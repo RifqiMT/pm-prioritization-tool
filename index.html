@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RICE Project Prioritizer</title>
+  <link href="css/main.css" rel="stylesheet" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="app-title-group">
+        <span class="app-badge">RICE Prioritization • Portfolio ready</span>
+        <h2 class="app-title">Project RICE Scoreboard</h2>
+        <p class="app-subtitle">
+          Capture projects across profiles, track reach, impact, confidence, effort, and financial upside, and auto-rank everything by RICE score.
+        </p>
+      </div>
+      <div class="app-header-actions">
+        <div class="app-header-actions-row">
+          <div class="data-pill-group">
+            <span class="data-pill-label">Export</span>
+            <button type="button" id="exportDataBtn" class="data-pill-btn">
+              Export data
+            </button>
+          </div>
+          <div class="data-pill-group">
+            <span class="data-pill-label">Import</span>
+            <button type="button" id="importDataBtn" class="data-pill-btn">
+              Import data
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="app-layout">
+      <!-- Profiles / owners -->
+      <section class="card profiles-panel">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">Profiles / Owners</h3>
+            <p class="card-caption">Create separate portfolios for different owners, teams, or products.</p>
+          </div>
+        </div>
+
+        <form id="addProfileForm" class="profile-form-row" autocomplete="off">
+          <div style="flex:1 1 0;min-width:0;">
+            <label for="newProfileName">Profile name</label>
+            <input id="newProfileName" name="newProfileName" type="text" placeholder="e.g. Product Squad Alpha" required />
+          </div>
+          <button type="submit" aria-label="Add profile">
+            + Profile
+          </button>
+        </form>
+
+        <ul id="profileList" class="profiles-list" aria-label="Profiles list"></ul>
+        <p id="profilesEmptyState" class="profile-empty" style="display:none;">No profiles yet. Create your first profile above.</p>
+      </section>
+
+      <!-- Projects side -->
+      <section class="card-plain">
+        <div class="projects-header-row">
+          <div class="projects-header-left">
+            <div class="projects-header-title" id="activeProfileTitleText">No profile selected</div>
+            <div class="projects-header-subtitle" id="activeProfileSubtitleText">
+              Create a profile on the left to start prioritizing projects.
+            </div>
+            <div class="projects-header-badges" id="projectsHeaderBadges"></div>
+          </div>
+          <div class="projects-header-actions">
+            <button type="button" id="addProjectBtn" disabled>
+              + Project
+            </button>
+            <button type="button" id="bulkDeleteBtn" class="btn-danger" disabled>
+              Delete Selected
+            </button>
+          </div>
+        </div>
+
+        <section class="filters-shell" aria-label="Project filters">
+          <div class="filters-header">
+            <div>
+              <div class="filters-title">Filters</div>
+              <div class="filters-quick-label">Tune what’s visible in your RICE table.</div>
+            </div>
+            <div class="filters-meta">
+              <span id="filtersActivePill" class="filters-active-pill" style="display:none;"></span>
+              <button type="button" id="filtersResetBtn" class="filters-reset-btn">
+                Reset
+              </button>
+              <button type="button" id="filtersToggleBtn" class="filters-toggle-btn">
+                Show advanced
+              </button>
+            </div>
+          </div>
+
+          <div class="filters-row">
+            <div class="filter-group filter-group--stretch">
+              <label for="filterTitle">Project title</label>
+              <input id="filterTitle" type="text" placeholder="Search by title..." />
+            </div>
+            <div class="filter-group filter-group--compact">
+              <label for="filterProjectType">Type</label>
+              <select id="filterProjectType">
+                <option value="">Any</option>
+                <option value="New Product">New Product</option>
+                <option value="Improvement">Improvement</option>
+                <option value="Tech Debt">Tech Debt</option>
+                <option value="Market Expansion">Market Expansion</option>
+              </select>
+            </div>
+            <div class="filter-group filter-group--compact">
+              <label for="filterCountriesSearch">Countries</label>
+              <div class="filter-countries">
+                <button type="button" id="filterCountriesToggle" class="filter-countries-toggle">
+                  <div id="filterCountriesSummary" class="filter-countries-summary"></div>
+                  <span class="filter-countries-toggle-icon">▾</span>
+                </button>
+                <div id="filterCountriesPopup" class="filter-countries-popup">
+                  <input id="filterCountriesSearch" type="text" placeholder="Search countries..." />
+                  <div id="filterCountriesList" class="filter-countries-list"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="filtersAdvanced" class="filters-advanced">
+            <div class="filters-row">
+              <div class="filter-group filter-group--date-range">
+                <div class="filters-row-inline">
+                  <div>
+                    <div class="filter-inline-label">Created between</div>
+                    <input id="filterCreatedFrom" type="date" />
+                  </div>
+                  <span class="hint-muted">and</span>
+                  <div>
+                    <div class="filter-inline-label">&nbsp;</div>
+                    <input id="filterCreatedTo" type="date" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="filter-group filter-group--date-range">
+                <div class="filters-row-inline">
+                  <div>
+                    <div class="filter-inline-label">Modified between</div>
+                    <input id="filterModifiedFrom" type="date" />
+                  </div>
+                  <span class="hint-muted">and</span>
+                  <div>
+                    <div class="filter-inline-label">&nbsp;</div>
+                    <input id="filterModifiedTo" type="date" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="filters-row">
+              <div class="filter-group filter-group--compact">
+                <label for="filterImpact">Impact</label>
+                <select id="filterImpact">
+                  <option value="">Any</option>
+                  <option value="1">1 – Minimal</option>
+                  <option value="2">2 – Low</option>
+                  <option value="3">3 – Medium</option>
+                  <option value="4">4 – High</option>
+                  <option value="5">5 – Massive</option>
+                </select>
+              </div>
+              <div class="filter-group filter-group--compact">
+                <label for="filterEffort">Effort</label>
+                <select id="filterEffort">
+                  <option value="">Any</option>
+                  <option value="1">1 – Tiny</option>
+                  <option value="2">2 – Small</option>
+                  <option value="3">3 – Medium</option>
+                  <option value="4">4 – Large</option>
+                  <option value="5">5 – Huge</option>
+                </select>
+              </div>
+              <div class="filter-group filter-group--compact">
+                <label for="filterCurrency">Currency</label>
+                <select id="filterCurrency">
+                  <option value="">Any</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="table-wrapper" aria-label="Projects table">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:32px;">
+                  <input id="selectAllProjects" type="checkbox" class="checkbox-input" />
+                </th>
+                <th data-sort-field="title">
+                  <button class="sort-button" type="button">
+                    <span>Project</span>
+                    <span class="sort-indicator">↕</span>
+                  </button>
+                </th>
+                <th data-sort-field="projectType">
+                  <button class="sort-button" type="button">
+                    <span>Type</span>
+                    <span class="sort-indicator">↕</span>
+                  </button>
+                </th>
+                <th data-sort-field="riceScore">
+                  <button class="sort-button" type="button">
+                    <span>RICE score</span>
+                    <span class="sort-indicator">↕</span>
+                  </button>
+                </th>
+                <th>
+                  RICE values
+                </th>
+                <th data-sort-field="financialImpactValue">
+                  <button class="sort-button" type="button">
+                    <span>Financial impact</span>
+                    <span class="sort-indicator">↕</span>
+                  </button>
+                </th>
+                <th data-sort-field="financialImpactCurrency">
+                  <button class="sort-button" type="button">
+                    <span>Currency</span>
+                    <span class="sort-indicator">↕</span>
+                  </button>
+                </th>
+                <th data-sort-field="createdAt">
+                  <button class="sort-button" type="button">
+                    <span>Created</span>
+                    <span class="sort-indicator">↕</span>
+                  </button>
+                </th>
+                <th data-sort-field="modifiedAt">
+                  <button class="sort-button" type="button">
+                    <span>Modified</span>
+                    <span class="sort-indicator">↕</span>
+                  </button>
+                </th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="projectsTableBody">
+              <tr>
+                <td colspan="10" class="empty-state">
+                  Select a profile and add your first project to see it here.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <input
+    type="file"
+    id="importFileInput"
+    accept=".json,application/json,.csv,text/csv"
+    style="display:none;"
+  />
+  <input type="file" id="importCsvFileInput" accept=".csv,text/csv" style="display:none;" />
+
+  <!-- Export format modal -->
+  <div id="exportFormatModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="exportFormatModalTitle">
+      <header class="modal-header">
+        <div class="modal-title-group">
+          <h3 id="exportFormatModalTitle" class="modal-title">Export data</h3>
+          <p class="modal-subtitle">
+            Choose which format you’d like to export your RICE data in.
+          </p>
+        </div>
+      </header>
+
+      <div class="modal-body" style="display:block;">
+        <div class="form-row-inline" style="justify-content:flex-end;margin-top:0.25rem;">
+          <button type="button" class="btn-secondary" id="exportAsJsonBtn">Export as JSON</button>
+          <button type="button" class="btn-secondary" id="exportAsCsvBtn">Export as CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import format modal -->
+  <div id="importFormatModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="importFormatModalTitle">
+      <header class="modal-header">
+        <div class="modal-title-group">
+          <h3 id="importFormatModalTitle" class="modal-title">Import data</h3>
+          <p class="modal-subtitle">
+            Bring in profiles and projects from a previous export file.
+          </p>
+        </div>
+      </header>
+
+      <div class="modal-body" style="display:block;">
+        <p class="modal-subtitle" style="margin-bottom:0.75rem;">
+          Select the format of the file you want to import. Data will be merged into your current workspace.
+        </p>
+        <div class="form-row-inline" style="justify-content:flex-end;">
+          <button type="button" class="btn-secondary" id="importAsJsonBtn">Import JSON</button>
+          <button type="button" class="btn-secondary" id="importAsCsvBtn">Import CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Project modal -->
+  <div id="projectModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="projectModalTitle">
+      <header class="modal-header">
+        <div class="modal-title-group">
+          <h3 id="projectModalTitle" class="modal-title">New project</h3>
+          <p id="projectModalSubtitle" class="modal-subtitle">
+            Define reach, impact, confidence, effort, and optional financial upside.
+          </p>
+        </div>
+        <button type="button" class="btn-ghost modal-close-btn" id="projectModalCloseBtn">
+          Close
+        </button>
+      </header>
+
+      <form id="projectForm">
+        <div class="modal-body">
+          <section>
+            <div class="form-section">
+              <div class="form-section-header">
+                <span class="form-section-title">Project overview</span>
+              </div>
+              <div class="form-grid form-grid-full">
+                <div>
+                  <label for="projectTitle">Title</label>
+                  <input id="projectTitle" name="projectTitle" type="text" placeholder="e.g. Onboarding email sequence revamp" required />
+                </div>
+                <div>
+                  <label for="projectDescription">Description</label>
+                  <textarea id="projectDescription" name="projectDescription" placeholder="Long-form context, goals, and scope for this project."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-header">
+                <span class="form-section-title">RICE inputs</span>
+                <span class="form-section-hint">RICE = (Reach × Impact × Confidence) ÷ Effort</span>
+              </div>
+
+              <div class="form-grid">
+                <div>
+                  <label for="reachDescription">Reach description</label>
+                  <textarea id="reachDescription" name="reachDescription" placeholder="Who will this affect, and over what period?"></textarea>
+                </div>
+                <div>
+                  <label for="reachValue">Reach value (integer)</label>
+                  <input id="reachValue" name="reachValue" type="number" min="0" step="1" placeholder="e.g. 1200" required />
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div>
+                  <label for="impactDescription">Impact description</label>
+                  <textarea id="impactDescription" name="impactDescription" placeholder="How much will this move your core metric per user?"></textarea>
+                </div>
+                <div>
+                  <label for="impactValue">Impact (1–5)</label>
+                  <select id="impactValue" name="impactValue" required>
+                    <option value="">Select impact</option>
+                    <option value="1">1 – Minimal</option>
+                    <option value="2">2 – Low</option>
+                    <option value="3">3 – Medium</option>
+                    <option value="4">4 – High</option>
+                    <option value="5">5 – Massive</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div>
+                  <label for="confidenceDescription">Confidence description</label>
+                  <textarea id="confidenceDescription" name="confidenceDescription" placeholder="Why do you believe this will work? Link data, experiments, or bets."></textarea>
+                </div>
+                <div>
+                  <label for="confidenceValue">Confidence (% 0–100)</label>
+                  <input id="confidenceValue" name="confidenceValue" type="number" min="0" max="100" step="1" placeholder="e.g. 80" required />
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div>
+                  <label for="effortDescription">Effort description</label>
+                  <textarea id="effortDescription" name="effortDescription" placeholder="Rough sizing: people × weeks, dependencies, and complexity."></textarea>
+                </div>
+                <div>
+                  <label for="effortValue">Effort (1–5)</label>
+                  <select id="effortValue" name="effortValue" required>
+                    <option value="">Select effort</option>
+                    <option value="1">1 – Tiny</option>
+                    <option value="2">2 – Small</option>
+                    <option value="3">3 – Medium</option>
+                    <option value="4">4 – Large</option>
+                    <option value="5">5 – Huge</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <div class="form-section">
+              <div class="form-section-header">
+                <span class="form-section-title">Optional financial impact</span>
+              </div>
+              <div class="form-grid">
+                <div>
+                  <label for="financialImpactValue">Financial impact (optional)</label>
+                  <input id="financialImpactValue" name="financialImpactValue" type="number" min="0" step="0.01" placeholder="e.g. 250000" />
+                  <p class="hint-muted">Use your preferred time window (e.g. annualized, first 6 months); this is not used in the RICE formula.</p>
+                </div>
+                <div>
+                  <label for="projectCurrency">Currency</label>
+                  <select id="projectCurrency" name="projectCurrency">
+                    <option value="">None / not set</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-header">
+                <span class="form-section-title">Project metadata</span>
+              </div>
+
+              <div class="form-grid form-grid-full">
+                <div class="countries-section">
+                  <label for="projectType">Project type (optional)</label>
+                  <select id="projectType" name="projectType">
+                    <option value="">None</option>
+                    <option value="New Product">New Product</option>
+                    <option value="Improvement">Improvement</option>
+                    <option value="Tech Debt">Tech Debt</option>
+                    <option value="Market Expansion">Market Expansion</option>
+                  </select>
+
+                  <label style="margin-top:0.55rem;">Target countries (optional)</label>
+                  <div id="countriesContainer" class="countries-list"></div>
+                  <button type="button" id="addCountryBtn" class="btn-secondary" style="align-self:flex-start;min-height:32px;font-size:0.72rem;padding-inline:0.6rem;margin-top:0.15rem;">
+                    + Add country
+                  </button>
+                  <p class="countries-hint">Use multiple rows to capture all markets this project touches.</p>
+                </div>
+
+                <div class="field-meta-row" id="projectMetaInfo">
+                  <span><strong>Created:</strong> <span id="projectMetaCreated">—</span></span>
+                  <span><strong>Last modified:</strong> <span id="projectMetaModified">—</span></span>
+                  <span><strong>RICE score:</strong> <span id="projectMetaRice">—</span></span>
+                </div>
+              </div>
+            </div>
+
+            <div id="projectFormError" class="field-error" role="alert" style="display:none;"></div>
+
+            <div class="form-actions-row">
+              <button type="button" class="btn-secondary" id="projectFormCancelBtn">Cancel</button>
+              <button type="submit" id="projectFormSubmitBtn">Save project</button>
+            </div>
+          </section>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Hidden file inputs used by Import buttons (JSON and CSV) -->
+  <input
+    type="file"
+    id="importFileInput"
+    accept=".json,application/json,.csv,text/csv"
+    style="display:none;"
+  />
+
+  <!-- Profile delete confirm modal -->
+  <div id="profileDeleteModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="profileDeleteModalTitle">
+      <header class="modal-header">
+        <div class="modal-title-group">
+          <h3 id="profileDeleteModalTitle" class="modal-title">Delete profile</h3>
+          <p class="modal-subtitle">
+            <span class="modal-subtitle-strong" id="profileDeleteNameLabel"></span>
+            <span id="profileDeleteSummaryLabel"></span>
+          </p>
+        </div>
+        <button type="button" class="btn-ghost modal-close-btn" id="profileDeleteCancelTopBtn">
+          Cancel
+        </button>
+      </header>
+
+      <div class="modal-body" style="display:block;">
+        <p class="modal-subtitle" id="profileDeleteWarningText">
+          This will permanently remove this profile and all of its projects from this browser. This action cannot be undone.
+        </p>
+        <div class="form-actions" style="margin-top:1rem;justify-content:flex-end;">
+          <button type="button" class="btn-ghost" id="profileDeleteCancelBtn">Keep profile</button>
+          <button type="button" class="btn-danger" id="profileDeleteConfirmBtn">Delete profile</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Project delete confirm modal -->
+  <div id="projectDeleteModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="projectDeleteModalTitle">
+      <header class="modal-header">
+        <div class="modal-title-group">
+          <h3 id="projectDeleteModalTitle" class="modal-title">Delete project</h3>
+          <p class="modal-subtitle">
+            <span class="modal-subtitle-strong" id="projectDeleteNameLabel"></span>
+          </p>
+        </div>
+      </header>
+
+      <div class="modal-body" style="display:block;">
+        <p class="modal-subtitle" id="projectDeleteWarningText">
+          This will permanently remove this project from this profile. This action cannot be undone.
+        </p>
+        <div class="form-actions" style="margin-top:1rem;justify-content:flex-end;">
+          <button type="button" class="btn-ghost" id="projectDeleteCancelBtn">Keep project</button>
+          <button type="button" class="btn-danger" id="projectDeleteConfirmBtn">Delete project</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Classic scripts (no ES modules) so you can just open index.html directly -->
+  <script src="src/constants.js"></script>
+  <script src="src/utils.js"></script>
+  <script src="src/rice.js"></script>
+  <script src="src/app.js"></script>
+</body>
+</html>
+
