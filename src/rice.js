@@ -1,5 +1,5 @@
 /**
- * RICE Prioritizer - RICE scoring and validation
+ * Product Management Prioritization Tool - RICE scoring and validation
  * Implements the RICE formula: (Reach × Impact × Confidence) ÷ Effort.
  * Confidence is normalized from 0–100% to 0–1 when > 1.
  *

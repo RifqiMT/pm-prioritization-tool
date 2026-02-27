@@ -1,4 +1,4 @@
-# RICE Project Prioritizer
+# Product Management Prioritization Tool
 
 A **local-first**, **no-backend** web app to prioritize projects using the [RICE framework](https://www.intercom.com/blog/rice-scoring-model/) (Reach × Impact × Confidence ÷ Effort). All data is stored in your browser. No installation or server required to run—just open with a local static server (see [How to run](#how-to-run)).
 

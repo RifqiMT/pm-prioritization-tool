@@ -837,7 +837,13 @@ tbody tr:hover {
 .cell-title {
   font-weight: 600;
   color: #e5e7eb;
-  margin-bottom: 0.15rem;
+  margin-bottom: 0;
+}
+
+.cell-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .cell-description {
@@ -953,6 +959,7 @@ tbody tr:hover {
 .cell-type-pill {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   padding: 0.18rem 0.5rem;
   border-radius: 999px;
   font-size: 0.68rem;
@@ -961,6 +968,169 @@ tbody tr:hover {
   border: 1px solid rgba(148, 163, 184, 0.4);
   color: #e5e7eb;
   background: rgba(15, 23, 42, 0.96);
+}
+
+/* Project type as icon with tooltip */
+.cell-type-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0;
+  cursor: help;
+}
+
+.cell-type-icon-wrap svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+/* Created date with Modified tooltip (same tooltip style as type/status) */
+.cell-date-with-tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+}
+
+.cell-date-with-tooltip .cell-created-date-text {
+  font-size: inherit;
+  color: inherit;
+}
+
+/* Countries badge with tooltip (flag + full name, same style as type/status) */
+.cell-countries-with-tooltip {
+  position: relative;
+  display: inline-flex;
+  cursor: help;
+  align-self: flex-start;
+}
+
+/* T-shirt size with tooltip (same style as type/status) */
+.cell-tshirt-with-tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+}
+
+.cell-tshirt-with-tooltip .cell-tshirt-size-text {
+  font-size: inherit;
+  color: inherit;
+}
+
+/* Structured tooltip (DOM element) — professional layout with title and body */
+/* Position is set via JS (position: fixed) so it is not clipped by table overflow */
+.cell-type-tooltip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -100%);
+  min-width: 7rem;
+  max-width: 11rem;
+  padding: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+  transition-delay: 0s;
+  pointer-events: none;
+  z-index: 9999;
+  text-align: left;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(148, 163, 184, 0.2);
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(26, 27, 35, 0.98);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  margin-top: 0;
+}
+
+/* Shown below icon */
+.cell-type-tooltip.cell-type-tooltip--below {
+  transform: translate(-50%, 0);
+  margin-top: 0;
+}
+
+.cell-type-icon-wrap:hover .cell-type-tooltip,
+.cell-type-icon-wrap:focus-within .cell-type-tooltip,
+.cell-date-with-tooltip:hover .cell-type-tooltip,
+.cell-date-with-tooltip:focus-within .cell-type-tooltip,
+.cell-countries-with-tooltip:hover .cell-type-tooltip,
+.cell-countries-with-tooltip:focus-within .cell-type-tooltip,
+.cell-tshirt-with-tooltip:hover .cell-type-tooltip,
+.cell-tshirt-with-tooltip:focus-within .cell-type-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0.28s;
+}
+
+.cell-type-icon-wrap:hover .cell-type-tooltip:not(.cell-type-tooltip--below),
+.cell-type-icon-wrap:focus-within .cell-type-tooltip:not(.cell-type-tooltip--below),
+.cell-date-with-tooltip:hover .cell-type-tooltip:not(.cell-type-tooltip--below),
+.cell-date-with-tooltip:focus-within .cell-type-tooltip:not(.cell-type-tooltip--below),
+.cell-countries-with-tooltip:hover .cell-type-tooltip:not(.cell-type-tooltip--below),
+.cell-countries-with-tooltip:focus-within .cell-type-tooltip:not(.cell-type-tooltip--below),
+.cell-tshirt-with-tooltip:hover .cell-type-tooltip:not(.cell-type-tooltip--below),
+.cell-tshirt-with-tooltip:focus-within .cell-type-tooltip:not(.cell-type-tooltip--below) {
+  transform: translate(-50%, -100%);
+}
+
+.cell-type-icon-wrap:hover .cell-type-tooltip.cell-type-tooltip--below,
+.cell-type-icon-wrap:focus-within .cell-type-tooltip.cell-type-tooltip--below,
+.cell-date-with-tooltip:hover .cell-type-tooltip.cell-type-tooltip--below,
+.cell-date-with-tooltip:focus-within .cell-type-tooltip.cell-type-tooltip--below,
+.cell-countries-with-tooltip:hover .cell-type-tooltip.cell-type-tooltip--below,
+.cell-countries-with-tooltip:focus-within .cell-type-tooltip.cell-type-tooltip--below,
+.cell-tshirt-with-tooltip:hover .cell-type-tooltip.cell-type-tooltip--below,
+.cell-tshirt-with-tooltip:focus-within .cell-type-tooltip.cell-type-tooltip--below {
+  transform: translate(-50%, 0);
+}
+
+/* Hide when table scrolls so tooltip doesn’t stay in wrong place */
+body.cell-type-tooltip-hidden .cell-type-tooltip {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.cell-type-tooltip-title {
+  padding: 0.4rem 0.6rem 0.28rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #e2e8f0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.cell-type-tooltip-body {
+  padding: 0.4rem 0.6rem 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 450;
+  line-height: 1.5;
+  color: #cbd5e1;
+  word-spacing: 0.03em;
+  white-space: pre-line;
+  letter-spacing: 0.01em;
+}
+
+.cell-type-tooltip-body p {
+  margin: 0;
+  line-height: 1.5;
+  word-spacing: 0.03em;
+  white-space: pre-line;
+}
+
+.cell-type-tooltip-body p:last-child {
+  margin-bottom: 0;
+}
+
+.cell-type-tooltip-body p + p {
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 .cell-type-pill[data-type="New Product"] {
@@ -981,6 +1151,37 @@ tbody tr:hover {
 .cell-type-pill[data-type="Market Expansion"] {
   border-color: rgba(250, 204, 21, 0.85);
   background: rgba(234, 179, 8, 0.18);
+}
+
+/* Project status icon pill colors */
+.cell-type-pill[data-status="Not Started"] {
+  border-color: rgba(148, 163, 184, 0.6);
+  background: rgba(71, 85, 105, 0.2);
+  color: #94a3b8;
+}
+
+.cell-type-pill[data-status="In Progress"] {
+  border-color: rgba(59, 130, 246, 0.75);
+  background: rgba(37, 99, 235, 0.18);
+  color: #60a5fa;
+}
+
+.cell-type-pill[data-status="On Hold"] {
+  border-color: rgba(251, 191, 36, 0.75);
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+.cell-type-pill[data-status="Done"] {
+  border-color: rgba(52, 211, 153, 0.75);
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+.cell-type-pill[data-status="Cancelled"] {
+  border-color: rgba(248, 113, 113, 0.75);
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
 }
 
 .cell-actions {
@@ -1307,7 +1508,7 @@ th[data-sort-active="true"] .sort-indicator {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 0.2rem;
-  margin-top: 0.25rem;
+  margin-top: 0;
   font-size: 0.7rem;
   color: var(--muted);
 }

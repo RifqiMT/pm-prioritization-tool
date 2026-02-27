@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RICE Project Prioritizer</title>
+  <title>Product Management Prioritization Tool</title>
   <link href="css/main.css" rel="stylesheet" />
 </head>
 <body>
   <div class="app-shell">
     <header class="app-header">
       <div class="app-title-group">
-        <span class="app-badge">RICE Prioritization • Portfolio ready</span>
-        <h2 class="app-title">Project RICE Scoreboard</h2>
+        <span class="app-badge">Product Management Prioritization • Portfolio ready</span>
+        <h2 class="app-title">Product Management Prioritization Tool</h2>
         <p class="app-subtitle">
           Capture projects across profiles, track reach, impact, confidence, effort, and financial upside, and auto-rank everything by RICE score.
         </p>
@@ -208,6 +208,18 @@
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
+                <th data-sort-field="projectStatus">
+                  <button class="sort-button" type="button">
+                    <span>Status</span>
+                    <span class="sort-indicator">↕</span>
+                  </button>
+                </th>
+                <th data-sort-field="tshirtSize">
+                  <button class="sort-button" type="button">
+                    <span>T-shirt size</span>
+                    <span class="sort-indicator">↕</span>
+                  </button>
+                </th>
                 <th data-sort-field="riceScore">
                   <button class="sort-button" type="button">
                     <span>RICE score</span>
@@ -223,21 +235,9 @@
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
-                <th data-sort-field="financialImpactCurrency">
-                  <button class="sort-button" type="button">
-                    <span>Currency</span>
-                    <span class="sort-indicator">↕</span>
-                  </button>
-                </th>
                 <th data-sort-field="createdAt">
                   <button class="sort-button" type="button">
                     <span>Created</span>
-                    <span class="sort-indicator">↕</span>
-                  </button>
-                </th>
-                <th data-sort-field="modifiedAt">
-                  <button class="sort-button" type="button">
-                    <span>Modified</span>
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
@@ -444,6 +444,26 @@
                     <option value="Improvement">Improvement</option>
                     <option value="Tech Debt">Tech Debt</option>
                     <option value="Market Expansion">Market Expansion</option>
+                  </select>
+
+                  <label for="projectStatus" style="margin-top:0.55rem;">Project status</label>
+                  <select id="projectStatus" name="projectStatus">
+                    <option value="">—</option>
+                    <option value="Not Started">Not Started</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="On Hold">On Hold</option>
+                    <option value="Done">Done</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+
+                  <label for="projectTshirtSize" style="margin-top:0.55rem;">T-shirt size</label>
+                  <select id="projectTshirtSize" name="projectTshirtSize">
+                    <option value="">—</option>
+                    <option value="XS">XS</option>
+                    <option value="S">S</option>
+                    <option value="M">M</option>
+                    <option value="L">L</option>
+                    <option value="XL">XL</option>
                   </select>
 
                   <label style="margin-top:0.55rem;">Target countries (optional)</label>

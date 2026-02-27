@@ -1,12 +1,12 @@
 /**
- * RICE Prioritizer - Main application module
+ * Product Management Prioritization Tool - Main application module
  * Handles state, DOM cache, initialization, rendering, modals, import/export, and event handlers.
  *
  * IMPORTANT: This file now runs as a classic <script> (no ES modules).
  * It relies on globals defined in:
- *  - src/constants.js  (STORAGE_KEY, currencyList, countryList, countryCodeByName)
+ *  - src/constants.js  (STORAGE_KEY, currencyList, countryList, countryCodeByName, projectTypeIcons, projectStatusIcons, tshirtSizeTooltips)
  *  - src/rice.js       (calculateRiceScore, formatRice, validateProjectInput)
- *  - src/utils.js      (formatDateTime, formatDate, formatDateForFilename, compareDatesDesc, generateId, escapeHtml, toNumberOrNull, parseCsv, escapeCsvCell)
+ *  - src/utils.js      (formatDateTime, formatDate, formatDateForFilename, compareDatesDesc, generateId, escapeHtml, countryCodeToFlag, toNumberOrNull, parseCsv, escapeCsvCell)
  *
  * That means you can simply open index.html in a browser (no dev server required)
  * and everything, including export/import, will work.
@@ -93,6 +93,8 @@ function cacheElements() {
   elements.financialImpactValue = $("financialImpactValue");
   elements.projectCurrency = $("projectCurrency");
   elements.projectType = $("projectType");
+  elements.projectStatus = $("projectStatus");
+  elements.projectTshirtSize = $("projectTshirtSize");
 
   elements.projectMetaCreated = $("projectMetaCreated");
   elements.projectMetaModified = $("projectMetaModified");
@@ -420,6 +422,42 @@ function attachEventListeners() {
     }
   });
 
+  elements.projectsTableBody.addEventListener("mouseenter", (e) => {
+    const wrap = e.target.closest(".cell-type-icon-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip");
+    if (!wrap) return;
+    const tooltip = wrap.querySelector(".cell-type-tooltip");
+    if (!tooltip) return;
+    document.body.classList.remove("cell-type-tooltip-hidden");
+    const rect = wrap.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const spaceAbove = rect.top;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const minSpace = 200;
+    let showBelow;
+    if (spaceBelow < minSpace && spaceAbove > spaceBelow) {
+      showBelow = false;
+    } else if (spaceAbove < minSpace && spaceBelow > spaceAbove) {
+      showBelow = true;
+    } else {
+      showBelow = spaceBelow >= spaceAbove;
+    }
+    tooltip.style.left = (rect.left + rect.width / 2) + "px";
+    if (showBelow) {
+      tooltip.classList.add("cell-type-tooltip--below");
+      tooltip.style.top = (rect.bottom + 8) + "px";
+    } else {
+      tooltip.classList.remove("cell-type-tooltip--below");
+      tooltip.style.top = (rect.top - 8) + "px";
+    }
+  }, true);
+
+  const tableWrapper = elements.projectsTableBody && elements.projectsTableBody.closest(".table-wrapper");
+  if (tableWrapper) {
+    tableWrapper.addEventListener("scroll", () => {
+      document.body.classList.add("cell-type-tooltip-hidden");
+    }, { passive: true });
+  }
+
   const headerCells = document.querySelectorAll("th[data-sort-field]");
   headerCells.forEach((th) => {
     th.dataset.sortActive = "false";
@@ -544,6 +582,8 @@ function handleExportCsv() {
       "financialImpactValue",
       "financialImpactCurrency",
       "projectType",
+      "projectStatus",
+      "tshirtSize",
       "countries",
       "riceScore"
     ];
@@ -560,6 +600,7 @@ function handleExportCsv() {
           escapeCsvCell(profileId),
           escapeCsvCell(profileName),
           escapeCsvCell(profileCreatedAt),
+          "",
           "",
           "",
           "",
@@ -606,6 +647,8 @@ function handleExportCsv() {
           escapeCsvCell(project.financialImpactValue != null ? String(project.financialImpactValue) : ""),
           escapeCsvCell(project.financialImpactCurrency || ""),
           escapeCsvCell(project.projectType || ""),
+          escapeCsvCell(project.projectStatus || ""),
+          escapeCsvCell(project.tshirtSize || ""),
           escapeCsvCell(countries),
           escapeCsvCell(String(rice))
         ];
@@ -831,6 +874,8 @@ function buildProfilesFromCsvRows(header, rows) {
       financialImpactValue: toNumberOrNull(cells[colIndex.financialImpactValue]),
       financialImpactCurrency: normalizeCurrency(cells[colIndex.financialImpactCurrency]),
       projectType: (cells[colIndex.projectType] ?? "").toString().trim() || null,
+      projectStatus: (cells[colIndex.projectStatus] ?? "").toString().trim() || null,
+      tshirtSize: (cells[colIndex.tshirtSize] ?? "").toString().trim() || null,
       countries: (cells[colIndex.countries] ?? "").toString().split("|").map((c) => c.trim()).filter((c) => c !== "")
     };
     project.riceScore = calculateRiceScore(project);
@@ -883,6 +928,8 @@ function normalizeImportedProject(project) {
     financialImpactValue: Number.isFinite(financialImpactValue) && financialImpactValue >= 0 ? financialImpactValue : null,
     financialImpactCurrency: normalizeCurrency(project.financialImpactCurrency),
     projectType: (project.projectType != null && String(project.projectType).trim() !== "") ? String(project.projectType).trim() : null,
+    projectStatus: (project.projectStatus != null && String(project.projectStatus).trim() !== "") ? String(project.projectStatus).trim() : null,
+    tshirtSize: (project.tshirtSize != null && String(project.tshirtSize).trim() !== "") ? String(project.tshirtSize).trim() : null,
     countries: Array.isArray(project.countries) ? project.countries.map((c) => String(c)) : []
   };
   normalized.riceScore = calculateRiceScore(normalized);
@@ -1053,6 +1100,8 @@ function normalizeLoadedProject(project) {
     financialImpactValue: Number.isFinite(toNumberOrNull(project.financialImpactValue)) ? Number(project.financialImpactValue) : null,
     financialImpactCurrency: normalizeCurrency(project.financialImpactCurrency),
     projectType: (project.projectType != null && String(project.projectType).trim() !== "") ? String(project.projectType).trim() : null,
+    projectStatus: (project.projectStatus != null && String(project.projectStatus).trim() !== "") ? String(project.projectStatus).trim() : null,
+    tshirtSize: (project.tshirtSize != null && String(project.tshirtSize).trim() !== "") ? String(project.tshirtSize).trim() : null,
     countries: Array.isArray(project.countries) ? project.countries.map((c) => String(c)) : []
   };
 }
@@ -1265,39 +1314,181 @@ function renderProjects() {
 
     const tdTitle = document.createElement("td");
     const countries = Array.isArray(project.countries) ? project.countries : [];
-    let countriesHtml = "";
+    const titleBlock = document.createElement("div");
+    titleBlock.className = "cell-title-block";
+    const titleDiv = document.createElement("div");
+    titleDiv.className = "cell-title";
+    titleDiv.textContent = project.title || "";
+    titleBlock.appendChild(titleDiv);
     if (countries.length) {
       const maxToShow = 3;
       const shown = countries.slice(0, maxToShow);
       const moreCount = countries.length - shown.length;
       const shownCodes = shown.map((name) => countryCodeByName[name] || name);
-      countriesHtml = `
-        <div class="countries-badge">
-          <span>${escapeHtml(shownCodes.join(", "))}${moreCount > 0 ? escapeHtml(" +" + moreCount + " more") : ""}</span>
-        </div>
-      `;
+      const countriesWrap = document.createElement("span");
+      countriesWrap.className = "cell-countries-with-tooltip";
+      countriesWrap.setAttribute("aria-label", "Target countries; hover for full list");
+      const badge = document.createElement("div");
+      badge.className = "countries-badge";
+      const badgeSpan = document.createElement("span");
+      badgeSpan.textContent = shownCodes.join(", ") + (moreCount > 0 ? " +" + moreCount + " more" : "");
+      badge.appendChild(badgeSpan);
+      countriesWrap.appendChild(badge);
+      const tooltipEl = document.createElement("div");
+      tooltipEl.className = "cell-type-tooltip";
+      tooltipEl.setAttribute("role", "tooltip");
+      const tooltipTitle = document.createElement("div");
+      tooltipTitle.className = "cell-type-tooltip-title";
+      tooltipTitle.textContent = "Target countries";
+      tooltipEl.appendChild(tooltipTitle);
+      const tooltipBody = document.createElement("div");
+      tooltipBody.className = "cell-type-tooltip-body";
+      countries.forEach((name) => {
+        const code = countryCodeByName[name] || "";
+        const flag = typeof countryCodeToFlag === "function" ? countryCodeToFlag(code) : "";
+        const p = document.createElement("p");
+        if (flag && code) {
+          p.textContent = `${flag} ${code} — ${name}`;
+        } else if (code) {
+          p.textContent = `${code} — ${name}`;
+        } else {
+          p.textContent = name;
+        }
+        tooltipBody.appendChild(p);
+      });
+      tooltipEl.appendChild(tooltipBody);
+      countriesWrap.appendChild(tooltipEl);
+      titleBlock.appendChild(countriesWrap);
     }
-    tdTitle.innerHTML = `
-      <div class="cell-title">${escapeHtml(project.title || "")}</div>
-      ${countriesHtml}
-    `;
+    tdTitle.appendChild(titleBlock);
     const projectDesc = project.description || "";
     if (projectDesc) {
-      tr.title = projectDesc;
+      tdTitle.title = projectDesc;
     }
     tr.appendChild(tdTitle);
 
     const tdType = document.createElement("td");
     if (project.projectType) {
-      const span = document.createElement("span");
-      span.className = "cell-type-pill";
-      span.dataset.type = project.projectType;
-      span.textContent = project.projectType;
-      tdType.appendChild(span);
+      const meta = projectTypeIcons && projectTypeIcons[project.projectType];
+      const wrapper = document.createElement("span");
+      wrapper.className = "cell-type-icon-wrap cell-type-pill";
+      wrapper.dataset.type = project.projectType;
+      wrapper.setAttribute("role", "img");
+      wrapper.setAttribute("aria-label", project.projectType);
+      if (meta && meta.svg) {
+        wrapper.innerHTML = meta.svg;
+        if (meta.tooltipTitle != null || meta.tooltipBody != null) {
+          const tooltipEl = document.createElement("div");
+          tooltipEl.className = "cell-type-tooltip";
+          tooltipEl.setAttribute("role", "tooltip");
+          if (meta.tooltipTitle != null) {
+            const titleEl = document.createElement("div");
+            titleEl.className = "cell-type-tooltip-title";
+            titleEl.textContent = meta.tooltipTitle;
+            tooltipEl.appendChild(titleEl);
+          }
+          if (meta.tooltipBody != null) {
+            const bodyEl = document.createElement("div");
+            bodyEl.className = "cell-type-tooltip-body";
+            const paragraphs = String(meta.tooltipBody).split(/\n\n+/);
+            paragraphs.forEach((p) => {
+              const block = document.createElement("p");
+              block.textContent = p.trim();
+              if (block.textContent) bodyEl.appendChild(block);
+            });
+            tooltipEl.appendChild(bodyEl);
+          }
+          wrapper.appendChild(tooltipEl);
+        }
+      } else {
+        wrapper.textContent = project.projectType;
+      }
+      tdType.appendChild(wrapper);
     } else {
       tdType.innerHTML = `<span class="cell-meta">—</span>`;
     }
     tr.appendChild(tdType);
+
+    const tdStatus = document.createElement("td");
+    if (project.projectStatus) {
+      const meta = projectStatusIcons && projectStatusIcons[project.projectStatus];
+      const wrapper = document.createElement("span");
+      wrapper.className = "cell-type-icon-wrap cell-type-pill cell-status-icon-wrap";
+      wrapper.dataset.status = project.projectStatus;
+      wrapper.setAttribute("role", "img");
+      wrapper.setAttribute("aria-label", project.projectStatus);
+      if (meta && meta.svg) {
+        wrapper.innerHTML = meta.svg;
+        if (meta.tooltipTitle != null || meta.tooltipBody != null) {
+          const tooltipEl = document.createElement("div");
+          tooltipEl.className = "cell-type-tooltip";
+          tooltipEl.setAttribute("role", "tooltip");
+          if (meta.tooltipTitle != null) {
+            const titleEl = document.createElement("div");
+            titleEl.className = "cell-type-tooltip-title";
+            titleEl.textContent = meta.tooltipTitle;
+            tooltipEl.appendChild(titleEl);
+          }
+          if (meta.tooltipBody != null) {
+            const bodyEl = document.createElement("div");
+            bodyEl.className = "cell-type-tooltip-body";
+            const paragraphs = String(meta.tooltipBody).split(/\n\n+/);
+            paragraphs.forEach((p) => {
+              const block = document.createElement("p");
+              block.textContent = p.trim();
+              if (block.textContent) bodyEl.appendChild(block);
+            });
+            tooltipEl.appendChild(bodyEl);
+          }
+          wrapper.appendChild(tooltipEl);
+        }
+      } else {
+        wrapper.textContent = project.projectStatus;
+      }
+      tdStatus.appendChild(wrapper);
+    } else {
+      tdStatus.innerHTML = `<span class="cell-meta">—</span>`;
+    }
+    tr.appendChild(tdStatus);
+
+    const tdTshirtSize = document.createElement("td");
+    if (project.tshirtSize) {
+      const meta = tshirtSizeTooltips && tshirtSizeTooltips[project.tshirtSize];
+      const wrap = document.createElement("span");
+      wrap.className = "cell-tshirt-with-tooltip";
+      wrap.setAttribute("aria-label", `T-shirt size: ${project.tshirtSize}`);
+      const textSpan = document.createElement("span");
+      textSpan.className = "cell-meta cell-tshirt-size-text";
+      textSpan.textContent = project.tshirtSize;
+      wrap.appendChild(textSpan);
+      if (meta && (meta.tooltipTitle != null || meta.tooltipBody != null)) {
+        const tooltipEl = document.createElement("div");
+        tooltipEl.className = "cell-type-tooltip";
+        tooltipEl.setAttribute("role", "tooltip");
+        if (meta.tooltipTitle != null) {
+          const titleEl = document.createElement("div");
+          titleEl.className = "cell-type-tooltip-title";
+          titleEl.textContent = meta.tooltipTitle;
+          tooltipEl.appendChild(titleEl);
+        }
+        if (meta.tooltipBody != null) {
+          const bodyEl = document.createElement("div");
+          bodyEl.className = "cell-type-tooltip-body";
+          const paragraphs = String(meta.tooltipBody).split(/\n\n+/);
+          paragraphs.forEach((p) => {
+            const block = document.createElement("p");
+            block.textContent = p.trim();
+            if (block.textContent) bodyEl.appendChild(block);
+          });
+          tooltipEl.appendChild(bodyEl);
+        }
+        wrap.appendChild(tooltipEl);
+      }
+      tdTshirtSize.appendChild(wrap);
+    } else {
+      tdTshirtSize.innerHTML = `<span class="cell-meta">—</span>`;
+    }
+    tr.appendChild(tdTshirtSize);
 
     const tdRice = document.createElement("td");
     const riceScore = calculateRiceScore(project);
@@ -1399,25 +1590,39 @@ function renderProjects() {
       const formattedAmount = Number(project.financialImpactValue).toLocaleString(undefined, {
         maximumFractionDigits: 2
       });
+      const currency = project.financialImpactCurrency ? String(project.financialImpactCurrency).trim() : "";
       tdFinancial.innerHTML = `
-        <div class="cell-meta"><strong>${formattedAmount}</strong></div>
+        <div class="cell-meta"><strong>${escapeHtml(formattedAmount)}</strong>${currency ? " " + escapeHtml(currency) : ""}</div>
       `;
     } else {
       tdFinancial.innerHTML = `<span class="cell-meta">—</span>`;
     }
     tr.appendChild(tdFinancial);
 
-    const tdCurrency = document.createElement("td");
-    tdCurrency.innerHTML = `<span class="cell-meta">${project.financialImpactCurrency || "—"}</span>`;
-    tr.appendChild(tdCurrency);
-
     const tdCreated = document.createElement("td");
-    tdCreated.innerHTML = `<div class="cell-meta">${formatDateTime(project.createdAt)}</div>`;
+    const createdWrap = document.createElement("span");
+    createdWrap.className = "cell-date-with-tooltip";
+    createdWrap.setAttribute("aria-label", "Created date; hover for last modified");
+    const createdText = document.createElement("span");
+    createdText.className = "cell-meta cell-created-date-text";
+    createdText.textContent = formatDateTime(project.createdAt);
+    createdWrap.appendChild(createdText);
+    const modifiedTooltip = document.createElement("div");
+    modifiedTooltip.className = "cell-type-tooltip";
+    modifiedTooltip.setAttribute("role", "tooltip");
+    const modifiedTitle = document.createElement("div");
+    modifiedTitle.className = "cell-type-tooltip-title";
+    modifiedTitle.textContent = "Modified";
+    modifiedTooltip.appendChild(modifiedTitle);
+    const modifiedBody = document.createElement("div");
+    modifiedBody.className = "cell-type-tooltip-body";
+    const modifiedP = document.createElement("p");
+    modifiedP.textContent = formatDateTime(project.modifiedAt || project.createdAt);
+    modifiedBody.appendChild(modifiedP);
+    modifiedTooltip.appendChild(modifiedBody);
+    createdWrap.appendChild(modifiedTooltip);
+    tdCreated.appendChild(createdWrap);
     tr.appendChild(tdCreated);
-
-    const tdModified = document.createElement("td");
-    tdModified.innerHTML = `<div class="cell-meta">${formatDateTime(project.modifiedAt)}</div>`;
-    tr.appendChild(tdModified);
 
     const tdActions = document.createElement("td");
     tdActions.className = "cell-actions";
@@ -1529,7 +1734,7 @@ function sortProjects(projects) {
   const direction = state.sortDirection === "asc" ? 1 : -1;
 
   return projects.slice().sort((a, b) => {
-    if (field === "title" || field === "projectType" || field === "financialImpactCurrency") {
+    if (field === "title" || field === "projectType" || field === "projectStatus" || field === "tshirtSize" || field === "financialImpactCurrency") {
       const va = (a[field] || "").toString().toLowerCase();
       const vb = (b[field] || "").toString().toLowerCase();
       if (va === vb) {
@@ -1793,6 +1998,8 @@ function openProjectModal(mode, projectId) {
       elements.projectCurrency.value = "";
     }
     elements.projectType.value = project.projectType || "";
+    elements.projectStatus.value = project.projectStatus || "";
+    elements.projectTshirtSize.value = project.tshirtSize || "";
     renderCountriesControls(Array.isArray(project.countries) ? project.countries : []);
 
     elements.projectMetaCreated.textContent = formatDateTime(project.createdAt);
@@ -1814,6 +2021,8 @@ function openProjectModal(mode, projectId) {
     elements.financialImpactValue.value = "";
     elements.projectCurrency.value = "";
     elements.projectType.value = "";
+    elements.projectStatus.value = "";
+    elements.projectTshirtSize.value = "";
     renderCountriesControls([]);
 
     const now = new Date().toISOString();
@@ -1885,6 +2094,8 @@ function handleProjectFormSubmit(e) {
     financialImpactValue: elements.financialImpactValue.value !== "" ? Number(elements.financialImpactValue.value) : null,
     financialImpactCurrency: normalizeCurrency(elements.projectCurrency.value),
     projectType: (elements.projectType.value || "").trim() || null,
+    projectStatus: (elements.projectStatus.value || "").trim() || null,
+    tshirtSize: (elements.projectTshirtSize.value || "").trim() || null,
     countries: getCountriesFromControls()
   };
 
@@ -1911,6 +2122,8 @@ function handleProjectFormSubmit(e) {
     project.financialImpactValue = raw.financialImpactValue;
     project.financialImpactCurrency = raw.financialImpactCurrency;
     project.projectType = raw.projectType || null;
+    project.projectStatus = raw.projectStatus || null;
+    project.tshirtSize = raw.tshirtSize || null;
     project.countries = Array.isArray(raw.countries) ? raw.countries : [];
     project.modifiedAt = new Date().toISOString();
     project.riceScore = calculateRiceScore(project);
@@ -1933,6 +2146,8 @@ function handleProjectFormSubmit(e) {
       financialImpactValue: raw.financialImpactValue,
       financialImpactCurrency: raw.financialImpactCurrency,
       projectType: raw.projectType || null,
+      projectStatus: raw.projectStatus || null,
+      tshirtSize: raw.tshirtSize || null,
       countries: Array.isArray(raw.countries) ? raw.countries : []
     };
     project.riceScore = calculateRiceScore(project);

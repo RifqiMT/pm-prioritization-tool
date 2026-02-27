@@ -1,5 +1,5 @@
 /**
- * RICE Prioritizer - Shared utilities
+ * Product Management Prioritization Tool - Shared utilities
  * Date formatting, ID generation, HTML/CSV escaping, and CSV parsing for export/import.
  *
  * NOTE: This file is loaded as a classic <script>, not as an ES module.
@@ -56,6 +56,15 @@ function escapeHtml(str) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+/** Converts a 2-letter ISO country code to its emoji flag (e.g. "US" -> "🇺🇸"). */
+function countryCodeToFlag(code) {
+  if (!code || typeof code !== "string" || code.length !== 2) return "";
+  const a = code.toUpperCase().charCodeAt(0) - 65;
+  const b = code.toUpperCase().charCodeAt(1) - 65;
+  if (a < 0 || a > 25 || b < 0 || b > 25) return "";
+  return String.fromCodePoint(0x1F1E6 + a, 0x1F1E6 + b);
 }
 
 function toNumberOrNull(value) {
