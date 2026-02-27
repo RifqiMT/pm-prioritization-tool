@@ -1,123 +1,373 @@
 # Product Management Prioritization Tool
 
-A **local-first**, **no-backend** web app to prioritize projects using the [RICE framework](https://www.intercom.com/blog/rice-scoring-model/) (Reach × Impact × Confidence ÷ Effort). All data is stored in your browser. No installation or server required to run—just open with a local static server (see [How to run](#how-to-run)).
+**Local-first, no-backend** web application for prioritizing projects using the [RICE framework](https://www.intercom.com/blog/rice-scoring-model/) (Reach × Impact × Confidence ÷ Effort). All data is stored in the browser. No account, server, or build step required.
 
 ---
 
-## Features
+## Table of contents
 
-### Profiles / owners
-- **Create profiles** – Separate portfolios for different owners, teams, or products.
-- **Switch profile** – Click a profile to make it active; the project list and filters apply to that profile.
-- **Delete profile** – Use the × button (shown on hover or when the profile is active) to remove a profile and all its projects (with confirmation).
-
-### Projects
-- **Add project** – With a profile selected, click **+ Project** to open the project form.
-- **Edit project** – In the project list, click **Edit** to change title, description, RICE inputs, financial impact, type, and countries.
-- **View project** – Click **View** to open a read-only popup (no edit controls, no add/remove country).
-- **Delete project** – Click **Delete** to open a confirmation modal; **Keep project** cancels, **Delete project** removes it.
-- **Bulk delete** – Select projects with the checkboxes and click **Delete Selected** (browser confirm).
-
-### RICE inputs (per project)
-- **Reach** – Description + integer value (e.g. number of users affected).
-- **Impact** – Description + scale 1–5 (Minimal → Massive).
-- **Confidence** – Description + percentage 0–100%.
-- **Effort** – Description + scale 1–5 (Tiny → Huge).
-
-**RICE score** is computed as: **[R × I × C] ÷ E** (Confidence is normalized from % to 0–1 when &gt; 1). The list shows the numeric score; the **?** next to it opens a popup with the formula and the exact calculation.
-
-### Optional fields
-- **Financial impact** – Optional number + currency (not used in RICE formula).
-- **Project type** – New Product, Improvement, Tech Debt, Market Expansion.
-- **Target countries** – Multi-select from a global list; displayed as 2-letter ISO codes in the project list.
-
-### Filters
-- **Basic:** Project title (search), Type, Countries (multi-select with search).
-- **Advanced (toggle):** Created date range, Modified date range, Impact, Effort, Currency.
-- **Reset** – Clears all filters. Active filter count is shown when any filter is applied.
-
-### Sort
-- Sort by: Project title, Type, RICE score, Financial impact, Currency, Created, Modified.
-- Default: Created date descending. Click a column header to toggle sort.
-
-### Export & import
-- **Export** – Click **Export data**; choose **JSON** or **CSV** in the popup. Downloads a file with all profiles and projects.
-- **Import** – Click **Import data**; choose **JSON** or **CSV**. File is merged into the current data:
-  - **Profiles** are matched by ID or name; if a match exists, its **projects** are merged (by project ID, no duplicates).
-  - New profiles are added; new projects on existing profiles are appended.
-
-### UI behavior
-- **Project description** – Not shown in the list; hover over a project row to see it in a tooltip.
-- **Modals** – Project (add/edit/view), profile delete, project delete, export format, import format. Backdrop click or explicit buttons close them. Export/Import/Project delete modals use a solid, non-transparent panel style.
+1. [Product overview](#1-product-overview)
+2. [Prerequisites and requirements](#2-prerequisites-and-requirements)
+3. [Getting started](#3-getting-started)
+4. [Product benefits](#4-product-benefits)
+5. [Features](#5-features)
+6. [Logics and data model](#6-logics-and-data-model)
+7. [Business guidelines](#7-business-guidelines)
+8. [Tech stack and guidelines](#8-tech-stack-and-guidelines)
+9. [Screens and key UI](#9-screens-and-key-ui)
+10. [Limitations and considerations](#10-limitations-and-considerations)
+11. [License](#11-license)
 
 ---
 
-## How to run
+## 1. Product overview
 
-You can run the app in **either** of these ways:
+### 1.1 Purpose
 
-- **Simplest (no tooling):**  
-  - Open the `rice-prioritizer` folder.  
-  - Double-click `index.html` to open it in your browser.  
-  - All logic is loaded via classic `<script>` tags; no bundler or dev server required.
+The tool helps product managers and teams **capture**, **score**, **rank**, and **track** projects in one place. It provides:
 
-- **Optional: local static server (recommended for development):**
+- **RICE scoring** – Consistent prioritization using Reach × Impact × Confidence ÷ Effort.
+- **Portfolio separation** – Multiple profiles (e.g. per team or product) with separate project lists.
+- **Dual views** – **Table** for sortable, filterable lists and bulk actions; **Board** for status-based columns and drag-and-drop.
+- **Data ownership** – Export/import JSON or CSV; no vendor lock-in.
 
-  ```bash
-  # From the project root (rice-prioritizer/)
-  npx serve .
-  # or
-  python3 -m http.server 8000
-  ```
+### 1.2 Target users
 
-  Then open `http://localhost:3000` (or `http://localhost:8000` for Python) in your browser.
+- Product managers maintaining roadmaps and backlogs.
+- Teams that need a shared view of project status and RICE scores.
+- Anyone who wants a simple, local prioritization tool without sign-up or backend.
+
+### 1.3 Key concepts
+
+| Term | Meaning |
+|------|--------|
+| **Profile** | A container for projects (e.g. “Q1 roadmap”, “Team Alpha”). Each profile has its own projects and optional board order. |
+| **RICE** | Prioritization formula: (Reach × Impact × Confidence) ÷ Effort. Higher score = higher priority. |
+| **Board order** | When “Sort by RICE” is off, the order of cards in each board column is stored per profile and per status. |
+| **Merge (import)** | Imported data is merged by profile (ID or name) and by project ID; duplicates are skipped. |
+
+### 1.4 High-level flow
+
+1. Create a **profile** (name, optional team).
+2. Add **projects** with RICE inputs and optional metadata (type, status, countries, etc.).
+3. View and sort in **Table** or **Board**; filter as needed.
+4. Change status via **Board** drag-and-drop; optionally use manual card order.
+5. **Export** for backup or **Import** to merge data from another export.
 
 ---
 
-## Data & logic
+## 2. Prerequisites and requirements
 
-- **Storage** – `localStorage` key: `rice_prioritizer_v1`. One JSON object: `{ profiles, activeProfileId, sortField, sortDirection }`.
-- **Profiles** – Array of `{ id, name, createdAt, projects }`.
-- **Projects** – Each has: title, description, RICE fields, financial impact (optional)/currency, project type, countries array, `createdAt`, `modifiedAt`. RICE score is computed on demand (not stored).
-- **Merge on import** – Same profile (by id or name): merge projects by id (skip duplicates). New profiles are appended.
+| Requirement | Details |
+|-------------|--------|
+| **Browser** | Modern browser with JavaScript enabled and `localStorage` support (e.g. Chrome, Firefox, Safari, Edge). |
+| **Network** | Optional: only for loading Google Fonts (Inter). App runs fully offline after first load if fonts are cached. |
+| **Backend** | None. No server, database, or API. |
+| **Build** | None. Plain HTML, CSS, and JavaScript; no bundler or Node required to run. |
 
 ---
 
-## Code structure (for developers)
+## 3. Getting started
+
+### 3.1 Run the app
+
+**Option A – No tooling**
+
+1. Open the `rice-prioritizer` folder.
+2. Double-click `index.html` or open it from your browser (File → Open).
+3. The app loads; data is stored in this browser’s `localStorage`.
+
+**Option B – Local static server (recommended for development)**
+
+```bash
+cd rice-prioritizer
+npx serve .
+# or: python3 -m http.server 8000
+```
+
+Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
+
+### 3.2 First-time use
+
+1. **Create a profile** – Enter a profile name (and optional team), click **Add**.
+2. **Add a project** – Click **+ Project**, fill required RICE fields (title, reach value, impact 1–5, confidence 0–100, effort 1–5), then **Save**.
+3. **Switch views** – Use **Table** for a sortable list; **Board** for status columns and drag-and-drop.
+4. **Export** – Use **Export data** → JSON or CSV to back up your data.
+
+---
+
+## 4. Product benefits
+
+| Benefit | Description |
+|--------|-------------|
+| **Single source of truth** | One place for project metadata and RICE scores; table and board stay in sync. |
+| **Portfolio-ready** | Multiple profiles for different owners, teams, or products; switch context with one click. |
+| **Transparent prioritization** | RICE formula is visible; the **?** next to the score shows the exact calculation. |
+| **Flexible workflow** | Table for bulk review and sort; board for status flow and manual ordering when “Sort by RICE” is off. |
+| **Data ownership** | Export JSON/CSV anytime; no lock-in; data stays in your control. |
+| **Low friction** | No sign-up, no backend; runs from a folder or static server. |
+| **Accessibility** | Semantic HTML, ARIA where needed, keyboard-friendly controls, and screen-reader support for key UI. |
+
+---
+
+## 5. Features
+
+### 5.1 Profiles / owners
+
+| Action | Description |
+|--------|-------------|
+| **Create profile** | Name (required) and optional team; each profile has its own project list and optional board order. |
+| **Switch profile** | Click a profile pill to make it active; table, board, and filters apply to that profile. |
+| **Delete profile** | × button (on hover or when active); confirmation modal; all projects in that profile are removed. |
+
+### 5.2 Projects
+
+| Action | Description |
+|--------|-------------|
+| **Add project** | With a profile selected, **+ Project** opens the project form (add mode). |
+| **Edit project** | **Edit** in table or board opens the form with all fields editable. |
+| **View project** | **View** opens a read-only modal (no edit or add/remove country). |
+| **Delete project** | **Delete** opens confirmation; **Delete Selected** (table) bulk-deletes checked projects after browser confirm. |
+
+### 5.3 RICE inputs (per project)
+
+| Field | Type | Role in formula |
+|-------|------|-----------------|
+| **Reach** | Description + integer (≥ 0) | R in (R × I × C) ÷ E |
+| **Impact** | Description + 1–5 (Minimal → Massive) | I |
+| **Confidence** | Description + 0–100% | C (stored as %; if > 1, divided by 100 in formula) |
+| **Effort** | Description + 1–5 (Tiny → Huge) | E (must be > 0) |
+
+**RICE score** = **(Reach × Impact × Confidence) ÷ Effort**. Shown in table and board; **?** next to the score opens a popup with the formula and exact calculation.
+
+### 5.4 Optional project fields
+
+| Field | Description |
+|-------|-------------|
+| **Financial impact** | Optional number + currency; not used in RICE; for reporting. |
+| **Project type** | New Product, Improvement, Tech Debt, Market Expansion (with icons in table/board). |
+| **Project status** | Not Started, In Progress, On Hold, Done, Cancelled; drives board columns. |
+| **T-shirt size** | XS, S, M, L, XL; tooltips describe sprint-level sizing. |
+| **Project period** | Optional `YYYY-Qn` (e.g. 2026-Q1); filterable. |
+| **Target countries** | Multi-select from a global list; shown as 2-letter ISO codes and flags in table. |
+
+### 5.5 Filters
+
+- **Basic:** Project title (search), Project type, Countries (multi-select with search), Project period (multi-select).
+- **Advanced (toggle):** Impact, Effort, Currency, Status, T-shirt size.
+- **Reset** clears all filters; active filter count is shown when any filter is applied.
+- Filters apply to both table and board views.
+
+### 5.6 Sort (table view)
+
+- **Sortable columns:** Project title, Project type, Status, T-shirt size, RICE score, Financial impact, Created, Modified.
+- **Default:** Created date descending.
+- Click a column header to sort by that field; click again to toggle ascending/descending.
+
+### 5.7 Table view
+
+- Sortable columns, row checkboxes for bulk delete, tooltips for description and RICE breakdown.
+- **Columns:** Checkbox, Project, Project type, Status, Project period, T-shirt size, RICE score, RICE values, Financial impact, Created, Actions (View, Edit, Delete).
+
+### 5.8 Board view (Scrum-style)
+
+| Aspect | Description |
+|--------|-------------|
+| **Columns** | One per project status: Not Started, In Progress, On Hold, Done, Cancelled. |
+| **Cards** | Title, RICE score, T-shirt size, project type icon; click opens View modal. |
+| **Sort by RICE (desc)** | **On:** cards in each column sorted by RICE score (highest first). **Off:** manual order; drag to reorder within a column or move between columns; order is saved per profile per status. |
+| **Drag-and-drop** | Move a card to another column to change its status. When “Sort by RICE” is off, drop position sets the card’s position in that column (persisted). |
+
+### 5.9 Export and import
+
+| Action | Behavior |
+|--------|----------|
+| **Export** | **Export data** → **JSON** or **CSV**. Downloads all profiles and projects (including board order). Filename includes timestamp. |
+| **Import** | **Import data** → **JSON** or **CSV**. Data is **merged**: profiles matched by ID or name get projects merged by project ID (no duplicates); new profiles and new projects are added. |
+
+### 5.10 UI behavior
+
+- Project description in a tooltip on table row hover.
+- Modals: project (add/edit/view), profile delete, project delete, export format, import format; backdrop click or **Close** dismisses.
+- Accessible labels, ARIA attributes, and keyboard support for main controls (e.g. view toggle, board columns).
+
+---
+
+## 6. Logics and data model
+
+### 6.1 RICE formula
+
+- **Score** = (Reach × Impact × Confidence) ÷ Effort.
+- **Confidence:** stored as 0–100; if value > 1, it is divided by 100 before use (e.g. 50% → 0.5).
+- **Effort:** must be > 0; otherwise score is 0.
+- Score is computed on demand (not stored). Display: up to 2 decimal places, or 0 decimals for values ≥ 1000.
+
+### 6.2 Validation (project form)
+
+- **Required:** Title, Reach (non-negative integer), Impact (1–5), Confidence (0–100), Effort (1–5).
+- **Optional:** Financial impact (non-negative); if non-zero, currency required. Project period, if set, must match `YYYY-Qn`.
+
+### 6.3 Storage
+
+- **Key:** `rice_prioritizer_v1` in `localStorage`.
+- **Root payload:**  
+  `{ profiles, activeProfileId, sortField, sortDirection, projectsView, scrumBoardSortByRice }`
+
+### 6.4 Profile schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique identifier. |
+| `name` | string | Display name. |
+| `team` | string | Optional team label. |
+| `createdAt` | string | ISO 8601 date. |
+| `projects` | array | Array of project objects. |
+| `boardOrder` | object | Optional. `{ [status]: [projectId, ...] }`; used when “Sort by RICE” is off. |
+
+### 6.5 Project schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique identifier. |
+| `title` | string | Project name. |
+| `description` | string | Long-form context. |
+| `reachValue`, `reachDescription` | number, string | RICE Reach. |
+| `impactValue`, `impactDescription` | number, string | RICE Impact (1–5). |
+| `confidenceValue`, `confidenceDescription` | number, string | RICE Confidence (0–100). |
+| `effortValue`, `effortDescription` | number, string | RICE Effort (1–5). |
+| `financialImpactValue` | number \| null | Optional. |
+| `financialImpactCurrency` | string \| null | Optional; required if financial impact non-zero. |
+| `projectType` | string \| null | New Product, Improvement, Tech Debt, Market Expansion. |
+| `projectStatus` | string \| null | Not Started, In Progress, On Hold, Done, Cancelled. |
+| `tshirtSize` | string \| null | XS, S, M, L, XL. |
+| `projectPeriod` | string \| null | YYYY-Qn. |
+| `countries` | string[] | Target country names. |
+| `createdAt`, `modifiedAt` | string | ISO 8601 dates. |
+
+RICE score is not stored; it is computed from the RICE fields when needed.
+
+### 6.6 Board order (manual sort)
+
+- When **Sort by RICE (desc)** is **off**:
+  - Column order comes from `profile.boardOrder[status]` (array of project IDs).
+  - Projects not in `boardOrder` appear after ordered ones (filter order).
+  - Dragging within a column updates `boardOrder[status]`. Dragging to another column updates the project’s status and inserts its ID at the drop index in `boardOrder[newStatus]`.
+- When **Sort by RICE** is **on**, columns are sorted by RICE score only; `boardOrder` is ignored for display.
+
+### 6.7 Import merge rules
+
+- **Profiles:** Matched by `id` or `name`. If matched, projects are merged by project `id` (duplicates skipped). If no match, profile is added.
+- **Projects:** New projects on an existing profile are appended; existing project IDs are updated from the file (no duplicate IDs per profile).
+
+---
+
+## 7. Business guidelines
+
+1. **Create a profile first** – At least one profile is required before adding projects.
+2. **Use consistent RICE definitions** – Agree on Reach (e.g. users/quarter), Impact 1–5, Confidence %, and Effort 1–5 so scores are comparable.
+3. **Use View for read-only** – Share or review without risk of edits.
+4. **Export regularly** – Data lives only in this browser; export JSON or CSV to back up or move to another device.
+5. **Import merges** – Imported data is merged by profile and project ID; duplicates are avoided.
+6. **Use filters and sort** – Narrow by type, status, period, or country; sort by RICE or date to focus on what to do next.
+7. **Use the board for status** – Track Not Started → In Progress → Done; turn off “Sort by RICE” when you want to order items manually within a column.
+
+---
+
+## 8. Tech stack and guidelines
+
+### 8.1 Tech stack
+
+| Layer | Technology |
+|-------|------------|
+| **Markup** | HTML5 (single page, semantic sections). |
+| **Styles** | CSS3 (custom properties, flexbox/grid, responsive). |
+| **Scripting** | Vanilla JavaScript; classic scripts, no framework or build. |
+| **Fonts** | Google Fonts (Inter). |
+| **Persistence** | Browser `localStorage` (key: `rice_prioritizer_v1`). |
+| **Backend** | None; local-first, no server or auth. |
+
+### 8.2 Code structure
 
 ```
 rice-prioritizer/
-├── index.html          # Single page: layout, forms, modals; loads CSS and app scripts
+├── index.html          # Single page: layout, forms, modals; loads CSS and scripts
 ├── css/
-│   └── main.css        # All styles (variables, layout, components, modals)
+│   └── main.css        # All styles (variables, layout, table, board, modals)
 ├── src/
-│   ├── constants.js    # STORAGE_KEY, currencyList, countryList, countryCodeByName
-│   ├── utils.js        # formatDateTime, formatDate, generateId, escapeHtml, parseCsv, etc.
+│   ├── constants.js    # STORAGE_KEY, projectStatusList, projectTypeIcons,
+│   │                   # projectStatusIcons, tshirtSizeList/tooltips,
+│   │                   # currencyList, countryList, countryCodeByName
+│   ├── utils.js        # formatDateTime, formatDate, generateId, escapeHtml,
+│   │                   # parseCsv, escapeCsvCell, countryCodeToFlag, etc.
 │   ├── rice.js         # calculateRiceScore, formatRice, validateProjectInput
-│   └── app.js          # Main app: state, DOM cache, init, render, modals, import/export, events
-└── README.md           # This file
+│   └── app.js          # State, DOM cache, init, filters, render (table + board),
+│                       # drag-and-drop, modals, export/import, events
+└── README.md
 ```
 
-- **constants.js** – Shared config and lookup data.
-- **utils.js** – Pure helpers for dates, IDs, CSV, HTML escaping.
-- **rice.js** – RICE formula and validation (no DOM).
-- **app.js** – State, elements, `init`, `cacheElements`, all UI and event logic, render, modals, import/export. Section comments inside mark: State & DOM cache, Initialization, Filters, Render, Export/Import, etc.
+### 8.3 File roles
 
-Comments in the code are aimed at helping a human programmer follow flow and intent.
+| File | Role |
+|------|------|
+| **constants.js** | Config and lookup data (statuses, types, currencies, countries). No DOM. |
+| **utils.js** | Pure helpers: dates, IDs, CSV, HTML escaping. No DOM. |
+| **rice.js** | RICE calculation and validation. No DOM. |
+| **app.js** | State, elements, init, all UI and event logic, render, modals, import/export. Section comments: State & DOM cache, Initialization, Filters, Render, Export/Import, etc. |
 
----
+### 8.4 Script load order
 
-## User-friendly guidelines
-
-1. **Create a profile first** – You need at least one profile before adding projects.
-2. **Fill required RICE fields** – Title, Reach value, Impact (1–5), Confidence (0–100), Effort (1–5) are required for a valid RICE score.
-3. **Use View for read-only** – View project shows all data without edit or add/remove country controls.
-4. **Export regularly** – Data is only in this browser; export JSON or CSV to back up or move data.
-5. **Import merges** – Imported data is merged by profile and project ID; duplicates are avoided.
-6. **Filters and sort** – Use filters to focus on a subset; sort by RICE score or other columns to prioritize.
+Scripts are loaded in order: `constants.js` → `utils.js` → `rice.js` → `app.js`. No ES modules in the default setup; everything runs in the global scope.
 
 ---
 
-## License
+## 9. Screens and key UI
+
+Brief reference for where data appears. Add screenshots to the repo and link them here if desired.
+
+### 9.1 App header and profiles
+
+- **Header:** App title, subtitle, **Export data**, **Import data**.
+- **Profiles panel:** Form (Profile name, Team optional), **Add**; list of profile pills. Active profile highlighted; × to delete (with confirmation).
+
+### 9.2 Projects header and view toggle
+
+- Active profile name and subtitle; optional badges.
+- **Table** | **Board** toggle; **+ Project**; **Delete Selected** (enabled when at least one project is selected in table view).
+
+### 9.3 Filters
+
+- Basic: title search, type, countries, project period. Advanced: impact, effort, currency, status, T-shirt size. **Reset**; active filter count.
+
+### 9.4 Table view
+
+- Columns: Checkbox, Project, Type, Status, Period, T-shirt, RICE score, RICE values, Financial impact, Created, Actions. Sort by header click; description tooltip on hover; **?** for RICE formula.
+
+### 9.5 Board view
+
+- Toolbar: status legend, **Sort by RICE (desc)** checkbox. Columns per status with counts; cards show title, RICE, T-shirt, type icon; drag to move or reorder (when manual sort is on).
+
+### 9.6 Project modal (add/edit/view)
+
+- Sections: overview (title, description), RICE inputs, optional (financial, type, status, T-shirt, period, countries). Edit/Add: **Save** / **Cancel**. View: read-only. Meta: Created, Modified, RICE score.
+
+### 9.7 Export / Import modals
+
+- Export: **Export as JSON** or **Export as CSV**. Import: **Import JSON** or **Import CSV**; file is merged into current data.
+
+---
+
+## 10. Limitations and considerations
+
+| Topic | Detail |
+|-------|--------|
+| **Single browser** | Data is in one browser’s `localStorage`; not synced across devices or browsers. Use export/import to move data. |
+| **No auth** | Anyone with access to the browser can see and change data. Do not use for sensitive or regulated data. |
+| **Storage quota** | Subject to browser `localStorage` limits (~5–10 MB typical). Large exports may hit limits. |
+| **CORS / file://** | Opening `index.html` via `file://` may behave differently than via `http://`. Use a static server for consistent behavior. |
+| **No versioning** | No built-in history or undo; export regularly to keep backups. |
+
+---
+
+## 11. License
 
 Use and modify as needed for your context.
