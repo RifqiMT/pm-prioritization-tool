@@ -2,6 +2,8 @@
 
 **Local-first, no-backend** web application for prioritizing projects using the [RICE framework](https://www.intercom.com/blog/rice-scoring-model/) (Reach × Impact × Confidence ÷ Effort). All data is stored in the browser. No account, server, or build step required.
 
+This README describes the product overview, benefits, features, logics, data model, business and technical guidelines, tech stack, and repository structure of the **Product Management Prioritization Tool** as implemented in this repository.
+
 ---
 
 ## Table of contents
@@ -13,7 +15,7 @@
 5. [Features](#5-features)
 6. [Logics and data model](#6-logics-and-data-model)
 7. [Business guidelines](#7-business-guidelines)
-8. [Tech stack and guidelines](#8-tech-stack-and-guidelines)
+8. [Tech stack and technical guidelines](#8-tech-stack-and-technical-guidelines)
 9. [Screens and key UI](#9-screens-and-key-ui)
 10. [Limitations and considerations](#10-limitations-and-considerations)
 11. [License](#11-license)
@@ -26,8 +28,8 @@
 
 The tool helps product managers and teams **capture**, **score**, **rank**, and **track** projects in one place. It provides:
 
-- **RICE scoring** – Consistent prioritization using Reach × Impact × Confidence ÷ Effort.
-- **Portfolio separation** – Multiple profiles (e.g. per team or product) with separate project lists.
+- **RICE scoring** – Consistent prioritization using **Reach × Impact × Confidence ÷ Effort**.
+- **Portfolio separation** – Multiple profiles (e.g. per team or product) with separate project lists and optional board order.
 - **Dual views** – **Table** for sortable, filterable lists and bulk actions; **Board** for status-based columns and drag-and-drop.
 - **Data ownership** – Export/import JSON or CSV; no vendor lock-in.
 
@@ -41,18 +43,18 @@ The tool helps product managers and teams **capture**, **score**, **rank**, and 
 
 | Term | Meaning |
 |------|--------|
-| **Profile** | A container for projects (e.g. “Q1 roadmap”, “Team Alpha”). Each profile has its own projects and optional board order. |
-| **RICE** | Prioritization formula: (Reach × Impact × Confidence) ÷ Effort. Higher score = higher priority. |
+| **Profile** | A container for projects (e.g. “Q1 roadmap”, “Team Alpha”). Each profile has its own projects, optional board order, and can be viewed/edited via modals. |
+| **RICE** | Prioritization formula: **(Reach × Impact × Confidence) ÷ Effort**. Higher score = higher priority. |
 | **Board order** | When “Sort by RICE” is off, the order of cards in each board column is stored per profile and per status. |
 | **Merge (import)** | Imported data is merged by profile (ID or name) and by project ID; duplicates are skipped. |
 
 ### 1.4 High-level flow
 
-1. Create a **profile** (name, optional team).
-2. Add **projects** with RICE inputs and optional metadata (type, status, countries, etc.).
-3. View and sort in **Table** or **Board**; filter as needed.
-4. Change status via **Board** drag-and-drop; optionally use manual card order.
-5. **Export** for backup or **Import** to merge data from another export.
+1. **Create a profile** – Enter profile name and optional team; click **Add**.
+2. **Add projects** – With a profile selected, click **+ Project** and fill RICE inputs plus optional metadata (type, status, countries, period, etc.).
+3. **View and prioritize** – Use **Table** for sorting and filtering, or **Board** for status columns and drag-and-drop.
+4. **Change status** – In Board view, drag cards between columns to update status; optionally turn off “Sort by RICE” to use manual card order.
+5. **Export or import** – Use **Export data** (JSON/CSV) for backup; **Import data** to merge from another export.
 
 ---
 
@@ -107,6 +109,7 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 | **Data ownership** | Export JSON/CSV anytime; no lock-in; data stays in your control. |
 | **Low friction** | No sign-up, no backend; runs from a folder or static server. |
 | **Accessibility** | Semantic HTML, ARIA where needed, keyboard-friendly controls, and screen-reader support for key UI. |
+| **Profile insights** | View profile modal shows statistics (projects by status, type, T-shirt size, RICE summary, unique countries). |
 
 ---
 
@@ -118,7 +121,9 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 |--------|-------------|
 | **Create profile** | Name (required) and optional team; each profile has its own project list and optional board order. |
 | **Switch profile** | Click a profile pill to make it active; table, board, and filters apply to that profile. |
-| **Delete profile** | × button (on hover or when active); confirmation modal; all projects in that profile are removed. |
+| **View profile** | View icon on the profile pill opens a read-only modal with profile name, team, and statistics (total projects, unique countries, counts by status/type/T-shirt size, RICE score summary). |
+| **Edit profile** | Edit icon on the profile pill opens a modal to update profile name and team. |
+| **Delete profile** | Delete icon (with confirmation modal); all projects in that profile are removed permanently. |
 
 ### 5.2 Projects
 
@@ -147,7 +152,7 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 | **Financial impact** | Optional number + currency; not used in RICE; for reporting. |
 | **Project type** | New Product, Improvement, Tech Debt, Market Expansion (with icons in table/board). |
 | **Project status** | Not Started, In Progress, On Hold, Done, Cancelled; drives board columns. |
-| **T-shirt size** | XS, S, M, L, XL; tooltips describe sprint-level sizing. |
+| **T-shirt size** | XS, S, M, L, XL; tooltips describe sprint-level sizing (see [practical guide](https://rifqi-tjahyono.com/story-points-demystified-a-practical-guide-for-modern-product-teams/)). |
 | **Project period** | Optional `YYYY-Qn` (e.g. 2026-Q1); filterable. |
 | **Target countries** | Multi-select from a global list; shown as 2-letter ISO codes and flags in table. |
 
@@ -188,7 +193,7 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 ### 5.10 UI behavior
 
 - Project description in a tooltip on table row hover.
-- Modals: project (add/edit/view), profile delete, project delete, export format, import format; backdrop click or **Close** dismisses.
+- Modals: project (add/edit/view), profile view, profile edit, profile delete, project delete, export format, import format; backdrop click or **Close** dismisses.
 - Accessible labels, ARIA attributes, and keyboard support for main controls (e.g. view toggle, board columns).
 
 ---
@@ -264,16 +269,17 @@ RICE score is not stored; it is computed from the RICE fields when needed.
 ## 7. Business guidelines
 
 1. **Create a profile first** – At least one profile is required before adding projects.
-2. **Use consistent RICE definitions** – Agree on Reach (e.g. users/quarter), Impact 1–5, Confidence %, and Effort 1–5 so scores are comparable.
-3. **Use View for read-only** – Share or review without risk of edits.
+2. **Use consistent RICE definitions** – Agree on Reach (e.g. users/quarter), Impact 1–5, Confidence %, and Effort 1–5 so scores are comparable across projects.
+3. **Use View for read-only** – Share or review projects and profiles without risk of edits.
 4. **Export regularly** – Data lives only in this browser; export JSON or CSV to back up or move to another device.
 5. **Import merges** – Imported data is merged by profile and project ID; duplicates are avoided.
 6. **Use filters and sort** – Narrow by type, status, period, or country; sort by RICE or date to focus on what to do next.
 7. **Use the board for status** – Track Not Started → In Progress → Done; turn off “Sort by RICE” when you want to order items manually within a column.
+8. **Use profile view for portfolio health** – Check profile statistics (by status, type, T-shirt size, RICE) to balance workload and priorities.
 
 ---
 
-## 8. Tech stack and guidelines
+## 8. Tech stack and technical guidelines
 
 ### 8.1 Tech stack
 
@@ -281,42 +287,79 @@ RICE score is not stored; it is computed from the RICE fields when needed.
 |-------|------------|
 | **Markup** | HTML5 (single page, semantic sections). |
 | **Styles** | CSS3 (custom properties, flexbox/grid, responsive). |
-| **Scripting** | Vanilla JavaScript; classic scripts, no framework or build. |
+| **Scripting** | Vanilla JavaScript; classic scripts (no ES modules in default run), no framework or build. |
 | **Fonts** | Google Fonts (Inter). |
 | **Persistence** | Browser `localStorage` (key: `rice_prioritizer_v1`). |
 | **Backend** | None; local-first, no server or auth. |
+| **Theme / UX** | Dark theme via CSS custom properties; `prefers-reduced-motion` respected for transitions. Single CSS file (`main.css`). |
 
-### 8.2 Code structure
+### 8.2 Folder directory (source code and files)
+
+The repository contains the following source files (excluding version control and system files):
+
+| Path | Purpose |
+|------|--------|
+| `index.html` | Single HTML page: app shell, header, profiles panel, filters, table/board containers, all modals (project, profile view/edit/delete, export/import format, project delete). Loads `css/main.css` and scripts in order: `constants.js` → `utils.js` → `rice.js` → `app.js`. |
+| `css/main.css` | All styles: CSS custom properties (dark theme, colors, radii, shadows, transitions), layout (app-shell, header, profiles, projects, filters), table, board, cards, modals, form controls, responsive and `prefers-reduced-motion` support. |
+| `src/constants.js` | Application constants and lookup data: `STORAGE_KEY`, `projectStatusList`, `projectStatusIcons`, `tshirtSizeList`, `tshirtSizeTooltips`, `projectTypeIcons`, `currencyList`, `countryList`, `countryCodeByName`. No DOM. |
+| `src/utils.js` | Pure helpers: `formatDateTime`, `formatDate`, `formatDateForFilename`, `compareDatesDesc`, `generateId`, `escapeHtml`, `countryCodeToFlag`, `toNumberOrNull`, `parseCsv`, `escapeCsvCell`. No DOM. |
+| `src/rice.js` | RICE logic: `calculateRiceScore`, `formatRice`, `validateProjectInput`. No DOM. |
+| `src/app.js` | Main application: state, DOM element cache, `init`, `cacheElements`, currency/filter init, event listeners, load/save state, profile/project CRUD, render (profiles, table, board), drag-and-drop, all modals, export/import. Ends with `document.addEventListener("DOMContentLoaded", init)` to boot the app. |
+| `src/main.js` | Optional ES-module entry point (`import { init } from "./app.js"`; then `DOMContentLoaded` → `init`). **Not loaded by `index.html`**; the app runs by loading `app.js` as a classic script, which registers its own `DOMContentLoaded` listener. Use `main.js` only if you serve the app through a bundler or module-aware dev server. |
+| `README.md` | This documentation. |
+
+### 8.3 Code structure (tree)
 
 ```
 rice-prioritizer/
-├── index.html          # Single page: layout, forms, modals; loads CSS and scripts
+├── index.html          # Single page: layout, forms, modals; loads CSS and scripts (see table above)
 ├── css/
-│   └── main.css        # All styles (variables, layout, table, board, modals)
+│   └── main.css        # All styles (variables, layout, table, board, modals, responsive)
 ├── src/
-│   ├── constants.js    # STORAGE_KEY, projectStatusList, projectTypeIcons,
-│   │                   # projectStatusIcons, tshirtSizeList/tooltips,
-│   │                   # currencyList, countryList, countryCodeByName
-│   ├── utils.js        # formatDateTime, formatDate, generateId, escapeHtml,
-│   │                   # parseCsv, escapeCsvCell, countryCodeToFlag, etc.
+│   ├── constants.js    # STORAGE_KEY, projectStatusList, projectStatusIcons, tshirtSizeList,
+│   │                   # tshirtSizeTooltips, projectTypeIcons, currencyList, countryList,
+│   │                   # countryCodeByName
+│   ├── utils.js        # formatDateTime, formatDate, formatDateForFilename, compareDatesDesc,
+│   │                   # generateId, escapeHtml, countryCodeToFlag, toNumberOrNull,
+│   │                   # parseCsv, escapeCsvCell
 │   ├── rice.js         # calculateRiceScore, formatRice, validateProjectInput
-│   └── app.js          # State, DOM cache, init, filters, render (table + board),
-│                       # drag-and-drop, modals, export/import, events
+│   ├── app.js          # State, DOM cache, init, filters, render (table + board), drag-and-drop,
+│   │                   # modals (project, profile view/edit/delete), export/import, events.
+│   │                   # Boots via document.addEventListener("DOMContentLoaded", init) at end of file.
+│   └── main.js         # Optional ES module entry; not loaded by index.html
 └── README.md
 ```
 
-### 8.3 File roles
+### 8.4 File roles
 
 | File | Role |
 |------|------|
-| **constants.js** | Config and lookup data (statuses, types, currencies, countries). No DOM. |
-| **utils.js** | Pure helpers: dates, IDs, CSV, HTML escaping. No DOM. |
+| **constants.js** | Config and lookup data: `STORAGE_KEY`, `projectStatusList`, `projectStatusIcons`, `tshirtSizeList`, `tshirtSizeTooltips`, `projectTypeIcons`, `currencyList`, `countryList`, `countryCodeByName`. No DOM. |
+| **utils.js** | Pure helpers: dates, IDs, CSV parse/escape, HTML escaping, country code to flag. No DOM. |
 | **rice.js** | RICE calculation and validation. No DOM. |
-| **app.js** | State, elements, init, all UI and event logic, render, modals, import/export. Section comments: State & DOM cache, Initialization, Filters, Render, Export/Import, etc. |
+| **app.js** | State, element cache, init, all UI and event logic, render (profiles, table, board), modals, import/export. Section comments: State & DOM cache, Initialization, Filters, Render, Export/Import, etc. Boot: `DOMContentLoaded` → `init` at end of file. |
 
-### 8.4 Script load order
+### 8.5 Script load order and boot
 
-Scripts are loaded in order: `constants.js` → `utils.js` → `rice.js` → `app.js`. No ES modules in the default setup; everything runs in the global scope.
+Scripts are loaded in order: `constants.js` → `utils.js` → `rice.js` → `app.js`. The app boots when `app.js` runs and registers `document.addEventListener("DOMContentLoaded", init)` at the end of the file; `init()` runs after the DOM is ready. No ES modules are used in the default setup (opening `index.html` or serving via static server); all scripts run in the global scope. The file `main.js` is **not** referenced in `index.html` and is only useful if you use an ES-module–aware bundler or dev server.
+
+### 8.6 Technical guidelines for contributors
+
+- **No DOM in constants/utils/rice** – Keep these files pure for testability and reuse.
+- **Single storage key** – All app state under `rice_prioritizer_v1`; version key allows future migrations.
+- **Ids** – Use `generateId(prefix)` for profile and project IDs to avoid collisions.
+- **Escaping** – Use `escapeHtml` for user content in HTML; use `escapeCsvCell` for CSV export.
+- **Accessibility** – Use semantic HTML, ARIA where needed, and keyboard support for primary actions.
+
+### 8.7 Global dependencies (for development)
+
+`app.js` relies on globals provided by the other scripts (no module imports in the default run):
+
+- **From constants.js:** `STORAGE_KEY`, `projectStatusList`, `projectStatusIcons`, `tshirtSizeList`, `tshirtSizeTooltips`, `projectTypeIcons`, `currencyList`, `countryList`, `countryCodeByName`
+- **From rice.js:** `calculateRiceScore`, `formatRice`, `validateProjectInput`
+- **From utils.js:** `formatDateTime`, `formatDate`, `formatDateForFilename`, `compareDatesDesc`, `generateId`, `escapeHtml`, `countryCodeToFlag`, `toNumberOrNull`, `parseCsv`, `escapeCsvCell`
+
+When changing or renaming any of these, ensure all consumers in `app.js` (and in `index.html` if any IDs or structure change) are updated.
 
 ---
 
@@ -327,7 +370,7 @@ Brief reference for where data appears. Add screenshots to the repo and link the
 ### 9.1 App header and profiles
 
 - **Header:** App title, subtitle, **Export data**, **Import data**.
-- **Profiles panel:** Form (Profile name, Team optional), **Add**; list of profile pills. Active profile highlighted; × to delete (with confirmation).
+- **Profiles panel:** Form (Profile name, Team optional), **Add**; list of profile pills. Each pill: click to select; View / Edit / Delete icon buttons. Active profile highlighted.
 
 ### 9.2 Projects header and view toggle
 
@@ -350,7 +393,15 @@ Brief reference for where data appears. Add screenshots to the repo and link the
 
 - Sections: overview (title, description), RICE inputs, optional (financial, type, status, T-shirt, period, countries). Edit/Add: **Save** / **Cancel**. View: read-only. Meta: Created, Modified, RICE score.
 
-### 9.7 Export / Import modals
+### 9.7 Profile view modal
+
+- Read-only: profile name, team; statistics (total projects, unique countries, counts by status/type/T-shirt size, RICE score summary).
+
+### 9.8 Profile edit modal
+
+- Editable: profile name, team; **Save** / **Cancel**.
+
+### 9.9 Export / Import modals
 
 - Export: **Export as JSON** or **Export as CSV**. Import: **Import JSON** or **Import CSV**; file is merged into current data.
 
