@@ -332,19 +332,72 @@ button:disabled {
 .profiles-panel {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 1rem;
 }
 
 .profile-form-row {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.5rem;
   align-items: flex-end;
   flex-wrap: wrap;
 }
 
-.profile-form-row input {
-  flex: 1;
+.profile-form-field {
+  flex: 1 1 0;
   min-width: 0;
+}
+
+.profile-form-field label {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.profile-form-row input {
+  width: 100%;
+}
+
+.profile-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.1rem;
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid rgba(96, 165, 250, 0.5);
+  background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.25), rgba(15, 23, 42, 0.98));
+  color: #93c5fd;
+  font-size: 0.88rem;
+  font-weight: 500;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-add-btn:hover {
+  border-color: rgba(96, 165, 250, 0.9);
+  background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.4), rgba(15, 23, 42, 0.98));
+  box-shadow: 0 8px 20px rgba(30, 64, 175, 0.35);
+  color: #bfdbfe;
+}
+
+.profile-add-btn-icon {
+  flex-shrink: 0;
+}
+
+.profile-add-btn-text {
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .profile-form-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .profile-form-field {
+    flex: 0 0 auto;
+  }
+  .profile-add-btn {
+    align-self: flex-start;
+  }
 }
 
 .profiles-list {
@@ -355,14 +408,86 @@ button:disabled {
   padding: 0;
   list-style: none;
   max-height: 360px;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .profile-item-row {
   display: flex;
   align-items: stretch;
-  gap: 0.4rem;
+  gap: 0.35rem;
   position: relative;
+  padding: 0.15rem 0;
+}
+
+.profile-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.profile-icon-btn {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(15, 23, 42, 0.9);
+  color: #94a3b8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+
+/* View: blue/cyan – read-only, info */
+.profile-icon-btn--view {
+  color: #67e8f9;
+  border-color: rgba(34, 211, 238, 0.45);
+  background: rgba(6, 182, 212, 0.12);
+}
+
+.profile-icon-btn--view:hover {
+  color: #a5f3fc;
+  border-color: rgba(34, 211, 238, 0.8);
+  background: rgba(6, 182, 212, 0.22);
+  transform: translateY(-1px);
+}
+
+/* Edit: amber – modify */
+.profile-icon-btn--edit {
+  color: #fcd34d;
+  border-color: rgba(251, 191, 36, 0.5);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.profile-icon-btn--edit:hover {
+  color: #fde68a;
+  border-color: rgba(251, 191, 36, 0.85);
+  background: rgba(245, 158, 11, 0.22);
+  transform: translateY(-1px);
+}
+
+/* Delete: red – destructive */
+.profile-icon-btn--danger {
+  color: #fca5a5;
+  border-color: rgba(248, 113, 113, 0.5);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.profile-icon-btn--danger:hover {
+  color: #fee2e2;
+  border-color: rgba(248, 113, 113, 0.9);
+  background: rgba(248, 113, 113, 0.2);
+  transform: translateY(-1px);
+}
+
+.profile-icon-btn svg {
+  display: block;
+  pointer-events: none;
 }
 
 .profile-item-btn {
@@ -412,49 +537,23 @@ button:disabled {
   gap: 0.4rem;
   font-size: 0.72rem;
   color: var(--muted);
-  margin-top: 0.4rem;
-}
-
-.profile-delete-btn {
-  position: absolute;
-  top: 8px;
-  right: 6px;
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.96));
-  color: #fecaca;
-  font-size: 0.7rem;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.8);
-  opacity: 0;
-  transform: translateY(-2px);
-  pointer-events: none;
-  transition: opacity 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
-  cursor: pointer;
-}
-
-.profile-item-row:hover .profile-delete-btn,
-.profile-item-btn.active + .profile-delete-btn {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-
-.profile-delete-btn:hover {
-  background: rgba(248, 113, 113, 0.24);
-  border-color: rgba(248, 113, 113, 0.9);
-  color: #fee2e2;
-  box-shadow: 0 10px 24px rgba(127, 29, 29, 0.9);
+  margin-top: 0.25rem;
 }
 
 .profile-empty {
   font-size: 0.8rem;
   color: var(--muted);
+}
+
+@media (max-width: 420px) {
+  .profile-item-row {
+    flex-wrap: wrap;
+  }
+  .profile-item-actions {
+    width: 100%;
+    justify-content: flex-end;
+    padding-top: 0.25rem;
+  }
 }
 
 /* Projects side */
@@ -782,7 +881,7 @@ table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 0.78rem;
+  font-size: 0.875rem;
   min-width: 840px;
 }
 
@@ -796,30 +895,32 @@ thead {
 
 th,
 td {
-  padding: 0.5rem 0.55rem;
+  padding: 0.7rem 0.65rem;
   text-align: left;
   border-bottom: 1px solid rgba(30, 41, 59, 0.9);
-  vertical-align: top;
+  vertical-align: middle;
 }
 
 th:first-child,
 td:first-child {
-  padding-left: 0.75rem;
+  padding-left: 0.95rem;
 }
 
 th:last-child,
 td:last-child {
-  padding-right: 0.75rem;
+  padding-right: 0.95rem;
 }
 
 th {
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--muted);
   font-weight: 600;
   position: relative;
   white-space: nowrap;
+  padding-top: 0.8rem;
+  padding-bottom: 0.8rem;
 }
 
 tbody tr:nth-child(even) {
@@ -832,6 +933,11 @@ tbody tr:nth-child(odd) {
 
 tbody tr:hover {
   background: radial-gradient(circle at left, rgba(37, 99, 235, 0.24), rgba(15, 23, 42, 0.98));
+}
+
+tbody td {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
 }
 
 .cell-title {
@@ -848,7 +954,7 @@ tbody tr:hover {
 
 .cell-description {
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   max-width: 260px;
   white-space: nowrap;
   overflow: hidden;
@@ -856,7 +962,7 @@ tbody tr:hover {
 }
 
 .cell-meta {
-  font-size: 0.7rem;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 
@@ -876,7 +982,7 @@ tbody tr:hover {
   border: none;
   border-radius: 999px;
   padding: 0.08rem 0.25rem;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   text-transform: none;
   letter-spacing: 0;
   background: rgba(15, 23, 42, 0.9);
@@ -902,7 +1008,7 @@ tbody tr:hover {
   border: 1px solid rgba(55, 65, 81, 0.9);
   background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.75), rgba(15, 23, 42, 0.98));
   box-shadow: 0 16px 36px rgba(15, 23, 42, 0.98);
-  font-size: 0.7rem;
+  font-size: 0.8125rem;
   color: var(--muted);
   z-index: 30;
   display: none;
@@ -926,7 +1032,7 @@ tbody tr:hover {
 .rice-popup-label {
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: #c7d2fe;
 }
 
@@ -939,7 +1045,7 @@ tbody tr:hover {
   display: flex;
   flex-direction: column;
   gap: 0.18rem;
-  font-size: 0.7rem;
+  font-size: 0.8125rem;
 }
 
 .rice-values-wrapper {
@@ -950,7 +1056,7 @@ tbody tr:hover {
 }
 
 .rice-values-header {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--muted);
@@ -962,7 +1068,7 @@ tbody tr:hover {
   justify-content: center;
   padding: 0.18rem 0.5rem;
   border-radius: 999px;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   border: 1px solid rgba(148, 163, 184, 0.4);
@@ -1022,6 +1128,19 @@ tbody tr:hover {
   color: inherit;
 }
 
+/* Project name with description tooltip (same style as project status/type) */
+.cell-desc-with-tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+}
+
+/* Wider tooltip for long text (e.g. project description) */
+.cell-type-tooltip--wide {
+  min-width: 12rem;
+  max-width: 22rem;
+}
+
 /* Structured tooltip (DOM element) — professional layout with title and body */
 /* Position is set via JS (position: fixed) so it is not clipped by table overflow */
 .cell-type-tooltip {
@@ -1060,7 +1179,9 @@ tbody tr:hover {
 .cell-countries-with-tooltip:hover .cell-type-tooltip,
 .cell-countries-with-tooltip:focus-within .cell-type-tooltip,
 .cell-tshirt-with-tooltip:hover .cell-type-tooltip,
-.cell-tshirt-with-tooltip:focus-within .cell-type-tooltip {
+.cell-tshirt-with-tooltip:focus-within .cell-type-tooltip,
+.cell-desc-with-tooltip:hover .cell-type-tooltip,
+.cell-desc-with-tooltip:focus-within .cell-type-tooltip {
   opacity: 1;
   visibility: visible;
   transition-delay: 0.28s;
@@ -1073,7 +1194,9 @@ tbody tr:hover {
 .cell-countries-with-tooltip:hover .cell-type-tooltip:not(.cell-type-tooltip--below),
 .cell-countries-with-tooltip:focus-within .cell-type-tooltip:not(.cell-type-tooltip--below),
 .cell-tshirt-with-tooltip:hover .cell-type-tooltip:not(.cell-type-tooltip--below),
-.cell-tshirt-with-tooltip:focus-within .cell-type-tooltip:not(.cell-type-tooltip--below) {
+.cell-tshirt-with-tooltip:focus-within .cell-type-tooltip:not(.cell-type-tooltip--below),
+.cell-desc-with-tooltip:hover .cell-type-tooltip:not(.cell-type-tooltip--below),
+.cell-desc-with-tooltip:focus-within .cell-type-tooltip:not(.cell-type-tooltip--below) {
   transform: translate(-50%, -100%);
 }
 
@@ -1084,7 +1207,9 @@ tbody tr:hover {
 .cell-countries-with-tooltip:hover .cell-type-tooltip.cell-type-tooltip--below,
 .cell-countries-with-tooltip:focus-within .cell-type-tooltip.cell-type-tooltip--below,
 .cell-tshirt-with-tooltip:hover .cell-type-tooltip.cell-type-tooltip--below,
-.cell-tshirt-with-tooltip:focus-within .cell-type-tooltip.cell-type-tooltip--below {
+.cell-tshirt-with-tooltip:focus-within .cell-type-tooltip.cell-type-tooltip--below,
+.cell-desc-with-tooltip:hover .cell-type-tooltip.cell-type-tooltip--below,
+.cell-desc-with-tooltip:focus-within .cell-type-tooltip.cell-type-tooltip--below {
   transform: translate(-50%, 0);
 }
 
@@ -1096,7 +1221,7 @@ body.cell-type-tooltip-hidden .cell-type-tooltip {
 
 .cell-type-tooltip-title {
   padding: 0.4rem 0.6rem 0.28rem;
-  font-size: 0.6rem;
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -1107,7 +1232,7 @@ body.cell-type-tooltip-hidden .cell-type-tooltip {
 
 .cell-type-tooltip-body {
   padding: 0.4rem 0.6rem 0.5rem;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 450;
   line-height: 1.5;
   color: #cbd5e1;
@@ -1193,7 +1318,7 @@ body.cell-type-tooltip-hidden .cell-type-tooltip {
 .cell-actions button {
   padding-inline: 0.6rem;
   min-height: 30px;
-  font-size: 0.7rem;
+  font-size: 0.8125rem;
 }
 
 .sort-button {
@@ -1207,6 +1332,7 @@ body.cell-type-tooltip-hidden .cell-type-tooltip {
   color: inherit;
   box-shadow: none;
   cursor: pointer;
+  font-size: inherit;
 }
 
 .sort-button:hover {
@@ -1216,7 +1342,7 @@ body.cell-type-tooltip-hidden .cell-type-tooltip {
 
 .sort-indicator {
   opacity: 0.4;
-  font-size: 0.72rem;
+  font-size: 0.8rem;
 }
 
 th[data-sort-active="true"] .sort-indicator {
@@ -1239,7 +1365,7 @@ th[data-sort-active="true"] .sort-indicator {
   text-align: center;
   padding: 1.25rem 0.75rem;
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.875rem;
 }
 
 /* Modal */
@@ -1275,11 +1401,218 @@ th[data-sort-active="true"] .sort-indicator {
 }
 
 #projectModal .modal-panel,
+#profileViewModal .modal-panel,
+#profileEditModal .modal-panel,
 #profileDeleteModal .modal-panel,
 #projectDeleteModal .modal-panel,
 #exportFormatModal .modal-panel,
 #importFormatModal .modal-panel {
   background: #020617;
+}
+
+/* Project modal: refined padding and spacing for a polished layout */
+#projectModal .modal-panel {
+  padding: 1.5rem 1.65rem 1.65rem;
+}
+
+#projectModal .modal-header {
+  margin-bottom: 1rem;
+}
+
+#projectModal .modal-body {
+  gap: 1.25rem;
+  padding: 0.1rem 0;
+}
+
+#projectModal .form-section {
+  padding: 1rem 1.1rem 1.1rem;
+  margin-bottom: 0.85rem;
+}
+
+#projectModal .form-section:last-of-type {
+  margin-bottom: 0;
+}
+
+#projectModal .form-section-header {
+  margin-bottom: 0.5rem;
+}
+
+#projectModal .form-grid {
+  gap: 0.85rem 1rem;
+}
+
+#projectModal .form-grid > div {
+  min-width: 0;
+}
+
+#projectModal .form-grid label {
+  margin-bottom: 0.35rem;
+}
+
+#projectModal input,
+#projectModal select,
+#projectModal textarea {
+  padding: 0.6rem 0.75rem;
+  min-height: 40px;
+}
+
+#projectModal textarea {
+  min-height: 72px;
+  padding-top: 0.65rem;
+}
+
+#projectModal .field-meta-row {
+  margin-top: 0.55rem;
+  gap: 0.35rem;
+}
+
+#projectModal .form-actions-row {
+  margin-top: 1.1rem;
+  padding-top: 0.5rem;
+  gap: 0.6rem;
+}
+
+#profileViewModal .form-actions-row {
+  margin-top: 1.1rem;
+  padding-top: 0.5rem;
+  gap: 0.6rem;
+  justify-content: flex-end;
+}
+
+#profileEditModal .form-actions-row {
+  margin-top: 1.1rem;
+  padding-top: 0.5rem;
+  gap: 0.6rem;
+  justify-content: flex-end;
+}
+
+#projectModal .countries-section {
+  gap: 0.5rem;
+}
+
+#projectModal .countries-section label {
+  margin-top: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
+#projectModal .countries-section label:first-child {
+  margin-top: 0;
+}
+
+#projectModal #projectFormError {
+  margin-top: 0.5rem;
+  padding: 0.4rem 0;
+}
+
+/* Project delete modal: clear spacing for message and actions */
+#projectDeleteModal .modal-panel {
+  padding: 1.4rem 1.6rem 1.6rem;
+}
+
+#projectDeleteModal .modal-body {
+  display: block;
+  padding: 0.2rem 0 0;
+}
+
+#projectDeleteModal .modal-body .modal-subtitle {
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+}
+
+#projectDeleteModal .form-actions {
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+  justify-content: flex-end;
+}
+
+/* Profile view modal – statistics section */
+.profile-view-stats-section .form-section-header {
+  margin-bottom: 0.6rem;
+}
+
+.profile-view-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.profile-view-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.profile-view-stat-row-multi {
+  align-items: flex-start;
+}
+
+.profile-view-stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  flex-shrink: 0;
+  min-width: 8rem;
+}
+
+.profile-view-stat-value {
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.profile-view-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  justify-content: flex-end;
+}
+
+.profile-view-chip {
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: rgba(30, 64, 175, 0.35);
+  font-size: 0.7rem;
+  color: #e5e7eb;
+  white-space: nowrap;
+}
+
+.profile-view-chip-muted {
+  opacity: 0.85;
+  background: rgba(51, 65, 85, 0.5);
+}
+
+.profile-view-rice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  font-size: 0.74rem;
+  color: #c7d2fe;
+}
+
+.profile-view-rice-item {
+  white-space: nowrap;
+}
+
+.profile-view-rice-empty {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 520px) {
+  .profile-view-stat-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .profile-view-stat-row-multi .profile-view-chips,
+  .profile-view-stat-row-multi .profile-view-rice {
+    justify-content: flex-start;
+  }
 }
 
 #profileDeleteCancelTopBtn {
@@ -1403,7 +1736,9 @@ th[data-sort-active="true"] .sort-indicator {
 .field-meta-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
   margin-top: 0.4rem;
   font-size: 0.7rem;
   color: var(--muted);

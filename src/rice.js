@@ -56,6 +56,12 @@ function validateProjectInput(raw) {
   if (raw.financialImpactValue != null && raw.financialImpactValue !== 0 && !raw.financialImpactCurrency) {
     return "Select a currency when financial impact is provided.";
   }
+  if (raw.projectPeriod) {
+    const periodPattern = /^\d{4}-Q[1-4]$/;
+    if (!periodPattern.test(raw.projectPeriod)) {
+      return "Project period must be in the format YYYY-QX (e.g. 2026-Q1).";
+    }
+  }
   return "";
 }
 

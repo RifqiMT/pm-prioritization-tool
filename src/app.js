@@ -51,6 +51,7 @@ function cacheElements() {
   elements.profilesEmptyState = $("profilesEmptyState");
   elements.addProfileForm = $("addProfileForm");
   elements.newProfileName = $("newProfileName");
+  elements.newProfileTeam = $("newProfileTeam");
 
   elements.activeProfileTitleText = $("activeProfileTitleText");
   elements.activeProfileSubtitleText = $("activeProfileSubtitleText");
@@ -59,13 +60,16 @@ function cacheElements() {
   elements.bulkDeleteBtn = $("bulkDeleteBtn");
 
   elements.filterTitle = $("filterTitle");
-  elements.filterCreatedFrom = $("filterCreatedFrom");
-  elements.filterCreatedTo = $("filterCreatedTo");
-  elements.filterModifiedFrom = $("filterModifiedFrom");
-  elements.filterModifiedTo = $("filterModifiedTo");
+  elements.filterProjectPeriodToggle = $("filterProjectPeriodToggle");
+  elements.filterProjectPeriodPopup = $("filterProjectPeriodPopup");
+  elements.filterProjectPeriodSearch = $("filterProjectPeriodSearch");
+  elements.filterProjectPeriodList = $("filterProjectPeriodList");
+  elements.filterProjectPeriodSummary = $("filterProjectPeriodSummary");
   elements.filterImpact = $("filterImpact");
   elements.filterEffort = $("filterEffort");
   elements.filterCurrency = $("filterCurrency");
+  elements.filterStatus = $("filterStatus");
+  elements.filterTshirtSize = $("filterTshirtSize");
   elements.filterProjectType = $("filterProjectType");
 
   elements.projectsTableBody = $("projectsTableBody");
@@ -95,6 +99,7 @@ function cacheElements() {
   elements.projectType = $("projectType");
   elements.projectStatus = $("projectStatus");
   elements.projectTshirtSize = $("projectTshirtSize");
+  elements.projectPeriod = $("projectPeriod");
 
   elements.projectMetaCreated = $("projectMetaCreated");
   elements.projectMetaModified = $("projectMetaModified");
@@ -118,7 +123,6 @@ function cacheElements() {
   elements.filterCountriesSummary = $("filterCountriesSummary");
   elements.filterCountriesToggle = $("filterCountriesToggle");
   elements.filterCountriesPopup = $("filterCountriesPopup");
-
   elements.profileDeleteModal = $("profileDeleteModal");
   elements.profileDeleteNameLabel = $("profileDeleteNameLabel");
   elements.profileDeleteSummaryLabel = $("profileDeleteSummaryLabel");
@@ -126,6 +130,23 @@ function cacheElements() {
   elements.profileDeleteCancelTopBtn = $("profileDeleteCancelTopBtn");
   elements.profileDeleteCancelBtn = $("profileDeleteCancelBtn");
   elements.profileDeleteConfirmBtn = $("profileDeleteConfirmBtn");
+
+  elements.profileViewModal = $("profileViewModal");
+  elements.profileViewName = $("profileViewName");
+  elements.profileViewTeam = $("profileViewTeam");
+  elements.profileViewCloseBtnFooter = $("profileViewCloseBtnFooter");
+  elements.profileViewUniqueCountries = $("profileViewUniqueCountries");
+  elements.profileViewTotalProjects = $("profileViewTotalProjects");
+  elements.profileViewByStatus = $("profileViewByStatus");
+  elements.profileViewByType = $("profileViewByType");
+  elements.profileViewByTshirt = $("profileViewByTshirt");
+  elements.profileViewRiceStats = $("profileViewRiceStats");
+
+  elements.profileEditModal = $("profileEditModal");
+  elements.profileEditName = $("profileEditName");
+  elements.profileEditTeam = $("profileEditTeam");
+  elements.profileEditCancelBtn = $("profileEditCancelBtn");
+  elements.profileEditSaveBtn = $("profileEditSaveBtn");
 
   elements.projectDeleteModal = $("projectDeleteModal");
   elements.projectDeleteNameLabel = $("projectDeleteNameLabel");
@@ -199,14 +220,52 @@ function initFilterCountriesOptions() {
   updateFilterCountriesSummary();
 }
 
+function initFilterProjectPeriodOptions(projects) {
+  if (!elements.filterProjectPeriodList) return;
+  const listEl = elements.filterProjectPeriodList;
+  const previouslySelected = new Set(getSelectedFilterProjectPeriods());
+
+  const periodsSet = new Set();
+  (projects || []).forEach((p) => {
+    const raw = p.projectPeriod != null ? String(p.projectPeriod).trim().toUpperCase() : "";
+    if (raw) periodsSet.add(raw);
+  });
+
+  const periods = Array.from(periodsSet).sort();
+  listEl.innerHTML = "";
+
+  periods.forEach((period) => {
+    const row = document.createElement("div");
+    row.className = "filter-country-option";
+    row.dataset.period = period;
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = period;
+    if (previouslySelected.has(period)) cb.checked = true;
+
+    const label = document.createElement("span");
+    label.textContent = period;
+
+    row.appendChild(cb);
+    row.appendChild(label);
+    listEl.appendChild(row);
+  });
+
+  filterFilterProjectPeriodsBySearchTerm();
+  updateFilterProjectPeriodsSummary();
+}
+
 function attachEventListeners() {
   // --- Profiles & projects: core interactions ---
   elements.addProfileForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const name = (elements.newProfileName.value || "").trim();
     if (!name) return;
-    addProfile(name);
+    const team = (elements.newProfileTeam && elements.newProfileTeam.value || "").trim();
+    addProfile(name, team);
     elements.newProfileName.value = "";
+    if (elements.newProfileTeam) elements.newProfileTeam.value = "";
   });
 
   elements.addProjectBtn.addEventListener("click", () => {
@@ -284,6 +343,27 @@ function attachEventListeners() {
     elements.importFileInput.addEventListener("change", handleUnifiedImportChange);
   }
 
+  if (elements.profileViewModal) {
+    elements.profileViewModal.addEventListener("click", (e) => {
+      if (e.target === elements.profileViewModal) closeProfileViewModal();
+    });
+  }
+  if (elements.profileViewCloseBtnFooter) {
+    elements.profileViewCloseBtnFooter.addEventListener("click", () => closeProfileViewModal());
+  }
+
+  if (elements.profileEditModal) {
+    elements.profileEditModal.addEventListener("click", (e) => {
+      if (e.target === elements.profileEditModal) closeProfileEditModal();
+    });
+  }
+  if (elements.profileEditCancelBtn) {
+    elements.profileEditCancelBtn.addEventListener("click", () => closeProfileEditModal());
+  }
+  if (elements.profileEditSaveBtn) {
+    elements.profileEditSaveBtn.addEventListener("click", handleProfileEditSave);
+  }
+
   if (elements.filtersToggleBtn && elements.filtersAdvanced) {
     elements.filtersToggleBtn.addEventListener("click", () => {
       const visible = elements.filtersAdvanced.classList.toggle("visible");
@@ -311,21 +391,48 @@ function attachEventListeners() {
     });
   }
 
+  if (elements.filterProjectPeriodToggle) {
+    elements.filterProjectPeriodToggle.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const container = elements.filterProjectPeriodToggle.closest(".filter-countries");
+      if (!container) return;
+      const isOpen = container.classList.toggle("open");
+      if (isOpen && elements.filterProjectPeriodSearch) {
+        elements.filterProjectPeriodSearch.focus();
+        elements.filterProjectPeriodSearch.select();
+      }
+    });
+  }
+
   document.addEventListener("click", (event) => {
-    if (!elements.filterCountriesToggle) return;
-    const container = elements.filterCountriesToggle.closest(".filter-countries");
-    if (!container) return;
-    if (!container.contains(event.target)) {
-      container.classList.remove("open");
+    if (elements.filterCountriesToggle) {
+      const countriesContainer = elements.filterCountriesToggle.closest(".filter-countries");
+      if (countriesContainer && !countriesContainer.contains(event.target)) {
+        countriesContainer.classList.remove("open");
+      }
+    }
+    if (elements.filterProjectPeriodToggle) {
+      const periodContainer = elements.filterProjectPeriodToggle.closest(".filter-countries");
+      if (periodContainer && !periodContainer.contains(event.target)) {
+        periodContainer.classList.remove("open");
+      }
     }
   });
 
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
-    if (!elements.filterCountriesToggle) return;
-    const container = elements.filterCountriesToggle.closest(".filter-countries");
-    if (!container) return;
-    container.classList.remove("open");
+    if (elements.filterCountriesToggle) {
+      const countriesContainer = elements.filterCountriesToggle.closest(".filter-countries");
+      if (countriesContainer) {
+        countriesContainer.classList.remove("open");
+      }
+    }
+    if (elements.filterProjectPeriodToggle) {
+      const periodContainer = elements.filterProjectPeriodToggle.closest(".filter-countries");
+      if (periodContainer) {
+        periodContainer.classList.remove("open");
+      }
+    }
   });
 
   if (elements.filterCountriesSearch) {
@@ -344,6 +451,26 @@ function attachEventListeners() {
         renderProjects();
         updateFiltersActivePill();
         updateFilterCountriesSummary();
+      }
+    });
+  }
+
+  if (elements.filterProjectPeriodSearch) {
+    elements.filterProjectPeriodSearch.addEventListener("input", () => {
+      filterFilterProjectPeriodsBySearchTerm();
+      renderProjects();
+      updateFiltersActivePill();
+      updateFilterProjectPeriodsSummary();
+    });
+  }
+
+  if (elements.filterProjectPeriodList) {
+    elements.filterProjectPeriodList.addEventListener("change", (event) => {
+      const target = event.target;
+      if (target && target.type === "checkbox") {
+        renderProjects();
+        updateFiltersActivePill();
+        updateFilterProjectPeriodsSummary();
       }
     });
   }
@@ -368,13 +495,11 @@ function attachEventListeners() {
 
   const filterInputs = [
     elements.filterTitle,
-    elements.filterCreatedFrom,
-    elements.filterCreatedTo,
-    elements.filterModifiedFrom,
-    elements.filterModifiedTo,
     elements.filterImpact,
     elements.filterEffort,
     elements.filterCurrency,
+    elements.filterStatus,
+    elements.filterTshirtSize,
     elements.filterProjectType
   ].filter(Boolean); // guard against missing DOM nodes so we never throw while wiring listeners
 
@@ -423,7 +548,7 @@ function attachEventListeners() {
   });
 
   elements.projectsTableBody.addEventListener("mouseenter", (e) => {
-    const wrap = e.target.closest(".cell-type-icon-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip");
+    const wrap = e.target.closest(".cell-type-icon-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-desc-with-tooltip");
     if (!wrap) return;
     const tooltip = wrap.querySelector(".cell-type-tooltip");
     if (!tooltip) return;
@@ -508,11 +633,12 @@ function updateFiltersActivePill() {
   if ((elements.filterTitle.value || "").trim()) activeFilters.push("Title");
   if (elements.filterProjectType.value) activeFilters.push("Type");
   if (getSelectedFilterCountries().length) activeFilters.push("Countries");
+  if (getSelectedFilterProjectPeriods().length) activeFilters.push("Project period");
   if (elements.filterImpact.value) activeFilters.push("Impact");
   if (elements.filterEffort.value) activeFilters.push("Effort");
   if (elements.filterCurrency.value) activeFilters.push("Currency");
-  if (elements.filterCreatedFrom.value || elements.filterCreatedTo.value) activeFilters.push("Created date");
-  if (elements.filterModifiedFrom.value || elements.filterModifiedTo.value) activeFilters.push("Modified date");
+  if (elements.filterStatus.value) activeFilters.push("Status");
+  if (elements.filterTshirtSize.value) activeFilters.push("T-shirt size");
 
   if (!activeFilters.length) {
     elements.filtersActivePill.style.display = "none";
@@ -565,6 +691,7 @@ function handleExportCsv() {
     const header = [
       "profileId",
       "profileName",
+      "profileTeam",
       "profileCreatedAt",
       "projectId",
       "projectTitle",
@@ -584,6 +711,7 @@ function handleExportCsv() {
       "projectType",
       "projectStatus",
       "tshirtSize",
+      "projectPeriod",
       "countries",
       "riceScore"
     ];
@@ -593,13 +721,16 @@ function handleExportCsv() {
     state.profiles.forEach((profile) => {
       const profileId = profile.id || "";
       const profileName = profile.name || "";
+      const profileTeam = profile.team || "";
       const profileCreatedAt = profile.createdAt || "";
       const projectsArray = Array.isArray(profile.projects) ? profile.projects : [];
       if (!projectsArray.length) {
         const emptyRow = [
           escapeCsvCell(profileId),
           escapeCsvCell(profileName),
+          escapeCsvCell(profileTeam),
           escapeCsvCell(profileCreatedAt),
+          "",
           "",
           "",
           "",
@@ -630,6 +761,7 @@ function handleExportCsv() {
         const row = [
           escapeCsvCell(profileId),
           escapeCsvCell(profileName),
+          escapeCsvCell(profileTeam),
           escapeCsvCell(profileCreatedAt),
           escapeCsvCell(project.id || ""),
           escapeCsvCell(project.title || ""),
@@ -649,6 +781,7 @@ function handleExportCsv() {
           escapeCsvCell(project.projectType || ""),
           escapeCsvCell(project.projectStatus || ""),
           escapeCsvCell(project.tshirtSize || ""),
+          escapeCsvCell(project.projectPeriod || ""),
           escapeCsvCell(countries),
           escapeCsvCell(String(rice))
         ];
@@ -839,12 +972,14 @@ function buildProfilesFromCsvRows(header, rows) {
     if (!profileName) return;
     const profileIdFromCsv = (cells[colIndex.profileId] ?? "").toString().trim();
     const profileCreatedAt = (cells[colIndex.profileCreatedAt] ?? "").toString().trim();
+    const profileTeam = (cells[colIndex.profileTeam] ?? "").toString().trim();
     const key = profileIdFromCsv || profileName;
 
     if (!byProfileKey.has(key)) {
       byProfileKey.set(key, {
         id: profileIdFromCsv || generateId("profile"),
         name: profileName,
+        team: profileTeam || "",
         createdAt: profileCreatedAt || new Date().toISOString(),
         projects: []
       });
@@ -876,6 +1011,7 @@ function buildProfilesFromCsvRows(header, rows) {
       projectType: (cells[colIndex.projectType] ?? "").toString().trim() || null,
       projectStatus: (cells[colIndex.projectStatus] ?? "").toString().trim() || null,
       tshirtSize: (cells[colIndex.tshirtSize] ?? "").toString().trim() || null,
+      projectPeriod: (cells[colIndex.projectPeriod] ?? "").toString().trim().toUpperCase() || null,
       countries: (cells[colIndex.countries] ?? "").toString().split("|").map((c) => c.trim()).filter((c) => c !== "")
     };
     project.riceScore = calculateRiceScore(project);
@@ -889,12 +1025,14 @@ function normalizeImportedProfile(profile) {
   if (!profile || typeof profile !== "object") return null;
   const id = typeof profile.id === "string" && profile.id.trim() ? profile.id.trim() : generateId("profile");
   const name = String(profile.name || "Imported profile");
+  const team = String(profile.team || "");
   const createdAt = profile.createdAt || new Date().toISOString();
   const projectsArray = Array.isArray(profile.projects) ? profile.projects : [];
   const normalizedProjects = projectsArray.map(normalizeImportedProject).filter(Boolean);
   return {
     id,
     name,
+    team,
     createdAt,
     projects: normalizedProjects
   };
@@ -911,6 +1049,8 @@ function normalizeImportedProject(project) {
   const confidenceValue = toNumberOrNull(project.confidenceValue);
   const effortValue = toNumberOrNull(project.effortValue);
   const financialImpactValue = toNumberOrNull(project.financialImpactValue);
+  const periodRaw = project.projectPeriod != null ? String(project.projectPeriod).trim() : "";
+  const projectPeriod = periodRaw ? periodRaw.toUpperCase() : null;
   const normalized = {
     id,
     createdAt,
@@ -930,6 +1070,7 @@ function normalizeImportedProject(project) {
     projectType: (project.projectType != null && String(project.projectType).trim() !== "") ? String(project.projectType).trim() : null,
     projectStatus: (project.projectStatus != null && String(project.projectStatus).trim() !== "") ? String(project.projectStatus).trim() : null,
     tshirtSize: (project.tshirtSize != null && String(project.tshirtSize).trim() !== "") ? String(project.tshirtSize).trim() : null,
+    projectPeriod,
     countries: Array.isArray(project.countries) ? project.countries.map((c) => String(c)) : []
   };
   normalized.riceScore = calculateRiceScore(normalized);
@@ -946,6 +1087,15 @@ function getSelectedFilterCountries() {
   return Array.from(new Set(values));
 }
 
+function getSelectedFilterProjectPeriods() {
+  if (!elements.filterProjectPeriodList) return [];
+  const checkboxes = elements.filterProjectPeriodList.querySelectorAll("input[type=\"checkbox\"]");
+  const values = Array.from(checkboxes)
+    .filter((cb) => cb.checked)
+    .map((cb) => cb.value.toString().toUpperCase());
+  return Array.from(new Set(values));
+}
+
 function filterFilterCountriesBySearchTerm() {
   if (!elements.filterCountriesList || !elements.filterCountriesSearch) return;
   const term = (elements.filterCountriesSearch.value || "").trim().toLowerCase();
@@ -953,6 +1103,16 @@ function filterFilterCountriesBySearchTerm() {
   options.forEach((opt) => {
     const name = (opt.dataset.name || "").toLowerCase();
     opt.style.display = !term || name.includes(term) ? "" : "none";
+  });
+}
+
+function filterFilterProjectPeriodsBySearchTerm() {
+  if (!elements.filterProjectPeriodList || !elements.filterProjectPeriodSearch) return;
+  const term = (elements.filterProjectPeriodSearch.value || "").trim().toLowerCase();
+  const options = elements.filterProjectPeriodList.querySelectorAll(".filter-country-option");
+  options.forEach((opt) => {
+    const period = (opt.dataset.period || "").toLowerCase();
+    opt.style.display = !term || period.includes(term) ? "" : "none";
   });
 }
 
@@ -975,6 +1135,36 @@ function updateFilterCountriesSummary() {
     const chip = document.createElement("span");
     chip.className = "filter-countries-chip";
     chip.textContent = name;
+    container.appendChild(chip);
+  });
+
+  if (selected.length > maxChips) {
+    const moreChip = document.createElement("span");
+    moreChip.className = "filter-countries-chip filter-countries-chip-count";
+    moreChip.textContent = `+${selected.length - maxChips} more`;
+    container.appendChild(moreChip);
+  }
+}
+
+function updateFilterProjectPeriodsSummary() {
+  if (!elements.filterProjectPeriodSummary) return;
+  const container = elements.filterProjectPeriodSummary;
+  const selected = getSelectedFilterProjectPeriods();
+  container.innerHTML = "";
+
+  if (!selected.length) {
+    const span = document.createElement("span");
+    span.textContent = "Any period";
+    container.appendChild(span);
+    return;
+  }
+
+  const maxChips = 3;
+  const visible = selected.slice(0, maxChips);
+  visible.forEach((period) => {
+    const chip = document.createElement("span");
+    chip.className = "filter-countries-chip";
+    chip.textContent = period;
     container.appendChild(chip);
   });
 
@@ -1052,6 +1242,7 @@ function loadState() {
       return {
         id: typeof p.id === "string" && p.id.trim() ? p.id.trim() : generateId("profile"),
         name: String(p.name || "Unnamed profile"),
+        team: String(p.team || ""),
         createdAt: p.createdAt || new Date().toISOString(),
         projects
       };
@@ -1083,6 +1274,8 @@ function normalizeLoadedProject(project) {
   const impactValue = toNumberOrNull(project.impactValue);
   const confidenceValue = toNumberOrNull(project.confidenceValue);
   const effortValue = toNumberOrNull(project.effortValue);
+  const periodRaw = project.projectPeriod != null ? String(project.projectPeriod).trim() : "";
+  const projectPeriod = periodRaw ? periodRaw.toUpperCase() : null;
   return {
     id,
     createdAt,
@@ -1102,6 +1295,7 @@ function normalizeLoadedProject(project) {
     projectType: (project.projectType != null && String(project.projectType).trim() !== "") ? String(project.projectType).trim() : null,
     projectStatus: (project.projectStatus != null && String(project.projectStatus).trim() !== "") ? String(project.projectStatus).trim() : null,
     tshirtSize: (project.tshirtSize != null && String(project.tshirtSize).trim() !== "") ? String(project.tshirtSize).trim() : null,
+    projectPeriod,
     countries: Array.isArray(project.countries) ? project.countries.map((c) => String(c)) : []
   };
 }
@@ -1126,6 +1320,7 @@ function ensureDefaultProfile() {
     const profile = {
       id: generateId("profile"),
       name: "Default Profile",
+      team: "",
       createdAt: now,
       projects: []
     };
@@ -1135,11 +1330,12 @@ function ensureDefaultProfile() {
   }
 }
 
-function addProfile(name) {
+function addProfile(name, team) {
   const now = new Date().toISOString();
   const profile = {
     id: generateId("profile"),
     name,
+    team: (team || "").trim(),
     createdAt: now,
     projects: []
   };
@@ -1164,6 +1360,16 @@ function getActiveProfile() {
 }
 
 // --- Render (profiles list, projects table) ---
+function getProfileIconSvg(iconName) {
+  const icons = {
+    view: "<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M15 12a3 3 0 11-6 0 3 3 0 016 0z'/><path d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'/></svg>",
+    edit: "<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z'/></svg>",
+    trash: "<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><polyline points='3 6 5 6 21 6'/><path d='M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2'/><line x1='10' y1='11' x2='10' y2='17'/><line x1='14' y1='11' x2='14' y2='17'/></svg>",
+    add: "<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='10'/><line x1='12' y1='8' x2='12' y2='16'/><line x1='8' y1='12' x2='16' y2='12'/></svg>"
+  };
+  return icons[iconName] || "";
+}
+
 function renderProfiles() {
   const { profiles, activeProfileId } = state;
 
@@ -1188,46 +1394,64 @@ function renderProfiles() {
       const nameEl = document.createElement("div");
       nameEl.className = "profile-item-name";
       nameEl.textContent = profile.name;
-
-      const metaEl = document.createElement("div");
-      metaEl.className = "profile-item-meta";
-      const createdDate = formatDate(profile.createdAt);
-      const projectsCount = profile.projects ? profile.projects.length : 0;
-      metaEl.textContent = `Created ${createdDate} • ${projectsCount} project${projectsCount === 1 ? "" : "s"}`;
-
       main.appendChild(nameEl);
-      main.appendChild(metaEl);
 
-      if (projectsCount > 0) {
-        const summary = document.createElement("div");
-        summary.className = "profile-summary";
-        const riceValues = profile.projects.map((p) => Number(p.riceScore || 0)).filter((v) => !Number.isNaN(v));
-        if (riceValues.length) {
-          const maxRice = Math.max(...riceValues);
-          const avgRice = riceValues.reduce((a, b) => a + b, 0) / riceValues.length;
-          summary.innerHTML = `
-            <span>Top RICE: <strong>${formatRice(maxRice)}</strong></span>
-            <span>Avg: <strong>${formatRice(avgRice)}</strong></span>
-          `;
-          main.appendChild(summary);
-        }
+      const summary = document.createElement("div");
+      summary.className = "profile-summary";
+
+      const teamText = (profile.team || "").trim();
+      if (teamText) {
+        const teamSpan = document.createElement("span");
+        teamSpan.textContent = teamText;
+        summary.appendChild(teamSpan);
       }
+
+      main.appendChild(summary);
 
       btn.appendChild(main);
       btn.addEventListener("click", () => setActiveProfile(profile.id));
 
+      const actions = document.createElement("div");
+      actions.className = "profile-item-actions";
+
+      const viewBtn = document.createElement("button");
+      viewBtn.type = "button";
+      viewBtn.className = "profile-icon-btn profile-icon-btn--view";
+      viewBtn.setAttribute("aria-label", "View profile");
+      viewBtn.title = "View profile";
+      viewBtn.innerHTML = getProfileIconSvg("view");
+      viewBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openProfileViewModal(profile.id);
+      });
+      actions.appendChild(viewBtn);
+
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "profile-icon-btn profile-icon-btn--edit";
+      editBtn.setAttribute("aria-label", "Edit profile");
+      editBtn.title = "Edit profile";
+      editBtn.innerHTML = getProfileIconSvg("edit");
+      editBtn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openProfileEditModal(profile.id);
+      });
+      actions.appendChild(editBtn);
+
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
-      deleteBtn.className = "profile-delete-btn";
-      deleteBtn.textContent = "×";
+      deleteBtn.className = "profile-icon-btn profile-icon-btn--danger";
+      deleteBtn.setAttribute("aria-label", "Delete profile and all its projects");
       deleteBtn.title = "Delete profile and all its projects";
+      deleteBtn.innerHTML = getProfileIconSvg("trash");
       deleteBtn.addEventListener("click", (event) => {
         event.stopPropagation();
         deleteProfile(profile.id);
       });
+      actions.appendChild(deleteBtn);
 
       row.appendChild(btn);
-      row.appendChild(deleteBtn);
+      row.appendChild(actions);
       li.appendChild(row);
       elements.profileList.appendChild(li);
     });
@@ -1243,23 +1467,12 @@ function renderProfiles() {
   }
 
   elements.activeProfileTitleText.textContent = activeProfile.name;
-  const count = activeProfile.projects.length;
-  elements.activeProfileSubtitleText.textContent =
-    count === 0 ? "No projects yet. Add your first project for this profile."
-      : `${count} project${count === 1 ? "" : "s"} in this profile.`;
+  const teamLabel = (activeProfile.team || "").trim();
+  elements.activeProfileSubtitleText.textContent = teamLabel || "Profile ready for prioritization.";
 
   elements.addProjectBtn.disabled = false;
 
-  const badges = [];
-  badges.push(`<span class="pill pill-muted">Projects: <strong>${count}</strong></span>`);
-  const riceValues = activeProfile.projects.map((p) => Number(p.riceScore || 0)).filter((v) => !Number.isNaN(v));
-  if (riceValues.length) {
-    const maxRice = Math.max(...riceValues);
-    const avgRice = riceValues.reduce((a, b) => a + b, 0) / riceValues.length;
-    badges.push(`<span class="pill pill-soft"><strong>Top:</strong>${formatRice(maxRice)}</span>`);
-    badges.push(`<span class="pill pill-soft"><strong>Avg:</strong>${formatRice(avgRice)}</span>`);
-  }
-  elements.projectsHeaderBadges.innerHTML = badges.join("");
+  elements.projectsHeaderBadges.innerHTML = "";
 }
 
 function renderProjects() {
@@ -1269,7 +1482,7 @@ function renderProjects() {
   if (!activeProfile) {
     elements.projectsTableBody.innerHTML = `
       <tr>
-        <td colspan="10" class="empty-state">
+        <td colspan="11" class="empty-state">
           Create or select a profile to start adding projects.
         </td>
       </tr>
@@ -1284,13 +1497,15 @@ function renderProjects() {
     p.riceScore = calculateRiceScore(p);
   });
 
+  initFilterProjectPeriodOptions(baseProjects);
+
   let projects = applyFilters(baseProjects);
   projects = sortProjects(projects);
 
   if (!projects.length) {
     elements.projectsTableBody.innerHTML = `
       <tr>
-        <td colspan="10" class="empty-state">
+        <td colspan="11" class="empty-state">
           No projects match the current filters. Adjust filters or add a new project.
         </td>
       </tr>
@@ -1316,10 +1531,36 @@ function renderProjects() {
     const countries = Array.isArray(project.countries) ? project.countries : [];
     const titleBlock = document.createElement("div");
     titleBlock.className = "cell-title-block";
+    const projectDesc = project.description || "";
     const titleDiv = document.createElement("div");
     titleDiv.className = "cell-title";
     titleDiv.textContent = project.title || "";
-    titleBlock.appendChild(titleDiv);
+    if (projectDesc) {
+      const descWrap = document.createElement("span");
+      descWrap.className = "cell-desc-with-tooltip";
+      descWrap.setAttribute("aria-label", "Project name; hover for description");
+      descWrap.appendChild(titleDiv);
+      const tooltipEl = document.createElement("div");
+      tooltipEl.className = "cell-type-tooltip cell-type-tooltip--wide";
+      tooltipEl.setAttribute("role", "tooltip");
+      const tooltipTitleEl = document.createElement("div");
+      tooltipTitleEl.className = "cell-type-tooltip-title";
+      tooltipTitleEl.textContent = "Description";
+      tooltipEl.appendChild(tooltipTitleEl);
+      const tooltipBodyEl = document.createElement("div");
+      tooltipBodyEl.className = "cell-type-tooltip-body";
+      const paragraphs = String(projectDesc).split(/\n\n+/);
+      paragraphs.forEach((p) => {
+        const block = document.createElement("p");
+        block.textContent = p.trim();
+        if (block.textContent) tooltipBodyEl.appendChild(block);
+      });
+      tooltipEl.appendChild(tooltipBodyEl);
+      descWrap.appendChild(tooltipEl);
+      titleBlock.appendChild(descWrap);
+    } else {
+      titleBlock.appendChild(titleDiv);
+    }
     if (countries.length) {
       const maxToShow = 3;
       const shown = countries.slice(0, maxToShow);
@@ -1361,10 +1602,6 @@ function renderProjects() {
       titleBlock.appendChild(countriesWrap);
     }
     tdTitle.appendChild(titleBlock);
-    const projectDesc = project.description || "";
-    if (projectDesc) {
-      tdTitle.title = projectDesc;
-    }
     tr.appendChild(tdTitle);
 
     const tdType = document.createElement("td");
@@ -1450,6 +1687,13 @@ function renderProjects() {
       tdStatus.innerHTML = `<span class="cell-meta">—</span>`;
     }
     tr.appendChild(tdStatus);
+
+    const tdPeriod = document.createElement("td");
+    const periodSpan = document.createElement("span");
+    periodSpan.className = "cell-meta cell-tshirt-size-text";
+    periodSpan.textContent = project.projectPeriod || "—";
+    tdPeriod.appendChild(periodSpan);
+    tr.appendChild(tdPeriod);
 
     const tdTshirtSize = document.createElement("td");
     if (project.tshirtSize) {
@@ -1665,13 +1909,12 @@ function renderProjects() {
 
 function applyFilters(projects) {
   const titleQuery = (elements.filterTitle.value || "").trim().toLowerCase();
-  const createdFrom = elements.filterCreatedFrom.value ? new Date(elements.filterCreatedFrom.value) : null;
-  const createdTo = elements.filterCreatedTo.value ? new Date(elements.filterCreatedTo.value) : null;
-  const modifiedFrom = elements.filterModifiedFrom.value ? new Date(elements.filterModifiedFrom.value) : null;
-  const modifiedTo = elements.filterModifiedTo.value ? new Date(elements.filterModifiedTo.value) : null;
+  const selectedPeriodsFilter = getSelectedFilterProjectPeriods();
   const impactFilter = elements.filterImpact.value;
   const effortFilter = elements.filterEffort.value;
   const currencyFilter = elements.filterCurrency.value;
+  const statusFilter = elements.filterStatus ? elements.filterStatus.value : "";
+  const tshirtFilter = elements.filterTshirtSize ? elements.filterTshirtSize.value : "";
   const projectTypeFilter = elements.filterProjectType.value;
   const selectedCountriesFilter = getSelectedFilterCountries();
 
@@ -1681,26 +1924,9 @@ function applyFilters(projects) {
       if (!title.includes(titleQuery)) return false;
     }
 
-    if (createdFrom) {
-      const createdDate = new Date(p.createdAt);
-      if (createdDate < createdFrom) return false;
-    }
-    if (createdTo) {
-      const createdDate = new Date(p.createdAt);
-      const endOfDay = new Date(createdTo);
-      endOfDay.setHours(23, 59, 59, 999);
-      if (createdDate > endOfDay) return false;
-    }
-
-    if (modifiedFrom) {
-      const modifiedDate = new Date(p.modifiedAt || p.createdAt);
-      if (modifiedDate < modifiedFrom) return false;
-    }
-    if (modifiedTo) {
-      const modifiedDate = new Date(p.modifiedAt || p.createdAt);
-      const endOfDay = new Date(modifiedTo);
-      endOfDay.setHours(23, 59, 59, 999);
-      if (modifiedDate > endOfDay) return false;
+    if (selectedPeriodsFilter.length) {
+      const projectPeriod = (p.projectPeriod || "").toString().trim().toUpperCase();
+      if (!projectPeriod || !selectedPeriodsFilter.includes(projectPeriod)) return false;
     }
 
     if (impactFilter) {
@@ -1713,6 +1939,14 @@ function applyFilters(projects) {
 
     if (currencyFilter) {
       if ((p.financialImpactCurrency || "") !== currencyFilter) return false;
+    }
+
+    if (statusFilter) {
+      if ((p.projectStatus || "") !== statusFilter) return false;
+    }
+
+    if (tshirtFilter) {
+      if ((p.tshirtSize || "") !== tshirtFilter) return false;
     }
 
     if (projectTypeFilter) {
@@ -1794,14 +2028,21 @@ function updateSortIndicators() {
 
 function clearFilters() {
   elements.filterTitle.value = "";
-  elements.filterCreatedFrom.value = "";
-  elements.filterCreatedTo.value = "";
-  elements.filterModifiedFrom.value = "";
-  elements.filterModifiedTo.value = "";
   elements.filterImpact.value = "";
   elements.filterEffort.value = "";
   elements.filterCurrency.value = "";
   elements.filterProjectType.value = "";
+  if (elements.filterStatus) elements.filterStatus.value = "";
+  if (elements.filterTshirtSize) elements.filterTshirtSize.value = "";
+  if (elements.filterProjectPeriodSearch) {
+    elements.filterProjectPeriodSearch.value = "";
+  }
+  if (elements.filterProjectPeriodList) {
+    const checkboxes = elements.filterProjectPeriodList.querySelectorAll("input[type=\"checkbox\"]");
+    checkboxes.forEach((cb) => {
+      cb.checked = false;
+    });
+  }
   if (elements.filterCountriesSearch) {
     elements.filterCountriesSearch.value = "";
   }
@@ -1813,6 +2054,7 @@ function clearFilters() {
     filterFilterCountriesBySearchTerm();
   }
   updateFiltersActivePill();
+  updateFilterProjectPeriodsSummary();
   updateFilterCountriesSummary();
 }
 
@@ -1833,17 +2075,49 @@ function syncHeaderCheckbox() {
 
 function handleBulkDelete() {
   const activeProfile = getActiveProfile();
-  if (!activeProfile) return;
+  if (!activeProfile || !elements.projectDeleteModal) return;
   const checked = elements.projectsTableBody.querySelectorAll(".project-select-checkbox:checked");
   if (!checked.length) return;
 
   const ids = Array.from(checked).map((cb) => cb.getAttribute("data-id"));
-  const confirmDelete = window.confirm(`Delete ${ids.length} selected project(s)? This cannot be undone.`);
-  if (!confirmDelete) return;
 
-  activeProfile.projects = activeProfile.projects.filter((p) => !ids.includes(p.id));
-  saveState();
-  renderProjects();
+  elements.projectDeleteModal.setAttribute("data-delete-mode", "bulk");
+  elements.projectDeleteModal.setAttribute("data-project-ids", ids.join(","));
+
+  if (elements.projectDeleteNameLabel) {
+    elements.projectDeleteNameLabel.textContent = `${ids.length} project${ids.length === 1 ? "" : "s"} selected`;
+  }
+  if (elements.projectDeleteWarningText) {
+    elements.projectDeleteWarningText.textContent =
+      "This will permanently remove the selected projects from this profile. This action cannot be undone.";
+  }
+
+  elements.projectDeleteModal.setAttribute("aria-hidden", "false");
+  elements.projectDeleteModal.classList.add("active");
+
+  if (elements.projectDeleteConfirmBtn) {
+    elements.projectDeleteConfirmBtn.onclick = () => {
+      const mode = elements.projectDeleteModal.getAttribute("data-delete-mode") || "single";
+      if (mode === "bulk") {
+        const idsAttr = elements.projectDeleteModal.getAttribute("data-project-ids") || "";
+        const idList = idsAttr ? idsAttr.split(",").filter(Boolean) : [];
+        if (!idList.length) {
+          closeProjectDeleteModal();
+          return;
+        }
+        activeProfile.projects = activeProfile.projects.filter((p) => !idList.includes(p.id));
+        saveState();
+        renderProjects();
+        closeProjectDeleteModal();
+      }
+    };
+  }
+
+  if (elements.projectDeleteCancelBtn) {
+    elements.projectDeleteCancelBtn.onclick = () => {
+      closeProjectDeleteModal();
+    };
+  }
 }
 
 function closeProjectDeleteModal() {
@@ -1851,6 +2125,8 @@ function closeProjectDeleteModal() {
   elements.projectDeleteModal.classList.remove("active");
   elements.projectDeleteModal.setAttribute("aria-hidden", "true");
   elements.projectDeleteModal.removeAttribute("data-project-id");
+  elements.projectDeleteModal.removeAttribute("data-project-ids");
+  elements.projectDeleteModal.removeAttribute("data-delete-mode");
 }
 
 function closeProfileDeleteModal() {
@@ -1858,6 +2134,157 @@ function closeProfileDeleteModal() {
   elements.profileDeleteModal.classList.remove("active");
   elements.profileDeleteModal.setAttribute("aria-hidden", "true");
   elements.profileDeleteModal.removeAttribute("data-profile-id");
+}
+
+function openProfileViewModal(profileId) {
+  const profile = state.profiles.find((p) => p.id === profileId);
+  if (!profile || !elements.profileViewModal) return;
+  if (elements.profileViewName) {
+    elements.profileViewName.textContent = profile.name || "Untitled profile";
+  }
+  if (elements.profileViewTeam) {
+    const teamText = (profile.team || "").trim();
+    elements.profileViewTeam.textContent = teamText || "—";
+  }
+
+  const projects = Array.isArray(profile.projects) ? profile.projects.slice() : [];
+  const totalProjects = projects.length;
+
+  if (elements.profileViewTotalProjects) {
+    elements.profileViewTotalProjects.textContent = String(totalProjects);
+  }
+
+  const uniqueCountries = new Set();
+  projects.forEach((p) => {
+    const list = Array.isArray(p.countries) ? p.countries : [];
+    list.forEach((c) => {
+      if (c != null && String(c).trim() !== "") uniqueCountries.add(String(c).trim());
+    });
+  });
+  if (elements.profileViewUniqueCountries) {
+    elements.profileViewUniqueCountries.textContent = String(uniqueCountries.size);
+  }
+
+  const statusCounts = {};
+  const typeCounts = {};
+  const tshirtCounts = {};
+  const riceScores = [];
+  projects.forEach((p) => {
+    const statusKey = (p.projectStatus || "—").toString();
+    statusCounts[statusKey] = (statusCounts[statusKey] || 0) + 1;
+    const typeKey = (p.projectType || "—").toString();
+    typeCounts[typeKey] = (typeCounts[typeKey] || 0) + 1;
+    const tshirtKey = (p.tshirtSize || "—").toString();
+    tshirtCounts[tshirtKey] = (tshirtCounts[tshirtKey] || 0) + 1;
+    const score = calculateRiceScore(p);
+    if (Number.isFinite(score)) riceScores.push(score);
+  });
+
+  function renderChips(container, counts) {
+    if (!container) return;
+    container.innerHTML = "";
+    const entries = Object.entries(counts);
+    if (!entries.length) {
+      const span = document.createElement("span");
+      span.className = "profile-view-chip profile-view-chip-muted";
+      span.textContent = "None";
+      container.appendChild(span);
+      return;
+    }
+    entries.forEach(([label, count]) => {
+      const chip = document.createElement("span");
+      chip.className = "profile-view-chip";
+      chip.textContent = `${label}: ${count}`;
+      container.appendChild(chip);
+    });
+  }
+  renderChips(elements.profileViewByStatus, statusCounts);
+  renderChips(elements.profileViewByType, typeCounts);
+  renderChips(elements.profileViewByTshirt, tshirtCounts);
+
+  if (elements.profileViewRiceStats) {
+    elements.profileViewRiceStats.innerHTML = "";
+    if (!riceScores.length) {
+      const span = document.createElement("span");
+      span.className = "profile-view-rice-empty";
+      span.textContent = "No RICE scores yet.";
+      elements.profileViewRiceStats.appendChild(span);
+    } else {
+      riceScores.sort((a, b) => a - b);
+      const n = riceScores.length;
+      const sum = riceScores.reduce((acc, v) => acc + v, 0);
+      const mean = sum / n;
+      const mid = Math.floor(n / 2);
+      const median = n % 2 === 0 ? (riceScores[mid - 1] + riceScores[mid]) / 2 : riceScores[mid];
+      const min = riceScores[0];
+      const max = riceScores[n - 1];
+      const stats = [
+        ["Mean", mean],
+        ["Median", median],
+        ["Min", min],
+        ["Max", max],
+        ["Total", sum]
+      ];
+      stats.forEach(([label, value]) => {
+        const span = document.createElement("span");
+        span.className = "profile-view-rice-item";
+        span.textContent = `${label}: ${formatRice(value)}`;
+        elements.profileViewRiceStats.appendChild(span);
+      });
+    }
+  }
+
+  elements.profileViewModal.setAttribute("aria-hidden", "false");
+  elements.profileViewModal.classList.add("active");
+}
+
+function closeProfileViewModal() {
+  if (!elements.profileViewModal) return;
+  elements.profileViewModal.classList.remove("active");
+  elements.profileViewModal.setAttribute("aria-hidden", "true");
+}
+
+function openProfileEditModal(profileId) {
+  const profile = state.profiles.find((p) => p.id === profileId);
+  if (!profile || !elements.profileEditModal) return;
+  elements.profileEditModal.setAttribute("data-profile-id", profileId);
+  if (elements.profileEditName) {
+    elements.profileEditName.value = profile.name || "";
+  }
+  if (elements.profileEditTeam) {
+    elements.profileEditTeam.value = (profile.team || "").trim();
+  }
+  elements.profileEditModal.setAttribute("aria-hidden", "false");
+  elements.profileEditModal.classList.add("active");
+}
+
+function closeProfileEditModal() {
+  if (!elements.profileEditModal) return;
+  elements.profileEditModal.classList.remove("active");
+  elements.profileEditModal.setAttribute("aria-hidden", "true");
+  elements.profileEditModal.removeAttribute("data-profile-id");
+}
+
+function handleProfileEditSave() {
+  const profileId = elements.profileEditModal.getAttribute("data-profile-id");
+  if (!profileId) return;
+  const profile = state.profiles.find((p) => p.id === profileId);
+  if (!profile) {
+    closeProfileEditModal();
+    return;
+  }
+  const name = (elements.profileEditName && elements.profileEditName.value || "").trim();
+  if (!name) {
+    if (elements.profileEditName) elements.profileEditName.focus();
+    return;
+  }
+  const team = (elements.profileEditTeam && elements.profileEditTeam.value || "").trim();
+  profile.name = name;
+  profile.team = team;
+  saveState();
+  renderProfiles();
+  renderProjects();
+  closeProfileEditModal();
 }
 
 function deleteProfile(profileId) {
@@ -1924,7 +2351,9 @@ function handleSingleDelete(projectId) {
   const project = activeProfile.projects.find((p) => p.id === projectId);
   if (!project) return;
 
+  elements.projectDeleteModal.setAttribute("data-delete-mode", "single");
   elements.projectDeleteModal.setAttribute("data-project-id", projectId);
+  elements.projectDeleteModal.removeAttribute("data-project-ids");
   if (elements.projectDeleteNameLabel) {
     elements.projectDeleteNameLabel.textContent = project.title || "Untitled project";
   }
@@ -1938,16 +2367,19 @@ function handleSingleDelete(projectId) {
 
   if (elements.projectDeleteConfirmBtn) {
     elements.projectDeleteConfirmBtn.onclick = () => {
-      const id = elements.projectDeleteModal.getAttribute("data-project-id");
-      const target = activeProfile.projects.find((p) => p.id === id);
-      if (!target) {
+      const mode = elements.projectDeleteModal.getAttribute("data-delete-mode") || "single";
+      if (mode === "single") {
+        const id = elements.projectDeleteModal.getAttribute("data-project-id");
+        const target = activeProfile.projects.find((p) => p.id === id);
+        if (!target) {
+          closeProjectDeleteModal();
+          return;
+        }
+        activeProfile.projects = activeProfile.projects.filter((p) => p.id !== id);
+        saveState();
+        renderProjects();
         closeProjectDeleteModal();
-        return;
       }
-      activeProfile.projects = activeProfile.projects.filter((p) => p.id !== id);
-      saveState();
-      renderProjects();
-      closeProjectDeleteModal();
     };
   }
 
@@ -2000,6 +2432,7 @@ function openProjectModal(mode, projectId) {
     elements.projectType.value = project.projectType || "";
     elements.projectStatus.value = project.projectStatus || "";
     elements.projectTshirtSize.value = project.tshirtSize || "";
+    elements.projectPeriod.value = project.projectPeriod || "";
     renderCountriesControls(Array.isArray(project.countries) ? project.countries : []);
 
     elements.projectMetaCreated.textContent = formatDateTime(project.createdAt);
@@ -2021,13 +2454,18 @@ function openProjectModal(mode, projectId) {
     elements.financialImpactValue.value = "";
     elements.projectCurrency.value = "";
     elements.projectType.value = "";
-    elements.projectStatus.value = "";
+    elements.projectStatus.value = "Not Started";
     elements.projectTshirtSize.value = "";
+    elements.projectPeriod.value = "";
     renderCountriesControls([]);
 
-    const now = new Date().toISOString();
-    elements.projectMetaCreated.textContent = formatDateTime(now);
-    elements.projectMetaModified.textContent = formatDateTime(now);
+    const now = new Date();
+    const nowIso = now.toISOString();
+    const currentYear = now.getFullYear();
+    const currentQuarter = Math.floor(now.getMonth() / 3) + 1;
+    elements.projectPeriod.value = `${currentYear}-Q${currentQuarter}`;
+    elements.projectMetaCreated.textContent = formatDateTime(nowIso);
+    elements.projectMetaModified.textContent = formatDateTime(nowIso);
     elements.projectMetaRice.textContent = "—";
     elements.projectFormSubmitBtn.textContent = "Save project";
   }
@@ -2080,6 +2518,11 @@ function handleProjectFormSubmit(e) {
   const activeProfile = getActiveProfile();
   if (!activeProfile) return;
 
+  let period = (elements.projectPeriod.value || "").trim();
+  if (period) {
+    period = period.toUpperCase();
+  }
+
   const raw = {
     title: (elements.projectTitle.value || "").trim(),
     description: (elements.projectDescription.value || "").trim(),
@@ -2096,6 +2539,7 @@ function handleProjectFormSubmit(e) {
     projectType: (elements.projectType.value || "").trim() || null,
     projectStatus: (elements.projectStatus.value || "").trim() || null,
     tshirtSize: (elements.projectTshirtSize.value || "").trim() || null,
+    projectPeriod: period,
     countries: getCountriesFromControls()
   };
 
@@ -2124,6 +2568,7 @@ function handleProjectFormSubmit(e) {
     project.projectType = raw.projectType || null;
     project.projectStatus = raw.projectStatus || null;
     project.tshirtSize = raw.tshirtSize || null;
+    project.projectPeriod = raw.projectPeriod || null;
     project.countries = Array.isArray(raw.countries) ? raw.countries : [];
     project.modifiedAt = new Date().toISOString();
     project.riceScore = calculateRiceScore(project);
@@ -2148,6 +2593,7 @@ function handleProjectFormSubmit(e) {
       projectType: raw.projectType || null,
       projectStatus: raw.projectStatus || null,
       tshirtSize: raw.tshirtSize || null,
+      projectPeriod: raw.projectPeriod || null,
       countries: Array.isArray(raw.countries) ? raw.countries : []
     };
     project.riceScore = calculateRiceScore(project);

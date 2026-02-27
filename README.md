@@ -78,7 +78,7 @@ You can run the app in **either** of these ways:
 
 - **Storage** – `localStorage` key: `rice_prioritizer_v1`. One JSON object: `{ profiles, activeProfileId, sortField, sortDirection }`.
 - **Profiles** – Array of `{ id, name, createdAt, projects }`.
-- **Projects** – Each has: title, description, RICE fields, optional financial impact/currency, project type, countries array, `createdAt`, `modifiedAt`. RICE score is computed on demand (not stored).
+- **Projects** – Each has: title, description, RICE fields, financial impact (optional)/currency, project type, countries array, `createdAt`, `modifiedAt`. RICE score is computed on demand (not stored).
 - **Merge on import** – Same profile (by id or name): merge projects by id (skip duplicates). New profiles are appended.
 
 ---

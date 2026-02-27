@@ -82,27 +82,27 @@ const tshirtSizeTooltips = {
 /**
  * Project type display: icon (SVG string) and tooltip for the table column.
  * Keys must match the project type values used in the app.
- * tooltipTitle: short label; tooltipBody: description (use \n for line breaks).
+ * tooltipTitle: short label; tooltipBody: brief, human-friendly description (use \n for line breaks).
  */
 const projectTypeIcons = {
   "New Product": {
     tooltipTitle: "New Product",
-    tooltipBody: "Net-new product or feature\nintroduced to users or the market.",
+    tooltipBody: "Brand new product or feature for users or the market.",
     svg: "<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 2L14.5 8.5L21 9L16 13.5L17.5 21L12 18L6.5 21L8 13.5L3 9L9.5 8.5L12 2Z'/></svg>"
   },
   "Improvement": {
     tooltipTitle: "Improvement",
-    tooltipBody: "Enhances or optimizes an existing\nproduct, flow, or process.",
+    tooltipBody: "Makes an existing product, flow, or process better.",
     svg: "<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><polyline points='23 6 13.5 15.5 8.5 10.5 1 18'/><polyline points='17 6 23 6 23 12'/></svg>"
   },
   "Tech Debt": {
     tooltipTitle: "Tech Debt",
-    tooltipBody: "Reduces technical debt through\nrefactoring, infrastructure, or platform improvements.",
+    tooltipBody: "Reduces technical debt through refactoring, infrastructure, or platform work.",
     svg: "<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><polyline points='16 18 22 12 16 6'/><polyline points='8 6 2 12 8 18'/></svg>"
   },
   "Market Expansion": {
     tooltipTitle: "Market Expansion",
-    tooltipBody: "Extends reach into new\ncustomer segments, markets, or regions.",
+    tooltipBody: "Reaches new customer segments, markets, or regions.",
     svg: "<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='10'/><line x1='2' y1='12' x2='22' y2='12'/><path d='M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z'/></svg>"
   }
 };

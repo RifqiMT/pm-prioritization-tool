@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Capture projects across profiles, track reach, impact, confidence, effort, and financial upside, and auto-rank everything by RICE score." />
   <title>Product Management Prioritization Tool</title>
   <link href="css/main.css" rel="stylesheet" />
 </head>
@@ -45,12 +46,17 @@
         </div>
 
         <form id="addProfileForm" class="profile-form-row" autocomplete="off">
-          <div style="flex:1 1 0;min-width:0;">
+          <div class="profile-form-field">
             <label for="newProfileName">Profile name</label>
             <input id="newProfileName" name="newProfileName" type="text" placeholder="e.g. Product Squad Alpha" required />
           </div>
-          <button type="submit" aria-label="Add profile">
-            + Profile
+          <div class="profile-form-field">
+            <label for="newProfileTeam">Team (optional)</label>
+            <input id="newProfileTeam" name="newProfileTeam" type="text" placeholder="e.g. Growth, Core PM, Platform" />
+          </div>
+          <button type="submit" class="profile-add-btn" aria-label="Add profile" title="Add profile">
+            <svg class="profile-add-btn-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            <span class="profile-add-btn-text">Add</span>
           </button>
         </form>
 
@@ -101,7 +107,7 @@
               <input id="filterTitle" type="text" placeholder="Search by title..." />
             </div>
             <div class="filter-group filter-group--compact">
-              <label for="filterProjectType">Type</label>
+              <label for="filterProjectType">Project type</label>
               <select id="filterProjectType">
                 <option value="">Any</option>
                 <option value="New Product">New Product</option>
@@ -123,39 +129,26 @@
                 </div>
               </div>
             </div>
-          </div>
-
-          <div id="filtersAdvanced" class="filters-advanced">
-            <div class="filters-row">
-              <div class="filter-group filter-group--date-range">
-                <div class="filters-row-inline">
-                  <div>
-                    <div class="filter-inline-label">Created between</div>
-                    <input id="filterCreatedFrom" type="date" />
-                  </div>
-                  <span class="hint-muted">and</span>
-                  <div>
-                    <div class="filter-inline-label">&nbsp;</div>
-                    <input id="filterCreatedTo" type="date" />
-                  </div>
-                </div>
-              </div>
-
-              <div class="filter-group filter-group--date-range">
-                <div class="filters-row-inline">
-                  <div>
-                    <div class="filter-inline-label">Modified between</div>
-                    <input id="filterModifiedFrom" type="date" />
-                  </div>
-                  <span class="hint-muted">and</span>
-                  <div>
-                    <div class="filter-inline-label">&nbsp;</div>
-                    <input id="filterModifiedTo" type="date" />
-                  </div>
+            <div class="filter-group filter-group--compact">
+              <label for="filterProjectPeriodSearch">Project period</label>
+              <div class="filter-countries filter-periods">
+                <button type="button" id="filterProjectPeriodToggle" class="filter-countries-toggle">
+                  <div id="filterProjectPeriodSummary" class="filter-countries-summary"></div>
+                  <span class="filter-countries-toggle-icon">▾</span>
+                </button>
+                <div id="filterProjectPeriodPopup" class="filter-countries-popup">
+                  <input
+                    id="filterProjectPeriodSearch"
+                    type="text"
+                    placeholder="Search periods..."
+                  />
+                  <div id="filterProjectPeriodList" class="filter-countries-list"></div>
                 </div>
               </div>
             </div>
+          </div>
 
+          <div id="filtersAdvanced" class="filters-advanced">
             <div class="filters-row">
               <div class="filter-group filter-group--compact">
                 <label for="filterImpact">Impact</label>
@@ -185,6 +178,28 @@
                   <option value="">Any</option>
                 </select>
               </div>
+              <div class="filter-group filter-group--compact">
+                <label for="filterStatus">Status</label>
+                <select id="filterStatus">
+                  <option value="">Any</option>
+                  <option value="Not Started">Not Started</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="On Hold">On Hold</option>
+                  <option value="Done">Done</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
+              <div class="filter-group filter-group--compact">
+                <label for="filterTshirtSize">T-shirt size</label>
+                <select id="filterTshirtSize">
+                  <option value="">Any</option>
+                  <option value="XS">XS</option>
+                  <option value="S">S</option>
+                  <option value="M">M</option>
+                  <option value="L">L</option>
+                  <option value="XL">XL</option>
+                </select>
+              </div>
             </div>
           </div>
         </section>
@@ -204,7 +219,7 @@
                 </th>
                 <th data-sort-field="projectType">
                   <button class="sort-button" type="button">
-                    <span>Type</span>
+                    <span>Project type</span>
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
@@ -213,6 +228,9 @@
                     <span>Status</span>
                     <span class="sort-indicator">↕</span>
                   </button>
+                </th>
+                <th>
+                  Project period
                 </th>
                 <th data-sort-field="tshirtSize">
                   <button class="sort-button" type="button">
@@ -246,7 +264,7 @@
             </thead>
             <tbody id="projectsTableBody">
               <tr>
-                <td colspan="10" class="empty-state">
+                <td colspan="11" class="empty-state">
                   Select a profile and add your first project to see it here.
                 </td>
               </tr>
@@ -342,6 +360,11 @@
                   <textarea id="projectDescription" name="projectDescription" placeholder="Long-form context, goals, and scope for this project."></textarea>
                 </div>
               </div>
+              <div class="field-meta-row" id="projectMetaInfo">
+                <span><strong>Created:</strong> <span id="projectMetaCreated">—</span></span>
+                <span><strong>Last modified:</strong> <span id="projectMetaModified">—</span></span>
+                <span><strong>RICE score:</strong> <span id="projectMetaRice">—</span></span>
+              </div>
             </div>
 
             <div class="form-section">
@@ -413,13 +436,12 @@
           <section>
             <div class="form-section">
               <div class="form-section-header">
-                <span class="form-section-title">Optional financial impact</span>
+                <span class="form-section-title">Financial impact (optional)</span>
               </div>
               <div class="form-grid">
                 <div>
-                  <label for="financialImpactValue">Financial impact (optional)</label>
+                  <label for="financialImpactValue">Financial impact</label>
                   <input id="financialImpactValue" name="financialImpactValue" type="number" min="0" step="0.01" placeholder="e.g. 250000" />
-                  <p class="hint-muted">Use your preferred time window (e.g. annualized, first 6 months); this is not used in the RICE formula.</p>
                 </div>
                 <div>
                   <label for="projectCurrency">Currency</label>
@@ -435,51 +457,53 @@
                 <span class="form-section-title">Project metadata</span>
               </div>
 
-              <div class="form-grid form-grid-full">
-                <div class="countries-section">
-                  <label for="projectType">Project type (optional)</label>
-                  <select id="projectType" name="projectType">
-                    <option value="">None</option>
-                    <option value="New Product">New Product</option>
-                    <option value="Improvement">Improvement</option>
-                    <option value="Tech Debt">Tech Debt</option>
-                    <option value="Market Expansion">Market Expansion</option>
-                  </select>
+                <div class="form-grid form-grid-full">
+                  <div class="countries-section">
+                    <label for="projectType">Project type (optional)</label>
+                    <select id="projectType" name="projectType">
+                      <option value="">—</option>
+                      <option value="New Product">New Product</option>
+                      <option value="Improvement">Improvement</option>
+                      <option value="Tech Debt">Tech Debt</option>
+                      <option value="Market Expansion">Market Expansion</option>
+                    </select>
 
-                  <label for="projectStatus" style="margin-top:0.55rem;">Project status</label>
-                  <select id="projectStatus" name="projectStatus">
-                    <option value="">—</option>
-                    <option value="Not Started">Not Started</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="On Hold">On Hold</option>
-                    <option value="Done">Done</option>
-                    <option value="Cancelled">Cancelled</option>
-                  </select>
+                    <label for="projectStatus" style="margin-top:0.55rem;">Project status</label>
+                    <select id="projectStatus" name="projectStatus">
+                      <option value="">—</option>
+                      <option value="Not Started">Not Started</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="On Hold">On Hold</option>
+                      <option value="Done">Done</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
 
-                  <label for="projectTshirtSize" style="margin-top:0.55rem;">T-shirt size</label>
-                  <select id="projectTshirtSize" name="projectTshirtSize">
-                    <option value="">—</option>
-                    <option value="XS">XS</option>
-                    <option value="S">S</option>
-                    <option value="M">M</option>
-                    <option value="L">L</option>
-                    <option value="XL">XL</option>
-                  </select>
+                    <label for="projectTshirtSize" style="margin-top:0.55rem;">T-shirt size</label>
+                    <select id="projectTshirtSize" name="projectTshirtSize">
+                      <option value="">—</option>
+                      <option value="XS">XS</option>
+                      <option value="S">S</option>
+                      <option value="M">M</option>
+                      <option value="L">L</option>
+                      <option value="XL">XL</option>
+                    </select>
 
-                  <label style="margin-top:0.55rem;">Target countries (optional)</label>
-                  <div id="countriesContainer" class="countries-list"></div>
-                  <button type="button" id="addCountryBtn" class="btn-secondary" style="align-self:flex-start;min-height:32px;font-size:0.72rem;padding-inline:0.6rem;margin-top:0.15rem;">
-                    + Add country
-                  </button>
-                  <p class="countries-hint">Use multiple rows to capture all markets this project touches.</p>
+                    <label for="projectPeriod" style="margin-top:0.55rem;">Project period (YYYY-QX)</label>
+                    <input
+                      id="projectPeriod"
+                      name="projectPeriod"
+                      type="text"
+                      placeholder="e.g. 2026-Q1"
+                      pattern="[0-9]{4}-[Qq][1-4]"
+                    />
+
+                    <label style="margin-top:0.55rem;">Target countries (optional)</label>
+                    <div id="countriesContainer" class="countries-list"></div>
+                    <button type="button" id="addCountryBtn" class="btn-secondary" style="align-self:flex-start;min-height:32px;font-size:0.72rem;padding-inline:0.6rem;margin-top:0.15rem;">
+                      + Add country
+                    </button>
+                  </div>
                 </div>
-
-                <div class="field-meta-row" id="projectMetaInfo">
-                  <span><strong>Created:</strong> <span id="projectMetaCreated">—</span></span>
-                  <span><strong>Last modified:</strong> <span id="projectMetaModified">—</span></span>
-                  <span><strong>RICE score:</strong> <span id="projectMetaRice">—</span></span>
-                </div>
-              </div>
             </div>
 
             <div id="projectFormError" class="field-error" role="alert" style="display:none;"></div>
@@ -502,6 +526,96 @@
     style="display:none;"
   />
 
+  <!-- Profile view modal -->
+  <div id="profileViewModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="profileViewModalTitle">
+      <header class="modal-header">
+        <div class="modal-title-group">
+          <h3 id="profileViewModalTitle" class="modal-title">Profile</h3>
+          <p id="profileViewModalSubtitle" class="modal-subtitle">Profile and team details.</p>
+        </div>
+      </header>
+      <div class="modal-body" style="display:block;">
+        <div class="form-section">
+          <div class="form-section-header">
+            <span class="form-section-title">Profile &amp; team</span>
+          </div>
+          <div class="field-meta-row">
+            <span><strong>Profile name:</strong> <span id="profileViewName">—</span></span>
+            <span><strong>Team:</strong> <span id="profileViewTeam">—</span></span>
+          </div>
+        </div>
+        <div class="form-section profile-view-stats-section">
+          <div class="form-section-header">
+            <span class="form-section-title">Profile statistics</span>
+          </div>
+          <div class="profile-view-stats">
+            <div class="profile-view-stat-row">
+              <span class="profile-view-stat-label">Total unique countries</span>
+              <span id="profileViewUniqueCountries" class="profile-view-stat-value">—</span>
+            </div>
+            <div class="profile-view-stat-row">
+              <span class="profile-view-stat-label">Total projects</span>
+              <span id="profileViewTotalProjects" class="profile-view-stat-value">—</span>
+            </div>
+            <div class="profile-view-stat-row profile-view-stat-row-multi">
+              <span class="profile-view-stat-label">By status</span>
+              <div id="profileViewByStatus" class="profile-view-chips"></div>
+            </div>
+            <div class="profile-view-stat-row profile-view-stat-row-multi">
+              <span class="profile-view-stat-label">By project type</span>
+              <div id="profileViewByType" class="profile-view-chips"></div>
+            </div>
+            <div class="profile-view-stat-row profile-view-stat-row-multi">
+              <span class="profile-view-stat-label">By T-shirt size</span>
+              <div id="profileViewByTshirt" class="profile-view-chips"></div>
+            </div>
+            <div class="profile-view-stat-row profile-view-stat-row-multi">
+              <span class="profile-view-stat-label">RICE score</span>
+              <div id="profileViewRiceStats" class="profile-view-rice"></div>
+            </div>
+          </div>
+        </div>
+        <div class="form-actions-row">
+          <button type="button" id="profileViewCloseBtnFooter">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile edit modal -->
+  <div id="profileEditModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="profileEditModalTitle">
+      <header class="modal-header">
+        <div class="modal-title-group">
+          <h3 id="profileEditModalTitle" class="modal-title">Edit profile</h3>
+          <p id="profileEditModalSubtitle" class="modal-subtitle">Update profile name and team.</p>
+        </div>
+      </header>
+      <div class="modal-body" style="display:block;">
+        <div class="form-section">
+          <div class="form-section-header">
+            <span class="form-section-title">Profile &amp; team</span>
+          </div>
+          <div class="form-grid form-grid-full">
+            <div>
+              <label for="profileEditName">Profile name</label>
+              <input id="profileEditName" type="text" placeholder="Profile name" required />
+            </div>
+            <div>
+              <label for="profileEditTeam">Team</label>
+              <input id="profileEditTeam" type="text" placeholder="Team (optional)" />
+            </div>
+          </div>
+        </div>
+        <div class="form-actions-row">
+          <button type="button" class="btn-secondary" id="profileEditCancelBtn">Cancel</button>
+          <button type="button" id="profileEditSaveBtn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Profile delete confirm modal -->
   <div id="profileDeleteModal" class="modal-backdrop" aria-hidden="true">
     <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="profileDeleteModalTitle">
@@ -518,7 +632,7 @@
         </button>
       </header>
 
-      <div class="modal-body" style="display:block;">
+      <div class="modal-body">
         <p class="modal-subtitle" id="profileDeleteWarningText">
           This will permanently remove this profile and all of its projects from this browser. This action cannot be undone.
         </p>
@@ -542,11 +656,11 @@
         </div>
       </header>
 
-      <div class="modal-body" style="display:block;">
+      <div class="modal-body">
         <p class="modal-subtitle" id="projectDeleteWarningText">
           This will permanently remove this project from this profile. This action cannot be undone.
         </p>
-        <div class="form-actions" style="margin-top:1rem;justify-content:flex-end;">
+        <div class="form-actions">
           <button type="button" class="btn-ghost" id="projectDeleteCancelBtn">Keep project</button>
           <button type="button" class="btn-danger" id="projectDeleteConfirmBtn">Delete project</button>
         </div>
