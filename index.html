@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Capture projects across profiles, track reach, impact, confidence, effort, and financial upside, and auto-rank everything by RICE score." />
   <title>Product Management Prioritization Tool</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="css/main.css" rel="stylesheet" />
 </head>
 <body>
@@ -54,10 +57,16 @@
             <label for="newProfileTeam">Team (optional)</label>
             <input id="newProfileTeam" name="newProfileTeam" type="text" placeholder="e.g. Growth, Core PM, Platform" />
           </div>
-          <button type="submit" class="profile-add-btn" aria-label="Add profile" title="Add profile">
-            <svg class="profile-add-btn-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-            <span class="profile-add-btn-text">Add</span>
-          </button>
+          <div class="profile-icon-wrap">
+            <button type="submit" class="profile-add-btn" aria-label="Add profile">
+              <svg class="profile-add-btn-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              <span class="profile-add-btn-text">Add</span>
+            </button>
+            <div class="cell-type-tooltip">
+              <div class="cell-type-tooltip-title">Add profile</div>
+              <div class="cell-type-tooltip-body">Create a new profile to organize projects.</div>
+            </div>
+          </div>
         </form>
 
         <ul id="profileList" class="profiles-list" aria-label="Profiles list"></ul>
@@ -75,6 +84,10 @@
             <div class="projects-header-badges" id="projectsHeaderBadges"></div>
           </div>
           <div class="projects-header-actions">
+            <div class="view-toggle-group" role="tablist" aria-label="Projects view">
+              <button type="button" id="projectsViewTableBtn" class="view-toggle-btn view-toggle-btn--active" role="tab" aria-selected="true" data-view="table">Table</button>
+              <button type="button" id="projectsViewBoardBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="board">Board</button>
+            </div>
             <button type="button" id="addProjectBtn" disabled>
               + Project
             </button>
@@ -88,7 +101,7 @@
           <div class="filters-header">
             <div>
               <div class="filters-title">Filters</div>
-              <div class="filters-quick-label">Tune what’s visible in your RICE table.</div>
+              <div class="filters-quick-label">Tune what’s visible in your table and board.</div>
             </div>
             <div class="filters-meta">
               <span id="filtersActivePill" class="filters-active-pill" style="display:none;"></span>
@@ -204,6 +217,7 @@
           </div>
         </section>
 
+        <div id="projectsTableView" class="projects-view projects-view--table">
         <div class="table-wrapper" aria-label="Projects table">
           <table>
             <thead>
@@ -270,6 +284,18 @@
               </tr>
             </tbody>
           </table>
+        </div>
+        </div>
+
+        <div id="projectsBoardView" class="projects-view projects-view--board" aria-hidden="true" style="display:none;">
+          <div class="scrum-board-toolbar">
+            <div id="scrumBoardLegend" class="scrum-board-legend" aria-label="Status color legend"></div>
+            <label class="scrum-board-sort-toggle" for="scrumBoardSortByRiceToggle">
+              <input type="checkbox" id="scrumBoardSortByRiceToggle" checked aria-describedby="scrumBoardSortByRiceLabel" />
+              <span id="scrumBoardSortByRiceLabel">Sort by RICE (desc)</span>
+            </label>
+          </div>
+          <div id="scrumBoardContainer" class="scrum-board" aria-label="Scrum board"></div>
         </div>
       </section>
     </main>
@@ -351,13 +377,21 @@
                 <span class="form-section-title">Project overview</span>
               </div>
               <div class="form-grid form-grid-full">
-                <div>
+                <div class="project-field-tooltip-wrap">
                   <label for="projectTitle">Title</label>
                   <input id="projectTitle" name="projectTitle" type="text" placeholder="e.g. Onboarding email sequence revamp" required />
+                  <div class="cell-type-tooltip">
+                    <div class="cell-type-tooltip-title">Title</div>
+                    <div class="cell-type-tooltip-body">Short name for the project.</div>
+                  </div>
                 </div>
-                <div>
+                <div class="project-field-tooltip-wrap">
                   <label for="projectDescription">Description</label>
                   <textarea id="projectDescription" name="projectDescription" placeholder="Long-form context, goals, and scope for this project."></textarea>
+                  <div class="cell-type-tooltip">
+                    <div class="cell-type-tooltip-title">Description</div>
+                    <div class="cell-type-tooltip-body">Long-form context, goals, and scope. Shown in table tooltip.</div>
+                  </div>
                 </div>
               </div>
               <div class="field-meta-row" id="projectMetaInfo">
@@ -374,22 +408,34 @@
               </div>
 
               <div class="form-grid">
-                <div>
+                <div class="project-field-tooltip-wrap">
                   <label for="reachDescription">Reach description</label>
                   <textarea id="reachDescription" name="reachDescription" placeholder="Who will this affect, and over what period?"></textarea>
+                  <div class="cell-type-tooltip">
+                    <div class="cell-type-tooltip-title">Reach description</div>
+                    <div class="cell-type-tooltip-body">Who will this affect, and over what period?</div>
+                  </div>
                 </div>
-                <div>
+                <div class="project-field-tooltip-wrap">
                   <label for="reachValue">Reach value (integer)</label>
                   <input id="reachValue" name="reachValue" type="number" min="0" step="1" placeholder="e.g. 1200" required />
+                  <div class="cell-type-tooltip">
+                    <div class="cell-type-tooltip-title">Reach value</div>
+                    <div class="cell-type-tooltip-body">Numeric reach (e.g. users or events per quarter). Used in RICE.</div>
+                  </div>
                 </div>
               </div>
 
               <div class="form-grid">
-                <div>
+                <div class="project-field-tooltip-wrap">
                   <label for="impactDescription">Impact description</label>
                   <textarea id="impactDescription" name="impactDescription" placeholder="How much will this move your core metric per user?"></textarea>
+                  <div class="cell-type-tooltip">
+                    <div class="cell-type-tooltip-title">Impact description</div>
+                    <div class="cell-type-tooltip-body">How much this moves your core metric per user.</div>
+                  </div>
                 </div>
-                <div>
+                <div class="project-field-tooltip-wrap">
                   <label for="impactValue">Impact (1–5)</label>
                   <select id="impactValue" name="impactValue" required>
                     <option value="">Select impact</option>
@@ -399,26 +445,42 @@
                     <option value="4">4 – High</option>
                     <option value="5">5 – Massive</option>
                   </select>
+                  <div class="cell-type-tooltip">
+                    <div class="cell-type-tooltip-title">Impact (1–5)</div>
+                    <div class="cell-type-tooltip-body">1 = Minimal, 5 = Massive. Effect per user. Used in RICE.</div>
+                  </div>
                 </div>
               </div>
 
               <div class="form-grid">
-                <div>
+                <div class="project-field-tooltip-wrap">
                   <label for="confidenceDescription">Confidence description</label>
                   <textarea id="confidenceDescription" name="confidenceDescription" placeholder="Why do you believe this will work? Link data, experiments, or bets."></textarea>
+                  <div class="cell-type-tooltip">
+                    <div class="cell-type-tooltip-title">Confidence description</div>
+                    <div class="cell-type-tooltip-body">Why you believe this will work; link data, experiments, or bets.</div>
+                  </div>
                 </div>
-                <div>
+                <div class="project-field-tooltip-wrap">
                   <label for="confidenceValue">Confidence (% 0–100)</label>
                   <input id="confidenceValue" name="confidenceValue" type="number" min="0" max="100" step="1" placeholder="e.g. 80" required />
+                  <div class="cell-type-tooltip">
+                    <div class="cell-type-tooltip-title">Confidence (% 0–100)</div>
+                    <div class="cell-type-tooltip-body">Percentage certainty. Used in RICE (normalized to 0–1 when &gt; 1).</div>
+                  </div>
                 </div>
               </div>
 
               <div class="form-grid">
-                <div>
+                <div class="project-field-tooltip-wrap">
                   <label for="effortDescription">Effort description</label>
                   <textarea id="effortDescription" name="effortDescription" placeholder="Rough sizing: people × weeks, dependencies, and complexity."></textarea>
+                  <div class="cell-type-tooltip">
+                    <div class="cell-type-tooltip-title">Effort description</div>
+                    <div class="cell-type-tooltip-body">Rough sizing: people × weeks, dependencies, and complexity.</div>
+                  </div>
                 </div>
-                <div>
+                <div class="project-field-tooltip-wrap">
                   <label for="effortValue">Effort (1–5)</label>
                   <select id="effortValue" name="effortValue" required>
                     <option value="">Select effort</option>
@@ -428,6 +490,10 @@
                     <option value="4">4 – Large</option>
                     <option value="5">5 – Huge</option>
                   </select>
+                  <div class="cell-type-tooltip">
+                    <div class="cell-type-tooltip-title">Effort (1–5)</div>
+                    <div class="cell-type-tooltip-body">1 = Tiny, 5 = Huge. Used as divisor in RICE formula.</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -439,15 +505,23 @@
                 <span class="form-section-title">Financial impact (optional)</span>
               </div>
               <div class="form-grid">
-                <div>
+                <div class="project-field-tooltip-wrap">
                   <label for="financialImpactValue">Financial impact</label>
                   <input id="financialImpactValue" name="financialImpactValue" type="number" min="0" step="0.01" placeholder="e.g. 250000" />
+                  <div class="cell-type-tooltip">
+                    <div class="cell-type-tooltip-title">Financial impact</div>
+                    <div class="cell-type-tooltip-body">Optional revenue or cost impact. Not used in RICE score.</div>
+                  </div>
                 </div>
-                <div>
+                <div class="project-field-tooltip-wrap">
                   <label for="projectCurrency">Currency</label>
                   <select id="projectCurrency" name="projectCurrency">
                     <option value="">None / not set</option>
                   </select>
+                  <div class="cell-type-tooltip">
+                    <div class="cell-type-tooltip-title">Currency</div>
+                    <div class="cell-type-tooltip-body">Currency for the financial impact value.</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -459,49 +533,79 @@
 
                 <div class="form-grid form-grid-full">
                   <div class="countries-section">
-                    <label for="projectType">Project type (optional)</label>
-                    <select id="projectType" name="projectType">
-                      <option value="">—</option>
-                      <option value="New Product">New Product</option>
-                      <option value="Improvement">Improvement</option>
-                      <option value="Tech Debt">Tech Debt</option>
-                      <option value="Market Expansion">Market Expansion</option>
-                    </select>
+                    <div class="project-field-tooltip-wrap">
+                      <label for="projectType">Project type (optional)</label>
+                      <select id="projectType" name="projectType">
+                        <option value="">—</option>
+                        <option value="New Product">New Product</option>
+                        <option value="Improvement">Improvement</option>
+                        <option value="Tech Debt">Tech Debt</option>
+                        <option value="Market Expansion">Market Expansion</option>
+                      </select>
+                      <div class="cell-type-tooltip">
+                        <div class="cell-type-tooltip-title">Project type</div>
+                        <div class="cell-type-tooltip-body">Category: New Product, Improvement, Tech Debt, Market Expansion.</div>
+                      </div>
+                    </div>
 
-                    <label for="projectStatus" style="margin-top:0.55rem;">Project status</label>
-                    <select id="projectStatus" name="projectStatus">
-                      <option value="">—</option>
-                      <option value="Not Started">Not Started</option>
-                      <option value="In Progress">In Progress</option>
-                      <option value="On Hold">On Hold</option>
-                      <option value="Done">Done</option>
-                      <option value="Cancelled">Cancelled</option>
-                    </select>
+                    <div class="project-field-tooltip-wrap" style="margin-top:0.55rem;">
+                      <label for="projectStatus">Project status</label>
+                      <select id="projectStatus" name="projectStatus">
+                        <option value="">—</option>
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="On Hold">On Hold</option>
+                        <option value="Done">Done</option>
+                        <option value="Cancelled">Cancelled</option>
+                      </select>
+                      <div class="cell-type-tooltip">
+                        <div class="cell-type-tooltip-title">Project status</div>
+                        <div class="cell-type-tooltip-body">Current state: Not Started, In Progress, On Hold, Done, or Cancelled.</div>
+                      </div>
+                    </div>
 
-                    <label for="projectTshirtSize" style="margin-top:0.55rem;">T-shirt size</label>
-                    <select id="projectTshirtSize" name="projectTshirtSize">
-                      <option value="">—</option>
-                      <option value="XS">XS</option>
-                      <option value="S">S</option>
-                      <option value="M">M</option>
-                      <option value="L">L</option>
-                      <option value="XL">XL</option>
-                    </select>
+                    <div class="project-field-tooltip-wrap" style="margin-top:0.55rem;">
+                      <label for="projectTshirtSize">T-shirt size</label>
+                      <select id="projectTshirtSize" name="projectTshirtSize">
+                        <option value="">—</option>
+                        <option value="XS">XS</option>
+                        <option value="S">S</option>
+                        <option value="M">M</option>
+                        <option value="L">L</option>
+                        <option value="XL">XL</option>
+                      </select>
+                      <div class="cell-type-tooltip">
+                        <div class="cell-type-tooltip-title">T-shirt size</div>
+                        <div class="cell-type-tooltip-body">Relative size from XS to XL for planning.</div>
+                      </div>
+                    </div>
 
-                    <label for="projectPeriod" style="margin-top:0.55rem;">Project period (YYYY-QX)</label>
-                    <input
-                      id="projectPeriod"
-                      name="projectPeriod"
-                      type="text"
-                      placeholder="e.g. 2026-Q1"
-                      pattern="[0-9]{4}-[Qq][1-4]"
-                    />
+                    <div class="project-field-tooltip-wrap" style="margin-top:0.55rem;">
+                      <label for="projectPeriod">Project period (YYYY-QX)</label>
+                      <input
+                        id="projectPeriod"
+                        name="projectPeriod"
+                        type="text"
+                        placeholder="e.g. 2026-Q1"
+                        pattern="[0-9]{4}-[Qq][1-4]"
+                      />
+                      <div class="cell-type-tooltip">
+                        <div class="cell-type-tooltip-title">Project period</div>
+                        <div class="cell-type-tooltip-body">Quarter (e.g. 2026-Q1) for planning and filtering.</div>
+                      </div>
+                    </div>
 
-                    <label style="margin-top:0.55rem;">Target countries (optional)</label>
-                    <div id="countriesContainer" class="countries-list"></div>
-                    <button type="button" id="addCountryBtn" class="btn-secondary" style="align-self:flex-start;min-height:32px;font-size:0.72rem;padding-inline:0.6rem;margin-top:0.15rem;">
-                      + Add country
-                    </button>
+                    <div class="project-field-tooltip-wrap" style="margin-top:0.55rem;">
+                      <label style="margin-top:0;">Target countries (optional)</label>
+                      <div id="countriesContainer" class="countries-list"></div>
+                      <button type="button" id="addCountryBtn" class="btn-secondary" style="align-self:flex-start;min-height:32px;font-size:0.72rem;padding-inline:0.6rem;margin-top:0.15rem;">
+                        + Add country
+                      </button>
+                      <div class="cell-type-tooltip">
+                        <div class="cell-type-tooltip-title">Target countries</div>
+                        <div class="cell-type-tooltip-body">Countries this project applies to. Used for filtering.</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
             </div>

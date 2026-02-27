@@ -17,7 +17,9 @@ let state = {
   profiles: [],
   activeProfileId: null,
   sortField: "createdAt",
-  sortDirection: "desc"
+  sortDirection: "desc",
+  projectsView: "table",
+  scrumBoardSortByRice: true
 };
 
 let editingProjectId = null;
@@ -44,6 +46,9 @@ function init() {
   ensureDefaultProfile();
   renderProfiles();
   renderProjects();
+  if (elements.projectsTableView && elements.projectsBoardView) {
+    switchProjectsView(state.projectsView);
+  }
 }
 
 function cacheElements() {
@@ -74,6 +79,13 @@ function cacheElements() {
 
   elements.projectsTableBody = $("projectsTableBody");
   elements.selectAllProjects = $("selectAllProjects");
+  elements.projectsViewTableBtn = $("projectsViewTableBtn");
+  elements.projectsViewBoardBtn = $("projectsViewBoardBtn");
+  elements.projectsTableView = $("projectsTableView");
+  elements.projectsBoardView = $("projectsBoardView");
+  elements.scrumBoardContainer = $("scrumBoardContainer");
+  elements.scrumBoardLegend = $("scrumBoardLegend");
+  elements.scrumBoardSortByRiceToggle = $("scrumBoardSortByRiceToggle");
 
   elements.projectModal = $("projectModal");
   elements.projectModalTitle = $("projectModalTitle");
@@ -273,6 +285,21 @@ function attachEventListeners() {
   });
 
   elements.bulkDeleteBtn.addEventListener("click", handleBulkDelete);
+
+  if (elements.projectsViewTableBtn) {
+    elements.projectsViewTableBtn.addEventListener("click", () => switchProjectsView("table"));
+  }
+  if (elements.projectsViewBoardBtn) {
+    elements.projectsViewBoardBtn.addEventListener("click", () => switchProjectsView("board"));
+  }
+
+  if (elements.scrumBoardSortByRiceToggle) {
+    elements.scrumBoardSortByRiceToggle.addEventListener("change", () => {
+      state.scrumBoardSortByRice = elements.scrumBoardSortByRiceToggle.checked;
+      saveState();
+      if (state.projectsView === "board") renderScrumBoard();
+    });
+  }
 
   // --- Data export / import: main toolbar buttons ---
   // Export and Import both open a simple format chooser (JSON or CSV).
@@ -581,6 +608,37 @@ function attachEventListeners() {
     tableWrapper.addEventListener("scroll", () => {
       document.body.classList.add("cell-type-tooltip-hidden");
     }, { passive: true });
+  }
+
+  document.body.addEventListener("mouseenter", (e) => {
+    const wrap = e.target.closest(".profile-icon-wrap");
+    if (!wrap) return;
+    positionProfileTooltip(wrap);
+  }, true);
+
+  document.body.addEventListener("focusin", (e) => {
+    const wrap = e.target.closest(".profile-icon-wrap");
+    if (!wrap) return;
+    positionProfileTooltip(wrap);
+  }, true);
+
+  if (elements.profileList) {
+    elements.profileList.addEventListener("scroll", () => {
+      document.body.classList.add("cell-type-tooltip-hidden");
+    }, { passive: true });
+  }
+
+  if (elements.projectModal) {
+    elements.projectModal.addEventListener("mouseenter", (e) => {
+      const wrap = e.target.closest(".project-field-tooltip-wrap");
+      if (!wrap) return;
+      positionProfileTooltip(wrap);
+    }, true);
+    elements.projectModal.addEventListener("focusin", (e) => {
+      const wrap = e.target.closest(".project-field-tooltip-wrap");
+      if (!wrap) return;
+      positionProfileTooltip(wrap);
+    }, true);
   }
 
   const headerCells = document.querySelectorAll("th[data-sort-field]");
@@ -1239,12 +1297,14 @@ function loadState() {
       const projects = Array.isArray(p.projects)
         ? p.projects.map(normalizeLoadedProject).filter(Boolean)
         : [];
+      const boardOrder = p.boardOrder && typeof p.boardOrder === "object" ? p.boardOrder : {};
       return {
         id: typeof p.id === "string" && p.id.trim() ? p.id.trim() : generateId("profile"),
         name: String(p.name || "Unnamed profile"),
         team: String(p.team || ""),
         createdAt: p.createdAt || new Date().toISOString(),
-        projects
+        projects,
+        boardOrder
       };
     });
 
@@ -1258,6 +1318,12 @@ function loadState() {
 
     state.sortField = !Array.isArray(parsed) && parsed.sortField ? parsed.sortField : "createdAt";
     state.sortDirection = !Array.isArray(parsed) && parsed.sortDirection ? parsed.sortDirection : "desc";
+    if (!Array.isArray(parsed) && (parsed.projectsView === "table" || parsed.projectsView === "board")) {
+      state.projectsView = parsed.projectsView;
+    }
+    if (!Array.isArray(parsed) && typeof parsed.scrumBoardSortByRice === "boolean") {
+      state.scrumBoardSortByRice = parsed.scrumBoardSortByRice;
+    }
   } catch (err) {
     console.error("Failed to load stored state", err);
   }
@@ -1305,7 +1371,9 @@ function saveState() {
     profiles: state.profiles,
     activeProfileId: state.activeProfileId,
     sortField: state.sortField,
-    sortDirection: state.sortDirection
+    sortDirection: state.sortDirection,
+    projectsView: state.projectsView,
+    scrumBoardSortByRice: state.scrumBoardSortByRice
   };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
@@ -1370,6 +1438,76 @@ function getProfileIconSvg(iconName) {
   return icons[iconName] || "";
 }
 
+function createProfileButtonTooltip(titleText, bodyText) {
+  const tooltip = document.createElement("div");
+  tooltip.className = "cell-type-tooltip";
+  const titleEl = document.createElement("div");
+  titleEl.className = "cell-type-tooltip-title";
+  titleEl.textContent = titleText;
+  tooltip.appendChild(titleEl);
+  if (bodyText) {
+    const bodyEl = document.createElement("div");
+    bodyEl.className = "cell-type-tooltip-body";
+    bodyEl.textContent = bodyText;
+    tooltip.appendChild(bodyEl);
+  }
+  return tooltip;
+}
+
+function positionProfileTooltip(wrap) {
+  const tooltip = wrap.querySelector(".cell-type-tooltip");
+  if (!tooltip) return;
+  document.body.classList.remove("cell-type-tooltip-hidden");
+
+  let rect;
+  if (wrap.classList.contains("project-field-tooltip-wrap")) {
+    const control = wrap.querySelector("input, select, textarea");
+    rect = control ? control.getBoundingClientRect() : wrap.getBoundingClientRect();
+  } else {
+    rect = wrap.getBoundingClientRect();
+  }
+
+  const viewportHeight = window.innerHeight;
+  const viewportWidth = window.innerWidth;
+  const spaceAbove = rect.top;
+  const spaceBelow = viewportHeight - rect.bottom;
+  const minSpace = 200;
+  let showBelow;
+  if (spaceBelow < minSpace && spaceAbove > spaceBelow) {
+    showBelow = false;
+  } else if (spaceAbove < minSpace && spaceBelow > spaceAbove) {
+    showBelow = true;
+  } else {
+    showBelow = spaceBelow >= spaceAbove;
+  }
+
+  const centerX = rect.left + rect.width / 2;
+  tooltip.style.left = centerX + "px";
+
+  if (showBelow) {
+    tooltip.classList.add("cell-type-tooltip--below");
+    tooltip.style.top = (rect.bottom + 8) + "px";
+  } else {
+    tooltip.classList.remove("cell-type-tooltip--below");
+    tooltip.style.top = (rect.top - 8) + "px";
+  }
+
+  if (wrap.classList.contains("project-field-tooltip-wrap")) {
+    tooltip.classList.add("cell-type-tooltip--field");
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const minMargin = 12;
+    let left = centerX;
+    if (centerX - tooltipRect.width / 2 < minMargin) {
+      left = minMargin + tooltipRect.width / 2;
+    } else if (centerX + tooltipRect.width / 2 > viewportWidth - minMargin) {
+      left = viewportWidth - minMargin - tooltipRect.width / 2;
+    }
+    tooltip.style.left = left + "px";
+  } else {
+    tooltip.classList.remove("cell-type-tooltip--field");
+  }
+}
+
 function renderProfiles() {
   const { profiles, activeProfileId } = state;
 
@@ -1414,41 +1552,50 @@ function renderProfiles() {
       const actions = document.createElement("div");
       actions.className = "profile-item-actions";
 
+      const viewWrap = document.createElement("div");
+      viewWrap.className = "profile-icon-wrap";
       const viewBtn = document.createElement("button");
       viewBtn.type = "button";
       viewBtn.className = "profile-icon-btn profile-icon-btn--view";
       viewBtn.setAttribute("aria-label", "View profile");
-      viewBtn.title = "View profile";
       viewBtn.innerHTML = getProfileIconSvg("view");
       viewBtn.addEventListener("click", (event) => {
         event.stopPropagation();
         openProfileViewModal(profile.id);
       });
-      actions.appendChild(viewBtn);
+      viewWrap.appendChild(viewBtn);
+      viewWrap.appendChild(createProfileButtonTooltip("View profile", "Open profile details and statistics"));
+      actions.appendChild(viewWrap);
 
+      const editWrap = document.createElement("div");
+      editWrap.className = "profile-icon-wrap";
       const editBtn = document.createElement("button");
       editBtn.type = "button";
       editBtn.className = "profile-icon-btn profile-icon-btn--edit";
       editBtn.setAttribute("aria-label", "Edit profile");
-      editBtn.title = "Edit profile";
       editBtn.innerHTML = getProfileIconSvg("edit");
       editBtn.addEventListener("click", (event) => {
         event.stopPropagation();
         openProfileEditModal(profile.id);
       });
-      actions.appendChild(editBtn);
+      editWrap.appendChild(editBtn);
+      editWrap.appendChild(createProfileButtonTooltip("Edit profile", "Change profile name and team"));
+      actions.appendChild(editWrap);
 
+      const deleteWrap = document.createElement("div");
+      deleteWrap.className = "profile-icon-wrap";
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
       deleteBtn.className = "profile-icon-btn profile-icon-btn--danger";
       deleteBtn.setAttribute("aria-label", "Delete profile and all its projects");
-      deleteBtn.title = "Delete profile and all its projects";
       deleteBtn.innerHTML = getProfileIconSvg("trash");
       deleteBtn.addEventListener("click", (event) => {
         event.stopPropagation();
         deleteProfile(profile.id);
       });
-      actions.appendChild(deleteBtn);
+      deleteWrap.appendChild(deleteBtn);
+      deleteWrap.appendChild(createProfileButtonTooltip("Delete profile", "Remove this profile and all its projects permanently"));
+      actions.appendChild(deleteWrap);
 
       row.appendChild(btn);
       row.appendChild(actions);
@@ -1904,7 +2051,314 @@ function renderProjects() {
   syncHeaderCheckbox();
   updateBulkDeleteButton();
   updateSortIndicators();
-  renderProfiles();
+  if (state.projectsView === "board" && elements.scrumBoardContainer) {
+    renderScrumBoard();
+  }
+}
+
+function switchProjectsView(view) {
+  state.projectsView = view;
+  saveState();
+  if (!elements.projectsTableView || !elements.projectsBoardView) return;
+  if (view === "table") {
+    elements.projectsTableView.style.display = "";
+    elements.projectsBoardView.style.display = "none";
+    elements.projectsBoardView.setAttribute("aria-hidden", "true");
+    if (elements.projectsViewTableBtn) {
+      elements.projectsViewTableBtn.classList.add("view-toggle-btn--active");
+      elements.projectsViewTableBtn.setAttribute("aria-selected", "true");
+    }
+    if (elements.projectsViewBoardBtn) {
+      elements.projectsViewBoardBtn.classList.remove("view-toggle-btn--active");
+      elements.projectsViewBoardBtn.setAttribute("aria-selected", "false");
+    }
+  } else {
+    elements.projectsTableView.style.display = "none";
+    elements.projectsBoardView.style.display = "flex";
+    elements.projectsBoardView.setAttribute("aria-hidden", "false");
+    if (elements.projectsViewBoardBtn) {
+      elements.projectsViewBoardBtn.classList.add("view-toggle-btn--active");
+      elements.projectsViewBoardBtn.setAttribute("aria-selected", "true");
+    }
+    if (elements.projectsViewTableBtn) {
+      elements.projectsViewTableBtn.classList.remove("view-toggle-btn--active");
+      elements.projectsViewTableBtn.setAttribute("aria-selected", "false");
+    }
+    renderScrumBoard();
+  }
+}
+
+function renderScrumBoard() {
+  if (!elements.scrumBoardContainer) return;
+  const activeProfile = getActiveProfile();
+  elements.scrumBoardContainer.innerHTML = "";
+
+  if (elements.scrumBoardSortByRiceToggle) {
+    elements.scrumBoardSortByRiceToggle.checked = state.scrumBoardSortByRice;
+  }
+
+  if (elements.scrumBoardLegend) {
+    elements.scrumBoardLegend.innerHTML = "";
+    if (activeProfile) {
+      const legendLabel = document.createElement("span");
+      legendLabel.className = "scrum-board-legend-label";
+      legendLabel.textContent = "Status:";
+      elements.scrumBoardLegend.appendChild(legendLabel);
+      projectStatusList.forEach((status) => {
+        const pill = document.createElement("span");
+        pill.className = "cell-type-pill";
+        pill.setAttribute("data-status", status);
+        pill.textContent = status;
+        elements.scrumBoardLegend.appendChild(pill);
+      });
+    }
+  }
+
+  if (!activeProfile) {
+    elements.scrumBoardContainer.innerHTML = '<div class="scrum-board-empty">Select a profile to see the Scrum board.</div>';
+    return;
+  }
+
+  const baseProjects = activeProfile.projects.slice();
+  baseProjects.forEach((p) => {
+    p.riceScore = calculateRiceScore(p);
+  });
+  initFilterProjectPeriodOptions(baseProjects);
+  const projects = applyFilters(baseProjects);
+
+  const byStatus = {};
+  projectStatusList.forEach((status) => {
+    byStatus[status] = [];
+  });
+  projects.forEach((p) => {
+    const status = (p.projectStatus || "Not Started").toString().trim();
+    if (!byStatus[status]) byStatus[status] = [];
+    byStatus[status].push(p);
+  });
+
+  if (!state.scrumBoardSortByRice && activeProfile) {
+    activeProfile.boardOrder = activeProfile.boardOrder || {};
+    projectStatusList.forEach((status) => {
+      const list = byStatus[status] || [];
+      const orderIds = activeProfile.boardOrder[status];
+      if (orderIds && Array.isArray(orderIds) && orderIds.length > 0) {
+        const byId = new Map(list.map((p) => [p.id, p]));
+        const ordered = [];
+        for (const id of orderIds) {
+          if (byId.has(id)) {
+            ordered.push(byId.get(id));
+            byId.delete(id);
+          }
+        }
+        byId.forEach((p) => ordered.push(p));
+        byStatus[status] = ordered;
+      }
+    });
+  }
+
+  projectStatusList.forEach((status) => {
+    const list = byStatus[status] || [];
+    if (state.scrumBoardSortByRice) {
+      list.sort((a, b) => {
+        const scoreA = a.riceScore != null ? a.riceScore : calculateRiceScore(a);
+        const scoreB = b.riceScore != null ? b.riceScore : calculateRiceScore(b);
+        return scoreB - scoreA;
+      });
+    }
+  });
+
+  projectStatusList.forEach((status) => {
+    const column = document.createElement("div");
+    column.className = "scrum-board-column";
+    column.setAttribute("data-status", status);
+    column.setAttribute("role", "region");
+    column.setAttribute("aria-label", "Column: " + status);
+
+    const header = document.createElement("div");
+    header.className = "scrum-board-column-header";
+    const title = document.createElement("h4");
+    title.className = "scrum-board-column-title";
+    title.textContent = status;
+    const count = document.createElement("span");
+    count.className = "scrum-board-column-count";
+    count.textContent = String((byStatus[status] || []).length);
+    header.appendChild(title);
+    header.appendChild(count);
+    column.appendChild(header);
+
+    const cardsContainer = document.createElement("div");
+    cardsContainer.className = "scrum-board-column-cards";
+
+    (byStatus[status] || []).forEach((project) => {
+      const card = document.createElement("div");
+      card.className = "scrum-board-card";
+      card.setAttribute("draggable", "true");
+      card.setAttribute("data-project-id", project.id);
+      card.setAttribute("role", "button");
+      card.setAttribute("tabindex", "0");
+      card.setAttribute("aria-label", "Project: " + (project.title || "Untitled") + ". Drag to change status.");
+
+      const titleEl = document.createElement("div");
+      titleEl.className = "scrum-board-card-title";
+      titleEl.textContent = project.title || "Untitled";
+      card.appendChild(titleEl);
+
+      const meta = document.createElement("div");
+      meta.className = "scrum-board-card-meta";
+      const metaLeft = document.createElement("span");
+      metaLeft.className = "scrum-board-card-meta-left";
+      const rice = document.createElement("span");
+      rice.className = "scrum-board-card-rice";
+      rice.textContent = "RICE " + formatRice(project.riceScore != null ? project.riceScore : calculateRiceScore(project));
+      metaLeft.appendChild(rice);
+      if (project.tshirtSize) {
+        const sizeSpan = document.createElement("span");
+        sizeSpan.textContent = project.tshirtSize;
+        metaLeft.appendChild(sizeSpan);
+      }
+      meta.appendChild(metaLeft);
+      if (project.projectType) {
+        const typeMeta = projectTypeIcons && projectTypeIcons[project.projectType];
+        const typeWrap = document.createElement("span");
+        typeWrap.className = "scrum-board-card-type-wrap";
+        typeWrap.setAttribute("role", "img");
+        typeWrap.setAttribute("aria-label", project.projectType);
+        if (typeMeta && typeMeta.svg) {
+          typeWrap.innerHTML = typeMeta.svg;
+          const tooltipText = [typeMeta.tooltipTitle, typeMeta.tooltipBody].filter(Boolean).join(" — ");
+          if (tooltipText) typeWrap.setAttribute("title", tooltipText);
+        } else {
+          typeWrap.textContent = project.projectType;
+        }
+        meta.appendChild(typeWrap);
+      }
+      card.appendChild(meta);
+
+      card.addEventListener("click", (e) => {
+        if (e.target.closest("button")) return;
+        openProjectModal("view", project.id);
+      });
+
+      cardsContainer.appendChild(card);
+    });
+
+    column.appendChild(cardsContainer);
+    elements.scrumBoardContainer.appendChild(column);
+  });
+
+  bindScrumBoardDragAndDrop();
+}
+
+function bindScrumBoardDragAndDrop() {
+  if (!elements.scrumBoardContainer) return;
+  const cards = elements.scrumBoardContainer.querySelectorAll(".scrum-board-card");
+  const columns = elements.scrumBoardContainer.querySelectorAll(".scrum-board-column");
+
+  let draggedCard = null;
+  let draggedProjectId = null;
+  let dropColumn = null;
+  let dropIndex = 0;
+
+  cards.forEach((card) => {
+    card.addEventListener("dragstart", (e) => {
+      draggedCard = card;
+      draggedProjectId = card.getAttribute("data-project-id");
+      card.classList.add("scrum-board-card--dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", draggedProjectId);
+      e.dataTransfer.setData("application/x-project-id", draggedProjectId);
+    });
+
+    card.addEventListener("dragend", () => {
+      if (draggedCard) draggedCard.classList.remove("scrum-board-card--dragging");
+      draggedCard = null;
+      draggedProjectId = null;
+      dropColumn = null;
+      columns.forEach((col) => col.classList.remove("scrum-board-column--drag-over"));
+    });
+  });
+
+  columns.forEach((column) => {
+    column.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      if (!draggedProjectId) return;
+      const status = column.getAttribute("data-status");
+      const cardInColumn = column.querySelector(`[data-project-id="${draggedProjectId}"]`);
+      if (!cardInColumn) column.classList.add("scrum-board-column--drag-over");
+      dropColumn = column;
+      const cardsContainer = column.querySelector(".scrum-board-column-cards");
+      const columnCards = cardsContainer ? Array.from(cardsContainer.querySelectorAll(".scrum-board-card")) : [];
+      if (columnCards.length === 0) {
+        dropIndex = 0;
+      } else {
+        const rect = cardsContainer.getBoundingClientRect();
+        const y = e.clientY - rect.top;
+        dropIndex = columnCards.length;
+        for (let i = 0; i < columnCards.length; i++) {
+          const cardRect = columnCards[i].getBoundingClientRect();
+          const cardMid = (cardRect.top + cardRect.bottom) / 2 - rect.top;
+          if (y < cardMid) {
+            dropIndex = i;
+            break;
+          }
+        }
+      }
+    });
+
+    column.addEventListener("dragleave", (e) => {
+      if (!column.contains(e.relatedTarget)) column.classList.remove("scrum-board-column--drag-over");
+    });
+
+    column.addEventListener("drop", (e) => {
+      e.preventDefault();
+      column.classList.remove("scrum-board-column--drag-over");
+      if (!draggedProjectId) return;
+      const newStatus = column.getAttribute("data-status");
+      const activeProfile = getActiveProfile();
+      if (!activeProfile) return;
+      const project = activeProfile.projects.find((p) => p.id === draggedProjectId);
+      if (!project) return;
+      const currentStatus = (project.projectStatus || "Not Started").toString().trim();
+
+      if (currentStatus === newStatus) {
+        if (!state.scrumBoardSortByRice && dropColumn) {
+          const cardsContainer = dropColumn.querySelector(".scrum-board-column-cards");
+          const columnCards = cardsContainer ? Array.from(cardsContainer.querySelectorAll(".scrum-board-card")) : [];
+          const orderWithoutDragged = columnCards
+            .map((c) => c.getAttribute("data-project-id"))
+            .filter((id) => id !== draggedProjectId);
+          const idx = Math.min(dropIndex, orderWithoutDragged.length);
+          const newOrder = orderWithoutDragged.slice();
+          newOrder.splice(idx, 0, draggedProjectId);
+          activeProfile.boardOrder = activeProfile.boardOrder || {};
+          activeProfile.boardOrder[newStatus] = newOrder;
+          saveState();
+          renderScrumBoard();
+          renderProjects();
+        }
+        return;
+      }
+
+      project.projectStatus = newStatus;
+      project.modifiedAt = new Date().toISOString();
+
+      if (!state.scrumBoardSortByRice && dropColumn) {
+        const cardsContainer = dropColumn.querySelector(".scrum-board-column-cards");
+        const columnCards = cardsContainer ? Array.from(cardsContainer.querySelectorAll(".scrum-board-card")) : [];
+        const currentIds = columnCards.map((c) => c.getAttribute("data-project-id"));
+        const idx = Math.min(dropIndex, currentIds.length);
+        const newOrder = currentIds.slice();
+        newOrder.splice(idx, 0, draggedProjectId);
+        activeProfile.boardOrder = activeProfile.boardOrder || {};
+        activeProfile.boardOrder[newStatus] = newOrder;
+      }
+
+      saveState();
+      renderScrumBoard();
+      renderProjects();
+    });
+  });
 }
 
 function applyFilters(projects) {
@@ -2500,6 +2954,7 @@ function openProjectModal(mode, projectId) {
 }
 
 function closeProjectModal() {
+  document.body.classList.add("cell-type-tooltip-hidden");
   elements.projectModal.classList.remove("active");
   elements.projectModal.setAttribute("aria-hidden", "true");
   editingProjectId = null;
