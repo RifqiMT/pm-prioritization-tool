@@ -64,6 +64,27 @@ function init() {
   cacheElements();
   initCurrencyOptions();
   initFilterCountriesOptions();
+  ExchangeRates.init({
+    getState: () => state,
+    saveState,
+    getElements: () => elements,
+    onRatesUpdated: () => {
+      renderProjects();
+      if (state.projectsView === "map" && elements.projectsMapContainer) renderProjectsMap();
+    }
+  });
+  Fullscreen.init({
+    getState: () => state,
+    getElements: () => elements,
+    switchView: switchProjectsView,
+    getViewElement(view) {
+      if (view === "table") return elements.projectsTableView;
+      if (view === "board") return elements.projectsBoardView;
+      if (view === "moscow") return elements.projectsMoscowView;
+      if (view === "map") return elements.projectsMapView;
+      return null;
+    }
+  });
   attachEventListeners();
   loadState();
   ensureDefaultProfile();
@@ -72,8 +93,8 @@ function init() {
   if (elements.projectsTableView && elements.projectsBoardView) {
     switchProjectsView(state.projectsView);
   }
-  updateExchangeRatesDateLabel();
-  scheduleDailyExchangeRatesRefresh();
+  ExchangeRates.updateLabel();
+  ExchangeRates.scheduleDailyRefresh();
 }
 
 function cacheElements() {
@@ -159,6 +180,8 @@ function cacheElements() {
   elements.projectMetaCreated = $("projectMetaCreated");
   elements.projectMetaModified = $("projectMetaModified");
   elements.projectMetaRice = $("projectMetaRice");
+  elements.projectMetaFinancialEur = $("projectMetaFinancialEur");
+  elements.projectMetaExchangeRate = $("projectMetaExchangeRate");
 
   elements.exportDataBtn = $("exportDataBtn");
   elements.importDataBtn = $("importDataBtn");
@@ -337,10 +360,8 @@ function attachEventListeners() {
 
   if (elements.projectsViewTableBtn) {
     elements.projectsViewTableBtn.addEventListener("click", () => {
-      if (isViewFullscreen() && state.projectsView !== "table") {
-        pendingFullscreenView = "table";
-        if (document.exitFullscreen) document.exitFullscreen();
-        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      if (Fullscreen.isViewFullscreen() && state.projectsView !== "table") {
+        Fullscreen.requestViewSwitchWhileFullscreen("table");
       } else {
         switchProjectsView("table");
       }
@@ -348,10 +369,8 @@ function attachEventListeners() {
   }
   if (elements.projectsViewBoardBtn) {
     elements.projectsViewBoardBtn.addEventListener("click", () => {
-      if (isViewFullscreen() && state.projectsView !== "board") {
-        pendingFullscreenView = "board";
-        if (document.exitFullscreen) document.exitFullscreen();
-        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      if (Fullscreen.isViewFullscreen() && state.projectsView !== "board") {
+        Fullscreen.requestViewSwitchWhileFullscreen("board");
       } else {
         switchProjectsView("board");
       }
@@ -359,10 +378,8 @@ function attachEventListeners() {
   }
   if (elements.projectsViewMoscowBtn) {
     elements.projectsViewMoscowBtn.addEventListener("click", () => {
-      if (isViewFullscreen() && state.projectsView !== "moscow") {
-        pendingFullscreenView = "moscow";
-        if (document.exitFullscreen) document.exitFullscreen();
-        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      if (Fullscreen.isViewFullscreen() && state.projectsView !== "moscow") {
+        Fullscreen.requestViewSwitchWhileFullscreen("moscow");
       } else {
         switchProjectsView("moscow");
       }
@@ -370,10 +387,8 @@ function attachEventListeners() {
   }
   if (elements.projectsViewMapBtn) {
     elements.projectsViewMapBtn.addEventListener("click", () => {
-      if (isViewFullscreen() && state.projectsView !== "map") {
-        pendingFullscreenView = "map";
-        if (document.exitFullscreen) document.exitFullscreen();
-        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      if (Fullscreen.isViewFullscreen() && state.projectsView !== "map") {
+        Fullscreen.requestViewSwitchWhileFullscreen("map");
       } else {
         switchProjectsView("map");
       }
@@ -407,22 +422,32 @@ function attachEventListeners() {
   }
 
   if (elements.projectsMapFullscreenBtn && elements.projectsMapView) {
-    elements.projectsMapFullscreenBtn.addEventListener("click", toggleMapFullscreen);
+    elements.projectsMapFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.projectsMapView));
   }
   if (elements.refreshExchangeRatesBtn) {
-    elements.refreshExchangeRatesBtn.addEventListener("click", refreshExchangeRatesManual);
+    elements.refreshExchangeRatesBtn.addEventListener("click", () => {
+      ExchangeRates.refreshManual()
+        .then(() => showToast("Exchange rates updated."))
+        .catch(() => showToast("Could not refresh exchange rates. Try again later."));
+    });
   }
   if (elements.scrumBoardFullscreenBtn && elements.projectsBoardView) {
-    elements.scrumBoardFullscreenBtn.addEventListener("click", () => toggleViewFullscreen(elements.projectsBoardView));
+    elements.scrumBoardFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.projectsBoardView));
   }
   if (elements.tableFullscreenBtn && elements.projectsTableView) {
-    elements.tableFullscreenBtn.addEventListener("click", () => toggleViewFullscreen(elements.projectsTableView));
+    elements.tableFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.projectsTableView));
   }
   if (elements.moscowFullscreenBtn && elements.projectsMoscowView) {
-    elements.moscowFullscreenBtn.addEventListener("click", () => toggleViewFullscreen(elements.projectsMoscowView));
+    elements.moscowFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.projectsMoscowView));
   }
-  document.addEventListener("fullscreenchange", onViewFullscreenChange);
-  document.addEventListener("webkitfullscreenchange", onViewFullscreenChange);
+  document.addEventListener("fullscreenchange", () => {
+    Fullscreen.onChange();
+    returnTooltipsToOwner();
+  });
+  document.addEventListener("webkitfullscreenchange", () => {
+    Fullscreen.onChange();
+    returnTooltipsToOwner();
+  });
 
   // --- Data export / import: main toolbar buttons ---
   // Export and Import both open a simple format chooser (JSON or CSV).
@@ -667,15 +692,18 @@ function attachEventListeners() {
     elements.filterProjectType
   ].filter(Boolean); // guard against missing DOM nodes so we never throw while wiring listeners
 
+  const applyFiltersAndUpdateUI = () => {
+    renderProjects();
+    updateFiltersActivePill();
+  };
+  const debouncedApplyFilters = typeof debounce === "function" ? debounce(applyFiltersAndUpdateUI, 200) : applyFiltersAndUpdateUI;
+
   filterInputs.forEach((input) => {
-    input.addEventListener("input", () => {
-      renderProjects();
-      updateFiltersActivePill();
-    });
-    input.addEventListener("change", () => {
-      renderProjects();
-      updateFiltersActivePill();
-    });
+    if (!input) return;
+    const isTitle = input === elements.filterTitle;
+    const handler = isTitle ? debouncedApplyFilters : applyFiltersAndUpdateUI;
+    input.addEventListener("input", handler);
+    input.addEventListener("change", handler);
   });
 
   elements.selectAllProjects.addEventListener("change", (e) => {
@@ -712,12 +740,16 @@ function attachEventListeners() {
   });
 
   elements.projectsTableBody.addEventListener("mouseenter", (e) => {
-    const wrap = e.target.closest(".cell-type-icon-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip");
+    const wrap = e.target.closest(".cell-type-icon-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip");
     if (!wrap) return;
     const tooltip = wrap.querySelector(".cell-type-tooltip");
     if (!tooltip) return;
     document.body.classList.remove("cell-type-tooltip-hidden");
     const rect = wrap.getBoundingClientRect();
+    returnTooltipsToOwner();
+    getTooltipRoot().appendChild(tooltip);
+    tooltip._ownerWrap = wrap;
+    tooltip.classList.add("cell-type-tooltip-visible");
     const viewportHeight = window.innerHeight;
     const spaceAbove = rect.top;
     const spaceBelow = viewportHeight - rect.bottom;
@@ -743,17 +775,17 @@ function attachEventListeners() {
   const tableWrapper = elements.projectsTableBody && elements.projectsTableBody.closest(".table-wrapper");
   if (tableWrapper) {
     tableWrapper.addEventListener("scroll", () => {
-      document.body.classList.add("cell-type-tooltip-hidden");
+      hideCellTypeTooltips();
     }, { passive: true });
   }
   if (elements.scrumBoardContainer) {
     elements.scrumBoardContainer.addEventListener("scroll", () => {
-      document.body.classList.add("cell-type-tooltip-hidden");
+      hideCellTypeTooltips();
     }, { passive: true });
   }
   if (elements.moscowBoardContainer) {
     elements.moscowBoardContainer.addEventListener("scroll", () => {
-      document.body.classList.add("cell-type-tooltip-hidden");
+      hideCellTypeTooltips();
     }, { passive: true });
   }
 
@@ -777,9 +809,21 @@ function attachEventListeners() {
     positionProfileTooltip(wrap);
   }, true);
 
+  document.body.addEventListener("mouseout", (e) => {
+    const wrap = e.target.closest(".profile-icon-wrap, .cell-type-icon-wrap, .scrum-board-card-type-wrap, .project-field-tooltip-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip");
+    if (!wrap || (e.relatedTarget && wrap.contains(e.relatedTarget))) return;
+    document.querySelectorAll(".cell-type-tooltip").forEach((el) => {
+      if (el._ownerWrap === wrap) {
+        el.classList.remove("cell-type-tooltip-visible");
+        wrap.appendChild(el);
+        el._ownerWrap = null;
+      }
+    });
+  }, true);
+
   if (elements.profileList) {
     elements.profileList.addEventListener("scroll", () => {
-      document.body.classList.add("cell-type-tooltip-hidden");
+      hideCellTypeTooltips();
     }, { passive: true });
   }
 
@@ -833,8 +877,11 @@ function attachEventListeners() {
     elements.reachValue,
     elements.impactValue,
     elements.confidenceValue,
-    elements.effortValue
+    elements.effortValue,
+    elements.financialImpactValue,
+    elements.projectCurrency
   ].forEach((el) => {
+    if (!el) return;
     el.addEventListener("input", updateModalRicePreview);
     el.addEventListener("change", updateModalRicePreview);
   });
@@ -1668,6 +1715,28 @@ function createProfileButtonTooltip(titleText, bodyText) {
   return tooltip;
 }
 
+/** Return the root element where tooltips should be appended (fullscreen element when in fullscreen, else body) so they remain visible. */
+function getTooltipRoot() {
+  return document.fullscreenElement || document.webkitFullscreenElement || document.body;
+}
+
+/** Return any tooltip that was moved to body/fullscreen back to its owner wrap (so positioning works in all contexts, including fullscreen). */
+function returnTooltipsToOwner() {
+  document.querySelectorAll(".cell-type-tooltip").forEach((el) => {
+    if (!el._ownerWrap) return;
+    if (el.parentNode === el._ownerWrap) return;
+    el.classList.remove("cell-type-tooltip-visible");
+    el._ownerWrap.appendChild(el);
+    el._ownerWrap = null;
+  });
+}
+
+/** Hide all cell-type tooltips and return any that were moved to body back to their owner. */
+function hideCellTypeTooltips() {
+  returnTooltipsToOwner();
+  document.body.classList.add("cell-type-tooltip-hidden");
+}
+
 function positionProfileTooltip(wrap) {
   const tooltip = wrap.querySelector(".cell-type-tooltip");
   if (!tooltip) return;
@@ -1680,6 +1749,11 @@ function positionProfileTooltip(wrap) {
   } else {
     rect = wrap.getBoundingClientRect();
   }
+
+  returnTooltipsToOwner();
+  getTooltipRoot().appendChild(tooltip);
+  tooltip._ownerWrap = wrap;
+  tooltip.classList.add("cell-type-tooltip-visible");
 
   const viewportHeight = window.innerHeight;
   const viewportWidth = window.innerWidth;
@@ -2068,10 +2142,53 @@ function renderProjects() {
     tr.appendChild(tdStatus);
 
     const tdPeriod = document.createElement("td");
-    const periodSpan = document.createElement("span");
-    periodSpan.className = "cell-meta cell-tshirt-size-text";
-    periodSpan.textContent = project.projectPeriod || "—";
-    tdPeriod.appendChild(periodSpan);
+    const periodValue = project.projectPeriod || "";
+    if (periodValue && typeof projectPeriodTooltip !== "undefined") {
+      const meta = projectPeriodTooltip;
+      const wrap = document.createElement("span");
+      wrap.className = "cell-period-with-tooltip";
+      wrap.setAttribute("aria-label", `Project period: ${periodValue}`);
+      const textSpan = document.createElement("span");
+      textSpan.className = "cell-meta cell-period-text";
+      textSpan.textContent = periodValue;
+      wrap.appendChild(textSpan);
+      const tooltipEl = document.createElement("div");
+      tooltipEl.className = "cell-type-tooltip";
+      tooltipEl.setAttribute("role", "tooltip");
+      if (meta.tooltipTitle != null) {
+        const titleEl = document.createElement("div");
+        titleEl.className = "cell-type-tooltip-title";
+        titleEl.textContent = meta.tooltipTitle;
+        tooltipEl.appendChild(titleEl);
+      }
+      if (meta.tooltipBodyDescription != null) {
+        const bodyEl = document.createElement("div");
+        bodyEl.className = "cell-type-tooltip-body";
+        const periodMatch = String(periodValue).trim().match(/^(\d{4})-Q([1-4])$/i);
+        let bodyText = meta.tooltipBodyDescription;
+        if (periodMatch) {
+          const year = periodMatch[1];
+          const q = periodMatch[2];
+          const quarterMonths = { "1": "Jan - Mar", "2": "Apr - Jun", "3": "Jul - Sep", "4": "Oct - Dec" };
+          const range = quarterMonths[q] || "";
+          bodyText = bodyText + "\n\n" + `${periodValue} → ${range} ${year}`;
+        }
+        const paragraphs = String(bodyText).split(/\n\n+/);
+        paragraphs.forEach((p) => {
+          const block = document.createElement("p");
+          block.textContent = p.trim();
+          if (block.textContent) bodyEl.appendChild(block);
+        });
+        tooltipEl.appendChild(bodyEl);
+      }
+      wrap.appendChild(tooltipEl);
+      tdPeriod.appendChild(wrap);
+    } else {
+      const periodSpan = document.createElement("span");
+      periodSpan.className = "cell-meta cell-period-text";
+      periodSpan.textContent = periodValue || "—";
+      tdPeriod.appendChild(periodSpan);
+    }
     tr.appendChild(tdPeriod);
 
     const tdTshirtSize = document.createElement("td");
@@ -2114,8 +2231,43 @@ function renderProjects() {
     tr.appendChild(tdTshirtSize);
 
     const tdMoscow = document.createElement("td");
-    tdMoscow.className = "cell-meta";
-    tdMoscow.textContent = project.moscowCategory || "—";
+    if (project.moscowCategory && typeof moscowTooltips !== "undefined" && moscowTooltips[project.moscowCategory]) {
+      const meta = moscowTooltips[project.moscowCategory];
+      const wrap = document.createElement("span");
+      wrap.className = "cell-moscow-with-tooltip";
+      wrap.setAttribute("aria-label", `MOSCOW: ${project.moscowCategory}`);
+      const textSpan = document.createElement("span");
+      textSpan.className = "cell-meta cell-moscow-text";
+      textSpan.textContent = project.moscowCategory;
+      wrap.appendChild(textSpan);
+      if (meta.tooltipTitle != null || meta.tooltipBody != null) {
+        const tooltipEl = document.createElement("div");
+        tooltipEl.className = "cell-type-tooltip";
+        tooltipEl.setAttribute("role", "tooltip");
+        if (meta.tooltipTitle != null) {
+          const titleEl = document.createElement("div");
+          titleEl.className = "cell-type-tooltip-title";
+          titleEl.textContent = meta.tooltipTitle;
+          tooltipEl.appendChild(titleEl);
+        }
+        if (meta.tooltipBody != null) {
+          const bodyEl = document.createElement("div");
+          bodyEl.className = "cell-type-tooltip-body";
+          const paragraphs = String(meta.tooltipBody).split(/\n\n+/);
+          paragraphs.forEach((p) => {
+            const block = document.createElement("p");
+            block.textContent = p.trim();
+            if (block.textContent) bodyEl.appendChild(block);
+          });
+          tooltipEl.appendChild(bodyEl);
+        }
+        wrap.appendChild(tooltipEl);
+      }
+      tdMoscow.appendChild(wrap);
+    } else {
+      tdMoscow.className = "cell-meta";
+      tdMoscow.textContent = project.moscowCategory || "—";
+    }
     tr.appendChild(tdMoscow);
 
     const tdRice = document.createElement("td");
@@ -2218,20 +2370,26 @@ function renderProjects() {
       const raw = project.financialImpactValue;
       const amount = Number.isFinite(raw) ? raw : (typeof raw === "string" ? parseFloat(raw) : 0);
       const currency = (project.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
-      const amountEur = typeof convertToEUR === "function" ? convertToEUR(amount, currency) : amount;
-      const shortEur = typeof formatFinancialShort === "function"
-        ? formatFinancialShort(amountEur)
-        : String(Number(amountEur).toLocaleString(undefined, { maximumFractionDigits: 2 }));
+      const amountEur = typeof ExchangeRates !== "undefined" && typeof ExchangeRates.convertToEUR === "function" ? ExchangeRates.convertToEUR(amount, currency) : amount;
+      const hasEurRate = typeof ExchangeRates !== "undefined" && typeof ExchangeRates.hasRate === "function" ? ExchangeRates.hasRate(currency) : true;
       const shortOriginal = typeof formatFinancialShort === "function"
         ? formatFinancialShort(amount)
         : String(Number(amount).toLocaleString(undefined, { maximumFractionDigits: 2 }));
 
       const wrap = document.createElement("span");
       wrap.className = "cell-financial-with-tooltip";
-      wrap.setAttribute("aria-label", `Financial impact: €${shortEur} (original: ${shortOriginal} ${currency})`);
       const textSpan = document.createElement("span");
       textSpan.className = "cell-meta cell-financial-text";
-      textSpan.innerHTML = `<strong>€${escapeHtml(shortEur)}</strong>`;
+      if (hasEurRate && Number.isFinite(amountEur)) {
+        const shortEur = typeof formatFinancialShort === "function"
+          ? formatFinancialShort(amountEur)
+          : String(Number(amountEur).toLocaleString(undefined, { maximumFractionDigits: 2 }));
+        wrap.setAttribute("aria-label", `Financial impact: €${shortEur} (original: ${shortOriginal} ${currency})`);
+        textSpan.innerHTML = `<strong>€${escapeHtml(shortEur)}</strong>`;
+      } else {
+        wrap.setAttribute("aria-label", `Financial impact: ${shortOriginal} ${currency} (EUR rate unavailable)`);
+        textSpan.innerHTML = `<strong>${escapeHtml(shortOriginal)} ${currency}</strong>`;
+      }
       wrap.appendChild(textSpan);
 
       const tooltipEl = document.createElement("div");
@@ -2244,7 +2402,9 @@ function renderProjects() {
       const bodyEl = document.createElement("div");
       bodyEl.className = "cell-type-tooltip-body";
       const p = document.createElement("p");
-      p.textContent = `${shortOriginal} ${currency}`;
+      p.textContent = hasEurRate && Number.isFinite(amountEur)
+        ? `${shortOriginal} ${currency}`
+        : `${shortOriginal} ${currency} (EUR rate unavailable)`;
       bodyEl.appendChild(p);
       tooltipEl.appendChild(bodyEl);
       wrap.appendChild(tooltipEl);
@@ -2318,7 +2478,7 @@ function renderProjects() {
   updateSortIndicators();
   if (state.projectsView === "table" && projects.some((p) => p.financialImpactValue != null && p.financialImpactValue !== "")) {
     if (Object.keys(state.exchangeRatesToEUR || {}).length === 0) {
-      ensureExchangeRatesToEUR().then(() => renderProjects()).catch(() => {});
+      ExchangeRates.ensure().then(() => renderProjects()).catch(() => {});
     }
   }
   if (state.projectsView === "board" && elements.scrumBoardContainer) {
@@ -2424,173 +2584,6 @@ function getCountryRiceByCode() {
   return riceByCode;
 }
 
-const EXCHANGE_RATES_API_URL = "https://api.frankfurter.dev/v1/latest";
-
-const EXCHANGE_RATES_TIMEZONE = "Europe/Berlin";
-
-/** Returns current date as YYYY-MM-DD in Germany (Europe/Berlin). Used so "today" and refresh-at-midnight are in Germany time. */
-function getTodayGermanyDateString() {
-  return new Date().toLocaleDateString("en-CA", { timeZone: EXCHANGE_RATES_TIMEZONE });
-}
-
-/** Returns milliseconds from now until the next 00:00 in Europe/Berlin. If we're past midnight Germany, returns ms until next day's midnight. */
-function getNextMidnightGermanyMs() {
-  const now = Date.now();
-  const todayStr = getTodayGermanyDateString();
-  const [y, m, d] = todayStr.split("-").map(Number);
-  const utc22 = new Date(Date.UTC(y, m - 1, d, 22, 0, 0)).getTime();
-  const utc23 = new Date(Date.UTC(y, m - 1, d, 23, 0, 0)).getTime();
-  const fmt = (ms) => {
-    const parts = new Intl.DateTimeFormat("en-CA", {
-      timeZone: EXCHANGE_RATES_TIMEZONE,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      hour12: false,
-      minute: "2-digit"
-    }).formatToParts(new Date(ms));
-    const get = (type) => (parts.find((p) => p.type === type) || {}).value;
-    return { day: Number(get("day")), hour: Number(get("hour")) };
-  };
-  const nextDay = d + 1;
-  const midnightBerlin = fmt(utc22).day === nextDay && fmt(utc22).hour === 0 ? utc22 : utc23;
-  let next = midnightBerlin;
-  if (next <= now) next += 24 * 60 * 60 * 1000;
-  return next - now;
-}
-
-/** ETL: Extract — fetch raw rates from the API. */
-function extractExchangeRatesFromAPI() {
-  return fetch(EXCHANGE_RATES_API_URL).then((res) => {
-    if (!res.ok) throw new Error("Exchange rates unavailable");
-    return res.json();
-  });
-}
-
-/** ETL: Transform — normalize and dedupe. One rate per currency (uppercase), valid numbers only. Returns map: currency -> rate from EUR to that currency. */
-function transformExchangeRatesToEUR(data) {
-  const rates = data.rates || {};
-  const seen = Object.create(null);
-  const toEUR = { EUR: 1 };
-  Object.keys(rates).forEach((c) => {
-    const key = (c || "").toString().trim().toUpperCase();
-    if (!key || key === "EUR") return;
-    const fromEurToC = rates[c];
-    if (!Number.isFinite(fromEurToC) || fromEurToC <= 0) return;
-    const rateToEur = 1 / fromEurToC;
-    if (!Number.isFinite(rateToEur)) return;
-    if (seen[key] !== undefined) {
-      return;
-    }
-    seen[key] = true;
-    toEUR[key] = rateToEur;
-  });
-  return toEUR;
-}
-
-/** ETL: Load — merge into state. Rule: replace with transformed map (single source of truth per currency; no duplicate keys). Optionally records source (manual/auto). */
-function loadExchangeRatesIntoState(transformed, source) {
-  state.exchangeRatesToEUR = transformed;
-  state.exchangeRatesDate = getTodayGermanyDateString();
-  if (source) state.exchangeRatesLastSource = source;
-  saveState();
-  updateExchangeRatesDateLabel();
-}
-
-/** Updates the header label under the refresh button with last exchange rate date and source (manual/auto). */
-function updateExchangeRatesDateLabel() {
-  const el = elements.exchangeRatesDateLabel;
-  if (!el) return;
-  const dateStr = state.exchangeRatesDate;
-  if (!dateStr) {
-    el.textContent = "";
-    return;
-  }
-  const d = new Date(dateStr + "T12:00:00Z");
-  const formatted = Number.isNaN(d.getTime()) ? dateStr : d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
-  const source = state.exchangeRatesLastSource;
-  const sourceLabel = source === "manual" ? " (manual refresh)" : source === "auto" ? " (auto)" : "";
-  el.textContent = `Last updated: ${formatted}${sourceLabel}`;
-}
-
-/** Fetches EUR-based rates (ETL pipeline). Builds ratesToEUR: for each currency C, amount in C -> EUR = amount * ratesToEUR[C]. EUR is 1. Optional source: "manual" | "auto". */
-function fetchExchangeRatesToEUR(source) {
-  return extractExchangeRatesFromAPI()
-    .then((data) => transformExchangeRatesToEUR(data))
-    .then((toEUR) => {
-      loadExchangeRatesIntoState(toEUR, source);
-      return toEUR;
-    });
-}
-
-/** Returns true if we have rates for today (Germany date) (or can use cached). Refreshes if needed. */
-function ensureExchangeRatesToEUR() {
-  const today = getTodayGermanyDateString();
-  if (state.exchangeRatesDate === today && Object.keys(state.exchangeRatesToEUR).length > 0) {
-    return Promise.resolve(state.exchangeRatesToEUR);
-  }
-  return fetchExchangeRatesToEUR("auto").catch((err) => {
-    if (Object.keys(state.exchangeRatesToEUR || {}).length === 0) {
-      state.exchangeRatesToEUR = { EUR: 1 };
-    }
-    throw err;
-  });
-}
-
-/** Timeout id for the next 00:00 Germany refresh (so we can cancel if needed). */
-let dailyExchangeRatesRefreshTimeoutId = null;
-
-/** Schedules the next daily exchange-rate refresh at 00:00 Germany time. Runs ETL (auto) when the time comes, then reschedules. When the app is closed, no code runs; on next open, ensureExchangeRatesToEUR() will refresh if Germany date is newer than stored date. */
-function scheduleDailyExchangeRatesRefresh() {
-  if (dailyExchangeRatesRefreshTimeoutId != null) {
-    clearTimeout(dailyExchangeRatesRefreshTimeoutId);
-    dailyExchangeRatesRefreshTimeoutId = null;
-  }
-  const ms = getNextMidnightGermanyMs();
-  dailyExchangeRatesRefreshTimeoutId = setTimeout(() => {
-    dailyExchangeRatesRefreshTimeoutId = null;
-    fetchExchangeRatesToEUR("auto")
-      .then(() => {
-        if (state.projectsView === "map" && elements.projectsMapContainer) renderProjectsMap();
-        renderProjects();
-      })
-      .catch(() => {})
-      .finally(() => {
-        scheduleDailyExchangeRatesRefresh();
-      });
-  }, ms);
-}
-
-/** Manual refresh: always fetch from API (ignore cache), run ETL merge, then re-render table and map. */
-function refreshExchangeRatesManual() {
-  const btn = elements.refreshExchangeRatesBtn;
-  if (btn) btn.disabled = true;
-  fetchExchangeRatesToEUR("manual")
-    .then(() => {
-      if (typeof showToast === "function") showToast("Exchange rates updated.");
-      renderProjects();
-      if (state.projectsView === "map" && elements.projectsMapContainer) renderProjectsMap();
-    })
-    .catch(() => {
-      if (typeof showToast === "function") showToast("Could not refresh exchange rates. Try again later.");
-    })
-    .finally(() => {
-      if (btn) btn.disabled = false;
-    });
-}
-
-/** Convert amount in given currency to EUR using latest API rates. EUR always converts 1:1. Returns 0 if currency is missing or no rate available (so we never show unconverted values as EUR). */
-function convertToEUR(amount, currencyCode) {
-  if (!Number.isFinite(amount)) return 0;
-  const code = (currencyCode || "EUR").toString().trim().toUpperCase();
-  if (!code) return 0;
-  if (code === "EUR") return amount;
-  const rate = state.exchangeRatesToEUR[code];
-  if (rate != null && Number.isFinite(rate)) return amount * rate;
-  return 0;
-}
-
 /** Returns a map of ISO 2-letter country code -> total financial impact in EUR (active profile, filtered). All amounts are converted to EUR using the latest exchange rates from the API; amounts in currencies without a rate are excluded. */
 function getCountryFinancialImpactByCode() {
   const activeProfile = getActiveProfile();
@@ -2604,7 +2597,8 @@ function getCountryFinancialImpactByCode() {
     const amount = Number.isFinite(raw) ? raw : (typeof raw === "string" ? parseFloat(raw) : 0);
     if (!Number.isFinite(amount) || amount <= 0) return;
     const currency = (p.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
-    const amountEUR = convertToEUR(amount, currency);
+    const amountEUR = ExchangeRates.convertToEUR(amount, currency);
+    if (!Number.isFinite(amountEUR)) return;
     const countries = Array.isArray(p.countries) ? p.countries : [];
     countries.forEach((name) => {
       const code = typeof countryCodeByName !== "undefined" ? countryCodeByName[name] : null;
@@ -2642,182 +2636,6 @@ function getCountryCodeFromFeature(feature) {
   if (typeof countryCodeByName !== "undefined" && countryCodeByName[name]) return countryCodeByName[name];
   const fromList = countryList && countryList.find((c) => c === canonical || c === name || name.indexOf(c) >= 0 || c.indexOf(name) >= 0);
   return (fromList && typeof countryCodeByName !== "undefined" && countryCodeByName[fromList]) ? countryCodeByName[fromList] : "";
-}
-
-function toggleMapFullscreen() {
-  toggleViewFullscreen(elements.projectsMapView);
-}
-
-function toggleViewFullscreen(viewEl) {
-  if (!viewEl) return;
-  const isFullscreen = document.fullscreenElement === viewEl ||
-    (document.webkitFullscreenElement && document.webkitFullscreenElement === viewEl);
-  if (isFullscreen) {
-    if (document.exitFullscreen) document.exitFullscreen();
-    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-  } else {
-    if (viewEl.requestFullscreen) viewEl.requestFullscreen();
-    else if (viewEl.webkitRequestFullscreen) viewEl.webkitRequestFullscreen();
-  }
-}
-
-/** IDs of modals and toast container that must live inside the fullscreen element so they work in fullscreen. */
-const FULLSCREEN_PORTAL_IDS = [
-  "exportFormatModal",
-  "importFormatModal",
-  "projectModal",
-  "profileViewModal",
-  "profileEditModal",
-  "profileDeleteModal",
-  "projectDeleteModal",
-  "toastContainer"
-];
-
-let currentFullscreenViewEl = null;
-/** When set, after exiting fullscreen we switch to this view and re-enter fullscreen on its element. */
-let pendingFullscreenView = null;
-
-function getViewElement(view) {
-  if (view === "table") return elements.projectsTableView;
-  if (view === "board") return elements.projectsBoardView;
-  if (view === "moscow") return elements.projectsMoscowView;
-  if (view === "map") return elements.projectsMapView;
-  return null;
-}
-
-function isViewFullscreen() {
-  const el = document.fullscreenElement || document.webkitFullscreenElement;
-  return el === elements.projectsTableView || el === elements.projectsBoardView ||
-    el === elements.projectsMoscowView || el === elements.projectsMapView;
-}
-
-function moveModalsAndToastToFullscreenElement(fullscreenEl) {
-  if (!fullscreenEl) return;
-  FULLSCREEN_PORTAL_IDS.forEach((id) => {
-    const node = document.getElementById(id);
-    if (node && node.parentNode !== fullscreenEl) fullscreenEl.appendChild(node);
-  });
-}
-
-function moveModalsAndToastBackToBody() {
-  FULLSCREEN_PORTAL_IDS.forEach((id) => {
-    const node = document.getElementById(id);
-    if (node && node.parentNode !== document.body) document.body.appendChild(node);
-  });
-}
-
-function moveFiltersAndHeaderToFullscreen(fullscreenEl) {
-  if (!fullscreenEl) return;
-  const filtersShell = document.querySelector(".filters-shell");
-  const headerRow = document.querySelector(".projects-header-row");
-  if (filtersShell && filtersShell.parentNode !== fullscreenEl) {
-    fullscreenEl.insertBefore(filtersShell, fullscreenEl.firstChild);
-  }
-  if (headerRow && headerRow.parentNode !== fullscreenEl) {
-    fullscreenEl.insertBefore(headerRow, fullscreenEl.firstChild);
-  }
-}
-
-function moveFiltersAndHeaderBack() {
-  if (!currentFullscreenViewEl) return;
-  const cardPlain = currentFullscreenViewEl.parentNode;
-  if (!cardPlain) return;
-  const filtersShell = document.querySelector(".filters-shell");
-  const headerRow = document.querySelector(".projects-header-row");
-  const anchor = elements.projectsTableView;
-  if (filtersShell && anchor && filtersShell.parentNode === currentFullscreenViewEl) {
-    cardPlain.insertBefore(filtersShell, anchor);
-  }
-  if (headerRow && headerRow.parentNode === currentFullscreenViewEl) {
-    cardPlain.insertBefore(headerRow, filtersShell || anchor);
-  }
-  currentFullscreenViewEl = null;
-}
-
-function setViewToggleDisabled(disabled) {
-  const btns = [
-    elements.projectsViewTableBtn,
-    elements.projectsViewBoardBtn,
-    elements.projectsViewMoscowBtn,
-    elements.projectsViewMapBtn
-  ];
-  btns.forEach((btn) => {
-    if (!btn) return;
-    btn.disabled = !!disabled;
-    if (disabled) {
-      btn.setAttribute("aria-disabled", "true");
-      btn.title = "Exit full screen to switch view";
-    } else {
-      btn.removeAttribute("aria-disabled");
-      btn.removeAttribute("title");
-    }
-  });
-}
-
-function setViewToggleTitlesForFullscreen() {
-  const titles = { table: "Switch to Table", board: "Switch to Board", moscow: "Switch to MOSCOW", map: "Switch to Map" };
-  const btns = [
-    [elements.projectsViewTableBtn, "table"],
-    [elements.projectsViewBoardBtn, "board"],
-    [elements.projectsViewMoscowBtn, "moscow"],
-    [elements.projectsViewMapBtn, "map"]
-  ];
-  btns.forEach(([btn, view]) => {
-    if (btn) btn.title = titles[view] || "";
-  });
-}
-
-function onViewFullscreenChange() {
-  const el = document.fullscreenElement || document.webkitFullscreenElement;
-  const isMap = el === elements.projectsMapView;
-  const isBoard = el === elements.projectsBoardView;
-  const isMoscow = el === elements.projectsMoscowView;
-  const isTable = el === elements.projectsTableView;
-  const isAnyFullscreen = isMap || isBoard || isMoscow || isTable;
-
-  if (isAnyFullscreen && el) {
-    currentFullscreenViewEl = el;
-    moveModalsAndToastToFullscreenElement(el);
-    moveFiltersAndHeaderToFullscreen(el);
-    setViewToggleTitlesForFullscreen();
-  } else {
-    moveFiltersAndHeaderBack();
-    moveModalsAndToastBackToBody();
-    setViewToggleDisabled(false);
-    if (pendingFullscreenView) {
-      const view = pendingFullscreenView;
-      pendingFullscreenView = null;
-      switchProjectsView(view);
-      const targetEl = getViewElement(view);
-      if (targetEl) {
-        requestAnimationFrame(() => {
-          if (targetEl.requestFullscreen) targetEl.requestFullscreen().catch(() => {});
-          else if (targetEl.webkitRequestFullscreen) targetEl.webkitRequestFullscreen();
-        });
-      }
-    }
-  }
-
-  function updateBtn(btn, isFullscreen, expandLabel, compressLabel) {
-    if (!btn) return;
-    btn.classList.toggle("is-fullscreen", !!isFullscreen);
-    const expand = btn.querySelector(".icon-expand");
-    const compress = btn.querySelector(".icon-compress");
-    if (expand) expand.style.display = isFullscreen ? "none" : "";
-    if (compress) compress.style.display = isFullscreen ? "" : "none";
-    const labelEl = btn.querySelector(".projects-map-fullscreen-label") || btn.querySelector(".view-fullscreen-label");
-    if (labelEl) labelEl.textContent = isFullscreen ? compressLabel : expandLabel;
-    btn.setAttribute("aria-label", isFullscreen ? compressLabel : expandLabel);
-    btn.title = isFullscreen ? compressLabel : expandLabel;
-  }
-
-  updateBtn(elements.projectsMapFullscreenBtn, isMap, "Full screen", "Exit full screen");
-  updateBtn(elements.scrumBoardFullscreenBtn, isBoard, "Full screen", "Exit full screen");
-  updateBtn(elements.moscowFullscreenBtn, isMoscow, "Full screen", "Exit full screen");
-  updateBtn(elements.tableFullscreenBtn, isTable, "Full screen", "Exit full screen");
-
-  const map = elements.projectsMapContainer && elements.projectsMapContainer._leafletMap;
-  if (map) map.invalidateSize();
 }
 
 function renderProjectsMap() {
@@ -2959,7 +2777,7 @@ function renderProjectsMap() {
 
   if (state.mapMetric === "financial") {
     if (elements.projectsMapLegend) elements.projectsMapLegend.textContent = "Loading exchange rates…";
-    ensureExchangeRatesToEUR()
+    ExchangeRates.ensure()
       .then(() => {
         const financialByCode = getCountryFinancialImpactByCode();
         renderMapWithValueByCode(financialByCode);
@@ -3600,7 +3418,7 @@ function renderMoscowBoard() {
 
     const cardsContainer = document.createElement("div");
     cardsContainer.className = "moscow-board-column-cards";
-    cardsContainer.addEventListener("scroll", () => document.body.classList.add("cell-type-tooltip-hidden"), { passive: true });
+    cardsContainer.addEventListener("scroll", () => hideCellTypeTooltips(), { passive: true });
 
     (byMoscow[moscow] || []).forEach((project, index) => {
       const card = document.createElement("div");
@@ -3700,8 +3518,10 @@ function renderMoscowBoard() {
         e.stopPropagation();
         moveMoscowProjectDown(project.id, moscow);
       });
-      actions.appendChild(upBtn);
-      actions.appendChild(downBtn);
+      const orderGroup = document.createElement("div");
+      orderGroup.className = "moscow-board-card-actions-order";
+      orderGroup.appendChild(upBtn);
+      orderGroup.appendChild(downBtn);
       const viewBtn = document.createElement("button");
       viewBtn.type = "button";
       viewBtn.className = "moscow-board-card-btn moscow-board-card-btn--view";
@@ -3735,6 +3555,7 @@ function renderMoscowBoard() {
       actions.appendChild(viewBtn);
       actions.appendChild(editBtn);
       actions.appendChild(deleteBtn);
+      actions.appendChild(orderGroup);
       card.appendChild(actions);
 
       cardsContainer.appendChild(card);
@@ -4028,6 +3849,7 @@ function handleBulkDelete() {
   const checked = elements.projectsTableBody.querySelectorAll(".project-select-checkbox:checked");
   if (!checked.length) return;
 
+  hideCellTypeTooltips();
   const ids = Array.from(checked).map((cb) => cb.getAttribute("data-id"));
 
   elements.projectDeleteModal.setAttribute("data-delete-mode", "bulk");
@@ -4118,6 +3940,7 @@ function showToast(message) {
 function openProfileViewModal(profileId) {
   const profile = state.profiles.find((p) => p.id === profileId);
   if (!profile || !elements.profileViewModal) return;
+  hideCellTypeTooltips();
   if (elements.profileViewName) {
     elements.profileViewName.textContent = profile.name || "Untitled profile";
   }
@@ -4226,6 +4049,7 @@ function closeProfileViewModal() {
 function openProfileEditModal(profileId) {
   const profile = state.profiles.find((p) => p.id === profileId);
   if (!profile || !elements.profileEditModal) return;
+  hideCellTypeTooltips();
   elements.profileEditModal.setAttribute("data-profile-id", profileId);
   if (elements.profileEditName) {
     elements.profileEditName.value = profile.name || "";
@@ -4270,6 +4094,7 @@ function handleProfileEditSave() {
 function deleteProfile(profileId) {
   const index = state.profiles.findIndex((p) => p.id === profileId);
   if (index === -1 || !elements.profileDeleteModal) return;
+  hideCellTypeTooltips();
   const profile = state.profiles[index];
   const projectCount = profile.projects ? profile.projects.length : 0;
 
@@ -4332,6 +4157,7 @@ function handleSingleDelete(projectId) {
   const project = activeProfile.projects.find((p) => p.id === projectId);
   if (!project) return;
 
+  hideCellTypeTooltips();
   elements.projectDeleteModal.setAttribute("data-delete-mode", "single");
   elements.projectDeleteModal.setAttribute("data-project-id", projectId);
   elements.projectDeleteModal.removeAttribute("data-project-ids");
@@ -4377,6 +4203,7 @@ function openProjectModal(mode, projectId) {
   const isView = mode === "view";
   projectModalMode = mode;
   editingProjectId = isEdit ? projectId : null;
+  hideCellTypeTooltips();
   elements.projectFormError.style.display = "none";
   elements.projectFormError.textContent = "";
 
@@ -4484,7 +4311,7 @@ function openProjectModal(mode, projectId) {
 }
 
 function closeProjectModal() {
-  document.body.classList.add("cell-type-tooltip-hidden");
+  hideCellTypeTooltips();
   elements.projectModal.classList.remove("active");
   elements.projectModal.setAttribute("aria-hidden", "true");
   editingProjectId = null;
@@ -4605,6 +4432,45 @@ function updateModalRicePreview() {
   };
   const rice = calculateRiceScore(temp);
   elements.projectMetaRice.textContent = Number.isFinite(rice) && rice > 0 ? formatRice(rice) : "—";
+
+  const rawAmount = elements.financialImpactValue && elements.financialImpactValue.value !== "" ? Number(elements.financialImpactValue.value) : null;
+  const currency = (elements.projectCurrency && elements.projectCurrency.value || "").toString().trim().toUpperCase() || "";
+  const hasAmount = Number.isFinite(rawAmount) && rawAmount >= 0;
+  const hasCurrency = currency.length === 3;
+
+  if (elements.projectMetaFinancialEur) {
+    if (hasAmount && hasCurrency) {
+      const amountEur = typeof ExchangeRates !== "undefined" && typeof ExchangeRates.convertToEUR === "function"
+        ? ExchangeRates.convertToEUR(rawAmount, currency)
+        : NaN;
+      if (Number.isFinite(amountEur)) {
+        const short = typeof formatFinancialShort === "function"
+          ? formatFinancialShort(amountEur)
+          : String(Number(amountEur).toLocaleString(undefined, { maximumFractionDigits: 2 }));
+        elements.projectMetaFinancialEur.textContent = "€" + short;
+      } else {
+        elements.projectMetaFinancialEur.textContent = "— (rate unavailable)";
+      }
+    } else {
+      elements.projectMetaFinancialEur.textContent = "—";
+    }
+  }
+
+  if (elements.projectMetaExchangeRate) {
+    if (hasCurrency && currency !== "EUR") {
+      const rates = state.exchangeRatesToEUR || {};
+      const rate = rates[currency];
+      if (rate != null && Number.isFinite(rate)) {
+        elements.projectMetaExchangeRate.textContent = `1 ${currency} = ${Number(rate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })} EUR`;
+      } else {
+        elements.projectMetaExchangeRate.textContent = "— (rate unavailable)";
+      }
+    } else if (hasCurrency && currency === "EUR") {
+      elements.projectMetaExchangeRate.textContent = "1 EUR = 1 EUR";
+    } else {
+      elements.projectMetaExchangeRate.textContent = "—";
+    }
+  }
 }
 
 // Boot the app once the DOM is ready (classic script mode)

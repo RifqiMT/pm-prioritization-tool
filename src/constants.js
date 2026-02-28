@@ -91,6 +91,15 @@ const moscowTooltips = {
 const moscowGridOrder = ["Must have", "Should have", "Could have", "Won't have"];
 
 /**
+ * Project period tooltip for the table column (same style as project type / MOSCOW).
+ * tooltipTitle: column label; tooltipBodyDescription: static description. Interpretation (e.g. "2026-Q1 = Jan–Mar 2026") is appended in app.js when a value is present.
+ */
+const projectPeriodTooltip = {
+  tooltipTitle: "Project period",
+  tooltipBodyDescription: "Planning quarter for this project (YYYY-Qn). Used for filtering and roadmap views.\n\nQ1 = Jan - Mar\nQ2 = Apr - Jun\nQ3 = Jul - Sep\nQ4 = Oct - Dec"
+};
+
+/**
  * T-shirt size tooltips for the table column (same style as project type/status).
  * Duration in sprints aligns with the practical guide for modern product teams
  * (see https://rifqi-tjahyono.com/story-points-demystified-a-practical-guide-for-modern-product-teams/).
@@ -149,10 +158,11 @@ const projectTypeIcons = {
 
 const currencyList = [
   "USD", "EUR", "GBP", "JPY", "CNY", "AUD", "CAD", "CHF", "HKD", "SGD",
-  "NZD", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "RUB", "TRY", "BRL",
-  "MXN", "ARS", "CLP", "COP", "PEN", "ZAR", "INR", "IDR", "MYR", "THB",
-  "PHP", "VND", "KRW", "TWD", "SAR", "AED", "QAR", "KWD", "BHD", "ILS",
-  "EGP", "NGN", "KES", "GHS", "BDT", "PKR", "LKR", "RON", "HRK", "BGN"
+  "NZD", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "BGN", "RON", "HRK",
+  "RUB", "TRY", "BRL", "MXN", "ARS", "CLP", "COP", "PEN", "ZAR", "INR",
+  "IDR", "MYR", "THB", "PHP", "VND", "KRW", "TWD", "ISK",
+  "SAR", "AED", "QAR", "KWD", "BHD", "ILS", "EGP", "NGN", "KES", "GHS",
+  "BDT", "PKR", "LKR"
 ];
 
 const countryList = [

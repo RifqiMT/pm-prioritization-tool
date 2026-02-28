@@ -169,6 +169,21 @@ function escapeCsvCell(value) {
 }
 
 /**
+ * Returns a function that invokes fn after ms milliseconds of no further calls.
+ * Used to throttle rapid events (e.g. filter input).
+ */
+function debounce(fn, ms) {
+  let timeoutId = null;
+  return function (...args) {
+    if (timeoutId != null) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      timeoutId = null;
+      fn.apply(this, args);
+    }, ms);
+  };
+}
+
+/**
  * Formats a financial amount in short form: K (thousands), Mn (millions), Bn (billions), Tn (trillions).
  * Examples: 1000 -> "1 K", 1000000 -> "1 Mn", 1000000000 -> "1 Bn", 1000000000000 -> "1 Tn".
  * Uses 1 decimal when the value is not a whole unit (e.g. 1.5 Mn); otherwise no decimals.

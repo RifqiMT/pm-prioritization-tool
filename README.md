@@ -2,7 +2,18 @@
 
 **Local-first, no-backend** web application for prioritizing projects using the [RICE framework](https://www.intercom.com/blog/rice-scoring-model/) (Reach × Impact × Confidence ÷ Effort) and the **MoSCoW method** (Must have, Should have, Could have, Won't have). All data is stored in the browser. No account, server, or build step required.
 
-This README is the **product documentation** for the tool. It covers product overview, benefits, features, logics, data model, business and technical guidelines, tech stack, folder directory, and limitations.
+This README is the **product documentation** for the tool and follows the product documentation standard. It covers:
+
+- **Product overview** – Purpose, target users, key concepts, high-level flow  
+- **Product benefits** – Value proposition and user benefits  
+- **Features** – Profiles, projects, RICE, optional fields, exchange rates, filters, sort, Table/Board/MOSCOW/Map views, export/import, tooltips, fullscreen  
+- **Logics and data model** – RICE formula, validation, storage shape, exchange rates logic, profile and project schemas, board/MOSCOW order, import merge, country normalization  
+- **Business guidelines** – Recommended usage and practices  
+- **Tech guidelines** – Tech stack, script load order, contribution rules, global dependencies  
+- **Folder directory and file roles** – Source layout and responsibility of each file  
+- **Screens and key UI** – Header, profiles, filters, views, modals, toasts  
+- **Limitations and considerations** – Single browser, no auth, storage, CORS, no versioning  
+- **Other** – Script load order, global dependencies, export/import merge result, tooltip behavior, card layout (actions and reorder buttons)
 
 ---
 
@@ -55,6 +66,7 @@ The tool helps product managers and teams **capture**, **score**, **rank**, and 
 | **Map view** | Choropleth world map colored by project count, RICE score, or **total financial impact (EUR)** per target country; uses canonical country names and 2-letter codes (e.g. Taiwan). |
 | **Exchange rates ETL** | Extract: fetch from API; Transform: normalize to EUR-based rates per currency; Load: merge into state and persist. Manual and automatic (00:00 Germany) refresh. |
 | **Merge (import)** | Imported data is merged by profile (ID or name) and by project ID; duplicates are skipped. Country names are normalized to the canonical list on import. |
+| **Tooltips** | Structured tooltips (title + body) for project type, status, T-shirt size, MOSCOW, period, financial impact (EUR), and description. Tooltips are moved to the document body or fullscreen root so they are not clipped by overflow; visibility is controlled by the app and hidden on scroll or when modals open. |
 
 ### 1.4 High-level flow
 
@@ -73,7 +85,7 @@ The tool helps product managers and teams **capture**, **score**, **rank**, and 
 | Requirement | Details |
 |-------------|--------|
 | **Browser** | Modern browser with JavaScript enabled and `localStorage` support (e.g. Chrome, Firefox, Safari, Edge). |
-| **Network** | Optional: for Google Fonts (Inter), Leaflet tiles and Natural Earth GeoJSON in Map view, and **exchange rates API** (Frankfurter). App runs offline for table, board, and MOSCOW after first load if fonts and map data are cached; financial EUR conversion requires the rates API. |
+| **Network** | Optional: for Google Fonts (Inter), Leaflet tiles and Natural Earth GeoJSON in Map view, and **exchange rates APIs** (Frankfurter, MoneyConvert). App runs offline for table, board, and MOSCOW after first load if fonts and map data are cached; financial EUR conversion requires the rates APIs. |
 | **Backend** | None. No server, database, or API of your own. |
 | **Build** | None. Plain HTML, CSS, and JavaScript; no bundler or Node required to run. |
 
@@ -184,7 +196,7 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 | **Rates section** | Header: **Rates** label, **Refresh exchange rates** button, and **Last updated** line (date + manual/auto) in smaller muted text. |
 | **Manual refresh** | Click **Refresh exchange rates** to run the ETL (Extract → Transform → Load) and update table/map. |
 | **Automatic refresh** | Every day at **00:00 Europe/Berlin** (Germany time) the app runs the same ETL when the app is open. When the app is closed, the next time you open the app after midnight Germany, rates are refreshed automatically (stale-date check uses Germany “today”). |
-| **ETL** | Extract: fetch from Frankfurter API; Transform: normalize to one rate per currency (currency → EUR); Load: merge into state, set date (Germany), and persist. |
+| **ETL** | Extract: fetch from Frankfurter API (EUR base) and MoneyConvert API (USD base, 180+ currencies); Transform: normalize each to currency → EUR; Merge: Frankfurter first, then fill missing from MoneyConvert; optional fallback static rates when APIs fail or are blocked (e.g. CORS). Load: merge into state, set date (Germany), and persist. |
 | **Display** | “Last updated: &lt;date&gt; (manual refresh)” or “(auto)”; persisted so it survives reload. |
 
 ### 5.6 Filters
@@ -210,7 +222,7 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 | Aspect | Description |
 |--------|-------------|
 | **Columns** | One per project status: Not Started, In Progress, On Hold, Done, Cancelled. Column headers use status-specific colors. |
-| **Cards** | Title, RICE score, T-shirt size, project type icon; **View**, **Edit**, **Delete**, and **↑** / **↓** (reorder) buttons on each card. |
+| **Cards** | Title, RICE score, T-shirt size, project type icon; **View**, **Edit**, **Delete** on the left; **↑** / **↓** (reorder) in the right corner. |
 | **Sort by RICE (desc)** | **On:** cards in each column sorted by RICE score (highest first). **Off:** manual order; drag to move between columns or reorder within column; **↑** / **↓** to move card up/down; order is saved per profile per status. |
 | **Drag-and-drop** | Move a card to another column to change its status. When “Sort by RICE” is off, drop position and up/down set the card’s position (persisted). Drag uses a cloned ghost for precise cursor alignment. |
 | **Full screen** | **Full screen** button in the toolbar; **Exit full screen** or Escape to exit. View toggle remains available in fullscreen to switch to Table/MOSCOW/Map. |
@@ -221,7 +233,7 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 |--------|-------------|
 | **Layout** | 2×2 grid: Must have, Should have, Could have, Won't have. Each quadrant has a coloured label, one-sentence description, and project cards. |
 | **Sort by RICE (desc)** | **On:** cards within each quadrant sorted by RICE. **Off:** manual order; **↑** / **↓** to reorder within quadrant; order persisted per profile per MOSCOW category. |
-| **Cards** | Title, RICE score, T-shirt size; **View**, **Edit**, **Delete**, **↑**, **↓**. |
+| **Cards** | Title, RICE score, T-shirt size; **View**, **Edit**, **Delete** on the left; **↑** / **↓** (reorder) in the right corner. |
 | **Drag-and-drop** | Drag a card to another quadrant to change **MOSCOW category**; state is persisted. Drag uses a cloned ghost for alignment. |
 | **Full screen** | **Full screen** button in the header; view toggle remains available to switch to Table/Board/Map without exiting fullscreen. |
 
@@ -252,6 +264,13 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 - **Switch view in fullscreen:** The **Table | Board | MOSCOW | Map** buttons stay enabled. Clicking another view exits fullscreen, switches to that view, and re-enters fullscreen on the new view so you stay in fullscreen while changing boards.
 - **Exit fullscreen:** **Exit full screen** or Escape. Modals and toast container are moved back to document body when exiting.
 
+### 5.15 Tooltips
+
+- **Cell-type tooltips** provide structured title + body for: project type, status, T-shirt size, MOSCOW category, project period, financial impact (original amount/currency), and description in table/board/modal.
+- **Positioning:** Tooltips are moved to the document body (or the fullscreen element when a view is fullscreen) so they are not clipped by table or card overflow; positioning is set from the trigger element’s bounding rect.
+- **Visibility:** Shown on hover/focus via class `cell-type-tooltip-visible`; hidden on scroll, when modals open, and when focus leaves the trigger. `body.cell-type-tooltip-hidden` can force-hide all such tooltips (e.g. during scroll).
+- **Accessibility:** Title and body content; ARIA and keyboard-friendly where applicable.
+
 ---
 
 ## 6. Logics and data model
@@ -273,6 +292,7 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 - **Key:** `rice_prioritizer_v1` in `localStorage`.
 - **Root payload:**  
   `{ profiles, activeProfileId, sortField, sortDirection, projectsView, scrumBoardSortByRice, moscowSortByRice, mapMetric, exchangeRatesToEUR, exchangeRatesDate, exchangeRatesLastSource }`
+- **profiles:** Each profile may include `boardOrder` and `moscowOrder` (optional; used when “Sort by RICE” is off).
 - **projectsView:** `"table"` | `"board"` | `"moscow"` | `"map"`.
 - **mapMetric:** `"projects"` | `"rice"` | `"financial"` (used when projectsView is `"map"`).
 - **exchangeRatesToEUR:** `{ [currencyCode]: rateToEur }` (e.g. `USD: 0.92`); **EUR** is 1.
@@ -282,14 +302,19 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 ### 6.4 Exchange rates logic
 
 - **Timezone:** All “today” and “midnight” for rates use **Europe/Berlin** (Germany).
+- **Sources:**  
+  - **Frankfurter:** `GET https://api.frankfurter.dev/v1/latest` (EUR base, ~31 currencies).  
+  - **MoneyConvert:** `GET https://cdn.moneyconvert.net/api/latest.json` (USD base, 180+ currencies).  
+  - **Fallback:** Static rates for currencies that may be missing when APIs fail or are blocked (e.g. CORS); approximate; refresh from APIs when possible.
 - **ETL:**  
-  - **Extract:** `GET https://api.frankfurter.dev/v1/latest` (EUR-based rates).  
-  - **Transform:** One entry per currency (uppercase), rate to EUR = 1 / rateFromEur; dedupe.  
+  - **Extract:** Fetch from Frankfurter and MoneyConvert in parallel.  
+  - **Transform:** Normalize each response to a map `currencyCode → rateToEUR` (EUR = 1).  
+  - **Merge:** Frankfurter first, then fill missing from MoneyConvert, then from fallback so every listed currency has a rate.  
   - **Load:** Replace `state.exchangeRatesToEUR`, set `state.exchangeRatesDate` to today (Germany), set `state.exchangeRatesLastSource`, save state, update “Last updated” label.
 - **When to refresh:**  
   - **Manual:** User clicks **Refresh exchange rates**.  
   - **Auto (app open):** A timeout is set for the next 00:00 Germany; when it fires, ETL runs and the next 00:00 is scheduled again.  
-  - **Auto (app closed):** On load, if `state.exchangeRatesDate` is not today (Germany), `ensureExchangeRatesToEUR()` runs and fetches (so first open after midnight Germany gets fresh rates).
+  - **Auto (app closed):** On load, if `state.exchangeRatesDate` is not today (Germany), `ensure()` runs and fetches (so first open after midnight Germany gets fresh rates).
 - **Conversion:** For a project with `financialImpactValue` and `financialImpactCurrency`, EUR = value × `exchangeRatesToEUR[currency]` (or value if currency is EUR or missing rate).
 
 ### 6.5 Financial display
@@ -307,7 +332,8 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 | `team` | string | Optional team label. |
 | `createdAt` | string | ISO 8601 date. |
 | `projects` | array | Array of project objects. |
-| `boardOrder` | object | Optional. `{ [status]: [projectId, ...] }` for board; used when “Sort by RICE” is off. |
+| `boardOrder` | object | Optional. `{ [status]: [projectId, ...] }` for board column order; used when “Sort by RICE” is off. |
+| `moscowOrder` | object | Optional. `{ [moscowCategory]: [projectId, ...] }` for MOSCOW quadrant order; used when “Sort by RICE” is off. |
 
 ### 6.7 Project schema
 
@@ -340,7 +366,7 @@ RICE score is not stored; it is computed from the RICE fields when needed.
 ### 6.9 MOSCOW category and order
 
 - Stored as `project.moscowCategory`. Valid values: `"Must have"`, `"Should have"`, `"Could have"`, `"Won't have"`. New projects default to **Could have**.
-- When “Sort by RICE” is off, quadrant order can be persisted per profile per MOSCOW category (same pattern as board order).
+- When “Sort by RICE” is off, quadrant order comes from `profile.moscowOrder[quadrant]` (array of project IDs); dragging or **↑** / **↓** updates `moscowOrder` and `project.moscowCategory` / `project.modifiedAt`.
 - Drag-and-drop in MOSCOW view updates `project.moscowCategory` and `project.modifiedAt`.
 
 ### 6.10 Import merge rules
@@ -384,7 +410,7 @@ RICE score is not stored; it is computed from the RICE fields when needed.
 | **Styles** | CSS3 (custom properties, flexbox/grid, responsive, fullscreen for all views). |
 | **Scripting** | Vanilla JavaScript; classic scripts (no ES modules in default run), no framework or build. |
 | **Map** | Leaflet 1.9.4 (CDN); world countries GeoJSON from Natural Earth (110m, jsDelivr CDN). Choropleth and tooltips in Map view. |
-| **Exchange rates** | Frankfurter API (`https://api.frankfurter.dev/v1/latest`); client-side fetch, no backend. |
+| **Exchange rates** | Frankfurter API (`api.frankfurter.dev`) and MoneyConvert API (`cdn.moneyconvert.net`); client-side fetch, no API keys; merged for maximum currency coverage; fallback static rates when APIs fail (e.g. CORS). |
 | **Fonts** | Google Fonts (Inter). |
 | **Persistence** | Browser `localStorage` (key: `rice_prioritizer_v1`). |
 | **Backend** | None; local-first, no server or auth. |
@@ -392,7 +418,7 @@ RICE score is not stored; it is computed from the RICE fields when needed.
 
 ### 8.2 Script load order and boot
 
-Scripts are loaded in order: **Leaflet** (CDN) → `constants.js` → `utils.js` → `rice.js` → `app.js`. The app boots when `app.js` registers `document.addEventListener("DOMContentLoaded", init)`. No ES modules in the default setup; all scripts run in the global scope. The file `main.js` is an optional ES-module entry and is **not** referenced in `index.html`.
+Scripts are loaded in order: **Leaflet** (CDN) → `constants.js` → `utils.js` → `rice.js` → `src/modules/exchange-rates.js` → `src/modules/fullscreen.js` → `app.js`. The app boots when `app.js` registers `document.addEventListener("DOMContentLoaded", init)`. No ES modules in the default setup; all scripts run in the global scope. The file `main.js` is an optional ES-module entry and is **not** referenced in `index.html`. **ExchangeRates** and **Fullscreen** are initialized at startup with dependencies (getState, saveState, getElements, etc.) so exchange-rate and fullscreen logic stay modular and testable.
 
 ### 8.3 Technical guidelines for contributors
 
@@ -403,7 +429,7 @@ Scripts are loaded in order: **Leaflet** (CDN) → `constants.js` → `utils.js`
 - **Accessibility** – Use semantic HTML, ARIA where needed, and keyboard support for primary actions.
 - **Country consistency** – Use `getCanonicalCountryName` and `normalizeCountryNames` when reading or storing country names.
 - **MOSCOW** – Use `moscowList` and `moscowGridOrder` for order; use `moscowTooltips[].gridDescription` for quadrant text. Default new projects to **Could have** in form and create logic.
-- **Exchange rates** – Use Germany timezone (`Europe/Berlin`) for “today” and for scheduling 00:00 refresh; store date as Germany YYYY-MM-DD; ETL: extract → transform → load; persist `exchangeRatesToEUR`, `exchangeRatesDate`, `exchangeRatesLastSource`.
+- **Exchange rates** – Use Germany timezone (`Europe/Berlin`) for “today” and for scheduling 00:00 refresh; store date as Germany YYYY-MM-DD; ETL: fetch from Frankfurter + MoneyConvert, transform to EUR-based rates, merge (Frankfurter first, then fill missing from MoneyConvert), load into state; persist `exchangeRatesToEUR`, `exchangeRatesDate`, `exchangeRatesLastSource`.
 
 ### 8.4 Global dependencies (for development)
 
@@ -411,7 +437,7 @@ Scripts are loaded in order: **Leaflet** (CDN) → `constants.js` → `utils.js`
 
 - **From constants.js:** `STORAGE_KEY`, `projectStatusList`, `projectStatusIcons`, `tshirtSizeList`, `tshirtSizeTooltips`, `projectTypeIcons`, `moscowList`, `moscowTooltips`, `moscowGridOrder`, `currencyList`, `countryList`, `countryCodeByName`, `countryNameAliases`
 - **From rice.js:** `calculateRiceScore`, `formatRice`, `validateProjectInput`
-- **From utils.js:** `formatDateTime`, `formatDate`, `formatDateForFilename`, `compareDatesDesc`, `generateId`, `escapeHtml`, `countryCodeToFlag`, `countryCodeToTwoLetter`, `toNumberOrNull`, `parseCsv`, `escapeCsvCell`, `formatFinancialShort`
+- **From utils.js:** `formatDateTime`, `formatDate`, `formatDateForFilename`, `compareDatesDesc`, `generateId`, `escapeHtml`, `countryCodeToFlag`, `countryCodeToTwoLetter`, `toNumberOrNull`, `parseCsv`, `escapeCsvCell`, `formatFinancialShort`, `debounce`
 
 ---
 
@@ -428,18 +454,19 @@ pm-prioritization-tool/
 │                        # fullscreen, exchange-rates label, modals, responsive, prefers-reduced-motion
 ├── src/
 │   ├── constants.js    # STORAGE_KEY, projectStatusList, projectStatusIcons, tshirtSizeList,
-│   │                   # tshirtSizeTooltips, projectTypeIcons, moscowList, moscowTooltips,
+│   │                   # tshirtSizeTooltips, projectTypeIcons, projectPeriodTooltip, moscowList, moscowTooltips,
 │   │                   # moscowGridOrder, currencyList, countryList, countryCodeByName, countryNameAliases
 │   ├── utils.js        # formatDateTime, formatDate, formatDateForFilename, compareDatesDesc,
 │   │                   # generateId, escapeHtml, countryCodeToFlag, countryCodeToTwoLetter,
-│   │                   # ISO3_TO_ISO2, toNumberOrNull, parseCsv, escapeCsvCell, formatFinancialShort
+│   │                   # ISO3_TO_ISO2, toNumberOrNull, parseCsv, escapeCsvCell, formatFinancialShort, debounce
 │   ├── rice.js         # calculateRiceScore, formatRice, validateProjectInput
-│   ├── app.js          # State, DOM cache, init, filters, render (profiles, table, board, MOSCOW, map),
-│   │                   # exchange rates ETL, scheduleDailyExchangeRatesRefresh, getTodayGermanyDateString,
-│   │                   # fullscreen (toggle, view switch, getViewElement, pendingFullscreenView),
-│   │                   # createDragGhost, board/MOSCOW drag-and-drop and up/down reorder,
-│   │                   # getCountryFinancialImpactByCode, convertToEUR, renderProjectsMap, modals,
-│   │                   # export/import, showToast. Boot: DOMContentLoaded → init
+│   ├── modules/
+│   │   ├── exchange-rates.js  # ETL, Germany timezone, daily 00:00 refresh; init(getState, saveState, getElements, onRatesUpdated)
+│   │   └── fullscreen.js      # Toggle fullscreen, view switch while fullscreen; init(getState, getElements, switchView, getViewElement)
+│   ├── app.js          # State, DOM cache, init (wires ExchangeRates + Fullscreen), filters, render (profiles, table, board, MOSCOW, map),
+│   │                   # tooltip handling (getTooltipRoot, returnTooltipsToOwner, hideCellTypeTooltips, positionProfileTooltip),
+│   │                   # getCountryFinancialImpactByCode, renderProjectsMap, createDragGhost, board/MOSCOW drag-and-drop,
+│   │                   # modals, export/import, showToast. Boot: DOMContentLoaded → init
 │   └── main.js         # Optional ES module entry; not loaded by index.html
 └── README.md           # This documentation
 ```
@@ -448,12 +475,14 @@ pm-prioritization-tool/
 
 | File | Role |
 |------|------|
-| **index.html** | App shell, header (title, Export, Import, **Rates**: refresh button + `#exchangeRatesDateLabel`), profiles panel, filters, view toggle (Table \| Board \| MOSCOW \| Map), table/board/map/MOSCOW containers, fullscreen buttons, all modals, `#toastContainer`. Loads Leaflet CSS, `css/main.css`, and scripts in order: Leaflet → constants → utils → rice → app. |
-| **css/main.css** | CSS custom properties (dark theme), layout, table, board, MOSCOW 2×2 grid, map, fullscreen for all views, `.data-pill-group--rates`, `.exchange-rates-date-label`, `.drag-ghost`, `.cell-financial-with-tooltip`, modals, toast, responsive, `prefers-reduced-motion`. |
-| **constants.js** | Config and lookup data only; no DOM. |
-| **utils.js** | Pure helpers only; includes `formatFinancialShort`; no DOM. |
+| **index.html** | App shell, header (title, Export, Import, **Rates**: refresh button + `#exchangeRatesDateLabel`), profiles panel, filters, view toggle (Table \| Board \| MOSCOW \| Map), table/board/map/MOSCOW containers, fullscreen buttons, all modals, `#toastContainer`. Loads Leaflet CSS, `css/main.css`, and scripts: Leaflet → constants → utils → rice → modules/exchange-rates.js → modules/fullscreen.js → app. |
+| **css/main.css** | CSS custom properties (dark theme), layout, table, board, MOSCOW 2×2 grid, map, fullscreen for all views, `.data-pill-group--rates`, `.exchange-rates-date-label`, `.drag-ghost`, cell-type tooltips (`.cell-type-tooltip`, `.cell-type-tooltip-visible`, `.cell-type-tooltip-hidden`), modals, toast, responsive, `prefers-reduced-motion`. |
+| **constants.js** | Config and lookup data only (STORAGE_KEY, project status/type/MOSCOW/period/tshirt tooltips, currency and country lists, country aliases); no DOM. |
+| **utils.js** | Pure helpers; includes `formatFinancialShort`, `debounce` (for filter title); no DOM. |
 | **rice.js** | RICE calculation and validation only; no DOM. |
-| **app.js** | Full application logic: state, elements, init, filters, render, exchange rates ETL and scheduling (Germany timezone), fullscreen and view switching, drag-and-drop with ghost, financial EUR conversion and map metric “financial”, modals, export/import, showToast. Boot: `DOMContentLoaded` → `init`. |
+| **modules/exchange-rates.js** | Exchange rates ETL from multiple APIs (Frankfurter + MoneyConvert), merge for max currency coverage; Germany timezone, daily 00:00 refresh; exposes `ExchangeRates` (init, ensure, refreshManual, scheduleDailyRefresh, updateLabel, convertToEUR, hasRate). No direct state/DOM; uses init() deps. |
+| **modules/fullscreen.js** | Fullscreen toggle and view switch while fullscreen; exposes `Fullscreen` (init, toggle, onChange, isViewFullscreen, requestViewSwitchWhileFullscreen). No direct state/DOM; uses init() deps. |
+| **app.js** | State, elements, init (wires ExchangeRates + Fullscreen), filters (debounced title), render (profiles, table, board, MOSCOW, map), tooltip handling (`getTooltipRoot`, `returnTooltipsToOwner`, `hideCellTypeTooltips`, `positionProfileTooltip`), getCountryFinancialImpactByCode, renderProjectsMap, drag-and-drop, modals, export/import, showToast. Boot: `DOMContentLoaded` → `init`. |
 | **main.js** | Optional ES module entry that imports `init` from `app.js`; use only with a bundler or module-aware dev server; **not** loaded by `index.html`. |
 
 ---
@@ -508,7 +537,7 @@ pm-prioritization-tool/
 | **Single browser** | Data is in one browser’s `localStorage`; not synced across devices or browsers. Use export/import to move data. |
 | **No auth** | Anyone with access to the browser can see and change data. Do not use for sensitive or regulated data. |
 | **Storage quota** | Subject to browser `localStorage` limits (~5–10 MB typical). Large exports may hit limits. |
-| **Exchange rates** | Require network (Frankfurter API). When the app is closed, no code runs; automatic refresh at 00:00 Germany happens the next time you open the app (if the stored date is before today Germany). |
+| **Exchange rates** | Require network (Frankfurter + MoneyConvert APIs). When the app is closed, no code runs; automatic refresh at 00:00 Germany happens the next time you open the app (if the stored date is before today Germany). |
 | **CORS / file://** | Opening `index.html` via `file://` may behave differently than via `http://`. Use a static server for consistent behavior. Map and exchange rates need network or cache. |
 | **No versioning** | No built-in history or undo; export regularly to keep backups. |
 
