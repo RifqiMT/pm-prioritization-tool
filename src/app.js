@@ -94,15 +94,18 @@ function cacheElements() {
   elements.filterCurrency = $("filterCurrency");
   elements.filterStatus = $("filterStatus");
   elements.filterTshirtSize = $("filterTshirtSize");
+  elements.filterMoscow = $("filterMoscow");
   elements.filterProjectType = $("filterProjectType");
 
   elements.projectsTableBody = $("projectsTableBody");
   elements.selectAllProjects = $("selectAllProjects");
   elements.projectsViewTableBtn = $("projectsViewTableBtn");
   elements.projectsViewBoardBtn = $("projectsViewBoardBtn");
+  elements.projectsViewMoscowBtn = $("projectsViewMoscowBtn");
   elements.projectsViewMapBtn = $("projectsViewMapBtn");
   elements.projectsTableView = $("projectsTableView");
   elements.projectsBoardView = $("projectsBoardView");
+  elements.projectsMoscowView = $("projectsMoscowView");
   elements.projectsMapView = $("projectsMapView");
   elements.projectsMapContainer = $("projectsMapContainer");
   elements.projectsMapLegend = $("projectsMapLegend");
@@ -111,6 +114,9 @@ function cacheElements() {
   elements.scrumBoardContainer = $("scrumBoardContainer");
   elements.scrumBoardLegend = $("scrumBoardLegend");
   elements.scrumBoardSortByRiceToggle = $("scrumBoardSortByRiceToggle");
+  elements.scrumBoardFullscreenBtn = $("scrumBoardFullscreenBtn");
+  elements.moscowBoardContainer = $("moscowBoardContainer");
+  elements.moscowFullscreenBtn = $("moscowFullscreenBtn");
 
   elements.projectModal = $("projectModal");
   elements.projectModalTitle = $("projectModalTitle");
@@ -137,6 +143,7 @@ function cacheElements() {
   elements.projectStatus = $("projectStatus");
   elements.projectTshirtSize = $("projectTshirtSize");
   elements.projectPeriod = $("projectPeriod");
+  elements.projectMoscow = $("projectMoscow");
 
   elements.projectMetaCreated = $("projectMetaCreated");
   elements.projectMetaModified = $("projectMetaModified");
@@ -323,6 +330,9 @@ function attachEventListeners() {
   if (elements.projectsViewBoardBtn) {
     elements.projectsViewBoardBtn.addEventListener("click", () => switchProjectsView("board"));
   }
+  if (elements.projectsViewMoscowBtn) {
+    elements.projectsViewMoscowBtn.addEventListener("click", () => switchProjectsView("moscow"));
+  }
   if (elements.projectsViewMapBtn) {
     elements.projectsViewMapBtn.addEventListener("click", () => switchProjectsView("map"));
   }
@@ -349,8 +359,14 @@ function attachEventListeners() {
   if (elements.projectsMapFullscreenBtn && elements.projectsMapView) {
     elements.projectsMapFullscreenBtn.addEventListener("click", toggleMapFullscreen);
   }
-  document.addEventListener("fullscreenchange", onMapFullscreenChange);
-  document.addEventListener("webkitfullscreenchange", onMapFullscreenChange);
+  if (elements.scrumBoardFullscreenBtn && elements.projectsBoardView) {
+    elements.scrumBoardFullscreenBtn.addEventListener("click", () => toggleViewFullscreen(elements.projectsBoardView));
+  }
+  if (elements.moscowFullscreenBtn && elements.projectsMoscowView) {
+    elements.moscowFullscreenBtn.addEventListener("click", () => toggleViewFullscreen(elements.projectsMoscowView));
+  }
+  document.addEventListener("fullscreenchange", onViewFullscreenChange);
+  document.addEventListener("webkitfullscreenchange", onViewFullscreenChange);
 
   // --- Data export / import: main toolbar buttons ---
   // Export and Import both open a simple format chooser (JSON or CSV).
@@ -762,6 +778,7 @@ function updateFiltersActivePill() {
   if (elements.filterCurrency.value) activeFilters.push("Currency");
   if (elements.filterStatus.value) activeFilters.push("Status");
   if (elements.filterTshirtSize.value) activeFilters.push("T-shirt size");
+  if (elements.filterMoscow && elements.filterMoscow.value) activeFilters.push("MOSCOW");
 
   if (!activeFilters.length) {
     elements.filtersActivePill.style.display = "none";
@@ -801,7 +818,7 @@ function handleExportData() {
     const a = document.createElement("a");
     const ts = formatDateForFilename(new Date());
     a.href = url;
-    a.download = `rice-prioritizer-export-${ts}.json`;
+    a.download = `pm-prioritization-tool-export-${ts}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -847,6 +864,7 @@ function handleExportCsv() {
       "projectStatus",
       "tshirtSize",
       "projectPeriod",
+      "moscowCategory",
       "countries",
       "riceScore"
     ];
@@ -917,6 +935,7 @@ function handleExportCsv() {
           escapeCsvCell(project.projectStatus || ""),
           escapeCsvCell(project.tshirtSize || ""),
           escapeCsvCell(project.projectPeriod || ""),
+          escapeCsvCell(project.moscowCategory || ""),
           escapeCsvCell(countries),
           escapeCsvCell(String(rice))
         ];
@@ -930,7 +949,7 @@ function handleExportCsv() {
     const a = document.createElement("a");
     const ts = formatDateForFilename(new Date());
     a.href = url;
-    a.download = `rice-prioritizer-export-${ts}.csv`;
+    a.download = `pm-prioritization-tool-export-${ts}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1168,6 +1187,7 @@ function buildProfilesFromCsvRows(header, rows) {
       projectStatus: (cells[colIndex.projectStatus] ?? "").toString().trim() || null,
       tshirtSize: (cells[colIndex.tshirtSize] ?? "").toString().trim() || null,
       projectPeriod: (cells[colIndex.projectPeriod] ?? "").toString().trim().toUpperCase() || null,
+      moscowCategory: (cells[colIndex.moscowCategory] ?? "").toString().trim() || null,
       countries: normalizeCountryNames((cells[colIndex.countries] ?? "").toString().split("|").map((c) => c.trim()).filter((c) => c !== ""))
     };
     project.riceScore = calculateRiceScore(project);
@@ -1227,6 +1247,7 @@ function normalizeImportedProject(project) {
     projectStatus: (project.projectStatus != null && String(project.projectStatus).trim() !== "") ? String(project.projectStatus).trim() : null,
     tshirtSize: (project.tshirtSize != null && String(project.tshirtSize).trim() !== "") ? String(project.tshirtSize).trim() : null,
     projectPeriod,
+    moscowCategory: (project.moscowCategory != null && String(project.moscowCategory).trim() !== "" && typeof moscowList !== "undefined" && moscowList.includes(project.moscowCategory)) ? String(project.moscowCategory).trim() : null,
     countries: normalizeCountryNames(Array.isArray(project.countries) ? project.countries : [])
   };
   normalized.riceScore = calculateRiceScore(normalized);
@@ -1416,7 +1437,7 @@ function loadState() {
 
     state.sortField = !Array.isArray(parsed) && parsed.sortField ? parsed.sortField : "createdAt";
     state.sortDirection = !Array.isArray(parsed) && parsed.sortDirection ? parsed.sortDirection : "desc";
-    if (!Array.isArray(parsed) && (parsed.projectsView === "table" || parsed.projectsView === "board" || parsed.projectsView === "map")) {
+    if (!Array.isArray(parsed) && (parsed.projectsView === "table" || parsed.projectsView === "board" || parsed.projectsView === "moscow" || parsed.projectsView === "map")) {
       state.projectsView = parsed.projectsView;
     }
     if (!Array.isArray(parsed) && typeof parsed.scrumBoardSortByRice === "boolean") {
@@ -1463,6 +1484,7 @@ function normalizeLoadedProject(project) {
     projectStatus: (project.projectStatus != null && String(project.projectStatus).trim() !== "") ? String(project.projectStatus).trim() : null,
     tshirtSize: (project.tshirtSize != null && String(project.tshirtSize).trim() !== "") ? String(project.tshirtSize).trim() : null,
     projectPeriod,
+    moscowCategory: (project.moscowCategory != null && String(project.moscowCategory).trim() !== "" && typeof moscowList !== "undefined" && moscowList.includes(project.moscowCategory)) ? String(project.moscowCategory).trim() : null,
     countries: normalizeCountryNames(Array.isArray(project.countries) ? project.countries : [])
   };
 }
@@ -1731,7 +1753,7 @@ function renderProjects() {
   if (!activeProfile) {
     elements.projectsTableBody.innerHTML = `
       <tr>
-        <td colspan="11" class="empty-state">
+        <td colspan="12" class="empty-state">
           Create or select a profile to start adding projects.
         </td>
       </tr>
@@ -1739,6 +1761,9 @@ function renderProjects() {
     elements.bulkDeleteBtn.disabled = true;
     if (state.projectsView === "board" && elements.scrumBoardContainer) {
       renderScrumBoard();
+    }
+    if (state.projectsView === "moscow" && elements.moscowBoardContainer) {
+      renderMoscowBoard();
     }
     if (state.projectsView === "map" && elements.projectsMapContainer) {
       renderProjectsMap();
@@ -1760,7 +1785,7 @@ function renderProjects() {
   if (!projects.length) {
     elements.projectsTableBody.innerHTML = `
       <tr>
-        <td colspan="11" class="empty-state">
+        <td colspan="12" class="empty-state">
           No projects match the current filters. Adjust filters or add a new project.
         </td>
       </tr>
@@ -1769,6 +1794,9 @@ function renderProjects() {
     elements.selectAllProjects.checked = false;
     if (state.projectsView === "board" && elements.scrumBoardContainer) {
       renderScrumBoard();
+    }
+    if (state.projectsView === "moscow" && elements.moscowBoardContainer) {
+      renderMoscowBoard();
     }
     if (state.projectsView === "map" && elements.projectsMapContainer) {
       renderProjectsMap();
@@ -1995,6 +2023,11 @@ function renderProjects() {
     }
     tr.appendChild(tdTshirtSize);
 
+    const tdMoscow = document.createElement("td");
+    tdMoscow.className = "cell-meta";
+    tdMoscow.textContent = project.moscowCategory || "—";
+    tr.appendChild(tdMoscow);
+
     const tdRice = document.createElement("td");
     const riceScore = calculateRiceScore(project);
     tdRice.className = "cell-rice";
@@ -2168,6 +2201,9 @@ function renderProjects() {
   if (state.projectsView === "board" && elements.scrumBoardContainer) {
     renderScrumBoard();
   }
+  if (state.projectsView === "moscow" && elements.moscowBoardContainer) {
+    renderMoscowBoard();
+  }
   if (state.projectsView === "map" && elements.projectsMapContainer) {
     renderProjectsMap();
   }
@@ -2180,11 +2216,16 @@ function switchProjectsView(view) {
 
   const showTable = view === "table";
   const showBoard = view === "board";
+  const showMoscow = view === "moscow";
   const showMap = view === "map";
 
   elements.projectsTableView.style.display = showTable ? "" : "none";
   elements.projectsBoardView.style.display = showBoard ? "flex" : "none";
   elements.projectsBoardView.setAttribute("aria-hidden", String(!showBoard));
+  if (elements.projectsMoscowView) {
+    elements.projectsMoscowView.style.display = showMoscow ? "flex" : "none";
+    elements.projectsMoscowView.setAttribute("aria-hidden", String(!showMoscow));
+  }
   if (elements.projectsMapView) {
     elements.projectsMapView.style.display = showMap ? "flex" : "none";
     elements.projectsMapView.setAttribute("aria-hidden", String(!showMap));
@@ -2198,6 +2239,10 @@ function switchProjectsView(view) {
     elements.projectsViewBoardBtn.classList.toggle("view-toggle-btn--active", showBoard);
     elements.projectsViewBoardBtn.setAttribute("aria-selected", String(showBoard));
   }
+  if (elements.projectsViewMoscowBtn) {
+    elements.projectsViewMoscowBtn.classList.toggle("view-toggle-btn--active", showMoscow);
+    elements.projectsViewMoscowBtn.setAttribute("aria-selected", String(showMoscow));
+  }
   if (elements.projectsViewMapBtn) {
     elements.projectsViewMapBtn.classList.toggle("view-toggle-btn--active", showMap);
     elements.projectsViewMapBtn.setAttribute("aria-selected", String(showMap));
@@ -2205,7 +2250,9 @@ function switchProjectsView(view) {
 
   if (showBoard) {
     renderScrumBoard();
-  } else   if (showMap && elements.projectsMapContainer) {
+  } else if (showMoscow && elements.moscowBoardContainer) {
+    renderMoscowBoard();
+  } else if (showMap && elements.projectsMapContainer) {
     renderProjectsMap();
   }
 }
@@ -2285,34 +2332,45 @@ function getCountryCodeFromFeature(feature) {
 }
 
 function toggleMapFullscreen() {
-  if (!elements.projectsMapView) return;
-  const isFullscreen = document.fullscreenElement === elements.projectsMapView ||
-    (document.webkitFullscreenElement && document.webkitFullscreenElement === elements.projectsMapView);
+  toggleViewFullscreen(elements.projectsMapView);
+}
+
+function toggleViewFullscreen(viewEl) {
+  if (!viewEl) return;
+  const isFullscreen = document.fullscreenElement === viewEl ||
+    (document.webkitFullscreenElement && document.webkitFullscreenElement === viewEl);
   if (isFullscreen) {
     if (document.exitFullscreen) document.exitFullscreen();
     else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
   } else {
-    const el = elements.projectsMapView;
-    if (el.requestFullscreen) el.requestFullscreen();
-    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    if (viewEl.requestFullscreen) viewEl.requestFullscreen();
+    else if (viewEl.webkitRequestFullscreen) viewEl.webkitRequestFullscreen();
   }
 }
 
-function onMapFullscreenChange() {
-  const isFullscreen = document.fullscreenElement === elements.projectsMapView ||
-    (document.webkitFullscreenElement && document.webkitFullscreenElement === elements.projectsMapView);
-  const btn = elements.projectsMapFullscreenBtn;
-  if (btn) {
+function onViewFullscreenChange() {
+  const el = document.fullscreenElement || document.webkitFullscreenElement;
+  const isMap = el === elements.projectsMapView;
+  const isBoard = el === elements.projectsBoardView;
+  const isMoscow = el === elements.projectsMoscowView;
+
+  function updateBtn(btn, isFullscreen, expandLabel, compressLabel) {
+    if (!btn) return;
     btn.classList.toggle("is-fullscreen", !!isFullscreen);
-    btn.setAttribute("aria-label", isFullscreen ? "Exit full screen" : "Expand map to full screen");
-    btn.title = isFullscreen ? "Exit full screen" : "Full screen";
     const expand = btn.querySelector(".icon-expand");
     const compress = btn.querySelector(".icon-compress");
     if (expand) expand.style.display = isFullscreen ? "none" : "";
     if (compress) compress.style.display = isFullscreen ? "" : "none";
-    const label = btn.querySelector(".projects-map-fullscreen-label");
-    if (label) label.textContent = isFullscreen ? "Exit full screen" : "Full screen";
+    const labelEl = btn.querySelector(".projects-map-fullscreen-label") || btn.querySelector(".view-fullscreen-label");
+    if (labelEl) labelEl.textContent = isFullscreen ? compressLabel : expandLabel;
+    btn.setAttribute("aria-label", isFullscreen ? compressLabel : expandLabel);
+    btn.title = isFullscreen ? compressLabel : expandLabel;
   }
+
+  updateBtn(elements.projectsMapFullscreenBtn, isMap, "Full screen", "Exit full screen");
+  updateBtn(elements.scrumBoardFullscreenBtn, isBoard, "Full screen", "Exit full screen");
+  updateBtn(elements.moscowFullscreenBtn, isMoscow, "Full screen", "Exit full screen");
+
   const map = elements.projectsMapContainer && elements.projectsMapContainer._leafletMap;
   if (map) map.invalidateSize();
 }
@@ -2747,6 +2805,217 @@ function bindScrumBoardDragAndDrop() {
   });
 }
 
+function renderMoscowBoard() {
+  if (!elements.moscowBoardContainer || typeof moscowList === "undefined") return;
+  const gridOrder = typeof moscowGridOrder !== "undefined" && Array.isArray(moscowGridOrder) ? moscowGridOrder : moscowList;
+  const activeProfile = getActiveProfile();
+  elements.moscowBoardContainer.innerHTML = "";
+
+  if (!activeProfile) {
+    elements.moscowBoardContainer.innerHTML = '<div class="moscow-board-empty">Select a profile to see the MOSCOW grid.</div>';
+    return;
+  }
+
+  const baseProjects = activeProfile.projects.slice();
+  baseProjects.forEach((p) => {
+    p.riceScore = calculateRiceScore(p);
+  });
+  initFilterProjectPeriodOptions(baseProjects);
+  const projects = applyFilters(baseProjects);
+
+  const byMoscow = {};
+  moscowList.forEach((m) => {
+    byMoscow[m] = [];
+  });
+  projects.forEach((p) => {
+    const moscow = (p.moscowCategory != null && String(p.moscowCategory).trim() !== "" && moscowList.includes(p.moscowCategory))
+      ? p.moscowCategory
+      : "Could have";
+    if (!byMoscow[moscow]) byMoscow[moscow] = [];
+    byMoscow[moscow].push(p);
+  });
+
+  gridOrder.forEach((moscow) => {
+    const list = byMoscow[moscow] || [];
+    list.sort((a, b) => {
+      const scoreA = a.riceScore != null ? a.riceScore : calculateRiceScore(a);
+      const scoreB = b.riceScore != null ? b.riceScore : calculateRiceScore(b);
+      return scoreB - scoreA;
+    });
+  });
+
+  gridOrder.forEach((moscow) => {
+    const cell = document.createElement("div");
+    cell.className = "moscow-board-column moscow-grid-cell";
+    cell.setAttribute("data-moscow", moscow);
+    cell.setAttribute("role", "region");
+    cell.setAttribute("aria-label", "Quadrant: " + moscow);
+
+    const header = document.createElement("div");
+    header.className = "moscow-quadrant-header";
+    const tip = moscowTooltips && moscowTooltips[moscow];
+    const gridDesc = tip && tip.gridDescription ? tip.gridDescription : "";
+    const labelBox = document.createElement("div");
+    labelBox.className = "moscow-quadrant-label";
+    const shortLabels = { "Must have": "MUST", "Should have": "SHOULD", "Could have": "COULD", "Won't have": "WON'T" };
+    labelBox.textContent = shortLabels[moscow] || moscow.toUpperCase().replace("'", "'");
+    header.appendChild(labelBox);
+    if (gridDesc) {
+      const descEl = document.createElement("p");
+      descEl.className = "moscow-quadrant-description";
+      descEl.textContent = gridDesc;
+      header.appendChild(descEl);
+    }
+    const count = document.createElement("span");
+    count.className = "moscow-board-column-count";
+    count.textContent = String((byMoscow[moscow] || []).length);
+    header.appendChild(count);
+    cell.appendChild(header);
+
+    const cardsContainer = document.createElement("div");
+    cardsContainer.className = "moscow-board-column-cards";
+
+    (byMoscow[moscow] || []).forEach((project) => {
+      const card = document.createElement("div");
+      card.className = "moscow-board-card";
+      card.setAttribute("draggable", "true");
+      card.setAttribute("data-project-id", project.id);
+      card.setAttribute("aria-label", "Project: " + (project.title || "Untitled") + ". Drag to change MOSCOW category. View, Edit, Delete.");
+
+      const titleEl = document.createElement("div");
+      titleEl.className = "moscow-board-card-title";
+      titleEl.textContent = project.title || "Untitled";
+      card.appendChild(titleEl);
+
+      const meta = document.createElement("div");
+      meta.className = "moscow-board-card-meta";
+      const metaLeft = document.createElement("span");
+      metaLeft.className = "moscow-board-card-meta-left";
+      const rice = document.createElement("span");
+      rice.className = "moscow-board-card-rice";
+      rice.textContent = "RICE " + formatRice(project.riceScore != null ? project.riceScore : calculateRiceScore(project));
+      metaLeft.appendChild(rice);
+      if (project.tshirtSize) {
+        const sizeSpan = document.createElement("span");
+        sizeSpan.textContent = project.tshirtSize;
+        metaLeft.appendChild(sizeSpan);
+      }
+      meta.appendChild(metaLeft);
+      card.appendChild(meta);
+
+      const actions = document.createElement("div");
+      actions.className = "moscow-board-card-actions";
+      const viewBtn = document.createElement("button");
+      viewBtn.type = "button";
+      viewBtn.className = "moscow-board-card-btn moscow-board-card-btn--view";
+      viewBtn.setAttribute("data-project-id", project.id);
+      viewBtn.setAttribute("aria-label", "View project");
+      viewBtn.textContent = "View";
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "moscow-board-card-btn moscow-board-card-btn--edit";
+      editBtn.setAttribute("data-project-id", project.id);
+      editBtn.setAttribute("aria-label", "Edit project");
+      editBtn.textContent = "Edit";
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "moscow-board-card-btn moscow-board-card-btn--delete";
+      deleteBtn.setAttribute("data-project-id", project.id);
+      deleteBtn.setAttribute("aria-label", "Delete project");
+      deleteBtn.textContent = "Delete";
+      viewBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openProjectModal("view", project.id);
+      });
+      editBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openProjectModal("edit", project.id);
+      });
+      deleteBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        handleSingleDelete(project.id);
+      });
+      actions.appendChild(viewBtn);
+      actions.appendChild(editBtn);
+      actions.appendChild(deleteBtn);
+      card.appendChild(actions);
+
+      cardsContainer.appendChild(card);
+    });
+
+    cell.appendChild(cardsContainer);
+    elements.moscowBoardContainer.appendChild(cell);
+  });
+
+  bindMoscowBoardDragAndDrop();
+}
+
+function bindMoscowBoardDragAndDrop() {
+  if (!elements.moscowBoardContainer) return;
+  const cards = elements.moscowBoardContainer.querySelectorAll(".moscow-board-card");
+  const columns = elements.moscowBoardContainer.querySelectorAll(".moscow-board-column");
+
+  let draggedCard = null;
+  let draggedProjectId = null;
+  let dropColumn = null;
+
+  cards.forEach((card) => {
+    card.addEventListener("dragstart", (e) => {
+      if (e.target.closest(".moscow-board-card-actions")) {
+        e.preventDefault();
+        return;
+      }
+      draggedCard = card;
+      draggedProjectId = card.getAttribute("data-project-id");
+      card.classList.add("moscow-board-card--dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", draggedProjectId);
+      e.dataTransfer.setData("application/x-project-id", draggedProjectId);
+    });
+
+    card.addEventListener("dragend", () => {
+      if (draggedCard) draggedCard.classList.remove("moscow-board-card--dragging");
+      draggedCard = null;
+      draggedProjectId = null;
+      dropColumn = null;
+      columns.forEach((col) => col.classList.remove("moscow-board-column--drag-over"));
+    });
+  });
+
+  columns.forEach((column) => {
+    column.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      if (!draggedProjectId) return;
+      const cardInColumn = column.querySelector(`[data-project-id="${draggedProjectId}"]`);
+      if (!cardInColumn) column.classList.add("moscow-board-column--drag-over");
+      dropColumn = column;
+    });
+
+    column.addEventListener("dragleave", (e) => {
+      if (!column.contains(e.relatedTarget)) column.classList.remove("moscow-board-column--drag-over");
+    });
+
+    column.addEventListener("drop", (e) => {
+      e.preventDefault();
+      column.classList.remove("moscow-board-column--drag-over");
+      if (!draggedProjectId) return;
+      const newMoscow = column.getAttribute("data-moscow");
+      const activeProfile = getActiveProfile();
+      if (!activeProfile) return;
+      const project = activeProfile.projects.find((p) => p.id === draggedProjectId);
+      if (!project) return;
+
+      project.moscowCategory = newMoscow;
+      project.modifiedAt = new Date().toISOString();
+
+      saveState();
+      renderMoscowBoard();
+      renderProjects();
+    });
+  });
+}
+
 function applyFilters(projects) {
   const titleQuery = (elements.filterTitle.value || "").trim().toLowerCase();
   const selectedPeriodsFilter = getSelectedFilterProjectPeriods();
@@ -2755,6 +3024,7 @@ function applyFilters(projects) {
   const currencyFilter = elements.filterCurrency.value;
   const statusFilter = elements.filterStatus ? elements.filterStatus.value : "";
   const tshirtFilter = elements.filterTshirtSize ? elements.filterTshirtSize.value : "";
+  const moscowFilter = elements.filterMoscow ? elements.filterMoscow.value : "";
   const projectTypeFilter = elements.filterProjectType.value;
   const selectedCountriesFilter = getSelectedFilterCountries();
 
@@ -2786,11 +3056,25 @@ function applyFilters(projects) {
     }
 
     if (tshirtFilter) {
-      if ((p.tshirtSize || "") !== tshirtFilter) return false;
+      const projectSize = (p.tshirtSize || "").toString().trim();
+      if (tshirtFilter === "__none__") {
+        if (projectSize !== "") return false;
+      } else {
+        if (projectSize !== tshirtFilter) return false;
+      }
+    }
+
+    if (moscowFilter) {
+      if ((p.moscowCategory || "") !== moscowFilter) return false;
     }
 
     if (projectTypeFilter) {
-      if ((p.projectType || "") !== projectTypeFilter) return false;
+      const projectType = (p.projectType || "").toString().trim();
+      if (projectTypeFilter === "__none__") {
+        if (projectType !== "") return false;
+      } else {
+        if (projectType !== projectTypeFilter) return false;
+      }
     }
 
     if (selectedCountriesFilter.length) {
@@ -2808,7 +3092,7 @@ function sortProjects(projects) {
   const direction = state.sortDirection === "asc" ? 1 : -1;
 
   return projects.slice().sort((a, b) => {
-    if (field === "title" || field === "projectType" || field === "projectStatus" || field === "tshirtSize" || field === "financialImpactCurrency") {
+    if (field === "title" || field === "projectType" || field === "projectStatus" || field === "tshirtSize" || field === "financialImpactCurrency" || field === "moscowCategory") {
       const va = (a[field] || "").toString().toLowerCase();
       const vb = (b[field] || "").toString().toLowerCase();
       if (va === vb) {
@@ -2874,6 +3158,7 @@ function clearFilters() {
   elements.filterProjectType.value = "";
   if (elements.filterStatus) elements.filterStatus.value = "";
   if (elements.filterTshirtSize) elements.filterTshirtSize.value = "";
+  if (elements.filterMoscow) elements.filterMoscow.value = "";
   if (elements.filterProjectPeriodSearch) {
     elements.filterProjectPeriodSearch.value = "";
   }
@@ -3306,6 +3591,7 @@ function openProjectModal(mode, projectId) {
     elements.projectStatus.value = project.projectStatus || "";
     elements.projectTshirtSize.value = project.tshirtSize || "";
     elements.projectPeriod.value = project.projectPeriod || "";
+    elements.projectMoscow.value = project.moscowCategory || "";
     renderCountriesControls(Array.isArray(project.countries) ? project.countries : []);
 
     elements.projectMetaCreated.textContent = formatDateTime(project.createdAt);
@@ -3330,6 +3616,7 @@ function openProjectModal(mode, projectId) {
     elements.projectStatus.value = "Not Started";
     elements.projectTshirtSize.value = "";
     elements.projectPeriod.value = "";
+    elements.projectMoscow.value = "Could have";
     renderCountriesControls([]);
 
     const now = new Date();
@@ -3414,6 +3701,7 @@ function handleProjectFormSubmit(e) {
     projectStatus: (elements.projectStatus.value || "").trim() || null,
     tshirtSize: (elements.projectTshirtSize.value || "").trim() || null,
     projectPeriod: period,
+    moscowCategory: (elements.projectMoscow && elements.projectMoscow.value) ? (elements.projectMoscow.value || "").trim() || "Could have" : "Could have",
     countries: getCountriesFromControls()
   };
 
@@ -3443,6 +3731,7 @@ function handleProjectFormSubmit(e) {
     project.projectStatus = raw.projectStatus || null;
     project.tshirtSize = raw.tshirtSize || null;
     project.projectPeriod = raw.projectPeriod || null;
+    project.moscowCategory = raw.moscowCategory || null;
     project.countries = Array.isArray(raw.countries) ? raw.countries : [];
     project.modifiedAt = new Date().toISOString();
     project.riceScore = calculateRiceScore(project);
@@ -3468,6 +3757,7 @@ function handleProjectFormSubmit(e) {
       projectStatus: raw.projectStatus || null,
       tshirtSize: raw.tshirtSize || null,
       projectPeriod: raw.projectPeriod || null,
+      moscowCategory: raw.moscowCategory || "Could have",
       countries: Array.isArray(raw.countries) ? raw.countries : []
     };
     project.riceScore = calculateRiceScore(project);

@@ -51,6 +51,46 @@ const projectStatusIcons = {
 const tshirtSizeList = ["XS", "S", "M", "L", "XL"];
 
 /**
+ * MOSCOW prioritization: Must have, Should have, Could have, Won't have (this time).
+ * Used in the MOSCOW view and project metadata.
+ */
+const moscowList = [
+  "Must have",
+  "Should have",
+  "Could have",
+  "Won't have"
+];
+
+/**
+ * MOSCOW category tooltips for the board view.
+ */
+const moscowTooltips = {
+  "Must have": {
+    tooltipTitle: "Must have",
+    tooltipBody: "Critical for launch. Non-negotiable requirements.",
+    gridDescription: "Essential for the product to work or meet its core goal."
+  },
+  "Should have": {
+    tooltipTitle: "Should have",
+    tooltipBody: "Important but not vital. Should be included if possible.",
+    gridDescription: "Adds real value but is not required for launch."
+  },
+  "Could have": {
+    tooltipTitle: "Could have",
+    tooltipBody: "Desirable. Include when time and resources allow.",
+    gridDescription: "Nice-to-have when time and resources allow."
+  },
+  "Won't have": {
+    tooltipTitle: "Won't have",
+    tooltipBody: "Out of scope for this release. Deferred to later.",
+    gridDescription: "Out of scope for this release; can be added later."
+  }
+};
+
+/** Grid order: top-left, top-right, bottom-left, bottom-right (2x2) */
+const moscowGridOrder = ["Must have", "Should have", "Could have", "Won't have"];
+
+/**
  * T-shirt size tooltips for the table column (same style as project type/status).
  * Duration in sprints aligns with the practical guide for modern product teams
  * (see https://rifqi-tjahyono.com/story-points-demystified-a-practical-guide-for-modern-product-teams/).

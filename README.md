@@ -1,6 +1,6 @@
 # Product Management Prioritization Tool
 
-**Local-first, no-backend** web application for prioritizing projects using the [RICE framework](https://www.intercom.com/blog/rice-scoring-model/) (Reach × Impact × Confidence ÷ Effort). All data is stored in the browser. No account, server, or build step required.
+**Local-first, no-backend** web application for prioritizing projects using the [RICE framework](https://www.intercom.com/blog/rice-scoring-model/) (Reach × Impact × Confidence ÷ Effort) and the **MoSCoW method** (Must have, Should have, Could have, Won't have). All data is stored in the browser. No account, server, or build step required.
 
 This README describes the product overview, benefits, features, logics, data model, business and technical guidelines, tech stack, and repository structure of the **Product Management Prioritization Tool** as implemented in this repository.
 
@@ -29,14 +29,15 @@ This README describes the product overview, benefits, features, logics, data mod
 The tool helps product managers and teams **capture**, **score**, **rank**, and **track** projects in one place. It provides:
 
 - **RICE scoring** – Consistent prioritization using **Reach × Impact × Confidence ÷ Effort**.
+- **MoSCoW categorisation** – Classify projects as Must have, Should have, Could have, or Won't have; default for new projects is **Could have**.
 - **Portfolio separation** – Multiple profiles (e.g. per team or product) with separate project lists and optional board order.
-- **Triple view** – **Table** for sortable, filterable lists and bulk actions; **Board** for status-based columns and drag-and-drop; **Map** for a world choropleth of project count or RICE score by target country.
+- **Four views** – **Table** for sortable, filterable lists and bulk actions; **Board** for status-based columns and drag-and-drop; **MOSCOW** for a 2×2 quadrant grid by MoSCoW category; **Map** for a world choropleth of project count or RICE score by target country.
 - **Data ownership** – Export/import JSON or CSV; no vendor lock-in.
 
 ### 1.2 Target users
 
 - Product managers maintaining roadmaps and backlogs.
-- Teams that need a shared view of project status and RICE scores.
+- Teams that need a shared view of project status, RICE scores, and MoSCoW priorities.
 - Anyone who wants a simple, local prioritization tool without sign-up or backend.
 
 ### 1.3 Key concepts
@@ -45,16 +46,18 @@ The tool helps product managers and teams **capture**, **score**, **rank**, and 
 |------|--------|
 | **Profile** | A container for projects (e.g. “Q1 roadmap”, “Team Alpha”). Each profile has its own projects, optional board order, and can be viewed/edited via modals. |
 | **RICE** | Prioritization formula: **(Reach × Impact × Confidence) ÷ Effort**. Higher score = higher priority. |
+| **MoSCoW** | Prioritisation method: **M**ust have, **S**hould have, **C**ould have, **W**on't have (this time). Each project has a **MOSCOW category** (`moscowCategory`); new projects default to “Could have”. |
 | **Board order** | When “Sort by RICE” is off, the order of cards in each board column is stored per profile and per status. |
+| **MOSCOW view** | 2×2 grid of quadrants (Must / Should / Could / Won't) with short descriptions; drag cards between quadrants to change category. |
 | **Map view** | Choropleth world map colored by project count or RICE score per target country; uses canonical country names and 2-letter codes (e.g. Taiwan). |
 | **Merge (import)** | Imported data is merged by profile (ID or name) and by project ID; duplicates are skipped. Country names are normalized to the canonical list on import. |
 
 ### 1.4 High-level flow
 
 1. **Create a profile** – Enter profile name and optional team; click **Add**.
-2. **Add projects** – With a profile selected, click **+ Project** and fill RICE inputs plus optional metadata (type, status, countries, period, etc.).
-3. **View and prioritize** – Use **Table** for sorting and filtering, **Board** for status columns and drag-and-drop, or **Map** for a geographic view by target country.
-4. **Change status** – In Board view, drag cards between columns to update status; optionally turn off “Sort by RICE” to use manual card order.
+2. **Add projects** – With a profile selected, click **+ Project** and fill RICE inputs plus optional metadata (type, status, MOSCOW category, T-shirt size, countries, period, etc.). New projects default to MOSCOW category **Could have**.
+3. **View and prioritize** – Use **Table** for sorting and filtering; **Board** for status columns and drag-and-drop; **MOSCOW** for the 2×2 quadrant grid and drag-between-categories; or **Map** for a geographic view by target country.
+4. **Change status or MOSCOW** – In Board view, drag cards between columns to update status; optionally turn off “Sort by RICE” to use manual card order. In MOSCOW view, drag cards between quadrants to change MOSCOW category.
 5. **Export or import** – Use **Export data** (JSON/CSV) for backup; **Import data** to merge from another export (country names normalized to canonical list).
 
 ---
@@ -64,7 +67,7 @@ The tool helps product managers and teams **capture**, **score**, **rank**, and 
 | Requirement | Details |
 |-------------|--------|
 | **Browser** | Modern browser with JavaScript enabled and `localStorage` support (e.g. Chrome, Firefox, Safari, Edge). |
-| **Network** | Optional: for Google Fonts (Inter) and, in Map view, for loading Leaflet tiles and Natural Earth GeoJSON. App runs offline for table/board after first load if fonts and map data are cached. |
+| **Network** | Optional: for Google Fonts (Inter) and, in Map view, for loading Leaflet tiles and Natural Earth GeoJSON. App runs offline for table, board, and MOSCOW after first load if fonts and map data are cached. |
 | **Backend** | None. No server, database, or API. |
 | **Build** | None. Plain HTML, CSS, and JavaScript; no bundler or Node required to run. |
 
@@ -76,14 +79,14 @@ The tool helps product managers and teams **capture**, **score**, **rank**, and 
 
 **Option A – No tooling**
 
-1. Open the `rice-prioritizer` folder.
+1. Open the `pm-prioritization-tool` folder.
 2. Double-click `index.html` or open it from your browser (File → Open).
 3. The app loads; data is stored in this browser’s `localStorage`.
 
 **Option B – Local static server (recommended for development)**
 
 ```bash
-cd rice-prioritizer
+cd pm-prioritization-tool
 npx serve .
 # or: python3 -m http.server 8000
 ```
@@ -93,8 +96,8 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 ### 3.2 First-time use
 
 1. **Create a profile** – Enter a profile name (and optional team), click **Add**.
-2. **Add a project** – Click **+ Project**, fill required RICE fields (title, reach value, impact 1–5, confidence 0–100, effort 1–5), then **Save**.
-3. **Switch views** – Use **Table** for a sortable list; **Board** for status columns and drag-and-drop.
+2. **Add a project** – Click **+ Project**, fill required RICE fields (title, reach value, impact 1–5, confidence 0–100, effort 1–5), then **Save**. The MOSCOW category defaults to “Could have”.
+3. **Switch views** – Use **Table**, **Board**, **MOSCOW**, or **Map**.
 4. **Export** – Use **Export data** → JSON or CSV to back up your data.
 
 ---
@@ -103,17 +106,21 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 
 | Benefit | Description |
 |--------|-------------|
-| **Single source of truth** | One place for project metadata and RICE scores; table and board stay in sync. |
+| **Single source of truth** | One place for project metadata, RICE scores, and MOSCOW category; all views stay in sync. |
+| **Dual frameworks** | RICE for numeric prioritisation; MoSCoW for requirement categorisation (Must/Should/Could/Won't). |
 | **Portfolio-ready** | Multiple profiles for different owners, teams, or products; switch context with one click. |
 | **Transparent prioritization** | RICE formula is visible; the **?** next to the score shows the exact calculation. |
-| **Flexible workflow** | Table for bulk review and sort; board for status flow and manual ordering when “Sort by RICE” is off; map for geographic distribution. |
-| **Geographic view** | Map view shows project count or RICE score per country with choropleth coloring, country flags in tooltips, and fullscreen option; supports all countries including Taiwan. |
-| **Consistent country data** | Single canonical country list and name aliases (e.g. Chinese Taipei to Taiwan); normalization on load and import so table, board, map, and filters stay consistent. |
+| **Flexible workflow** | Table for bulk review and sort; Board for status flow and manual ordering; MOSCOW for category-based prioritisation; Map for geographic distribution. |
+| **MOSCOW 2×2 grid** | Clear quadrant layout with one-sentence descriptions per category; drag cards to change category; fullscreen for presentations. |
+| **Fullscreen on all main views** | Board, MOSCOW, and Map each have a **Full screen** button; exit via button or Escape. |
+| **Geographic view** | Map view shows project count or RICE score per country with choropleth coloring, country flags in tooltips, and fullscreen; supports all countries including Taiwan. |
+| **Consistent country data** | Single canonical country list and name aliases (e.g. Chinese Taipei → Taiwan); normalization on load and import. |
+| **Filter by “Not set”** | Project type and T-shirt size filters include **Not set** to show only projects with no type or no size. |
 | **Data ownership** | Export JSON/CSV anytime; no lock-in; data stays in your control. |
 | **Low friction** | No sign-up, no backend; runs from a folder or static server. |
 | **Accessibility** | Semantic HTML, ARIA where needed, keyboard-friendly controls, and screen-reader support for key UI. |
 | **Profile insights** | View profile modal shows statistics (projects by status, type, T-shirt size, RICE summary, unique countries). |
-| **Clear confirmations** | Bottom-right toasts confirm every successful create, update, delete, export, and import—with details (e.g. export/import counts and format). |
+| **Clear confirmations** | Bottom-right toasts confirm every successful create, update, delete, export, and import. |
 
 ---
 
@@ -124,8 +131,8 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 | Action | Description |
 |--------|-------------|
 | **Create profile** | Name (required) and optional team; each profile has its own project list and optional board order. |
-| **Switch profile** | Click a profile pill to make it active; table, board, and filters apply to that profile. |
-| **View profile** | View icon on the profile pill opens a read-only modal with profile name, team, and statistics (total projects, unique countries, counts by status/type/T-shirt size, RICE score summary). |
+| **Switch profile** | Click a profile pill to make it active; table, board, MOSCOW, map, and filters apply to that profile. |
+| **View profile** | View icon on the profile pill opens a read-only modal with profile name, team, and statistics. |
 | **Edit profile** | Edit icon on the profile pill opens a modal to update profile name and team. |
 | **Delete profile** | Delete icon (with confirmation modal); all projects in that profile are removed permanently. |
 
@@ -133,10 +140,10 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 
 | Action | Description |
 |--------|-------------|
-| **Add project** | With a profile selected, **+ Project** opens the project form (add mode). |
-| **Edit project** | **Edit** in table or board opens the form with all fields editable. |
-| **View project** | **View** opens a read-only modal (no edit or add/remove country). |
-| **Delete project** | **Delete** opens confirmation; **Delete Selected** (table) bulk-deletes checked projects after browser confirm. |
+| **Add project** | With a profile selected, **+ Project** opens the project form (add mode). MOSCOW category defaults to **Could have**. |
+| **Edit project** | **Edit** in table, board, or MOSCOW opens the form with all fields editable. |
+| **View project** | **View** opens a read-only modal. |
+| **Delete project** | **Delete** opens confirmation; **Delete Selected** (table) bulk-deletes checked projects after confirm. |
 
 ### 5.3 RICE inputs (per project)
 
@@ -147,87 +154,99 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 | **Confidence** | Description + 0–100% | C (stored as %; if > 1, divided by 100 in formula) |
 | **Effort** | Description + 1–5 (Tiny → Huge) | E (must be > 0) |
 
-**RICE score** = **(Reach × Impact × Confidence) ÷ Effort**. Shown in table and board; **?** next to the score opens a popup with the formula and exact calculation.
+**RICE score** = **(Reach × Impact × Confidence) ÷ Effort**. Shown in table, board, and MOSCOW cards; **?** next to the score opens a popup with the formula and exact calculation.
 
 ### 5.4 Optional project fields
 
 | Field | Description |
 |-------|-------------|
+| **MOSCOW category** | Must have, Should have, Could have, Won't have. Default for **new projects** is **Could have**. Used in MOSCOW view and filters. |
 | **Financial impact** | Optional number + currency; not used in RICE; for reporting. |
-| **Project type** | New Product, Improvement, Tech Debt, Market Expansion (with icons in table/board). |
+| **Project type** | New Product, Improvement, Tech Debt, Market Expansion (with icons in table/board). Filter supports **Not set** to show projects with no type. |
 | **Project status** | Not Started, In Progress, On Hold, Done, Cancelled; drives board columns. |
-| **T-shirt size** | XS, S, M, L, XL; tooltips describe sprint-level sizing (see [practical guide](https://rifqi-tjahyono.com/story-points-demystified-a-practical-guide-for-modern-product-teams/)). |
+| **T-shirt size** | XS, S, M, L, XL; tooltips describe sprint-level sizing. Filter supports **Not set** to show projects with no size. |
 | **Project period** | Optional `YYYY-Qn` (e.g. 2026-Q1); filterable. |
 | **Target countries** | Multi-select from a global list; shown as 2-letter ISO codes and flags in table. |
 
 ### 5.5 Filters
 
-- **Basic:** Project title (search), Project type, Countries (multi-select with search), Project period (multi-select).
-- **Advanced (toggle):** Impact, Effort, Currency, Status, T-shirt size.
+- **Basic:** Project title (search), Project type (including **Not set**), Countries (multi-select with search), Project period (multi-select).
+- **Advanced (toggle):** Impact, Effort, Currency, Status, T-shirt size (including **Not set**), **MOSCOW** (Must have / Should have / Could have / Won't have).
 - **Reset** clears all filters; active filter count is shown when any filter is applied.
-- Filters apply to both table and board views.
+- Filters apply to table, board, MOSCOW, and map views.
 
 ### 5.6 Sort (table view)
 
-- **Sortable columns:** Project title, Project type, Status, T-shirt size, RICE score, Financial impact, Created, Modified.
+- **Sortable columns:** Project title, Project type, Status, T-shirt size, **MOSCOW**, RICE score, Financial impact, Created, Modified.
 - **Default:** Created date descending.
 - Click a column header to sort by that field; click again to toggle ascending/descending.
 
 ### 5.7 Table view
 
 - Sortable columns, row checkboxes for bulk delete, tooltips for description and RICE breakdown.
-- **Columns:** Checkbox, Project, Project type, Status, Project period, T-shirt size, RICE score, RICE values, Financial impact, Created, Actions (View, Edit, Delete).
+- **Columns:** Checkbox, Project, Project type, Status, Project period, T-shirt size, **MOSCOW**, RICE score, RICE values, Financial impact, Created, Actions (View, Edit, Delete).
 
 ### 5.8 Board view (Scrum-style)
 
 | Aspect | Description |
 |--------|-------------|
-| **Columns** | One per project status: Not Started, In Progress, On Hold, Done, Cancelled. Column headers use status-specific colors (slate, blue, amber, green, red). |
-| **Cards** | Title, RICE score, T-shirt size, project type icon; **View**, **Edit**, **Delete** buttons on each card. Card body is for drag only (no click-to-view). |
+| **Columns** | One per project status: Not Started, In Progress, On Hold, Done, Cancelled. Column headers use status-specific colors. |
+| **Cards** | Title, RICE score, T-shirt size, project type icon; **View**, **Edit**, **Delete** buttons on each card. |
 | **Sort by RICE (desc)** | **On:** cards in each column sorted by RICE score (highest first). **Off:** manual order; drag to reorder within a column or move between columns; order is saved per profile per status. |
-| **Drag-and-drop** | Move a card to another column to change its status. When “Sort by RICE” is off, drop position sets the card’s position in that column (persisted). Dragging from the action buttons does not start a drag. |
+| **Drag-and-drop** | Move a card to another column to change its status. When “Sort by RICE” is off, drop position sets the card’s position in that column (persisted). |
+| **Full screen** | **Full screen** button in the toolbar toggles the board view to fullscreen; **Exit full screen** or Escape to exit. |
 | **Profile alignment** | Board always shows projects for the **currently selected profile**; switching profile or changing filters re-renders the board. |
 
-### 5.9 Map view
+### 5.9 MOSCOW view (MoSCoW 2×2 grid)
 
 | Aspect | Description |
 |--------|-------------|
-| **Access** | **Table** \| **Board** \| **Map** view toggle in the projects header. Map view shows a world choropleth. |
-| **Data source** | Active profile's filtered projects; each project's **Target countries** list; counts or RICE sums are aggregated per country (2-letter ISO code). |
-| **Show by** | Dropdown: **Number of projects** (count of projects targeting each country) or **RICE score** (sum of RICE scores per country). Choice is persisted in state (`mapMetric`). |
-| **Choropleth** | Countries colored by value (light to dark green); gray when no projects target that country. Legend shows total project–country links or total RICE and country count. |
-| **Tooltips** | Hover: country flag emoji, canonical name, 2-letter code in parentheses, and project count or RICE (e.g. "🇹🇼 Taiwan (TW): 2 projects"). |
-| **Country matching** | GeoJSON features are matched to app data via 2-letter code: ISO_A2_EH or ISO_A2 (compound codes like CN-TW normalized to TW), POSTAL, ISO_A3→alpha-2, then name lookup with **countryNameAliases** (e.g. Chinese Taipei → Taiwan) so Taiwan and all countries display consistently. |
-| **Full screen** | **Full screen** button in the map toolbar toggles the map view to fullscreen; **Exit full screen** or Escape to exit. Leaflet map resizes correctly on enter/exit. |
-| **Filters** | Same filters as table/board apply; map reflects filtered project list. |
+| **Layout** | 2×2 grid: top-left **Must have**, top-right **Should have**, bottom-left **Could have**, bottom-right **Won't have**. Each quadrant shows a coloured label (MUST / SHOULD / COULD / WON'T), a single-sentence description, and project cards. |
+| **Descriptions** | Must: “Essential for the product to work or meet its core goal.” Should: “Adds real value but is not required for launch.” Could: “Nice-to-have when time and resources allow.” Won't: “Out of scope for this release; can be added later.” |
+| **Cards** | Same as board: title, RICE score, T-shirt size; **View**, **Edit**, **Delete**. Cards are sorted by RICE (desc) within each quadrant. |
+| **Drag-and-drop** | Drag a card to another quadrant to change its **MOSCOW category**; state is persisted. |
+| **Default category** | Projects without a MOSCOW category (or with an invalid value) appear in **Could have**. |
+| **Full screen** | **Full screen** button in the MOSCOW header toggles the MOSCOW view to fullscreen; **Exit full screen** or Escape to exit. |
+| **Responsive** | On narrow screens the grid stacks into a single column (four quadrants one above the other). |
 
-### 5.10 Export and import
+### 5.10 Map view
+
+| Aspect | Description |
+|--------|-------------|
+| **Access** | **Table** \| **Board** \| **MOSCOW** \| **Map** view toggle. Map view shows a world choropleth. |
+| **Data source** | Active profile's filtered projects; each project's **Target countries** list; counts or RICE sums aggregated per country (2-letter ISO code). |
+| **Show by** | Dropdown: **Number of projects** or **RICE score** per country. Choice is persisted (`mapMetric`). |
+| **Choropleth** | Countries colored by value; gray when no projects target that country. Legend shows total project–country links or total RICE and country count. |
+| **Tooltips** | Hover: country flag, canonical name, 2-letter code, and project count or RICE. |
+| **Full screen** | **Full screen** button toggles map view to fullscreen; **Exit full screen** or Escape to exit. Leaflet map resizes correctly on enter/exit. |
+| **Filters** | Same filters as other views apply. |
+
+### 5.11 Export and import
 
 | Action | Behavior |
 |--------|----------|
-| **Export** | **Export data** → **JSON** or **CSV**. Downloads all profiles and projects (including board order). Filename includes timestamp. A **toast** (bottom-right) confirms success and shows how many profiles and projects were exported and the format (JSON or CSV). |
-| **Import** | **Import data** → **JSON** or **CSV**. Data is **merged**: profiles matched by ID or name get projects merged by project ID (duplicates skipped). New profiles and new projects are added. A **toast** confirms success with: profiles added, profiles merged, projects added, projects merged, and source format (JSON or CSV). |
+| **Export** | **Export data** → **JSON** or **CSV**. Downloads all profiles and projects (including board order and **moscowCategory**). Filename: `pm-prioritization-tool-export-{timestamp}.json|csv`. A **toast** confirms success and shows how many profiles and projects were exported and the format. |
+| **Import** | **Import data** → **JSON** or **CSV**. Data is **merged**: profiles matched by ID or name get projects merged by project ID (duplicates skipped). New profiles and new projects are added. **moscowCategory** is read from CSV/JSON when present. A **toast** confirms success with profiles added/merged, projects added/merged, and source format. |
 
-### 5.11 Confirmations (toasts)
+### 5.12 Confirmations (toasts)
 
-- **Location:** Bottom-right of the viewport; same style for all confirmations (green accent, checkmark icon, slide-in/out, auto-dismiss, click to dismiss).
+- **Location:** Bottom-right of the viewport; green accent, checkmark icon, slide-in/out, auto-dismiss, click to dismiss.
 - **Deletion:** Profile deleted; project deleted; N projects deleted.
 - **Creation:** Profile created; project created.
 - **Modification:** Profile updated; project updated.
 - **Export:** “Exported X profile(s) and Y project(s) as JSON/CSV.”
 - **Import:** “Imported from JSON/CSV. X profiles added, Y merged, Z projects added, W merged.”
 
-### 5.12 Product description tooltip
+### 5.13 Product description tooltip
 
-- A **?** icon next to the app title opens a **Product Description** tooltip with the product summary. No subtitle is shown under the title; the same text is available in this tooltip.
+- A **?** icon next to the app title opens a **Product Description** tooltip with the product summary.
 
-### 5.13 UI behavior
+### 5.14 UI behaviour
 
-- **Product description:** ? icon next to title opens tooltip; no subtitle under title.
-- Project description in a tooltip on table row hover.
 - Modals: project (add/edit/view), profile view, profile edit, profile delete, project delete, export format, import format; backdrop click or **Close** dismisses.
-- Accessible labels, ARIA attributes, and keyboard support for main controls (e.g. view toggle, board columns).
-- **Toasts:** Fixed container `#toastContainer` (sibling of app-shell); `showToast(message)` appends a toast; used for create/update/delete/export/import confirmations.
+- Accessible labels, ARIA attributes, and keyboard support for main controls.
+- **Toasts:** Fixed container `#toastContainer`; `showToast(message)` used for create/update/delete/export/import confirmations.
+- **Reduced motion:** `prefers-reduced-motion: reduce` disables hover/drag transforms in MOSCOW and other views.
 
 ---
 
@@ -243,14 +262,14 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 ### 6.2 Validation (project form)
 
 - **Required:** Title, Reach (non-negative integer), Impact (1–5), Confidence (0–100), Effort (1–5).
-- **Optional:** Financial impact (non-negative); if non-zero, currency required. Project period, if set, must match `YYYY-Qn`.
+- **Optional:** MOSCOW category (default **Could have** for new projects). Financial impact (non-negative); if non-zero, currency required. Project period, if set, must match `YYYY-Qn`.
 
 ### 6.3 Storage
 
 - **Key:** `rice_prioritizer_v1` in `localStorage`.
 - **Root payload:**  
   `{ profiles, activeProfileId, sortField, sortDirection, projectsView, scrumBoardSortByRice, mapMetric }`
-- **projectsView:** `"table"` | `"board"` | `"map"`.
+- **projectsView:** `"table"` | `"board"` | `"moscow"` | `"map"`.
 - **mapMetric:** `"projects"` | `"rice"` (used when projectsView is `"map"`).
 
 ### 6.4 Profile schema
@@ -277,50 +296,55 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 | `effortValue`, `effortDescription` | number, string | RICE Effort (1–5). |
 | `financialImpactValue` | number \| null | Optional. |
 | `financialImpactCurrency` | string \| null | Optional; required if financial impact non-zero. |
+| `moscowCategory` | string \| null | Must have, Should have, Could have, Won't have. Default **Could have** for new projects. |
 | `projectType` | string \| null | New Product, Improvement, Tech Debt, Market Expansion. |
 | `projectStatus` | string \| null | Not Started, In Progress, On Hold, Done, Cancelled. |
 | `tshirtSize` | string \| null | XS, S, M, L, XL. |
 | `projectPeriod` | string \| null | YYYY-Qn. |
-| `countries` | string[] | Target country names (canonical only; normalized on load and import via **countryNameAliases** and **normalizeCountryNames**). |
+| `countries` | string[] | Target country names (canonical only; normalized on load and import). |
 | `createdAt`, `modifiedAt` | string | ISO 8601 dates. |
 
 RICE score is not stored; it is computed from the RICE fields when needed.
 
 ### 6.6 Board order (manual sort)
 
-- When **Sort by RICE (desc)** is **off**:
-  - Column order comes from `profile.boardOrder[status]` (array of project IDs).
-  - Projects not in `boardOrder` appear after ordered ones (filter order).
-  - Dragging within a column updates `boardOrder[status]`. Dragging to another column updates the project’s status and inserts its ID at the drop index in `boardOrder[newStatus]`.
+- When **Sort by RICE (desc)** is **off**: column order comes from `profile.boardOrder[status]`; dragging within or between columns updates project status and/or `boardOrder`.
 - When **Sort by RICE** is **on**, columns are sorted by RICE score only; `boardOrder` is ignored for display.
 
-### 6.7 Import merge rules
+### 6.7 MOSCOW category
+
+- Stored as `project.moscowCategory`. Valid values: `"Must have"`, `"Should have"`, `"Could have"`, `"Won't have"`.
+- New projects default to **Could have** (form default and create logic).
+- Projects with null/empty or invalid `moscowCategory` are shown in the **Could have** quadrant in MOSCOW view.
+- Drag-and-drop in MOSCOW view updates `project.moscowCategory` and `project.modifiedAt`.
+
+### 6.8 Import merge rules
 
 - **Profiles:** Matched by `id` or `name`. If matched, projects are merged by project `id` (duplicates skipped). If no match, profile is added.
-- **Projects:** New projects on an existing profile are appended; existing project IDs are not duplicated. Projects added to existing profiles count as **merged projects**; projects that come with newly added profiles count as **added projects**.
-- **Merge result:** The merge function returns `addedProfiles`, `mergedProfiles`, `addedProjects`, `mergedProjects`, and `skippedProjects` for use in the import confirmation toast.
+- **Projects:** New projects on an existing profile are appended; existing project IDs are not duplicated. **moscowCategory** is imported from JSON/CSV when present.
+- **Merge result:** The merge function returns `addedProfiles`, `mergedProfiles`, `addedProjects`, `mergedProjects` for use in the import confirmation toast.
 
-### 6.8 Country normalization
+### 6.9 Country normalization
 
-- **Canonical list:** `countryList` and `countryCodeByName` in `constants.js` define the single set of country names and 2-letter ISO codes used everywhere (dropdowns, filters, table, board, map).
-- **Aliases:** `countryNameAliases` maps alternate names (e.g. from GeoJSON or imports) to canonical names (e.g. "Chinese Taipei" → "Taiwan", "United Republic of Tanzania" → "Tanzania"). Used so the map and imports show and store one consistent name.
-- **Normalization:** On load (`normalizeLoadedProject`), CSV import, and JSON import (`normalizeImportedProject`), `normalizeCountryNames(names)` runs each name through `getCanonicalCountryName` and keeps only names present in `countryList`. So stored `project.countries` always contain canonical names.
-- **Map code resolution:** `getCountryCodeFromFeature(feature)` returns 2-letter code for a GeoJSON feature: prefers ISO_A2_EH then ISO_A2 (compound like "CN-TW" normalized to "TW"), POSTAL, FIPS_10, then ISO_A3 via `countryCodeToTwoLetter`, then name lookup via `getCanonicalCountryName` and `countryCodeByName`. Ensures Taiwan and all territories match app data.
+- **Canonical list:** `countryList` and `countryCodeByName` in `constants.js` define the single set of country names and 2-letter ISO codes.
+- **Aliases:** `countryNameAliases` maps alternate names (e.g. from GeoJSON or imports) to canonical names (e.g. "Chinese Taipei" → "Taiwan").
+- **Normalization:** On load (`normalizeLoadedProject`), CSV import, and JSON import (`normalizeImportedProject`), `normalizeCountryNames(names)` runs each name through `getCanonicalCountryName` and keeps only names present in `countryList`.
 
 ---
 
 ## 7. Business guidelines
 
 1. **Create a profile first** – At least one profile is required before adding projects.
-2. **Use consistent RICE definitions** – Agree on Reach (e.g. users/quarter), Impact 1–5, Confidence %, and Effort 1–5 so scores are comparable across projects.
-3. **Use View for read-only** – Share or review projects and profiles without risk of edits.
-4. **Export regularly** – Data lives only in this browser; export JSON or CSV to back up or move to another device.
-5. **Import merges** – Imported data is merged by profile and project ID; duplicates are avoided.
-6. **Use filters and sort** – Narrow by type, status, period, or country; sort by RICE or date to focus on what to do next.
-7. **Use the board for status** – Track Not Started → In Progress → Done; turn off “Sort by RICE” when you want to order items manually within a column.
-8. **Use profile view for portfolio health** – Check profile statistics (by status, type, T-shirt size, RICE) to balance workload and priorities.
-9. **Use the Product Description ?** – Click the **?** next to the app title to read the product summary in a tooltip.
-10. **Use the map for geographic spread** – Map view shows project count or RICE by target country; use "Show by" to switch metric; use fullscreen for presentations. Rely on canonical country names so Taiwan and all countries display consistently.
+2. **Use consistent RICE definitions** – Agree on Reach, Impact 1–5, Confidence %, and Effort 1–5 so scores are comparable.
+3. **Use MOSCOW for requirement prioritisation** – Classify projects as Must/Should/Could/Won't; use the MOSCOW view to review and drag to reprioritise. New projects default to Could have.
+4. **Use View for read-only** – Share or review projects and profiles without risk of edits.
+5. **Export regularly** – Data lives only in this browser; export JSON or CSV to back up or move to another device.
+6. **Import merges** – Imported data is merged by profile and project ID; duplicates are avoided.
+7. **Use filters and sort** – Narrow by type, status, MOSCOW, period, or country; use **Not set** for type/T-shirt size to find projects missing those fields; sort by RICE or date to focus on what to do next.
+8. **Use the board for status** – Track Not Started → In Progress → Done; turn off “Sort by RICE” when you want to order items manually within a column.
+9. **Use fullscreen for focus** – Board, MOSCOW, and Map each support fullscreen for presentations or focused work; exit with the button or Escape.
+10. **Use profile view for portfolio health** – Check profile statistics (by status, type, T-shirt size, RICE) to balance workload and priorities.
+11. **Use the map for geographic spread** – Map view shows project count or RICE by target country; use "Show by" to switch metric; use fullscreen for presentations.
 
 ---
 
@@ -331,7 +355,7 @@ RICE score is not stored; it is computed from the RICE fields when needed.
 | Layer | Technology |
 |-------|------------|
 | **Markup** | HTML5 (single page, semantic sections). |
-| **Styles** | CSS3 (custom properties, flexbox/grid, responsive). |
+| **Styles** | CSS3 (custom properties, flexbox/grid, responsive, fullscreen for board/MOSCOW/map). |
 | **Scripting** | Vanilla JavaScript; classic scripts (no ES modules in default run), no framework or build. |
 | **Map** | Leaflet 1.9.4 (CDN); world countries GeoJSON from Natural Earth (110m, jsDelivr CDN). Choropleth and tooltips in Map view. |
 | **Fonts** | Google Fonts (Inter). |
@@ -341,36 +365,37 @@ RICE score is not stored; it is computed from the RICE fields when needed.
 
 ### 8.2 Folder directory (source code and files)
 
-The repository contains the following source files (excluding version control and system files):
-
 | Path | Purpose |
 |------|--------|
-| `index.html` | Single HTML page: app shell, header (title + Product Description ? tooltip), profiles panel, filters, view toggle (Table \| Board \| Map), table/board/map containers, all modals. Loads Leaflet CSS, `css/main.css`, and scripts: `constants.js` → `utils.js` → `rice.js` → `app.js` (Leaflet JS before constants). Contains `#toastContainer` for confirmation toasts. |
-| `css/main.css` | All styles: CSS custom properties (dark theme), layout, table, board, map toolbar and container, fullscreen map, modals, form controls, toast, responsive and `prefers-reduced-motion`. |
-| `src/constants.js` | Application constants and lookup data: `STORAGE_KEY`, `projectStatusList`, `projectStatusIcons`, `tshirtSizeList`, `tshirtSizeTooltips`, `projectTypeIcons`, `currencyList`, `countryList`, `countryCodeByName`, `countryNameAliases`. No DOM. |
-| `src/utils.js` | Pure helpers: `formatDateTime`, `formatDate`, `formatDateForFilename`, `compareDatesDesc`, `generateId`, `escapeHtml`, `countryCodeToFlag`, `countryCodeToTwoLetter`, `toNumberOrNull`, `parseCsv`, `escapeCsvCell`. Data: `ISO3_TO_ISO2` (alpha-3 to alpha-2). No DOM. |
+| `index.html` | Single HTML page: app shell, header (title + Product Description ? tooltip), profiles panel, filters, view toggle (Table \| Board \| MOSCOW \| Map), table/board/MOSCOW/map containers, fullscreen buttons for Board and MOSCOW, all modals. Loads Leaflet CSS, `css/main.css`, and scripts: `constants.js` → `utils.js` → `rice.js` → `app.js` (Leaflet JS before constants). Contains `#toastContainer` for confirmation toasts. |
+| `css/main.css` | All styles: CSS custom properties (dark theme), layout, table, board, MOSCOW 2×2 grid (quadrants, labels, cards, fullscreen), map toolbar and container, fullscreen map/board/MOSCOW, modals, form controls, toast, responsive, `prefers-reduced-motion`. |
+| `src/constants.js` | Application constants and lookup data: `STORAGE_KEY`, `projectStatusList`, `projectStatusIcons`, `tshirtSizeList`, `tshirtSizeTooltips`, `projectTypeIcons`, `moscowList`, `moscowTooltips`, `moscowGridOrder`, `currencyList`, `countryList`, `countryCodeByName`, `countryNameAliases`. No DOM. |
+| `src/utils.js` | Pure helpers: `formatDateTime`, `formatDate`, `formatDateForFilename`, `compareDatesDesc`, `generateId`, `escapeHtml`, `countryCodeToFlag`, `countryCodeToTwoLetter`, `toNumberOrNull`, `parseCsv`, `escapeCsvCell`. Data: `ISO3_TO_ISO2`. No DOM. |
 | `src/rice.js` | RICE logic: `calculateRiceScore`, `formatRice`, `validateProjectInput`. No DOM. |
-| `src/app.js` | Main application: state (including `mapMetric`), DOM cache, `getCanonicalCountryName`, `normalizeCountryNames`, init, filters, render (profiles, table, board, map), map fullscreen, `getCountryCodeFromFeature`, `getProjectCountByCountryCode`, `getCountryRiceByCode`, `renderProjectsMap`, drag-and-drop, modals, export/import, showToast. Boot: `DOMContentLoaded` → `init`. |
+| `src/app.js` | Main application: state (including `projectsView`, `mapMetric`, `scrumBoardSortByRice`), DOM cache, `getCanonicalCountryName`, `normalizeCountryNames`, init, filters (including MOSCOW and “Not set” for type/T-shirt size), render (profiles, table, board, MOSCOW grid, map), fullscreen (map, board, MOSCOW via `toggleViewFullscreen`, `onViewFullscreenChange`), `renderMoscowBoard`, `bindMoscowBoardDragAndDrop`, `getCountryCodeFromFeature`, `getProjectCountByCountryCode`, `getCountryRiceByCode`, `renderProjectsMap`, drag-and-drop (board and MOSCOW), modals, export/import (including `moscowCategory`), showToast. Boot: `DOMContentLoaded` → `init`. |
 | `src/main.js` | Optional ES-module entry; **not loaded by index.html**. Use only with a bundler or module-aware dev server. |
 | `README.md` | This documentation. |
 
 ### 8.3 Code structure (tree)
 
 ```
-rice-prioritizer/
-├── index.html          # Single page: layout, view toggle (Table | Board | Map), forms, modals; Leaflet CSS + scripts (see table above)
+pm-prioritization-tool/
+├── index.html          # Single page: layout, view toggle (Table | Board | MOSCOW | Map), fullscreen buttons, forms, modals
 ├── css/
-│   └── main.css        # All styles (variables, layout, table, board, map, fullscreen map, modals, responsive)
+│   └── main.css        # All styles (variables, layout, table, board, MOSCOW grid, map, fullscreen, modals, responsive)
 ├── src/
 │   ├── constants.js    # STORAGE_KEY, projectStatusList, projectStatusIcons, tshirtSizeList, tshirtSizeTooltips,
-│   │                   # projectTypeIcons, currencyList, countryList, countryCodeByName, countryNameAliases
+│   │                   # projectTypeIcons, moscowList, moscowTooltips, moscowGridOrder, currencyList, countryList,
+│   │                   # countryCodeByName, countryNameAliases
 │   ├── utils.js        # formatDateTime, formatDate, formatDateForFilename, compareDatesDesc, generateId,
 │   │                   # escapeHtml, countryCodeToFlag, countryCodeToTwoLetter, ISO3_TO_ISO2, toNumberOrNull,
 │   │                   # parseCsv, escapeCsvCell
 │   ├── rice.js         # calculateRiceScore, formatRice, validateProjectInput
-│   ├── app.js          # State (incl. mapMetric), getCanonicalCountryName, normalizeCountryNames, init, filters,
-│   │                   # render (table, board, map), getCountryCodeFromFeature, renderProjectsMap, fullscreen,
-│   │                   # modals, export/import, showToast. Boot: DOMContentLoaded → init
+│   ├── app.js          # State (projectsView, mapMetric, scrumBoardSortByRice), getCanonicalCountryName,
+│   │                   # normalizeCountryNames, init, filters, render (table, board, MOSCOW, map),
+│   │                   # toggleViewFullscreen, onViewFullscreenChange, renderMoscowBoard, bindMoscowBoardDragAndDrop,
+│   │                   # getCountryCodeFromFeature, renderProjectsMap, fullscreen, modals, export/import, showToast.
+│   │                   # Boot: DOMContentLoaded → init
 │   └── main.js         # Optional ES module entry; not loaded by index.html
 └── README.md
 ```
@@ -379,77 +404,74 @@ rice-prioritizer/
 
 | File | Role |
 |------|------|
-| **constants.js** | Config and lookup: `STORAGE_KEY`, `projectStatusList`, `projectStatusIcons`, `tshirtSizeList`, `tshirtSizeTooltips`, `projectTypeIcons`, `currencyList`, `countryList`, `countryCodeByName`, `countryNameAliases`. No DOM. |
+| **constants.js** | Config and lookup: `STORAGE_KEY`, `projectStatusList`, `projectStatusIcons`, `tshirtSizeList`, `tshirtSizeTooltips`, `projectTypeIcons`, `moscowList`, `moscowTooltips`, `moscowGridOrder`, `currencyList`, `countryList`, `countryCodeByName`, `countryNameAliases`. No DOM. |
 | **utils.js** | Pure helpers: dates, IDs, CSV parse/escape, HTML escaping, `countryCodeToFlag`, `countryCodeToTwoLetter`, `ISO3_TO_ISO2`. No DOM. |
 | **rice.js** | RICE calculation and validation. No DOM. |
-| **app.js** | State (incl. `mapMetric`), element cache, `getCanonicalCountryName`, `normalizeCountryNames`, init, filters, render (profiles, table, board, map), `getCountryCodeFromFeature`, `renderProjectsMap`, map fullscreen, modals, export/import, showToast. Boot: `DOMContentLoaded` → `init`. |
+| **app.js** | State, element cache, `getCanonicalCountryName`, `normalizeCountryNames`, init, filters, render (profiles, table, board, MOSCOW, map), fullscreen (map/board/MOSCOW), `renderMoscowBoard`, `bindMoscowBoardDragAndDrop`, `getCountryCodeFromFeature`, `renderProjectsMap`, modals, export/import, showToast. Boot: `DOMContentLoaded` → `init`. |
 
 ### 8.5 Script load order and boot
 
-Scripts are loaded in order: **Leaflet** (from unpkg CDN) → `constants.js` → `utils.js` → `rice.js` → `app.js`. The app boots when `app.js` runs and registers `document.addEventListener("DOMContentLoaded", init)` at the end of the file; `init()` runs after the DOM is ready. No ES modules are used in the default setup (opening `index.html` or serving via static server); all scripts run in the global scope. The file `main.js` is **not** referenced in `index.html` and is only useful if you use an ES-module–aware bundler or dev server.
+Scripts are loaded in order: **Leaflet** (CDN) → `constants.js` → `utils.js` → `rice.js` → `app.js`. The app boots when `app.js` registers `document.addEventListener("DOMContentLoaded", init)`. No ES modules in the default setup; all scripts run in the global scope. The file `main.js` is **not** referenced in `index.html`.
 
 ### 8.6 Technical guidelines for contributors
 
 - **No DOM in constants/utils/rice** – Keep these files pure for testability and reuse.
 - **Single storage key** – All app state under `rice_prioritizer_v1`; version key allows future migrations.
-- **Ids** – Use `generateId(prefix)` for profile and project IDs to avoid collisions.
+- **Ids** – Use `generateId(prefix)` for profile and project IDs.
 - **Escaping** – Use `escapeHtml` for user content in HTML; use `escapeCsvCell` for CSV export.
 - **Accessibility** – Use semantic HTML, ARIA where needed, and keyboard support for primary actions.
-- **Country consistency** – Use `getCanonicalCountryName` and `normalizeCountryNames` when reading or storing country names; use `countryNameAliases` for any new alternate names so the map, table, board, and filters stay in sync (e.g. Taiwan).
+- **Country consistency** – Use `getCanonicalCountryName` and `normalizeCountryNames` when reading or storing country names.
+- **MOSCOW** – Use `moscowList` and `moscowGridOrder` for order; use `moscowTooltips[].gridDescription` for quadrant text. Default new projects to **Could have** in form and create logic.
 
 ### 8.7 Global dependencies (for development)
 
-`app.js` relies on globals provided by the other scripts (no module imports in the default run):
+`app.js` relies on globals from the other scripts (no module imports in the default run):
 
-- **From constants.js:** `STORAGE_KEY`, `projectStatusList`, `projectStatusIcons`, `tshirtSizeList`, `tshirtSizeTooltips`, `projectTypeIcons`, `currencyList`, `countryList`, `countryCodeByName`, `countryNameAliases`
+- **From constants.js:** `STORAGE_KEY`, `projectStatusList`, `projectStatusIcons`, `tshirtSizeList`, `tshirtSizeTooltips`, `projectTypeIcons`, `moscowList`, `moscowTooltips`, `moscowGridOrder`, `currencyList`, `countryList`, `countryCodeByName`, `countryNameAliases`
 - **From rice.js:** `calculateRiceScore`, `formatRice`, `validateProjectInput`
 - **From utils.js:** `formatDateTime`, `formatDate`, `formatDateForFilename`, `compareDatesDesc`, `generateId`, `escapeHtml`, `countryCodeToFlag`, `countryCodeToTwoLetter`, `toNumberOrNull`, `parseCsv`, `escapeCsvCell`
-
-When changing or renaming any of these, ensure all consumers in `app.js` (and in `index.html` if any IDs or structure change) are updated.
 
 ---
 
 ## 9. Screens and key UI
 
-Brief reference for where data appears. Add screenshots to the repo and link them here if desired.
-
 ### 9.1 App header and profiles
 
-- **Header:** App title with **?** icon (Product Description tooltip); no subtitle under title. **Export data**, **Import data**.
+- **Header:** App title with **?** icon (Product Description tooltip). **Export data**, **Import data**.
 - **Profiles panel:** Form (Profile name, Team optional), **Add**; list of profile pills. Each pill: click to select; View / Edit / Delete icon buttons. Active profile highlighted.
 
 ### 9.2 Projects header and view toggle
 
 - Active profile name and subtitle; optional badges.
-- **Table** | **Board** | **Map** toggle; **+ Project**; **Delete Selected** (enabled when at least one project is selected in table view).
+- **Table** | **Board** | **MOSCOW** | **Map** toggle; **+ Project**; **Delete Selected** (enabled when at least one project is selected in table view).
 
 ### 9.3 Filters
 
-- Basic: title search, type, countries, project period. Advanced: impact, effort, currency, status, T-shirt size. **Reset**; active filter count.
+- Basic: title search, type (including **Not set**), countries, project period. Advanced: impact, effort, currency, status, T-shirt size (including **Not set**), **MOSCOW**. **Reset**; active filter count.
 
 ### 9.4 Table view
 
-- Columns: Checkbox, Project, Type, Status, Period, T-shirt, RICE score, RICE values, Financial impact, Created, Actions. Sort by header click; description tooltip on hover; **?** for RICE formula.
+- Columns: Checkbox, Project, Type, Status, Period, T-shirt, **MOSCOW**, RICE score, RICE values, Financial impact, Created, Actions. Sort by header click; description tooltip on hover; **?** for RICE formula.
 
 ### 9.5 Board view
 
-- Toolbar: status legend, **Sort by RICE (desc)** checkbox. Column headers colored by status. Columns per status with counts; cards show title, RICE, T-shirt, type icon, and **View / Edit / Delete** buttons; drag card body to move or reorder (when manual sort is on).
+- Toolbar: status legend, **Sort by RICE (desc)** checkbox, **Full screen** button. Column headers colored by status. Columns per status with counts; cards show title, RICE, T-shirt, type icon, View/Edit/Delete; drag card body to move or reorder (when manual sort is on).
 
-### 9.6 Map view
+### 9.6 MOSCOW view
 
-- Toolbar: **Show by** dropdown (Number of projects | RICE score), **Full screen** button. Legend: project–country links or RICE summary. Choropleth map (Leaflet) with country tooltips (flag, name, code, count or RICE). Fullscreen toggles map view to full viewport; Escape or **Exit full screen** to exit.
+- Header: title “MoSCoW prioritisation”, hint text, **Full screen** button. 2×2 grid: each quadrant has coloured label (MUST / SHOULD / COULD / WON'T), one-sentence description, count badge, and project cards. Drag cards between quadrants to change MOSCOW category.
 
-### 9.7 Project modal (add/edit/view)
+### 9.7 Map view
 
-- Sections: overview (title, description), RICE inputs, optional (financial, type, status, T-shirt, period, countries). Edit/Add: **Save** / **Cancel**. View: read-only. Meta: Created, Modified, RICE score.
+- Toolbar: **Show by** dropdown (Number of projects | RICE score), **Full screen** button. Legend; choropleth map (Leaflet) with country tooltips (flag, name, code, count or RICE). Fullscreen toggles map view to full viewport; Escape or **Exit full screen** to exit.
 
-### 9.8 Profile view modal
+### 9.8 Project modal (add/edit/view)
 
-- Read-only: profile name, team; statistics (total projects, unique countries, counts by status/type/T-shirt size, RICE score summary).
+- Sections: overview (title, description), RICE inputs, optional (financial, type, status, T-shirt, **MOSCOW category**, period, countries). Edit/Add: **Save** / **Cancel**. View: read-only. Meta: Created, Modified, RICE score. New project defaults MOSCOW category to **Could have**.
 
-### 9.9 Profile edit modal
+### 9.9 Profile view / edit / delete modals
 
-- Editable: profile name, team; **Save** / **Cancel**.
+- View: read-only name, team, statistics. Edit: name, team; **Save** / **Cancel**. Delete: confirmation with project count.
 
 ### 9.10 Export / Import modals
 
@@ -457,7 +479,7 @@ Brief reference for where data appears. Add screenshots to the repo and link the
 
 ### 9.11 Toast confirmations (bottom-right)
 
-- After create, update, delete (profile or project), export, or import, a toast appears bottom-right with a short message (e.g. “Profile created successfully.” or “Exported 2 profiles and 5 projects as JSON.”). Toasts auto-dismiss after a few seconds; click to dismiss early.
+- After create, update, delete (profile or project), export, or import; message includes counts and format where relevant. Auto-dismiss; click to dismiss early.
 
 ---
 

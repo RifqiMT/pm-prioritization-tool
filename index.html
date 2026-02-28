@@ -94,6 +94,7 @@
             <div class="view-toggle-group" role="tablist" aria-label="Projects view">
               <button type="button" id="projectsViewTableBtn" class="view-toggle-btn view-toggle-btn--active" role="tab" aria-selected="true" data-view="table">Table</button>
               <button type="button" id="projectsViewBoardBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="board">Board</button>
+              <button type="button" id="projectsViewMoscowBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="moscow">MOSCOW</button>
               <button type="button" id="projectsViewMapBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="map">Map</button>
             </div>
             <button type="button" id="addProjectBtn" disabled>
@@ -131,6 +132,7 @@
               <label for="filterProjectType">Project type</label>
               <select id="filterProjectType">
                 <option value="">Any</option>
+                <option value="__none__">Not set</option>
                 <option value="New Product">New Product</option>
                 <option value="Improvement">Improvement</option>
                 <option value="Tech Debt">Tech Debt</option>
@@ -214,11 +216,22 @@
                 <label for="filterTshirtSize">T-shirt size</label>
                 <select id="filterTshirtSize">
                   <option value="">Any</option>
+                  <option value="__none__">Not set</option>
                   <option value="XS">XS</option>
                   <option value="S">S</option>
                   <option value="M">M</option>
                   <option value="L">L</option>
                   <option value="XL">XL</option>
+                </select>
+              </div>
+              <div class="filter-group filter-group--compact">
+                <label for="filterMoscow">MOSCOW</label>
+                <select id="filterMoscow">
+                  <option value="">Any</option>
+                  <option value="Must have">Must have</option>
+                  <option value="Should have">Should have</option>
+                  <option value="Could have">Could have</option>
+                  <option value="Won't have">Won't have</option>
                 </select>
               </div>
             </div>
@@ -260,6 +273,12 @@
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
+                <th data-sort-field="moscowCategory">
+                  <button class="sort-button" type="button">
+                    <span>MOSCOW</span>
+                    <span class="sort-indicator">↕</span>
+                  </button>
+                </th>
                 <th data-sort-field="riceScore">
                   <button class="sort-button" type="button">
                     <span>RICE score</span>
@@ -286,7 +305,7 @@
             </thead>
             <tbody id="projectsTableBody">
               <tr>
-                <td colspan="11" class="empty-state">
+                <td colspan="12" class="empty-state">
                   Select a profile and add your first project to see it here.
                 </td>
               </tr>
@@ -302,6 +321,11 @@
               <input type="checkbox" id="scrumBoardSortByRiceToggle" checked aria-describedby="scrumBoardSortByRiceLabel" />
               <span id="scrumBoardSortByRiceLabel">Sort by RICE (desc)</span>
             </label>
+            <button type="button" id="scrumBoardFullscreenBtn" class="view-fullscreen-btn" aria-label="Expand board to full screen" title="Full screen">
+              <svg class="view-fullscreen-icon icon-expand" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+              <svg class="view-fullscreen-icon icon-compress" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v3a2 2 0 0 1 2 2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+              <span class="view-fullscreen-label">Full screen</span>
+            </button>
           </div>
           <div id="scrumBoardContainer" class="scrum-board" aria-label="Scrum board"></div>
         </div>
@@ -321,6 +345,19 @@
           </div>
           <div class="projects-map-legend" id="projectsMapLegend" aria-label="Map legend"></div>
           <div id="projectsMapContainer" class="projects-map-container" aria-label="World map of projects by country"></div>
+        </div>
+
+        <div id="projectsMoscowView" class="projects-view projects-view--moscow" aria-hidden="true" style="display:none;">
+          <header class="moscow-view-header">
+            <h3 class="moscow-grid-title">MoSCoW prioritisation</h3>
+            <p class="moscow-board-hint">Drag cards between quadrants to change category, or set it in the project form.</p>
+            <button type="button" id="moscowFullscreenBtn" class="view-fullscreen-btn moscow-fullscreen-btn" aria-label="Expand MOSCOW view to full screen" title="Full screen">
+              <svg class="view-fullscreen-icon icon-expand" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+              <svg class="view-fullscreen-icon icon-compress" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v3a2 2 0 0 1 2 2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+              <span class="view-fullscreen-label">Full screen</span>
+            </button>
+          </header>
+          <div id="moscowBoardContainer" class="moscow-grid" aria-label="MOSCOW prioritization grid"></div>
         </div>
       </section>
     </main>
@@ -617,6 +654,21 @@
                       <div class="cell-type-tooltip">
                         <div class="cell-type-tooltip-title">Project period</div>
                         <div class="cell-type-tooltip-body">Quarter (e.g. 2026-Q1) for planning and filtering.</div>
+                      </div>
+                    </div>
+
+                    <div class="project-field-tooltip-wrap" style="margin-top:0.55rem;">
+                      <label for="projectMoscow">MOSCOW category</label>
+                      <select id="projectMoscow" name="projectMoscow">
+                        <option value="">—</option>
+                        <option value="Must have">Must have</option>
+                        <option value="Should have">Should have</option>
+                        <option value="Could have">Could have</option>
+                        <option value="Won't have">Won't have</option>
+                      </select>
+                      <div class="cell-type-tooltip">
+                        <div class="cell-type-tooltip-title">MOSCOW category</div>
+                        <div class="cell-type-tooltip-body">Must have, Should have, Could have, or Won't have (this time).</div>
                       </div>
                     </div>
 
