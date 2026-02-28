@@ -42,6 +42,15 @@
             </button>
           </div>
         </div>
+        <div class="app-header-actions-row">
+          <div class="data-pill-group data-pill-group--rates">
+            <span class="data-pill-label">Rates</span>
+            <button type="button" id="refreshExchangeRatesBtn" class="data-pill-btn refresh-rates-btn" aria-label="Refresh exchange rates from API" title="Refresh exchange rates (used for Financial impact in EUR)">
+              Refresh exchange rates
+            </button>
+            <p id="exchangeRatesDateLabel" class="exchange-rates-date-label" aria-live="polite"></p>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -239,6 +248,13 @@
         </section>
 
         <div id="projectsTableView" class="projects-view projects-view--table">
+        <div class="projects-table-toolbar">
+          <button type="button" id="tableFullscreenBtn" class="view-fullscreen-btn" aria-label="Expand table to full screen" title="Full screen">
+            <svg class="view-fullscreen-icon icon-expand" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            <svg class="view-fullscreen-icon icon-compress" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v3a2 2 0 0 1 2 2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+            <span class="view-fullscreen-label">Full screen</span>
+          </button>
+        </div>
         <div class="table-wrapper" aria-label="Projects table">
           <table>
             <thead>
@@ -290,7 +306,7 @@
                 </th>
                 <th data-sort-field="financialImpactValue">
                   <button class="sort-button" type="button">
-                    <span>Financial impact</span>
+                    <span>Financial impact (EUR)</span>
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
@@ -336,6 +352,7 @@
             <select id="projectsMapMetricSelect" class="projects-map-metric-select" aria-label="Map data metric">
               <option value="projects">Number of projects</option>
               <option value="rice">RICE score</option>
+              <option value="financial">Total financial impact (EUR)</option>
             </select>
             <button type="button" id="projectsMapFullscreenBtn" class="projects-map-fullscreen-btn" aria-label="Expand map to full screen" title="Full screen">
               <svg class="projects-map-fullscreen-icon icon-expand" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
@@ -351,6 +368,10 @@
           <header class="moscow-view-header">
             <h3 class="moscow-grid-title">MoSCoW prioritisation</h3>
             <p class="moscow-board-hint">Drag cards between quadrants to change category, or set it in the project form.</p>
+            <label class="moscow-sort-toggle" for="moscowSortByRiceToggle">
+              <input type="checkbox" id="moscowSortByRiceToggle" checked aria-describedby="moscowSortByRiceLabel" />
+              <span id="moscowSortByRiceLabel">Sort by RICE (desc)</span>
+            </label>
             <button type="button" id="moscowFullscreenBtn" class="view-fullscreen-btn moscow-fullscreen-btn" aria-label="Expand MOSCOW view to full screen" title="Full screen">
               <svg class="view-fullscreen-icon icon-expand" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
               <svg class="view-fullscreen-icon icon-compress" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v3a2 2 0 0 1 2 2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>

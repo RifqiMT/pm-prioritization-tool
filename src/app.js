@@ -20,7 +20,11 @@ let state = {
   sortDirection: "desc",
   projectsView: "table",
   scrumBoardSortByRice: true,
-  mapMetric: "projects"
+  moscowSortByRice: true,
+  mapMetric: "projects",
+  exchangeRatesToEUR: {},
+  exchangeRatesDate: null,
+  exchangeRatesLastSource: null
 };
 
 let editingProjectId = null;
@@ -68,6 +72,8 @@ function init() {
   if (elements.projectsTableView && elements.projectsBoardView) {
     switchProjectsView(state.projectsView);
   }
+  updateExchangeRatesDateLabel();
+  scheduleDailyExchangeRatesRefresh();
 }
 
 function cacheElements() {
@@ -107,16 +113,21 @@ function cacheElements() {
   elements.projectsBoardView = $("projectsBoardView");
   elements.projectsMoscowView = $("projectsMoscowView");
   elements.projectsMapView = $("projectsMapView");
+  elements.tableFullscreenBtn = $("tableFullscreenBtn");
   elements.projectsMapContainer = $("projectsMapContainer");
   elements.projectsMapLegend = $("projectsMapLegend");
   elements.projectsMapMetricSelect = $("projectsMapMetricSelect");
   elements.projectsMapFullscreenBtn = $("projectsMapFullscreenBtn");
+  elements.refreshExchangeRatesBtn = $("refreshExchangeRatesBtn");
+  elements.exchangeRatesDateLabel = $("exchangeRatesDateLabel");
   elements.scrumBoardContainer = $("scrumBoardContainer");
   elements.scrumBoardLegend = $("scrumBoardLegend");
   elements.scrumBoardSortByRiceToggle = $("scrumBoardSortByRiceToggle");
   elements.scrumBoardFullscreenBtn = $("scrumBoardFullscreenBtn");
   elements.moscowBoardContainer = $("moscowBoardContainer");
   elements.moscowFullscreenBtn = $("moscowFullscreenBtn");
+  elements.moscowSortByRiceToggle = $("moscowSortByRiceToggle");
+  elements.moscowSortByRiceLabel = $("moscowSortByRiceLabel");
 
   elements.projectModal = $("projectModal");
   elements.projectModalTitle = $("projectModalTitle");
@@ -325,16 +336,48 @@ function attachEventListeners() {
   elements.bulkDeleteBtn.addEventListener("click", handleBulkDelete);
 
   if (elements.projectsViewTableBtn) {
-    elements.projectsViewTableBtn.addEventListener("click", () => switchProjectsView("table"));
+    elements.projectsViewTableBtn.addEventListener("click", () => {
+      if (isViewFullscreen() && state.projectsView !== "table") {
+        pendingFullscreenView = "table";
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      } else {
+        switchProjectsView("table");
+      }
+    });
   }
   if (elements.projectsViewBoardBtn) {
-    elements.projectsViewBoardBtn.addEventListener("click", () => switchProjectsView("board"));
+    elements.projectsViewBoardBtn.addEventListener("click", () => {
+      if (isViewFullscreen() && state.projectsView !== "board") {
+        pendingFullscreenView = "board";
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      } else {
+        switchProjectsView("board");
+      }
+    });
   }
   if (elements.projectsViewMoscowBtn) {
-    elements.projectsViewMoscowBtn.addEventListener("click", () => switchProjectsView("moscow"));
+    elements.projectsViewMoscowBtn.addEventListener("click", () => {
+      if (isViewFullscreen() && state.projectsView !== "moscow") {
+        pendingFullscreenView = "moscow";
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      } else {
+        switchProjectsView("moscow");
+      }
+    });
   }
   if (elements.projectsViewMapBtn) {
-    elements.projectsViewMapBtn.addEventListener("click", () => switchProjectsView("map"));
+    elements.projectsViewMapBtn.addEventListener("click", () => {
+      if (isViewFullscreen() && state.projectsView !== "map") {
+        pendingFullscreenView = "map";
+        if (document.exitFullscreen) document.exitFullscreen();
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      } else {
+        switchProjectsView("map");
+      }
+    });
   }
 
   if (elements.scrumBoardSortByRiceToggle) {
@@ -344,11 +387,18 @@ function attachEventListeners() {
       if (state.projectsView === "board") renderScrumBoard();
     });
   }
+  if (elements.moscowSortByRiceToggle) {
+    elements.moscowSortByRiceToggle.addEventListener("change", () => {
+      state.moscowSortByRice = elements.moscowSortByRiceToggle.checked;
+      saveState();
+      if (state.projectsView === "moscow") renderMoscowBoard();
+    });
+  }
 
   if (elements.projectsMapMetricSelect) {
     elements.projectsMapMetricSelect.addEventListener("change", () => {
       const v = elements.projectsMapMetricSelect.value;
-      if (v === "projects" || v === "rice") {
+      if (v === "projects" || v === "rice" || v === "financial") {
         state.mapMetric = v;
         saveState();
         if (state.projectsView === "map" && elements.projectsMapContainer) renderProjectsMap();
@@ -359,8 +409,14 @@ function attachEventListeners() {
   if (elements.projectsMapFullscreenBtn && elements.projectsMapView) {
     elements.projectsMapFullscreenBtn.addEventListener("click", toggleMapFullscreen);
   }
+  if (elements.refreshExchangeRatesBtn) {
+    elements.refreshExchangeRatesBtn.addEventListener("click", refreshExchangeRatesManual);
+  }
   if (elements.scrumBoardFullscreenBtn && elements.projectsBoardView) {
     elements.scrumBoardFullscreenBtn.addEventListener("click", () => toggleViewFullscreen(elements.projectsBoardView));
+  }
+  if (elements.tableFullscreenBtn && elements.projectsTableView) {
+    elements.tableFullscreenBtn.addEventListener("click", () => toggleViewFullscreen(elements.projectsTableView));
   }
   if (elements.moscowFullscreenBtn && elements.projectsMoscowView) {
     elements.moscowFullscreenBtn.addEventListener("click", () => toggleViewFullscreen(elements.projectsMoscowView));
@@ -656,7 +712,7 @@ function attachEventListeners() {
   });
 
   elements.projectsTableBody.addEventListener("mouseenter", (e) => {
-    const wrap = e.target.closest(".cell-type-icon-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-desc-with-tooltip");
+    const wrap = e.target.closest(".cell-type-icon-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip");
     if (!wrap) return;
     const tooltip = wrap.querySelector(".cell-type-tooltip");
     if (!tooltip) return;
@@ -690,10 +746,28 @@ function attachEventListeners() {
       document.body.classList.add("cell-type-tooltip-hidden");
     }, { passive: true });
   }
+  if (elements.scrumBoardContainer) {
+    elements.scrumBoardContainer.addEventListener("scroll", () => {
+      document.body.classList.add("cell-type-tooltip-hidden");
+    }, { passive: true });
+  }
+  if (elements.moscowBoardContainer) {
+    elements.moscowBoardContainer.addEventListener("scroll", () => {
+      document.body.classList.add("cell-type-tooltip-hidden");
+    }, { passive: true });
+  }
 
   document.body.addEventListener("mouseenter", (e) => {
     const wrap = e.target.closest(".profile-icon-wrap");
     if (!wrap) return;
+    positionProfileTooltip(wrap);
+  }, true);
+
+  document.body.addEventListener("mouseenter", (e) => {
+    const wrap = e.target.closest(".cell-type-icon-wrap, .scrum-board-card-type-wrap");
+    if (!wrap) return;
+    const tooltip = wrap.querySelector(".cell-type-tooltip");
+    if (!tooltip) return;
     positionProfileTooltip(wrap);
   }, true);
 
@@ -1443,8 +1517,20 @@ function loadState() {
     if (!Array.isArray(parsed) && typeof parsed.scrumBoardSortByRice === "boolean") {
       state.scrumBoardSortByRice = parsed.scrumBoardSortByRice;
     }
-    if (!Array.isArray(parsed) && (parsed.mapMetric === "projects" || parsed.mapMetric === "rice")) {
+    if (!Array.isArray(parsed) && typeof parsed.moscowSortByRice === "boolean") {
+      state.moscowSortByRice = parsed.moscowSortByRice;
+    }
+    if (!Array.isArray(parsed) && (parsed.mapMetric === "projects" || parsed.mapMetric === "rice" || parsed.mapMetric === "financial")) {
       state.mapMetric = parsed.mapMetric;
+    }
+    if (!Array.isArray(parsed) && parsed.exchangeRatesToEUR && typeof parsed.exchangeRatesToEUR === "object") {
+      state.exchangeRatesToEUR = parsed.exchangeRatesToEUR;
+    }
+    if (!Array.isArray(parsed) && parsed.exchangeRatesDate) {
+      state.exchangeRatesDate = parsed.exchangeRatesDate;
+    }
+    if (!Array.isArray(parsed) && (parsed.exchangeRatesLastSource === "manual" || parsed.exchangeRatesLastSource === "auto")) {
+      state.exchangeRatesLastSource = parsed.exchangeRatesLastSource;
     }
   } catch (err) {
     console.error("Failed to load stored state", err);
@@ -1497,7 +1583,11 @@ function saveState() {
     sortDirection: state.sortDirection,
     projectsView: state.projectsView,
     scrumBoardSortByRice: state.scrumBoardSortByRice,
-    mapMetric: state.mapMetric
+    moscowSortByRice: state.moscowSortByRice,
+    mapMetric: state.mapMetric,
+    exchangeRatesToEUR: state.exchangeRatesToEUR,
+    exchangeRatesDate: state.exchangeRatesDate,
+    exchangeRatesLastSource: state.exchangeRatesLastSource
   };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
@@ -2125,13 +2215,41 @@ function renderProjects() {
 
     const tdFinancial = document.createElement("td");
     if (project.financialImpactValue != null && project.financialImpactValue !== "") {
-      const formattedAmount = Number(project.financialImpactValue).toLocaleString(undefined, {
-        maximumFractionDigits: 2
-      });
-      const currency = project.financialImpactCurrency ? String(project.financialImpactCurrency).trim() : "";
-      tdFinancial.innerHTML = `
-        <div class="cell-meta"><strong>${escapeHtml(formattedAmount)}</strong>${currency ? " " + escapeHtml(currency) : ""}</div>
-      `;
+      const raw = project.financialImpactValue;
+      const amount = Number.isFinite(raw) ? raw : (typeof raw === "string" ? parseFloat(raw) : 0);
+      const currency = (project.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
+      const amountEur = typeof convertToEUR === "function" ? convertToEUR(amount, currency) : amount;
+      const shortEur = typeof formatFinancialShort === "function"
+        ? formatFinancialShort(amountEur)
+        : String(Number(amountEur).toLocaleString(undefined, { maximumFractionDigits: 2 }));
+      const shortOriginal = typeof formatFinancialShort === "function"
+        ? formatFinancialShort(amount)
+        : String(Number(amount).toLocaleString(undefined, { maximumFractionDigits: 2 }));
+
+      const wrap = document.createElement("span");
+      wrap.className = "cell-financial-with-tooltip";
+      wrap.setAttribute("aria-label", `Financial impact: €${shortEur} (original: ${shortOriginal} ${currency})`);
+      const textSpan = document.createElement("span");
+      textSpan.className = "cell-meta cell-financial-text";
+      textSpan.innerHTML = `<strong>€${escapeHtml(shortEur)}</strong>`;
+      wrap.appendChild(textSpan);
+
+      const tooltipEl = document.createElement("div");
+      tooltipEl.className = "cell-type-tooltip";
+      tooltipEl.setAttribute("role", "tooltip");
+      const titleEl = document.createElement("div");
+      titleEl.className = "cell-type-tooltip-title";
+      titleEl.textContent = "Original financial impact";
+      tooltipEl.appendChild(titleEl);
+      const bodyEl = document.createElement("div");
+      bodyEl.className = "cell-type-tooltip-body";
+      const p = document.createElement("p");
+      p.textContent = `${shortOriginal} ${currency}`;
+      bodyEl.appendChild(p);
+      tooltipEl.appendChild(bodyEl);
+      wrap.appendChild(tooltipEl);
+
+      tdFinancial.appendChild(wrap);
     } else {
       tdFinancial.innerHTML = `<span class="cell-meta">—</span>`;
     }
@@ -2198,6 +2316,11 @@ function renderProjects() {
   syncHeaderCheckbox();
   updateBulkDeleteButton();
   updateSortIndicators();
+  if (state.projectsView === "table" && projects.some((p) => p.financialImpactValue != null && p.financialImpactValue !== "")) {
+    if (Object.keys(state.exchangeRatesToEUR || {}).length === 0) {
+      ensureExchangeRatesToEUR().then(() => renderProjects()).catch(() => {});
+    }
+  }
   if (state.projectsView === "board" && elements.scrumBoardContainer) {
     renderScrumBoard();
   }
@@ -2301,6 +2424,196 @@ function getCountryRiceByCode() {
   return riceByCode;
 }
 
+const EXCHANGE_RATES_API_URL = "https://api.frankfurter.dev/v1/latest";
+
+const EXCHANGE_RATES_TIMEZONE = "Europe/Berlin";
+
+/** Returns current date as YYYY-MM-DD in Germany (Europe/Berlin). Used so "today" and refresh-at-midnight are in Germany time. */
+function getTodayGermanyDateString() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: EXCHANGE_RATES_TIMEZONE });
+}
+
+/** Returns milliseconds from now until the next 00:00 in Europe/Berlin. If we're past midnight Germany, returns ms until next day's midnight. */
+function getNextMidnightGermanyMs() {
+  const now = Date.now();
+  const todayStr = getTodayGermanyDateString();
+  const [y, m, d] = todayStr.split("-").map(Number);
+  const utc22 = new Date(Date.UTC(y, m - 1, d, 22, 0, 0)).getTime();
+  const utc23 = new Date(Date.UTC(y, m - 1, d, 23, 0, 0)).getTime();
+  const fmt = (ms) => {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: EXCHANGE_RATES_TIMEZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      hour12: false,
+      minute: "2-digit"
+    }).formatToParts(new Date(ms));
+    const get = (type) => (parts.find((p) => p.type === type) || {}).value;
+    return { day: Number(get("day")), hour: Number(get("hour")) };
+  };
+  const nextDay = d + 1;
+  const midnightBerlin = fmt(utc22).day === nextDay && fmt(utc22).hour === 0 ? utc22 : utc23;
+  let next = midnightBerlin;
+  if (next <= now) next += 24 * 60 * 60 * 1000;
+  return next - now;
+}
+
+/** ETL: Extract — fetch raw rates from the API. */
+function extractExchangeRatesFromAPI() {
+  return fetch(EXCHANGE_RATES_API_URL).then((res) => {
+    if (!res.ok) throw new Error("Exchange rates unavailable");
+    return res.json();
+  });
+}
+
+/** ETL: Transform — normalize and dedupe. One rate per currency (uppercase), valid numbers only. Returns map: currency -> rate from EUR to that currency. */
+function transformExchangeRatesToEUR(data) {
+  const rates = data.rates || {};
+  const seen = Object.create(null);
+  const toEUR = { EUR: 1 };
+  Object.keys(rates).forEach((c) => {
+    const key = (c || "").toString().trim().toUpperCase();
+    if (!key || key === "EUR") return;
+    const fromEurToC = rates[c];
+    if (!Number.isFinite(fromEurToC) || fromEurToC <= 0) return;
+    const rateToEur = 1 / fromEurToC;
+    if (!Number.isFinite(rateToEur)) return;
+    if (seen[key] !== undefined) {
+      return;
+    }
+    seen[key] = true;
+    toEUR[key] = rateToEur;
+  });
+  return toEUR;
+}
+
+/** ETL: Load — merge into state. Rule: replace with transformed map (single source of truth per currency; no duplicate keys). Optionally records source (manual/auto). */
+function loadExchangeRatesIntoState(transformed, source) {
+  state.exchangeRatesToEUR = transformed;
+  state.exchangeRatesDate = getTodayGermanyDateString();
+  if (source) state.exchangeRatesLastSource = source;
+  saveState();
+  updateExchangeRatesDateLabel();
+}
+
+/** Updates the header label under the refresh button with last exchange rate date and source (manual/auto). */
+function updateExchangeRatesDateLabel() {
+  const el = elements.exchangeRatesDateLabel;
+  if (!el) return;
+  const dateStr = state.exchangeRatesDate;
+  if (!dateStr) {
+    el.textContent = "";
+    return;
+  }
+  const d = new Date(dateStr + "T12:00:00Z");
+  const formatted = Number.isNaN(d.getTime()) ? dateStr : d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  const source = state.exchangeRatesLastSource;
+  const sourceLabel = source === "manual" ? " (manual refresh)" : source === "auto" ? " (auto)" : "";
+  el.textContent = `Last updated: ${formatted}${sourceLabel}`;
+}
+
+/** Fetches EUR-based rates (ETL pipeline). Builds ratesToEUR: for each currency C, amount in C -> EUR = amount * ratesToEUR[C]. EUR is 1. Optional source: "manual" | "auto". */
+function fetchExchangeRatesToEUR(source) {
+  return extractExchangeRatesFromAPI()
+    .then((data) => transformExchangeRatesToEUR(data))
+    .then((toEUR) => {
+      loadExchangeRatesIntoState(toEUR, source);
+      return toEUR;
+    });
+}
+
+/** Returns true if we have rates for today (Germany date) (or can use cached). Refreshes if needed. */
+function ensureExchangeRatesToEUR() {
+  const today = getTodayGermanyDateString();
+  if (state.exchangeRatesDate === today && Object.keys(state.exchangeRatesToEUR).length > 0) {
+    return Promise.resolve(state.exchangeRatesToEUR);
+  }
+  return fetchExchangeRatesToEUR("auto").catch((err) => {
+    if (Object.keys(state.exchangeRatesToEUR || {}).length === 0) {
+      state.exchangeRatesToEUR = { EUR: 1 };
+    }
+    throw err;
+  });
+}
+
+/** Timeout id for the next 00:00 Germany refresh (so we can cancel if needed). */
+let dailyExchangeRatesRefreshTimeoutId = null;
+
+/** Schedules the next daily exchange-rate refresh at 00:00 Germany time. Runs ETL (auto) when the time comes, then reschedules. When the app is closed, no code runs; on next open, ensureExchangeRatesToEUR() will refresh if Germany date is newer than stored date. */
+function scheduleDailyExchangeRatesRefresh() {
+  if (dailyExchangeRatesRefreshTimeoutId != null) {
+    clearTimeout(dailyExchangeRatesRefreshTimeoutId);
+    dailyExchangeRatesRefreshTimeoutId = null;
+  }
+  const ms = getNextMidnightGermanyMs();
+  dailyExchangeRatesRefreshTimeoutId = setTimeout(() => {
+    dailyExchangeRatesRefreshTimeoutId = null;
+    fetchExchangeRatesToEUR("auto")
+      .then(() => {
+        if (state.projectsView === "map" && elements.projectsMapContainer) renderProjectsMap();
+        renderProjects();
+      })
+      .catch(() => {})
+      .finally(() => {
+        scheduleDailyExchangeRatesRefresh();
+      });
+  }, ms);
+}
+
+/** Manual refresh: always fetch from API (ignore cache), run ETL merge, then re-render table and map. */
+function refreshExchangeRatesManual() {
+  const btn = elements.refreshExchangeRatesBtn;
+  if (btn) btn.disabled = true;
+  fetchExchangeRatesToEUR("manual")
+    .then(() => {
+      if (typeof showToast === "function") showToast("Exchange rates updated.");
+      renderProjects();
+      if (state.projectsView === "map" && elements.projectsMapContainer) renderProjectsMap();
+    })
+    .catch(() => {
+      if (typeof showToast === "function") showToast("Could not refresh exchange rates. Try again later.");
+    })
+    .finally(() => {
+      if (btn) btn.disabled = false;
+    });
+}
+
+/** Convert amount in given currency to EUR using latest API rates. EUR always converts 1:1. Returns 0 if currency is missing or no rate available (so we never show unconverted values as EUR). */
+function convertToEUR(amount, currencyCode) {
+  if (!Number.isFinite(amount)) return 0;
+  const code = (currencyCode || "EUR").toString().trim().toUpperCase();
+  if (!code) return 0;
+  if (code === "EUR") return amount;
+  const rate = state.exchangeRatesToEUR[code];
+  if (rate != null && Number.isFinite(rate)) return amount * rate;
+  return 0;
+}
+
+/** Returns a map of ISO 2-letter country code -> total financial impact in EUR (active profile, filtered). All amounts are converted to EUR using the latest exchange rates from the API; amounts in currencies without a rate are excluded. */
+function getCountryFinancialImpactByCode() {
+  const activeProfile = getActiveProfile();
+  if (!activeProfile || !Array.isArray(activeProfile.projects)) return {};
+  const baseProjects = activeProfile.projects.slice();
+  initFilterProjectPeriodOptions(baseProjects);
+  const projects = applyFilters(baseProjects);
+  const impactByCode = {};
+  projects.forEach((p) => {
+    const raw = p.financialImpactValue;
+    const amount = Number.isFinite(raw) ? raw : (typeof raw === "string" ? parseFloat(raw) : 0);
+    if (!Number.isFinite(amount) || amount <= 0) return;
+    const currency = (p.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
+    const amountEUR = convertToEUR(amount, currency);
+    const countries = Array.isArray(p.countries) ? p.countries : [];
+    countries.forEach((name) => {
+      const code = typeof countryCodeByName !== "undefined" ? countryCodeByName[name] : null;
+      if (code) impactByCode[code] = (impactByCode[code] || 0) + amountEUR;
+    });
+  });
+  return impactByCode;
+}
+
 const PROJECTS_MAP_GEOJSON_URL = "https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_110m_admin_0_countries.geojson";
 
 /** Get 2-letter country code for a GeoJSON feature for matching to countByCode.
@@ -2348,11 +2661,142 @@ function toggleViewFullscreen(viewEl) {
   }
 }
 
+/** IDs of modals and toast container that must live inside the fullscreen element so they work in fullscreen. */
+const FULLSCREEN_PORTAL_IDS = [
+  "exportFormatModal",
+  "importFormatModal",
+  "projectModal",
+  "profileViewModal",
+  "profileEditModal",
+  "profileDeleteModal",
+  "projectDeleteModal",
+  "toastContainer"
+];
+
+let currentFullscreenViewEl = null;
+/** When set, after exiting fullscreen we switch to this view and re-enter fullscreen on its element. */
+let pendingFullscreenView = null;
+
+function getViewElement(view) {
+  if (view === "table") return elements.projectsTableView;
+  if (view === "board") return elements.projectsBoardView;
+  if (view === "moscow") return elements.projectsMoscowView;
+  if (view === "map") return elements.projectsMapView;
+  return null;
+}
+
+function isViewFullscreen() {
+  const el = document.fullscreenElement || document.webkitFullscreenElement;
+  return el === elements.projectsTableView || el === elements.projectsBoardView ||
+    el === elements.projectsMoscowView || el === elements.projectsMapView;
+}
+
+function moveModalsAndToastToFullscreenElement(fullscreenEl) {
+  if (!fullscreenEl) return;
+  FULLSCREEN_PORTAL_IDS.forEach((id) => {
+    const node = document.getElementById(id);
+    if (node && node.parentNode !== fullscreenEl) fullscreenEl.appendChild(node);
+  });
+}
+
+function moveModalsAndToastBackToBody() {
+  FULLSCREEN_PORTAL_IDS.forEach((id) => {
+    const node = document.getElementById(id);
+    if (node && node.parentNode !== document.body) document.body.appendChild(node);
+  });
+}
+
+function moveFiltersAndHeaderToFullscreen(fullscreenEl) {
+  if (!fullscreenEl) return;
+  const filtersShell = document.querySelector(".filters-shell");
+  const headerRow = document.querySelector(".projects-header-row");
+  if (filtersShell && filtersShell.parentNode !== fullscreenEl) {
+    fullscreenEl.insertBefore(filtersShell, fullscreenEl.firstChild);
+  }
+  if (headerRow && headerRow.parentNode !== fullscreenEl) {
+    fullscreenEl.insertBefore(headerRow, fullscreenEl.firstChild);
+  }
+}
+
+function moveFiltersAndHeaderBack() {
+  if (!currentFullscreenViewEl) return;
+  const cardPlain = currentFullscreenViewEl.parentNode;
+  if (!cardPlain) return;
+  const filtersShell = document.querySelector(".filters-shell");
+  const headerRow = document.querySelector(".projects-header-row");
+  const anchor = elements.projectsTableView;
+  if (filtersShell && anchor && filtersShell.parentNode === currentFullscreenViewEl) {
+    cardPlain.insertBefore(filtersShell, anchor);
+  }
+  if (headerRow && headerRow.parentNode === currentFullscreenViewEl) {
+    cardPlain.insertBefore(headerRow, filtersShell || anchor);
+  }
+  currentFullscreenViewEl = null;
+}
+
+function setViewToggleDisabled(disabled) {
+  const btns = [
+    elements.projectsViewTableBtn,
+    elements.projectsViewBoardBtn,
+    elements.projectsViewMoscowBtn,
+    elements.projectsViewMapBtn
+  ];
+  btns.forEach((btn) => {
+    if (!btn) return;
+    btn.disabled = !!disabled;
+    if (disabled) {
+      btn.setAttribute("aria-disabled", "true");
+      btn.title = "Exit full screen to switch view";
+    } else {
+      btn.removeAttribute("aria-disabled");
+      btn.removeAttribute("title");
+    }
+  });
+}
+
+function setViewToggleTitlesForFullscreen() {
+  const titles = { table: "Switch to Table", board: "Switch to Board", moscow: "Switch to MOSCOW", map: "Switch to Map" };
+  const btns = [
+    [elements.projectsViewTableBtn, "table"],
+    [elements.projectsViewBoardBtn, "board"],
+    [elements.projectsViewMoscowBtn, "moscow"],
+    [elements.projectsViewMapBtn, "map"]
+  ];
+  btns.forEach(([btn, view]) => {
+    if (btn) btn.title = titles[view] || "";
+  });
+}
+
 function onViewFullscreenChange() {
   const el = document.fullscreenElement || document.webkitFullscreenElement;
   const isMap = el === elements.projectsMapView;
   const isBoard = el === elements.projectsBoardView;
   const isMoscow = el === elements.projectsMoscowView;
+  const isTable = el === elements.projectsTableView;
+  const isAnyFullscreen = isMap || isBoard || isMoscow || isTable;
+
+  if (isAnyFullscreen && el) {
+    currentFullscreenViewEl = el;
+    moveModalsAndToastToFullscreenElement(el);
+    moveFiltersAndHeaderToFullscreen(el);
+    setViewToggleTitlesForFullscreen();
+  } else {
+    moveFiltersAndHeaderBack();
+    moveModalsAndToastBackToBody();
+    setViewToggleDisabled(false);
+    if (pendingFullscreenView) {
+      const view = pendingFullscreenView;
+      pendingFullscreenView = null;
+      switchProjectsView(view);
+      const targetEl = getViewElement(view);
+      if (targetEl) {
+        requestAnimationFrame(() => {
+          if (targetEl.requestFullscreen) targetEl.requestFullscreen().catch(() => {});
+          else if (targetEl.webkitRequestFullscreen) targetEl.webkitRequestFullscreen();
+        });
+      }
+    }
+  }
 
   function updateBtn(btn, isFullscreen, expandLabel, compressLabel) {
     if (!btn) return;
@@ -2370,6 +2814,7 @@ function onViewFullscreenChange() {
   updateBtn(elements.projectsMapFullscreenBtn, isMap, "Full screen", "Exit full screen");
   updateBtn(elements.scrumBoardFullscreenBtn, isBoard, "Full screen", "Exit full screen");
   updateBtn(elements.moscowFullscreenBtn, isMoscow, "Full screen", "Exit full screen");
+  updateBtn(elements.tableFullscreenBtn, isTable, "Full screen", "Exit full screen");
 
   const map = elements.projectsMapContainer && elements.projectsMapContainer._leafletMap;
   if (map) map.invalidateSize();
@@ -2399,103 +2844,137 @@ function renderProjectsMap() {
   }
 
   const countByCode = getProjectCountByCountryCode();
+
+  function formatEur(num) {
+    const short = typeof formatFinancialShort === "function" ? formatFinancialShort(Number(num)) : String(Number(num).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }));
+    return "€" + short;
+  }
+
+  function renderMapWithValueByCode(valueByCode) {
+    const values = Object.values(valueByCode);
+    const maxValue = values.length ? Math.max(...values) : 0;
+    const totalProjectHits = Object.values(countByCode).reduce((a, b) => a + b, 0);
+    const numCountries = Object.keys(valueByCode).length;
+
+    if (elements.projectsMapLegend) {
+      if (state.mapMetric === "rice") {
+        const totalRice = Object.values(valueByCode).reduce((a, b) => a + b, 0);
+        elements.projectsMapLegend.textContent = totalRice > 0
+          ? `RICE score per country (sum) — total RICE ${typeof formatRice === "function" ? formatRice(totalRice) : totalRice} across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"}`
+          : "RICE score per country. Add countries to projects to see RICE on the map.";
+      } else if (state.mapMetric === "financial") {
+        const totalEur = Object.values(valueByCode).reduce((a, b) => a + b, 0);
+        elements.projectsMapLegend.textContent = totalEur > 0
+          ? `Total financial impact (EUR) per country — ${formatEur(totalEur)} across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"} (rates refreshed daily)`
+          : "Total financial impact (EUR) per country. Add countries and financial impact to projects to see values on the map.";
+      } else {
+        elements.projectsMapLegend.textContent = totalProjectHits > 0
+          ? `Projects per country — ${totalProjectHits} project–country link${totalProjectHits !== 1 ? "s" : ""} across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"}`
+          : "Projects per country. Add countries to projects to see them on the map.";
+      }
+    }
+
+    if (!elements.projectsMapContainer._leafletMap) {
+      const map = L.map(elements.projectsMapContainer, { center: [20, 0], zoom: 2, zoomControl: true });
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>"
+      }).addTo(map);
+      elements.projectsMapContainer._leafletMap = map;
+    }
+    const map = elements.projectsMapContainer._leafletMap;
+    if (elements.projectsMapContainer._geoLayer) {
+      map.removeLayer(elements.projectsMapContainer._geoLayer);
+      elements.projectsMapContainer._geoLayer = null;
+    }
+
+    function getColor(val) {
+      if (val === 0) return "#e0e0e0";
+      if (maxValue <= 0) return "#e0e0e0";
+      const t = val / maxValue;
+      if (t <= 0.25) return "#c8e6c9";
+      if (t <= 0.5) return "#81c784";
+      if (t <= 0.75) return "#4caf50";
+      return "#2e7d32";
+    }
+
+    function style(feature) {
+      const code = getCountryCodeFromFeature(feature);
+      const value = code ? (valueByCode[code] || 0) : 0;
+      return {
+        fillColor: getColor(value),
+        weight: 1,
+        opacity: 1,
+        color: "#fff",
+        fillOpacity: 0.8
+      };
+    }
+
+    function onEachFeature(feature, layer) {
+      const code = getCountryCodeFromFeature(feature);
+      const rawName = feature.properties && (feature.properties.NAME || feature.properties.ADMIN || feature.properties.NAME_LONG || code);
+      const name = (rawName && typeof getCanonicalCountryName === "function") ? getCanonicalCountryName(rawName) : rawName;
+      const displayName = name || code;
+      const count = code ? (countByCode[code] || 0) : 0;
+      const value = code ? (valueByCode[code] || 0) : 0;
+      const flag = (code && typeof countryCodeToFlag === "function") ? countryCodeToFlag(code) : "";
+      const flagPrefix = flag ? `${flag} ` : "";
+      const codeLabel = code ? ` (${typeof countryCodeToTwoLetter === "function" ? (countryCodeToTwoLetter(code) || code) : code})` : "";
+      const label = `${flagPrefix}${displayName}${codeLabel}`;
+      let text;
+      if (state.mapMetric === "rice") {
+        text = count > 0
+          ? `${label}: RICE ${typeof formatRice === "function" ? formatRice(value) : value} (${count} project${count !== 1 ? "s" : ""})`
+          : `${label}: 0 projects`;
+      } else if (state.mapMetric === "financial") {
+        text = value > 0
+          ? `${label}: ${formatEur(value)} (${count} project${count !== 1 ? "s" : ""})`
+          : `${label}: —`;
+      } else {
+        text = `${label}: ${count} project${count !== 1 ? "s" : ""}`;
+      }
+      layer.bindTooltip(text, { permanent: false, direction: "top" });
+    }
+
+    fetch(PROJECTS_MAP_GEOJSON_URL)
+      .then((res) => {
+        if (!res.ok) throw new Error("Map data unavailable");
+        return res.json();
+      })
+      .then((geojson) => {
+        if (!geojson || !geojson.features || !Array.isArray(geojson.features)) throw new Error("Invalid map data");
+        const layer = L.geoJSON(geojson, { style, onEachFeature });
+        layer.addTo(map);
+        elements.projectsMapContainer._geoLayer = layer;
+        map.invalidateSize();
+      })
+      .catch(() => {
+        if (elements.projectsMapContainer._leafletMap) {
+          elements.projectsMapContainer._leafletMap.remove();
+          elements.projectsMapContainer._leafletMap = null;
+        }
+        elements.projectsMapContainer._geoLayer = null;
+        elements.projectsMapContainer.innerHTML = '<div class="projects-map-empty">Could not load map data. Check your connection.</div>';
+      });
+  }
+
+  if (state.mapMetric === "financial") {
+    if (elements.projectsMapLegend) elements.projectsMapLegend.textContent = "Loading exchange rates…";
+    ensureExchangeRatesToEUR()
+      .then(() => {
+        const financialByCode = getCountryFinancialImpactByCode();
+        renderMapWithValueByCode(financialByCode);
+      })
+      .catch(() => {
+        if (elements.projectsMapLegend) elements.projectsMapLegend.textContent = "Exchange rates unavailable; showing amounts in EUR only where applicable.";
+        const financialByCode = getCountryFinancialImpactByCode();
+        renderMapWithValueByCode(financialByCode);
+      });
+    return;
+  }
+
   const riceByCode = state.mapMetric === "rice" ? getCountryRiceByCode() : {};
   const valueByCode = state.mapMetric === "rice" ? riceByCode : countByCode;
-  const values = Object.values(valueByCode);
-  const maxValue = values.length ? Math.max(...values) : 0;
-  const totalProjectHits = Object.values(countByCode).reduce((a, b) => a + b, 0);
-  const numCountries = state.mapMetric === "rice" ? Object.keys(riceByCode).length : Object.keys(countByCode).length;
-
-  if (elements.projectsMapLegend) {
-    if (state.mapMetric === "rice") {
-      const totalRice = Object.values(riceByCode).reduce((a, b) => a + b, 0);
-      elements.projectsMapLegend.textContent = totalRice > 0
-        ? `RICE score per country (sum) — total RICE ${typeof formatRice === "function" ? formatRice(totalRice) : totalRice} across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"}`
-        : "RICE score per country. Add countries to projects to see RICE on the map.";
-    } else {
-      elements.projectsMapLegend.textContent = totalProjectHits > 0
-        ? `Projects per country — ${totalProjectHits} project–country link${totalProjectHits !== 1 ? "s" : ""} across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"}`
-        : "Projects per country. Add countries to projects to see them on the map.";
-    }
-  }
-
-  if (!elements.projectsMapContainer._leafletMap) {
-    const map = L.map(elements.projectsMapContainer, { center: [20, 0], zoom: 2, zoomControl: true });
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>"
-    }).addTo(map);
-    elements.projectsMapContainer._leafletMap = map;
-  }
-  const map = elements.projectsMapContainer._leafletMap;
-  if (elements.projectsMapContainer._geoLayer) {
-    map.removeLayer(elements.projectsMapContainer._geoLayer);
-    elements.projectsMapContainer._geoLayer = null;
-  }
-
-  function getColor(val) {
-    if (val === 0) return "#e0e0e0";
-    if (maxValue <= 0) return "#e0e0e0";
-    const t = val / maxValue;
-    if (t <= 0.25) return "#c8e6c9";
-    if (t <= 0.5) return "#81c784";
-    if (t <= 0.75) return "#4caf50";
-    return "#2e7d32";
-  }
-
-  function style(feature) {
-    const code = getCountryCodeFromFeature(feature);
-    const value = code ? (valueByCode[code] || 0) : 0;
-    return {
-      fillColor: getColor(value),
-      weight: 1,
-      opacity: 1,
-      color: "#fff",
-      fillOpacity: 0.8
-    };
-  }
-
-  function onEachFeature(feature, layer) {
-    const code = getCountryCodeFromFeature(feature);
-    const rawName = feature.properties && (feature.properties.NAME || feature.properties.ADMIN || feature.properties.NAME_LONG || code);
-    const name = (rawName && typeof getCanonicalCountryName === "function") ? getCanonicalCountryName(rawName) : rawName;
-    const displayName = name || code;
-    const count = code ? (countByCode[code] || 0) : 0;
-    const value = code ? (valueByCode[code] || 0) : 0;
-    const flag = (code && typeof countryCodeToFlag === "function") ? countryCodeToFlag(code) : "";
-    const flagPrefix = flag ? `${flag} ` : "";
-    const codeLabel = code ? ` (${typeof countryCodeToTwoLetter === "function" ? (countryCodeToTwoLetter(code) || code) : code})` : "";
-    const label = `${flagPrefix}${displayName}${codeLabel}`;
-    let text;
-    if (state.mapMetric === "rice") {
-      text = count > 0
-        ? `${label}: RICE ${typeof formatRice === "function" ? formatRice(value) : value} (${count} project${count !== 1 ? "s" : ""})`
-        : `${label}: 0 projects`;
-    } else {
-      text = `${label}: ${count} project${count !== 1 ? "s" : ""}`;
-    }
-    layer.bindTooltip(text, { permanent: false, direction: "top" });
-  }
-
-  fetch(PROJECTS_MAP_GEOJSON_URL)
-    .then((res) => {
-      if (!res.ok) throw new Error("Map data unavailable");
-      return res.json();
-    })
-    .then((geojson) => {
-      if (!geojson || !geojson.features || !Array.isArray(geojson.features)) throw new Error("Invalid map data");
-      const layer = L.geoJSON(geojson, { style, onEachFeature });
-      layer.addTo(map);
-      elements.projectsMapContainer._geoLayer = layer;
-      map.invalidateSize();
-    })
-    .catch(() => {
-      if (elements.projectsMapContainer._leafletMap) {
-        elements.projectsMapContainer._leafletMap.remove();
-        elements.projectsMapContainer._leafletMap = null;
-      }
-      elements.projectsMapContainer._geoLayer = null;
-      elements.projectsMapContainer.innerHTML = '<div class="projects-map-empty">Could not load map data. Check your connection.</div>';
-    });
+  renderMapWithValueByCode(valueByCode);
 }
 
 function renderScrumBoard() {
@@ -2599,7 +3078,8 @@ function renderScrumBoard() {
     const cardsContainer = document.createElement("div");
     cardsContainer.className = "scrum-board-column-cards";
 
-    (byStatus[status] || []).forEach((project) => {
+    const listForStatus = byStatus[status] || [];
+    (listForStatus).forEach((project, index) => {
       const card = document.createElement("div");
       card.className = "scrum-board-card";
       card.setAttribute("draggable", "true");
@@ -2628,13 +3108,34 @@ function renderScrumBoard() {
       if (project.projectType) {
         const typeMeta = projectTypeIcons && projectTypeIcons[project.projectType];
         const typeWrap = document.createElement("span");
-        typeWrap.className = "scrum-board-card-type-wrap";
+        typeWrap.className = "scrum-board-card-type-wrap cell-type-icon-wrap";
         typeWrap.setAttribute("role", "img");
         typeWrap.setAttribute("aria-label", project.projectType);
         if (typeMeta && typeMeta.svg) {
           typeWrap.innerHTML = typeMeta.svg;
-          const tooltipText = [typeMeta.tooltipTitle, typeMeta.tooltipBody].filter(Boolean).join(" — ");
-          if (tooltipText) typeWrap.setAttribute("title", tooltipText);
+          if (typeMeta.tooltipTitle != null || typeMeta.tooltipBody != null) {
+            const tooltipEl = document.createElement("div");
+            tooltipEl.className = "cell-type-tooltip";
+            tooltipEl.setAttribute("role", "tooltip");
+            if (typeMeta.tooltipTitle != null) {
+              const titleEl = document.createElement("div");
+              titleEl.className = "cell-type-tooltip-title";
+              titleEl.textContent = typeMeta.tooltipTitle;
+              tooltipEl.appendChild(titleEl);
+            }
+            if (typeMeta.tooltipBody != null) {
+              const bodyEl = document.createElement("div");
+              bodyEl.className = "cell-type-tooltip-body";
+              const paragraphs = String(typeMeta.tooltipBody).split(/\n\n+/);
+              paragraphs.forEach((text) => {
+                const p = document.createElement("p");
+                p.textContent = text.replace(/\n/g, " ").trim();
+                bodyEl.appendChild(p);
+              });
+              tooltipEl.appendChild(bodyEl);
+            }
+            typeWrap.appendChild(tooltipEl);
+          }
         } else {
           typeWrap.textContent = project.projectType;
         }
@@ -2644,6 +3145,39 @@ function renderScrumBoard() {
 
       const actions = document.createElement("div");
       actions.className = "scrum-board-card-actions";
+      const isFirst = index === 0;
+      const isLast = index === listForStatus.length - 1;
+      const orderDisabled = state.scrumBoardSortByRice;
+      const upBtn = document.createElement("button");
+      upBtn.type = "button";
+      upBtn.className = "scrum-board-card-btn scrum-board-card-btn--order";
+      upBtn.setAttribute("data-project-id", project.id);
+      upBtn.setAttribute("data-status", status);
+      upBtn.setAttribute("aria-label", "Move project up in column");
+      upBtn.title = "Move up";
+      upBtn.innerHTML = "↑";
+      upBtn.disabled = orderDisabled || isFirst;
+      const downBtn = document.createElement("button");
+      downBtn.type = "button";
+      downBtn.className = "scrum-board-card-btn scrum-board-card-btn--order";
+      downBtn.setAttribute("data-project-id", project.id);
+      downBtn.setAttribute("data-status", status);
+      downBtn.setAttribute("aria-label", "Move project down in column");
+      downBtn.title = "Move down";
+      downBtn.innerHTML = "↓";
+      downBtn.disabled = orderDisabled || isLast;
+      upBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        moveBoardProjectUp(project.id, status);
+      });
+      downBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        moveBoardProjectDown(project.id, status);
+      });
+      const orderGroup = document.createElement("div");
+      orderGroup.className = "scrum-board-card-actions-order";
+      orderGroup.appendChild(upBtn);
+      orderGroup.appendChild(downBtn);
       const viewBtn = document.createElement("button");
       viewBtn.type = "button";
       viewBtn.className = "scrum-board-card-btn scrum-board-card-btn--view";
@@ -2677,6 +3211,7 @@ function renderScrumBoard() {
       actions.appendChild(viewBtn);
       actions.appendChild(editBtn);
       actions.appendChild(deleteBtn);
+      actions.appendChild(orderGroup);
       card.appendChild(actions);
 
       cardsContainer.appendChild(card);
@@ -2689,6 +3224,29 @@ function renderScrumBoard() {
   bindScrumBoardDragAndDrop();
 }
 
+function createDragGhost(card, clientX, clientY) {
+  const rect = card.getBoundingClientRect();
+  const ghost = card.cloneNode(true);
+  ghost.classList.add("drag-ghost");
+  ghost.setAttribute("aria-hidden", "true");
+  const style = ghost.style;
+  style.position = "fixed";
+  style.top = "-9999px";
+  style.left = "0";
+  style.width = rect.width + "px";
+  style.height = rect.height + "px";
+  style.boxSizing = "border-box";
+  style.pointerEvents = "none";
+  style.margin = "0";
+  style.opacity = "0.98";
+  style.zIndex = "10000";
+  document.body.appendChild(ghost);
+  void ghost.offsetHeight;
+  const offsetX = clientX - rect.left;
+  const offsetY = clientY - rect.top;
+  return { ghost, offsetX, offsetY };
+}
+
 function bindScrumBoardDragAndDrop() {
   if (!elements.scrumBoardContainer) return;
   const cards = elements.scrumBoardContainer.querySelectorAll(".scrum-board-card");
@@ -2698,6 +3256,7 @@ function bindScrumBoardDragAndDrop() {
   let draggedProjectId = null;
   let dropColumn = null;
   let dropIndex = 0;
+  let dragGhost = null;
 
   cards.forEach((card) => {
     card.addEventListener("dragstart", (e) => {
@@ -2707,13 +3266,18 @@ function bindScrumBoardDragAndDrop() {
       }
       draggedCard = card;
       draggedProjectId = card.getAttribute("data-project-id");
+      const { ghost, offsetX, offsetY } = createDragGhost(card, e.clientX, e.clientY);
+      dragGhost = ghost;
       card.classList.add("scrum-board-card--dragging");
       e.dataTransfer.effectAllowed = "move";
       e.dataTransfer.setData("text/plain", draggedProjectId);
       e.dataTransfer.setData("application/x-project-id", draggedProjectId);
+      e.dataTransfer.setDragImage(ghost, offsetX, offsetY);
     });
 
     card.addEventListener("dragend", () => {
+      if (dragGhost && dragGhost.parentNode) dragGhost.remove();
+      dragGhost = null;
       if (draggedCard) draggedCard.classList.remove("scrum-board-card--dragging");
       draggedCard = null;
       draggedProjectId = null;
@@ -2805,11 +3369,158 @@ function bindScrumBoardDragAndDrop() {
   });
 }
 
+function getBoardOrderedList(profile, status) {
+  const base = profile.projects.slice();
+  base.forEach((p) => { p.riceScore = p.riceScore != null ? p.riceScore : calculateRiceScore(p); });
+  initFilterProjectPeriodOptions(base);
+  const filtered = applyFilters(base);
+  const list = filtered.filter((p) => (p.projectStatus || "Not Started").toString().trim() === status);
+  if (state.scrumBoardSortByRice) {
+    list.sort((a, b) => {
+      const scoreA = a.riceScore != null ? a.riceScore : calculateRiceScore(a);
+      const scoreB = b.riceScore != null ? b.riceScore : calculateRiceScore(b);
+      return scoreB - scoreA;
+    });
+    return list;
+  }
+  const orderIds = profile.boardOrder && profile.boardOrder[status];
+  if (orderIds && Array.isArray(orderIds) && orderIds.length) {
+    const byId = {};
+    list.forEach((p) => { byId[p.id] = p; });
+    const ordered = [];
+    orderIds.forEach((id) => { if (byId[id]) { ordered.push(byId[id]); delete byId[id]; } });
+    Object.values(byId).sort((a, b) => compareDatesDesc(a.createdAt, b.createdAt)).forEach((p) => ordered.push(p));
+    return ordered;
+  }
+  list.sort((a, b) => compareDatesDesc(a.createdAt, b.createdAt));
+  return list;
+}
+
+function moveBoardProjectUp(projectId, status) {
+  const activeProfile = getActiveProfile();
+  if (!activeProfile) return;
+  const list = getBoardOrderedList(activeProfile, status);
+  const idx = list.findIndex((p) => p.id === projectId);
+  if (idx <= 0) return;
+  activeProfile.boardOrder = activeProfile.boardOrder || {};
+  if (!Array.isArray(activeProfile.boardOrder[status]) || activeProfile.boardOrder[status].length !== list.length) {
+    activeProfile.boardOrder[status] = list.map((p) => p.id);
+  }
+  const orderIds = activeProfile.boardOrder[status];
+  const i = orderIds.indexOf(projectId);
+  if (i <= 0) return;
+  [orderIds[i - 1], orderIds[i]] = [orderIds[i], orderIds[i - 1]];
+  state.scrumBoardSortByRice = false;
+  if (elements.scrumBoardSortByRiceToggle) elements.scrumBoardSortByRiceToggle.checked = false;
+  saveState();
+  renderScrumBoard();
+  renderProjects();
+}
+
+function moveBoardProjectDown(projectId, status) {
+  const activeProfile = getActiveProfile();
+  if (!activeProfile) return;
+  const list = getBoardOrderedList(activeProfile, status);
+  const idx = list.findIndex((p) => p.id === projectId);
+  if (idx < 0 || idx >= list.length - 1) return;
+  activeProfile.boardOrder = activeProfile.boardOrder || {};
+  if (!Array.isArray(activeProfile.boardOrder[status]) || activeProfile.boardOrder[status].length !== list.length) {
+    activeProfile.boardOrder[status] = list.map((p) => p.id);
+  }
+  const orderIds = activeProfile.boardOrder[status];
+  const i = orderIds.indexOf(projectId);
+  if (i < 0 || i >= orderIds.length - 1) return;
+  [orderIds[i], orderIds[i + 1]] = [orderIds[i + 1], orderIds[i]];
+  state.scrumBoardSortByRice = false;
+  if (elements.scrumBoardSortByRiceToggle) elements.scrumBoardSortByRiceToggle.checked = false;
+  saveState();
+  renderScrumBoard();
+  renderProjects();
+}
+
+function getMoscowOrderedList(profile, quadrant) {
+  const base = profile.projects.slice();
+  base.forEach((p) => { p.riceScore = p.riceScore != null ? p.riceScore : calculateRiceScore(p); });
+  initFilterProjectPeriodOptions(base);
+  const filtered = applyFilters(base);
+  const list = filtered.filter((p) => {
+    const m = (p.moscowCategory != null && String(p.moscowCategory).trim() !== "" && typeof moscowList !== "undefined" && moscowList.includes(p.moscowCategory))
+      ? p.moscowCategory
+      : "Could have";
+    return m === quadrant;
+  });
+  if (state.moscowSortByRice) {
+    list.sort((a, b) => {
+      const scoreA = a.riceScore != null ? a.riceScore : calculateRiceScore(a);
+      const scoreB = b.riceScore != null ? b.riceScore : calculateRiceScore(b);
+      return scoreB - scoreA;
+    });
+    return list;
+  }
+  if (profile.moscowOrder && Array.isArray(profile.moscowOrder[quadrant]) && profile.moscowOrder[quadrant].length) {
+    const orderIds = profile.moscowOrder[quadrant];
+    const byId = {};
+    list.forEach((p) => { byId[p.id] = p; });
+    const ordered = [];
+    orderIds.forEach((id) => { if (byId[id]) { ordered.push(byId[id]); delete byId[id]; } });
+    Object.values(byId).sort((a, b) => compareDatesDesc(a.createdAt, b.createdAt)).forEach((p) => ordered.push(p));
+    return ordered;
+  }
+  list.sort((a, b) => compareDatesDesc(a.createdAt, b.createdAt));
+  return list;
+}
+
+function moveMoscowProjectUp(projectId, quadrant) {
+  const activeProfile = getActiveProfile();
+  if (!activeProfile) return;
+  const list = getMoscowOrderedList(activeProfile, quadrant);
+  const idx = list.findIndex((p) => p.id === projectId);
+  if (idx <= 0) return;
+  activeProfile.moscowOrder = activeProfile.moscowOrder || {};
+  if (!Array.isArray(activeProfile.moscowOrder[quadrant]) || activeProfile.moscowOrder[quadrant].length !== list.length) {
+    activeProfile.moscowOrder[quadrant] = list.map((p) => p.id);
+  }
+  const orderIds = activeProfile.moscowOrder[quadrant];
+  const i = orderIds.indexOf(projectId);
+  if (i <= 0) return;
+  [orderIds[i - 1], orderIds[i]] = [orderIds[i], orderIds[i - 1]];
+  state.moscowSortByRice = false;
+  if (elements.moscowSortByRiceToggle) elements.moscowSortByRiceToggle.checked = false;
+  saveState();
+  renderMoscowBoard();
+  renderProjects();
+}
+
+function moveMoscowProjectDown(projectId, quadrant) {
+  const activeProfile = getActiveProfile();
+  if (!activeProfile) return;
+  const list = getMoscowOrderedList(activeProfile, quadrant);
+  const idx = list.findIndex((p) => p.id === projectId);
+  if (idx < 0 || idx >= list.length - 1) return;
+  activeProfile.moscowOrder = activeProfile.moscowOrder || {};
+  if (!Array.isArray(activeProfile.moscowOrder[quadrant]) || activeProfile.moscowOrder[quadrant].length !== list.length) {
+    activeProfile.moscowOrder[quadrant] = list.map((p) => p.id);
+  }
+  const orderIds = activeProfile.moscowOrder[quadrant];
+  const i = orderIds.indexOf(projectId);
+  if (i < 0 || i >= orderIds.length - 1) return;
+  [orderIds[i], orderIds[i + 1]] = [orderIds[i + 1], orderIds[i]];
+  state.moscowSortByRice = false;
+  if (elements.moscowSortByRiceToggle) elements.moscowSortByRiceToggle.checked = false;
+  saveState();
+  renderMoscowBoard();
+  renderProjects();
+}
+
 function renderMoscowBoard() {
   if (!elements.moscowBoardContainer || typeof moscowList === "undefined") return;
   const gridOrder = typeof moscowGridOrder !== "undefined" && Array.isArray(moscowGridOrder) ? moscowGridOrder : moscowList;
   const activeProfile = getActiveProfile();
   elements.moscowBoardContainer.innerHTML = "";
+
+  if (elements.moscowSortByRiceToggle) {
+    elements.moscowSortByRiceToggle.checked = state.moscowSortByRice;
+  }
 
   if (!activeProfile) {
     elements.moscowBoardContainer.innerHTML = '<div class="moscow-board-empty">Select a profile to see the MOSCOW grid.</div>';
@@ -2837,11 +3548,26 @@ function renderMoscowBoard() {
 
   gridOrder.forEach((moscow) => {
     const list = byMoscow[moscow] || [];
-    list.sort((a, b) => {
-      const scoreA = a.riceScore != null ? a.riceScore : calculateRiceScore(a);
-      const scoreB = b.riceScore != null ? b.riceScore : calculateRiceScore(b);
-      return scoreB - scoreA;
-    });
+    if (state.moscowSortByRice) {
+      list.sort((a, b) => {
+        const scoreA = a.riceScore != null ? a.riceScore : calculateRiceScore(a);
+        const scoreB = b.riceScore != null ? b.riceScore : calculateRiceScore(b);
+        return scoreB - scoreA;
+      });
+    } else {
+      if (activeProfile.moscowOrder && Array.isArray(activeProfile.moscowOrder[moscow]) && activeProfile.moscowOrder[moscow].length) {
+        const orderIds = activeProfile.moscowOrder[moscow];
+        const byId = {};
+        list.forEach((p) => { byId[p.id] = p; });
+        const ordered = [];
+        orderIds.forEach((id) => { if (byId[id]) { ordered.push(byId[id]); delete byId[id]; } });
+        Object.values(byId).sort((a, b) => compareDatesDesc(a.createdAt, b.createdAt)).forEach((p) => ordered.push(p));
+        byMoscow[moscow].length = 0;
+        ordered.forEach((p) => byMoscow[moscow].push(p));
+      } else {
+        list.sort((a, b) => compareDatesDesc(a.createdAt, b.createdAt));
+      }
+    }
   });
 
   gridOrder.forEach((moscow) => {
@@ -2874,8 +3600,9 @@ function renderMoscowBoard() {
 
     const cardsContainer = document.createElement("div");
     cardsContainer.className = "moscow-board-column-cards";
+    cardsContainer.addEventListener("scroll", () => document.body.classList.add("cell-type-tooltip-hidden"), { passive: true });
 
-    (byMoscow[moscow] || []).forEach((project) => {
+    (byMoscow[moscow] || []).forEach((project, index) => {
       const card = document.createElement("div");
       card.className = "moscow-board-card";
       card.setAttribute("draggable", "true");
@@ -2901,10 +3628,80 @@ function renderMoscowBoard() {
         metaLeft.appendChild(sizeSpan);
       }
       meta.appendChild(metaLeft);
+      if (project.projectType) {
+        const typeMeta = projectTypeIcons && projectTypeIcons[project.projectType];
+        const typeWrap = document.createElement("span");
+        typeWrap.className = "scrum-board-card-type-wrap cell-type-icon-wrap";
+        typeWrap.setAttribute("role", "img");
+        typeWrap.setAttribute("aria-label", project.projectType);
+        if (typeMeta && typeMeta.svg) {
+          typeWrap.innerHTML = typeMeta.svg;
+          if (typeMeta.tooltipTitle != null || typeMeta.tooltipBody != null) {
+            const tooltipEl = document.createElement("div");
+            tooltipEl.className = "cell-type-tooltip";
+            tooltipEl.setAttribute("role", "tooltip");
+            if (typeMeta.tooltipTitle != null) {
+              const titleEl = document.createElement("div");
+              titleEl.className = "cell-type-tooltip-title";
+              titleEl.textContent = typeMeta.tooltipTitle;
+              tooltipEl.appendChild(titleEl);
+            }
+            if (typeMeta.tooltipBody != null) {
+              const bodyEl = document.createElement("div");
+              bodyEl.className = "cell-type-tooltip-body";
+              const paragraphs = String(typeMeta.tooltipBody).split(/\n\n+/);
+              paragraphs.forEach((text) => {
+                const p = document.createElement("p");
+                p.textContent = text.replace(/\n/g, " ").trim();
+                bodyEl.appendChild(p);
+              });
+              tooltipEl.appendChild(bodyEl);
+            }
+            typeWrap.appendChild(tooltipEl);
+          }
+        } else {
+          typeWrap.textContent = project.projectType;
+        }
+        meta.appendChild(typeWrap);
+      }
       card.appendChild(meta);
 
       const actions = document.createElement("div");
       actions.className = "moscow-board-card-actions";
+      const listForQuadrant = byMoscow[moscow] || [];
+      const isFirst = index === 0;
+      const isLast = index === listForQuadrant.length - 1;
+      const orderDisabled = state.moscowSortByRice;
+      const upBtn = document.createElement("button");
+      upBtn.type = "button";
+      upBtn.className = "moscow-board-card-btn moscow-board-card-btn--order";
+      upBtn.setAttribute("data-action", "moscowMoveUp");
+      upBtn.setAttribute("data-project-id", project.id);
+      upBtn.setAttribute("data-moscow", moscow);
+      upBtn.setAttribute("aria-label", "Move project up in quadrant");
+      upBtn.title = "Move up";
+      upBtn.innerHTML = "↑";
+      upBtn.disabled = orderDisabled || isFirst;
+      const downBtn = document.createElement("button");
+      downBtn.type = "button";
+      downBtn.className = "moscow-board-card-btn moscow-board-card-btn--order";
+      downBtn.setAttribute("data-action", "moscowMoveDown");
+      downBtn.setAttribute("data-project-id", project.id);
+      downBtn.setAttribute("data-moscow", moscow);
+      downBtn.setAttribute("aria-label", "Move project down in quadrant");
+      downBtn.title = "Move down";
+      downBtn.innerHTML = "↓";
+      downBtn.disabled = orderDisabled || isLast;
+      upBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        moveMoscowProjectUp(project.id, moscow);
+      });
+      downBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        moveMoscowProjectDown(project.id, moscow);
+      });
+      actions.appendChild(upBtn);
+      actions.appendChild(downBtn);
       const viewBtn = document.createElement("button");
       viewBtn.type = "button";
       viewBtn.className = "moscow-board-card-btn moscow-board-card-btn--view";
@@ -2958,6 +3755,7 @@ function bindMoscowBoardDragAndDrop() {
   let draggedCard = null;
   let draggedProjectId = null;
   let dropColumn = null;
+  let dragGhost = null;
 
   cards.forEach((card) => {
     card.addEventListener("dragstart", (e) => {
@@ -2967,13 +3765,18 @@ function bindMoscowBoardDragAndDrop() {
       }
       draggedCard = card;
       draggedProjectId = card.getAttribute("data-project-id");
+      const { ghost, offsetX, offsetY } = createDragGhost(card, e.clientX, e.clientY);
+      dragGhost = ghost;
       card.classList.add("moscow-board-card--dragging");
       e.dataTransfer.effectAllowed = "move";
       e.dataTransfer.setData("text/plain", draggedProjectId);
       e.dataTransfer.setData("application/x-project-id", draggedProjectId);
+      e.dataTransfer.setDragImage(ghost, offsetX, offsetY);
     });
 
     card.addEventListener("dragend", () => {
+      if (dragGhost && dragGhost.parentNode) dragGhost.remove();
+      dragGhost = null;
       if (draggedCard) draggedCard.classList.remove("moscow-board-card--dragging");
       draggedCard = null;
       draggedProjectId = null;
@@ -2999,8 +3802,11 @@ function bindMoscowBoardDragAndDrop() {
     column.addEventListener("drop", (e) => {
       e.preventDefault();
       column.classList.remove("moscow-board-column--drag-over");
+      columns.forEach((col) => col.classList.remove("moscow-board-column--drag-over"));
       if (!draggedProjectId) return;
-      const newMoscow = column.getAttribute("data-moscow");
+      const targetColumn = dropColumn || column.closest(".moscow-board-column");
+      if (!targetColumn) return;
+      const newMoscow = targetColumn.getAttribute("data-moscow");
       const activeProfile = getActiveProfile();
       if (!activeProfile) return;
       const project = activeProfile.projects.find((p) => p.id === draggedProjectId);
@@ -3014,6 +3820,24 @@ function bindMoscowBoardDragAndDrop() {
       renderProjects();
     });
   });
+
+  elements.moscowBoardContainer.addEventListener("drop", (e) => {
+    if (!dropColumn || !draggedProjectId) return;
+    if (e.target.closest(".moscow-board-column")) return;
+    e.preventDefault();
+    e.stopPropagation();
+    columns.forEach((col) => col.classList.remove("moscow-board-column--drag-over"));
+    const newMoscow = dropColumn.getAttribute("data-moscow");
+    const activeProfile = getActiveProfile();
+    if (!activeProfile) return;
+    const project = activeProfile.projects.find((p) => p.id === draggedProjectId);
+    if (!project) return;
+    project.moscowCategory = newMoscow;
+    project.modifiedAt = new Date().toISOString();
+    saveState();
+    renderMoscowBoard();
+    renderProjects();
+  }, true);
 }
 
 function applyFilters(projects) {

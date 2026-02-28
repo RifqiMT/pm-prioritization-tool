@@ -168,3 +168,32 @@ function escapeCsvCell(value) {
   return str;
 }
 
+/**
+ * Formats a financial amount in short form: K (thousands), Mn (millions), Bn (billions), Tn (trillions).
+ * Examples: 1000 -> "1 K", 1000000 -> "1 Mn", 1000000000 -> "1 Bn", 1000000000000 -> "1 Tn".
+ * Uses 1 decimal when the value is not a whole unit (e.g. 1.5 Mn); otherwise no decimals.
+ */
+function formatFinancialShort(num) {
+  const n = Number(num);
+  if (!Number.isFinite(n)) return "0";
+  const abs = Math.abs(n);
+  const sign = n < 0 ? "−" : "";
+  if (abs >= 1e12) {
+    const v = n / 1e12;
+    return sign + (v % 1 === 0 ? v.toFixed(0) : v.toFixed(1)) + " Tn";
+  }
+  if (abs >= 1e9) {
+    const v = n / 1e9;
+    return sign + (v % 1 === 0 ? v.toFixed(0) : v.toFixed(1)) + " Bn";
+  }
+  if (abs >= 1e6) {
+    const v = n / 1e6;
+    return sign + (v % 1 === 0 ? v.toFixed(0) : v.toFixed(1)) + " Mn";
+  }
+  if (abs >= 1e3) {
+    const v = n / 1e3;
+    return sign + (v % 1 === 0 ? v.toFixed(0) : v.toFixed(1)) + " K";
+  }
+  return sign + (abs % 1 === 0 ? abs.toFixed(0) : abs.toFixed(2));
+}
+
