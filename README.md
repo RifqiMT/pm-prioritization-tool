@@ -30,7 +30,7 @@ The tool helps product managers and teams **capture**, **score**, **rank**, and 
 
 - **RICE scoring** – Consistent prioritization using **Reach × Impact × Confidence ÷ Effort**.
 - **Portfolio separation** – Multiple profiles (e.g. per team or product) with separate project lists and optional board order.
-- **Dual views** – **Table** for sortable, filterable lists and bulk actions; **Board** for status-based columns and drag-and-drop.
+- **Triple view** – **Table** for sortable, filterable lists and bulk actions; **Board** for status-based columns and drag-and-drop; **Map** for a world choropleth of project count or RICE score by target country.
 - **Data ownership** – Export/import JSON or CSV; no vendor lock-in.
 
 ### 1.2 Target users
@@ -46,15 +46,16 @@ The tool helps product managers and teams **capture**, **score**, **rank**, and 
 | **Profile** | A container for projects (e.g. “Q1 roadmap”, “Team Alpha”). Each profile has its own projects, optional board order, and can be viewed/edited via modals. |
 | **RICE** | Prioritization formula: **(Reach × Impact × Confidence) ÷ Effort**. Higher score = higher priority. |
 | **Board order** | When “Sort by RICE” is off, the order of cards in each board column is stored per profile and per status. |
-| **Merge (import)** | Imported data is merged by profile (ID or name) and by project ID; duplicates are skipped. |
+| **Map view** | Choropleth world map colored by project count or RICE score per target country; uses canonical country names and 2-letter codes (e.g. Taiwan). |
+| **Merge (import)** | Imported data is merged by profile (ID or name) and by project ID; duplicates are skipped. Country names are normalized to the canonical list on import. |
 
 ### 1.4 High-level flow
 
 1. **Create a profile** – Enter profile name and optional team; click **Add**.
 2. **Add projects** – With a profile selected, click **+ Project** and fill RICE inputs plus optional metadata (type, status, countries, period, etc.).
-3. **View and prioritize** – Use **Table** for sorting and filtering, or **Board** for status columns and drag-and-drop.
+3. **View and prioritize** – Use **Table** for sorting and filtering, **Board** for status columns and drag-and-drop, or **Map** for a geographic view by target country.
 4. **Change status** – In Board view, drag cards between columns to update status; optionally turn off “Sort by RICE” to use manual card order.
-5. **Export or import** – Use **Export data** (JSON/CSV) for backup; **Import data** to merge from another export.
+5. **Export or import** – Use **Export data** (JSON/CSV) for backup; **Import data** to merge from another export (country names normalized to canonical list).
 
 ---
 
@@ -63,7 +64,7 @@ The tool helps product managers and teams **capture**, **score**, **rank**, and 
 | Requirement | Details |
 |-------------|--------|
 | **Browser** | Modern browser with JavaScript enabled and `localStorage` support (e.g. Chrome, Firefox, Safari, Edge). |
-| **Network** | Optional: only for loading Google Fonts (Inter). App runs fully offline after first load if fonts are cached. |
+| **Network** | Optional: for Google Fonts (Inter) and, in Map view, for loading Leaflet tiles and Natural Earth GeoJSON. App runs offline for table/board after first load if fonts and map data are cached. |
 | **Backend** | None. No server, database, or API. |
 | **Build** | None. Plain HTML, CSS, and JavaScript; no bundler or Node required to run. |
 
@@ -105,7 +106,9 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 | **Single source of truth** | One place for project metadata and RICE scores; table and board stay in sync. |
 | **Portfolio-ready** | Multiple profiles for different owners, teams, or products; switch context with one click. |
 | **Transparent prioritization** | RICE formula is visible; the **?** next to the score shows the exact calculation. |
-| **Flexible workflow** | Table for bulk review and sort; board for status flow and manual ordering when “Sort by RICE” is off. |
+| **Flexible workflow** | Table for bulk review and sort; board for status flow and manual ordering when “Sort by RICE” is off; map for geographic distribution. |
+| **Geographic view** | Map view shows project count or RICE score per country with choropleth coloring, country flags in tooltips, and fullscreen option; supports all countries including Taiwan. |
+| **Consistent country data** | Single canonical country list and name aliases (e.g. Chinese Taipei to Taiwan); normalization on load and import so table, board, map, and filters stay consistent. |
 | **Data ownership** | Export JSON/CSV anytime; no lock-in; data stays in your control. |
 | **Low friction** | No sign-up, no backend; runs from a folder or static server. |
 | **Accessibility** | Semantic HTML, ARIA where needed, keyboard-friendly controls, and screen-reader support for key UI. |
@@ -185,14 +188,27 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 | **Drag-and-drop** | Move a card to another column to change its status. When “Sort by RICE” is off, drop position sets the card’s position in that column (persisted). Dragging from the action buttons does not start a drag. |
 | **Profile alignment** | Board always shows projects for the **currently selected profile**; switching profile or changing filters re-renders the board. |
 
-### 5.9 Export and import
+### 5.9 Map view
+
+| Aspect | Description |
+|--------|-------------|
+| **Access** | **Table** \| **Board** \| **Map** view toggle in the projects header. Map view shows a world choropleth. |
+| **Data source** | Active profile's filtered projects; each project's **Target countries** list; counts or RICE sums are aggregated per country (2-letter ISO code). |
+| **Show by** | Dropdown: **Number of projects** (count of projects targeting each country) or **RICE score** (sum of RICE scores per country). Choice is persisted in state (`mapMetric`). |
+| **Choropleth** | Countries colored by value (light to dark green); gray when no projects target that country. Legend shows total project–country links or total RICE and country count. |
+| **Tooltips** | Hover: country flag emoji, canonical name, 2-letter code in parentheses, and project count or RICE (e.g. "🇹🇼 Taiwan (TW): 2 projects"). |
+| **Country matching** | GeoJSON features are matched to app data via 2-letter code: ISO_A2_EH or ISO_A2 (compound codes like CN-TW normalized to TW), POSTAL, ISO_A3→alpha-2, then name lookup with **countryNameAliases** (e.g. Chinese Taipei → Taiwan) so Taiwan and all countries display consistently. |
+| **Full screen** | **Full screen** button in the map toolbar toggles the map view to fullscreen; **Exit full screen** or Escape to exit. Leaflet map resizes correctly on enter/exit. |
+| **Filters** | Same filters as table/board apply; map reflects filtered project list. |
+
+### 5.10 Export and import
 
 | Action | Behavior |
 |--------|----------|
 | **Export** | **Export data** → **JSON** or **CSV**. Downloads all profiles and projects (including board order). Filename includes timestamp. A **toast** (bottom-right) confirms success and shows how many profiles and projects were exported and the format (JSON or CSV). |
 | **Import** | **Import data** → **JSON** or **CSV**. Data is **merged**: profiles matched by ID or name get projects merged by project ID (duplicates skipped). New profiles and new projects are added. A **toast** confirms success with: profiles added, profiles merged, projects added, projects merged, and source format (JSON or CSV). |
 
-### 5.10 Confirmations (toasts)
+### 5.11 Confirmations (toasts)
 
 - **Location:** Bottom-right of the viewport; same style for all confirmations (green accent, checkmark icon, slide-in/out, auto-dismiss, click to dismiss).
 - **Deletion:** Profile deleted; project deleted; N projects deleted.
@@ -201,11 +217,11 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 - **Export:** “Exported X profile(s) and Y project(s) as JSON/CSV.”
 - **Import:** “Imported from JSON/CSV. X profiles added, Y merged, Z projects added, W merged.”
 
-### 5.11 Product description tooltip
+### 5.12 Product description tooltip
 
 - A **?** icon next to the app title opens a **Product Description** tooltip with the product summary. No subtitle is shown under the title; the same text is available in this tooltip.
 
-### 5.12 UI behavior
+### 5.13 UI behavior
 
 - **Product description:** ? icon next to title opens tooltip; no subtitle under title.
 - Project description in a tooltip on table row hover.
@@ -233,7 +249,9 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 
 - **Key:** `rice_prioritizer_v1` in `localStorage`.
 - **Root payload:**  
-  `{ profiles, activeProfileId, sortField, sortDirection, projectsView, scrumBoardSortByRice }`
+  `{ profiles, activeProfileId, sortField, sortDirection, projectsView, scrumBoardSortByRice, mapMetric }`
+- **projectsView:** `"table"` | `"board"` | `"map"`.
+- **mapMetric:** `"projects"` | `"rice"` (used when projectsView is `"map"`).
 
 ### 6.4 Profile schema
 
@@ -263,7 +281,7 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 | `projectStatus` | string \| null | Not Started, In Progress, On Hold, Done, Cancelled. |
 | `tshirtSize` | string \| null | XS, S, M, L, XL. |
 | `projectPeriod` | string \| null | YYYY-Qn. |
-| `countries` | string[] | Target country names. |
+| `countries` | string[] | Target country names (canonical only; normalized on load and import via **countryNameAliases** and **normalizeCountryNames**). |
 | `createdAt`, `modifiedAt` | string | ISO 8601 dates. |
 
 RICE score is not stored; it is computed from the RICE fields when needed.
@@ -282,6 +300,13 @@ RICE score is not stored; it is computed from the RICE fields when needed.
 - **Projects:** New projects on an existing profile are appended; existing project IDs are not duplicated. Projects added to existing profiles count as **merged projects**; projects that come with newly added profiles count as **added projects**.
 - **Merge result:** The merge function returns `addedProfiles`, `mergedProfiles`, `addedProjects`, `mergedProjects`, and `skippedProjects` for use in the import confirmation toast.
 
+### 6.8 Country normalization
+
+- **Canonical list:** `countryList` and `countryCodeByName` in `constants.js` define the single set of country names and 2-letter ISO codes used everywhere (dropdowns, filters, table, board, map).
+- **Aliases:** `countryNameAliases` maps alternate names (e.g. from GeoJSON or imports) to canonical names (e.g. "Chinese Taipei" → "Taiwan", "United Republic of Tanzania" → "Tanzania"). Used so the map and imports show and store one consistent name.
+- **Normalization:** On load (`normalizeLoadedProject`), CSV import, and JSON import (`normalizeImportedProject`), `normalizeCountryNames(names)` runs each name through `getCanonicalCountryName` and keeps only names present in `countryList`. So stored `project.countries` always contain canonical names.
+- **Map code resolution:** `getCountryCodeFromFeature(feature)` returns 2-letter code for a GeoJSON feature: prefers ISO_A2_EH then ISO_A2 (compound like "CN-TW" normalized to "TW"), POSTAL, FIPS_10, then ISO_A3 via `countryCodeToTwoLetter`, then name lookup via `getCanonicalCountryName` and `countryCodeByName`. Ensures Taiwan and all territories match app data.
+
 ---
 
 ## 7. Business guidelines
@@ -295,6 +320,7 @@ RICE score is not stored; it is computed from the RICE fields when needed.
 7. **Use the board for status** – Track Not Started → In Progress → Done; turn off “Sort by RICE” when you want to order items manually within a column.
 8. **Use profile view for portfolio health** – Check profile statistics (by status, type, T-shirt size, RICE) to balance workload and priorities.
 9. **Use the Product Description ?** – Click the **?** next to the app title to read the product summary in a tooltip.
+10. **Use the map for geographic spread** – Map view shows project count or RICE by target country; use "Show by" to switch metric; use fullscreen for presentations. Rely on canonical country names so Taiwan and all countries display consistently.
 
 ---
 
@@ -307,6 +333,7 @@ RICE score is not stored; it is computed from the RICE fields when needed.
 | **Markup** | HTML5 (single page, semantic sections). |
 | **Styles** | CSS3 (custom properties, flexbox/grid, responsive). |
 | **Scripting** | Vanilla JavaScript; classic scripts (no ES modules in default run), no framework or build. |
+| **Map** | Leaflet 1.9.4 (CDN); world countries GeoJSON from Natural Earth (110m, jsDelivr CDN). Choropleth and tooltips in Map view. |
 | **Fonts** | Google Fonts (Inter). |
 | **Persistence** | Browser `localStorage` (key: `rice_prioritizer_v1`). |
 | **Backend** | None; local-first, no server or auth. |
@@ -318,33 +345,32 @@ The repository contains the following source files (excluding version control an
 
 | Path | Purpose |
 |------|--------|
-| `index.html` | Single HTML page: app shell, header (title + Product Description ? tooltip), profiles panel, filters, table/board containers, all modals (project, profile view/edit/delete, export/import format, project delete). Loads `css/main.css` and scripts in order: `constants.js` → `utils.js` → `rice.js` → `app.js`. Contains `#toastContainer` (fixed bottom-right) for confirmation toasts. |
-| `css/main.css` | All styles: CSS custom properties (dark theme, colors, radii, shadows, transitions), layout (app-shell, header, profiles, projects, filters), table, board, cards, board column header colors by status, card action buttons, modals, form controls, toast (bottom-right confirmations), responsive and `prefers-reduced-motion` support. |
-| `src/constants.js` | Application constants and lookup data: `STORAGE_KEY`, `projectStatusList`, `projectStatusIcons`, `tshirtSizeList`, `tshirtSizeTooltips`, `projectTypeIcons`, `currencyList`, `countryList`, `countryCodeByName`. No DOM. |
-| `src/utils.js` | Pure helpers: `formatDateTime`, `formatDate`, `formatDateForFilename`, `compareDatesDesc`, `generateId`, `escapeHtml`, `countryCodeToFlag`, `toNumberOrNull`, `parseCsv`, `escapeCsvCell`. No DOM. |
+| `index.html` | Single HTML page: app shell, header (title + Product Description ? tooltip), profiles panel, filters, view toggle (Table \| Board \| Map), table/board/map containers, all modals. Loads Leaflet CSS, `css/main.css`, and scripts: `constants.js` → `utils.js` → `rice.js` → `app.js` (Leaflet JS before constants). Contains `#toastContainer` for confirmation toasts. |
+| `css/main.css` | All styles: CSS custom properties (dark theme), layout, table, board, map toolbar and container, fullscreen map, modals, form controls, toast, responsive and `prefers-reduced-motion`. |
+| `src/constants.js` | Application constants and lookup data: `STORAGE_KEY`, `projectStatusList`, `projectStatusIcons`, `tshirtSizeList`, `tshirtSizeTooltips`, `projectTypeIcons`, `currencyList`, `countryList`, `countryCodeByName`, `countryNameAliases`. No DOM. |
+| `src/utils.js` | Pure helpers: `formatDateTime`, `formatDate`, `formatDateForFilename`, `compareDatesDesc`, `generateId`, `escapeHtml`, `countryCodeToFlag`, `countryCodeToTwoLetter`, `toNumberOrNull`, `parseCsv`, `escapeCsvCell`. Data: `ISO3_TO_ISO2` (alpha-3 to alpha-2). No DOM. |
 | `src/rice.js` | RICE logic: `calculateRiceScore`, `formatRice`, `validateProjectInput`. No DOM. |
-| `src/app.js` | Main application: state, DOM element cache, `init`, `cacheElements`, currency/filter init, event listeners, load/save state, profile/project CRUD, render (profiles, table, board), drag-and-drop, all modals, getExportCounts, showToast, export/import with detailed toasts. Ends with `document.addEventListener("DOMContentLoaded", init)` to boot the app. |
-| `src/main.js` | Optional ES-module entry point (`import { init } from "./app.js"`; then `DOMContentLoaded` → `init`). **Not loaded by `index.html`**; the app runs by loading `app.js` as a classic script, which registers its own `DOMContentLoaded` listener. Use `main.js` only if you serve the app through a bundler or module-aware dev server. |
+| `src/app.js` | Main application: state (including `mapMetric`), DOM cache, `getCanonicalCountryName`, `normalizeCountryNames`, init, filters, render (profiles, table, board, map), map fullscreen, `getCountryCodeFromFeature`, `getProjectCountByCountryCode`, `getCountryRiceByCode`, `renderProjectsMap`, drag-and-drop, modals, export/import, showToast. Boot: `DOMContentLoaded` → `init`. |
+| `src/main.js` | Optional ES-module entry; **not loaded by index.html**. Use only with a bundler or module-aware dev server. |
 | `README.md` | This documentation. |
 
 ### 8.3 Code structure (tree)
 
 ```
 rice-prioritizer/
-├── index.html          # Single page: layout, forms, modals; loads CSS and scripts (see table above)
+├── index.html          # Single page: layout, view toggle (Table | Board | Map), forms, modals; Leaflet CSS + scripts (see table above)
 ├── css/
-│   └── main.css        # All styles (variables, layout, table, board, modals, responsive)
+│   └── main.css        # All styles (variables, layout, table, board, map, fullscreen map, modals, responsive)
 ├── src/
-│   ├── constants.js    # STORAGE_KEY, projectStatusList, projectStatusIcons, tshirtSizeList,
-│   │                   # tshirtSizeTooltips, projectTypeIcons, currencyList, countryList,
-│   │                   # countryCodeByName
-│   ├── utils.js        # formatDateTime, formatDate, formatDateForFilename, compareDatesDesc,
-│   │                   # generateId, escapeHtml, countryCodeToFlag, toNumberOrNull,
+│   ├── constants.js    # STORAGE_KEY, projectStatusList, projectStatusIcons, tshirtSizeList, tshirtSizeTooltips,
+│   │                   # projectTypeIcons, currencyList, countryList, countryCodeByName, countryNameAliases
+│   ├── utils.js        # formatDateTime, formatDate, formatDateForFilename, compareDatesDesc, generateId,
+│   │                   # escapeHtml, countryCodeToFlag, countryCodeToTwoLetter, ISO3_TO_ISO2, toNumberOrNull,
 │   │                   # parseCsv, escapeCsvCell
 │   ├── rice.js         # calculateRiceScore, formatRice, validateProjectInput
-│   ├── app.js          # State, DOM cache, init, filters, render (table + board), drag-and-drop,
-│   │                   # modals (project, profile view/edit/delete), getExportCounts, showToast,
-│   │                   # export/import with toasts. Boots via document.addEventListener("DOMContentLoaded", init) at end of file.
+│   ├── app.js          # State (incl. mapMetric), getCanonicalCountryName, normalizeCountryNames, init, filters,
+│   │                   # render (table, board, map), getCountryCodeFromFeature, renderProjectsMap, fullscreen,
+│   │                   # modals, export/import, showToast. Boot: DOMContentLoaded → init
 │   └── main.js         # Optional ES module entry; not loaded by index.html
 └── README.md
 ```
@@ -353,14 +379,14 @@ rice-prioritizer/
 
 | File | Role |
 |------|------|
-| **constants.js** | Config and lookup data: `STORAGE_KEY`, `projectStatusList`, `projectStatusIcons`, `tshirtSizeList`, `tshirtSizeTooltips`, `projectTypeIcons`, `currencyList`, `countryList`, `countryCodeByName`. No DOM. |
-| **utils.js** | Pure helpers: dates, IDs, CSV parse/escape, HTML escaping, country code to flag. No DOM. |
+| **constants.js** | Config and lookup: `STORAGE_KEY`, `projectStatusList`, `projectStatusIcons`, `tshirtSizeList`, `tshirtSizeTooltips`, `projectTypeIcons`, `currencyList`, `countryList`, `countryCodeByName`, `countryNameAliases`. No DOM. |
+| **utils.js** | Pure helpers: dates, IDs, CSV parse/escape, HTML escaping, `countryCodeToFlag`, `countryCodeToTwoLetter`, `ISO3_TO_ISO2`. No DOM. |
 | **rice.js** | RICE calculation and validation. No DOM. |
-| **app.js** | State, element cache, init, all UI and event logic, render (profiles, table, board), modals, getExportCounts, showToast, import/export. Section comments: State & DOM cache, Initialization, Filters, Render, Export/Import, etc. Boot: `DOMContentLoaded` → `init` at end of file. |
+| **app.js** | State (incl. `mapMetric`), element cache, `getCanonicalCountryName`, `normalizeCountryNames`, init, filters, render (profiles, table, board, map), `getCountryCodeFromFeature`, `renderProjectsMap`, map fullscreen, modals, export/import, showToast. Boot: `DOMContentLoaded` → `init`. |
 
 ### 8.5 Script load order and boot
 
-Scripts are loaded in order: `constants.js` → `utils.js` → `rice.js` → `app.js`. The app boots when `app.js` runs and registers `document.addEventListener("DOMContentLoaded", init)` at the end of the file; `init()` runs after the DOM is ready. No ES modules are used in the default setup (opening `index.html` or serving via static server); all scripts run in the global scope. The file `main.js` is **not** referenced in `index.html` and is only useful if you use an ES-module–aware bundler or dev server.
+Scripts are loaded in order: **Leaflet** (from unpkg CDN) → `constants.js` → `utils.js` → `rice.js` → `app.js`. The app boots when `app.js` runs and registers `document.addEventListener("DOMContentLoaded", init)` at the end of the file; `init()` runs after the DOM is ready. No ES modules are used in the default setup (opening `index.html` or serving via static server); all scripts run in the global scope. The file `main.js` is **not** referenced in `index.html` and is only useful if you use an ES-module–aware bundler or dev server.
 
 ### 8.6 Technical guidelines for contributors
 
@@ -369,14 +395,15 @@ Scripts are loaded in order: `constants.js` → `utils.js` → `rice.js` → `ap
 - **Ids** – Use `generateId(prefix)` for profile and project IDs to avoid collisions.
 - **Escaping** – Use `escapeHtml` for user content in HTML; use `escapeCsvCell` for CSV export.
 - **Accessibility** – Use semantic HTML, ARIA where needed, and keyboard support for primary actions.
+- **Country consistency** – Use `getCanonicalCountryName` and `normalizeCountryNames` when reading or storing country names; use `countryNameAliases` for any new alternate names so the map, table, board, and filters stay in sync (e.g. Taiwan).
 
 ### 8.7 Global dependencies (for development)
 
 `app.js` relies on globals provided by the other scripts (no module imports in the default run):
 
-- **From constants.js:** `STORAGE_KEY`, `projectStatusList`, `projectStatusIcons`, `tshirtSizeList`, `tshirtSizeTooltips`, `projectTypeIcons`, `currencyList`, `countryList`, `countryCodeByName`
+- **From constants.js:** `STORAGE_KEY`, `projectStatusList`, `projectStatusIcons`, `tshirtSizeList`, `tshirtSizeTooltips`, `projectTypeIcons`, `currencyList`, `countryList`, `countryCodeByName`, `countryNameAliases`
 - **From rice.js:** `calculateRiceScore`, `formatRice`, `validateProjectInput`
-- **From utils.js:** `formatDateTime`, `formatDate`, `formatDateForFilename`, `compareDatesDesc`, `generateId`, `escapeHtml`, `countryCodeToFlag`, `toNumberOrNull`, `parseCsv`, `escapeCsvCell`
+- **From utils.js:** `formatDateTime`, `formatDate`, `formatDateForFilename`, `compareDatesDesc`, `generateId`, `escapeHtml`, `countryCodeToFlag`, `countryCodeToTwoLetter`, `toNumberOrNull`, `parseCsv`, `escapeCsvCell`
 
 When changing or renaming any of these, ensure all consumers in `app.js` (and in `index.html` if any IDs or structure change) are updated.
 
@@ -394,7 +421,7 @@ Brief reference for where data appears. Add screenshots to the repo and link the
 ### 9.2 Projects header and view toggle
 
 - Active profile name and subtitle; optional badges.
-- **Table** | **Board** toggle; **+ Project**; **Delete Selected** (enabled when at least one project is selected in table view).
+- **Table** | **Board** | **Map** toggle; **+ Project**; **Delete Selected** (enabled when at least one project is selected in table view).
 
 ### 9.3 Filters
 
@@ -408,23 +435,27 @@ Brief reference for where data appears. Add screenshots to the repo and link the
 
 - Toolbar: status legend, **Sort by RICE (desc)** checkbox. Column headers colored by status. Columns per status with counts; cards show title, RICE, T-shirt, type icon, and **View / Edit / Delete** buttons; drag card body to move or reorder (when manual sort is on).
 
-### 9.6 Project modal (add/edit/view)
+### 9.6 Map view
+
+- Toolbar: **Show by** dropdown (Number of projects | RICE score), **Full screen** button. Legend: project–country links or RICE summary. Choropleth map (Leaflet) with country tooltips (flag, name, code, count or RICE). Fullscreen toggles map view to full viewport; Escape or **Exit full screen** to exit.
+
+### 9.7 Project modal (add/edit/view)
 
 - Sections: overview (title, description), RICE inputs, optional (financial, type, status, T-shirt, period, countries). Edit/Add: **Save** / **Cancel**. View: read-only. Meta: Created, Modified, RICE score.
 
-### 9.7 Profile view modal
+### 9.8 Profile view modal
 
 - Read-only: profile name, team; statistics (total projects, unique countries, counts by status/type/T-shirt size, RICE score summary).
 
-### 9.8 Profile edit modal
+### 9.9 Profile edit modal
 
 - Editable: profile name, team; **Save** / **Cancel**.
 
-### 9.9 Export / Import modals
+### 9.10 Export / Import modals
 
 - Export: **Export as JSON** or **Export as CSV**. Import: **Import JSON** or **Import CSV**; file is merged into current data.
 
-### 9.10 Toast confirmations (bottom-right)
+### 9.11 Toast confirmations (bottom-right)
 
 - After create, update, delete (profile or project), export, or import, a toast appears bottom-right with a short message (e.g. “Profile created successfully.” or “Exported 2 profiles and 5 projects as JSON.”). Toasts auto-dismiss after a few seconds; click to dismiss early.
 
@@ -437,7 +468,7 @@ Brief reference for where data appears. Add screenshots to the repo and link the
 | **Single browser** | Data is in one browser’s `localStorage`; not synced across devices or browsers. Use export/import to move data. |
 | **No auth** | Anyone with access to the browser can see and change data. Do not use for sensitive or regulated data. |
 | **Storage quota** | Subject to browser `localStorage` limits (~5–10 MB typical). Large exports may hit limits. |
-| **CORS / file://** | Opening `index.html` via `file://` may behave differently than via `http://`. Use a static server for consistent behavior. |
+| **CORS / file://** | Opening `index.html` via `file://` may behave differently than via `http://`. Use a static server for consistent behavior. Map view fetches GeoJSON from CDN; ensure network or cache allows it. |
 | **No versioning** | No built-in history or undo; export regularly to keep backups. |
 
 ---

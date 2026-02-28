@@ -123,10 +123,10 @@ const countryList = [
   "Comoros","Congo (Congo-Brazzaville)","Costa Rica","Croatia","Cuba","Cyprus","Czechia","Democratic Republic of the Congo",
   "Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea",
   "Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany",
-  "Ghana","Greece","Grenada","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti","Honduras","Hungary",
+  "Ghana","Greece","Grenada","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti","Honduras","Hong Kong","Hungary",
   "Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Jamaica","Japan","Jordan","Kazakhstan",
-  "Kenya","Kiribati","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein",
-  "Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands",
+  "Kenya","Kiribati","Kosovo","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein",
+  "Lithuania","Luxembourg","Macau","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands",
   "Mauritania","Mauritius","Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Morocco",
   "Mozambique","Myanmar","Namibia","Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria",
   "North Korea","North Macedonia","Norway","Oman","Pakistan","Palau","Palestine","Panama","Papua New Guinea","Paraguay",
@@ -213,6 +213,7 @@ const countryCodeByName = {
   "Guyana": "GY",
   "Haiti": "HT",
   "Honduras": "HN",
+  "Hong Kong": "HK",
   "Hungary": "HU",
   "Iceland": "IS",
   "India": "IN",
@@ -228,6 +229,7 @@ const countryCodeByName = {
   "Kazakhstan": "KZ",
   "Kenya": "KE",
   "Kiribati": "KI",
+  "Kosovo": "XK",
   "Kuwait": "KW",
   "Kyrgyzstan": "KG",
   "Laos": "LA",
@@ -239,6 +241,7 @@ const countryCodeByName = {
   "Liechtenstein": "LI",
   "Lithuania": "LT",
   "Luxembourg": "LU",
+  "Macau": "MO",
   "Madagascar": "MG",
   "Malawi": "MW",
   "Malaysia": "MY",
@@ -335,4 +338,29 @@ const countryCodeByName = {
   "Yemen": "YE",
   "Zambia": "ZM",
   "Zimbabwe": "ZW"
+};
+
+/**
+ * Alternate names (e.g. from GeoJSON, imports) mapped to canonical countryList name.
+ * Ensures one consistent label and code (e.g. Taiwan) everywhere.
+ */
+const countryNameAliases = {
+  "Chinese Taipei": "Taiwan",
+  "Taiwan, Province of China": "Taiwan",
+  "Taiwan, China": "Taiwan",
+  "Republic of China (Taiwan)": "Taiwan",
+  "United Republic of Tanzania": "Tanzania",
+  "Czech Republic": "Czechia",
+  "Republic of Korea": "South Korea",
+  "Democratic People's Republic of Korea": "North Korea",
+  "Iran, Islamic Republic of": "Iran",
+  "Lao People's Democratic Republic": "Laos",
+  "Republic of Moldova": "Moldova",
+  "Russian Federation": "Russia",
+  "Syrian Arab Republic": "Syria",
+  "United States of America": "United States",
+  "Viet Nam": "Vietnam",
+  "Venezuela, Bolivarian Republic of": "Venezuela",
+  "Bolivia, Plurinational State of": "Bolivia",
+  "Brunei Darussalam": "Brunei"
 };

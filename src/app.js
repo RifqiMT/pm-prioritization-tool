@@ -4,7 +4,7 @@
  *
  * IMPORTANT: This file now runs as a classic <script> (no ES modules).
  * It relies on globals defined in:
- *  - src/constants.js  (STORAGE_KEY, currencyList, countryList, countryCodeByName, projectTypeIcons, projectStatusIcons, tshirtSizeTooltips)
+ *  - src/constants.js  (STORAGE_KEY, currencyList, countryList, countryCodeByName, countryNameAliases, ...)
  *  - src/rice.js       (calculateRiceScore, formatRice, validateProjectInput)
  *  - src/utils.js      (formatDateTime, formatDate, formatDateForFilename, compareDatesDesc, generateId, escapeHtml, countryCodeToFlag, toNumberOrNull, parseCsv, escapeCsvCell)
  *
@@ -19,7 +19,8 @@ let state = {
   sortField: "createdAt",
   sortDirection: "desc",
   projectsView: "table",
-  scrumBoardSortByRice: true
+  scrumBoardSortByRice: true,
+  mapMetric: "projects"
 };
 
 let editingProjectId = null;
@@ -28,6 +29,24 @@ let projectModalMode = "create";
 const $ = (id) => document.getElementById(id);
 
 const elements = {};
+
+/** Returns the canonical country name used in countryList/countryCodeByName. Resolves aliases (e.g. Chinese Taipei → Taiwan). */
+function getCanonicalCountryName(name) {
+  if (!name || typeof name !== "string") return "";
+  const t = name.trim();
+  if (!t) return "";
+  if (typeof countryList !== "undefined" && countryList.includes(t)) return t;
+  if (typeof countryNameAliases !== "undefined" && countryNameAliases[t]) return countryNameAliases[t];
+  return t;
+}
+
+/** Returns canonical names only; drops any not in countryList (after alias resolution). */
+function normalizeCountryNames(names) {
+  if (!Array.isArray(names)) return [];
+  return names
+    .map((c) => getCanonicalCountryName(String(c).trim()))
+    .filter((c) => c && typeof countryList !== "undefined" && countryList.includes(c));
+}
 
 /** Returns a trimmed currency string or null; use for consistent storage and comparison. */
 function normalizeCurrency(val) {
@@ -81,8 +100,14 @@ function cacheElements() {
   elements.selectAllProjects = $("selectAllProjects");
   elements.projectsViewTableBtn = $("projectsViewTableBtn");
   elements.projectsViewBoardBtn = $("projectsViewBoardBtn");
+  elements.projectsViewMapBtn = $("projectsViewMapBtn");
   elements.projectsTableView = $("projectsTableView");
   elements.projectsBoardView = $("projectsBoardView");
+  elements.projectsMapView = $("projectsMapView");
+  elements.projectsMapContainer = $("projectsMapContainer");
+  elements.projectsMapLegend = $("projectsMapLegend");
+  elements.projectsMapMetricSelect = $("projectsMapMetricSelect");
+  elements.projectsMapFullscreenBtn = $("projectsMapFullscreenBtn");
   elements.scrumBoardContainer = $("scrumBoardContainer");
   elements.scrumBoardLegend = $("scrumBoardLegend");
   elements.scrumBoardSortByRiceToggle = $("scrumBoardSortByRiceToggle");
@@ -298,6 +323,9 @@ function attachEventListeners() {
   if (elements.projectsViewBoardBtn) {
     elements.projectsViewBoardBtn.addEventListener("click", () => switchProjectsView("board"));
   }
+  if (elements.projectsViewMapBtn) {
+    elements.projectsViewMapBtn.addEventListener("click", () => switchProjectsView("map"));
+  }
 
   if (elements.scrumBoardSortByRiceToggle) {
     elements.scrumBoardSortByRiceToggle.addEventListener("change", () => {
@@ -306,6 +334,23 @@ function attachEventListeners() {
       if (state.projectsView === "board") renderScrumBoard();
     });
   }
+
+  if (elements.projectsMapMetricSelect) {
+    elements.projectsMapMetricSelect.addEventListener("change", () => {
+      const v = elements.projectsMapMetricSelect.value;
+      if (v === "projects" || v === "rice") {
+        state.mapMetric = v;
+        saveState();
+        if (state.projectsView === "map" && elements.projectsMapContainer) renderProjectsMap();
+      }
+    });
+  }
+
+  if (elements.projectsMapFullscreenBtn && elements.projectsMapView) {
+    elements.projectsMapFullscreenBtn.addEventListener("click", toggleMapFullscreen);
+  }
+  document.addEventListener("fullscreenchange", onMapFullscreenChange);
+  document.addEventListener("webkitfullscreenchange", onMapFullscreenChange);
 
   // --- Data export / import: main toolbar buttons ---
   // Export and Import both open a simple format chooser (JSON or CSV).
@@ -1123,7 +1168,7 @@ function buildProfilesFromCsvRows(header, rows) {
       projectStatus: (cells[colIndex.projectStatus] ?? "").toString().trim() || null,
       tshirtSize: (cells[colIndex.tshirtSize] ?? "").toString().trim() || null,
       projectPeriod: (cells[colIndex.projectPeriod] ?? "").toString().trim().toUpperCase() || null,
-      countries: (cells[colIndex.countries] ?? "").toString().split("|").map((c) => c.trim()).filter((c) => c !== "")
+      countries: normalizeCountryNames((cells[colIndex.countries] ?? "").toString().split("|").map((c) => c.trim()).filter((c) => c !== ""))
     };
     project.riceScore = calculateRiceScore(project);
     profile.projects.push(project);
@@ -1182,7 +1227,7 @@ function normalizeImportedProject(project) {
     projectStatus: (project.projectStatus != null && String(project.projectStatus).trim() !== "") ? String(project.projectStatus).trim() : null,
     tshirtSize: (project.tshirtSize != null && String(project.tshirtSize).trim() !== "") ? String(project.tshirtSize).trim() : null,
     projectPeriod,
-    countries: Array.isArray(project.countries) ? project.countries.map((c) => String(c)) : []
+    countries: normalizeCountryNames(Array.isArray(project.countries) ? project.countries : [])
   };
   normalized.riceScore = calculateRiceScore(normalized);
   return normalized;
@@ -1371,11 +1416,14 @@ function loadState() {
 
     state.sortField = !Array.isArray(parsed) && parsed.sortField ? parsed.sortField : "createdAt";
     state.sortDirection = !Array.isArray(parsed) && parsed.sortDirection ? parsed.sortDirection : "desc";
-    if (!Array.isArray(parsed) && (parsed.projectsView === "table" || parsed.projectsView === "board")) {
+    if (!Array.isArray(parsed) && (parsed.projectsView === "table" || parsed.projectsView === "board" || parsed.projectsView === "map")) {
       state.projectsView = parsed.projectsView;
     }
     if (!Array.isArray(parsed) && typeof parsed.scrumBoardSortByRice === "boolean") {
       state.scrumBoardSortByRice = parsed.scrumBoardSortByRice;
+    }
+    if (!Array.isArray(parsed) && (parsed.mapMetric === "projects" || parsed.mapMetric === "rice")) {
+      state.mapMetric = parsed.mapMetric;
     }
   } catch (err) {
     console.error("Failed to load stored state", err);
@@ -1415,7 +1463,7 @@ function normalizeLoadedProject(project) {
     projectStatus: (project.projectStatus != null && String(project.projectStatus).trim() !== "") ? String(project.projectStatus).trim() : null,
     tshirtSize: (project.tshirtSize != null && String(project.tshirtSize).trim() !== "") ? String(project.tshirtSize).trim() : null,
     projectPeriod,
-    countries: Array.isArray(project.countries) ? project.countries.map((c) => String(c)) : []
+    countries: normalizeCountryNames(Array.isArray(project.countries) ? project.countries : [])
   };
 }
 
@@ -1426,7 +1474,8 @@ function saveState() {
     sortField: state.sortField,
     sortDirection: state.sortDirection,
     projectsView: state.projectsView,
-    scrumBoardSortByRice: state.scrumBoardSortByRice
+    scrumBoardSortByRice: state.scrumBoardSortByRice,
+    mapMetric: state.mapMetric
   };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
@@ -1691,6 +1740,9 @@ function renderProjects() {
     if (state.projectsView === "board" && elements.scrumBoardContainer) {
       renderScrumBoard();
     }
+    if (state.projectsView === "map" && elements.projectsMapContainer) {
+      renderProjectsMap();
+    }
     return;
   }
 
@@ -1717,6 +1769,9 @@ function renderProjects() {
     elements.selectAllProjects.checked = false;
     if (state.projectsView === "board" && elements.scrumBoardContainer) {
       renderScrumBoard();
+    }
+    if (state.projectsView === "map" && elements.projectsMapContainer) {
+      renderProjectsMap();
     }
     return;
   }
@@ -2113,38 +2168,276 @@ function renderProjects() {
   if (state.projectsView === "board" && elements.scrumBoardContainer) {
     renderScrumBoard();
   }
+  if (state.projectsView === "map" && elements.projectsMapContainer) {
+    renderProjectsMap();
+  }
 }
 
 function switchProjectsView(view) {
   state.projectsView = view;
   saveState();
   if (!elements.projectsTableView || !elements.projectsBoardView) return;
-  if (view === "table") {
-    elements.projectsTableView.style.display = "";
-    elements.projectsBoardView.style.display = "none";
-    elements.projectsBoardView.setAttribute("aria-hidden", "true");
-    if (elements.projectsViewTableBtn) {
-      elements.projectsViewTableBtn.classList.add("view-toggle-btn--active");
-      elements.projectsViewTableBtn.setAttribute("aria-selected", "true");
-    }
-    if (elements.projectsViewBoardBtn) {
-      elements.projectsViewBoardBtn.classList.remove("view-toggle-btn--active");
-      elements.projectsViewBoardBtn.setAttribute("aria-selected", "false");
-    }
-  } else {
-    elements.projectsTableView.style.display = "none";
-    elements.projectsBoardView.style.display = "flex";
-    elements.projectsBoardView.setAttribute("aria-hidden", "false");
-    if (elements.projectsViewBoardBtn) {
-      elements.projectsViewBoardBtn.classList.add("view-toggle-btn--active");
-      elements.projectsViewBoardBtn.setAttribute("aria-selected", "true");
-    }
-    if (elements.projectsViewTableBtn) {
-      elements.projectsViewTableBtn.classList.remove("view-toggle-btn--active");
-      elements.projectsViewTableBtn.setAttribute("aria-selected", "false");
-    }
-    renderScrumBoard();
+
+  const showTable = view === "table";
+  const showBoard = view === "board";
+  const showMap = view === "map";
+
+  elements.projectsTableView.style.display = showTable ? "" : "none";
+  elements.projectsBoardView.style.display = showBoard ? "flex" : "none";
+  elements.projectsBoardView.setAttribute("aria-hidden", String(!showBoard));
+  if (elements.projectsMapView) {
+    elements.projectsMapView.style.display = showMap ? "flex" : "none";
+    elements.projectsMapView.setAttribute("aria-hidden", String(!showMap));
   }
+
+  if (elements.projectsViewTableBtn) {
+    elements.projectsViewTableBtn.classList.toggle("view-toggle-btn--active", showTable);
+    elements.projectsViewTableBtn.setAttribute("aria-selected", String(showTable));
+  }
+  if (elements.projectsViewBoardBtn) {
+    elements.projectsViewBoardBtn.classList.toggle("view-toggle-btn--active", showBoard);
+    elements.projectsViewBoardBtn.setAttribute("aria-selected", String(showBoard));
+  }
+  if (elements.projectsViewMapBtn) {
+    elements.projectsViewMapBtn.classList.toggle("view-toggle-btn--active", showMap);
+    elements.projectsViewMapBtn.setAttribute("aria-selected", String(showMap));
+  }
+
+  if (showBoard) {
+    renderScrumBoard();
+  } else   if (showMap && elements.projectsMapContainer) {
+    renderProjectsMap();
+  }
+}
+
+/** Returns a map of ISO 2-letter country code -> number of projects that target that country (active profile, filtered). */
+function getProjectCountByCountryCode() {
+  const activeProfile = getActiveProfile();
+  if (!activeProfile || !Array.isArray(activeProfile.projects)) return {};
+  const baseProjects = activeProfile.projects.slice();
+  initFilterProjectPeriodOptions(baseProjects);
+  const projects = applyFilters(baseProjects);
+  const countByCode = {};
+  projects.forEach((p) => {
+    const countries = Array.isArray(p.countries) ? p.countries : [];
+    countries.forEach((name) => {
+      const code = typeof countryCodeByName !== "undefined" ? countryCodeByName[name] : null;
+      if (code) {
+        countByCode[code] = (countByCode[code] || 0) + 1;
+      }
+    });
+  });
+  return countByCode;
+}
+
+/** Returns a map of ISO 2-letter country code -> sum of RICE scores for projects that target that country (active profile, filtered). */
+function getCountryRiceByCode() {
+  const activeProfile = getActiveProfile();
+  if (!activeProfile || !Array.isArray(activeProfile.projects)) return {};
+  const baseProjects = activeProfile.projects.slice();
+  baseProjects.forEach((p) => {
+    p.riceScore = typeof calculateRiceScore === "function" ? calculateRiceScore(p) : 0;
+  });
+  initFilterProjectPeriodOptions(baseProjects);
+  const projects = applyFilters(baseProjects);
+  const riceByCode = {};
+  projects.forEach((p) => {
+    const countries = Array.isArray(p.countries) ? p.countries : [];
+    const score = Number.isFinite(p.riceScore) ? p.riceScore : 0;
+    countries.forEach((name) => {
+      const code = typeof countryCodeByName !== "undefined" ? countryCodeByName[name] : null;
+      if (code) {
+        riceByCode[code] = (riceByCode[code] || 0) + score;
+      }
+    });
+  });
+  return riceByCode;
+}
+
+const PROJECTS_MAP_GEOJSON_URL = "https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_110m_admin_0_countries.geojson";
+
+/** Get 2-letter country code for a GeoJSON feature for matching to countByCode.
+ *  Uses ISO_A2_EH (or ISO_A2 when not compound), POSTAL, ISO_A3, then name lookup.
+ *  Normalizes compound codes like "CN-TW" (Natural Earth Taiwan) to "TW". */
+function getCountryCodeFromFeature(feature) {
+  if (!feature || !feature.properties) return "";
+  const p = feature.properties;
+  let code = (p.ISO_A2_EH || p.ISO_A2 || p.POSTAL || p.WB_A2 || p.FIPS_10 || p.iso_a2 || p.iso2 || "").toString().trim().toUpperCase();
+  if (code && code !== "-99" && code !== "NULL") {
+    if (code.length > 2 && code.includes("-")) {
+      const suffix = code.split("-").find((part) => part.length === 2);
+      if (suffix) code = suffix;
+    }
+    if (code.length === 2) return code;
+  }
+  const iso3 = (p.ISO_A3 || p.ISO_A3_EH || p.ADM0_A3 || p.iso_a3 || "").toString().trim().toUpperCase();
+  if (iso3 && iso3 !== "-99" && typeof countryCodeToTwoLetter === "function") {
+    const two = countryCodeToTwoLetter(iso3);
+    if (two) return two;
+  }
+  const name = (p.NAME || p.ADMIN || p.NAME_LONG || p.SOVEREIGNT || "").toString().trim();
+  if (!name) return "";
+  const canonical = typeof getCanonicalCountryName === "function" ? getCanonicalCountryName(name) : name;
+  if (typeof countryCodeByName !== "undefined" && countryCodeByName[canonical]) return countryCodeByName[canonical];
+  if (typeof countryCodeByName !== "undefined" && countryCodeByName[name]) return countryCodeByName[name];
+  const fromList = countryList && countryList.find((c) => c === canonical || c === name || name.indexOf(c) >= 0 || c.indexOf(name) >= 0);
+  return (fromList && typeof countryCodeByName !== "undefined" && countryCodeByName[fromList]) ? countryCodeByName[fromList] : "";
+}
+
+function toggleMapFullscreen() {
+  if (!elements.projectsMapView) return;
+  const isFullscreen = document.fullscreenElement === elements.projectsMapView ||
+    (document.webkitFullscreenElement && document.webkitFullscreenElement === elements.projectsMapView);
+  if (isFullscreen) {
+    if (document.exitFullscreen) document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+  } else {
+    const el = elements.projectsMapView;
+    if (el.requestFullscreen) el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  }
+}
+
+function onMapFullscreenChange() {
+  const isFullscreen = document.fullscreenElement === elements.projectsMapView ||
+    (document.webkitFullscreenElement && document.webkitFullscreenElement === elements.projectsMapView);
+  const btn = elements.projectsMapFullscreenBtn;
+  if (btn) {
+    btn.classList.toggle("is-fullscreen", !!isFullscreen);
+    btn.setAttribute("aria-label", isFullscreen ? "Exit full screen" : "Expand map to full screen");
+    btn.title = isFullscreen ? "Exit full screen" : "Full screen";
+    const expand = btn.querySelector(".icon-expand");
+    const compress = btn.querySelector(".icon-compress");
+    if (expand) expand.style.display = isFullscreen ? "none" : "";
+    if (compress) compress.style.display = isFullscreen ? "" : "none";
+    const label = btn.querySelector(".projects-map-fullscreen-label");
+    if (label) label.textContent = isFullscreen ? "Exit full screen" : "Full screen";
+  }
+  const map = elements.projectsMapContainer && elements.projectsMapContainer._leafletMap;
+  if (map) map.invalidateSize();
+}
+
+function renderProjectsMap() {
+  if (!elements.projectsMapContainer || typeof L === "undefined") return;
+  const activeProfile = getActiveProfile();
+
+  if (elements.projectsMapLegend) {
+    elements.projectsMapLegend.innerHTML = "";
+    elements.projectsMapLegend.textContent = "Loading map…";
+  }
+
+  if (!activeProfile) {
+    if (elements.projectsMapContainer._leafletMap) {
+      elements.projectsMapContainer._leafletMap.remove();
+      elements.projectsMapContainer._leafletMap = null;
+    }
+    elements.projectsMapContainer._geoLayer = null;
+    elements.projectsMapContainer.innerHTML = '<div class="projects-map-empty">Select a profile to see the map.</div>';
+    return;
+  }
+
+  if (elements.projectsMapMetricSelect) {
+    elements.projectsMapMetricSelect.value = state.mapMetric;
+  }
+
+  const countByCode = getProjectCountByCountryCode();
+  const riceByCode = state.mapMetric === "rice" ? getCountryRiceByCode() : {};
+  const valueByCode = state.mapMetric === "rice" ? riceByCode : countByCode;
+  const values = Object.values(valueByCode);
+  const maxValue = values.length ? Math.max(...values) : 0;
+  const totalProjectHits = Object.values(countByCode).reduce((a, b) => a + b, 0);
+  const numCountries = state.mapMetric === "rice" ? Object.keys(riceByCode).length : Object.keys(countByCode).length;
+
+  if (elements.projectsMapLegend) {
+    if (state.mapMetric === "rice") {
+      const totalRice = Object.values(riceByCode).reduce((a, b) => a + b, 0);
+      elements.projectsMapLegend.textContent = totalRice > 0
+        ? `RICE score per country (sum) — total RICE ${typeof formatRice === "function" ? formatRice(totalRice) : totalRice} across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"}`
+        : "RICE score per country. Add countries to projects to see RICE on the map.";
+    } else {
+      elements.projectsMapLegend.textContent = totalProjectHits > 0
+        ? `Projects per country — ${totalProjectHits} project–country link${totalProjectHits !== 1 ? "s" : ""} across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"}`
+        : "Projects per country. Add countries to projects to see them on the map.";
+    }
+  }
+
+  if (!elements.projectsMapContainer._leafletMap) {
+    const map = L.map(elements.projectsMapContainer, { center: [20, 0], zoom: 2, zoomControl: true });
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>"
+    }).addTo(map);
+    elements.projectsMapContainer._leafletMap = map;
+  }
+  const map = elements.projectsMapContainer._leafletMap;
+  if (elements.projectsMapContainer._geoLayer) {
+    map.removeLayer(elements.projectsMapContainer._geoLayer);
+    elements.projectsMapContainer._geoLayer = null;
+  }
+
+  function getColor(val) {
+    if (val === 0) return "#e0e0e0";
+    if (maxValue <= 0) return "#e0e0e0";
+    const t = val / maxValue;
+    if (t <= 0.25) return "#c8e6c9";
+    if (t <= 0.5) return "#81c784";
+    if (t <= 0.75) return "#4caf50";
+    return "#2e7d32";
+  }
+
+  function style(feature) {
+    const code = getCountryCodeFromFeature(feature);
+    const value = code ? (valueByCode[code] || 0) : 0;
+    return {
+      fillColor: getColor(value),
+      weight: 1,
+      opacity: 1,
+      color: "#fff",
+      fillOpacity: 0.8
+    };
+  }
+
+  function onEachFeature(feature, layer) {
+    const code = getCountryCodeFromFeature(feature);
+    const rawName = feature.properties && (feature.properties.NAME || feature.properties.ADMIN || feature.properties.NAME_LONG || code);
+    const name = (rawName && typeof getCanonicalCountryName === "function") ? getCanonicalCountryName(rawName) : rawName;
+    const displayName = name || code;
+    const count = code ? (countByCode[code] || 0) : 0;
+    const value = code ? (valueByCode[code] || 0) : 0;
+    const flag = (code && typeof countryCodeToFlag === "function") ? countryCodeToFlag(code) : "";
+    const flagPrefix = flag ? `${flag} ` : "";
+    const codeLabel = code ? ` (${typeof countryCodeToTwoLetter === "function" ? (countryCodeToTwoLetter(code) || code) : code})` : "";
+    const label = `${flagPrefix}${displayName}${codeLabel}`;
+    let text;
+    if (state.mapMetric === "rice") {
+      text = count > 0
+        ? `${label}: RICE ${typeof formatRice === "function" ? formatRice(value) : value} (${count} project${count !== 1 ? "s" : ""})`
+        : `${label}: 0 projects`;
+    } else {
+      text = `${label}: ${count} project${count !== 1 ? "s" : ""}`;
+    }
+    layer.bindTooltip(text, { permanent: false, direction: "top" });
+  }
+
+  fetch(PROJECTS_MAP_GEOJSON_URL)
+    .then((res) => {
+      if (!res.ok) throw new Error("Map data unavailable");
+      return res.json();
+    })
+    .then((geojson) => {
+      if (!geojson || !geojson.features || !Array.isArray(geojson.features)) throw new Error("Invalid map data");
+      const layer = L.geoJSON(geojson, { style, onEachFeature });
+      layer.addTo(map);
+      elements.projectsMapContainer._geoLayer = layer;
+      map.invalidateSize();
+    })
+    .catch(() => {
+      if (elements.projectsMapContainer._leafletMap) {
+        elements.projectsMapContainer._leafletMap.remove();
+        elements.projectsMapContainer._leafletMap = null;
+      }
+      elements.projectsMapContainer._geoLayer = null;
+      elements.projectsMapContainer.innerHTML = '<div class="projects-map-empty">Could not load map data. Check your connection.</div>';
+    });
 }
 
 function renderScrumBoard() {

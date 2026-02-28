@@ -791,6 +791,108 @@ button:disabled {
   min-height: 400px;
 }
 
+.projects-view--map {
+  flex: 1;
+  flex-direction: column;
+  min-height: 400px;
+}
+
+.projects-map-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.projects-map-fullscreen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.projects-map-fullscreen-btn:hover {
+  color: #e5e7eb;
+  background: rgba(148, 163, 184, 0.15);
+  border-color: rgba(148, 163, 184, 0.5);
+}
+
+.projects-map-fullscreen-btn .projects-map-fullscreen-icon {
+  flex-shrink: 0;
+}
+
+.projects-map-metric-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.projects-map-metric-select {
+  font-size: 0.85rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(15, 23, 42, 0.8);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.projects-map-metric-select:hover,
+.projects-map-metric-select:focus {
+  border-color: rgba(99, 102, 241, 0.5);
+  outline: none;
+}
+
+.projects-map-legend {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+
+.projects-map-container {
+  flex: 1;
+  min-height: 360px;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* Fullscreen: map view fills the screen and map container grows */
+.projects-view--map:fullscreen,
+.projects-view--map::-webkit-full-screen {
+  background: var(--bg-subtle);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.projects-view--map:fullscreen .projects-map-container,
+.projects-view--map::-webkit-full-screen .projects-map-container {
+  flex: 1;
+  min-height: 0;
+}
+
+.projects-map-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 360px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
 /* Scrum board status legend */
 .scrum-board-legend {
   display: flex;

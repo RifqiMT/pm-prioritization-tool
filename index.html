@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="css/main.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 <body>
   <div class="app-shell">
@@ -93,6 +94,7 @@
             <div class="view-toggle-group" role="tablist" aria-label="Projects view">
               <button type="button" id="projectsViewTableBtn" class="view-toggle-btn view-toggle-btn--active" role="tab" aria-selected="true" data-view="table">Table</button>
               <button type="button" id="projectsViewBoardBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="board">Board</button>
+              <button type="button" id="projectsViewMapBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="map">Map</button>
             </div>
             <button type="button" id="addProjectBtn" disabled>
               + Project
@@ -302,6 +304,23 @@
             </label>
           </div>
           <div id="scrumBoardContainer" class="scrum-board" aria-label="Scrum board"></div>
+        </div>
+
+        <div id="projectsMapView" class="projects-view projects-view--map" aria-hidden="true" style="display:none;">
+          <div class="projects-map-toolbar">
+            <label for="projectsMapMetricSelect" class="projects-map-metric-label">Show by</label>
+            <select id="projectsMapMetricSelect" class="projects-map-metric-select" aria-label="Map data metric">
+              <option value="projects">Number of projects</option>
+              <option value="rice">RICE score</option>
+            </select>
+            <button type="button" id="projectsMapFullscreenBtn" class="projects-map-fullscreen-btn" aria-label="Expand map to full screen" title="Full screen">
+              <svg class="projects-map-fullscreen-icon icon-expand" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+              <svg class="projects-map-fullscreen-icon icon-compress" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v3a2 2 0 0 1 2 2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+              <span class="projects-map-fullscreen-label">Full screen</span>
+            </button>
+          </div>
+          <div class="projects-map-legend" id="projectsMapLegend" aria-label="Map legend"></div>
+          <div id="projectsMapContainer" class="projects-map-container" aria-label="World map of projects by country"></div>
         </div>
       </section>
     </main>
@@ -781,6 +800,7 @@
   <div id="toastContainer" class="toast-container" role="status" aria-live="polite" aria-label="Deletion notifications"></div>
 
   <!-- Classic scripts (no ES modules) so you can just open index.html directly -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="src/constants.js"></script>
   <script src="src/utils.js"></script>
   <script src="src/rice.js"></script>
