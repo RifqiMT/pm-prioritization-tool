@@ -91,6 +91,41 @@ body {
   line-height: 1.25;
 }
 
+.app-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.product-description-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.product-description-wrapper .product-description-popup {
+  top: 120%;
+  left: 0;
+  right: auto;
+  min-width: 280px;
+  max-width: 360px;
+}
+
+.product-description-popup-title {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: #c7d2fe;
+  margin-bottom: 0.4rem;
+}
+
+.product-description-popup-body {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #e5e7eb;
+  line-height: 1.5;
+}
+
 .app-subtitle {
   margin: 0;
   font-size: clamp(0.8rem, 1.2vw, 0.875rem);
@@ -867,6 +902,51 @@ button:disabled {
   flex-shrink: 0;
 }
 
+.scrum-board-column[data-status="Not Started"] .scrum-board-column-header {
+  border-top: 3px solid rgba(148, 163, 184, 0.9);
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.12) 0%, transparent 100%);
+}
+
+.scrum-board-column[data-status="Not Started"] .scrum-board-column-title {
+  color: #94a3b8;
+}
+
+.scrum-board-column[data-status="In Progress"] .scrum-board-column-header {
+  border-top: 3px solid rgba(59, 130, 246, 0.9);
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.12) 0%, transparent 100%);
+}
+
+.scrum-board-column[data-status="In Progress"] .scrum-board-column-title {
+  color: #93c5fd;
+}
+
+.scrum-board-column[data-status="On Hold"] .scrum-board-column-header {
+  border-top: 3px solid rgba(251, 191, 36, 0.9);
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.12) 0%, transparent 100%);
+}
+
+.scrum-board-column[data-status="On Hold"] .scrum-board-column-title {
+  color: #fcd34d;
+}
+
+.scrum-board-column[data-status="Done"] .scrum-board-column-header {
+  border-top: 3px solid rgba(52, 211, 153, 0.9);
+  background: linear-gradient(180deg, rgba(52, 211, 153, 0.12) 0%, transparent 100%);
+}
+
+.scrum-board-column[data-status="Done"] .scrum-board-column-title {
+  color: #6ee7b7;
+}
+
+.scrum-board-column[data-status="Cancelled"] .scrum-board-column-header {
+  border-top: 3px solid rgba(248, 113, 113, 0.9);
+  background: linear-gradient(180deg, rgba(248, 113, 113, 0.12) 0%, transparent 100%);
+}
+
+.scrum-board-column[data-status="Cancelled"] .scrum-board-column-title {
+  color: #fca5a5;
+}
+
 .scrum-board-column-title {
   font-size: 0.8rem;
   font-weight: 600;
@@ -1000,6 +1080,56 @@ button:disabled {
   font-weight: 700;
   color: #a5b4fc;
   font-size: 0.8rem;
+}
+
+.scrum-board-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(71, 85, 105, 0.5);
+}
+
+.scrum-board-card-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+  flex: 0 0 auto;
+}
+
+.scrum-board-card-btn--view {
+  background: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+}
+
+.scrum-board-card-btn--view:hover {
+  background: rgba(99, 102, 241, 0.35);
+  color: #c7d2fe;
+}
+
+.scrum-board-card-btn--edit {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+.scrum-board-card-btn--edit:hover {
+  background: rgba(59, 130, 246, 0.35);
+  color: #bfdbfe;
+}
+
+.scrum-board-card-btn--delete {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}
+
+.scrum-board-card-btn--delete:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #fecaca;
 }
 
 .scrum-board-empty {
@@ -2371,4 +2501,88 @@ th[data-sort-active="true"] .sort-indicator {
   padding: 0.1rem 0.4rem;
   border: 1px solid rgba(148, 163, 184, 0.4);
   background: rgba(15, 23, 42, 0.9);
+}
+
+/* --- Toast: deletion confirmation (bottom-right) --- */
+.toast-container {
+  position: fixed;
+  bottom: clamp(1rem, 3vw, 1.5rem);
+  right: clamp(1rem, 3vw, 1.5rem);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: min(360px, calc(100vw - 2rem));
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.98) 100%);
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(52, 211, 153, 0.15);
+  font-size: 0.875rem;
+  color: var(--text);
+  line-height: 1.4;
+  animation: toast-in 0.35s ease-out;
+  transform-origin: bottom right;
+}
+
+.toast-icon {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: rgba(52, 211, 153, 0.25);
+  color: #34d399;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.toast-message {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast.toast-exit {
+  animation: toast-out 0.25s ease-in forwards;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes toast-out {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%) scale(0.95);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+  .toast.toast-exit {
+    animation: none;
+  }
 }

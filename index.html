@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Capture projects across profiles, track reach, impact, confidence, effort, and financial upside, and auto-rank everything by RICE score." />
+  <meta name="description" content="Capture projects per profile, score them with RICE (reach, impact, confidence, effort) and optional financial impact, and auto-rank by priority—all in the browser." />
   <title>Product Management Prioritization Tool</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,10 +15,16 @@
     <header class="app-header">
       <div class="app-title-group">
         <span class="app-badge">Product Management Prioritization • Portfolio ready</span>
-        <h2 class="app-title">Product Management Prioritization Tool</h2>
-        <p class="app-subtitle">
-          Capture projects across profiles, track reach, impact, confidence, effort, and financial upside, and auto-rank everything by RICE score.
-        </p>
+        <div class="app-title-row">
+          <h2 class="app-title">Product Management Prioritization Tool</h2>
+          <div class="product-description-wrapper">
+            <button type="button" class="rice-info-btn product-description-btn" id="productDescriptionBtn" aria-label="Product description">?</button>
+            <div class="product-description-popup rice-popup" id="productDescriptionPopup" role="tooltip">
+              <div class="product-description-popup-title">Product Description</div>
+              <p class="product-description-popup-body">Capture projects per profile, score them with RICE (reach, impact, confidence, effort) and optional financial impact, and auto-rank by priority—all in the browser.</p>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="app-header-actions">
         <div class="app-header-actions-row">
@@ -771,6 +777,8 @@
       </div>
     </div>
   </div>
+
+  <div id="toastContainer" class="toast-container" role="status" aria-live="polite" aria-label="Deletion notifications"></div>
 
   <!-- Classic scripts (no ES modules) so you can just open index.html directly -->
   <script src="src/constants.js"></script>

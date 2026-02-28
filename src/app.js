@@ -122,6 +122,11 @@ function cacheElements() {
   elements.importFileInput = $("importFileInput");
   elements.importCsvFileInput = $("importCsvFileInput");
 
+  elements.productDescriptionBtn = $("productDescriptionBtn");
+  elements.productDescriptionPopup = $("productDescriptionPopup");
+
+  elements.toastContainer = $("toastContainer");
+
   elements.filtersToggleBtn = $("filtersToggleBtn");
   elements.filtersAdvanced = $("filtersAdvanced");
   elements.filtersActivePill = $("filtersActivePill");
@@ -278,6 +283,7 @@ function attachEventListeners() {
     addProfile(name, team);
     elements.newProfileName.value = "";
     if (elements.newProfileTeam) elements.newProfileTeam.value = "";
+    showToast("Profile created successfully.");
   });
 
   elements.addProjectBtn.addEventListener("click", () => {
@@ -317,6 +323,20 @@ function attachEventListeners() {
     if (!elements.importFormatModal) return;
     elements.importFormatModal.setAttribute("aria-hidden", "false");
     elements.importFormatModal.classList.add("active");
+  });
+
+  if (elements.productDescriptionBtn && elements.productDescriptionPopup) {
+    elements.productDescriptionBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isVisible = elements.productDescriptionPopup.classList.contains("visible");
+      document.querySelectorAll(".rice-popup.visible").forEach((el) => el.classList.remove("visible"));
+      if (!isVisible) {
+        elements.productDescriptionPopup.classList.add("visible");
+      }
+    });
+  }
+  document.addEventListener("click", () => {
+    if (elements.productDescriptionPopup) elements.productDescriptionPopup.classList.remove("visible");
   });
 
   if (elements.exportFormatModal) {
@@ -711,6 +731,15 @@ function updateFiltersActivePill() {
 }
 
 // --- Export / import (JSON & CSV, merge logic) ---
+function getExportCounts() {
+  const profileCount = state.profiles.length;
+  const projectCount = state.profiles.reduce(
+    (n, p) => n + (Array.isArray(p.projects) ? p.projects.length : 0),
+    0
+  );
+  return { profileCount, projectCount };
+}
+
 function handleExportData() {
   try {
     const payload = {
@@ -732,6 +761,9 @@ function handleExportData() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    const { profileCount, projectCount } = getExportCounts();
+    const msg = `Exported ${profileCount} profile${profileCount !== 1 ? "s" : ""} and ${projectCount} project${projectCount !== 1 ? "s" : ""} as JSON.`;
+    setTimeout(() => showToast(msg), 0);
   } catch (err) {
     console.error("Export failed", err);
     window.alert("Export failed. See console for details.");
@@ -858,6 +890,9 @@ function handleExportCsv() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    const { profileCount, projectCount } = getExportCounts();
+    const msg = `Exported ${profileCount} profile${profileCount !== 1 ? "s" : ""} and ${projectCount} project${projectCount !== 1 ? "s" : ""} as CSV.`;
+    setTimeout(() => showToast(msg), 0);
   } catch (err) {
     console.error("CSV export failed", err);
     window.alert("CSV export failed. See console for details.");
@@ -871,11 +906,12 @@ function closeImportFormatModal() {
 }
 
 function mergeImportedProfiles(importedProfiles) {
-  if (!Array.isArray(importedProfiles) || !importedProfiles.length) return { addedProfiles: 0, mergedProfiles: 0, addedProjects: 0, skippedProjects: 0 };
+  if (!Array.isArray(importedProfiles) || !importedProfiles.length) return { addedProfiles: 0, mergedProfiles: 0, addedProjects: 0, mergedProjects: 0, skippedProjects: 0 };
 
   let addedProfiles = 0;
   let mergedProfiles = 0;
   let addedProjects = 0;
+  let mergedProjects = 0;
   let skippedProjects = 0;
 
   importedProfiles.forEach((rawProfile) => {
@@ -903,10 +939,11 @@ function mergeImportedProfiles(importedProfiles) {
       existing.projects.push(normProj);
       existingById.set(normProj.id, normProj);
       addedProjects += 1;
+      mergedProjects += 1;
     });
   });
 
-  return { addedProfiles, mergedProfiles, addedProjects, skippedProjects };
+  return { addedProfiles, mergedProfiles, addedProjects, mergedProjects, skippedProjects };
 }
 
 // Unified handler: decides between JSON and CSV based on the selected file and the data-import-kind flag.
@@ -953,14 +990,22 @@ function handleImportJsonFile(file) {
         window.alert("Import file contains no profiles.");
         return;
       }
-      const { addedProfiles, mergedProfiles, addedProjects } = mergeImportedProfiles(importedProfiles);
+      const { addedProfiles, mergedProfiles, addedProjects, mergedProjects } = mergeImportedProfiles(importedProfiles);
       if (!state.activeProfileId && state.profiles[0]) {
         state.activeProfileId = state.profiles[0].id;
       }
       saveState();
       renderProfiles();
       renderProjects();
-      window.alert(`Import complete. ${addedProfiles} profile(s) added, ${mergedProfiles} merged, ${addedProjects} project(s) imported.`);
+      const addedOnly = addedProjects - mergedProjects;
+      const parts = [];
+      if (addedProfiles) parts.push(`${addedProfiles} profile${addedProfiles !== 1 ? "s" : ""} added`);
+      if (mergedProfiles) parts.push(`${mergedProfiles} profile${mergedProfiles !== 1 ? "s" : ""} merged`);
+      if (addedOnly) parts.push(`${addedOnly} project${addedOnly !== 1 ? "s" : ""} added`);
+      if (mergedProjects) parts.push(`${mergedProjects} project${mergedProjects !== 1 ? "s" : ""} merged`);
+      const detail = parts.length ? parts.join(", ") + "." : "No new data.";
+      const msg = `Imported from JSON. ${detail}`;
+      setTimeout(() => showToast(msg), 0);
     } catch (err) {
       console.error("Import failed", err);
       window.alert("Import failed. Please check that you selected a valid JSON export file.");
@@ -996,14 +1041,22 @@ function handleImportCsvFile(file) {
         window.alert("No valid data found in CSV file.");
         return;
       }
-      const { addedProfiles, mergedProfiles, addedProjects } = mergeImportedProfiles(importedProfiles);
+      const { addedProfiles, mergedProfiles, addedProjects, mergedProjects } = mergeImportedProfiles(importedProfiles);
       if (!state.activeProfileId && state.profiles[0]) {
         state.activeProfileId = state.profiles[0].id;
       }
       saveState();
       renderProfiles();
       renderProjects();
-      window.alert(`CSV import complete. ${addedProfiles} profile(s) added, ${mergedProfiles} merged, ${addedProjects} project(s) imported.`);
+      const addedOnly = addedProjects - mergedProjects;
+      const parts = [];
+      if (addedProfiles) parts.push(`${addedProfiles} profile${addedProfiles !== 1 ? "s" : ""} added`);
+      if (mergedProfiles) parts.push(`${mergedProfiles} profile${mergedProfiles !== 1 ? "s" : ""} merged`);
+      if (addedOnly) parts.push(`${addedOnly} project${addedOnly !== 1 ? "s" : ""} added`);
+      if (mergedProjects) parts.push(`${mergedProjects} project${mergedProjects !== 1 ? "s" : ""} merged`);
+      const detail = parts.length ? parts.join(", ") + "." : "No new data.";
+      const msg = `Imported from CSV. ${detail}`;
+      setTimeout(() => showToast(msg), 0);
     } catch (err) {
       console.error("CSV import failed", err);
       window.alert("CSV import failed. Please check that you selected a valid CSV export file.");
@@ -1635,6 +1688,9 @@ function renderProjects() {
       </tr>
     `;
     elements.bulkDeleteBtn.disabled = true;
+    if (state.projectsView === "board" && elements.scrumBoardContainer) {
+      renderScrumBoard();
+    }
     return;
   }
 
@@ -1659,6 +1715,9 @@ function renderProjects() {
     `;
     elements.bulkDeleteBtn.disabled = true;
     elements.selectAllProjects.checked = false;
+    if (state.projectsView === "board" && elements.scrumBoardContainer) {
+      renderScrumBoard();
+    }
     return;
   }
 
@@ -2194,9 +2253,7 @@ function renderScrumBoard() {
       card.className = "scrum-board-card";
       card.setAttribute("draggable", "true");
       card.setAttribute("data-project-id", project.id);
-      card.setAttribute("role", "button");
-      card.setAttribute("tabindex", "0");
-      card.setAttribute("aria-label", "Project: " + (project.title || "Untitled") + ". Drag to change status.");
+      card.setAttribute("aria-label", "Project: " + (project.title || "Untitled") + ". Drag to change status. View, Edit, Delete.");
 
       const titleEl = document.createElement("div");
       titleEl.className = "scrum-board-card-title";
@@ -2234,10 +2291,42 @@ function renderScrumBoard() {
       }
       card.appendChild(meta);
 
-      card.addEventListener("click", (e) => {
-        if (e.target.closest("button")) return;
+      const actions = document.createElement("div");
+      actions.className = "scrum-board-card-actions";
+      const viewBtn = document.createElement("button");
+      viewBtn.type = "button";
+      viewBtn.className = "scrum-board-card-btn scrum-board-card-btn--view";
+      viewBtn.setAttribute("data-project-id", project.id);
+      viewBtn.setAttribute("aria-label", "View project");
+      viewBtn.textContent = "View";
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "scrum-board-card-btn scrum-board-card-btn--edit";
+      editBtn.setAttribute("data-project-id", project.id);
+      editBtn.setAttribute("aria-label", "Edit project");
+      editBtn.textContent = "Edit";
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "scrum-board-card-btn scrum-board-card-btn--delete";
+      deleteBtn.setAttribute("data-project-id", project.id);
+      deleteBtn.setAttribute("aria-label", "Delete project");
+      deleteBtn.textContent = "Delete";
+      viewBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
         openProjectModal("view", project.id);
       });
+      editBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openProjectModal("edit", project.id);
+      });
+      deleteBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        handleSingleDelete(project.id);
+      });
+      actions.appendChild(viewBtn);
+      actions.appendChild(editBtn);
+      actions.appendChild(deleteBtn);
+      card.appendChild(actions);
 
       cardsContainer.appendChild(card);
     });
@@ -2261,6 +2350,10 @@ function bindScrumBoardDragAndDrop() {
 
   cards.forEach((card) => {
     card.addEventListener("dragstart", (e) => {
+      if (e.target.closest(".scrum-board-card-actions")) {
+        e.preventDefault();
+        return;
+      }
       draggedCard = card;
       draggedProjectId = card.getAttribute("data-project-id");
       card.classList.add("scrum-board-card--dragging");
@@ -2559,10 +2652,12 @@ function handleBulkDelete() {
           closeProjectDeleteModal();
           return;
         }
+        const count = idList.length;
         activeProfile.projects = activeProfile.projects.filter((p) => !idList.includes(p.id));
         saveState();
         renderProjects();
         closeProjectDeleteModal();
+        showToast(count === 1 ? "Project deleted successfully." : count + " projects deleted successfully.");
       }
     };
   }
@@ -2588,6 +2683,34 @@ function closeProfileDeleteModal() {
   elements.profileDeleteModal.classList.remove("active");
   elements.profileDeleteModal.setAttribute("aria-hidden", "true");
   elements.profileDeleteModal.removeAttribute("data-profile-id");
+}
+
+function showToast(message) {
+  const container = elements.toastContainer || document.getElementById("toastContainer");
+  if (!container || !message) return;
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.setAttribute("role", "alert");
+  toast.innerHTML = `
+    <span class="toast-icon" aria-hidden="true">✓</span>
+    <span class="toast-message">${escapeHtml(message)}</span>
+  `;
+  container.appendChild(toast);
+  const duration = 4200;
+  const exitDuration = 250;
+  const timer = setTimeout(() => {
+    toast.classList.add("toast-exit");
+    setTimeout(() => {
+      if (toast.parentNode) toast.parentNode.removeChild(toast);
+    }, exitDuration);
+  }, duration);
+  toast.addEventListener("click", () => {
+    clearTimeout(timer);
+    toast.classList.add("toast-exit");
+    setTimeout(() => {
+      if (toast.parentNode) toast.parentNode.removeChild(toast);
+    }, exitDuration);
+  });
 }
 
 function openProfileViewModal(profileId) {
@@ -2739,6 +2862,7 @@ function handleProfileEditSave() {
   renderProfiles();
   renderProjects();
   closeProfileEditModal();
+  showToast("Profile updated successfully.");
 }
 
 function deleteProfile(profileId) {
@@ -2781,6 +2905,7 @@ function deleteProfile(profileId) {
         saveState();
         renderProfiles();
         renderProjects();
+        showToast("Profile deleted successfully.");
       }
       closeProfileDeleteModal();
     };
@@ -2833,6 +2958,7 @@ function handleSingleDelete(projectId) {
         saveState();
         renderProjects();
         closeProjectDeleteModal();
+        showToast("Project deleted successfully.");
       }
     };
   }
@@ -3055,9 +3181,12 @@ function handleProjectFormSubmit(e) {
     activeProfile.projects.unshift(project);
   }
 
+  const wasCreate = !editingProjectId;
   saveState();
   closeProjectModal();
   renderProjects();
+  if (wasCreate) showToast("Project created successfully.");
+  else showToast("Project updated successfully.");
 }
 
 function updateModalRicePreview() {

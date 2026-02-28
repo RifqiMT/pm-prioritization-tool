@@ -110,6 +110,7 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 | **Low friction** | No sign-up, no backend; runs from a folder or static server. |
 | **Accessibility** | Semantic HTML, ARIA where needed, keyboard-friendly controls, and screen-reader support for key UI. |
 | **Profile insights** | View profile modal shows statistics (projects by status, type, T-shirt size, RICE summary, unique countries). |
+| **Clear confirmations** | Bottom-right toasts confirm every successful create, update, delete, export, and import—with details (e.g. export/import counts and format). |
 
 ---
 
@@ -178,23 +179,39 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
 
 | Aspect | Description |
 |--------|-------------|
-| **Columns** | One per project status: Not Started, In Progress, On Hold, Done, Cancelled. |
-| **Cards** | Title, RICE score, T-shirt size, project type icon; click opens View modal. |
+| **Columns** | One per project status: Not Started, In Progress, On Hold, Done, Cancelled. Column headers use status-specific colors (slate, blue, amber, green, red). |
+| **Cards** | Title, RICE score, T-shirt size, project type icon; **View**, **Edit**, **Delete** buttons on each card. Card body is for drag only (no click-to-view). |
 | **Sort by RICE (desc)** | **On:** cards in each column sorted by RICE score (highest first). **Off:** manual order; drag to reorder within a column or move between columns; order is saved per profile per status. |
-| **Drag-and-drop** | Move a card to another column to change its status. When “Sort by RICE” is off, drop position sets the card’s position in that column (persisted). |
+| **Drag-and-drop** | Move a card to another column to change its status. When “Sort by RICE” is off, drop position sets the card’s position in that column (persisted). Dragging from the action buttons does not start a drag. |
+| **Profile alignment** | Board always shows projects for the **currently selected profile**; switching profile or changing filters re-renders the board. |
 
 ### 5.9 Export and import
 
 | Action | Behavior |
 |--------|----------|
-| **Export** | **Export data** → **JSON** or **CSV**. Downloads all profiles and projects (including board order). Filename includes timestamp. |
-| **Import** | **Import data** → **JSON** or **CSV**. Data is **merged**: profiles matched by ID or name get projects merged by project ID (no duplicates); new profiles and new projects are added. |
+| **Export** | **Export data** → **JSON** or **CSV**. Downloads all profiles and projects (including board order). Filename includes timestamp. A **toast** (bottom-right) confirms success and shows how many profiles and projects were exported and the format (JSON or CSV). |
+| **Import** | **Import data** → **JSON** or **CSV**. Data is **merged**: profiles matched by ID or name get projects merged by project ID (duplicates skipped). New profiles and new projects are added. A **toast** confirms success with: profiles added, profiles merged, projects added, projects merged, and source format (JSON or CSV). |
 
-### 5.10 UI behavior
+### 5.10 Confirmations (toasts)
 
+- **Location:** Bottom-right of the viewport; same style for all confirmations (green accent, checkmark icon, slide-in/out, auto-dismiss, click to dismiss).
+- **Deletion:** Profile deleted; project deleted; N projects deleted.
+- **Creation:** Profile created; project created.
+- **Modification:** Profile updated; project updated.
+- **Export:** “Exported X profile(s) and Y project(s) as JSON/CSV.”
+- **Import:** “Imported from JSON/CSV. X profiles added, Y merged, Z projects added, W merged.”
+
+### 5.11 Product description tooltip
+
+- A **?** icon next to the app title opens a **Product Description** tooltip with the product summary. No subtitle is shown under the title; the same text is available in this tooltip.
+
+### 5.12 UI behavior
+
+- **Product description:** ? icon next to title opens tooltip; no subtitle under title.
 - Project description in a tooltip on table row hover.
 - Modals: project (add/edit/view), profile view, profile edit, profile delete, project delete, export format, import format; backdrop click or **Close** dismisses.
 - Accessible labels, ARIA attributes, and keyboard support for main controls (e.g. view toggle, board columns).
+- **Toasts:** Fixed container `#toastContainer` (sibling of app-shell); `showToast(message)` appends a toast; used for create/update/delete/export/import confirmations.
 
 ---
 
@@ -262,7 +279,8 @@ RICE score is not stored; it is computed from the RICE fields when needed.
 ### 6.7 Import merge rules
 
 - **Profiles:** Matched by `id` or `name`. If matched, projects are merged by project `id` (duplicates skipped). If no match, profile is added.
-- **Projects:** New projects on an existing profile are appended; existing project IDs are updated from the file (no duplicate IDs per profile).
+- **Projects:** New projects on an existing profile are appended; existing project IDs are not duplicated. Projects added to existing profiles count as **merged projects**; projects that come with newly added profiles count as **added projects**.
+- **Merge result:** The merge function returns `addedProfiles`, `mergedProfiles`, `addedProjects`, `mergedProjects`, and `skippedProjects` for use in the import confirmation toast.
 
 ---
 
@@ -276,6 +294,7 @@ RICE score is not stored; it is computed from the RICE fields when needed.
 6. **Use filters and sort** – Narrow by type, status, period, or country; sort by RICE or date to focus on what to do next.
 7. **Use the board for status** – Track Not Started → In Progress → Done; turn off “Sort by RICE” when you want to order items manually within a column.
 8. **Use profile view for portfolio health** – Check profile statistics (by status, type, T-shirt size, RICE) to balance workload and priorities.
+9. **Use the Product Description ?** – Click the **?** next to the app title to read the product summary in a tooltip.
 
 ---
 
@@ -299,12 +318,12 @@ The repository contains the following source files (excluding version control an
 
 | Path | Purpose |
 |------|--------|
-| `index.html` | Single HTML page: app shell, header, profiles panel, filters, table/board containers, all modals (project, profile view/edit/delete, export/import format, project delete). Loads `css/main.css` and scripts in order: `constants.js` → `utils.js` → `rice.js` → `app.js`. |
-| `css/main.css` | All styles: CSS custom properties (dark theme, colors, radii, shadows, transitions), layout (app-shell, header, profiles, projects, filters), table, board, cards, modals, form controls, responsive and `prefers-reduced-motion` support. |
+| `index.html` | Single HTML page: app shell, header (title + Product Description ? tooltip), profiles panel, filters, table/board containers, all modals (project, profile view/edit/delete, export/import format, project delete). Loads `css/main.css` and scripts in order: `constants.js` → `utils.js` → `rice.js` → `app.js`. Contains `#toastContainer` (fixed bottom-right) for confirmation toasts. |
+| `css/main.css` | All styles: CSS custom properties (dark theme, colors, radii, shadows, transitions), layout (app-shell, header, profiles, projects, filters), table, board, cards, board column header colors by status, card action buttons, modals, form controls, toast (bottom-right confirmations), responsive and `prefers-reduced-motion` support. |
 | `src/constants.js` | Application constants and lookup data: `STORAGE_KEY`, `projectStatusList`, `projectStatusIcons`, `tshirtSizeList`, `tshirtSizeTooltips`, `projectTypeIcons`, `currencyList`, `countryList`, `countryCodeByName`. No DOM. |
 | `src/utils.js` | Pure helpers: `formatDateTime`, `formatDate`, `formatDateForFilename`, `compareDatesDesc`, `generateId`, `escapeHtml`, `countryCodeToFlag`, `toNumberOrNull`, `parseCsv`, `escapeCsvCell`. No DOM. |
 | `src/rice.js` | RICE logic: `calculateRiceScore`, `formatRice`, `validateProjectInput`. No DOM. |
-| `src/app.js` | Main application: state, DOM element cache, `init`, `cacheElements`, currency/filter init, event listeners, load/save state, profile/project CRUD, render (profiles, table, board), drag-and-drop, all modals, export/import. Ends with `document.addEventListener("DOMContentLoaded", init)` to boot the app. |
+| `src/app.js` | Main application: state, DOM element cache, `init`, `cacheElements`, currency/filter init, event listeners, load/save state, profile/project CRUD, render (profiles, table, board), drag-and-drop, all modals, getExportCounts, showToast, export/import with detailed toasts. Ends with `document.addEventListener("DOMContentLoaded", init)` to boot the app. |
 | `src/main.js` | Optional ES-module entry point (`import { init } from "./app.js"`; then `DOMContentLoaded` → `init`). **Not loaded by `index.html`**; the app runs by loading `app.js` as a classic script, which registers its own `DOMContentLoaded` listener. Use `main.js` only if you serve the app through a bundler or module-aware dev server. |
 | `README.md` | This documentation. |
 
@@ -324,8 +343,8 @@ rice-prioritizer/
 │   │                   # parseCsv, escapeCsvCell
 │   ├── rice.js         # calculateRiceScore, formatRice, validateProjectInput
 │   ├── app.js          # State, DOM cache, init, filters, render (table + board), drag-and-drop,
-│   │                   # modals (project, profile view/edit/delete), export/import, events.
-│   │                   # Boots via document.addEventListener("DOMContentLoaded", init) at end of file.
+│   │                   # modals (project, profile view/edit/delete), getExportCounts, showToast,
+│   │                   # export/import with toasts. Boots via document.addEventListener("DOMContentLoaded", init) at end of file.
 │   └── main.js         # Optional ES module entry; not loaded by index.html
 └── README.md
 ```
@@ -337,7 +356,7 @@ rice-prioritizer/
 | **constants.js** | Config and lookup data: `STORAGE_KEY`, `projectStatusList`, `projectStatusIcons`, `tshirtSizeList`, `tshirtSizeTooltips`, `projectTypeIcons`, `currencyList`, `countryList`, `countryCodeByName`. No DOM. |
 | **utils.js** | Pure helpers: dates, IDs, CSV parse/escape, HTML escaping, country code to flag. No DOM. |
 | **rice.js** | RICE calculation and validation. No DOM. |
-| **app.js** | State, element cache, init, all UI and event logic, render (profiles, table, board), modals, import/export. Section comments: State & DOM cache, Initialization, Filters, Render, Export/Import, etc. Boot: `DOMContentLoaded` → `init` at end of file. |
+| **app.js** | State, element cache, init, all UI and event logic, render (profiles, table, board), modals, getExportCounts, showToast, import/export. Section comments: State & DOM cache, Initialization, Filters, Render, Export/Import, etc. Boot: `DOMContentLoaded` → `init` at end of file. |
 
 ### 8.5 Script load order and boot
 
@@ -369,7 +388,7 @@ Brief reference for where data appears. Add screenshots to the repo and link the
 
 ### 9.1 App header and profiles
 
-- **Header:** App title, subtitle, **Export data**, **Import data**.
+- **Header:** App title with **?** icon (Product Description tooltip); no subtitle under title. **Export data**, **Import data**.
 - **Profiles panel:** Form (Profile name, Team optional), **Add**; list of profile pills. Each pill: click to select; View / Edit / Delete icon buttons. Active profile highlighted.
 
 ### 9.2 Projects header and view toggle
@@ -387,7 +406,7 @@ Brief reference for where data appears. Add screenshots to the repo and link the
 
 ### 9.5 Board view
 
-- Toolbar: status legend, **Sort by RICE (desc)** checkbox. Columns per status with counts; cards show title, RICE, T-shirt, type icon; drag to move or reorder (when manual sort is on).
+- Toolbar: status legend, **Sort by RICE (desc)** checkbox. Column headers colored by status. Columns per status with counts; cards show title, RICE, T-shirt, type icon, and **View / Edit / Delete** buttons; drag card body to move or reorder (when manual sort is on).
 
 ### 9.6 Project modal (add/edit/view)
 
@@ -404,6 +423,10 @@ Brief reference for where data appears. Add screenshots to the repo and link the
 ### 9.9 Export / Import modals
 
 - Export: **Export as JSON** or **Export as CSV**. Import: **Import JSON** or **Import CSV**; file is merged into current data.
+
+### 9.10 Toast confirmations (bottom-right)
+
+- After create, update, delete (profile or project), export, or import, a toast appears bottom-right with a short message (e.g. “Profile created successfully.” or “Exported 2 profiles and 5 projects as JSON.”). Toasts auto-dismiss after a few seconds; click to dismiss early.
 
 ---
 
