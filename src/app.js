@@ -93,8 +93,16 @@ function init() {
   if (elements.projectsTableView && elements.projectsBoardView) {
     switchProjectsView(state.projectsView);
   }
-  ExchangeRates.updateLabel();
-  ExchangeRates.scheduleDailyRefresh();
+  ExchangeRates.ensure()
+    .then(() => {
+      renderProjects();
+      if (state.projectsView === "map" && elements.projectsMapContainer) renderProjectsMap();
+    })
+    .catch(() => {})
+    .finally(() => {
+      ExchangeRates.updateLabel();
+      ExchangeRates.scheduleDailyRefresh();
+    });
 }
 
 function cacheElements() {

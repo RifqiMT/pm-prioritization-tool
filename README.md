@@ -313,8 +313,9 @@ Then open `http://localhost:3000` (or `http://localhost:8000` for Python).
   - **Load:** Replace `state.exchangeRatesToEUR`, set `state.exchangeRatesDate` to today (Germany), set `state.exchangeRatesLastSource`, save state, update “Last updated” label.
 - **When to refresh:**  
   - **Manual:** User clicks **Refresh exchange rates**.  
-  - **Auto (app open):** A timeout is set for the next 00:00 Germany; when it fires, ETL runs and the next 00:00 is scheduled again.  
-  - **Auto (app closed):** On load, if `state.exchangeRatesDate` is not today (Germany), `ensure()` runs and fetches (so first open after midnight Germany gets fresh rates).
+  - **On app open:** On init, `ensure()` runs: if stored rates are missing or the stored date is not today (Germany), the full ETL runs and rates are refreshed automatically.  
+  - **Auto (app open, same day):** A timeout is set for the next 00:00 Germany; when it fires, ETL runs and the next 00:00 is scheduled again.  
+  - **Auto (app closed):** Next time you open the app after midnight Germany, `ensure()` sees the date is stale and fetches (so first open of the day gets fresh rates).
 - **Conversion:** For a project with `financialImpactValue` and `financialImpactCurrency`, EUR = value × `exchangeRatesToEUR[currency]` (or value if currency is EUR or missing rate).
 
 ### 6.5 Financial display
