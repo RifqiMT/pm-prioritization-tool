@@ -15,6 +15,8 @@ This README is the **product documentation** for the tool and follows the produc
 - **Limitations and considerations** – Single browser, no auth, storage, CORS, no versioning  
 - **Other** – Script load order, global dependencies, export/import merge result, tooltip behavior, card layout (actions and reorder buttons)
 
+**Additional documentation** (in `docs/`): [PRD](docs/PRD.md) (Product Requirements Document), [User personas](docs/USER_PERSONAS.md), [User stories](docs/USER_STORIES.md). Index: [PRODUCT_DOCUMENTATION_STANDARD.md](PRODUCT_DOCUMENTATION_STANDARD.md).
+
 ---
 
 ## Table of contents
@@ -31,6 +33,8 @@ This README is the **product documentation** for the tool and follows the produc
 10. [Screens and key UI](#10-screens-and-key-ui)
 11. [Limitations and considerations](#11-limitations-and-considerations)
 12. [License](#12-license)
+
+**See also:** [PRD](docs/PRD.md) · [User personas](docs/USER_PERSONAS.md) · [User stories](docs/USER_STORIES.md) · [Product documentation standard](PRODUCT_DOCUMENTATION_STANDARD.md)
 
 ---
 
@@ -453,6 +457,12 @@ pm-prioritization-tool/
 ├── css/
 │   └── main.css        # All styles: variables, layout, table, board, MOSCOW grid, map,
 │                        # fullscreen, exchange-rates label, modals, responsive, prefers-reduced-motion
+├── docs/
+│   ├── PRD.md          # Product Requirements Document: overview, goals, functional/non-functional
+│   │                   # requirements, data model summary, success criteria, out of scope
+│   ├── USER_PERSONAS.md   # User personas: Product Manager, Team Lead, Solo PM, Geo/Finance PM, Stakeholder
+│   └── USER_STORIES.md    # User stories by epic (profiles, projects, RICE, table, board, MOSCOW,
+│                          # map, financial/rates, export/import, fullscreen, confirmations)
 ├── src/
 │   ├── constants.js    # STORAGE_KEY, projectStatusList, projectStatusIcons, tshirtSizeList,
 │   │                   # tshirtSizeTooltips, projectTypeIcons, projectPeriodTooltip, moscowList, moscowTooltips,
@@ -469,7 +479,9 @@ pm-prioritization-tool/
 │   │                   # getCountryFinancialImpactByCode, renderProjectsMap, createDragGhost, board/MOSCOW drag-and-drop,
 │   │                   # modals, export/import, showToast. Boot: DOMContentLoaded → init
 │   └── main.js         # Optional ES module entry; not loaded by index.html
-└── README.md           # This documentation
+├── README.md           # This documentation
+└── PRODUCT_DOCUMENTATION_STANDARD.md   # Checklist and index for product documentation (overview, benefits,
+                                        # features, logics, guidelines, tech stack, folder directory, other)
 ```
 
 ### 9.2 File roles (summary)
@@ -485,6 +497,15 @@ pm-prioritization-tool/
 | **modules/fullscreen.js** | Fullscreen toggle and view switch while fullscreen; exposes `Fullscreen` (init, toggle, onChange, isViewFullscreen, requestViewSwitchWhileFullscreen). No direct state/DOM; uses init() deps. |
 | **app.js** | State, elements, init (wires ExchangeRates + Fullscreen), filters (debounced title), render (profiles, table, board, MOSCOW, map), tooltip handling (`getTooltipRoot`, `returnTooltipsToOwner`, `hideCellTypeTooltips`, `positionProfileTooltip`), getCountryFinancialImpactByCode, renderProjectsMap, drag-and-drop, modals, export/import, showToast. Boot: `DOMContentLoaded` → `init`. |
 | **main.js** | Optional ES module entry that imports `init` from `app.js`; use only with a bundler or module-aware dev server; **not** loaded by `index.html`. |
+
+### 9.3 Documentation files
+
+| File | Role |
+|------|------|
+| **docs/PRD.md** | Product Requirements Document: product overview, goals, user needs, functional and non-functional requirements, data model summary, success criteria, out of scope. |
+| **docs/USER_PERSONAS.md** | User personas (Product Manager, Team Lead, Solo PM, PM Geo/Finance, Stakeholder) with goals, pain points, needs, and relevant features. |
+| **docs/USER_STORIES.md** | User stories by epic (profiles, projects, RICE, table, board, MOSCOW, map, financial/rates, export/import, fullscreen, confirmations); format: As a [persona], I want [action] so that [benefit]. |
+| **PRODUCT_DOCUMENTATION_STANDARD.md** | Checklist and index for product documentation standard; points to README sections and to PRD, personas, and user stories. |
 
 ---
 

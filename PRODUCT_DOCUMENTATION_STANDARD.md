@@ -1,6 +1,17 @@
 # Product Documentation Standard
 
-This document defines the **product documentation standard** for the Product Management Prioritization Tool. The full content for each section lives in [README.md](README.md). Use this as a checklist and index.
+This document defines the **product documentation standard** for the Product Management Prioritization Tool. The full content for each section lives in [README.md](README.md) or in the linked docs. Use this as a checklist and index.
+
+---
+
+## Documentation index
+
+| Document | Purpose |
+|----------|---------|
+| [README.md](README.md) | Main product documentation: overview, benefits, features, logics, business/tech guidelines, tech stack, folder directory, screens, limitations. |
+| [docs/PRD.md](docs/PRD.md) | Product Requirements Document: goals, user needs, functional/non-functional requirements, data model summary, success criteria, out of scope. |
+| [docs/USER_PERSONAS.md](docs/USER_PERSONAS.md) | User personas: Product Manager, Team Lead, Solo PM, PM (Geo/Finance), Stakeholder; goals, pain points, needs. |
+| [docs/USER_STORIES.md](docs/USER_STORIES.md) | User stories by epic (profiles, projects, RICE, table, board, MOSCOW, map, financial/rates, export/import, fullscreen, confirmations). |
 
 ---
 
@@ -100,16 +111,19 @@ Markup, styles, scripting, map (Leaflet + GeoJSON), exchange rates (APIs + fallb
 
 ## 8. Other important elements
 
-| Element | Location in README |
-|--------|---------------------|
-| **Prerequisites and requirements** | §2 – Browser, network, backend, build. |
-| **Getting started** | §3 – Run app (file or server), first-time use. |
-| **Folder directory and file roles** | §9 – Directory tree, file roles (index.html, main.css, constants, utils, rice, modules, app, main.js). |
-| **Screens and key UI** | §10 – Header, profiles, projects header, filters, Table/Board/MOSCOW/Map, modals, toast. |
-| **Limitations and considerations** | §11 – Single browser, no auth, storage quota, exchange rates, CORS/file://, no versioning. |
-| **Tooltip behavior** | §1.3 Key concepts (Tooltips), §5.15 Tooltips. |
-| **Card layout** | §5.9 Board, §5.10 MOSCOW – View/Edit/Delete left, ↑/↓ right corner. |
-| **Exchange rates on app open** | §5.5, §6.4 – ensure() on init when rates missing or date not today (Germany). |
+| Element | Location |
+|--------|----------|
+| **Prerequisites and requirements** | README §2 – Browser, network, backend, build. |
+| **Getting started** | README §3 – Run app (file or server), first-time use. |
+| **Folder directory and file roles** | README §9 – Directory tree, file roles (index.html, main.css, constants, utils, rice, modules, app, main.js), **docs/** (PRD, USER_PERSONAS, USER_STORIES). |
+| **Screens and key UI** | README §10 – Header, profiles, projects header, filters, Table/Board/MOSCOW/Map, modals, toast. |
+| **Limitations and considerations** | README §11 – Single browser, no auth, storage quota, exchange rates, CORS/file://, no versioning. |
+| **Tooltip behavior** | README §1.3 Key concepts (Tooltips), §5.15 Tooltips. |
+| **Card layout** | README §5.9 Board, §5.10 MOSCOW – View/Edit/Delete left, ↑/↓ right corner. |
+| **Exchange rates on app open** | README §5.5, §6.4 – ensure() on init when rates missing or date not today (Germany). |
+| **PRD (requirements)** | [docs/PRD.md](docs/PRD.md) – Functional/non-functional requirements, success criteria, out of scope. |
+| **User personas** | [docs/USER_PERSONAS.md](docs/USER_PERSONAS.md) – Personas with goals, pain points, needs. |
+| **User stories** | [docs/USER_STORIES.md](docs/USER_STORIES.md) – Stories by epic with persona and benefit. |
 
 ---
 
@@ -123,9 +137,9 @@ Markup, styles, scripting, map (Leaflet + GeoJSON), exchange rates (APIs + fallb
 6. Logics and data model  
 7. Business guidelines  
 8. Tech stack and technical guidelines  
-9. Folder directory and file roles  
+9. Folder directory and file roles (includes **docs/**: PRD, USER_PERSONAS, USER_STORIES)  
 10. Screens and key UI  
 11. Limitations and considerations  
 12. License  
 
-For the full, up-to-date text of each section, see [README.md](README.md).
+**Related docs:** [README.md](README.md) · [PRD.md](docs/PRD.md) · [USER_PERSONAS.md](docs/USER_PERSONAS.md) · [USER_STORIES.md](docs/USER_STORIES.md)
