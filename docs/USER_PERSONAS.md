@@ -85,4 +85,4 @@ Personas represent primary users of the tool. They inform features, user stories
 | PM (Geo/Finance)| Country + EUR view            | Financial impact, exchange rates, Map, fullscreen |
 | Stakeholder    | Review only                    | View project/profile, all views, fullscreen       |
 
-For user stories derived from these personas, see [USER_STORIES.md](USER_STORIES.md). For full product documentation, see [README.md](../README.md).
+For user stories derived from these personas, see [USER_STORIES.md](USER_STORIES.md). For full documentation navigation, see [docs/README.md](README.md) and [README.md](../README.md).

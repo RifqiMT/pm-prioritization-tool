@@ -134,3 +134,49 @@ Personas: Product Manager, Team Lead, Solo PM, PM (Geo/Finance), Stakeholder. Se
 - **PRD:** [PRD.md](PRD.md)  
 - **Full documentation:** [README.md](../README.md)  
 - **Product documentation standard:** [PRODUCT_DOCUMENTATION_STANDARD.md](../PRODUCT_DOCUMENTATION_STANDARD.md)
+
+---
+
+## Acceptance Criteria Summary by Epic
+
+### Profiles
+
+- Profile cannot be created without a name.
+- Switching profile updates all views and filters to selected profile context.
+- Delete profile requires confirmation and removes scoped projects.
+
+### Projects
+
+- Project save requires valid RICE fields and field bounds.
+- Edit updates `modifiedAt`; view remains read-only.
+- Bulk delete only enabled when one or more rows are selected.
+
+### RICE and MOSCOW
+
+- RICE score renders consistently in table, board, and MOSCOW cards.
+- MOSCOW category defaults to `Could have` for new projects.
+- RICE formula tooltip reflects actual input values.
+
+### Board and MOSCOW Views
+
+- Drag-and-drop updates status/category correctly.
+- Manual order applies only when corresponding "Sort by RICE" toggle is off.
+- Fullscreen mode preserves view switch capability.
+
+### Map and Financial
+
+- Map metric switch updates legend and country values.
+- Financial metric uses EUR-converted values from latest rate snapshot.
+- Countries are normalized to canonical labels before aggregation.
+
+### Exchange Rates
+
+- Manual refresh updates label and persisted source marker.
+- Stale sessions trigger auto-refresh on load.
+- Missing remote rates still allow operation through fallback rates.
+
+### Import/Export
+
+- JSON and CSV exports include complete logical payload for restoration.
+- Import merges without duplicate project insertion by ID.
+- Import normalizes country aliases to canonical names.

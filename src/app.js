@@ -4469,12 +4469,18 @@ function updateModalRicePreview() {
       const rates = state.exchangeRatesToEUR || {};
       const rate = rates[currency];
       if (rate != null && Number.isFinite(rate)) {
-        elements.projectMetaExchangeRate.textContent = `1 ${currency} = ${Number(rate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })} EUR`;
+        // Stored rate is EUR per 1 local currency; convert for UI to "1 EUR = X local currency".
+        const localPerEur = rate > 0 ? 1 / Number(rate) : NaN;
+        if (Number.isFinite(localPerEur)) {
+          elements.projectMetaExchangeRate.textContent = `1 EUR = ${Number(localPerEur).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
+        } else {
+          elements.projectMetaExchangeRate.textContent = "— (rate unavailable)";
+        }
       } else {
         elements.projectMetaExchangeRate.textContent = "— (rate unavailable)";
       }
     } else if (hasCurrency && currency === "EUR") {
-      elements.projectMetaExchangeRate.textContent = "1 EUR = 1 EUR";
+      elements.projectMetaExchangeRate.textContent = "1 EUR = 1.00 EUR";
     } else {
       elements.projectMetaExchangeRate.textContent = "—";
     }

@@ -15,7 +15,7 @@ This README is the **product documentation** for the tool and follows the produc
 - **Limitations and considerations** – Single browser, no auth, storage, CORS, no versioning  
 - **Other** – Script load order, global dependencies, export/import merge result, tooltip behavior, card layout (actions and reorder buttons)
 
-**Additional documentation** (in `docs/`): [PRD](docs/PRD.md) (Product Requirements Document), [User personas](docs/USER_PERSONAS.md), [User stories](docs/USER_STORIES.md). Index: [PRODUCT_DOCUMENTATION_STANDARD.md](PRODUCT_DOCUMENTATION_STANDARD.md).
+**Additional documentation** (in `docs/`): [Docs hub](docs/README.md), [PRD](docs/PRD.md), [User personas](docs/USER_PERSONAS.md), [User stories](docs/USER_STORIES.md), [Variables](docs/VARIABLES.md), [Metrics and OKRs](docs/METRICS_AND_OKRS.md), [Design guidelines](docs/DESIGN_GUIDELINES.md), [Architecture](docs/ARCHITECTURE.md), [Traceability matrix](docs/TRACEABILITY_MATRIX.md), [Guardrails](docs/GUARDRAILS.md), [Changelog](docs/CHANGELOG.md). Standard: [PRODUCT_DOCUMENTATION_STANDARD.md](PRODUCT_DOCUMENTATION_STANDARD.md).
 
 ---
 
@@ -34,7 +34,7 @@ This README is the **product documentation** for the tool and follows the produc
 11. [Limitations and considerations](#11-limitations-and-considerations)
 12. [License](#12-license)
 
-**See also:** [PRD](docs/PRD.md) · [User personas](docs/USER_PERSONAS.md) · [User stories](docs/USER_STORIES.md) · [Product documentation standard](PRODUCT_DOCUMENTATION_STANDARD.md)
+**See also:** [Docs hub](docs/README.md) · [PRD](docs/PRD.md) · [User personas](docs/USER_PERSONAS.md) · [User stories](docs/USER_STORIES.md) · [Variables](docs/VARIABLES.md) · [Metrics and OKRs](docs/METRICS_AND_OKRS.md) · [Design guidelines](docs/DESIGN_GUIDELINES.md) · [Traceability matrix](docs/TRACEABILITY_MATRIX.md) · [Guardrails](docs/GUARDRAILS.md) · [Changelog](docs/CHANGELOG.md) · [Product documentation standard](PRODUCT_DOCUMENTATION_STANDARD.md)
 
 ---
 
@@ -502,10 +502,18 @@ pm-prioritization-tool/
 
 | File | Role |
 |------|------|
+| **docs/README.md** | Documentation hub and recommended reading sequence for all product, design, engineering, and governance documents. |
 | **docs/PRD.md** | Product Requirements Document: product overview, goals, user needs, functional and non-functional requirements, data model summary, success criteria, out of scope. |
 | **docs/USER_PERSONAS.md** | User personas (Product Manager, Team Lead, Solo PM, PM Geo/Finance, Stakeholder) with goals, pain points, needs, and relevant features. |
 | **docs/USER_STORIES.md** | User stories by epic (profiles, projects, RICE, table, board, MOSCOW, map, financial/rates, export/import, fullscreen, confirmations); format: As a [persona], I want [action] so that [benefit]. |
-| **PRODUCT_DOCUMENTATION_STANDARD.md** | Checklist and index for product documentation standard; points to README sections and to PRD, personas, and user stories. |
+| **docs/VARIABLES.md** | Comprehensive variable catalog with definitions, formulas, source locations, examples, and variable relationship chart. |
+| **docs/METRICS_AND_OKRS.md** | Product, UX, and engineering metrics with OKRs and target guidance for the product team. |
+| **docs/DESIGN_GUIDELINES.md** | Design system guidance including Indonesian palette usage, component behavior, and accessibility rules. |
+| **docs/ARCHITECTURE.md** | Runtime architecture, module boundaries, data flow, ETL flow, and risk controls. |
+| **docs/TRACEABILITY_MATRIX.md** | Enterprise requirement-to-code traceability for functional and non-functional requirements. |
+| **docs/GUARDRAILS.md** | Product guardrails covering business, technical, data, UX, and release boundaries. |
+| **docs/CHANGELOG.md** | Historical development logs and release notes. |
+| **PRODUCT_DOCUMENTATION_STANDARD.md** | Master documentation standard, coverage criteria, governance checklist, and required document set. |
 
 ---
 

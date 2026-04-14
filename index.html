@@ -41,8 +41,6 @@
               Import data
             </button>
           </div>
-        </div>
-        <div class="app-header-actions-row">
           <div class="data-pill-group data-pill-group--rates">
             <span class="data-pill-label">Rates</span>
             <button type="button" id="refreshExchangeRatesBtn" class="data-pill-btn refresh-rates-btn" aria-label="Refresh exchange rates from API" title="Refresh exchange rates (used for Financial impact in EUR)">
@@ -257,9 +255,23 @@
         </div>
         <div class="table-wrapper" aria-label="Projects table">
           <table>
+            <colgroup>
+              <col style="width: 40px;" />
+              <col style="width: 220px;" />
+              <col style="width: 92px;" />
+              <col style="width: 86px;" />
+              <col style="width: 106px;" />
+              <col style="width: 80px;" />
+              <col style="width: 110px;" />
+              <col style="width: 92px;" />
+              <col style="width: 92px;" />
+              <col style="width: 140px;" />
+              <col style="width: 160px;" />
+              <col style="width: 124px;" />
+            </colgroup>
             <thead>
               <tr>
-                <th style="width:32px;">
+                <th>
                   <input id="selectAllProjects" type="checkbox" class="checkbox-input" />
                 </th>
                 <th data-sort-field="title">
@@ -270,22 +282,22 @@
                 </th>
                 <th data-sort-field="projectType">
                   <button class="sort-button" type="button">
-                    <span>Project type</span>
+                    <span>Type</span>
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
                 <th data-sort-field="projectStatus">
                   <button class="sort-button" type="button">
-                    <span>Status</span>
+                    <span>State</span>
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
                 <th>
-                  Project period
+                  Period
                 </th>
                 <th data-sort-field="tshirtSize">
                   <button class="sort-button" type="button">
-                    <span>T-shirt size</span>
+                    <span>Size</span>
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
@@ -306,13 +318,13 @@
                 </th>
                 <th data-sort-field="financialImpactValue">
                   <button class="sort-button" type="button">
-                    <span>Financial impact (EUR)</span>
+                    <span>Impact (EUR)</span>
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
                 <th data-sort-field="createdAt">
                   <button class="sort-button" type="button">
-                    <span>Created</span>
+                    <span>Created At</span>
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
