@@ -465,11 +465,14 @@
       </header>
 
       <form id="projectForm">
-        <div class="modal-body">
-          <section>
-            <div class="form-section">
+        <div class="modal-body project-modal-body">
+          <div class="project-modal-main-row">
+            <div class="project-modal-scroll" id="projectModalScrollRegion">
+            <div class="project-modal-sections-stream">
+            <div id="projectModalSectionProject" class="form-section">
               <div class="form-section-header">
-                <span class="form-section-title">Project overview</span>
+                <span class="form-section-title">Project</span>
+                <span class="form-section-hint">Title and description (summary)</span>
               </div>
               <div class="form-grid form-grid-full">
                 <div class="project-field-tooltip-wrap">
@@ -489,18 +492,9 @@
                   </div>
                 </div>
               </div>
-              <div class="field-meta-row" id="projectMetaInfo">
-                <span><strong>Created:</strong> <span id="projectMetaCreated">—</span></span>
-                <span><strong>Last modified:</strong> <span id="projectMetaModified">—</span></span>
-                <span><strong>RICE score:</strong> <span id="projectMetaRice">—</span></span>
-              </div>
-              <div class="field-meta-row field-meta-row--financial-eur" id="projectMetaFinancialRow">
-                <span><strong>Financial (EUR):</strong> <span id="projectMetaFinancialEur">—</span></span>
-                <span><strong>Exchange rate:</strong> <span id="projectMetaExchangeRate">—</span></span>
-              </div>
             </div>
 
-            <div class="form-section">
+            <div id="projectModalSectionRice" class="form-section">
               <div class="form-section-header">
                 <span class="form-section-title">RICE inputs</span>
                 <span class="form-section-hint">RICE = (Reach × Impact × Confidence) ÷ Effort</span>
@@ -596,42 +590,14 @@
                 </div>
               </div>
             </div>
-          </section>
 
-          <section>
-            <div class="form-section">
+            <div id="projectModalSectionMeta" class="form-section">
               <div class="form-section-header">
-                <span class="form-section-title">Financial impact (optional)</span>
+                <span class="form-section-title">Project Details</span>
+                <span class="form-section-hint">Snapshot values and classification</span>
               </div>
-              <div class="form-grid">
-                <div class="project-field-tooltip-wrap">
-                  <label for="financialImpactValue">Financial impact</label>
-                  <input id="financialImpactValue" name="financialImpactValue" type="number" min="0" step="0.01" placeholder="e.g. 250000" />
-                  <div class="cell-type-tooltip">
-                    <div class="cell-type-tooltip-title">Financial impact</div>
-                    <div class="cell-type-tooltip-body">Optional revenue or cost impact. Not used in RICE score.</div>
-                  </div>
-                </div>
-                <div class="project-field-tooltip-wrap">
-                  <label for="projectCurrency">Currency</label>
-                  <select id="projectCurrency" name="projectCurrency">
-                    <option value="">None / not set</option>
-                  </select>
-                  <div class="cell-type-tooltip">
-                    <div class="cell-type-tooltip-title">Currency</div>
-                    <div class="cell-type-tooltip-body">Currency for the financial impact value.</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="form-section">
-              <div class="form-section-header">
-                <span class="form-section-title">Project metadata</span>
-              </div>
-
-                <div class="form-grid form-grid-full">
-                  <div class="countries-section">
+              <div class="form-grid form-grid-full">
+                <div class="countries-section">
                     <div class="project-field-tooltip-wrap">
                       <label for="projectType">Project type (optional)</label>
                       <select id="projectType" name="projectType">
@@ -720,17 +686,227 @@
                         <div class="cell-type-tooltip-body">Countries this project applies to. Used for filtering.</div>
                       </div>
                     </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="projectModalSectionFinancial" class="form-section financial-form-section">
+              <div class="form-section-header">
+                <span class="form-section-title">Financial impact (optional)</span>
+              </div>
+              <p id="financialFrameworkFormulaHint" class="form-section-hint financial-framework-hint">
+                Custom: enter a direct amount manually.
+              </p>
+              <div class="form-grid">
+                <div class="project-field-tooltip-wrap">
+                  <label for="financialFramework">Financial framework</label>
+                  <select id="financialFramework" name="financialFramework">
+                    <option value="custom">Custom (direct amount)</option>
+                    <option value="clv">CLV framework</option>
+                    <option value="nps">NPS to financial impact</option>
+                    <option value="risk">Risk mitigation</option>
+                  </select>
+                  <div class="cell-type-tooltip">
+                    <div class="cell-type-tooltip-title">Financial framework</div>
+                    <div class="cell-type-tooltip-body">Choose a framework to estimate financial impact consistently across projects.</div>
                   </div>
                 </div>
+                <div class="project-field-tooltip-wrap">
+                  <label for="financialImpactValue">Financial impact result</label>
+                  <input id="financialImpactValue" name="financialImpactValue" type="number" step="0.01" placeholder="e.g. 250000" />
+                  <div class="cell-type-tooltip">
+                    <div class="cell-type-tooltip-title">Financial impact result</div>
+                    <div class="cell-type-tooltip-body">For non-custom frameworks this is auto-calculated from framework inputs. RICE uses reach, impact, confidence, and effort; this value is for prioritization context and reporting.</div>
+                  </div>
+                </div>
+                <div class="project-field-tooltip-wrap">
+                  <label for="projectCurrency">Currency</label>
+                  <select id="projectCurrency" name="projectCurrency">
+                    <option value="">None / not set</option>
+                  </select>
+                  <div class="cell-type-tooltip">
+                    <div class="cell-type-tooltip-title">Currency</div>
+                    <div class="cell-type-tooltip-body">Currency for the financial impact value.</div>
+                  </div>
+                </div>
+              </div>
+              <div id="financialFrameworkFields" class="form-grid form-grid-full">
+                <div id="financialFieldsCustom" class="form-grid" data-framework-fields="custom">
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialCustomNotes">Custom notes (optional)</label>
+                    <input id="financialCustomNotes" name="financialCustomNotes" type="text" placeholder="e.g. based on validated forecast" />
+                  </div>
+                </div>
+
+                <div id="financialFieldsClv" class="form-grid" data-framework-fields="clv" style="display:none;">
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialClvCustomers">Customers (portfolio size)</label>
+                    <input id="financialClvCustomers" name="financialClvCustomers" type="number" min="0" step="1" placeholder="e.g. 5000 (or leave blank for per-customer)" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialClvMargin">Contribution margin per customer</label>
+                    <input id="financialClvMargin" name="financialClvMargin" type="number" step="0.01" placeholder="e.g. 400" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialClvRetentionRatePct">New retention rate (%)</label>
+                    <input id="financialClvRetentionRatePct" name="financialClvRetentionRatePct" type="number" min="0" max="100" step="0.01" placeholder="e.g. 83" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialClvDiscountRatePct">Discount rate (%)</label>
+                    <input id="financialClvDiscountRatePct" name="financialClvDiscountRatePct" type="number" min="0" max="100" step="0.01" placeholder="e.g. 12" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialClvAcquisitionCost">CAC per customer (optional)</label>
+                    <input id="financialClvAcquisitionCost" name="financialClvAcquisitionCost" type="number" min="0" step="0.01" placeholder="e.g. 300 (defaults to 0 if empty)" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialClvBaselineRetentionRatePct">Baseline retention (%) or uplift points (optional)</label>
+                    <input id="financialClvBaselineRetentionRatePct" name="financialClvBaselineRetentionRatePct" type="number" min="0" max="100" step="0.01" placeholder="e.g. 80 or 3 for +3 pp uplift" />
+                  </div>
+                  <div id="financialClvBreakdown" class="financial-clv-breakdown" aria-live="polite">
+                    <div class="financial-clv-breakdown-row"><span>CLV (new)</span><strong id="financialClvBreakdownClvNew">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Net CLV (new)</span><strong id="financialClvBreakdownNetClvNew">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Net CLV (baseline)</span><strong id="financialClvBreakdownNetClvBaseline">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Incremental Net CLV</span><strong id="financialClvBreakdownNetClvIncremental">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Total impact</span><strong id="financialClvBreakdownTotalImpact">—</strong></div>
+                  </div>
+                </div>
+
+                <div id="financialFieldsNps" class="form-grid" data-framework-fields="nps" style="display:none;">
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialNpsReportedImpactBasis">Reported financial impact (single number)</label>
+                    <select id="financialNpsReportedImpactBasis" name="financialNpsReportedImpactBasis" title="Controls what populates the Financial impact result field and exports. Breakdown below always shows every line.">
+                      <option value="net">Net impact (retention + expansion + referral GP − program cost)</option>
+                      <option value="subtotal">Subtotal (retention + expansion gross profit only — doc Step 3)</option>
+                    </select>
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialNpsTotalCustomers">Total customers (optional reference)</label>
+                    <input id="financialNpsTotalCustomers" name="financialNpsTotalCustomers" type="number" min="0" step="1" placeholder="e.g. 10000" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialNpsCustomersMoved">Customers moved to promoter</label>
+                    <input id="financialNpsCustomersMoved" name="financialNpsCustomersMoved" type="number" min="0" step="1" placeholder="e.g. 1000" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialNpsArpa">ARPA per year</label>
+                    <input id="financialNpsArpa" name="financialNpsArpa" type="number" min="0" step="0.01" placeholder="e.g. 1200" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialNpsRetentionPromoterPct">Retention (promoter, %)</label>
+                    <input id="financialNpsRetentionPromoterPct" name="financialNpsRetentionPromoterPct" type="number" min="0" max="100" step="0.01" placeholder="e.g. 95" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialNpsRetentionSourcePct">Retention (source segment, %)</label>
+                    <input id="financialNpsRetentionSourcePct" name="financialNpsRetentionSourcePct" type="number" min="0" max="100" step="0.01" placeholder="e.g. 60" title="Use the annual retention of the segment customers leave (e.g. detractor 60%). If moves are blended, use a weighted rate." />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialNpsContributionMarginPct">Contribution margin (%)</label>
+                    <input id="financialNpsContributionMarginPct" name="financialNpsContributionMarginPct" type="number" min="0" max="100" step="0.01" placeholder="e.g. 70" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialNpsUpsellPerConverted">Upsell per converted customer (optional, default 0)</label>
+                    <input id="financialNpsUpsellPerConverted" name="financialNpsUpsellPerConverted" type="number" min="0" step="0.01" placeholder="e.g. 150" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialNpsReferralPerConverted">Referral revenue per converted customer (optional)</label>
+                    <input id="financialNpsReferralPerConverted" name="financialNpsReferralPerConverted" type="number" min="0" step="0.01" placeholder="e.g. 50" title="Incremental referral revenue per moved account/year before margin; gross profit = revenue × contribution margin." />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialNpsProgramCost">Program cost</label>
+                    <input id="financialNpsProgramCost" name="financialNpsProgramCost" type="number" min="0" step="0.01" placeholder="e.g. 80000" />
+                  </div>
+                  <div id="financialNpsBreakdown" class="financial-clv-breakdown" aria-live="polite">
+                    <div id="financialNpsBreakdownWarningRow" class="financial-clv-breakdown-row" style="display:none;"><span>Validation</span><strong id="financialNpsBreakdownWarning">—</strong></div>
+                    <div id="financialNpsBreakdownFormulaRow" class="financial-clv-breakdown-row financial-nps-formula-row" style="display:none;"><span id="financialNpsBreakdownFormula" class="financial-nps-formula-text"></span></div>
+                    <div class="financial-clv-breakdown-row"><span>Incremental retained customers</span><strong id="financialNpsBreakdownRetainedCustomers">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Retained revenue</span><strong id="financialNpsBreakdownRetainedRevenue">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Retained gross profit</span><strong id="financialNpsBreakdownRetainedGrossProfit">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Expansion revenue</span><strong id="financialNpsBreakdownExpansionRevenue">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Expansion gross profit</span><strong id="financialNpsBreakdownExpansionGrossProfit">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Subtotal (retention + expansion) gross profit</span><strong id="financialNpsBreakdownSubtotalRetentionExpansion">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Referral revenue</span><strong id="financialNpsBreakdownReferralRevenue">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Referral gross profit</span><strong id="financialNpsBreakdownReferralGrossProfit">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Total gross profit (retention + expansion + referral)</span><strong id="financialNpsBreakdownGrossProfit">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Net impact</span><strong id="financialNpsBreakdownNetImpact">—</strong></div>
+                  </div>
+                </div>
+
+                <div id="financialFieldsRisk" class="form-grid" data-framework-fields="risk" style="display:none;">
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialRiskProbabilityBeforePct">Probability before mitigation (%)</label>
+                    <input id="financialRiskProbabilityBeforePct" name="financialRiskProbabilityBeforePct" type="number" min="0" max="100" step="0.01" placeholder="e.g. 8" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialRiskProbabilityAfterPct">Probability after mitigation (%)</label>
+                    <input id="financialRiskProbabilityAfterPct" name="financialRiskProbabilityAfterPct" type="number" min="0" max="100" step="0.01" placeholder="e.g. 5" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialRiskLossPerExposure">Loss per exposed unit</label>
+                    <input id="financialRiskLossPerExposure" name="financialRiskLossPerExposure" type="number" min="0" step="0.01" placeholder="e.g. 1500" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialRiskExposureUnits">Exposure units per period</label>
+                    <input id="financialRiskExposureUnits" name="financialRiskExposureUnits" type="number" min="0" step="1" placeholder="e.g. 2000" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialRiskPeriodsPerYear">Periods per year</label>
+                    <input id="financialRiskPeriodsPerYear" name="financialRiskPeriodsPerYear" type="number" min="1" step="1" placeholder="e.g. 12" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialRiskMitigationCost">Mitigation cost per year (optional)</label>
+                    <input id="financialRiskMitigationCost" name="financialRiskMitigationCost" type="number" min="0" step="0.01" placeholder="e.g. 250000" />
+                  </div>
+                  <div id="financialRiskBreakdown" class="financial-clv-breakdown" aria-live="polite">
+                    <div class="financial-clv-breakdown-row"><span>Expected loss before</span><strong id="financialRiskBreakdownExpectedBefore">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Expected loss after</span><strong id="financialRiskBreakdownExpectedAfter">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Expected loss avoided</span><strong id="financialRiskBreakdownExpectedAvoided">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Annualized avoided loss</span><strong id="financialRiskBreakdownAnnualizedAvoided">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Mitigation value (net)</span><strong id="financialRiskBreakdownNetValue">—</strong></div>
+                  </div>
+                </div>
+
+              </div>
             </div>
+            </div>
+            </div>
+            <div class="project-modal-rail-column">
+            <nav class="project-modal-section-rail" aria-label="Jump to form section">
+              <button type="button" class="project-modal-section-btn" data-scroll-target="projectModalSectionProject" aria-label="Project">
+                <svg class="project-modal-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+              </button>
+              <button type="button" class="project-modal-section-btn" data-scroll-target="projectModalSectionRice" aria-label="RICE inputs">
+                <svg class="project-modal-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-3v4.5m3-6.75v6.75m3-9v9M3.75 21h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v13.5a1.5 1.5 0 001.5 1.5z" /></svg>
+              </button>
+              <button type="button" class="project-modal-section-btn" data-scroll-target="projectModalSectionMeta" aria-label="Project Details">
+                <svg class="project-modal-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              </button>
+              <button type="button" class="project-modal-section-btn" data-scroll-target="projectModalSectionFinancial" aria-label="Financial impact">
+                <svg class="project-modal-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5z" /></svg>
+              </button>
+            </nav>
+            </div>
+          </div>
 
             <div id="projectFormError" class="field-error" role="alert" style="display:none;"></div>
 
-            <div class="form-actions-row">
+            <div class="project-modal-footer-bar">
+              <div class="project-modal-footer-meta-group">
+              <div class="field-meta-row project-modal-footer-meta" id="projectMetaInfo">
+                <span><strong>Created:</strong> <span id="projectMetaCreated">—</span></span>
+                <span><strong>Last modified:</strong> <span id="projectMetaModified">—</span></span>
+                <span><strong>RICE score:</strong> <span id="projectMetaRice">—</span></span>
+              </div>
+              <div class="field-meta-row field-meta-row--financial-eur project-modal-footer-financial" id="projectMetaFinancialRow">
+                <span><strong>Financial (EUR):</strong> <span id="projectMetaFinancialEur">—</span></span>
+                <span><strong>Exchange rate:</strong> <span id="projectMetaExchangeRate">—</span></span>
+              </div>
+              </div>
+              <div class="form-actions-row project-modal-form-actions">
               <button type="button" class="btn-secondary" id="projectFormCancelBtn">Cancel</button>
               <button type="submit" id="projectFormSubmitBtn">Save project</button>
+              </div>
             </div>
-          </section>
         </div>
       </form>
     </div>

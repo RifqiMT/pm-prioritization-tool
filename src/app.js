@@ -59,9 +59,636 @@ function normalizeCurrency(val) {
   return s === "" ? null : s;
 }
 
+const FINANCIAL_FRAMEWORK_DEFAULT = "custom";
+const FINANCIAL_FRAMEWORKS = ["custom", "clv", "nps", "risk"];
+
+function normalizeFinancialFramework(val) {
+  const raw = (val || "").toString().trim().toLowerCase();
+  return FINANCIAL_FRAMEWORKS.includes(raw) ? raw : FINANCIAL_FRAMEWORK_DEFAULT;
+}
+
+function sanitizeFinancialImpactInputs(framework, inputs) {
+  const f = normalizeFinancialFramework(framework);
+  const source = inputs && typeof inputs === "object" ? inputs : {};
+  const allowed = {
+    custom: ["customNotes"],
+    clv: [
+      "clvCustomers",
+      "clvMargin",
+      "clvRetentionRatePct",
+      "clvDiscountRatePct",
+      "clvAcquisitionCost",
+      "clvBaselineRetentionRatePct"
+    ],
+    nps: [
+      "npsTotalCustomers",
+      "npsCustomersMoved",
+      "npsArpa",
+      "npsRetentionPromoterPct",
+      "npsRetentionSourcePct",
+      "npsContributionMarginPct",
+      "npsUpsellPerConverted",
+      "npsReferralPerConverted",
+      "npsProgramCost",
+      "npsDeltaRetainedRevenue",
+      "npsDeltaExpansionRevenue",
+      "npsDeltaReferralRevenue",
+      "npsReportedImpactBasis"
+    ],
+    risk: [
+      "riskProbabilityBeforePct",
+      "riskProbabilityAfterPct",
+      "riskLossPerExposure",
+      "riskExposureUnits",
+      "riskPeriodsPerYear",
+      "riskMitigationCost"
+    ]
+  };
+
+  const out = {};
+  (allowed[f] || []).forEach((key) => {
+    if (key === "customNotes") {
+      const note = (source.customNotes || "").toString().trim();
+      if (note) out.customNotes = note;
+      return;
+    }
+    if (key === "npsReportedImpactBasis") {
+      const raw = (source.npsReportedImpactBasis ?? "net").toString().trim().toLowerCase();
+      out.npsReportedImpactBasis = raw === "subtotal" ? "subtotal" : "net";
+      return;
+    }
+    const n = Number(source[key]);
+    if (Number.isFinite(n)) out[key] = n;
+  });
+  return out;
+}
+
+function sanitizeProfilesForExport(profiles) {
+  return (Array.isArray(profiles) ? profiles : []).map((profile) => {
+    const safeProfile = { ...profile };
+    safeProfile.projects = (Array.isArray(profile.projects) ? profile.projects : []).map((project) => {
+      const framework = normalizeFinancialFramework(project.financialImpactFramework);
+      return {
+        ...project,
+        financialImpactFramework: framework,
+        financialImpactInputs: sanitizeFinancialImpactInputs(framework, project.financialImpactInputs || {})
+      };
+    });
+    return safeProfile;
+  });
+}
+
+function getFinancialInputsFromForm() {
+  return {
+    customNotes: (elements.financialCustomNotes && elements.financialCustomNotes.value || "").trim(),
+    clvCustomers: elements.financialClvCustomers && elements.financialClvCustomers.value !== "" ? Number(elements.financialClvCustomers.value) : null,
+    clvMargin: elements.financialClvMargin && elements.financialClvMargin.value !== "" ? Number(elements.financialClvMargin.value) : null,
+    clvRetentionRatePct: elements.financialClvRetentionRatePct && elements.financialClvRetentionRatePct.value !== "" ? Number(elements.financialClvRetentionRatePct.value) : null,
+    clvDiscountRatePct: elements.financialClvDiscountRatePct && elements.financialClvDiscountRatePct.value !== "" ? Number(elements.financialClvDiscountRatePct.value) : null,
+    clvAcquisitionCost: elements.financialClvAcquisitionCost && elements.financialClvAcquisitionCost.value !== "" ? Number(elements.financialClvAcquisitionCost.value) : null,
+    clvBaselineRetentionRatePct: elements.financialClvBaselineRetentionRatePct && elements.financialClvBaselineRetentionRatePct.value !== "" ? Number(elements.financialClvBaselineRetentionRatePct.value) : null,
+    npsTotalCustomers: elements.financialNpsTotalCustomers && elements.financialNpsTotalCustomers.value !== "" ? Number(elements.financialNpsTotalCustomers.value) : null,
+    npsCustomersMoved: elements.financialNpsCustomersMoved && elements.financialNpsCustomersMoved.value !== "" ? Number(elements.financialNpsCustomersMoved.value) : null,
+    npsArpa: elements.financialNpsArpa && elements.financialNpsArpa.value !== "" ? Number(elements.financialNpsArpa.value) : null,
+    npsRetentionPromoterPct: elements.financialNpsRetentionPromoterPct && elements.financialNpsRetentionPromoterPct.value !== "" ? Number(elements.financialNpsRetentionPromoterPct.value) : null,
+    npsRetentionSourcePct: elements.financialNpsRetentionSourcePct && elements.financialNpsRetentionSourcePct.value !== "" ? Number(elements.financialNpsRetentionSourcePct.value) : null,
+    npsContributionMarginPct: elements.financialNpsContributionMarginPct && elements.financialNpsContributionMarginPct.value !== "" ? Number(elements.financialNpsContributionMarginPct.value) : null,
+    npsUpsellPerConverted: elements.financialNpsUpsellPerConverted && elements.financialNpsUpsellPerConverted.value !== "" ? Number(elements.financialNpsUpsellPerConverted.value) : null,
+    npsReferralPerConverted: elements.financialNpsReferralPerConverted && elements.financialNpsReferralPerConverted.value !== "" ? Number(elements.financialNpsReferralPerConverted.value) : null,
+    npsProgramCost: elements.financialNpsProgramCost && elements.financialNpsProgramCost.value !== "" ? Number(elements.financialNpsProgramCost.value) : null,
+    npsReportedImpactBasis:
+      elements.financialNpsReportedImpactBasis && elements.financialNpsReportedImpactBasis.value
+        ? elements.financialNpsReportedImpactBasis.value
+        : "net",
+    riskProbabilityBeforePct: elements.financialRiskProbabilityBeforePct && elements.financialRiskProbabilityBeforePct.value !== "" ? Number(elements.financialRiskProbabilityBeforePct.value) : null,
+    riskProbabilityAfterPct: elements.financialRiskProbabilityAfterPct && elements.financialRiskProbabilityAfterPct.value !== "" ? Number(elements.financialRiskProbabilityAfterPct.value) : null,
+    riskLossPerExposure: elements.financialRiskLossPerExposure && elements.financialRiskLossPerExposure.value !== "" ? Number(elements.financialRiskLossPerExposure.value) : null,
+    riskExposureUnits: elements.financialRiskExposureUnits && elements.financialRiskExposureUnits.value !== "" ? Number(elements.financialRiskExposureUnits.value) : null,
+    riskPeriodsPerYear: elements.financialRiskPeriodsPerYear && elements.financialRiskPeriodsPerYear.value !== "" ? Number(elements.financialRiskPeriodsPerYear.value) : null,
+    riskMitigationCost: elements.financialRiskMitigationCost && elements.financialRiskMitigationCost.value !== "" ? Number(elements.financialRiskMitigationCost.value) : null
+  };
+}
+
+/** Use current form values only so framework switches never reuse old framework inputs. */
+function mergeFinancialImpactInputsForCompute() {
+  const formInputs = getFinancialInputsFromForm();
+  const currentFramework = normalizeFinancialFramework(elements.financialFramework && elements.financialFramework.value);
+  return sanitizeFinancialImpactInputs(currentFramework, formInputs);
+}
+
+function setFinancialInputsToForm(inputs) {
+  const safe = inputs && typeof inputs === "object" ? inputs : {};
+  if (elements.financialCustomNotes) elements.financialCustomNotes.value = safe.customNotes || "";
+  if (elements.financialClvCustomers) elements.financialClvCustomers.value = safe.clvCustomers != null ? String(safe.clvCustomers) : "";
+  if (elements.financialClvMargin) elements.financialClvMargin.value = safe.clvMargin != null ? String(safe.clvMargin) : "";
+  if (elements.financialClvRetentionRatePct) elements.financialClvRetentionRatePct.value = safe.clvRetentionRatePct != null ? String(safe.clvRetentionRatePct) : "";
+  if (elements.financialClvDiscountRatePct) elements.financialClvDiscountRatePct.value = safe.clvDiscountRatePct != null ? String(safe.clvDiscountRatePct) : "";
+  if (elements.financialClvAcquisitionCost) elements.financialClvAcquisitionCost.value = safe.clvAcquisitionCost != null ? String(safe.clvAcquisitionCost) : "";
+  if (elements.financialClvBaselineRetentionRatePct) elements.financialClvBaselineRetentionRatePct.value = safe.clvBaselineRetentionRatePct != null ? String(safe.clvBaselineRetentionRatePct) : "";
+  if (elements.financialNpsTotalCustomers) elements.financialNpsTotalCustomers.value = safe.npsTotalCustomers != null ? String(safe.npsTotalCustomers) : "";
+  if (elements.financialNpsCustomersMoved) elements.financialNpsCustomersMoved.value = safe.npsCustomersMoved != null ? String(safe.npsCustomersMoved) : "";
+  if (elements.financialNpsArpa) elements.financialNpsArpa.value = safe.npsArpa != null ? String(safe.npsArpa) : "";
+  if (elements.financialNpsRetentionPromoterPct) elements.financialNpsRetentionPromoterPct.value = safe.npsRetentionPromoterPct != null ? String(safe.npsRetentionPromoterPct) : "";
+  if (elements.financialNpsRetentionSourcePct) elements.financialNpsRetentionSourcePct.value = safe.npsRetentionSourcePct != null ? String(safe.npsRetentionSourcePct) : "";
+  if (elements.financialNpsContributionMarginPct) elements.financialNpsContributionMarginPct.value = safe.npsContributionMarginPct != null ? String(safe.npsContributionMarginPct) : "";
+  if (elements.financialNpsUpsellPerConverted) elements.financialNpsUpsellPerConverted.value = safe.npsUpsellPerConverted != null ? String(safe.npsUpsellPerConverted) : "";
+  if (elements.financialNpsReferralPerConverted) elements.financialNpsReferralPerConverted.value = safe.npsReferralPerConverted != null ? String(safe.npsReferralPerConverted) : "";
+  if (elements.financialNpsProgramCost) elements.financialNpsProgramCost.value = safe.npsProgramCost != null ? String(safe.npsProgramCost) : "";
+  if (elements.financialNpsReportedImpactBasis) {
+    elements.financialNpsReportedImpactBasis.value =
+      safe.npsReportedImpactBasis === "subtotal" ? "subtotal" : "net";
+  }
+  if (elements.financialRiskProbabilityBeforePct) elements.financialRiskProbabilityBeforePct.value = safe.riskProbabilityBeforePct != null ? String(safe.riskProbabilityBeforePct) : "";
+  if (elements.financialRiskProbabilityAfterPct) elements.financialRiskProbabilityAfterPct.value = safe.riskProbabilityAfterPct != null ? String(safe.riskProbabilityAfterPct) : "";
+  if (elements.financialRiskLossPerExposure) elements.financialRiskLossPerExposure.value = safe.riskLossPerExposure != null ? String(safe.riskLossPerExposure) : "";
+  if (elements.financialRiskExposureUnits) elements.financialRiskExposureUnits.value = safe.riskExposureUnits != null ? String(safe.riskExposureUnits) : "";
+  if (elements.financialRiskPeriodsPerYear) elements.financialRiskPeriodsPerYear.value = safe.riskPeriodsPerYear != null ? String(safe.riskPeriodsPerYear) : "";
+  if (elements.financialRiskMitigationCost) elements.financialRiskMitigationCost.value = safe.riskMitigationCost != null ? String(safe.riskMitigationCost) : "";
+}
+
+function resetFinancialFrameworkInputs() {
+  // Hard reset all framework-specific inputs to prevent stale cross-framework carryover.
+  setFinancialInputsToForm({});
+  if (elements.financialImpactValue && elements.financialImpactValue.readOnly) {
+    elements.financialImpactValue.value = "";
+  }
+}
+
+function toggleFinancialFrameworkFields(framework) {
+  const selected = normalizeFinancialFramework(framework);
+  if (elements.financialFramework) elements.financialFramework.value = selected;
+  if (elements.financialImpactValue) {
+    const isCustom = selected === FINANCIAL_FRAMEWORK_DEFAULT;
+    elements.financialImpactValue.readOnly = !isCustom;
+    elements.financialImpactValue.classList.toggle("is-computed", !isCustom);
+    if (isCustom) {
+      elements.financialImpactValue.placeholder = "e.g. 250000";
+    } else {
+      elements.financialImpactValue.placeholder = "Auto-calculated from framework inputs";
+    }
+  }
+  if (elements.financialFrameworkFormulaHint) {
+    if (selected === "clv") {
+      elements.financialFrameworkFormulaHint.textContent = "CLV: CLV = (margin x retention) / (1 + discount - retention), Net CLV = CLV - CAC. Enter baseline retention for uplift mode. If you enter a small value (e.g. 3) it is treated as uplift points (+3 pp). If customers is blank, result is per-customer.";
+    } else if (selected === "nps") {
+      elements.financialFrameworkFormulaHint.textContent =
+        "NPS: use “Reported impact” to choose what fills the financial impact field—subtotal (retention + expansion GP, doc Step 3) or net (includes referral GP and subtracts program cost). Breakdown always shows all lines. Rates accept 95 or 0.95.";
+    } else if (selected === "risk") {
+      elements.financialFrameworkFormulaHint.textContent = "Risk mitigation value: ((expected loss before - expected loss after) x periods per year) - mitigation cost, where expected loss = probability x loss per exposure x exposure units.";
+    } else {
+      elements.financialFrameworkFormulaHint.textContent = "Custom: enter a direct amount manually.";
+    }
+  }
+  const blocks = document.querySelectorAll("[data-framework-fields]");
+  blocks.forEach((el) => {
+    const isActive = el.getAttribute("data-framework-fields") === selected;
+    el.style.display = isActive ? "" : "none";
+  });
+  if (selected !== "clv") {
+    updateClvBreakdown(null);
+  }
+  if (selected !== "risk") {
+    updateRiskBreakdown(null);
+  }
+  if (selected !== "nps") {
+    updateNpsBreakdown(null);
+  }
+}
+
+function computeClvBreakdown(inputs) {
+  const safe = inputs && typeof inputs === "object" ? inputs : {};
+  const toFinite = (value) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  };
+  const pctOrNull = (value) => {
+    const n = toFinite(value);
+    return n == null ? null : n / 100;
+  };
+
+  const customersRaw = toFinite(safe.clvCustomers);
+  const margin = toFinite(safe.clvMargin);
+  const retentionRateRaw = toFinite(safe.clvRetentionRatePct);
+  const retentionRate = pctOrNull(safe.clvRetentionRatePct);
+  const discountRate = pctOrNull(safe.clvDiscountRatePct);
+  const acquisitionCostRaw = toFinite(safe.clvAcquisitionCost);
+  const acquisitionCost = acquisitionCostRaw == null ? 0 : acquisitionCostRaw;
+  const baselineRetentionRateRaw = toFinite(safe.clvBaselineRetentionRatePct);
+  let baselineRetentionRate = pctOrNull(safe.clvBaselineRetentionRatePct);
+  let effectiveNewRetentionRate = retentionRate;
+
+  if (retentionRateRaw == null || margin == null || discountRate == null) return null;
+
+  if (baselineRetentionRateRaw != null && baselineRetentionRateRaw > 0 && baselineRetentionRateRaw <= 15) {
+    effectiveNewRetentionRate = (retentionRateRaw + baselineRetentionRateRaw) / 100;
+    baselineRetentionRate = retentionRateRaw / 100;
+  }
+
+  const denominator = 1 + discountRate - effectiveNewRetentionRate;
+  if (effectiveNewRetentionRate == null || denominator === 0) return null;
+
+  const customers = customersRaw == null ? 1 : customersRaw;
+  const clvNew = (margin * effectiveNewRetentionRate) / denominator;
+  const netClvNew = clvNew - acquisitionCost;
+
+  let netClvBaseline = null;
+  let netClvIncremental = null;
+  if (baselineRetentionRate != null) {
+    const baselineDenominator = 1 + discountRate - baselineRetentionRate;
+    if (baselineDenominator === 0) return null;
+    const clvBaseline = (margin * baselineRetentionRate) / baselineDenominator;
+    netClvBaseline = clvBaseline - acquisitionCost;
+    netClvIncremental = netClvNew - netClvBaseline;
+  }
+
+  const totalImpact = netClvIncremental != null ? customers * netClvIncremental : customers * netClvNew;
+  return {
+    clvNew,
+    netClvNew,
+    netClvBaseline,
+    netClvIncremental,
+    totalImpact
+  };
+}
+
+function updateClvBreakdown(breakdown) {
+  const setText = (el, value) => {
+    if (!el) return;
+    el.textContent = Number.isFinite(value) ? Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 }) : "—";
+  };
+  setText(elements.financialClvBreakdownClvNew, breakdown && breakdown.clvNew);
+  setText(elements.financialClvBreakdownNetClvNew, breakdown && breakdown.netClvNew);
+  setText(elements.financialClvBreakdownNetClvBaseline, breakdown && breakdown.netClvBaseline);
+  setText(elements.financialClvBreakdownNetClvIncremental, breakdown && breakdown.netClvIncremental);
+  setText(elements.financialClvBreakdownTotalImpact, breakdown && breakdown.totalImpact);
+}
+
+function computeRiskBreakdown(inputs) {
+  const safe = inputs && typeof inputs === "object" ? inputs : {};
+  const toFinite = (value) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const probabilityBeforePct = toFinite(safe.riskProbabilityBeforePct);
+  const probabilityAfterPct = toFinite(safe.riskProbabilityAfterPct);
+  const lossPerExposure = toFinite(safe.riskLossPerExposure);
+  const exposureUnits = toFinite(safe.riskExposureUnits);
+  const periodsPerYearRaw = toFinite(safe.riskPeriodsPerYear);
+  const mitigationCostRaw = toFinite(safe.riskMitigationCost);
+  const periodsPerYear = periodsPerYearRaw == null ? 12 : periodsPerYearRaw;
+  const mitigationCost = mitigationCostRaw == null ? 0 : mitigationCostRaw;
+
+  if (
+    probabilityBeforePct == null ||
+    probabilityAfterPct == null ||
+    lossPerExposure == null ||
+    exposureUnits == null ||
+    periodsPerYear <= 0
+  ) return null;
+  if (probabilityAfterPct > probabilityBeforePct) return null;
+
+  const expectedBefore = exposureUnits * (probabilityBeforePct / 100) * lossPerExposure;
+  const expectedAfter = exposureUnits * (probabilityAfterPct / 100) * lossPerExposure;
+  const expectedAvoided = expectedBefore - expectedAfter;
+  const annualizedAvoided = expectedAvoided * periodsPerYear;
+  const netValue = annualizedAvoided - mitigationCost;
+
+  return {
+    expectedBefore,
+    expectedAfter,
+    expectedAvoided,
+    annualizedAvoided,
+    netValue
+  };
+}
+
+function updateRiskBreakdown(breakdown) {
+  const setText = (el, value) => {
+    if (!el) return;
+    el.textContent = Number.isFinite(value) ? Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 }) : "—";
+  };
+  setText(elements.financialRiskBreakdownExpectedBefore, breakdown && breakdown.expectedBefore);
+  setText(elements.financialRiskBreakdownExpectedAfter, breakdown && breakdown.expectedAfter);
+  setText(elements.financialRiskBreakdownExpectedAvoided, breakdown && breakdown.expectedAvoided);
+  setText(elements.financialRiskBreakdownAnnualizedAvoided, breakdown && breakdown.annualizedAvoided);
+  setText(elements.financialRiskBreakdownNetValue, breakdown && breakdown.netValue);
+}
+
+/**
+ * Parses retention/margin inputs: 95 → 0.95, and 0.95 → 0.95 (decimal fraction).
+ * Values must be within 0–100; (1, 100] are treated as percent points; [0, 1] as fractions.
+ */
+function parseNpsRateInput(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0 || n > 100) return null;
+  if (n > 1) return n / 100;
+  return n;
+}
+
+function normalizeNpsReportedImpactBasis(inputs) {
+  const safe = inputs && typeof inputs === "object" ? inputs : {};
+  return safe.npsReportedImpactBasis === "subtotal" ? "subtotal" : "net";
+}
+
+function computeNpsBreakdown(inputs) {
+  const safe = inputs && typeof inputs === "object" ? inputs : {};
+  const toFinite = (value) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const customersMoved = toFinite(safe.npsCustomersMoved);
+  const totalCustomers = toFinite(safe.npsTotalCustomers);
+  const arpa = toFinite(safe.npsArpa);
+  const retentionPromoter = parseNpsRateInput(safe.npsRetentionPromoterPct);
+  const retentionSource = parseNpsRateInput(safe.npsRetentionSourcePct);
+  const contributionMargin = parseNpsRateInput(safe.npsContributionMarginPct);
+  const upsellPerConvertedRaw = toFinite(safe.npsUpsellPerConverted);
+  const referralPerConvertedRaw = toFinite(safe.npsReferralPerConverted);
+  const programCostRaw = toFinite(safe.npsProgramCost);
+  const upsellPerConverted = upsellPerConvertedRaw == null ? 0 : upsellPerConvertedRaw;
+  const referralPerConverted = referralPerConvertedRaw == null ? 0 : referralPerConvertedRaw;
+  const programCost = programCostRaw == null ? 0 : programCostRaw;
+
+  if (
+    customersMoved == null ||
+    arpa == null ||
+    retentionPromoter == null ||
+    retentionSource == null ||
+    contributionMargin == null
+  ) return null;
+  if (totalCustomers != null && customersMoved > totalCustomers) return null;
+  if (retentionPromoter < retentionSource) return null;
+
+  const incrementalRetainedCustomers = customersMoved * (retentionPromoter - retentionSource);
+  const retainedRevenue = incrementalRetainedCustomers * arpa;
+  const expansionRevenue = customersMoved * upsellPerConverted;
+  const referralRevenue = customersMoved * referralPerConverted;
+  const retainedGrossProfit = retainedRevenue * contributionMargin;
+  const expansionGrossProfit = expansionRevenue * contributionMargin;
+  const referralGrossProfit = referralRevenue * contributionMargin;
+  const subtotalRetentionExpansionGrossProfit = retainedGrossProfit + expansionGrossProfit;
+  const grossProfitImpact = subtotalRetentionExpansionGrossProfit + referralGrossProfit;
+  const netImpact = grossProfitImpact - programCost;
+  const retentionRateDelta = retentionPromoter - retentionSource;
+
+  return {
+    incrementalRetainedCustomers,
+    retentionRateDelta,
+    retainedRevenue,
+    retainedGrossProfit,
+    expansionRevenue,
+    expansionGrossProfit,
+    subtotalRetentionExpansionGrossProfit,
+    referralRevenue,
+    referralGrossProfit,
+    grossProfitImpact,
+    netImpact
+  };
+}
+
+function updateNpsBreakdown(breakdown) {
+  const setText = (el, value) => {
+    if (!el) return;
+    el.textContent = Number.isFinite(value) ? Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 }) : "—";
+  };
+  setText(elements.financialNpsBreakdownRetainedCustomers, breakdown && breakdown.incrementalRetainedCustomers);
+  setText(elements.financialNpsBreakdownRetainedRevenue, breakdown && breakdown.retainedRevenue);
+  setText(elements.financialNpsBreakdownRetainedGrossProfit, breakdown && breakdown.retainedGrossProfit);
+  setText(elements.financialNpsBreakdownExpansionRevenue, breakdown && breakdown.expansionRevenue);
+  setText(elements.financialNpsBreakdownExpansionGrossProfit, breakdown && breakdown.expansionGrossProfit);
+  setText(elements.financialNpsBreakdownSubtotalRetentionExpansion, breakdown && breakdown.subtotalRetentionExpansionGrossProfit);
+  setText(elements.financialNpsBreakdownReferralRevenue, breakdown && breakdown.referralRevenue);
+  setText(elements.financialNpsBreakdownReferralGrossProfit, breakdown && breakdown.referralGrossProfit);
+  setText(elements.financialNpsBreakdownGrossProfit, breakdown && breakdown.grossProfitImpact);
+  setText(elements.financialNpsBreakdownNetImpact, breakdown && breakdown.netImpact);
+  if (elements.financialNpsBreakdownFormula) {
+    if (breakdown && Number.isFinite(breakdown.incrementalRetainedCustomers)) {
+      const dPct = Number.isFinite(breakdown.retentionRateDelta)
+        ? (breakdown.retentionRateDelta * 100).toLocaleString(undefined, { maximumFractionDigits: 2 })
+        : "—";
+      elements.financialNpsBreakdownFormula.textContent =
+        `Δ retention = ${dPct} percentage points → incremental retained customers = moved × ΔR. ` +
+        "GP = revenue × contribution margin per stream; subtotal = retained + expansion (matches the worked example when referral = 0).";
+    } else {
+      elements.financialNpsBreakdownFormula.textContent = "";
+    }
+  }
+  if (elements.financialNpsBreakdownFormulaRow) {
+    elements.financialNpsBreakdownFormulaRow.style.display =
+      breakdown && Number.isFinite(breakdown.incrementalRetainedCustomers) ? "" : "none";
+  }
+
+  const framework = elements.financialFramework && normalizeFinancialFramework(elements.financialFramework.value);
+  if (elements.financialNpsBreakdownWarningRow && elements.financialNpsBreakdownWarning) {
+    if (framework !== "nps") {
+      elements.financialNpsBreakdownWarning.textContent = "—";
+      elements.financialNpsBreakdownWarningRow.style.display = "none";
+      elements.financialNpsBreakdownWarningRow.classList.remove("is-missing");
+    } else {
+      const inputs = mergeFinancialImpactInputsForCompute();
+      const before = parseNpsRateInput(inputs.npsRetentionPromoterPct);
+      const source = parseNpsRateInput(inputs.npsRetentionSourcePct);
+      const invalidRetentionOrder =
+        before != null && source != null && source > before;
+      if (invalidRetentionOrder) {
+        elements.financialNpsBreakdownWarning.textContent = "Source segment retention cannot be greater than promoter retention.";
+        elements.financialNpsBreakdownWarningRow.style.display = "";
+        elements.financialNpsBreakdownWarningRow.classList.add("is-missing");
+      } else {
+        elements.financialNpsBreakdownWarning.textContent = "—";
+        elements.financialNpsBreakdownWarningRow.style.display = "none";
+        elements.financialNpsBreakdownWarningRow.classList.remove("is-missing");
+      }
+    }
+  }
+}
+
+function getFinancialFrameworkValidationMessage(framework, inputs) {
+  const f = normalizeFinancialFramework(framework);
+  const safe = inputs && typeof inputs === "object" ? inputs : {};
+  const isFiniteNumber = (value) => Number.isFinite(Number(value));
+
+  if (f === "clv") {
+    return "CLV framework requires margin, retention rate, and discount rate (plus optional customers, CAC, baseline/uplift).";
+  }
+  if (f === "nps") {
+    const rateOutOfRange = (key) =>
+      safe[key] != null &&
+      safe[key] !== "" &&
+      isFiniteNumber(safe[key]) &&
+      parseNpsRateInput(safe[key]) == null;
+    if (
+      rateOutOfRange("npsRetentionPromoterPct") ||
+      rateOutOfRange("npsRetentionSourcePct") ||
+      rateOutOfRange("npsContributionMarginPct")
+    ) {
+      return "NPS framework: retention and margin must be between 0 and 100 (e.g. 95 or 0.95 for 95%).";
+    }
+    const hasMoved = isFiniteNumber(safe.npsCustomersMoved);
+    const hasArpa = isFiniteNumber(safe.npsArpa);
+    const promoR = parseNpsRateInput(safe.npsRetentionPromoterPct);
+    const srcR = parseNpsRateInput(safe.npsRetentionSourcePct);
+    const marginR = parseNpsRateInput(safe.npsContributionMarginPct);
+    const hasPromo = promoR != null;
+    const hasSrc = srcR != null;
+    const hasMargin = marginR != null;
+    if (hasMoved && hasArpa && hasPromo && hasSrc && hasMargin) {
+      if (srcR > promoR) {
+        return "NPS framework: source segment retention must be less than or equal to promoter retention.";
+      }
+      if (safe.npsTotalCustomers != null && Number(safe.npsCustomersMoved) > Number(safe.npsTotalCustomers)) {
+        return "NPS framework: customers moved cannot exceed total customers.";
+      }
+    }
+    return "NPS framework requires moved customers, ARPA, promoter and source segment retention %, and contribution margin % (upsell and referral default to 0 if blank; optional total customers, program cost).";
+  }
+  if (f === "risk") {
+    return "Risk framework requires probability before, probability after, loss per exposure, and exposure units (plus optional periods per year and mitigation cost).";
+  }
+  return "Complete all required inputs for the selected financial framework.";
+}
+
+function computeFrameworkFinancialImpact(framework, inputs, customAmount) {
+  const safe = inputs && typeof inputs === "object" ? inputs : {};
+  const toFinite = (value) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  };
+  const pctOrNull = (value) => {
+    const n = toFinite(value);
+    return n == null ? null : n / 100;
+  };
+  const f = normalizeFinancialFramework(framework);
+
+  if (f === "custom") {
+    return toFinite(customAmount);
+  }
+
+  if (f === "clv") {
+    const customers = toFinite(safe.clvCustomers);
+    const margin = toFinite(safe.clvMargin);
+    const retentionRateRaw = toFinite(safe.clvRetentionRatePct);
+    const retentionRate = pctOrNull(safe.clvRetentionRatePct);
+    const discountRate = pctOrNull(safe.clvDiscountRatePct);
+    const acquisitionCostRaw = toFinite(safe.clvAcquisitionCost);
+    const acquisitionCost = acquisitionCostRaw == null ? 0 : acquisitionCostRaw;
+    const baselineRetentionRateRaw = toFinite(safe.clvBaselineRetentionRatePct);
+    let baselineRetentionRate = pctOrNull(safe.clvBaselineRetentionRatePct);
+    let effectiveNewRetentionRate = retentionRate;
+    if (retentionRateRaw == null || margin == null || discountRate == null) return null;
+
+    // UX guardrail: users often enter uplift points (e.g. "3") instead of baseline retention.
+    // If baseline input looks like uplift points, reinterpret as "new retention = current + uplift points".
+    if (baselineRetentionRateRaw != null && baselineRetentionRateRaw > 0 && baselineRetentionRateRaw <= 15) {
+      effectiveNewRetentionRate = (retentionRateRaw + baselineRetentionRateRaw) / 100;
+      baselineRetentionRate = retentionRateRaw / 100;
+    }
+
+    const denominator = 1 + discountRate - effectiveNewRetentionRate;
+    const customerCount = customers == null ? 1 : customers;
+    if (effectiveNewRetentionRate == null || denominator === 0) return null;
+    const clv = (margin * effectiveNewRetentionRate) / denominator;
+    const netClv = clv - acquisitionCost;
+
+    if (baselineRetentionRate != null) {
+      const baselineDenominator = 1 + discountRate - baselineRetentionRate;
+      if (baselineDenominator === 0) return null;
+      const baselineClv = (margin * baselineRetentionRate) / baselineDenominator;
+      const baselineNetClv = baselineClv - acquisitionCost;
+      return customerCount * (netClv - baselineNetClv);
+    }
+
+    return customerCount * netClv;
+  }
+  if (f === "nps") {
+    const basis = normalizeNpsReportedImpactBasis(safe);
+    const breakdown = computeNpsBreakdown(safe);
+    if (breakdown) {
+      return basis === "subtotal" ? breakdown.subtotalRetentionExpansionGrossProfit : breakdown.netImpact;
+    }
+    const dr = toFinite(safe.npsDeltaRetainedRevenue);
+    const de = toFinite(safe.npsDeltaExpansionRevenue);
+    const dref = toFinite(safe.npsDeltaReferralRevenue);
+    const pc = toFinite(safe.npsProgramCost);
+    if (dr != null || de != null || dref != null) {
+      if (basis === "subtotal") return (dr ?? 0) + (de ?? 0);
+      return (dr ?? 0) + (de ?? 0) + (dref ?? 0) - (pc ?? 0);
+    }
+    return null;
+  }
+  if (f === "risk") {
+    const breakdown = computeRiskBreakdown(safe);
+    if (!breakdown) return null;
+    return breakdown.netValue;
+  }
+  return null;
+}
+
 // --- Initialization ---
+let projectModalSectionNavObserver = null;
+
+function initProjectModalSectionNav() {
+  const modal = document.getElementById("projectModal");
+  if (!modal || modal.dataset.sectionNavReady === "1") return;
+  modal.dataset.sectionNavReady = "1";
+  const scrollRoot =
+    modal.querySelector("#projectModalScrollRegion") || modal.querySelector(".project-modal-scroll") || modal.querySelector(".modal-body");
+  modal.querySelectorAll(".project-modal-section-btn[data-scroll-target]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-scroll-target");
+      const el = id ? document.getElementById(id) : null;
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      modal.querySelectorAll(".project-modal-section-btn").forEach((b) => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+    });
+  });
+
+  if (!scrollRoot) return;
+  const sectionEls = ["projectModalSectionProject", "projectModalSectionRice", "projectModalSectionMeta", "projectModalSectionFinancial"]
+    .map((id) => document.getElementById(id))
+    .filter(Boolean);
+  if (sectionEls.length === 0) return;
+
+  if (projectModalSectionNavObserver) {
+    projectModalSectionNavObserver.disconnect();
+    projectModalSectionNavObserver = null;
+  }
+  projectModalSectionNavObserver = new IntersectionObserver(
+    (entries) => {
+      let best = null;
+      let bestRatio = 0;
+      entries.forEach((e) => {
+        if (e.isIntersecting && e.intersectionRatio > bestRatio) {
+          bestRatio = e.intersectionRatio;
+          best = e.target;
+        }
+      });
+      if (!best || bestRatio < 0.08) return;
+      const id = best.id;
+      modal.querySelectorAll(".project-modal-section-btn").forEach((b) => {
+        b.classList.toggle("is-active", b.getAttribute("data-scroll-target") === id);
+      });
+    },
+    { root: scrollRoot, threshold: [0, 0.05, 0.1, 0.2, 0.35, 0.55, 0.75, 1] }
+  );
+  sectionEls.forEach((sec) => projectModalSectionNavObserver.observe(sec));
+}
+
+function resetProjectModalSectionNav() {
+  const modal = document.getElementById("projectModal");
+  if (!modal) return;
+  const scrollRegion =
+    modal.querySelector("#projectModalScrollRegion") || modal.querySelector(".project-modal-scroll") || modal.querySelector(".modal-body");
+  if (scrollRegion) scrollRegion.scrollTop = 0;
+  const btns = modal.querySelectorAll(".project-modal-section-btn");
+  btns.forEach((b, i) => b.classList.toggle("is-active", i === 0));
+}
+
 function init() {
   cacheElements();
+  initProjectModalSectionNav();
   initCurrencyOptions();
   initFilterCountriesOptions();
   ExchangeRates.init({
@@ -88,6 +715,7 @@ function init() {
   attachEventListeners();
   loadState();
   ensureDefaultProfile();
+  toggleFinancialFrameworkFields(FINANCIAL_FRAMEWORK_DEFAULT);
   renderProfiles();
   renderProjects();
   if (elements.projectsTableView && elements.projectsBoardView) {
@@ -178,6 +806,59 @@ function cacheElements() {
   elements.effortDescription = $("effortDescription");
   elements.effortValue = $("effortValue");
   elements.financialImpactValue = $("financialImpactValue");
+  elements.financialFramework = $("financialFramework");
+  elements.financialFrameworkFormulaHint = $("financialFrameworkFormulaHint");
+  elements.financialFrameworkFields = $("financialFrameworkFields");
+  elements.financialCustomNotes = $("financialCustomNotes");
+  elements.financialClvCustomers = $("financialClvCustomers");
+  elements.financialClvMargin = $("financialClvMargin");
+  elements.financialClvRetentionRatePct = $("financialClvRetentionRatePct");
+  elements.financialClvDiscountRatePct = $("financialClvDiscountRatePct");
+  elements.financialClvAcquisitionCost = $("financialClvAcquisitionCost");
+  elements.financialClvBaselineRetentionRatePct = $("financialClvBaselineRetentionRatePct");
+  elements.financialClvBreakdown = $("financialClvBreakdown");
+  elements.financialClvBreakdownClvNew = $("financialClvBreakdownClvNew");
+  elements.financialClvBreakdownNetClvNew = $("financialClvBreakdownNetClvNew");
+  elements.financialClvBreakdownNetClvBaseline = $("financialClvBreakdownNetClvBaseline");
+  elements.financialClvBreakdownNetClvIncremental = $("financialClvBreakdownNetClvIncremental");
+  elements.financialClvBreakdownTotalImpact = $("financialClvBreakdownTotalImpact");
+  elements.financialNpsTotalCustomers = $("financialNpsTotalCustomers");
+  elements.financialNpsCustomersMoved = $("financialNpsCustomersMoved");
+  elements.financialNpsArpa = $("financialNpsArpa");
+  elements.financialNpsRetentionPromoterPct = $("financialNpsRetentionPromoterPct");
+  elements.financialNpsRetentionSourcePct = $("financialNpsRetentionSourcePct");
+  elements.financialNpsContributionMarginPct = $("financialNpsContributionMarginPct");
+  elements.financialNpsUpsellPerConverted = $("financialNpsUpsellPerConverted");
+  elements.financialNpsReferralPerConverted = $("financialNpsReferralPerConverted");
+  elements.financialNpsProgramCost = $("financialNpsProgramCost");
+  elements.financialNpsReportedImpactBasis = $("financialNpsReportedImpactBasis");
+  elements.financialNpsBreakdown = $("financialNpsBreakdown");
+  elements.financialNpsBreakdownWarningRow = $("financialNpsBreakdownWarningRow");
+  elements.financialNpsBreakdownWarning = $("financialNpsBreakdownWarning");
+  elements.financialNpsBreakdownFormulaRow = $("financialNpsBreakdownFormulaRow");
+  elements.financialNpsBreakdownFormula = $("financialNpsBreakdownFormula");
+  elements.financialNpsBreakdownRetainedCustomers = $("financialNpsBreakdownRetainedCustomers");
+  elements.financialNpsBreakdownRetainedRevenue = $("financialNpsBreakdownRetainedRevenue");
+  elements.financialNpsBreakdownRetainedGrossProfit = $("financialNpsBreakdownRetainedGrossProfit");
+  elements.financialNpsBreakdownExpansionRevenue = $("financialNpsBreakdownExpansionRevenue");
+  elements.financialNpsBreakdownExpansionGrossProfit = $("financialNpsBreakdownExpansionGrossProfit");
+  elements.financialNpsBreakdownSubtotalRetentionExpansion = $("financialNpsBreakdownSubtotalRetentionExpansion");
+  elements.financialNpsBreakdownReferralRevenue = $("financialNpsBreakdownReferralRevenue");
+  elements.financialNpsBreakdownReferralGrossProfit = $("financialNpsBreakdownReferralGrossProfit");
+  elements.financialNpsBreakdownGrossProfit = $("financialNpsBreakdownGrossProfit");
+  elements.financialNpsBreakdownNetImpact = $("financialNpsBreakdownNetImpact");
+  elements.financialRiskProbabilityBeforePct = $("financialRiskProbabilityBeforePct");
+  elements.financialRiskProbabilityAfterPct = $("financialRiskProbabilityAfterPct");
+  elements.financialRiskLossPerExposure = $("financialRiskLossPerExposure");
+  elements.financialRiskExposureUnits = $("financialRiskExposureUnits");
+  elements.financialRiskPeriodsPerYear = $("financialRiskPeriodsPerYear");
+  elements.financialRiskMitigationCost = $("financialRiskMitigationCost");
+  elements.financialRiskBreakdown = $("financialRiskBreakdown");
+  elements.financialRiskBreakdownExpectedBefore = $("financialRiskBreakdownExpectedBefore");
+  elements.financialRiskBreakdownExpectedAfter = $("financialRiskBreakdownExpectedAfter");
+  elements.financialRiskBreakdownExpectedAvoided = $("financialRiskBreakdownExpectedAvoided");
+  elements.financialRiskBreakdownAnnualizedAvoided = $("financialRiskBreakdownAnnualizedAvoided");
+  elements.financialRiskBreakdownNetValue = $("financialRiskBreakdownNetValue");
   elements.projectCurrency = $("projectCurrency");
   elements.projectType = $("projectType");
   elements.projectStatus = $("projectStatus");
@@ -881,18 +1562,55 @@ function attachEventListeners() {
 
   elements.projectForm.addEventListener("submit", handleProjectFormSubmit);
 
+  if (elements.financialFramework) {
+    elements.financialFramework.addEventListener("change", () => {
+      const nextFramework = normalizeFinancialFramework(elements.financialFramework.value);
+      const prevFramework = normalizeFinancialFramework(elements.financialFramework.dataset.lastFramework || "");
+      if (prevFramework && prevFramework !== nextFramework) {
+        resetFinancialFrameworkInputs();
+      }
+      toggleFinancialFrameworkFields(nextFramework);
+      elements.financialFramework.dataset.lastFramework = nextFramework;
+      updateModalRicePreview();
+    });
+  }
+
   [
     elements.reachValue,
     elements.impactValue,
     elements.confidenceValue,
     elements.effortValue,
     elements.financialImpactValue,
-    elements.projectCurrency
+    elements.projectCurrency,
+    elements.financialCustomNotes,
+    elements.financialClvCustomers,
+    elements.financialClvMargin,
+    elements.financialClvRetentionRatePct,
+    elements.financialClvDiscountRatePct,
+    elements.financialClvAcquisitionCost,
+    elements.financialClvBaselineRetentionRatePct,
+    elements.financialNpsTotalCustomers,
+    elements.financialNpsCustomersMoved,
+    elements.financialNpsArpa,
+    elements.financialNpsRetentionPromoterPct,
+    elements.financialNpsRetentionSourcePct,
+    elements.financialNpsContributionMarginPct,
+    elements.financialNpsUpsellPerConverted,
+    elements.financialNpsReferralPerConverted,
+    elements.financialNpsProgramCost,
+    elements.financialNpsReportedImpactBasis,
+    elements.financialRiskProbabilityBeforePct,
+    elements.financialRiskProbabilityAfterPct,
+    elements.financialRiskLossPerExposure,
+    elements.financialRiskExposureUnits,
+    elements.financialRiskPeriodsPerYear,
+    elements.financialRiskMitigationCost
   ].forEach((el) => {
     if (!el) return;
     el.addEventListener("input", updateModalRicePreview);
     el.addEventListener("change", updateModalRicePreview);
   });
+
 }
 
 function updateFiltersActivePill() {
@@ -936,7 +1654,7 @@ function handleExportData() {
     const payload = {
       version: 1,
       exportedAt: new Date().toISOString(),
-      profiles: state.profiles,
+      profiles: sanitizeProfilesForExport(state.profiles),
       activeProfileId: state.activeProfileId,
       sortField: state.sortField,
       sortDirection: state.sortDirection
@@ -989,6 +1707,8 @@ function handleExportCsv() {
       "effortDescription",
       "financialImpactValue",
       "financialImpactCurrency",
+      "financialImpactFramework",
+      "financialImpactInputs",
       "projectType",
       "projectStatus",
       "tshirtSize",
@@ -1012,6 +1732,8 @@ function handleExportCsv() {
           escapeCsvCell(profileName),
           escapeCsvCell(profileTeam),
           escapeCsvCell(profileCreatedAt),
+          "",
+          "",
           "",
           "",
           "",
@@ -1060,6 +1782,13 @@ function handleExportCsv() {
           escapeCsvCell(project.effortDescription || ""),
           escapeCsvCell(project.financialImpactValue != null ? String(project.financialImpactValue) : ""),
           escapeCsvCell(project.financialImpactCurrency || ""),
+          escapeCsvCell(normalizeFinancialFramework(project.financialImpactFramework)),
+          escapeCsvCell(JSON.stringify(
+            sanitizeFinancialImpactInputs(
+              project.financialImpactFramework,
+              project.financialImpactInputs || {}
+            )
+          )),
           escapeCsvCell(project.projectType || ""),
           escapeCsvCell(project.projectStatus || ""),
           escapeCsvCell(project.tshirtSize || ""),
@@ -1312,6 +2041,12 @@ function buildProfilesFromCsvRows(header, rows) {
       effortDescription: (cells[colIndex.effortDescription] ?? "").toString(),
       financialImpactValue: toNumberOrNull(cells[colIndex.financialImpactValue]),
       financialImpactCurrency: normalizeCurrency(cells[colIndex.financialImpactCurrency]),
+      financialImpactFramework: normalizeFinancialFramework((cells[colIndex.financialImpactFramework] ?? "").toString()),
+      financialImpactInputs: (() => {
+        const raw = (cells[colIndex.financialImpactInputs] ?? "").toString().trim();
+        if (!raw) return {};
+        try { return JSON.parse(raw); } catch (_) { return {}; }
+      })(),
       projectType: (cells[colIndex.projectType] ?? "").toString().trim() || null,
       projectStatus: (cells[colIndex.projectStatus] ?? "").toString().trim() || null,
       tshirtSize: (cells[colIndex.tshirtSize] ?? "").toString().trim() || null,
@@ -1354,8 +2089,16 @@ function normalizeImportedProject(project) {
   const confidenceValue = toNumberOrNull(project.confidenceValue);
   const effortValue = toNumberOrNull(project.effortValue);
   const financialImpactValue = toNumberOrNull(project.financialImpactValue);
+  const financialImpactFramework = normalizeFinancialFramework(project.financialImpactFramework);
+  const financialImpactInputs = sanitizeFinancialImpactInputs(
+    financialImpactFramework,
+    project.financialImpactInputs && typeof project.financialImpactInputs === "object"
+      ? project.financialImpactInputs
+      : {}
+  );
   const periodRaw = project.projectPeriod != null ? String(project.projectPeriod).trim() : "";
   const projectPeriod = periodRaw ? periodRaw.toUpperCase() : null;
+  const normalizedFinancialValue = computeFrameworkFinancialImpact(financialImpactFramework, financialImpactInputs, financialImpactValue);
   const normalized = {
     id,
     createdAt,
@@ -1370,8 +2113,10 @@ function normalizeImportedProject(project) {
     confidenceValue: Number.isFinite(confidenceValue) ? confidenceValue : 50,
     effortDescription: String(project.effortDescription || ""),
     effortValue: Number.isFinite(effortValue) && effortValue > 0 ? effortValue : 1,
-    financialImpactValue: Number.isFinite(financialImpactValue) && financialImpactValue >= 0 ? financialImpactValue : null,
+    financialImpactValue: Number.isFinite(normalizedFinancialValue) ? normalizedFinancialValue : null,
     financialImpactCurrency: normalizeCurrency(project.financialImpactCurrency),
+    financialImpactFramework,
+    financialImpactInputs,
     projectType: (project.projectType != null && String(project.projectType).trim() !== "") ? String(project.projectType).trim() : null,
     projectStatus: (project.projectStatus != null && String(project.projectStatus).trim() !== "") ? String(project.projectStatus).trim() : null,
     tshirtSize: (project.tshirtSize != null && String(project.tshirtSize).trim() !== "") ? String(project.tshirtSize).trim() : null,
@@ -1605,6 +2350,18 @@ function normalizeLoadedProject(project) {
   const effortValue = toNumberOrNull(project.effortValue);
   const periodRaw = project.projectPeriod != null ? String(project.projectPeriod).trim() : "";
   const projectPeriod = periodRaw ? periodRaw.toUpperCase() : null;
+  const financialImpactFramework = normalizeFinancialFramework(project.financialImpactFramework);
+  const financialImpactInputs = sanitizeFinancialImpactInputs(
+    financialImpactFramework,
+    project.financialImpactInputs && typeof project.financialImpactInputs === "object"
+      ? project.financialImpactInputs
+      : {}
+  );
+  const normalizedFinancialValue = computeFrameworkFinancialImpact(
+    financialImpactFramework,
+    financialImpactInputs,
+    Number.isFinite(toNumberOrNull(project.financialImpactValue)) ? Number(project.financialImpactValue) : null
+  );
   return {
     id,
     createdAt,
@@ -1619,8 +2376,10 @@ function normalizeLoadedProject(project) {
     confidenceValue: Number.isFinite(confidenceValue) ? confidenceValue : 50,
     effortDescription: String(project.effortDescription || ""),
     effortValue: Number.isFinite(effortValue) && effortValue > 0 ? effortValue : 1,
-    financialImpactValue: Number.isFinite(toNumberOrNull(project.financialImpactValue)) ? Number(project.financialImpactValue) : null,
+    financialImpactValue: Number.isFinite(normalizedFinancialValue) ? normalizedFinancialValue : null,
     financialImpactCurrency: normalizeCurrency(project.financialImpactCurrency),
+    financialImpactFramework,
+    financialImpactInputs,
     projectType: (project.projectType != null && String(project.projectType).trim() !== "") ? String(project.projectType).trim() : null,
     projectStatus: (project.projectStatus != null && String(project.projectStatus).trim() !== "") ? String(project.projectStatus).trim() : null,
     tshirtSize: (project.tshirtSize != null && String(project.tshirtSize).trim() !== "") ? String(project.tshirtSize).trim() : null,
@@ -4236,6 +4995,11 @@ function openProjectModal(mode, projectId) {
     elements.effortDescription.value = project.effortDescription || "";
     elements.effortValue.value = project.effortValue != null ? String(project.effortValue) : "";
     elements.financialImpactValue.value = project.financialImpactValue != null ? project.financialImpactValue : "";
+    const framework = normalizeFinancialFramework(project.financialImpactFramework);
+    if (elements.financialFramework) elements.financialFramework.value = framework;
+    if (elements.financialFramework) elements.financialFramework.dataset.lastFramework = framework;
+    setFinancialInputsToForm(project.financialImpactInputs || {});
+    toggleFinancialFrameworkFields(framework);
     ensureCurrencyOption(elements.projectCurrency, project.financialImpactCurrency);
     const currencyVal = project.financialImpactCurrency ? String(project.financialImpactCurrency).trim() : "";
     if (currencyVal) {
@@ -4270,6 +5034,10 @@ function openProjectModal(mode, projectId) {
     elements.effortDescription.value = "";
     elements.effortValue.value = "";
     elements.financialImpactValue.value = "";
+    if (elements.financialFramework) elements.financialFramework.value = FINANCIAL_FRAMEWORK_DEFAULT;
+    if (elements.financialFramework) elements.financialFramework.dataset.lastFramework = FINANCIAL_FRAMEWORK_DEFAULT;
+    setFinancialInputsToForm({});
+    toggleFinancialFrameworkFields(FINANCIAL_FRAMEWORK_DEFAULT);
     elements.projectCurrency.value = "";
     elements.projectType.value = "";
     elements.projectStatus.value = "Not Started";
@@ -4290,6 +5058,7 @@ function openProjectModal(mode, projectId) {
   }
 
   updateModalRicePreview();
+  resetProjectModalSectionNav();
   elements.projectModal.setAttribute("aria-hidden", "false");
   elements.projectModal.classList.add("active");
   elements.projectTitle.focus();
@@ -4356,6 +5125,11 @@ function handleProjectFormSubmit(e) {
     effortValue: elements.effortValue.value !== "" ? Number(elements.effortValue.value) : null,
     financialImpactValue: elements.financialImpactValue.value !== "" ? Number(elements.financialImpactValue.value) : null,
     financialImpactCurrency: normalizeCurrency(elements.projectCurrency.value),
+    financialImpactFramework: normalizeFinancialFramework(elements.financialFramework && elements.financialFramework.value),
+    financialImpactInputs: sanitizeFinancialImpactInputs(
+      normalizeFinancialFramework(elements.financialFramework && elements.financialFramework.value),
+      mergeFinancialImpactInputsForCompute()
+    ),
     projectType: (elements.projectType.value || "").trim() || null,
     projectStatus: (elements.projectStatus.value || "").trim() || null,
     tshirtSize: (elements.projectTshirtSize.value || "").trim() || null,
@@ -4363,6 +5137,21 @@ function handleProjectFormSubmit(e) {
     moscowCategory: (elements.projectMoscow && elements.projectMoscow.value) ? (elements.projectMoscow.value || "").trim() || "Could have" : "Could have",
     countries: getCountriesFromControls()
   };
+
+  raw.financialImpactValue = computeFrameworkFinancialImpact(
+    raw.financialImpactFramework,
+    raw.financialImpactInputs,
+    raw.financialImpactValue
+  );
+
+  if (raw.financialImpactFramework !== FINANCIAL_FRAMEWORK_DEFAULT && !Number.isFinite(raw.financialImpactValue)) {
+    elements.projectFormError.textContent = getFinancialFrameworkValidationMessage(
+      raw.financialImpactFramework,
+      raw.financialImpactInputs
+    );
+    elements.projectFormError.style.display = "block";
+    return;
+  }
 
   const validationError = validateProjectInput(raw);
   if (validationError) {
@@ -4386,6 +5175,8 @@ function handleProjectFormSubmit(e) {
     project.effortValue = raw.effortValue;
     project.financialImpactValue = raw.financialImpactValue;
     project.financialImpactCurrency = raw.financialImpactCurrency;
+    project.financialImpactFramework = raw.financialImpactFramework;
+    project.financialImpactInputs = raw.financialImpactInputs;
     project.projectType = raw.projectType || null;
     project.projectStatus = raw.projectStatus || null;
     project.tshirtSize = raw.tshirtSize || null;
@@ -4412,6 +5203,8 @@ function handleProjectFormSubmit(e) {
       effortValue: raw.effortValue,
       financialImpactValue: raw.financialImpactValue,
       financialImpactCurrency: raw.financialImpactCurrency,
+      financialImpactFramework: raw.financialImpactFramework,
+      financialImpactInputs: raw.financialImpactInputs,
       projectType: raw.projectType || null,
       projectStatus: raw.projectStatus || null,
       tshirtSize: raw.tshirtSize || null,
@@ -4442,14 +5235,28 @@ function updateModalRicePreview() {
   elements.projectMetaRice.textContent = Number.isFinite(rice) && rice > 0 ? formatRice(rice) : "—";
 
   const rawAmount = elements.financialImpactValue && elements.financialImpactValue.value !== "" ? Number(elements.financialImpactValue.value) : null;
+  const framework = normalizeFinancialFramework(elements.financialFramework && elements.financialFramework.value);
+  const frameworkInputs = mergeFinancialImpactInputsForCompute();
+  const clvBreakdown = framework === "clv" ? computeClvBreakdown(frameworkInputs) : null;
+  const npsBreakdown = framework === "nps" ? computeNpsBreakdown(frameworkInputs) : null;
+  const riskBreakdown = framework === "risk" ? computeRiskBreakdown(frameworkInputs) : null;
+  updateClvBreakdown(clvBreakdown);
+  updateNpsBreakdown(npsBreakdown);
+  updateRiskBreakdown(riskBreakdown);
+  const computedAmount = computeFrameworkFinancialImpact(framework, frameworkInputs, rawAmount);
+  if (elements.financialImpactValue && framework !== FINANCIAL_FRAMEWORK_DEFAULT) {
+    elements.financialImpactValue.value = Number.isFinite(computedAmount)
+      ? Number(computedAmount).toLocaleString("en-US", { useGrouping: false, maximumFractionDigits: 6 })
+      : "";
+  }
   const currency = (elements.projectCurrency && elements.projectCurrency.value || "").toString().trim().toUpperCase() || "";
-  const hasAmount = Number.isFinite(rawAmount) && rawAmount >= 0;
+  const hasAmount = Number.isFinite(computedAmount);
   const hasCurrency = currency.length === 3;
 
   if (elements.projectMetaFinancialEur) {
     if (hasAmount && hasCurrency) {
       const amountEur = typeof ExchangeRates !== "undefined" && typeof ExchangeRates.convertToEUR === "function"
-        ? ExchangeRates.convertToEUR(rawAmount, currency)
+        ? ExchangeRates.convertToEUR(computedAmount, currency)
         : NaN;
       if (Number.isFinite(amountEur)) {
         const short = typeof formatFinancialShort === "function"

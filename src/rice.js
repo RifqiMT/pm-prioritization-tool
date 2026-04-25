@@ -50,8 +50,8 @@ function validateProjectInput(raw) {
   if (raw.effortValue == null || !Number.isFinite(raw.effortValue) || raw.effortValue < 1 || raw.effortValue > 5) {
     return "Effort must be between 1 and 5.";
   }
-  if (raw.financialImpactValue != null && (!Number.isFinite(raw.financialImpactValue) || raw.financialImpactValue < 0)) {
-    return "Financial impact must be a non-negative number.";
+  if (raw.financialImpactValue != null && !Number.isFinite(raw.financialImpactValue)) {
+    return "Financial impact must be a valid number.";
   }
   if (raw.financialImpactValue != null && raw.financialImpactValue !== 0 && !raw.financialImpactCurrency) {
     return "Select a currency when financial impact is provided.";
