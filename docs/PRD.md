@@ -69,13 +69,21 @@ Framework-specific inputs are sanitized/reset when switching to prevent stale cr
 - **Board:** status workflow + drag/drop
 - **MOSCOW:** 2x2 strategic prioritization grid
 - **Map:** country-level aggregation of projects/RICE/financial (EUR)
+- **Advanced filtering:** includes framework-level filtering using standardized label `Framework`
 
 ### FR-5 UX Tooling
 - Unified tooltip system across table/cards/modal fields
 - RICE score tooltip includes abbreviation meanings + formula + computed line
 - Framework icon column in table (`Framework`) similar to Type/State icon behavior
+- Card project title tooltip includes `Status` + `Description`
+- Tooltip lifecycle enforces **single visible tooltip** across app
+- Modal fields enforce standardized tooltip coverage for all variable inputs
 
-### FR-6 Data Mobility
+### FR-6 Modal Metadata Footer
+- Left metadata block shows: `Project ID`, `Created`, `Last modified`
+- Right financial metadata block shows: `Financial (EUR)`, `Exchange rate`, `RICE score`
+
+### FR-7 Data Mobility
 - Export JSON/CSV
 - Import JSON/CSV with merge semantics (profile/project reconciliation)
 
@@ -98,6 +106,8 @@ Framework-specific inputs are sanitized/reset when switching to prevent stale cr
 - Users can explain score/value derivation directly from tooltip/inputs
 - Export/import preserves portfolio integrity
 - Framework switching does not leak stale values
+- Only one tooltip is visible at any point during interaction
+- Every create/edit modal variable field provides tooltip guidance
 
 ## 8. Risks and Mitigations
 

@@ -23,12 +23,20 @@
 - **US-D2** As a Team Lead, I want board drag/drop so status transitions are fast.
 - **US-D3** As a Product Manager, I want MOSCOW grid movement so category shifts are visible and actionable.
 - **US-D4** As a PM (Geo/Finance), I want map aggregation by projects/RICE/financial so regional trade-offs are visible.
+- **US-D5** As a PM, I want project-name tooltip content on cards (status + description) so quick context is available without opening edit view.
 
 ## Epic E — Data Governance
 
 - **US-E1** As a Product Manager, I want JSON/CSV export so I can back up and share data safely.
 - **US-E2** As a Product Manager, I want import merge behavior that avoids duplicate corruption.
 - **US-E3** As a Solo PM, I want local-first persistence so I can operate without backend setup.
+
+## Epic F — UX Standardization and Explainability
+
+- **US-F1** As a PM, I want exactly one tooltip visible at a time so the UI stays clear and non-conflicting.
+- **US-F2** As a PM, I want every variable field in the project modal to have standardized tooltip guidance so form completion is self-explanatory.
+- **US-F3** As a PM, I want advanced filter naming to be standardized as `Framework` so terminology is consistent across table, filters, and cards.
+- **US-F4** As a PM, I want project footer metadata to include Project ID and grouped financial/RICE context so audit and review are faster.
 
 ## Acceptance Criteria Highlights
 
@@ -39,3 +47,7 @@
   - numeric calculation line when inputs are valid
 - Table includes compact `Framework` column with icon + tooltip.
 - Removing RICE Values standalone column does not remove access to RICE component values.
+- Advanced filter includes `Framework` and matches framework values in project records.
+- Card title tooltip includes status and description.
+- Tooltip system guarantees a single active tooltip at any moment.
+- Project modal footer shows Project ID on the left and RICE score with financial data on the right.

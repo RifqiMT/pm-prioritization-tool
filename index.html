@@ -202,6 +202,18 @@
                 </select>
               </div>
               <div class="filter-group filter-group--compact">
+                <label for="filterFinancialFramework">Framework</label>
+                <select id="filterFinancialFramework">
+                  <option value="">Any</option>
+                  <option value="custom">Custom</option>
+                  <option value="clv">CLV uplift</option>
+                  <option value="headcount">Headcount savings</option>
+                  <option value="operational">Operational efficiency</option>
+                  <option value="nps">NPS retention</option>
+                  <option value="risk">Risk avoidance</option>
+                </select>
+              </div>
+              <div class="filter-group filter-group--compact">
                 <label for="filterStatus">Status</label>
                 <select id="filterStatus">
                   <option value="">Any</option>
@@ -961,13 +973,14 @@
             <div class="project-modal-footer-bar">
               <div class="project-modal-footer-meta-group">
               <div class="field-meta-row project-modal-footer-meta" id="projectMetaInfo">
+                <span><strong>Project ID:</strong> <span id="projectMetaId">—</span></span>
                 <span><strong>Created:</strong> <span id="projectMetaCreated">—</span></span>
                 <span><strong>Last modified:</strong> <span id="projectMetaModified">—</span></span>
-                <span><strong>RICE score:</strong> <span id="projectMetaRice">—</span></span>
               </div>
               <div class="field-meta-row field-meta-row--financial-eur project-modal-footer-financial" id="projectMetaFinancialRow">
                 <span><strong>Financial (EUR):</strong> <span id="projectMetaFinancialEur">—</span></span>
                 <span><strong>Exchange rate:</strong> <span id="projectMetaExchangeRate">—</span></span>
+                <span><strong>RICE score:</strong> <span id="projectMetaRice">—</span></span>
               </div>
               </div>
               <div class="form-actions-row project-modal-form-actions">

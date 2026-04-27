@@ -45,6 +45,7 @@ These are treated as runtime contracts and documented accordingly.
 - Sorting/filtering/map aggregation
 - Tooltip orchestration
 - Import/export behavior
+- Modal field tooltip auto-completion and standardized copy injection
 
 ## 4. Key Data Flow
 
@@ -66,15 +67,25 @@ These are treated as runtime contracts and documented accordingly.
 - Unified class-driven tooltip system across heterogeneous cells
 - Shared hover/focus selectors for icon/text wrappers
 - Specialized wrappers for cells like financial and rice score
+- Single-tooltip governance through active wrapper tracking and global hide-except behavior
+- Cursor-anchored title tooltip positioning on cards for perceived alignment quality
 
-## 7. Architectural Risks
+## 7. Filtering Architecture
+
+- Quick filters (title/type/countries/period) + advanced filters (impact/effort/currency/framework/status/size/MOSCOW)
+- Framework filter compares normalized framework value to selected advanced filter option
+- Active-filter pill summarizes currently engaged filter dimensions
+
+## 8. Architectural Risks
 
 - Missing module source files can create documentation/runtime drift
 - Additional columns in dense table layouts can reduce readability
 - Formula UX can be misunderstood without explanatory tooltip content
+- Complex tooltip lifecycles can regress into duplicate visible overlays without centralized policy
 
-## 8. Mitigations
+## 9. Mitigations
 
 - Keep docs tied to audited code snapshot
 - Use concise column labels and icon-based semantics
 - Enforce explainable tooltip standards for derived metrics
+- Enforce single-tooltip policy in shared tooltip orchestration path

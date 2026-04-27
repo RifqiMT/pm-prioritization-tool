@@ -6,6 +6,7 @@
 - **Pain point:** Scoring, status, and value are often spread across tools
 - **Needs:** Single workspace for RICE, MoSCoW, financial impact, and execution state
 - **Core features used:** Table, Framework column, RICE tooltip, Board, MOSCOW, export/import
+- **Critical UX expectation:** Every field in create/edit modal explains itself through consistent tooltips
 
 ## Persona 2 — Team Lead / Delivery Lead
 
@@ -20,6 +21,7 @@
 - **Pain point:** Black-box scoring reduces trust
 - **Needs:** Explainable score/value formulas without editing risk
 - **Core features used:** View mode, RICE detailed tooltip, framework tooltips, map summaries
+- **Critical UX expectation:** No overlapping tooltips; one clear context panel at a time
 
 ## Persona 4 — PM (Geo/Finance Focus)
 
@@ -34,3 +36,4 @@
 - **Pain point:** Heavy tools are slow to adopt
 - **Needs:** Zero-backend, low-friction setup with strong data ownership
 - **Core features used:** Local-first flow, quick project CRUD, JSON/CSV backup
+- **Critical UX expectation:** Footer metadata clarity with visible Project ID for quick reference and support/debug checks

@@ -34,12 +34,18 @@
 - Use shared structure: icon pill + tooltip
 - Tooltip content includes title and short explanatory body
 - Hover/focus behavior must match other tooltip-enabled cells
+- Card icon wrappers should reuse the same icon-pill semantics used in table cells
 
 ### RICE Score Cell
 - Must support tooltip with:
   - abbreviation expansions (R/I/C/E)
   - formula line
   - computed calculation line
+
+### Project Modal Footer Metadata
+- Left block: `Project ID`, `Created`, `Last modified`
+- Right block: `Financial (EUR)`, `Exchange rate`, `RICE score`
+- Keep both rows visually balanced and readable on reduced widths
 
 ## 4. Tooltip Design Standard
 
@@ -48,6 +54,9 @@
   - `cell-type-tooltip-body` with concise paragraphs
 - Positioning:
   - portal-aware behavior to prevent clipping
+  - project-title tooltips on cards may anchor to cursor x-position for perceived alignment
+- Lifecycle:
+  - exactly one tooltip visible at a time across app surfaces
 - Content:
   - no ambiguous abbreviations without expansion
   - formula or interpretation where relevant

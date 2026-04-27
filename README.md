@@ -30,6 +30,7 @@ This product helps teams capture initiatives, score priority, classify delivery 
   - New `Framework` icon column (similar behavior to Type/State icon cells)
   - RICE score tooltip now includes abbreviation meanings + formula + computed line
   - RICE Values standalone column replaced by tooltip on RICE Score
+  - Advanced filter includes `Framework` for model-specific slicing
 - **Financial impact frameworks**
   - `Custom`: direct value
   - `CLV`: margin/retention/discount based impact
@@ -42,6 +43,21 @@ This product helps teams capture initiatives, score priority, classify delivery 
   - EUR conversion used in table and map financial metric
 - **Governance UX**
   - Confirmation toasts, delete confirmations, consistent tooltip system
+  - Project modal fields now enforce standardized tooltip coverage for every variable
+  - Global single-tooltip behavior enforced across table, cards, and modal fields
+  - Card project title tooltip now includes project status and description
+  - Modal footer metadata now includes `Project ID`, and `RICE score` is grouped with financial metadata
+
+## Recent UX/Logic Updates (Current Snapshot)
+
+- Added advanced filter `Framework` in the filter panel for financial model segmentation.
+- Standardized card icon styling to match table icon-pill semantics and removed redundant border variance.
+- Improved task/project card visual hierarchy (spacing, readability, responsive behavior).
+- Fixed tooltip lifecycle defects:
+  - cursor-aligned project-title tooltip on MOSCOW cards,
+  - strict one-tooltip-at-a-time enforcement globally,
+  - robust modal tooltip transitions across densely packed fields.
+- Added comprehensive tooltip fallback injection for any modal form variable lacking explicit tooltip markup.
 
 ## Current Runtime File Inventory
 
@@ -61,6 +77,8 @@ Audited source files in this repository snapshot:
 - Treat exchange-rate-derived EUR values as decision support, not accounting books
 - Export regularly for backup and auditability
 - Keep tooltip content explanatory and non-ambiguous
+- Maintain a single active tooltip at any moment to prevent cognitive and visual conflicts
+- Keep framework naming standardized as `Framework` in table/filter/UI labels
 
 ## Tech Stack
 

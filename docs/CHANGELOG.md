@@ -4,6 +4,25 @@ All notable changes are recorded here.
 
 ## [Unreleased]
 
+### UX / Interaction
+- Added advanced filter `Framework` and standardized filter naming to match table terminology.
+- Added project-name tooltip on Board/MOSCOW cards with standardized content:
+  - project status
+  - project description
+- Improved card title tooltip alignment (cursor-anchored behavior where appropriate).
+- Standardized card icon visual semantics to match table icon-pill conventions.
+- Enforced single-tooltip lifecycle across app surfaces (table, cards, modal fields).
+- Added modal-wide tooltip stability improvements for rapid hover transitions.
+
+### Project Modal Metadata
+- Footer metadata layout updated:
+  - Left block now includes `Project ID`, `Created`, `Last modified`
+  - Right block now includes `Financial (EUR)`, `Exchange rate`, `RICE score`
+
+### Form Explainability
+- Added comprehensive standardized tooltip coverage for every variable field in create/edit modal.
+- Implemented auto-injection of fallback standardized tooltips for fields missing explicit tooltip markup.
+
 ### Documentation
 - Re-audited codebase and refreshed the full product documentation suite:
   - `README.md`

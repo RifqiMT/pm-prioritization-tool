@@ -32,3 +32,9 @@ This folder contains the professional product documentation suite for `pm-priori
 ## Maintenance Rule
 
 All updates must follow `../PRODUCT_DOCUMENTATION_STANDARD.md`.
+
+## Current Documentation Focus Areas
+
+- Standardized terminology alignment (`Framework` label across table/filter/modal contexts).
+- Tooltip governance updates (single-tooltip policy and modal field consistency).
+- Project modal metadata layout updates (`Project ID` in left block, `RICE score` in financial/right block).

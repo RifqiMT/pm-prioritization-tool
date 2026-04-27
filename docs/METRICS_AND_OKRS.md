@@ -18,6 +18,8 @@
 | UX-02 | Validation Friction | Validation errors per submit. | `validation_errors / submit_attempts` | <= 0.3 |
 | UX-03 | Table Scanability | Header-overflow defects in key columns. | QA defect count | 0 critical |
 | UX-04 | Time-to-Decision | Time from project open to saved prioritization. | median interaction time | Downward trend |
+| UX-05 | Tooltip Exclusivity Reliability | Cases where multiple tooltips overlap simultaneously. | `multi_tooltip_incidents / tooltip_sessions` | 0 |
+| UX-06 | Modal Guidance Coverage | Share of modal input/select/textarea fields with standardized tooltip. | `fields_with_standard_tooltip / total_modal_fields` | 100% |
 
 ## 3. Engineering Metrics
 
@@ -34,6 +36,7 @@
 - KR1.1: Raise PM-01 to >= 95%
 - KR1.2: Reduce UX-02 to <= 0.2
 - KR1.3: Increase UX-01 interaction rate by 30%
+- KR1.4: Keep UX-05 at 0 across regression test cycles
 
 ### Objective 2 — Strengthen financial planning discipline
 - KR2.1: Raise PM-02 to >= 65%
@@ -43,6 +46,7 @@
 - KR3.1: Keep ENG-01 <= 0.5%
 - KR3.2: Keep ENG-03 >= 99%
 - KR3.3: Keep ENG-04 p95 <= 300ms
+- KR3.4: Keep modal guidance coverage (UX-06) at 100%
 
 ## 5. Review Cadence
 

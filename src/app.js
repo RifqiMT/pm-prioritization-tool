@@ -64,25 +64,25 @@ const FINANCIAL_FRAMEWORKS = ["custom", "clv", "headcount", "operational", "nps"
 const FINANCIAL_FRAMEWORK_ICONS = {
   custom: {
     label: "Custom",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 7h14M5 12h8M5 17h14"/></svg>',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 20h4l10-10-4-4L4 16v4z"/><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l4 4"/></svg>',
     tooltipTitle: "Custom (direct amount)",
     tooltipBody: "Manual financial impact entered directly by the user."
   },
   clv: {
     label: "CLV",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 18l5-5 4 3 7-8"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 8h3v3"/></svg>',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 19V9m7 10V5m7 14v-8"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 19h18"/></svg>',
     tooltipTitle: "CLV framework",
     tooltipBody: "Estimates impact from customer lifetime value uplift."
   },
   nps: {
     label: "NPS",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M3 12h18"/></svg>',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 10h.01M15 10h.01M9 14c.8 1 1.8 1.5 3 1.5s2.2-.5 3-1.5"/></svg>',
     tooltipTitle: "NPS to financial impact",
     tooltipBody: "Converts NPS movement into retained, expansion, and referral value."
   },
   risk: {
     label: "Risk",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l9 16H3L12 3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 3h.01"/></svg>',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v6c0 4.2-2.5 6.9-7 9-4.5-2.1-7-4.8-7-9V6l7-3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v5m0 3h.01"/></svg>',
     tooltipTitle: "Risk mitigation",
     tooltipBody: "Estimates avoided expected loss after mitigation."
   },
@@ -94,9 +94,156 @@ const FINANCIAL_FRAMEWORK_ICONS = {
   },
   operational: {
     label: "Operational",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 12h4l2-5 4 10 2-5h4"/></svg>',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6"/></svg>',
     tooltipTitle: "Operational efficiency",
     tooltipBody: "Estimates savings from lower unit cost and faster cycle time."
+  }
+};
+
+const PROJECT_FORM_FIELD_TOOLTIPS = {
+  financialCustomNotes: {
+    title: "Custom notes",
+    body: "Optional notes that explain assumptions, source data, or rationale used for manual financial impact."
+  },
+  financialClvCustomers: {
+    title: "Customers (portfolio size)",
+    body: "Number of customers in scope for CLV calculations. Leave blank to treat inputs as per-customer."
+  },
+  financialClvMargin: {
+    title: "Contribution margin per customer",
+    body: "Contribution margin per customer used to estimate CLV-based impact."
+  },
+  financialClvRetentionRatePct: {
+    title: "New retention rate (%)",
+    body: "Expected retention rate after the initiative. Used in CLV uplift computation."
+  },
+  financialClvDiscountRatePct: {
+    title: "Discount rate (%)",
+    body: "Discount rate used to convert future value into present value in CLV calculations."
+  },
+  financialClvAcquisitionCost: {
+    title: "CAC per customer (optional)",
+    body: "Customer acquisition cost per customer. If empty, the model defaults this to 0."
+  },
+  financialClvBaselineRetentionRatePct: {
+    title: "Baseline retention (%) or uplift points",
+    body: "Baseline retention before change, or direct uplift points to compare against the new retention rate."
+  },
+  financialNpsReportedImpactBasis: {
+    title: "Reported financial impact basis",
+    body: "Controls which NPS outcome is written to the main Financial impact result field."
+  },
+  financialNpsTotalCustomers: {
+    title: "Total customers",
+    body: "Optional reference count for the full customer base used in NPS scenario framing."
+  },
+  financialNpsCustomersMoved: {
+    title: "Customers moved to promoter",
+    body: "Count of customers expected to move into promoter behavior due to the initiative."
+  },
+  financialNpsArpa: {
+    title: "ARPA per year",
+    body: "Annual revenue per account used to estimate retained and expansion revenue."
+  },
+  financialNpsRetentionPromoterPct: {
+    title: "Retention (promoter, %)",
+    body: "Annual retention rate for promoter customers in the NPS model."
+  },
+  financialNpsRetentionSourcePct: {
+    title: "Retention (source segment, %)",
+    body: "Annual retention of the source segment customers are moving from (for example, detractors or passives)."
+  },
+  financialNpsContributionMarginPct: {
+    title: "Contribution margin (%)",
+    body: "Contribution margin applied to NPS-driven retained, expansion, and referral revenue."
+  },
+  financialNpsUpsellPerConverted: {
+    title: "Upsell per converted customer",
+    body: "Optional incremental upsell revenue per moved customer (defaults to 0 when empty)."
+  },
+  financialNpsReferralPerConverted: {
+    title: "Referral revenue per converted customer",
+    body: "Optional incremental referral revenue per moved customer before margin."
+  },
+  financialNpsProgramCost: {
+    title: "Program cost",
+    body: "Total annual cost of the NPS initiative, subtracted to compute net impact."
+  },
+  financialRiskProbabilityBeforePct: {
+    title: "Probability before mitigation (%)",
+    body: "Estimated probability of the risk event before applying mitigation."
+  },
+  financialRiskProbabilityAfterPct: {
+    title: "Probability after mitigation (%)",
+    body: "Estimated probability of the same risk event after mitigation."
+  },
+  financialRiskLossPerExposure: {
+    title: "Loss per exposed unit",
+    body: "Expected loss value for one exposed unit when the risk materializes."
+  },
+  financialRiskExposureUnits: {
+    title: "Exposure units per period",
+    body: "Number of exposure units in each period for expected-loss estimation."
+  },
+  financialRiskPeriodsPerYear: {
+    title: "Periods per year",
+    body: "How many periods are included in one year (for example, 12 for monthly)."
+  },
+  financialRiskMitigationCost: {
+    title: "Mitigation cost per year",
+    body: "Optional annual mitigation spend used to compute net mitigation value."
+  },
+  financialHeadcountMinutesSavedPerFtePerDay: {
+    title: "Minutes saved per FTE per day",
+    body: "Average daily minutes saved for each FTE in scope."
+  },
+  financialHeadcountWorkingDaysPerYear: {
+    title: "Working days per year",
+    body: "Working days per year used to annualize time savings."
+  },
+  financialHeadcountFteCount: {
+    title: "FTE count in scope",
+    body: "Number of FTEs affected by the efficiency improvement."
+  },
+  financialHeadcountHoursPerDay: {
+    title: "Hours per day",
+    body: "Standard productive hours per workday used in avoided FTE conversion."
+  },
+  financialHeadcountUtilizationGainPct: {
+    title: "Utilization gain (%)",
+    body: "Optional override for utilization gain percentage; if empty, derived from minutes saved."
+  },
+  financialHeadcountAnnualCostPerFte: {
+    title: "Annual fully loaded cost per FTE",
+    body: "Annual fully loaded cost (salary plus overhead) per FTE."
+  },
+  financialOperationalCostPerUnitBefore: {
+    title: "Cost per unit (before)",
+    body: "Current cost per unit before the efficiency improvement."
+  },
+  financialOperationalCostPerUnitAfter: {
+    title: "Cost per unit (after)",
+    body: "Target cost per unit after the efficiency improvement."
+  },
+  financialOperationalAnnualVolume: {
+    title: "Annual volume",
+    body: "Annual unit volume used in the cost-per-unit savings component."
+  },
+  financialOperationalCycleTimeBeforeMinutes: {
+    title: "Cycle time before (minutes)",
+    body: "Current cycle time per transaction/customer before improvement."
+  },
+  financialOperationalCycleTimeAfterMinutes: {
+    title: "Cycle time after (minutes)",
+    body: "Target cycle time per transaction/customer after improvement."
+  },
+  financialOperationalLaborCostPerHour: {
+    title: "Labor cost per hour",
+    body: "Average labor cost per hour used in labor/time savings."
+  },
+  financialOperationalAnnualTransactions: {
+    title: "Annual transactions",
+    body: "Yearly transaction/customer volume used in labor/time annualization."
   }
 };
 
@@ -910,8 +1057,47 @@ function resetProjectModalSectionNav() {
   btns.forEach((b, i) => b.classList.toggle("is-active", i === 0));
 }
 
+function ensureProjectFormFieldTooltips() {
+  const projectForm = elements.projectForm || $("projectForm");
+  if (!projectForm) return;
+  const wraps = projectForm.querySelectorAll(".project-field-tooltip-wrap");
+  wraps.forEach((wrap) => {
+    if (wrap.querySelector(".cell-type-tooltip")) return;
+    const control = wrap.querySelector("input, select, textarea");
+    const labelEl = wrap.querySelector("label");
+    if (!control || !labelEl) return;
+
+    const labelText = (labelEl.textContent || "").replace(/\s+/g, " ").trim();
+    const cleanTitle = labelText.replace(/\s*\(optional\)\s*/ig, "").trim() || "Field details";
+    const tooltipCopy = PROJECT_FORM_FIELD_TOOLTIPS[control.id] || null;
+    const bodyText = tooltipCopy && tooltipCopy.body
+      ? tooltipCopy.body
+      : (
+        control.tagName === "SELECT"
+          ? `Select the value for ${cleanTitle.toLowerCase()} for this project.`
+          : `Provide a value for ${cleanTitle.toLowerCase()} for this project.`
+      );
+
+    const tooltipEl = document.createElement("div");
+    tooltipEl.className = "cell-type-tooltip";
+
+    const titleNode = document.createElement("div");
+    titleNode.className = "cell-type-tooltip-title";
+    titleNode.textContent = (tooltipCopy && tooltipCopy.title) || cleanTitle;
+    tooltipEl.appendChild(titleNode);
+
+    const bodyNode = document.createElement("div");
+    bodyNode.className = "cell-type-tooltip-body";
+    bodyNode.textContent = bodyText;
+    tooltipEl.appendChild(bodyNode);
+
+    wrap.appendChild(tooltipEl);
+  });
+}
+
 function init() {
   cacheElements();
+  ensureProjectFormFieldTooltips();
   initProjectModalSectionNav();
   initCurrencyOptions();
   initFilterCountriesOptions();
@@ -979,6 +1165,7 @@ function cacheElements() {
   elements.filterImpact = $("filterImpact");
   elements.filterEffort = $("filterEffort");
   elements.filterCurrency = $("filterCurrency");
+  elements.filterFinancialFramework = $("filterFinancialFramework");
   elements.filterStatus = $("filterStatus");
   elements.filterTshirtSize = $("filterTshirtSize");
   elements.filterMoscow = $("filterMoscow");
@@ -1113,6 +1300,7 @@ function cacheElements() {
   elements.projectPeriod = $("projectPeriod");
   elements.projectMoscow = $("projectMoscow");
 
+  elements.projectMetaId = $("projectMetaId");
   elements.projectMetaCreated = $("projectMetaCreated");
   elements.projectMetaModified = $("projectMetaModified");
   elements.projectMetaRice = $("projectMetaRice");
@@ -1606,6 +1794,7 @@ function attachEventListeners() {
     elements.filterImpact,
     elements.filterEffort,
     elements.filterCurrency,
+    elements.filterFinancialFramework,
     elements.filterStatus,
     elements.filterTshirtSize,
     elements.filterProjectType
@@ -1659,11 +1848,12 @@ function attachEventListeners() {
   });
 
   elements.projectsTableBody.addEventListener("mouseenter", (e) => {
-    const wrap = e.target.closest(".cell-type-icon-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip");
+    const wrap = e.target.closest(".cell-type-icon-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip");
     if (!wrap) return;
     const tooltip = wrap.querySelector(".cell-type-tooltip");
     if (!tooltip) return;
     document.body.classList.remove("cell-type-tooltip-hidden");
+    hideAllTooltipsExcept(tooltip);
     const rect = wrap.getBoundingClientRect();
     returnTooltipsToOwner();
     getTooltipRoot().appendChild(tooltip);
@@ -1711,15 +1901,20 @@ function attachEventListeners() {
   document.body.addEventListener("mouseenter", (e) => {
     const wrap = e.target.closest(".profile-icon-wrap");
     if (!wrap) return;
+    document.body.classList.remove("cell-type-tooltip-hidden");
     positionProfileTooltip(wrap);
   }, true);
 
   document.body.addEventListener("mouseenter", (e) => {
-    const wrap = e.target.closest(".cell-type-icon-wrap, .scrum-board-card-type-wrap");
+    const wrap = e.target.closest(".cell-type-icon-wrap, .scrum-board-card-type-wrap, .card-meta-with-tooltip, .card-title-with-tooltip");
     if (!wrap) return;
     const tooltip = wrap.querySelector(".cell-type-tooltip");
     if (!tooltip) return;
-    positionProfileTooltip(wrap);
+    document.body.classList.remove("cell-type-tooltip-hidden");
+    const anchorPoint = wrap.classList.contains("card-title-with-tooltip")
+      ? { x: e.clientX, y: e.clientY }
+      : null;
+    positionProfileTooltip(wrap, anchorPoint);
   }, true);
 
   document.body.addEventListener("focusin", (e) => {
@@ -1729,7 +1924,7 @@ function attachEventListeners() {
   }, true);
 
   document.body.addEventListener("mouseout", (e) => {
-    const wrap = e.target.closest(".profile-icon-wrap, .cell-type-icon-wrap, .scrum-board-card-type-wrap, .project-field-tooltip-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip");
+    const wrap = e.target.closest(".profile-icon-wrap, .cell-type-icon-wrap, .scrum-board-card-type-wrap, .project-field-tooltip-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip");
     if (!wrap || (e.relatedTarget && wrap.contains(e.relatedTarget))) return;
     document.querySelectorAll(".cell-type-tooltip").forEach((el) => {
       if (el._ownerWrap === wrap) {
@@ -1738,6 +1933,9 @@ function attachEventListeners() {
         el._ownerWrap = null;
       }
     });
+    if (activeTooltipWrap === wrap) {
+      activeTooltipWrap = null;
+    }
   }, true);
 
   if (elements.profileList) {
@@ -1747,11 +1945,15 @@ function attachEventListeners() {
   }
 
   if (elements.projectModal) {
-    elements.projectModal.addEventListener("mouseenter", (e) => {
+    elements.projectModal.addEventListener("mouseover", (e) => {
       const wrap = e.target.closest(".project-field-tooltip-wrap");
       if (!wrap) return;
+      if (activeTooltipWrap === wrap) return;
       positionProfileTooltip(wrap);
     }, true);
+    elements.projectModal.addEventListener("mouseleave", () => {
+      hideCellTypeTooltips();
+    });
     elements.projectModal.addEventListener("focusin", (e) => {
       const wrap = e.target.closest(".project-field-tooltip-wrap");
       if (!wrap) return;
@@ -1875,6 +2077,7 @@ function updateFiltersActivePill() {
   if (elements.filterImpact.value) activeFilters.push("Impact");
   if (elements.filterEffort.value) activeFilters.push("Effort");
   if (elements.filterCurrency.value) activeFilters.push("Currency");
+  if (elements.filterFinancialFramework && elements.filterFinancialFramework.value) activeFilters.push("Framework");
   if (elements.filterStatus.value) activeFilters.push("Status");
   if (elements.filterTshirtSize.value) activeFilters.push("T-shirt size");
   if (elements.filterMoscow && elements.filterMoscow.value) activeFilters.push("MOSCOW");
@@ -2750,13 +2953,29 @@ function returnTooltipsToOwner() {
   });
 }
 
+/** Enforce single-tooltip visibility across the app. */
+function hideAllTooltipsExcept(keepTooltip) {
+  document.querySelectorAll(".cell-type-tooltip").forEach((el) => {
+    if (keepTooltip && el === keepTooltip) return;
+    el.classList.remove("cell-type-tooltip-visible");
+    if (el._ownerWrap && el.parentNode !== el._ownerWrap) {
+      el._ownerWrap.appendChild(el);
+      el._ownerWrap = null;
+    }
+  });
+}
+
 /** Hide all cell-type tooltips and return any that were moved to body back to their owner. */
 function hideCellTypeTooltips() {
+  activeTooltipWrap = null;
+  hideAllTooltipsExcept(null);
   returnTooltipsToOwner();
   document.body.classList.add("cell-type-tooltip-hidden");
 }
 
-function positionProfileTooltip(wrap) {
+let activeTooltipWrap = null;
+
+function positionProfileTooltip(wrap, anchorPoint) {
   const tooltip = wrap.querySelector(".cell-type-tooltip");
   if (!tooltip) return;
   document.body.classList.remove("cell-type-tooltip-hidden");
@@ -2769,10 +2988,12 @@ function positionProfileTooltip(wrap) {
     rect = wrap.getBoundingClientRect();
   }
 
+  hideAllTooltipsExcept(tooltip);
   returnTooltipsToOwner();
   getTooltipRoot().appendChild(tooltip);
   tooltip._ownerWrap = wrap;
   tooltip.classList.add("cell-type-tooltip-visible");
+  activeTooltipWrap = wrap;
 
   const viewportHeight = window.innerHeight;
   const viewportWidth = window.innerWidth;
@@ -2788,7 +3009,9 @@ function positionProfileTooltip(wrap) {
     showBelow = spaceBelow >= spaceAbove;
   }
 
-  const centerX = rect.left + rect.width / 2;
+  const centerX = anchorPoint && Number.isFinite(anchorPoint.x)
+    ? anchorPoint.x
+    : (rect.left + rect.width / 2);
   tooltip.style.left = centerX + "px";
 
   if (showBelow) {
@@ -3082,6 +3305,7 @@ function renderProjects() {
       const wrapper = document.createElement("span");
       wrapper.className = "cell-type-icon-wrap cell-type-pill";
       wrapper.dataset.type = project.projectType;
+      wrapper.dataset.iconKind = "type";
       wrapper.setAttribute("role", "img");
       wrapper.setAttribute("aria-label", project.projectType);
       if (meta && meta.svg) {
@@ -3124,6 +3348,7 @@ function renderProjects() {
       const wrapper = document.createElement("span");
       wrapper.className = "cell-type-icon-wrap cell-type-pill cell-status-icon-wrap";
       wrapper.dataset.status = project.projectStatus;
+      wrapper.dataset.iconKind = "status";
       wrapper.setAttribute("role", "img");
       wrapper.setAttribute("aria-label", project.projectStatus);
       if (meta && meta.svg) {
@@ -3167,6 +3392,7 @@ function renderProjects() {
       const wrapper = document.createElement("span");
       wrapper.className = "cell-type-icon-wrap cell-type-pill cell-framework-icon-wrap";
       wrapper.dataset.framework = frameworkKey;
+      wrapper.dataset.iconKind = "framework";
       wrapper.setAttribute("role", "img");
       wrapper.setAttribute("aria-label", frameworkMeta.label || frameworkKey);
       wrapper.innerHTML = frameworkMeta.svg;
@@ -3817,6 +4043,89 @@ function renderProjectsMap() {
   renderMapWithValueByCode(valueByCode);
 }
 
+function getProjectFinancialImpactEurShort(project) {
+  if (!project || project.financialImpactValue == null || project.financialImpactValue === "") return null;
+  const raw = project.financialImpactValue;
+  const amount = Number.isFinite(raw) ? raw : Number(raw);
+  if (!Number.isFinite(amount)) return null;
+  const currency = (project.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
+  const amountEur = typeof ExchangeRates !== "undefined" && typeof ExchangeRates.convertToEUR === "function"
+    ? ExchangeRates.convertToEUR(amount, currency)
+    : (currency === "EUR" ? amount : NaN);
+  if (!Number.isFinite(amountEur)) return "€—";
+  const short = typeof formatFinancialShort === "function"
+    ? formatFinancialShort(amountEur)
+    : Number(amountEur).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  return `€${short}`;
+}
+
+function buildCardMetaTooltipWrap(text, ariaLabel, title, bodyLines, className) {
+  const wrap = document.createElement("span");
+  wrap.className = className;
+  wrap.setAttribute("aria-label", ariaLabel);
+
+  const textSpan = document.createElement("span");
+  textSpan.textContent = text;
+  wrap.appendChild(textSpan);
+
+  const tooltipEl = document.createElement("div");
+  tooltipEl.className = "cell-type-tooltip";
+  tooltipEl.setAttribute("role", "tooltip");
+
+  const titleEl = document.createElement("div");
+  titleEl.className = "cell-type-tooltip-title";
+  titleEl.textContent = title;
+  tooltipEl.appendChild(titleEl);
+
+  const bodyEl = document.createElement("div");
+  bodyEl.className = "cell-type-tooltip-body";
+  (Array.isArray(bodyLines) ? bodyLines : []).forEach((line) => {
+    const p = document.createElement("p");
+    p.textContent = line;
+    bodyEl.appendChild(p);
+  });
+  tooltipEl.appendChild(bodyEl);
+  wrap.appendChild(tooltipEl);
+  return wrap;
+}
+
+function buildCardTitleTooltipElement(titleClassName, project) {
+  const titleText = (project && project.title ? String(project.title) : "Untitled");
+  const statusText = (project && project.projectStatus ? String(project.projectStatus) : "Not set");
+  const rawDescription = project && project.projectDescription != null ? String(project.projectDescription) : "";
+  const descriptionText = rawDescription.replace(/\s+/g, " ").trim() || "No description provided.";
+
+  const wrap = document.createElement("div");
+  wrap.className = `${titleClassName} card-title-with-tooltip`;
+  wrap.setAttribute("aria-label", `${titleText}. Status: ${statusText}.`);
+
+  const textSpan = document.createElement("span");
+  textSpan.textContent = titleText;
+  wrap.appendChild(textSpan);
+
+  const tooltipEl = document.createElement("div");
+  tooltipEl.className = "cell-type-tooltip";
+  tooltipEl.setAttribute("role", "tooltip");
+
+  const titleEl = document.createElement("div");
+  titleEl.className = "cell-type-tooltip-title";
+  titleEl.textContent = "Project details";
+  tooltipEl.appendChild(titleEl);
+
+  const bodyEl = document.createElement("div");
+  bodyEl.className = "cell-type-tooltip-body";
+  const statusLine = document.createElement("p");
+  statusLine.textContent = `Status: ${statusText}`;
+  const descriptionLine = document.createElement("p");
+  descriptionLine.textContent = `Description: ${descriptionText}`;
+  bodyEl.appendChild(statusLine);
+  bodyEl.appendChild(descriptionLine);
+  tooltipEl.appendChild(bodyEl);
+
+  wrap.appendChild(tooltipEl);
+  return wrap;
+}
+
 function renderScrumBoard() {
   if (!elements.scrumBoardContainer) return;
   const activeProfile = getActiveProfile();
@@ -3926,29 +4235,15 @@ function renderScrumBoard() {
       card.setAttribute("data-project-id", project.id);
       card.setAttribute("aria-label", "Project: " + (project.title || "Untitled") + ". Drag to change status. View, Edit, Delete.");
 
-      const titleEl = document.createElement("div");
-      titleEl.className = "scrum-board-card-title";
-      titleEl.textContent = project.title || "Untitled";
-      card.appendChild(titleEl);
-
-      const meta = document.createElement("div");
-      meta.className = "scrum-board-card-meta";
-      const metaLeft = document.createElement("span");
-      metaLeft.className = "scrum-board-card-meta-left";
-      const rice = document.createElement("span");
-      rice.className = "scrum-board-card-rice";
-      rice.textContent = "RICE " + formatRice(project.riceScore != null ? project.riceScore : calculateRiceScore(project));
-      metaLeft.appendChild(rice);
-      if (project.tshirtSize) {
-        const sizeSpan = document.createElement("span");
-        sizeSpan.textContent = project.tshirtSize;
-        metaLeft.appendChild(sizeSpan);
-      }
-      meta.appendChild(metaLeft);
+      const titleRow = document.createElement("div");
+      titleRow.className = "scrum-board-card-title-row";
+      const titleEl = buildCardTitleTooltipElement("scrum-board-card-title", project);
+      titleRow.appendChild(titleEl);
       if (project.projectType) {
         const typeMeta = projectTypeIcons && projectTypeIcons[project.projectType];
         const typeWrap = document.createElement("span");
-        typeWrap.className = "scrum-board-card-type-wrap cell-type-icon-wrap";
+        typeWrap.className = "scrum-board-card-type-wrap cell-type-icon-wrap cell-type-pill";
+        typeWrap.dataset.iconKind = "type";
         typeWrap.setAttribute("role", "img");
         typeWrap.setAttribute("aria-label", project.projectType);
         if (typeMeta && typeMeta.svg) {
@@ -3979,7 +4274,107 @@ function renderScrumBoard() {
         } else {
           typeWrap.textContent = project.projectType;
         }
-        meta.appendChild(typeWrap);
+        titleRow.appendChild(typeWrap);
+      }
+      card.appendChild(titleRow);
+
+      const meta = document.createElement("div");
+      meta.className = "scrum-board-card-meta";
+      const metaLeft = document.createElement("span");
+      metaLeft.className = "scrum-board-card-meta-left";
+      const riceValue = project.riceScore != null ? project.riceScore : calculateRiceScore(project);
+      const riceLabel = "RICE " + formatRice(riceValue);
+      const reachVal = project.reachValue != null ? String(project.reachValue) : "—";
+      const impactVal = project.impactValue != null ? String(project.impactValue) : "—";
+      const confidenceVal = project.confidenceValue != null ? String(project.confidenceValue) : "—";
+      const effortVal = project.effortValue != null ? String(project.effortValue) : "—";
+      const confidenceNum = Number(project.confidenceValue);
+      const confidenceDecimal = Number.isFinite(confidenceNum) ? confidenceNum / 100 : null;
+      const formulaLine = Number.isFinite(Number(project.reachValue)) && Number.isFinite(Number(project.impactValue)) && Number.isFinite(confidenceDecimal) && Number.isFinite(Number(project.effortValue)) && Number(project.effortValue) > 0
+        ? `[${Number(project.reachValue)} × ${Number(project.impactValue)} × ${confidenceDecimal.toFixed(2)}] ÷ ${Number(project.effortValue)} = ${formatRice(riceValue)}`
+        : "Not enough inputs to compute full formula.";
+      const rice = buildCardMetaTooltipWrap(
+        riceLabel,
+        `RICE score ${formatRice(riceValue)}`,
+        "RICE score details",
+        [
+          "Formula: [Reach × Impact × Confidence] ÷ Effort",
+          `R (Reach): ${reachVal}`,
+          `I (Impact): ${impactVal}`,
+          `C (Confidence): ${confidenceVal !== "—" ? confidenceVal + "%" : "—"}${Number.isFinite(confidenceDecimal) ? ` (${confidenceDecimal.toFixed(2)})` : ""}`,
+          `E (Effort): ${effortVal}`,
+          `Calculation: ${formulaLine}`
+        ],
+        "scrum-board-card-rice card-meta-with-tooltip"
+      );
+      metaLeft.appendChild(rice);
+      if (project.tshirtSize) {
+        const sizeTooltip = typeof tshirtSizeTooltips !== "undefined" ? tshirtSizeTooltips[project.tshirtSize] : null;
+        const sizeSpan = buildCardMetaTooltipWrap(
+          project.tshirtSize,
+          `Project size ${project.tshirtSize}`,
+          (sizeTooltip && sizeTooltip.tooltipTitle) || "Project size",
+          [((sizeTooltip && sizeTooltip.tooltipBody) || project.tshirtSize)],
+          "scrum-board-card-size card-meta-with-tooltip"
+        );
+        metaLeft.appendChild(sizeSpan);
+      }
+      const financialShort = getProjectFinancialImpactEurShort(project);
+      if (financialShort) {
+        const raw = project.financialImpactValue;
+        const amount = Number.isFinite(raw) ? raw : Number(raw);
+        const currency = (project.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
+        const shortOriginal = Number.isFinite(amount) && typeof formatFinancialShort === "function"
+          ? formatFinancialShort(amount)
+          : (Number.isFinite(amount) ? String(Number(amount).toLocaleString(undefined, { maximumFractionDigits: 2 })) : "—");
+        const financialSpan = buildCardMetaTooltipWrap(
+          financialShort,
+          `Financial impact EUR ${financialShort}`,
+          "Financial impact",
+          [
+            `EUR converted: ${financialShort}`,
+            `Original: ${shortOriginal} ${currency}`
+          ],
+          "scrum-board-card-financial card-meta-with-tooltip"
+        );
+        metaLeft.appendChild(financialSpan);
+      }
+      meta.appendChild(metaLeft);
+      const iconGroup = document.createElement("span");
+      iconGroup.className = "scrum-board-card-icons";
+      const frameworkKey = normalizeFinancialFramework(project.financialImpactFramework);
+      const frameworkMeta = FINANCIAL_FRAMEWORK_ICONS[frameworkKey];
+      if (frameworkMeta && frameworkMeta.svg) {
+        const frameworkWrap = document.createElement("span");
+        frameworkWrap.className = "scrum-board-card-type-wrap cell-type-icon-wrap cell-type-pill";
+        frameworkWrap.dataset.iconKind = "framework";
+        frameworkWrap.setAttribute("role", "img");
+        frameworkWrap.setAttribute("aria-label", frameworkMeta.label || frameworkKey);
+        frameworkWrap.innerHTML = frameworkMeta.svg;
+        if (frameworkMeta.tooltipTitle != null || frameworkMeta.tooltipBody != null) {
+          const tooltipEl = document.createElement("div");
+          tooltipEl.className = "cell-type-tooltip";
+          tooltipEl.setAttribute("role", "tooltip");
+          if (frameworkMeta.tooltipTitle != null) {
+            const titleEl = document.createElement("div");
+            titleEl.className = "cell-type-tooltip-title";
+            titleEl.textContent = frameworkMeta.tooltipTitle;
+            tooltipEl.appendChild(titleEl);
+          }
+          if (frameworkMeta.tooltipBody != null) {
+            const bodyEl = document.createElement("div");
+            bodyEl.className = "cell-type-tooltip-body";
+            const p = document.createElement("p");
+            p.textContent = frameworkMeta.tooltipBody;
+            bodyEl.appendChild(p);
+            tooltipEl.appendChild(bodyEl);
+          }
+          frameworkWrap.appendChild(tooltipEl);
+        }
+        iconGroup.appendChild(frameworkWrap);
+      }
+      if (iconGroup.childElementCount > 0) {
+        meta.appendChild(iconGroup);
       }
       card.appendChild(meta);
 
@@ -4449,29 +4844,15 @@ function renderMoscowBoard() {
       card.setAttribute("data-project-id", project.id);
       card.setAttribute("aria-label", "Project: " + (project.title || "Untitled") + ". Drag to change MOSCOW category. View, Edit, Delete.");
 
-      const titleEl = document.createElement("div");
-      titleEl.className = "moscow-board-card-title";
-      titleEl.textContent = project.title || "Untitled";
-      card.appendChild(titleEl);
-
-      const meta = document.createElement("div");
-      meta.className = "moscow-board-card-meta";
-      const metaLeft = document.createElement("span");
-      metaLeft.className = "moscow-board-card-meta-left";
-      const rice = document.createElement("span");
-      rice.className = "moscow-board-card-rice";
-      rice.textContent = "RICE " + formatRice(project.riceScore != null ? project.riceScore : calculateRiceScore(project));
-      metaLeft.appendChild(rice);
-      if (project.tshirtSize) {
-        const sizeSpan = document.createElement("span");
-        sizeSpan.textContent = project.tshirtSize;
-        metaLeft.appendChild(sizeSpan);
-      }
-      meta.appendChild(metaLeft);
+      const titleRow = document.createElement("div");
+      titleRow.className = "moscow-board-card-title-row";
+      const titleEl = buildCardTitleTooltipElement("moscow-board-card-title", project);
+      titleRow.appendChild(titleEl);
       if (project.projectType) {
         const typeMeta = projectTypeIcons && projectTypeIcons[project.projectType];
         const typeWrap = document.createElement("span");
-        typeWrap.className = "scrum-board-card-type-wrap cell-type-icon-wrap";
+        typeWrap.className = "scrum-board-card-type-wrap cell-type-icon-wrap cell-type-pill";
+        typeWrap.dataset.iconKind = "type";
         typeWrap.setAttribute("role", "img");
         typeWrap.setAttribute("aria-label", project.projectType);
         if (typeMeta && typeMeta.svg) {
@@ -4502,7 +4883,107 @@ function renderMoscowBoard() {
         } else {
           typeWrap.textContent = project.projectType;
         }
-        meta.appendChild(typeWrap);
+        titleRow.appendChild(typeWrap);
+      }
+      card.appendChild(titleRow);
+
+      const meta = document.createElement("div");
+      meta.className = "moscow-board-card-meta";
+      const metaLeft = document.createElement("span");
+      metaLeft.className = "moscow-board-card-meta-left";
+      const riceValue = project.riceScore != null ? project.riceScore : calculateRiceScore(project);
+      const riceLabel = "RICE " + formatRice(riceValue);
+      const reachVal = project.reachValue != null ? String(project.reachValue) : "—";
+      const impactVal = project.impactValue != null ? String(project.impactValue) : "—";
+      const confidenceVal = project.confidenceValue != null ? String(project.confidenceValue) : "—";
+      const effortVal = project.effortValue != null ? String(project.effortValue) : "—";
+      const confidenceNum = Number(project.confidenceValue);
+      const confidenceDecimal = Number.isFinite(confidenceNum) ? confidenceNum / 100 : null;
+      const formulaLine = Number.isFinite(Number(project.reachValue)) && Number.isFinite(Number(project.impactValue)) && Number.isFinite(confidenceDecimal) && Number.isFinite(Number(project.effortValue)) && Number(project.effortValue) > 0
+        ? `[${Number(project.reachValue)} × ${Number(project.impactValue)} × ${confidenceDecimal.toFixed(2)}] ÷ ${Number(project.effortValue)} = ${formatRice(riceValue)}`
+        : "Not enough inputs to compute full formula.";
+      const rice = buildCardMetaTooltipWrap(
+        riceLabel,
+        `RICE score ${formatRice(riceValue)}`,
+        "RICE score details",
+        [
+          "Formula: [Reach × Impact × Confidence] ÷ Effort",
+          `R (Reach): ${reachVal}`,
+          `I (Impact): ${impactVal}`,
+          `C (Confidence): ${confidenceVal !== "—" ? confidenceVal + "%" : "—"}${Number.isFinite(confidenceDecimal) ? ` (${confidenceDecimal.toFixed(2)})` : ""}`,
+          `E (Effort): ${effortVal}`,
+          `Calculation: ${formulaLine}`
+        ],
+        "moscow-board-card-rice card-meta-with-tooltip"
+      );
+      metaLeft.appendChild(rice);
+      if (project.tshirtSize) {
+        const sizeTooltip = typeof tshirtSizeTooltips !== "undefined" ? tshirtSizeTooltips[project.tshirtSize] : null;
+        const sizeSpan = buildCardMetaTooltipWrap(
+          project.tshirtSize,
+          `Project size ${project.tshirtSize}`,
+          (sizeTooltip && sizeTooltip.tooltipTitle) || "Project size",
+          [((sizeTooltip && sizeTooltip.tooltipBody) || project.tshirtSize)],
+          "moscow-board-card-size card-meta-with-tooltip"
+        );
+        metaLeft.appendChild(sizeSpan);
+      }
+      const financialShort = getProjectFinancialImpactEurShort(project);
+      if (financialShort) {
+        const raw = project.financialImpactValue;
+        const amount = Number.isFinite(raw) ? raw : Number(raw);
+        const currency = (project.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
+        const shortOriginal = Number.isFinite(amount) && typeof formatFinancialShort === "function"
+          ? formatFinancialShort(amount)
+          : (Number.isFinite(amount) ? String(Number(amount).toLocaleString(undefined, { maximumFractionDigits: 2 })) : "—");
+        const financialSpan = buildCardMetaTooltipWrap(
+          financialShort,
+          `Financial impact EUR ${financialShort}`,
+          "Financial impact",
+          [
+            `EUR converted: ${financialShort}`,
+            `Original: ${shortOriginal} ${currency}`
+          ],
+          "moscow-board-card-financial card-meta-with-tooltip"
+        );
+        metaLeft.appendChild(financialSpan);
+      }
+      meta.appendChild(metaLeft);
+      const iconGroup = document.createElement("span");
+      iconGroup.className = "scrum-board-card-icons";
+      const frameworkKey = normalizeFinancialFramework(project.financialImpactFramework);
+      const frameworkMeta = FINANCIAL_FRAMEWORK_ICONS[frameworkKey];
+      if (frameworkMeta && frameworkMeta.svg) {
+        const frameworkWrap = document.createElement("span");
+        frameworkWrap.className = "scrum-board-card-type-wrap cell-type-icon-wrap cell-type-pill";
+        frameworkWrap.dataset.iconKind = "framework";
+        frameworkWrap.setAttribute("role", "img");
+        frameworkWrap.setAttribute("aria-label", frameworkMeta.label || frameworkKey);
+        frameworkWrap.innerHTML = frameworkMeta.svg;
+        if (frameworkMeta.tooltipTitle != null || frameworkMeta.tooltipBody != null) {
+          const tooltipEl = document.createElement("div");
+          tooltipEl.className = "cell-type-tooltip";
+          tooltipEl.setAttribute("role", "tooltip");
+          if (frameworkMeta.tooltipTitle != null) {
+            const titleEl = document.createElement("div");
+            titleEl.className = "cell-type-tooltip-title";
+            titleEl.textContent = frameworkMeta.tooltipTitle;
+            tooltipEl.appendChild(titleEl);
+          }
+          if (frameworkMeta.tooltipBody != null) {
+            const bodyEl = document.createElement("div");
+            bodyEl.className = "cell-type-tooltip-body";
+            const p = document.createElement("p");
+            p.textContent = frameworkMeta.tooltipBody;
+            bodyEl.appendChild(p);
+            tooltipEl.appendChild(bodyEl);
+          }
+          frameworkWrap.appendChild(tooltipEl);
+        }
+        iconGroup.appendChild(frameworkWrap);
+      }
+      if (iconGroup.childElementCount > 0) {
+        meta.appendChild(iconGroup);
       }
       card.appendChild(meta);
 
@@ -4689,6 +5170,7 @@ function applyFilters(projects) {
   const impactFilter = elements.filterImpact.value;
   const effortFilter = elements.filterEffort.value;
   const currencyFilter = elements.filterCurrency.value;
+  const frameworkFilter = elements.filterFinancialFramework ? elements.filterFinancialFramework.value : "";
   const statusFilter = elements.filterStatus ? elements.filterStatus.value : "";
   const tshirtFilter = elements.filterTshirtSize ? elements.filterTshirtSize.value : "";
   const moscowFilter = elements.filterMoscow ? elements.filterMoscow.value : "";
@@ -4716,6 +5198,11 @@ function applyFilters(projects) {
 
     if (currencyFilter) {
       if ((p.financialImpactCurrency || "") !== currencyFilter) return false;
+    }
+
+    if (frameworkFilter) {
+      const projectFramework = normalizeFinancialFramework(p.financialImpactFramework);
+      if (projectFramework !== frameworkFilter) return false;
     }
 
     if (statusFilter) {
@@ -4822,6 +5309,7 @@ function clearFilters() {
   elements.filterImpact.value = "";
   elements.filterEffort.value = "";
   elements.filterCurrency.value = "";
+  if (elements.filterFinancialFramework) elements.filterFinancialFramework.value = "";
   elements.filterProjectType.value = "";
   if (elements.filterStatus) elements.filterStatus.value = "";
   if (elements.filterTshirtSize) elements.filterTshirtSize.value = "";
@@ -5272,6 +5760,9 @@ function openProjectModal(mode, projectId) {
     elements.projectMoscow.value = project.moscowCategory || "";
     renderCountriesControls(Array.isArray(project.countries) ? project.countries : []);
 
+    if (elements.projectMetaId) {
+      elements.projectMetaId.textContent = project.id || "—";
+    }
     elements.projectMetaCreated.textContent = formatDateTime(project.createdAt);
     elements.projectMetaModified.textContent = formatDateTime(project.modifiedAt || project.createdAt);
     elements.projectMetaRice.textContent = formatRice(calculateRiceScore(project));
@@ -5306,6 +5797,9 @@ function openProjectModal(mode, projectId) {
     const currentYear = now.getFullYear();
     const currentQuarter = Math.floor(now.getMonth() / 3) + 1;
     elements.projectPeriod.value = `${currentYear}-Q${currentQuarter}`;
+    if (elements.projectMetaId) {
+      elements.projectMetaId.textContent = "Will be generated on save";
+    }
     elements.projectMetaCreated.textContent = formatDateTime(nowIso);
     elements.projectMetaModified.textContent = formatDateTime(nowIso);
     elements.projectMetaRice.textContent = "—";
