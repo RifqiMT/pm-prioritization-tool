@@ -1,47 +1,34 @@
 # Changelog
 
-All notable changes to this project are documented in this file.
+All notable changes are recorded here.
 
 ## [Unreleased]
 
-### Added
-
-- Comprehensive documentation suite:
+### Documentation
+- Re-audited codebase and refreshed the full product documentation suite:
+  - `README.md`
+  - `PRODUCT_DOCUMENTATION_STANDARD.md`
   - `docs/README.md`
+  - `docs/PRD.md`
+  - `docs/USER_PERSONAS.md`
+  - `docs/USER_STORIES.md`
   - `docs/VARIABLES.md`
   - `docs/METRICS_AND_OKRS.md`
   - `docs/DESIGN_GUIDELINES.md`
+  - `docs/ARCHITECTURE.md`
   - `docs/TRACEABILITY_MATRIX.md`
   - `docs/GUARDRAILS.md`
-  - `docs/ARCHITECTURE.md`
   - `docs/CHANGELOG.md`
 
-### Updated
+### Product / UX Alignment Captured
+- RICE values represented as tooltip on RICE score (standalone column removed)
+- RICE tooltip expanded with abbreviation meanings + formula + calculation line
+- New table `Framework` column with icon + tooltip semantics
+- Financial frameworks documented as currently implemented:
+  - `custom`, `clv`, `nps`, `risk`, `headcount`, `operational`
+- Number-input spinner removal and wheel-increment prevention documented
 
-- `README.md` expanded documentation map and cross-references.
-- `PRODUCT_DOCUMENTATION_STANDARD.md` expanded into full enterprise documentation index.
-- Existing core docs (`PRD`, personas, stories) aligned with current behavior and requirements.
-
-### UI/UX
-
-- Indonesian-inspired white-first palette and interaction refinements.
-- Header/table synchronization improvements and modernized control styles.
-- Profile panel layout and usability improvements.
-
-### Logic
-
-- Exchange rate preview formatting updated to `1 EUR = local currency` with 2 decimal places.
-
----
-
-## [1.0.0]
-
-### Baseline
-
-- Local-first PM prioritization app with:
-  - profile and project management
-  - RICE scoring and MOSCOW categorization
-  - table, board, MOSCOW, and map views
-  - exchange rates ETL and EUR conversion
-  - JSON/CSV import-export
-
+### Architecture Notes
+- Current folder snapshot audited as:
+  - `index.html`, `css/main.css`, `src/app.js`, `src/rice.js`
+- Runtime-referenced but currently missing module contracts documented for clarity

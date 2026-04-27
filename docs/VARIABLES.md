@@ -1,162 +1,79 @@
 # Variables Documentation
 
-## Purpose
+This document catalogs critical application variables with professional definitions, formulas, locations, and examples.
 
-This document provides an exhaustive variable and data-field catalog for the app, including definitions, formulas, app location, and examples.
+## 1. State Variables
 
----
-
-## 1) Application State Variables
-
-| Variable | Friendly Name | Definition | Formula / Logic | App Location | Example |
+| Variable Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |---|---|---|---|---|---|
-| `profiles` | Profile Collection | Array of all profile objects in local state. | N/A | `src/app.js` (`state`) | `[{ id: "profile_x", name: "Default Profile", ... }]` |
-| `activeProfileId` | Active Profile Pointer | ID of currently selected profile. | N/A | `src/app.js` (`state`) | `"profile_abc123"` |
-| `sortField` | Table Sort Field | Current field used for table sorting. | N/A | `src/app.js` (`state`) | `"createdAt"` |
-| `sortDirection` | Table Sort Direction | Current sort direction. | `asc` or `desc` | `src/app.js` (`state`) | `"desc"` |
-| `projectsView` | Active View | Current visible project view. | One of `table`, `board`, `moscow`, `map` | `src/app.js` (`state`) | `"table"` |
-| `scrumBoardSortByRice` | Board Auto-Sort Toggle | Whether board cards auto-sort by RICE. | Boolean | `src/app.js` (`state`) | `true` |
-| `moscowSortByRice` | MOSCOW Auto-Sort Toggle | Whether MOSCOW cards auto-sort by RICE. | Boolean | `src/app.js` (`state`) | `true` |
-| `mapMetric` | Map Metric Selector | Metric displayed in map choropleth. | One of `projects`, `rice`, `financial` | `src/app.js` (`state`) | `"financial"` |
-| `exchangeRatesToEUR` | Currency-to-EUR Rate Dictionary | Map of currency code to `EUR per 1 unit` of that currency. | From ETL sources + fallback merge | `src/app.js`, `src/modules/exchange-rates.js` | `{ USD: 0.92, IDR: 0.000057 }` |
-| `exchangeRatesDate` | Exchange Rate Date | Current effective rates date (Berlin timezone day). | `YYYY-MM-DD` | `src/modules/exchange-rates.js` | `"2026-04-14"` |
-| `exchangeRatesLastSource` | Last Refresh Source | Indicates refresh trigger source. | `manual` or `auto` | `src/modules/exchange-rates.js` | `"manual"` |
-| `editingProjectId` | Project Edit Cursor | Tracks project currently being edited. | N/A | `src/app.js` | `"project_456"` |
-| `projectModalMode` | Project Modal Mode | Current project modal behavior mode. | `create` or `edit` | `src/app.js` | `"create"` |
+| `profiles` | Profile Collection | All portfolio containers in runtime state. | Array of profile objects. | `src/app.js` (`state`) | `[{ id: "profile_1", ... }]` |
+| `activeProfileId` | Active Profile Pointer | Current profile context used for rendering and mutation. | Selected profile id. | `src/app.js` | `"profile_1"` |
+| `sortField` | Table Sort Field | Current sortable column key. | String enum matched by `sortProjects`. | `src/app.js` | `"riceScore"` |
+| `sortDirection` | Sort Direction | Current sort direction. | `"asc"` or `"desc"`. | `src/app.js` | `"desc"` |
+| `projectsView` | Active View | Current UI view mode. | `table|board|moscow|map`. | `src/app.js` | `"table"` |
+| `mapMetric` | Map Metric | Active map aggregation metric. | `projects|rice|financial`. | `src/app.js` | `"financial"` |
+| `exchangeRatesToEUR` | FX Rate Map | Currency-to-EUR conversion map. | `amountEUR = amount * rateToEUR`. | `src/app.js` + exchange module contract | `{ USD: 0.92 }` |
 
----
+## 2. Project Variables
 
-## 2) Profile Object Variables
-
-| Variable | Friendly Name | Definition | Formula / Logic | App Location | Example |
+| Variable Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |---|---|---|---|---|---|
-| `id` | Profile ID | Unique profile identifier. | `generateId("profile")` | `src/app.js` | `"profile_x8j2q9"` |
-| `name` | Profile Name | Human-readable profile name. | Required text | `src/app.js` | `"Q3 Roadmap"` |
-| `team` | Team Name | Optional team/owner label. | Optional text | `src/app.js` | `"Growth"` |
-| `createdAt` | Profile Created Timestamp | ISO timestamp for profile creation. | `new Date().toISOString()` | `src/app.js` | `"2026-04-14T15:00:00.000Z"` |
-| `projects` | Profile Projects | Project array scoped to the profile. | N/A | `src/app.js` | `[{...project}]` |
-| `boardOrder` | Board Manual Order Map | Status-column order map when board auto-sort disabled. | Keyed by status | `src/app.js` | `{ "In Progress": ["p1","p2"] }` |
-| `moscowOrder` | MOSCOW Manual Order Map | Quadrant order map when MOSCOW auto-sort disabled. | Keyed by category | `src/app.js` | `{ "Must have": ["p1"] }` |
+| `reachValue` | Reach | Estimated volume impacted. | R in RICE. | `src/rice.js`, `src/app.js` | `1000` |
+| `impactValue` | Impact | Relative per-unit impact score. | I in RICE (`1..5`). | `src/rice.js`, `src/app.js` | `3` |
+| `confidenceValue` | Confidence | Confidence percentage. | C in RICE (`0..100`, normalized to decimal). | `src/rice.js`, `src/app.js` | `80` |
+| `effortValue` | Effort | Estimated effort scale. | E in RICE (`1..5`, divisor). | `src/rice.js`, `src/app.js` | `2` |
+| `financialImpactFramework` | Financial Framework | Model used to compute financial impact. | `custom|clv|nps|risk|headcount|operational`. | `src/app.js`, `index.html` | `"operational"` |
+| `financialImpactInputs` | Framework Inputs | Framework-specific input payload. | Sanitized by selected framework whitelist. | `src/app.js` | `{ opAnnualVolume: 10000 }` |
+| `financialImpactValue` | Financial Impact | Computed or manual impact amount (project currency). | Derived by framework compute function or custom entry. | `src/app.js` | `166500` |
+| `financialImpactCurrency` | Currency Code | Currency unit for `financialImpactValue`. | Uppercase code; converted to EUR for shared reporting. | `src/app.js` | `"EUR"` |
 
----
+## 3. Formula Variables
 
-## 3) Project Object Variables
+### 3.1 RICE Formula
 
-| Variable | Friendly Name | Definition | Formula / Logic | App Location | Example |
-|---|---|---|---|---|---|
-| `id` | Project ID | Unique project identifier. | `generateId("project")` | `src/app.js` | `"project_4k92m1"` |
-| `title` | Project Title | Primary project name. | Required text | `src/app.js` | `"Refund Data Extraction"` |
-| `description` | Description | Optional long-form description. | Optional text | `src/app.js` | `"Automate refund ingestion."` |
-| `reachDescription` | Reach Description | Notes for reach estimate. | Optional text | `src/app.js` | `"Users impacted by launch"` |
-| `reachValue` | Reach Value | Reach input for RICE. | Integer `>=0` | `src/rice.js` | `100` |
-| `impactDescription` | Impact Description | Notes for impact estimate. | Optional text | `src/app.js` | `"High value to users"` |
-| `impactValue` | Impact Value | Impact input for RICE. | Integer `1..5` | `src/rice.js` | `3` |
-| `confidenceDescription` | Confidence Description | Notes for confidence estimate. | Optional text | `src/app.js` | `"Validated with pilot"` |
-| `confidenceValue` | Confidence Percentage | Confidence input for RICE. | Numeric `0..100` | `src/rice.js` | `80` |
-| `effortDescription` | Effort Description | Notes for effort estimate. | Optional text | `src/app.js` | `"2 sprint effort"` |
-| `effortValue` | Effort Value | Effort denominator in RICE. | Integer `1..5` | `src/rice.js` | `2` |
-| `riceScore` | RICE Score | Computed prioritization score. | `(reach * impact * confidenceNorm) / effort` | `src/rice.js`, `src/app.js` | `120` |
-| `financialImpactValue` | Financial Amount | Optional amount in original currency. | Number `>=0` | `src/app.js`, `src/rice.js` | `1500000` |
-| `financialImpactCurrency` | Financial Currency | ISO currency code for amount. | Uppercase currency code | `src/app.js` | `"EUR"` |
-| `projectType` | Project Type | Classification bucket. | Enum | `src/constants.js`, `src/app.js` | `"Improvement"` |
-| `projectStatus` | Project Status | Delivery status classification. | Enum | `src/constants.js`, `src/app.js` | `"In Progress"` |
-| `tshirtSize` | T-shirt Size | Relative sizing category. | Enum `XS..XL` | `src/constants.js`, `src/app.js` | `"M"` |
-| `projectPeriod` | Project Period | Quarter period representation. | `YYYY-Q[1-4]` | `src/rice.js`, `src/app.js` | `"2026-Q3"` |
-| `moscowCategory` | MOSCOW Category | Priority category. | Enum, default `"Could have"` | `src/constants.js`, `src/app.js` | `"Must have"` |
-| `countries` | Target Countries | Country list for map aggregation. | Canonicalized on save/import | `src/app.js`, `src/constants.js` | `["Germany","Indonesia"]` |
-| `createdAt` | Project Created Timestamp | ISO creation timestamp. | `new Date().toISOString()` | `src/app.js` | `"2026-04-14T15:30:00.000Z"` |
-| `modifiedAt` | Project Modified Timestamp | ISO update timestamp. | Updated on edit | `src/app.js` | `"2026-04-14T16:20:00.000Z"` |
+- `riceScore = (reachValue * impactValue * confidenceDecimal) / effortValue`
+- `confidenceDecimal = confidenceValue / 100` when confidence input is `%`
 
----
+### 3.2 Headcount Formula (current implementation)
 
-## 4) Formula Variables and Transformations
+- `hoursSavedPerFtePerYear = (minutesSavedPerFtePerDay / 60) * workingDaysPerYear`
+- `totalHoursSaved = hoursSavedPerFtePerYear * fteCount`
+- `avoidedFtes = totalHoursSaved / (workingDaysPerYear * hoursPerDay)`
+- `financialImpact = avoidedFtes * annualCostPerFte`
 
-### 4.1 RICE Formula Variables
+### 3.3 Operational Formula (current implementation)
 
-- `reach = Number(project.reachValue || 0)`
-- `impact = Number(project.impactValue || 0)`
-- `confidence = Number(project.confidenceValue || 0)`
-- `effort = Number(project.effortValue || 0)`
-- `confidenceNorm = confidence > 1 ? confidence / 100 : confidence`
-- `riceScore = (reach * impact * confidenceNorm) / effort`
+- `costPerUnitSavings = (costPerUnitBefore - costPerUnitAfter) * annualVolume`
+- `laborSavings = ((cycleTimeBeforeMinutes - cycleTimeAfterMinutes) / 60) * laborCostPerHour * annualTransactions`
+- `totalSavings = costPerUnitSavings + laborSavings`
 
-### 4.2 Exchange Rate Conversion Variables
-
-- `exchangeRatesToEUR[currency]` = `EUR per 1 local currency`
-- `amountEUR = amountLocal * exchangeRatesToEUR[currency]`
-- UI preview rate line: `1 EUR = (1 / exchangeRatesToEUR[currency]) local currency` (2 decimals)
-
-### 4.3 Financial Display Variables
-
-- `formatFinancialShort(n)` returns:
-  - `K` for thousand
-  - `Mn` for million
-  - `Bn` for billion
-  - `Tn` for trillion
-
----
-
-## 5) Global Constant Variables
-
-| Variable | Friendly Name | Definition | App Location |
-|---|---|---|---|
-| `STORAGE_KEY` | Local Storage Key | Primary localStorage key for serialized state payload. | `src/constants.js` |
-| `projectStatusList` | Status Catalog | Ordered status options. | `src/constants.js` |
-| `projectStatusIcons` | Status Icon Metadata | Status icon and tooltip metadata. | `src/constants.js` |
-| `tshirtSizeList` | Size Catalog | T-shirt options. | `src/constants.js` |
-| `moscowList` | MOSCOW Catalog | MOSCOW category options. | `src/constants.js` |
-| `moscowTooltips` | MOSCOW Tooltip Metadata | MOSCOW tooltip and grid descriptions. | `src/constants.js` |
-| `projectTypeIcons` | Type Icon Metadata | Project type icon and tooltip metadata. | `src/constants.js` |
-| `currencyList` | Currency Catalog | Supported currency dropdown list. | `src/constants.js` |
-| `countryList` | Country Catalog | Canonical country list. | `src/constants.js` |
-| `countryCodeByName` | Country-to-Code Map | Country display to ISO-2 mapping. | `src/constants.js` |
-| `countryNameAliases` | Country Alias Map | Alternate country labels mapped to canonical names. | `src/constants.js` |
-
----
-
-## 6) Variable Relationship Chart
+## 4. Variable Relationship Chart
 
 ```mermaid
 flowchart TD
-  A[Project Inputs] --> B[reachValue]
-  A --> C[impactValue]
-  A --> D[confidenceValue]
-  A --> E[effortValue]
-  B --> F[RICE Formula]
+  A[Project Inputs] --> B[Reach]
+  A --> C[Impact]
+  A --> D[Confidence]
+  A --> E[Effort]
+  D --> D1[Confidence Decimal]
+  B --> F[RICE Score]
   C --> F
-  D --> G[confidence normalization]
-  G --> F
+  D1 --> F
   E --> F
-  F --> H[riceScore]
-  H --> I[Table View]
-  H --> J[Board Sort]
-  H --> K[MOSCOW Sort]
-  H --> L[Map Metric RICE]
+  F --> G[Table RICE Score Cell]
+  G --> H[RICE Tooltip: R/I/C/E + Formula + Calculation]
 
-  M[financialImpactValue + financialImpactCurrency] --> N[exchangeRatesToEUR]
-  N --> O[convertToEUR]
-  O --> P[Financial Impact EUR]
-  P --> I
-  P --> Q[Map Metric Financial]
+  I[Financial Framework Selector] --> J[Framework-Specific Inputs]
+  J --> K[Framework Compute Function]
+  K --> L[financialImpactValue]
+  L --> M[Table Financial EUR Display]
+  L --> N[Map Financial Metric]
 
-  R[countries] --> S[Country Normalization]
-  S --> T[Country Code + Flag]
-  T --> I
-  T --> U[Map Aggregation]
-
-  V[profiles + activeProfileId] --> W[Filtered project set]
-  W --> I
-  W --> J
-  W --> K
-  W --> U
+  O[Currency + FX Rate] --> M
+  O --> N
 ```
 
----
+## 5. Notes
 
-## 7) Data Quality and Governance Notes
-
-- All country values should pass canonical normalization before persistence and import merge.
-- Financial conversions are deterministic against the currently loaded rates snapshot.
-- RICE validation ensures denominator (`effortValue`) never reaches zero in valid data.
-- Import merge behavior should preserve project IDs and avoid duplicate insertion.
-
+- Framework inputs are intentionally isolated by framework sanitization logic.
+- `financialImpactFramework` is now a first-class sortable table column via icon cell representation.

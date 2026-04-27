@@ -1,10 +1,10 @@
 # Product Documentation Standard
 
-This standard defines required documentation coverage, quality criteria, and governance for the Product Management Prioritization Tool.
+This standard defines how product documentation is authored, reviewed, and kept in sync with implemented behavior.
 
-## 1) Required Documentation Set
+## 1. Required Document Set
 
-The following documents are mandatory and must remain current:
+The following files are mandatory and must be maintained together:
 
 - `README.md`
 - `PRODUCT_DOCUMENTATION_STANDARD.md`
@@ -15,77 +15,62 @@ The following documents are mandatory and must remain current:
 - `docs/VARIABLES.md`
 - `docs/METRICS_AND_OKRS.md`
 - `docs/DESIGN_GUIDELINES.md`
+- `docs/ARCHITECTURE.md`
 - `docs/TRACEABILITY_MATRIX.md`
 - `docs/GUARDRAILS.md`
-- `docs/ARCHITECTURE.md`
 - `docs/CHANGELOG.md`
 
-## 2) Content Quality Requirements
+## 2. Quality Criteria
 
 Each documentation update must:
 
-1. Reflect latest implemented behavior in source code.
-2. Use clear professional wording and scannable structure.
-3. Include product overview, benefits, features, business and technical logic.
-4. Explicitly define assumptions and limitations.
-5. Reference source files or modules for traceability.
+1. Reflect current runtime behavior and UI.
+2. Use professional wording and readable structure.
+3. Describe product, business, and technical logic.
+4. Include assumptions, limitations, and edge-case notes.
+5. Reference implementation locations (files/functions) where relevant.
 
-## 3) Domain Coverage Requirements
+## 3. Coverage Requirements
 
-### Product
+### Product Coverage
+- Problem statement, goals, scope, non-goals
+- Feature behavior by user workflow
+- Financial framework and prioritization logic
 
-- Problem statement, goals, scope, non-goals.
-- User value and workflow outcomes.
-- Functional and non-functional requirements.
+### User Coverage
+- Persona goals, pain points, and workflow context
+- Stories with acceptance criteria
 
-### Users
+### Data Coverage
+- Variable catalog with formula and examples
+- Relationship chart linking inputs to outputs
 
-- Primary/secondary personas with goals and pain points.
-- Story coverage across all major epics and views.
+### Delivery Coverage
+- Product metrics and OKRs
+- Guardrails and operating constraints
+- Traceability from requirement to implementation
 
-### Data and Variables
+## 4. Governance Workflow
 
-- Variable name, friendly name, definition, formula/logic, app location, example.
-- Relationship chart connecting key variables and computed outputs.
+For any feature/code change:
 
-### Metrics and OKRs
+1. Update relevant code.
+2. Update `docs/CHANGELOG.md`.
+3. Update PRD, stories, personas if behavior or scope changed.
+4. Update variables/metrics/design/traceability/guardrails if impacted.
+5. Run a final consistency pass across all docs.
 
-- Product, UX, and engineering metrics.
-- Objective/KR mapping with measurable targets.
+## 5. Review Checklist
 
-### Design
+- [ ] README and docs hub reflect latest architecture and features
+- [ ] PRD aligns with actual implemented behaviors
+- [ ] Stories and personas cover active product workflows
+- [ ] Variables include latest fields and formulas
+- [ ] Metrics/OKRs remain measurable and actionable
+- [ ] Traceability matrix maps key requirements to code evidence
+- [ ] Guardrails cover business, technical, and delivery limits
+- [ ] Changelog records user-visible and architectural changes
 
-- Theme palette (including Indonesian palette profile).
-- Component-level visual behavior and responsive guidance.
-- Accessibility and usability rules.
+## 6. Source-of-Truth Rule
 
-### Engineering Governance
-
-- Architecture boundaries and runtime model.
-- Traceability from requirements to implementation.
-- Technical/business guardrails and release checklist.
-- Changelog discipline.
-
-## 4) Update Governance
-
-For any feature or behavior change:
-
-1. Update relevant source files.
-2. Update `CHANGELOG.md`.
-3. Update requirement docs (`PRD`, stories/personas if impact exists).
-4. Update traceability matrix mapping.
-5. Update design/variables/metrics docs if affected.
-
-## 5) Review Checklist
-
-- [ ] Behavior in docs matches runtime behavior.
-- [ ] New/changed fields represented in `VARIABLES.md`.
-- [ ] PRD and stories remain consistent.
-- [ ] Traceability entries added/updated.
-- [ ] Guardrails still respected.
-- [ ] Changelog entry added.
-
-## 6) Documentation Index
-
-Primary index: `docs/README.md`  
-Primary narrative: `README.md`
+When docs conflict with code, code is the source of truth. Documentation must be corrected in the same change cycle.

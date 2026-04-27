@@ -60,7 +60,45 @@ function normalizeCurrency(val) {
 }
 
 const FINANCIAL_FRAMEWORK_DEFAULT = "custom";
-const FINANCIAL_FRAMEWORKS = ["custom", "clv", "nps", "risk"];
+const FINANCIAL_FRAMEWORKS = ["custom", "clv", "headcount", "operational", "nps", "risk"];
+const FINANCIAL_FRAMEWORK_ICONS = {
+  custom: {
+    label: "Custom",
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 7h14M5 12h8M5 17h14"/></svg>',
+    tooltipTitle: "Custom (direct amount)",
+    tooltipBody: "Manual financial impact entered directly by the user."
+  },
+  clv: {
+    label: "CLV",
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 18l5-5 4 3 7-8"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 8h3v3"/></svg>',
+    tooltipTitle: "CLV framework",
+    tooltipBody: "Estimates impact from customer lifetime value uplift."
+  },
+  nps: {
+    label: "NPS",
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M3 12h18"/></svg>',
+    tooltipTitle: "NPS to financial impact",
+    tooltipBody: "Converts NPS movement into retained, expansion, and referral value."
+  },
+  risk: {
+    label: "Risk",
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l9 16H3L12 3z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 3h.01"/></svg>',
+    tooltipTitle: "Risk mitigation",
+    tooltipBody: "Estimates avoided expected loss after mitigation."
+  },
+  headcount: {
+    label: "Headcount",
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10a3 3 0 100-6 3 3 0 000 6zm8 1a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 19a5 5 0 0110 0m2 0a4 4 0 018 0"/></svg>',
+    tooltipTitle: "Headcount savings",
+    tooltipBody: "Converts saved capacity into avoided FTE and financial impact."
+  },
+  operational: {
+    label: "Operational",
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 12h4l2-5 4 10 2-5h4"/></svg>',
+    tooltipTitle: "Operational efficiency",
+    tooltipBody: "Estimates savings from lower unit cost and faster cycle time."
+  }
+};
 
 function normalizeFinancialFramework(val) {
   const raw = (val || "").toString().trim().toLowerCase();
@@ -102,6 +140,23 @@ function sanitizeFinancialImpactInputs(framework, inputs) {
       "riskExposureUnits",
       "riskPeriodsPerYear",
       "riskMitigationCost"
+    ],
+    headcount: [
+      "hcMinutesSavedPerFtePerDay",
+      "hcWorkingDaysPerYear",
+      "hcFteCount",
+      "hcHoursPerDay",
+      "hcUtilizationGainPct",
+      "hcAnnualCostPerFte"
+    ],
+    operational: [
+      "opCostPerUnitBefore",
+      "opCostPerUnitAfter",
+      "opAnnualVolume",
+      "opCycleTimeBeforeMinutes",
+      "opCycleTimeAfterMinutes",
+      "opLaborCostPerHour",
+      "opAnnualTransactions"
     ]
   };
 
@@ -165,7 +220,20 @@ function getFinancialInputsFromForm() {
     riskLossPerExposure: elements.financialRiskLossPerExposure && elements.financialRiskLossPerExposure.value !== "" ? Number(elements.financialRiskLossPerExposure.value) : null,
     riskExposureUnits: elements.financialRiskExposureUnits && elements.financialRiskExposureUnits.value !== "" ? Number(elements.financialRiskExposureUnits.value) : null,
     riskPeriodsPerYear: elements.financialRiskPeriodsPerYear && elements.financialRiskPeriodsPerYear.value !== "" ? Number(elements.financialRiskPeriodsPerYear.value) : null,
-    riskMitigationCost: elements.financialRiskMitigationCost && elements.financialRiskMitigationCost.value !== "" ? Number(elements.financialRiskMitigationCost.value) : null
+    riskMitigationCost: elements.financialRiskMitigationCost && elements.financialRiskMitigationCost.value !== "" ? Number(elements.financialRiskMitigationCost.value) : null,
+    hcMinutesSavedPerFtePerDay: elements.financialHeadcountMinutesSavedPerFtePerDay && elements.financialHeadcountMinutesSavedPerFtePerDay.value !== "" ? Number(elements.financialHeadcountMinutesSavedPerFtePerDay.value) : null,
+    hcWorkingDaysPerYear: elements.financialHeadcountWorkingDaysPerYear && elements.financialHeadcountWorkingDaysPerYear.value !== "" ? Number(elements.financialHeadcountWorkingDaysPerYear.value) : null,
+    hcFteCount: elements.financialHeadcountFteCount && elements.financialHeadcountFteCount.value !== "" ? Number(elements.financialHeadcountFteCount.value) : null,
+    hcHoursPerDay: elements.financialHeadcountHoursPerDay && elements.financialHeadcountHoursPerDay.value !== "" ? Number(elements.financialHeadcountHoursPerDay.value) : null,
+    hcUtilizationGainPct: elements.financialHeadcountUtilizationGainPct && elements.financialHeadcountUtilizationGainPct.value !== "" ? Number(elements.financialHeadcountUtilizationGainPct.value) : null,
+    hcAnnualCostPerFte: elements.financialHeadcountAnnualCostPerFte && elements.financialHeadcountAnnualCostPerFte.value !== "" ? Number(elements.financialHeadcountAnnualCostPerFte.value) : null,
+    opCostPerUnitBefore: elements.financialOperationalCostPerUnitBefore && elements.financialOperationalCostPerUnitBefore.value !== "" ? Number(elements.financialOperationalCostPerUnitBefore.value) : null,
+    opCostPerUnitAfter: elements.financialOperationalCostPerUnitAfter && elements.financialOperationalCostPerUnitAfter.value !== "" ? Number(elements.financialOperationalCostPerUnitAfter.value) : null,
+    opAnnualVolume: elements.financialOperationalAnnualVolume && elements.financialOperationalAnnualVolume.value !== "" ? Number(elements.financialOperationalAnnualVolume.value) : null,
+    opCycleTimeBeforeMinutes: elements.financialOperationalCycleTimeBeforeMinutes && elements.financialOperationalCycleTimeBeforeMinutes.value !== "" ? Number(elements.financialOperationalCycleTimeBeforeMinutes.value) : null,
+    opCycleTimeAfterMinutes: elements.financialOperationalCycleTimeAfterMinutes && elements.financialOperationalCycleTimeAfterMinutes.value !== "" ? Number(elements.financialOperationalCycleTimeAfterMinutes.value) : null,
+    opLaborCostPerHour: elements.financialOperationalLaborCostPerHour && elements.financialOperationalLaborCostPerHour.value !== "" ? Number(elements.financialOperationalLaborCostPerHour.value) : null,
+    opAnnualTransactions: elements.financialOperationalAnnualTransactions && elements.financialOperationalAnnualTransactions.value !== "" ? Number(elements.financialOperationalAnnualTransactions.value) : null
   };
 }
 
@@ -204,6 +272,19 @@ function setFinancialInputsToForm(inputs) {
   if (elements.financialRiskExposureUnits) elements.financialRiskExposureUnits.value = safe.riskExposureUnits != null ? String(safe.riskExposureUnits) : "";
   if (elements.financialRiskPeriodsPerYear) elements.financialRiskPeriodsPerYear.value = safe.riskPeriodsPerYear != null ? String(safe.riskPeriodsPerYear) : "";
   if (elements.financialRiskMitigationCost) elements.financialRiskMitigationCost.value = safe.riskMitigationCost != null ? String(safe.riskMitigationCost) : "";
+  if (elements.financialHeadcountMinutesSavedPerFtePerDay) elements.financialHeadcountMinutesSavedPerFtePerDay.value = safe.hcMinutesSavedPerFtePerDay != null ? String(safe.hcMinutesSavedPerFtePerDay) : "";
+  if (elements.financialHeadcountWorkingDaysPerYear) elements.financialHeadcountWorkingDaysPerYear.value = safe.hcWorkingDaysPerYear != null ? String(safe.hcWorkingDaysPerYear) : "";
+  if (elements.financialHeadcountFteCount) elements.financialHeadcountFteCount.value = safe.hcFteCount != null ? String(safe.hcFteCount) : "";
+  if (elements.financialHeadcountHoursPerDay) elements.financialHeadcountHoursPerDay.value = safe.hcHoursPerDay != null ? String(safe.hcHoursPerDay) : "";
+  if (elements.financialHeadcountUtilizationGainPct) elements.financialHeadcountUtilizationGainPct.value = safe.hcUtilizationGainPct != null ? String(safe.hcUtilizationGainPct) : "";
+  if (elements.financialHeadcountAnnualCostPerFte) elements.financialHeadcountAnnualCostPerFte.value = safe.hcAnnualCostPerFte != null ? String(safe.hcAnnualCostPerFte) : "";
+  if (elements.financialOperationalCostPerUnitBefore) elements.financialOperationalCostPerUnitBefore.value = safe.opCostPerUnitBefore != null ? String(safe.opCostPerUnitBefore) : "";
+  if (elements.financialOperationalCostPerUnitAfter) elements.financialOperationalCostPerUnitAfter.value = safe.opCostPerUnitAfter != null ? String(safe.opCostPerUnitAfter) : "";
+  if (elements.financialOperationalAnnualVolume) elements.financialOperationalAnnualVolume.value = safe.opAnnualVolume != null ? String(safe.opAnnualVolume) : "";
+  if (elements.financialOperationalCycleTimeBeforeMinutes) elements.financialOperationalCycleTimeBeforeMinutes.value = safe.opCycleTimeBeforeMinutes != null ? String(safe.opCycleTimeBeforeMinutes) : "";
+  if (elements.financialOperationalCycleTimeAfterMinutes) elements.financialOperationalCycleTimeAfterMinutes.value = safe.opCycleTimeAfterMinutes != null ? String(safe.opCycleTimeAfterMinutes) : "";
+  if (elements.financialOperationalLaborCostPerHour) elements.financialOperationalLaborCostPerHour.value = safe.opLaborCostPerHour != null ? String(safe.opLaborCostPerHour) : "";
+  if (elements.financialOperationalAnnualTransactions) elements.financialOperationalAnnualTransactions.value = safe.opAnnualTransactions != null ? String(safe.opAnnualTransactions) : "";
 }
 
 function resetFinancialFrameworkInputs() {
@@ -235,6 +316,10 @@ function toggleFinancialFrameworkFields(framework) {
         "NPS: use “Reported impact” to choose what fills the financial impact field—subtotal (retention + expansion GP, doc Step 3) or net (includes referral GP and subtracts program cost). Breakdown always shows all lines. Rates accept 95 or 0.95.";
     } else if (selected === "risk") {
       elements.financialFrameworkFormulaHint.textContent = "Risk mitigation value: ((expected loss before - expected loss after) x periods per year) - mitigation cost, where expected loss = probability x loss per exposure x exposure units.";
+    } else if (selected === "headcount") {
+      elements.financialFrameworkFormulaHint.textContent = "Headcount savings: Hours saved per FTE/year = (minutes saved per FTE per day / 60) x working days/year. Total hours saved = hours saved per FTE/year x FTE count. Avoided FTEs = total hours saved / (working days/year x hours/day). Financial impact = avoided FTEs x annual fully loaded cost per FTE.";
+    } else if (selected === "operational") {
+      elements.financialFrameworkFormulaHint.textContent = "Operational efficiency: Annual financial impact = (cost per unit before - cost per unit after) x annual volume + ((cycle time before - cycle time after) / 60) x labor cost per hour x annual transactions.";
     } else {
       elements.financialFrameworkFormulaHint.textContent = "Custom: enter a direct amount manually.";
     }
@@ -252,6 +337,12 @@ function toggleFinancialFrameworkFields(framework) {
   }
   if (selected !== "nps") {
     updateNpsBreakdown(null);
+  }
+  if (selected !== "headcount") {
+    updateHeadcountBreakdown(null);
+  }
+  if (selected !== "operational") {
+    updateOperationalBreakdown(null);
   }
 }
 
@@ -361,6 +452,123 @@ function computeRiskBreakdown(inputs) {
     annualizedAvoided,
     netValue
   };
+}
+
+function computeHeadcountBreakdown(inputs) {
+  const safe = inputs && typeof inputs === "object" ? inputs : {};
+  const toFinite = (value) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  };
+  const minutesSavedPerFtePerDay = toFinite(safe.hcMinutesSavedPerFtePerDay);
+  const workingDaysPerYear = toFinite(safe.hcWorkingDaysPerYear);
+  const fteCount = toFinite(safe.hcFteCount);
+  const hoursPerDay = toFinite(safe.hcHoursPerDay) || 8;
+  const annualCostPerFte = toFinite(safe.hcAnnualCostPerFte);
+  const utilizationGainPct = toFinite(safe.hcUtilizationGainPct);
+
+  if (
+    minutesSavedPerFtePerDay == null ||
+    workingDaysPerYear == null ||
+    fteCount == null ||
+    annualCostPerFte == null ||
+    workingDaysPerYear <= 0 ||
+    hoursPerDay <= 0 ||
+    fteCount < 0 ||
+    minutesSavedPerFtePerDay < 0 ||
+    annualCostPerFte < 0
+  ) return null;
+
+  const derivedUtilizationGain = minutesSavedPerFtePerDay / (hoursPerDay * 60);
+  const utilizationGain =
+    utilizationGainPct != null ? utilizationGainPct / 100 : derivedUtilizationGain;
+  if (utilizationGain < 0) return null;
+
+  const hoursSavedPerFtePerYear = (minutesSavedPerFtePerDay / 60) * workingDaysPerYear;
+  const totalHoursSaved = hoursSavedPerFtePerYear * fteCount;
+  const avoidedFtes = totalHoursSaved / (workingDaysPerYear * hoursPerDay);
+  const financialImpact = avoidedFtes * annualCostPerFte;
+
+  return {
+    utilizationGain,
+    hoursSavedPerFtePerYear,
+    totalHoursSaved,
+    avoidedFtes,
+    financialImpact
+  };
+}
+
+function updateHeadcountBreakdown(breakdown) {
+  const setText = (el, value, opts = {}) => {
+    if (!el) return;
+    if (!Number.isFinite(value)) {
+      el.textContent = "—";
+      return;
+    }
+    if (opts.percent) {
+      el.textContent = `${(value * 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}%`;
+      return;
+    }
+    el.textContent = Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  };
+  setText(elements.financialHeadcountBreakdownUtilizationGain, breakdown && breakdown.utilizationGain, { percent: true });
+  setText(elements.financialHeadcountBreakdownHoursSavedPerFte, breakdown && breakdown.hoursSavedPerFtePerYear);
+  setText(elements.financialHeadcountBreakdownTotalHoursSaved, breakdown && breakdown.totalHoursSaved);
+  setText(elements.financialHeadcountBreakdownAvoidedFtes, breakdown && breakdown.avoidedFtes);
+  setText(elements.financialHeadcountBreakdownFinancialImpact, breakdown && breakdown.financialImpact);
+}
+
+function computeOperationalBreakdown(inputs) {
+  const safe = inputs && typeof inputs === "object" ? inputs : {};
+  const toFinite = (value) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  };
+  const hasCostView =
+    toFinite(safe.opCostPerUnitBefore) != null &&
+    toFinite(safe.opCostPerUnitAfter) != null &&
+    toFinite(safe.opAnnualVolume) != null;
+  const hasLaborView =
+    toFinite(safe.opCycleTimeBeforeMinutes) != null &&
+    toFinite(safe.opCycleTimeAfterMinutes) != null &&
+    toFinite(safe.opLaborCostPerHour) != null &&
+    toFinite(safe.opAnnualTransactions) != null;
+  if (!hasCostView && !hasLaborView) return null;
+
+  const costPerUnitBefore = toFinite(safe.opCostPerUnitBefore);
+  const costPerUnitAfter = toFinite(safe.opCostPerUnitAfter);
+  const annualVolume = toFinite(safe.opAnnualVolume);
+  const cycleTimeBeforeMinutes = toFinite(safe.opCycleTimeBeforeMinutes);
+  const cycleTimeAfterMinutes = toFinite(safe.opCycleTimeAfterMinutes);
+  const laborCostPerHour = toFinite(safe.opLaborCostPerHour);
+  const annualTransactions = toFinite(safe.opAnnualTransactions);
+
+  const costPerUnitSavings =
+    hasCostView ? (costPerUnitBefore - costPerUnitAfter) * annualVolume : 0;
+  const laborSavings =
+    hasLaborView
+      ? ((cycleTimeBeforeMinutes - cycleTimeAfterMinutes) / 60) * laborCostPerHour * annualTransactions
+      : 0;
+
+  return {
+    costPerUnitSavings,
+    laborSavings,
+    totalSavings: costPerUnitSavings + laborSavings
+  };
+}
+
+function updateOperationalBreakdown(breakdown) {
+  const setText = (el, value) => {
+    if (!el) return;
+    if (!Number.isFinite(value)) {
+      el.textContent = "—";
+      return;
+    }
+    el.textContent = Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  };
+  setText(elements.financialOperationalBreakdownCostPerUnitSavings, breakdown && breakdown.costPerUnitSavings);
+  setText(elements.financialOperationalBreakdownLaborSavings, breakdown && breakdown.laborSavings);
+  setText(elements.financialOperationalBreakdownTotalSavings, breakdown && breakdown.totalSavings);
 }
 
 function updateRiskBreakdown(breakdown) {
@@ -547,6 +755,12 @@ function getFinancialFrameworkValidationMessage(framework, inputs) {
   if (f === "risk") {
     return "Risk framework requires probability before, probability after, loss per exposure, and exposure units (plus optional periods per year and mitigation cost).";
   }
+  if (f === "headcount") {
+    return "Headcount framework requires minutes saved per FTE per day, working days per year, FTE count, and annual fully loaded cost per FTE (optional hours/day default 8 and optional utilization gain % override).";
+  }
+  if (f === "operational") {
+    return "Operational efficiency requires either: (a) cost-per-unit before, cost-per-unit after, and annual volume; or (b) cycle time before (minutes), cycle time after (minutes), labor cost per hour, and annual transactions.";
+  }
   return "Complete all required inputs for the selected financial framework.";
 }
 
@@ -622,6 +836,16 @@ function computeFrameworkFinancialImpact(framework, inputs, customAmount) {
     const breakdown = computeRiskBreakdown(safe);
     if (!breakdown) return null;
     return breakdown.netValue;
+  }
+  if (f === "headcount") {
+    const breakdown = computeHeadcountBreakdown(safe);
+    if (!breakdown) return null;
+    return breakdown.financialImpact;
+  }
+  if (f === "operational") {
+    const breakdown = computeOperationalBreakdown(safe);
+    if (!breakdown) return null;
+    return breakdown.totalSavings;
   }
   return null;
 }
@@ -859,6 +1083,29 @@ function cacheElements() {
   elements.financialRiskBreakdownExpectedAvoided = $("financialRiskBreakdownExpectedAvoided");
   elements.financialRiskBreakdownAnnualizedAvoided = $("financialRiskBreakdownAnnualizedAvoided");
   elements.financialRiskBreakdownNetValue = $("financialRiskBreakdownNetValue");
+  elements.financialHeadcountMinutesSavedPerFtePerDay = $("financialHeadcountMinutesSavedPerFtePerDay");
+  elements.financialHeadcountWorkingDaysPerYear = $("financialHeadcountWorkingDaysPerYear");
+  elements.financialHeadcountFteCount = $("financialHeadcountFteCount");
+  elements.financialHeadcountHoursPerDay = $("financialHeadcountHoursPerDay");
+  elements.financialHeadcountUtilizationGainPct = $("financialHeadcountUtilizationGainPct");
+  elements.financialHeadcountAnnualCostPerFte = $("financialHeadcountAnnualCostPerFte");
+  elements.financialHeadcountBreakdown = $("financialHeadcountBreakdown");
+  elements.financialHeadcountBreakdownUtilizationGain = $("financialHeadcountBreakdownUtilizationGain");
+  elements.financialHeadcountBreakdownHoursSavedPerFte = $("financialHeadcountBreakdownHoursSavedPerFte");
+  elements.financialHeadcountBreakdownTotalHoursSaved = $("financialHeadcountBreakdownTotalHoursSaved");
+  elements.financialHeadcountBreakdownAvoidedFtes = $("financialHeadcountBreakdownAvoidedFtes");
+  elements.financialHeadcountBreakdownFinancialImpact = $("financialHeadcountBreakdownFinancialImpact");
+  elements.financialOperationalCostPerUnitBefore = $("financialOperationalCostPerUnitBefore");
+  elements.financialOperationalCostPerUnitAfter = $("financialOperationalCostPerUnitAfter");
+  elements.financialOperationalAnnualVolume = $("financialOperationalAnnualVolume");
+  elements.financialOperationalCycleTimeBeforeMinutes = $("financialOperationalCycleTimeBeforeMinutes");
+  elements.financialOperationalCycleTimeAfterMinutes = $("financialOperationalCycleTimeAfterMinutes");
+  elements.financialOperationalLaborCostPerHour = $("financialOperationalLaborCostPerHour");
+  elements.financialOperationalAnnualTransactions = $("financialOperationalAnnualTransactions");
+  elements.financialOperationalBreakdown = $("financialOperationalBreakdown");
+  elements.financialOperationalBreakdownCostPerUnitSavings = $("financialOperationalBreakdownCostPerUnitSavings");
+  elements.financialOperationalBreakdownLaborSavings = $("financialOperationalBreakdownLaborSavings");
+  elements.financialOperationalBreakdownTotalSavings = $("financialOperationalBreakdownTotalSavings");
   elements.projectCurrency = $("projectCurrency");
   elements.projectType = $("projectType");
   elements.projectStatus = $("projectStatus");
@@ -876,9 +1123,6 @@ function cacheElements() {
   elements.importDataBtn = $("importDataBtn");
   elements.importFileInput = $("importFileInput");
   elements.importCsvFileInput = $("importCsvFileInput");
-
-  elements.productDescriptionBtn = $("productDescriptionBtn");
-  elements.productDescriptionPopup = $("productDescriptionPopup");
 
   elements.toastContainer = $("toastContainer");
 
@@ -1156,20 +1400,6 @@ function attachEventListeners() {
     elements.importFormatModal.classList.add("active");
   });
 
-  if (elements.productDescriptionBtn && elements.productDescriptionPopup) {
-    elements.productDescriptionBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const isVisible = elements.productDescriptionPopup.classList.contains("visible");
-      document.querySelectorAll(".rice-popup.visible").forEach((el) => el.classList.remove("visible"));
-      if (!isVisible) {
-        elements.productDescriptionPopup.classList.add("visible");
-      }
-    });
-  }
-  document.addEventListener("click", () => {
-    if (elements.productDescriptionPopup) elements.productDescriptionPopup.classList.remove("visible");
-  });
-
   if (elements.exportFormatModal) {
     elements.exportFormatModal.addEventListener("click", (e) => {
       if (e.target === elements.exportFormatModal) {
@@ -1429,7 +1659,7 @@ function attachEventListeners() {
   });
 
   elements.projectsTableBody.addEventListener("mouseenter", (e) => {
-    const wrap = e.target.closest(".cell-type-icon-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip");
+    const wrap = e.target.closest(".cell-type-icon-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip");
     if (!wrap) return;
     const tooltip = wrap.querySelector(".cell-type-tooltip");
     if (!tooltip) return;
@@ -1499,7 +1729,7 @@ function attachEventListeners() {
   }, true);
 
   document.body.addEventListener("mouseout", (e) => {
-    const wrap = e.target.closest(".profile-icon-wrap, .cell-type-icon-wrap, .scrum-board-card-type-wrap, .project-field-tooltip-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip");
+    const wrap = e.target.closest(".profile-icon-wrap, .cell-type-icon-wrap, .scrum-board-card-type-wrap, .project-field-tooltip-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip");
     if (!wrap || (e.relatedTarget && wrap.contains(e.relatedTarget))) return;
     document.querySelectorAll(".cell-type-tooltip").forEach((el) => {
       if (el._ownerWrap === wrap) {
@@ -1528,6 +1758,15 @@ function attachEventListeners() {
       positionProfileTooltip(wrap);
     }, true);
   }
+
+  // Prevent accidental wheel-based increments on number inputs.
+  document.addEventListener("wheel", (e) => {
+    const numberInput = e.target instanceof Element ? e.target.closest("input[type=\"number\"]") : null;
+    if (!numberInput) return;
+    if (document.activeElement === numberInput) {
+      e.preventDefault();
+    }
+  }, { passive: false });
 
   const headerCells = document.querySelectorAll("th[data-sort-field]");
   headerCells.forEach((th) => {
@@ -1604,7 +1843,20 @@ function attachEventListeners() {
     elements.financialRiskLossPerExposure,
     elements.financialRiskExposureUnits,
     elements.financialRiskPeriodsPerYear,
-    elements.financialRiskMitigationCost
+    elements.financialRiskMitigationCost,
+    elements.financialHeadcountMinutesSavedPerFtePerDay,
+    elements.financialHeadcountWorkingDaysPerYear,
+    elements.financialHeadcountFteCount,
+    elements.financialHeadcountHoursPerDay,
+    elements.financialHeadcountUtilizationGainPct,
+    elements.financialHeadcountAnnualCostPerFte,
+    elements.financialOperationalCostPerUnitBefore,
+    elements.financialOperationalCostPerUnitAfter,
+    elements.financialOperationalAnnualVolume,
+    elements.financialOperationalCycleTimeBeforeMinutes,
+    elements.financialOperationalCycleTimeAfterMinutes,
+    elements.financialOperationalLaborCostPerHour,
+    elements.financialOperationalAnnualTransactions
   ].forEach((el) => {
     if (!el) return;
     el.addEventListener("input", updateModalRicePreview);
@@ -2908,6 +3160,39 @@ function renderProjects() {
     }
     tr.appendChild(tdStatus);
 
+    const tdFramework = document.createElement("td");
+    const frameworkKey = normalizeFinancialFramework(project.financialImpactFramework);
+    const frameworkMeta = FINANCIAL_FRAMEWORK_ICONS[frameworkKey];
+    if (frameworkMeta && frameworkMeta.svg) {
+      const wrapper = document.createElement("span");
+      wrapper.className = "cell-type-icon-wrap cell-type-pill cell-framework-icon-wrap";
+      wrapper.dataset.framework = frameworkKey;
+      wrapper.setAttribute("role", "img");
+      wrapper.setAttribute("aria-label", frameworkMeta.label || frameworkKey);
+      wrapper.innerHTML = frameworkMeta.svg;
+
+      const tooltipEl = document.createElement("div");
+      tooltipEl.className = "cell-type-tooltip";
+      tooltipEl.setAttribute("role", "tooltip");
+      const titleEl = document.createElement("div");
+      titleEl.className = "cell-type-tooltip-title";
+      titleEl.textContent = frameworkMeta.tooltipTitle || frameworkMeta.label || "Financial framework";
+      tooltipEl.appendChild(titleEl);
+      if (frameworkMeta.tooltipBody) {
+        const bodyEl = document.createElement("div");
+        bodyEl.className = "cell-type-tooltip-body";
+        const p = document.createElement("p");
+        p.textContent = frameworkMeta.tooltipBody;
+        bodyEl.appendChild(p);
+        tooltipEl.appendChild(bodyEl);
+      }
+      wrapper.appendChild(tooltipEl);
+      tdFramework.appendChild(wrapper);
+    } else {
+      tdFramework.innerHTML = `<span class="cell-meta">—</span>`;
+    }
+    tr.appendChild(tdFramework);
+
     const tdPeriod = document.createElement("td");
     const periodValue = project.projectPeriod || "";
     if (periodValue && typeof projectPeriodTooltip !== "undefined") {
@@ -3045,92 +3330,62 @@ function renderProjects() {
     const impactVal = project.impactValue != null ? String(project.impactValue) : "—";
     const confidenceVal = project.confidenceValue != null ? String(project.confidenceValue) : "—";
     const effortVal = project.effortValue != null ? String(project.effortValue) : "—";
-
-    const reachNum = Number(project.reachValue ?? 0);
-    const impactNum = Number(project.impactValue ?? 0);
-    const confidenceNum = project.confidenceValue != null ? Number(project.confidenceValue) : null;
-    const effortNum = Number(project.effortValue ?? 0);
-    const confidenceFraction = confidenceNum != null && Number.isFinite(confidenceNum)
-      ? confidenceNum / 100
-      : null;
-    const confidenceDecimal = confidenceFraction != null && Number.isFinite(confidenceFraction)
-      ? confidenceFraction.toFixed(2)
-      : "—";
-
-    let calcLine = "N/A";
-    if (Number.isFinite(reachNum) && Number.isFinite(impactNum) && confidenceFraction != null && Number.isFinite(effortNum) && effortNum > 0) {
-      calcLine = `[${reachNum} × ${impactNum} × ${confidenceFraction.toFixed(2)}] ÷ ${effortNum} = ${formatRice(riceScore)}`;
-    }
+    const reachNum = Number(project.reachValue);
+    const impactNum = Number(project.impactValue);
+    const confidenceNum = Number(project.confidenceValue);
+    const effortNum = Number(project.effortValue);
+    const confidenceDecimal = Number.isFinite(confidenceNum) ? confidenceNum / 100 : null;
+    const formulaLine =
+      Number.isFinite(reachNum) &&
+      Number.isFinite(impactNum) &&
+      Number.isFinite(confidenceDecimal) &&
+      Number.isFinite(effortNum) &&
+      effortNum > 0
+        ? `[${reachNum} × ${impactNum} × ${confidenceDecimal.toFixed(2)}] ÷ ${effortNum} = ${formatRice(riceScore)}`
+        : "Not enough inputs to compute full formula.";
 
     const riceWrapper = document.createElement("div");
     riceWrapper.className = "rice-score-wrapper";
 
+    const riceTooltipWrap = document.createElement("span");
+    riceTooltipWrap.className = "cell-rice-with-tooltip";
+    riceTooltipWrap.setAttribute(
+      "aria-label",
+      `RICE details: Reach ${reachVal}, Impact ${impactVal}, Confidence ${confidenceVal !== "—" ? confidenceVal + "%" : "—"}, Effort ${effortVal}. Formula: [Reach × Impact × Confidence] ÷ Effort.`
+    );
     const scoreSpan = document.createElement("span");
     scoreSpan.textContent = formatRice(riceScore);
-    riceWrapper.appendChild(scoreSpan);
+    riceTooltipWrap.appendChild(scoreSpan);
 
-    const infoBtn = document.createElement("button");
-    infoBtn.type = "button";
-    infoBtn.className = "rice-info-btn";
-    infoBtn.textContent = "?";
-    riceWrapper.appendChild(infoBtn);
-
-    const popup = document.createElement("div");
-    popup.className = "rice-popup";
-    popup.innerHTML = `
-      <div class="rice-popup-row">
-        <span class="rice-popup-label">Formula</span>
-        <span class="rice-popup-value">[Reach × Impact × Confidence] ÷ Effort</span>
-      </div>
-      <div class="rice-popup-row">
-        <span class="rice-popup-label">Reach</span>
-        <span class="rice-popup-value">${reachVal}</span>
-      </div>
-      <div class="rice-popup-row">
-        <span class="rice-popup-label">Impact</span>
-        <span class="rice-popup-value">${impactVal}</span>
-      </div>
-      <div class="rice-popup-row">
-        <span class="rice-popup-label">Confidence</span>
-        <span class="rice-popup-value">${confidenceVal !== "—" ? confidenceVal + "%" : "—"} (${confidenceDecimal})</span>
-      </div>
-      <div class="rice-popup-row">
-        <span class="rice-popup-label">Effort</span>
-        <span class="rice-popup-value">${effortVal}</span>
-      </div>
-      <div class="rice-popup-row">
-        <span class="rice-popup-label">Calculation</span>
-        <span class="rice-popup-value">${calcLine}</span>
-      </div>
-    `;
-    riceWrapper.appendChild(popup);
-
-    infoBtn.addEventListener("click", (event) => {
-      event.stopPropagation();
-      const isVisible = popup.classList.contains("visible");
-      document.querySelectorAll(".rice-popup.visible").forEach((el) => el.classList.remove("visible"));
-      if (!isVisible) {
-        popup.classList.add("visible");
-      }
+    const riceTooltip = document.createElement("div");
+    riceTooltip.className = "cell-type-tooltip";
+    riceTooltip.setAttribute("role", "tooltip");
+    const riceTooltipTitle = document.createElement("div");
+    riceTooltipTitle.className = "cell-type-tooltip-title";
+    riceTooltipTitle.textContent = "RICE score details";
+    riceTooltip.appendChild(riceTooltipTitle);
+    const riceTooltipBody = document.createElement("div");
+    riceTooltipBody.className = "cell-type-tooltip-body";
+    const formula = document.createElement("p");
+    formula.textContent = "Formula: [Reach × Impact × Confidence] ÷ Effort";
+    riceTooltipBody.appendChild(formula);
+    [
+      `R (Reach) - ${reachVal}`,
+      `I (Impact) - ${impactVal}`,
+      `C (Confidence) - ${confidenceVal !== "—" ? confidenceVal + "%" : "—"}${Number.isFinite(confidenceDecimal) ? ` (${confidenceDecimal.toFixed(2)})` : ""}`,
+      `E (Effort) - ${effortVal}`,
+      `Calculation - ${formulaLine}`
+    ].forEach((line) => {
+      const p = document.createElement("p");
+      p.textContent = line;
+      riceTooltipBody.appendChild(p);
     });
-
-    document.addEventListener("click", () => {
-      popup.classList.remove("visible");
-    });
+    riceTooltip.appendChild(riceTooltipBody);
+    riceTooltipWrap.appendChild(riceTooltip);
+    riceWrapper.appendChild(riceTooltipWrap);
 
     tdRice.appendChild(riceWrapper);
     tr.appendChild(tdRice);
-
-    const tdInputs = document.createElement("td");
-    tdInputs.innerHTML = `
-      <div class="cell-rice-values">
-        <div>R - ${reachVal}</div>
-        <div>I - ${impactVal}</div>
-        <div>C - ${confidenceVal !== "—" ? confidenceVal + "%" : "—"}</div>
-        <div>E - ${effortVal}</div>
-      </div>
-    `;
-    tr.appendChild(tdInputs);
 
     const tdFinancial = document.createElement("td");
     if (project.financialImpactValue != null && project.financialImpactValue !== "") {
@@ -4504,7 +4759,7 @@ function sortProjects(projects) {
   const direction = state.sortDirection === "asc" ? 1 : -1;
 
   return projects.slice().sort((a, b) => {
-    if (field === "title" || field === "projectType" || field === "projectStatus" || field === "tshirtSize" || field === "financialImpactCurrency" || field === "moscowCategory") {
+    if (field === "title" || field === "projectType" || field === "projectStatus" || field === "financialImpactFramework" || field === "tshirtSize" || field === "financialImpactCurrency" || field === "moscowCategory") {
       const va = (a[field] || "").toString().toLowerCase();
       const vb = (b[field] || "").toString().toLowerCase();
       if (va === vb) {
@@ -5240,9 +5495,13 @@ function updateModalRicePreview() {
   const clvBreakdown = framework === "clv" ? computeClvBreakdown(frameworkInputs) : null;
   const npsBreakdown = framework === "nps" ? computeNpsBreakdown(frameworkInputs) : null;
   const riskBreakdown = framework === "risk" ? computeRiskBreakdown(frameworkInputs) : null;
+  const headcountBreakdown = framework === "headcount" ? computeHeadcountBreakdown(frameworkInputs) : null;
+  const operationalBreakdown = framework === "operational" ? computeOperationalBreakdown(frameworkInputs) : null;
   updateClvBreakdown(clvBreakdown);
   updateNpsBreakdown(npsBreakdown);
   updateRiskBreakdown(riskBreakdown);
+  updateHeadcountBreakdown(headcountBreakdown);
+  updateOperationalBreakdown(operationalBreakdown);
   const computedAmount = computeFrameworkFinancialImpact(framework, frameworkInputs, rawAmount);
   if (elements.financialImpactValue && framework !== FINANCIAL_FRAMEWORK_DEFAULT) {
     elements.financialImpactValue.value = Number.isFinite(computedAmount)

@@ -1,105 +1,80 @@
 # Architecture Overview
 
-## 1) Runtime Model
+## 1. Runtime Model
 
-- **Application type:** Local-first static web application.
-- **Execution model:** Browser runtime with classic script loading (no bundler required to run).
-- **Persistence model:** `localStorage` state snapshot under `rice_prioritizer_v1`.
+- Local-first browser application
+- No backend dependency for core workflow
+- State persisted in browser storage
 
----
+## 2. Current Audited Source Topology
 
-## 2) Module Boundaries
+Runtime-audited files in this repository snapshot:
 
-| Module | Responsibility |
-|---|---|
-| `index.html` | App shell, views, forms, modals, table, and control wiring points (IDs/classes). |
-| `css/main.css` | Design system, responsive layout, component styling, interaction visuals. |
-| `src/constants.js` | Domain constants: statuses, MOSCOW categories, tooltips, currencies, countries, aliases, storage key. |
-| `src/utils.js` | Shared utilities: formatting, ID generation, CSV parsing/escaping, helper converters. |
-| `src/rice.js` | RICE calculation and project input validation logic. |
-| `src/modules/exchange-rates.js` | ETL and scheduling for multi-source exchange rates, conversion helpers. |
-| `src/modules/fullscreen.js` | Fullscreen orchestration and cross-view transition handling in fullscreen mode. |
-| `src/app.js` | Main controller: state lifecycle, event bindings, rendering, CRUD flows, import/export, modal orchestration. |
-| `src/main.js` | Entry support script (project boot integration). |
+- `index.html`
+- `css/main.css`
+- `src/app.js`
+- `src/rice.js`
 
----
+Referenced script contracts in `index.html` that are not present in this snapshot:
 
-## 3) State and Data Flow
+- `src/constants.js`
+- `src/utils.js`
+- `src/modules/exchange-rates.js`
+- `src/modules/fullscreen.js`
 
-### 3.1 State lifecycle
+These are treated as runtime contracts and documented accordingly.
 
-1. Boot app (`DOMContentLoaded` -> `init()`).
-2. Cache DOM references.
-3. Load persisted state from localStorage.
-4. Ensure baseline profile exists.
-5. Render active profile views.
-6. Ensure exchange rates and schedule daily refresh.
+## 3. Core Architectural Responsibilities
 
-### 3.2 Render flow
+### `index.html`
+- App shell and primary UI structure
+- Table/board/moscow/map view containers
+- Modal scaffolding and form controls
 
-- Any data mutation triggers `saveState()` and relevant `render*()` functions.
-- Table, board, MOSCOW, and map derive from active profile + filter state + sorting state.
-- Financial EUR computations rely on current exchange-rate snapshot.
+### `css/main.css`
+- Component and layout styling
+- Tooltip behavior and icon-pill visual semantics
+- View responsiveness and table usability constraints
 
----
+### `src/rice.js`
+- RICE calculation and input validation boundary logic
 
-## 4) Exchange Rates ETL Architecture
+### `src/app.js`
+- State lifecycle, event wiring, rendering, CRUD
+- Framework compute pipelines
+- Sorting/filtering/map aggregation
+- Tooltip orchestration
+- Import/export behavior
 
-### Sources
+## 4. Key Data Flow
 
-- Frankfurter API (EUR base)
-- MoneyConvert API (USD base)
-- Static fallback map (for resilience)
+1. User updates form/view controls.
+2. `app.js` validates and normalizes inputs.
+3. Computed outputs (RICE/financial) update UI.
+4. State is persisted and re-rendered by active view.
 
-### ETL sequence
+## 5. Financial Framework Pipeline
 
-1. **Extract** from both APIs.
-2. **Transform** to normalized `currency -> EUR per 1 unit`.
-3. **Load/Merge** (primary first, fill gaps from secondary, then fallback).
-4. Persist snapshot date in Berlin timezone.
-5. Update label and dependent views.
+- Selector chooses active framework
+- Input sanitization limits fields by framework
+- Framework-specific compute function derives impact
+- Output feeds table and map financial displays
+- Framework icon column surfaces model identity in table
 
----
+## 6. Tooltip Architecture
 
-## 5) Fullscreen Architecture
+- Unified class-driven tooltip system across heterogeneous cells
+- Shared hover/focus selectors for icon/text wrappers
+- Specialized wrappers for cells like financial and rice score
 
-- Fullscreen module supports table, board, MOSCOW, and map containers.
-- Moves modals/toasts/tooltips to current fullscreen root to avoid clipping.
-- Supports pending view switch while fullscreen by exiting and re-entering target view.
+## 7. Architectural Risks
 
----
+- Missing module source files can create documentation/runtime drift
+- Additional columns in dense table layouts can reduce readability
+- Formula UX can be misunderstood without explanatory tooltip content
 
-## 6) Import/Export Architecture
+## 8. Mitigations
 
-- Export supports JSON and CSV.
-- Import supports JSON and CSV parser paths.
-- Merge logic:
-  - match profiles by ID/name
-  - match projects by project ID
-  - skip duplicates
-  - normalize country names
-
----
-
-## 7) Key Technical Decisions
-
-1. **No backend dependency**
-   - minimizes setup and operational complexity.
-2. **Classic script architecture**
-   - supports direct browser-open execution.
-3. **Deterministic scoring**
-   - RICE logic is fully transparent and reproducible.
-4. **Resilient rates pipeline**
-   - multi-source + fallback protects financial functionality.
-
----
-
-## 8) Risks and Mitigations
-
-| Risk | Mitigation |
-|---|---|
-| Storage quota overflow | Encourage periodic export backups; keep payload lean. |
-| API outage/CORS issue | Fallback rates and non-blocking app behavior. |
-| Visual drift from layered CSS overrides | Consolidated theme sections and guardrail checks. |
-| Import data inconsistencies | Canonicalization and merge de-dup logic. |
-
+- Keep docs tied to audited code snapshot
+- Use concise column labels and icon-based semantics
+- Enforce explainable tooltip standards for derived metrics

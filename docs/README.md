@@ -1,31 +1,21 @@
 # Documentation Hub
 
-This folder contains the complete professional documentation suite for the Product Management Prioritization Tool.
+This folder contains the professional product documentation suite for `pm-prioritization-tool`.
 
-## Core Product Documents
+## Documents
 
-- `PRD.md` — Product requirements document (goals, scope, requirements, success criteria).
-- `USER_PERSONAS.md` — Primary and secondary user personas.
-- `USER_STORIES.md` — Epics, stories, and acceptance criteria-aligned narrative.
+- `PRD.md` — Product requirements and scope
+- `USER_PERSONAS.md` — Target user archetypes
+- `USER_STORIES.md` — Epics, stories, acceptance criteria
+- `VARIABLES.md` — Variable dictionary, formulas, and data relationships
+- `METRICS_AND_OKRS.md` — Product and team performance framework
+- `DESIGN_GUIDELINES.md` — Visual system, UX, and accessibility rules
+- `ARCHITECTURE.md` — Runtime model and module boundaries
+- `TRACEABILITY_MATRIX.md` — Requirement-to-code mapping
+- `GUARDRAILS.md` — Business and technical constraints
+- `CHANGELOG.md` — Historical release/change log
 
-## Governance and Standards
-
-- `../PRODUCT_DOCUMENTATION_STANDARD.md` — Master documentation quality and governance standard.
-- `TRACEABILITY_MATRIX.md` — Requirement-to-implementation mapping.
-- `GUARDRAILS.md` — Business and technical limits, plus release guardrails.
-- `CHANGELOG.md` — Historical development log.
-
-## Product Intelligence and Analytics
-
-- `VARIABLES.md` — Exhaustive variable catalog with formulas, app locations, examples, and relationship chart.
-- `METRICS_AND_OKRS.md` — Product metrics and OKR framework for product team operations.
-
-## Design and Engineering
-
-- `DESIGN_GUIDELINES.md` — UI/UX rules, component guidance, and theme/color standards.
-- `ARCHITECTURE.md` — Runtime architecture, module boundaries, data flow, and operational behavior.
-
-## Suggested Reading Sequence
+## Recommended Reading Sequence
 
 1. `../README.md`
 2. `PRD.md`
@@ -38,3 +28,7 @@ This folder contains the complete professional documentation suite for the Produ
 9. `TRACEABILITY_MATRIX.md`
 10. `GUARDRAILS.md`
 11. `CHANGELOG.md`
+
+## Maintenance Rule
+
+All updates must follow `../PRODUCT_DOCUMENTATION_STANDARD.md`.

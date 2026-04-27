@@ -107,35 +107,6 @@ body {
   gap: 0.35rem;
 }
 
-.product-description-wrapper {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-.product-description-wrapper .product-description-popup {
-  top: 120%;
-  left: 0;
-  right: auto;
-  min-width: 280px;
-  max-width: 360px;
-}
-
-.product-description-popup-title {
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.75rem;
-  color: #c7d2fe;
-  margin-bottom: 0.4rem;
-}
-
-.product-description-popup-body {
-  margin: 0;
-  font-size: 0.8125rem;
-  color: #e5e7eb;
-  line-height: 1.5;
-}
-
 .app-subtitle {
   margin: 0;
   font-size: clamp(0.8rem, 1.2vw, 0.875rem);
@@ -366,6 +337,18 @@ textarea {
   font-size: 0.875rem;
   min-height: 40px;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+/* Force exact typing for numeric fields: remove browser spinner controls. */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 input:focus,
@@ -2591,6 +2574,13 @@ tbody td {
   color: inherit;
 }
 
+/* RICE score with tooltip showing R/I/C/E values */
+.cell-rice-with-tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+}
+
 /* Project name with description tooltip (same style as project status/type) */
 .cell-desc-with-tooltip {
   position: relative;
@@ -2670,6 +2660,8 @@ tbody td {
 .cell-period-with-tooltip:focus-within .cell-type-tooltip,
 .cell-financial-with-tooltip:hover .cell-type-tooltip,
 .cell-financial-with-tooltip:focus-within .cell-type-tooltip,
+.cell-rice-with-tooltip:hover .cell-type-tooltip,
+.cell-rice-with-tooltip:focus-within .cell-type-tooltip,
 .cell-desc-with-tooltip:hover .cell-type-tooltip,
 .cell-desc-with-tooltip:focus-within .cell-type-tooltip,
 .profile-icon-wrap:hover .cell-type-tooltip,
@@ -2695,6 +2687,8 @@ tbody td {
 .cell-period-with-tooltip:focus-within .cell-type-tooltip:not(.cell-type-tooltip--below),
 .cell-financial-with-tooltip:hover .cell-type-tooltip:not(.cell-type-tooltip--below),
 .cell-financial-with-tooltip:focus-within .cell-type-tooltip:not(.cell-type-tooltip--below),
+.cell-rice-with-tooltip:hover .cell-type-tooltip:not(.cell-type-tooltip--below),
+.cell-rice-with-tooltip:focus-within .cell-type-tooltip:not(.cell-type-tooltip--below),
 .cell-desc-with-tooltip:hover .cell-type-tooltip:not(.cell-type-tooltip--below),
 .cell-desc-with-tooltip:focus-within .cell-type-tooltip:not(.cell-type-tooltip--below),
 .profile-icon-wrap:hover .cell-type-tooltip:not(.cell-type-tooltip--below),
@@ -2718,6 +2712,8 @@ tbody td {
 .cell-period-with-tooltip:focus-within .cell-type-tooltip.cell-type-tooltip--below,
 .cell-financial-with-tooltip:hover .cell-type-tooltip.cell-type-tooltip--below,
 .cell-financial-with-tooltip:focus-within .cell-type-tooltip.cell-type-tooltip--below,
+.cell-rice-with-tooltip:hover .cell-type-tooltip.cell-type-tooltip--below,
+.cell-rice-with-tooltip:focus-within .cell-type-tooltip.cell-type-tooltip--below,
 .cell-desc-with-tooltip:hover .cell-type-tooltip.cell-type-tooltip--below,
 .cell-desc-with-tooltip:focus-within .cell-type-tooltip.cell-type-tooltip--below,
 .profile-icon-wrap:hover .cell-type-tooltip.cell-type-tooltip--below,
@@ -6184,4 +6180,40 @@ tbody .checkbox-input {
   border-color: rgba(185, 28, 28, 0.5) !important;
   background: #fef2f2 !important;
   color: #991b1b !important;
+}
+
+.cell-type-icon-wrap.cell-type-pill[data-framework="custom"] {
+  border-color: rgba(148, 163, 184, 0.5) !important;
+  background: #f8fafc !important;
+  color: #334155 !important;
+}
+
+.cell-type-icon-wrap.cell-type-pill[data-framework="clv"] {
+  border-color: rgba(56, 189, 248, 0.5) !important;
+  background: #ecfeff !important;
+  color: #0e7490 !important;
+}
+
+.cell-type-icon-wrap.cell-type-pill[data-framework="nps"] {
+  border-color: rgba(250, 204, 21, 0.55) !important;
+  background: #fffbeb !important;
+  color: #a16207 !important;
+}
+
+.cell-type-icon-wrap.cell-type-pill[data-framework="risk"] {
+  border-color: rgba(251, 113, 133, 0.5) !important;
+  background: #fff1f2 !important;
+  color: #be123c !important;
+}
+
+.cell-type-icon-wrap.cell-type-pill[data-framework="headcount"] {
+  border-color: rgba(167, 139, 250, 0.5) !important;
+  background: #f5f3ff !important;
+  color: #6d28d9 !important;
+}
+
+.cell-type-icon-wrap.cell-type-pill[data-framework="operational"] {
+  border-color: rgba(52, 211, 153, 0.5) !important;
+  background: #ecfdf5 !important;
+  color: #047857 !important;
 }

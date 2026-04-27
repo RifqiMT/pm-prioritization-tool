@@ -18,13 +18,6 @@
         <span class="app-badge">Product Management Prioritization • Portfolio ready</span>
         <div class="app-title-row">
           <h2 class="app-title">Product Management Prioritization Tool</h2>
-          <div class="product-description-wrapper">
-            <button type="button" class="rice-info-btn product-description-btn" id="productDescriptionBtn" aria-label="Product description">?</button>
-            <div class="product-description-popup rice-popup" id="productDescriptionPopup" role="tooltip">
-              <div class="product-description-popup-title">Product Description</div>
-              <p class="product-description-popup-body">Capture projects per profile, score them with RICE (reach, impact, confidence, effort) and optional financial impact, and auto-rank by priority—all in the browser.</p>
-            </div>
-          </div>
         </div>
       </div>
       <div class="app-header-actions">
@@ -260,10 +253,10 @@
               <col style="width: 220px;" />
               <col style="width: 92px;" />
               <col style="width: 86px;" />
+              <col style="width: 84px;" />
               <col style="width: 106px;" />
               <col style="width: 80px;" />
               <col style="width: 110px;" />
-              <col style="width: 92px;" />
               <col style="width: 92px;" />
               <col style="width: 140px;" />
               <col style="width: 160px;" />
@@ -292,6 +285,12 @@
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
+                <th data-sort-field="financialImpactFramework">
+                  <button class="sort-button" type="button">
+                    <span>Framework</span>
+                    <span class="sort-indicator">↕</span>
+                  </button>
+                </th>
                 <th>
                   Period
                 </th>
@@ -312,9 +311,6 @@
                     <span>RICE score</span>
                     <span class="sort-indicator">↕</span>
                   </button>
-                </th>
-                <th>
-                  RICE values
                 </th>
                 <th data-sort-field="financialImpactValue">
                   <button class="sort-button" type="button">
@@ -703,6 +699,8 @@
                   <select id="financialFramework" name="financialFramework">
                     <option value="custom">Custom (direct amount)</option>
                     <option value="clv">CLV framework</option>
+                    <option value="headcount">Headcount savings</option>
+                    <option value="operational">Operational efficiency</option>
                     <option value="nps">NPS to financial impact</option>
                     <option value="risk">Risk mitigation</option>
                   </select>
@@ -863,6 +861,76 @@
                     <div class="financial-clv-breakdown-row"><span>Expected loss avoided</span><strong id="financialRiskBreakdownExpectedAvoided">—</strong></div>
                     <div class="financial-clv-breakdown-row"><span>Annualized avoided loss</span><strong id="financialRiskBreakdownAnnualizedAvoided">—</strong></div>
                     <div class="financial-clv-breakdown-row"><span>Mitigation value (net)</span><strong id="financialRiskBreakdownNetValue">—</strong></div>
+                  </div>
+                </div>
+
+                <div id="financialFieldsHeadcount" class="form-grid" data-framework-fields="headcount" style="display:none;">
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialHeadcountMinutesSavedPerFtePerDay">Minutes saved per FTE per day</label>
+                    <input id="financialHeadcountMinutesSavedPerFtePerDay" name="financialHeadcountMinutesSavedPerFtePerDay" type="number" min="0" step="0.01" placeholder="e.g. 120" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialHeadcountWorkingDaysPerYear">Working days per year</label>
+                    <input id="financialHeadcountWorkingDaysPerYear" name="financialHeadcountWorkingDaysPerYear" type="number" min="1" step="1" placeholder="e.g. 250" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialHeadcountFteCount">FTE count in scope</label>
+                    <input id="financialHeadcountFteCount" name="financialHeadcountFteCount" type="number" min="0" step="0.01" placeholder="e.g. 10" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialHeadcountHoursPerDay">Hours per day</label>
+                    <input id="financialHeadcountHoursPerDay" name="financialHeadcountHoursPerDay" type="number" min="0.5" step="0.01" placeholder="e.g. 8 (defaults to 8)" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialHeadcountUtilizationGainPct">Utilization gain (%) (optional override)</label>
+                    <input id="financialHeadcountUtilizationGainPct" name="financialHeadcountUtilizationGainPct" type="number" min="0" max="100" step="0.01" placeholder="e.g. 25 (or auto from minutes saved)" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialHeadcountAnnualCostPerFte">Annual fully loaded cost per FTE</label>
+                    <input id="financialHeadcountAnnualCostPerFte" name="financialHeadcountAnnualCostPerFte" type="number" min="0" step="0.01" placeholder="e.g. 80000" />
+                  </div>
+                  <div id="financialHeadcountBreakdown" class="financial-clv-breakdown" aria-live="polite">
+                    <div class="financial-clv-breakdown-row"><span>Utilization gain</span><strong id="financialHeadcountBreakdownUtilizationGain">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Hours saved per FTE/year</span><strong id="financialHeadcountBreakdownHoursSavedPerFte">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Total hours saved/year</span><strong id="financialHeadcountBreakdownTotalHoursSaved">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Avoided FTEs</span><strong id="financialHeadcountBreakdownAvoidedFtes">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Financial impact</span><strong id="financialHeadcountBreakdownFinancialImpact">—</strong></div>
+                  </div>
+                </div>
+
+                <div id="financialFieldsOperational" class="form-grid" data-framework-fields="operational" style="display:none;">
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialOperationalCostPerUnitBefore">Cost per unit (before)</label>
+                    <input id="financialOperationalCostPerUnitBefore" name="financialOperationalCostPerUnitBefore" type="number" step="0.01" placeholder="e.g. 12" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialOperationalCostPerUnitAfter">Cost per unit (after)</label>
+                    <input id="financialOperationalCostPerUnitAfter" name="financialOperationalCostPerUnitAfter" type="number" step="0.01" placeholder="e.g. 9" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialOperationalAnnualVolume">Annual volume (cost-per-unit view)</label>
+                    <input id="financialOperationalAnnualVolume" name="financialOperationalAnnualVolume" type="number" min="0" step="1" placeholder="e.g. 10000" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialOperationalCycleTimeBeforeMinutes">Cycle time before (minutes)</label>
+                    <input id="financialOperationalCycleTimeBeforeMinutes" name="financialOperationalCycleTimeBeforeMinutes" type="number" min="0" step="0.01" placeholder="e.g. 60" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialOperationalCycleTimeAfterMinutes">Cycle time after (minutes)</label>
+                    <input id="financialOperationalCycleTimeAfterMinutes" name="financialOperationalCycleTimeAfterMinutes" type="number" min="0" step="0.01" placeholder="e.g. 40" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialOperationalLaborCostPerHour">Labor cost per hour</label>
+                    <input id="financialOperationalLaborCostPerHour" name="financialOperationalLaborCostPerHour" type="number" min="0" step="0.01" placeholder="e.g. 50" />
+                  </div>
+                  <div class="project-field-tooltip-wrap">
+                    <label for="financialOperationalAnnualTransactions">Annual transactions</label>
+                    <input id="financialOperationalAnnualTransactions" name="financialOperationalAnnualTransactions" type="number" min="0" step="1" placeholder="e.g. 10000" />
+                  </div>
+                  <div id="financialOperationalBreakdown" class="financial-clv-breakdown" aria-live="polite">
+                    <div class="financial-clv-breakdown-row"><span>Cost-per-unit savings</span><strong id="financialOperationalBreakdownCostPerUnitSavings">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Labor/time savings</span><strong id="financialOperationalBreakdownLaborSavings">—</strong></div>
+                    <div class="financial-clv-breakdown-row"><span>Total annual financial impact</span><strong id="financialOperationalBreakdownTotalSavings">—</strong></div>
                   </div>
                 </div>
 
