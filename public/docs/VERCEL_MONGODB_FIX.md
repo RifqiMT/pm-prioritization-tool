@@ -2,6 +2,34 @@
 
 If the app header shows **Local browser storage** or **Cloud unavailable**, work through this checklist.
 
+## Step 0 — Turn off Vercel Deployment Protection (required for `/api`)
+
+New Vercel projects often block **all** URLs (including `/api/config`) with a **401 Authentication Required** page. The browser cannot sync to MongoDB until this is off for **Production**.
+
+1. Vercel → your **`pm-prioritization-tool`** project (linked to `RifqiMT/pm-prioritization-tool`).
+2. **Settings → Deployment Protection**.
+3. For **Production**: set protection to **None** (or disable **Vercel Authentication**).
+4. **Save** → **Redeploy** `main`.
+
+Check:
+
+```bash
+npm run verify:deploy -- https://YOUR-DOMAIN
+```
+
+If you see `FAIL: Vercel Deployment Protection blocks /api`, Step 0 is not done yet.
+
+**CLI alternative** (needs `VERCEL_TOKEN` + project id from Vercel → Settings → General):
+
+```bash
+curl -X PATCH "https://api.vercel.com/v9/projects/YOUR_PROJECT_ID" \
+  -H "Authorization: Bearer $VERCEL_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"ssoProtection":null}'
+```
+
+---
+
 ## Step 1 — Confirm the correct app is deployed
 
 Open in your browser:

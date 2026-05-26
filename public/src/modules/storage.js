@@ -159,6 +159,13 @@ const AppStorage = (function () {
           headers: { Accept: "application/json" },
           cache: "no-store"
         });
+        if (res.status === 401) {
+          apiIssue = "vercel_protection";
+          configError = new Error(
+            "Vercel Deployment Protection is blocking /api (HTTP 401). Disable it for Production in Vercel → Settings → Deployment Protection."
+          );
+          continue;
+        }
         if (!res.ok) {
           configError = new Error("Cloud config HTTP " + res.status);
           continue;

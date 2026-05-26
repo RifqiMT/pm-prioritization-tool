@@ -1152,7 +1152,16 @@ function showDeploymentIssueBanner(boot) {
   const dismissBtn = $("deploymentIssueBannerDismiss");
   if (!banner || !boot || !boot.apiIssue) return;
 
-  if (boot.apiIssue === "html_response") {
+  if (boot.apiIssue === "vercel_protection") {
+    if (titleEl) {
+      titleEl.textContent = "Vercel login is blocking the API";
+    }
+    if (textEl) {
+      textEl.textContent =
+        "Deployment Protection returns 401 on /api/config, so MongoDB cannot sync from the browser. " +
+        "In Vercel → your project → Deployment Protection → disable Vercel Authentication for Production (or set Standard Protection off).";
+    }
+  } else if (boot.apiIssue === "html_response") {
     if (titleEl) {
       titleEl.textContent = "Wrong app deployed on this domain";
     }

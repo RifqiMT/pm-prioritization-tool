@@ -27,6 +27,11 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Deploy — Vercel protection + diagnostics — Product Team — Impact: user-visible
+
+- Detect Vercel Deployment Protection (401 on `/api`) and show setup banner.
+- Add `scripts/disable-vercel-deployment-protection.sh` and Step 0 in `VERCEL_MONGODB_FIX.md`.
+
 ### Data — MongoDB persistence on Vercel — Product Team — Impact: user-visible
 
 - Added `/api/health` and `/api/state` serverless routes with MongoDB Atlas storage.

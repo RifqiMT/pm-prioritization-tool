@@ -29,6 +29,13 @@ async function main() {
 
   const res = await fetch(url, { headers: { Accept: "application/json" } });
   const text = await res.text();
+
+  if (res.status === 401 && text.includes("Authentication Required")) {
+    console.error("FAIL: Vercel Deployment Protection blocks /api (401).");
+    console.error("Disable: Vercel → Project → Deployment Protection → turn off for Production.");
+    process.exit(7);
+  }
+
   const isHtml = /^\s*</.test(text) || (res.headers.get("content-type") || "").includes("text/html");
 
   if (isHtml) {

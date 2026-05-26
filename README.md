@@ -101,7 +101,15 @@ Or: `cd public && python3 -m http.server 5173` (UI only; use `npx vercel dev` fo
 
 Connect the GitHub repo → deploy `main` on Vercel with `MONGODB_URI`. Details: **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
 
-**MongoDB not syncing?** See **[docs/VERCEL_MONGODB_FIX.md](docs/VERCEL_MONGODB_FIX.md)** — verify `/api/config` returns JSON (not an old React app on the same domain).
+**MongoDB not syncing?** See **[docs/VERCEL_MONGODB_FIX.md](docs/VERCEL_MONGODB_FIX.md)**.
+
+1. **`/api/config` must return JSON** (not HTML / not “Authentication Required”).  
+2. **`pm-prioritization-tool.vercel.app` may be the wrong app** (old React matrix) — use the deployment URL from your linked Vercel project or your custom domain.  
+3. **Disable Vercel Deployment Protection** on Production so `/api` is public.
+
+```bash
+npm run verify:deploy -- https://YOUR-DOMAIN
+```
 
 ### First-use checklist
 
