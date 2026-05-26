@@ -6,7 +6,7 @@ The app is a **static UI** plus **Vercel serverless API** routes under `/api`. P
 
 | Layer | Responsibility |
 |--------|----------------|
-| **Vercel CDN** | Host `public/` → `index.html`, `css/`, `src/` at site root |
+| **Vercel CDN** | Host `index.html`, `css/`, `src/` at repo root |
 | **Vercel Functions** | `GET /api/health`, `GET/PUT /api/state` → MongoDB |
 | **MongoDB Atlas** | Primary workspace document (`workspaces` collection) |
 | **Browser** | UI logic; `sessionStorage` for profile unlock + API key; `localStorage` cache when cloud is active |
@@ -35,10 +35,10 @@ openssl rand -hex 32
 ## One-time Vercel setup
 
 1. Import **`RifqiMT/pm-prioritization-tool`** in Vercel (not the old React “matrix” repo).
-2. **Root Directory:** repository root (contains `public/` and `api/`).
+2. **Root Directory:** repository root (contains `index.html`, `api/`).
 3. **Install Command:** `npm install` (installs `mongodb` for API routes).
-4. **Build Command:** `npm run build` (validates `public/` + `api/`).
-5. **Output Directory:** leave **empty** (Vercel serves `public/` automatically).
+4. **Build Command:** `npm run build` (validates layout).
+5. **Output Directory:** `.` (repository root — see `vercel.json`).
 6. Add environment variables above → **Redeploy**.
 
 ## Connecting the browser to cloud storage

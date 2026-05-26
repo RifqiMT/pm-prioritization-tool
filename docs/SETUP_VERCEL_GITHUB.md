@@ -30,20 +30,15 @@ Vercel → your project → **Deployments** → latest → **⋯** → **Redeplo
 
 ## 5. Fix the public domain (important)
 
-| Domain | Status |
-|--------|--------|
-| **`https://pm-prioritization-tool-six.vercel.app`** | Correct app + MongoDB API (use this today) |
-| **`https://pm-prioritization-tool.vercel.app`** | Still owned by another Vercel project (old React “Matrix” app) |
+`pm-prioritization-tool.vercel.app` may still point at the **wrong** React project.
 
-To use the shorter URL:
-
-1. In the **other** Vercel team/project (“Chris Eaton's projects” / Matrix app) → **Domains** → remove `pm-prioritization-tool.vercel.app`
-2. In **this** project → **Domains** → add `pm-prioritization-tool.vercel.app`
+1. **Old React project** → **Settings → Domains** → remove `pm-prioritization-tool.vercel.app`
+2. **This project** (`RifqiMT/pm-prioritization-tool`) → **Settings → Domains** → add `pm-prioritization-tool.vercel.app`
 
 ## 6. Verify
 
 ```bash
-npm run verify:deploy -- https://pm-prioritization-tool-six.vercel.app
+npm run verify:deploy -- https://pm-prioritization-tool.vercel.app
 ```
 
 Expected: exit code `0` and JSON with `"storage": "mongodb"`.
@@ -54,4 +49,4 @@ Open the app → header **Saved to cloud**.
 
 Add the same secrets plus run **Deploy to Vercel (Production)** workflow, or keep Vercel’s native Git integration (pushes to `main` already deploy via `vercel[bot]`).
 
-See also [VERCEL_MONGODB_FIX.md](../public/docs/VERCEL_MONGODB_FIX.md).
+See also [VERCEL_MONGODB_FIX.md](VERCEL_MONGODB_FIX.md).

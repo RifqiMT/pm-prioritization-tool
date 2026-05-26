@@ -78,9 +78,9 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 **Source layout:**
 
 ```
-public/       → static UI (index.html, css/, src/)
-api/          → Vercel serverless (MongoDB /api/state, /api/config)
-docs/         → symlink to public/docs (product documentation)
+index.html, css/, src/  → static UI at repo root
+api/                    → Vercel serverless (MongoDB /api/state, /api/config)
+docs/                   → product documentation
 ```
 
 ---

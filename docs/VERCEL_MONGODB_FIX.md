@@ -91,7 +91,7 @@ Push to `main` → Action deploys this repo to that Vercel project.
 
 After deploy, `/` must show **Product Management Prioritization Tool** (static HTML with `app-shell`, not `create-react-app`), and `/api/config` must return JSON.
 
-**Repo layout on Vercel:** static files in `public/`, serverless API in `api/` (do not set Output Directory to a React `build/` folder).
+**Repo layout on Vercel:** static files at repo root (`index.html`, `css/`, `src/`), serverless API in `api/`. Output Directory: `.` (see `vercel.json`).
 
 ---
 
