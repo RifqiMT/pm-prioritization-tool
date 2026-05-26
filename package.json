@@ -1,0 +1,22 @@
+{
+  "name": "pm-prioritization-tool",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Local-first Product Management Prioritization Tool (RICE, MoSCoW, financial frameworks, multi-view planning).",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "npx --yes serve . -l 5173",
+    "build": "node -e \"console.log('Static site — no compile step. Vercel serves index.html, css/, and src/ from repo root.')\"",
+    "start": "npm run dev"
+  },
+  "keywords": [
+    "product-management",
+    "prioritization",
+    "rice",
+    "moscow",
+    "static-site"
+  ]
+}

@@ -5182,6 +5182,145 @@ textarea:focus,
   box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18) !important;
 }
 
+/* =========================================================
+   Modern multi-select popovers (Countries / Project period)
+   ========================================================= */
+.filter-countries-toggle {
+  min-height: 42px !important;
+  padding: 0.55rem 0.75rem !important;
+  border-radius: 14px !important;
+  font-size: 0.85rem !important;
+  line-height: 1.1 !important;
+  color: var(--id-text) !important;
+  background: #ffffff !important;
+  box-shadow:
+    0 1px 0 rgba(127, 29, 29, 0.05),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.9) !important;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease, transform 160ms ease !important;
+}
+
+.filter-countries-toggle:hover {
+  background: linear-gradient(180deg, rgba(255, 252, 245, 0.9), #ffffff) !important;
+  border-color: rgba(185, 28, 28, 0.45) !important;
+  box-shadow: 0 8px 22px rgba(127, 29, 29, 0.08) !important;
+}
+
+.filter-countries-toggle:active {
+  transform: translateY(1px) !important;
+}
+
+.filter-countries-toggle:focus-visible {
+  outline: none !important;
+  border-color: var(--id-red-600) !important;
+  box-shadow:
+    0 0 0 3px rgba(220, 38, 38, 0.18),
+    0 10px 26px rgba(127, 29, 29, 0.12) !important;
+}
+
+.filter-countries-summary {
+  min-height: 1.25rem !important;
+  font-size: 0.82rem !important;
+  color: var(--id-text-soft) !important;
+}
+
+.filter-countries-toggle-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--id-surface-soft) !important;
+  border: 1px solid var(--id-border) !important;
+  color: var(--id-gold-700) !important;
+  transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease !important;
+}
+
+.filter-countries.open .filter-countries-toggle-icon {
+  transform: rotate(180deg);
+  background: var(--id-gold-100) !important;
+  border-color: #d7a928 !important;
+  color: var(--id-red-700) !important;
+}
+
+.filter-countries-popup {
+  border-radius: 16px !important;
+  padding: 0.6rem !important;
+  border: 1px solid rgba(212, 175, 55, 0.65) !important;
+  background: linear-gradient(180deg, #ffffff, #fffaf0) !important;
+  box-shadow:
+    0 26px 70px rgba(127, 29, 29, 0.18),
+    0 8px 24px rgba(15, 23, 42, 0.08) !important;
+}
+
+.filter-countries-popup input[type="text"] {
+  width: 100% !important;
+  min-height: 38px !important;
+  border-radius: 12px !important;
+  padding: 0.5rem 0.65rem !important;
+  margin-bottom: 0.5rem !important;
+  background: #fffdf6 !important;
+  border: 1px solid var(--id-border) !important;
+}
+
+.filter-countries-popup input[type="text"]:focus {
+  border-color: var(--id-red-600) !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.16) !important;
+}
+
+.filter-countries-list {
+  max-height: min(260px, 44vh) !important;
+  border-radius: 14px !important;
+  padding: 0.35rem !important;
+  border: 1px solid rgba(212, 175, 55, 0.55) !important;
+  background: #ffffff !important;
+}
+
+.filter-country-option {
+  padding: 0.4rem 0.45rem !important;
+  border-radius: 12px !important;
+  font-size: 0.85rem !important;
+  color: var(--id-text) !important;
+  gap: 0.5rem !important;
+}
+
+.filter-country-option:hover {
+  background: linear-gradient(90deg, rgba(254, 226, 226, 0.6), rgba(254, 243, 199, 0.55)) !important;
+  color: var(--id-red-700) !important;
+}
+
+.filter-country-option input[type="checkbox"] {
+  width: 16px !important;
+  height: 16px !important;
+  accent-color: var(--id-red-600);
+}
+
+.filter-country-option input[type="checkbox"]:checked + span {
+  font-weight: 600;
+  color: var(--id-red-700);
+}
+
+.filter-countries-chip {
+  padding: 0.18rem 0.55rem !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(212, 175, 55, 0.55) !important;
+  background: #fffdf6 !important;
+  color: var(--id-red-700) !important;
+}
+
+@media (max-width: 520px) {
+  .filter-countries-toggle {
+    min-height: 44px !important;
+    padding: 0.6rem 0.7rem !important;
+  }
+  .filter-countries-toggle-icon {
+    width: 1.9rem;
+    height: 1.9rem;
+  }
+  .filter-countries-popup {
+    padding: 0.55rem !important;
+  }
+}
+
 button,
 #addProjectBtn,
 .profile-add-btn,

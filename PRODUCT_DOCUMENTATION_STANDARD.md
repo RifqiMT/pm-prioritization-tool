@@ -19,6 +19,7 @@ The following files are mandatory and must be maintained together:
 - `docs/TRACEABILITY_MATRIX.md`
 - `docs/GUARDRAILS.md`
 - `docs/CHANGELOG.md`
+- `docs/DEPLOYMENT.md`
 
 ## 2. Quality Criteria
 

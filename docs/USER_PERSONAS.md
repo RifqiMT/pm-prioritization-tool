@@ -1,39 +1,45 @@
-# User Personas
+# User Personas (Hub)
 
-## Persona 1 — Product Manager (Primary)
+This hub summarizes the target users for the Product Management Prioritization Tool and links to **one-file-per-persona** deep dives under `docs/personas/`.
 
-- **Goal:** Prioritize roadmap items with transparent rationale
-- **Pain point:** Scoring, status, and value are often spread across tools
-- **Needs:** Single workspace for RICE, MoSCoW, financial impact, and execution state
-- **Core features used:** Table, Framework column, RICE tooltip, Board, MOSCOW, export/import
-- **Critical UX expectation:** Every field in create/edit modal explains itself through consistent tooltips
+## How to use personas in this product
 
-## Persona 2 — Team Lead / Delivery Lead
+- Use personas to validate that features remain aligned to real workflows.
+- Use them to design default behaviors (e.g., explainability tooltips, safe destructive actions).
+- Use them in prioritization: if a change breaks a persona’s critical workflow, it needs mitigation.
 
-- **Goal:** Keep execution flow aligned with agreed priority
-- **Pain point:** Priority and status can diverge over time
-- **Needs:** Fast status movement and clear rank visibility
-- **Core features used:** Board drag/drop, status columns, table sorting/filtering
+## Persona set
 
-## Persona 3 — Portfolio / Strategy Stakeholder
+### 1) Product Manager (Primary)
 
-- **Goal:** Understand why items are prioritized and what value they represent
-- **Pain point:** Black-box scoring reduces trust
-- **Needs:** Explainable score/value formulas without editing risk
-- **Core features used:** View mode, RICE detailed tooltip, framework tooltips, map summaries
-- **Critical UX expectation:** No overlapping tooltips; one clear context panel at a time
+- **Primary workflow**: capture initiatives → score (RICE) → categorize (MoSCoW) → compare in multiple views → export.
+- **Key need**: explainability (inputs + formula must be obvious).
+- **Deep dive**: `personas/PM_PRIMARY.md`
 
-## Persona 4 — PM (Geo/Finance Focus)
+### 2) Delivery / Team Lead
 
-- **Goal:** Compare value impact across regions and currencies
-- **Pain point:** Currency inconsistency and fragmented country reporting
-- **Needs:** EUR-normalized display and geography-based aggregation
-- **Core features used:** Financial impact frameworks, map metric switch, currency conversion display
+- **Primary workflow**: weekly planning and status movement (board/table).
+- **Key need**: speed + clarity (fast slicing, fast status transitions).
+- **Deep dive**: `personas/DELIVERY_LEAD.md`
 
-## Persona 5 — Solo PM / Founder
+### 3) Portfolio / Strategy Stakeholder
 
-- **Goal:** Run disciplined prioritization without enterprise overhead
-- **Pain point:** Heavy tools are slow to adopt
-- **Needs:** Zero-backend, low-friction setup with strong data ownership
-- **Core features used:** Local-first flow, quick project CRUD, JSON/CSV backup
-- **Critical UX expectation:** Footer metadata clarity with visible Project ID for quick reference and support/debug checks
+- **Primary workflow**: review and challenge prioritization decisions.
+- **Key need**: transparency + guardrails (avoid “black-box” scoring or misleading financial certainty).
+- **Deep dive**: `personas/PORTFOLIO_STAKEHOLDER.md`
+
+### 4) Geo / Finance Focus PM
+
+- **Primary workflow**: country/period slicing + EUR-normalized aggregation (map/reporting).
+- **Key need**: usable filters + credible normalization.
+- **Deep dive**: `personas/GEO_FINANCE_PM.md`
+
+## Persona-to-feature mapping (at a glance)
+
+- **Profiles**: PM Primary (portfolio separation), Delivery Lead (execution context)
+- **RICE tooltip explainability**: PM Primary, Stakeholder
+- **MOSCOW view**: PM Primary, Stakeholder
+- **Board view**: Delivery Lead
+- **Map + FX normalization**: Geo/Finance PM
+- **Export/Import**: everyone (data ownership + portability)
+

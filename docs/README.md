@@ -1,40 +1,73 @@
 # Documentation Hub
 
-This folder contains the professional product documentation suite for `pm-prioritization-tool`.
+This folder is the **source of truth** for the product documentation suite for `pm-prioritization-tool`.
 
-## Documents
+It is written to be usable by:
+- **Product** (PRD, personas, stories, OKRs)
+- **Design** (design system, UX patterns, accessibility)
+- **Engineering** (architecture, data dictionary, guardrails, traceability)
+- **Stakeholders** (decision logic, explainability, value model transparency)
 
-- `PRD.md` — Product requirements and scope
-- `USER_PERSONAS.md` — Target user archetypes
-- `USER_STORIES.md` — Epics, stories, acceptance criteria
-- `VARIABLES.md` — Variable dictionary, formulas, and data relationships
-- `METRICS_AND_OKRS.md` — Product and team performance framework
-- `DESIGN_GUIDELINES.md` — Visual system, UX, and accessibility rules
-- `ARCHITECTURE.md` — Runtime model and module boundaries
-- `TRACEABILITY_MATRIX.md` — Requirement-to-code mapping
-- `GUARDRAILS.md` — Business and technical constraints
-- `CHANGELOG.md` — Historical release/change log
+## Information Architecture (IA)
 
-## Recommended Reading Sequence
+The documentation is organized into two layers:
 
-1. `../README.md`
-2. `PRD.md`
-3. `ARCHITECTURE.md`
-4. `VARIABLES.md`
-5. `USER_PERSONAS.md`
-6. `USER_STORIES.md`
-7. `DESIGN_GUIDELINES.md`
-8. `METRICS_AND_OKRS.md`
-9. `TRACEABILITY_MATRIX.md`
-10. `GUARDRAILS.md`
-11. `CHANGELOG.md`
+- **Hub documents** (high-level, stable entry points): the files in this folder root (e.g., `PRD.md`).
+- **Deep-dive artifacts** (detailed, enterprise-friendly): subfolders under `docs/` (e.g., `docs/personas/`).
 
-## Maintenance Rule
+This split keeps the top-level docs readable while still providing thorough depth when needed.
+
+## Start Here (recommended reading order)
+
+1. `../README.md` (product + tech overview)
+2. `PRD.md` (requirements + scope + NFRs)
+3. `ARCHITECTURE.md` (runtime topology + data flow)
+4. `VARIABLES.md` (data dictionary hub → deep-dive variable catalog)
+5. `USER_PERSONAS.md` (personas hub → individual persona files)
+6. `USER_STORIES.md` (backlog hub → epics/stories breakdown)
+7. `DESIGN_GUIDELINES.md` (design system + interaction standards)
+8. `METRICS_AND_OKRS.md` (metrics + OKRs hub → metric catalog)
+9. `TRACEABILITY_MATRIX.md` (requirements ↔ code mapping)
+10. `GUARDRAILS.md` (business + technical constraints)
+11. `CHANGELOG.md` (historical change log)
+12. `DEPLOYMENT.md` (Vercel production deployment)
+
+## Hub Documents (this folder root)
+
+- `PRD.md` — Product requirements, scope, NFRs, and release criteria.
+- `USER_PERSONAS.md` — Persona overview and links to persona deep dives.
+- `USER_STORIES.md` — Epics/stories overview and links to detailed story specs.
+- `VARIABLES.md` — Variable dictionary hub, formulas, and relationships.
+- `METRICS_AND_OKRS.md` — Metrics + OKRs hub and measurement approach.
+- `DESIGN_GUIDELINES.md` — Design principles, theme/tokens, components, accessibility.
+- `ARCHITECTURE.md` — Runtime model, modules, and major responsibilities.
+- `TRACEABILITY_MATRIX.md` — Enterprise traceability (requirements → evidence → verification).
+- `GUARDRAILS.md` — Guardrails for business/tech/UX/data/delivery.
+- `CHANGELOG.md` — Change history and release notes structure.
+- `DEPLOYMENT.md` — Vercel production deployment, headers, caching, smoke tests.
+
+## Deep-dive Artifacts (subfolders)
+
+- `personas/` — One file per persona (goals, jobs-to-be-done, scenarios, success signals).
+- `user-stories/` — One file per epic + detailed story specifications.
+- `variables/` — Full variable catalog (inputs, derived values, storage schema, UI locations).
+- `metrics/` — Metric dictionary + OKR measurement plan.
+- `design/` — Theme tokens, component guidelines, interaction patterns.
+- `traceability/` — Extended traceability matrices (optional) and audit checklists.
+
+## Maintenance and Governance
 
 All updates must follow `../PRODUCT_DOCUMENTATION_STANDARD.md`.
 
-## Current Documentation Focus Areas
+### Source of truth rule
 
-- Standardized terminology alignment (`Framework` label across table/filter/modal contexts).
-- Tooltip governance updates (single-tooltip policy and modal field consistency).
-- Project modal metadata layout updates (`Project ID` in left block, `RICE score` in financial/right block).
+When docs conflict with runtime behavior, **the code is the source of truth**. Docs must be corrected in the same change cycle.
+
+### Document hygiene expectations
+
+- Use stable IDs for requirements (`FR-*`) and stories (`US-*`) so traceability remains durable.
+- Prefer links to deep dives rather than inflating hub docs with too much detail.
+- Every major requirement should be traceable to:
+  - UI evidence (`index.html`, `css/main.css`)
+  - Logic evidence (`src/app.js`, `src/rice.js`, modules)
+  - A verification method (manual test plan or automated test where applicable)

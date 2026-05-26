@@ -61,14 +61,12 @@ This product helps teams capture initiatives, score priority, classify delivery 
 
 ## Current Runtime File Inventory
 
-Audited source files in this repository snapshot:
-
-- `index.html`
-- `css/main.css`
-- `src/app.js`
-- `src/rice.js`
-
-`index.html` references additional scripts (`src/constants.js`, `src/utils.js`, `src/modules/exchange-rates.js`, `src/modules/fullscreen.js`) that are expected contracts for runtime but are not present in this folder snapshot.
+- `index.html` — application shell
+- `css/main.css` — styles and design system
+- `src/app.js` — state, rendering, CRUD, import/export
+- `src/rice.js` — RICE scoring
+- `src/constants.js`, `src/utils.js` — shared constants and helpers
+- `src/modules/exchange-rates.js`, `src/modules/fullscreen.js` — FX and fullscreen
 
 ## Business and Technical Guidelines
 
@@ -89,11 +87,32 @@ Audited source files in this repository snapshot:
 
 ## Getting Started
 
-1. Open `index.html` directly in a modern browser, or run a static server.
-2. Create a profile.
-3. Add projects with RICE and optional financial framework inputs.
-4. Use Table/Board/MOSCOW/Map to prioritize and communicate decisions.
-5. Export data periodically.
+### Local development
+
+```bash
+npm run dev
+# Open http://localhost:5173
+```
+
+Or open `index.html` via any static server (e.g. `python3 -m http.server 5173`).
+
+### Production (Vercel)
+
+This repo is configured for **Vercel** static hosting (`vercel.json`, `package.json`). See **`docs/DEPLOYMENT.md`** for:
+
+- Importing the GitHub repo into Vercel
+- Build/output settings (no compile step)
+- Security headers and caching
+- Custom domain, preview vs production, smoke tests
+
+**Quick deploy:** connect `https://github.com/RifqiMT/pm-prioritization-tool` in Vercel → deploy `main` with default static settings.
+
+### First use
+
+1. Create a profile.
+2. Add projects with RICE and optional financial framework inputs.
+3. Use Table/Board/MOSCOW/Map to prioritize and communicate decisions.
+4. Export data periodically (data lives in browser `localStorage`).
 
 ## Documentation Suite
 
@@ -109,3 +128,4 @@ Audited source files in this repository snapshot:
 - Traceability matrix: `docs/TRACEABILITY_MATRIX.md`
 - Guardrails: `docs/GUARDRAILS.md`
 - Changelog: `docs/CHANGELOG.md`
+- Deployment (Vercel): `docs/DEPLOYMENT.md`

@@ -4,6 +4,12 @@ All notable changes are recorded here.
 
 ## [Unreleased]
 
+### Production / Vercel
+- Added `vercel.json` with static deploy settings, security headers (CSP, frame options), and asset caching.
+- Added `package.json` (no-op build, local `npm run dev`), `.gitignore`, `.vercelignore`.
+- Added `docs/DEPLOYMENT.md` with Vercel setup, smoke tests, and operational guardrails.
+- Updated root `README.md` with Vercel deployment quick start.
+
 ### UX / Interaction
 - Added advanced filter `Framework` and standardized filter naming to match table terminology.
 - Added project-name tooltip on Board/MOSCOW cards with standardized content:

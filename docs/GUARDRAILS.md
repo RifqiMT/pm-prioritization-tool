@@ -35,3 +35,10 @@
 - Update PRD + traceability + changelog for behavior changes.
 - Run lint and sanity-pass for modified files.
 - Keep documentation aligned with audited runtime files.
+
+## 6. Production (Vercel) Guardrails
+
+- Deploy as **static assets only**; do not add server-side secrets to the repository.
+- Treat `localStorage` as **per-origin**: production URL, preview URLs, and localhost each have separate data.
+- After changing CSP in `vercel.json`, run the post-deploy smoke test in `docs/DEPLOYMENT.md` (map tiles, exchange rates, Leaflet).
+- Remind users to export backups; Vercel does not persist portfolio data.
