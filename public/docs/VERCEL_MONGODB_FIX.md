@@ -27,7 +27,7 @@ If you see `FAIL: Vercel Deployment Protection blocks /api`, Step 0 is not done 
 
 **GitHub Actions (recommended if you use GitHub secrets):**
 
-1. Add secrets `VERCEL_TOKEN`, `VERCEL_PROJECT_ID` (see [SETUP_VERCEL_GITHUB.md](../../docs/SETUP_VERCEL_GITHUB.md)).
+1. Add secrets `VERCEL_TOKEN`, `VERCEL_PROJECT_ID` (see [SETUP_VERCEL_GITHUB.md](SETUP_VERCEL_GITHUB.md)).
 2. Run **Actions → Fix Vercel Deployment Protection → Run workflow**.
 3. Redeploy Production in Vercel.
 

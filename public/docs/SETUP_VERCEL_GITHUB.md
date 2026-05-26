@@ -30,15 +30,20 @@ Vercel → your project → **Deployments** → latest → **⋯** → **Redeplo
 
 ## 5. Fix the public domain (important)
 
-`pm-prioritization-tool.vercel.app` may still point at the **wrong** React project.
+| Domain | Status |
+|--------|--------|
+| **`https://pm-prioritization-tool-six.vercel.app`** | Correct app + MongoDB API (use this today) |
+| **`https://pm-prioritization-tool.vercel.app`** | Still owned by another Vercel project (old React “Matrix” app) |
 
-1. **Old React project** → **Settings → Domains** → remove `pm-prioritization-tool.vercel.app`
-2. **This project** (`RifqiMT/pm-prioritization-tool`) → **Settings → Domains** → add `pm-prioritization-tool.vercel.app`
+To use the shorter URL:
+
+1. In the **other** Vercel team/project (“Chris Eaton's projects” / Matrix app) → **Domains** → remove `pm-prioritization-tool.vercel.app`
+2. In **this** project → **Domains** → add `pm-prioritization-tool.vercel.app`
 
 ## 6. Verify
 
 ```bash
-npm run verify:deploy -- https://pm-prioritization-tool.vercel.app
+npm run verify:deploy -- https://pm-prioritization-tool-six.vercel.app
 ```
 
 Expected: exit code `0` and JSON with `"storage": "mongodb"`.

@@ -101,6 +101,9 @@ Or: `cd public && python3 -m http.server 5173` (UI only; use `npx vercel dev` fo
 
 Connect the GitHub repo → deploy `main` on Vercel with `MONGODB_URI`. Details: **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
 
+**Live app (this repo):** [https://pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app) — MongoDB + `/api` enabled.  
+(`pm-prioritization-tool.vercel.app` may still point at a different legacy project until you move the domain in Vercel.)
+
 **MongoDB not syncing?** See **[docs/VERCEL_MONGODB_FIX.md](docs/VERCEL_MONGODB_FIX.md)**.
 
 1. **`/api/config` must return JSON** (not HTML / not “Authentication Required”).  
