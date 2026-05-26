@@ -1,59 +1,155 @@
 # Changelog
 
-All notable changes are recorded here.
+All notable changes to the Product Management Prioritization Tool are recorded here.
+
+**Product:** Product Management Prioritization Tool  
+**Documentation owner:** Product Team  
+**Format:** [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) (adapted)
+
+---
+
+## How to read this file
+
+| Field | Meaning |
+|-------|---------|
+| **Date** | When the change landed in the repository (YYYY-MM-DD). |
+| **Author** | **Product Team** unless a specific contributor is named. |
+| **Area** | Product, UI, Security, Data, Docs, Infra. |
+| **Impact** | User-visible, developer, or documentation-only. |
+
+When updating this file after a change:
+
+1. Add entries under `[Unreleased]` during development.
+2. On release, move `[Unreleased]` into a dated version section (e.g. `[2.0.0] - 2026-05-26`).
+3. Cross-link PRD, user stories, and traceability matrix when behavior changes.
+
+---
 
 ## [Unreleased]
 
-### Production / Vercel
-- Added `vercel.json` with static deploy settings, security headers (CSP, frame options), and asset caching.
-- Added `package.json` (no-op build, local `npm run dev`), `.gitignore`, `.vercelignore`.
-- Added `docs/DEPLOYMENT.md` with Vercel setup, smoke tests, and operational guardrails.
-- Updated root `README.md` with Vercel deployment quick start.
+_No pending changes at last audit (2026-05-26). Add new entries here before the next release._
 
-### UX / Interaction
-- Added advanced filter `Framework` and standardized filter naming to match table terminology.
-- Added project-name tooltip on Board/MOSCOW cards with standardized content:
-  - project status
-  - project description
-- Improved card title tooltip alignment (cursor-anchored behavior where appropriate).
-- Standardized card icon visual semantics to match table icon-pill conventions.
-- Enforced single-tooltip lifecycle across app surfaces (table, cards, modal fields).
-- Added modal-wide tooltip stability improvements for rapid hover transitions.
+---
 
-### Project Modal Metadata
-- Footer metadata layout updated:
-  - Left block now includes `Project ID`, `Created`, `Last modified`
-  - Right block now includes `Financial (EUR)`, `Exchange rate`, `RICE score`
+## [2.0.0] - 2026-05-26
 
-### Form Explainability
-- Added comprehensive standardized tooltip coverage for every variable field in create/edit modal.
-- Implemented auto-injection of fallback standardized tooltips for fields missing explicit tooltip markup.
+Major release: local-first portfolio workspace with profile security, modern responsive UI, export password gate, and full product documentation suite.
 
-### Documentation
-- Re-audited codebase and refreshed the full product documentation suite:
-  - `README.md`
-  - `PRODUCT_DOCUMENTATION_STANDARD.md`
-  - `docs/README.md`
-  - `docs/PRD.md`
-  - `docs/USER_PERSONAS.md`
-  - `docs/USER_STORIES.md`
-  - `docs/VARIABLES.md`
-  - `docs/METRICS_AND_OKRS.md`
-  - `docs/DESIGN_GUIDELINES.md`
-  - `docs/ARCHITECTURE.md`
-  - `docs/TRACEABILITY_MATRIX.md`
-  - `docs/GUARDRAILS.md`
-  - `docs/CHANGELOG.md`
+### Documentation — 2026-05-26 — Product Team — Docs — Impact: internal + delivery
 
-### Product / UX Alignment Captured
-- RICE values represented as tooltip on RICE score (standalone column removed)
-- RICE tooltip expanded with abbreviation meanings + formula + calculation line
-- New table `Framework` column with icon + tooltip semantics
-- Financial frameworks documented as currently implemented:
-  - `custom`, `clv`, `nps`, `risk`, `headcount`, `operational`
-- Number-input spinner removal and wheel-increment prevention documented
+- Re-audited codebase and published enterprise documentation suite:
+  - `README.md`, `PRODUCT_DOCUMENTATION_STANDARD.md`, `docs/README.md`
+  - `docs/PRD.md`, `docs/USER_PERSONAS.md`, `docs/personas/*`
+  - `docs/USER_STORIES.md` (Given/When/Then acceptance criteria)
+  - `docs/VARIABLES.md` (formulas + Mermaid relationship charts)
+  - `docs/METRICS_AND_OKRS.md`, `docs/DESIGN_GUIDELINES.md`
+  - `docs/ARCHITECTURE.md`, `docs/TECH_GUIDELINES.md`, `docs/BUSINESS_GUIDELINES.md`
+  - `docs/TRACEABILITY_MATRIX.md`, `docs/GUARDRAILS.md`, `docs/DEPLOYMENT.md`
+  - `docs/CHANGELOG.md` (this file; author label **Product Team**)
 
-### Architecture Notes
-- Current folder snapshot audited as:
-  - `index.html`, `css/main.css`, `src/app.js`, `src/rice.js`
-- Runtime-referenced but currently missing module contracts documented for clarity
+### UI — Export & import modals — 2026-05-26 — Product Team — Impact: user-visible
+
+- **Import data** dialog aligned with **Export data**: shared header, card-style JSON/CSV picker, cream palette, mobile-friendly layout.
+- Shared `data-transfer-*` styles; import includes **merge, not replace** callout.
+- Dynamic subtitles show workspace counts; export flow notes when protected profiles need passwords.
+- Removed legacy dark modal background override for export/import panels.
+
+### UI — Export modals — 2026-05-26 — Product Team — Impact: user-visible
+
+- **Unlock for export** and **Export data** redesigned: profile-style header, scrollable body, per-profile unlock cards (avatar, password, eye toggle).
+- Format chooser uses descriptive JSON/CSV option cards instead of legacy outline buttons.
+- Footer actions stack on phone; primary/ghost buttons match profile modal patterns.
+
+### Security — Export password gate — 2026-05-26 — Product Team — Impact: user-visible + security
+
+- JSON and CSV exports include only profiles **without a password** or **unlocked with the correct password** (session unlock or export dialog verification).
+- Profiles with **missing or incorrect** passwords are **omitted** from the export file; toast summarizes skipped profiles.
+- Export unlock dialog uses the same **show/hide password** eye toggle as profile modals.
+
+### UI — Locked profile banner — 2026-05-26 — Product Team — Impact: user-visible
+
+- Removed redundant **Use unlock dialog** from the locked banner; single inline password + **Unlock** flow.
+- Modal unlock remains for view/edit actions from profile list.
+
+### UI — Profile & toolbar controls — 2026-05-26 — Product Team — Impact: user-visible
+
+- Password **show/hide** buttons: neutral icon style, no layout jump on hover/click.
+- **Remove password** switch: static checkbox (no sliding thumb).
+- Map metric pills and RICE sort toggle: calmer active state without sliding animations.
+
+### UI — Map “Show by” metric — 2026-05-26 — Product Team — Impact: user-visible
+
+- Replaced dropdown with **segmented pill control** (Count / RICE / EUR).
+- Touch-friendly; keyboard navigable (`radiogroup` + arrow keys); compact on phone.
+
+### UI — Board status column filters — 2026-05-26 — Product Team — Impact: user-visible
+
+- Board toolbar status pills are **toggle buttons** to show/hide columns.
+- Active pills use status colors; hidden pills appear muted with strikethrough.
+- **Show all** when any column is hidden; at least one column must remain visible.
+- Preference persists in `localStorage` as `boardHiddenStatuses`.
+
+### UI — View toolbars — 2026-05-26 — Product Team — Impact: user-visible
+
+- Unified `view-toolbar` for Table, Board, MoSCoW, and Map.
+- Fixed legacy `main.css` flex-end collapse on table/map toolbars (title left, controls right via CSS grid).
+
+### UI — Profile modals — 2026-05-26 — Product Team — Impact: user-visible
+
+- Revamped **Edit profile** and **Unlock profile** modals: light sheet, sticky footer, security section, mobile bottom-sheet behavior.
+
+### UI — Profiles, portfolio, header, workspace — 2026-05-26 — Product Team — Impact: user-visible
+
+- Profiles v2 cards, portfolio command bar, collapsible filters, FAB on mobile.
+- Header actions menu on phones; modern ghost toolbar on tablet/desktop.
+- `workspace-modern.css`, `header-modern.css`, `profiles-modern.css`, `portfolio-modern.css`, `profile-modals-modern.css`, `export-modals-modern.css`, `view-toolbars-modern.css`.
+
+### Security — Profile passwords — 2026-05-26 — Product Team — Impact: user-visible + security
+
+- `profile-security.js`: PBKDF2-SHA256 password hashing; never store plaintext passwords.
+- `loadState()` persists `passwordSalt` / `passwordHash` after refresh.
+- Board, MoSCoW, and Map no longer leak project data when profile is locked.
+- Session unlock resets on tab close/refresh; inline unlock on locked banner.
+- Delete protected profile requires correct password.
+
+### Data — Import / export — 2026-05-26 — Product Team — Impact: user-visible
+
+- JSON export includes workspace preferences; CSV is flat project rows.
+- Import merges profiles/projects by ID without duplicate corruption for same IDs.
+
+### Product — Explainability & filters — 2026-05-26 — Product Team — Impact: user-visible
+
+- Single visible tooltip app-wide; standardized modal field tooltips.
+- RICE tooltip: abbreviations, formula, calculation line.
+- Table **Framework** column + advanced **Framework** filter naming.
+- Project modal footer: Project ID, timestamps, RICE, financial/EUR context.
+- Board/MoSCoW card tooltips: status + description.
+
+### Infra — Vercel deployment — 2026-05-26 — Product Team — Impact: developer + ops
+
+- `vercel.json`: static deploy, security headers (CSP), asset caching.
+- `package.json`, `.gitignore`, `.vercelignore`; `docs/DEPLOYMENT.md` smoke tests.
+
+---
+
+## [1.x] — Prior baseline (pre-2.0.0 UI refresh)
+
+Earlier iterations introduced core RICE scoring, multi-view planning (table/board/MoSCoW/map), financial frameworks, and JSON/CSV portability. Detailed history before 2026-05-26 was consolidated into **2.0.0** during the documentation audit.
+
+For archaeology, refer to git history on `main` and agent transcripts cited in project README.
+
+---
+
+## Versioning policy
+
+- **MAJOR** (e.g. 3.0.0): breaking changes to stored data format or incompatible import/export.
+- **MINOR** (e.g. 2.1.0): new features, backward-compatible persistence.
+- **PATCH** (e.g. 2.0.1): bug fixes and UI polish without new capabilities.
+
+---
+
+## Related documents
+
+- [PRD.md](PRD.md) — requirements baseline for 2.0.0  
+- [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md) — requirement → code mapping  
+- [README.md](../README.md) — product overview and quick start

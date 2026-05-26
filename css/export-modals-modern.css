@@ -1,0 +1,422 @@
+/**
+ * Export & import modals — shared format chooser, export unlock, responsive layout.
+ */
+
+.modal-backdrop--export,
+.modal-backdrop--import {
+  padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right))
+    max(0.75rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+  align-items: flex-end;
+}
+
+@media (min-width: 540px) {
+  .modal-backdrop--export,
+  .modal-backdrop--import {
+    align-items: center;
+  }
+}
+
+.modal-backdrop--export.active,
+.modal-backdrop--import.active {
+  backdrop-filter: blur(6px);
+  background: rgba(63, 15, 25, 0.45) !important;
+}
+
+#exportUnlockModal .modal-panel,
+#exportFormatModal .modal-panel,
+#importFormatModal .modal-panel,
+.modal-panel--export,
+.modal-panel--import {
+  --dt-bg: #ffffff;
+  --dt-bg-soft: #fffdf8;
+  --dt-border: rgba(231, 201, 120, 0.65);
+  --dt-text: #3f0f19;
+  --dt-text-soft: #7a4b12;
+  --dt-accent: #b91c1c;
+  --dt-gold: #a16207;
+  --dt-radius: 18px;
+  --dt-shadow: 0 24px 48px rgba(127, 29, 29, 0.18);
+
+  display: flex !important;
+  flex-direction: column !important;
+  max-width: min(480px, 100%) !important;
+  width: 100% !important;
+  max-height: min(92vh, 720px) !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  border-radius: var(--dt-radius) var(--dt-radius) 0 0 !important;
+  border: 1px solid var(--dt-border) !important;
+  background: linear-gradient(180deg, #fffdf8 0%, #ffffff 28%) !important;
+  box-shadow: var(--dt-shadow) !important;
+  color: var(--dt-text) !important;
+  transform: none !important;
+  overflow: hidden;
+}
+
+@media (min-width: 540px) {
+  #exportUnlockModal .modal-panel,
+  #exportFormatModal .modal-panel,
+  #importFormatModal .modal-panel,
+  .modal-panel--export,
+  .modal-panel--import {
+    border-radius: var(--dt-radius) !important;
+    max-height: min(88vh, 680px) !important;
+  }
+}
+
+#exportUnlockModal .profile-modal-header,
+#exportFormatModal .profile-modal-header,
+#importFormatModal .profile-modal-header {
+  padding: 1rem 1rem 0.85rem;
+  border-bottom: 1px solid var(--dt-border);
+  background: linear-gradient(180deg, #fffdf8, #fff);
+}
+
+#exportUnlockModal .profile-modal-title,
+#exportFormatModal .profile-modal-title,
+#importFormatModal .profile-modal-title,
+#exportUnlockModal .modal-title,
+#exportFormatModal .modal-title,
+#importFormatModal .modal-title {
+  margin: 0 !important;
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  text-transform: none !important;
+  color: var(--dt-text) !important;
+  line-height: 1.3 !important;
+}
+
+#exportUnlockModal .profile-modal-subtitle,
+#exportFormatModal .profile-modal-subtitle,
+#importFormatModal .profile-modal-subtitle,
+#exportUnlockModal .modal-subtitle,
+#exportFormatModal .modal-subtitle,
+#importFormatModal .modal-subtitle {
+  margin: 0.35rem 0 0 !important;
+  font-size: 0.8rem !important;
+  line-height: 1.5 !important;
+  color: var(--dt-text-soft) !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
+.profile-modal-mark--export {
+  background: linear-gradient(145deg, #b91c1c, #991b1b 55%, #a16207);
+}
+
+.profile-modal-mark--export-format,
+.profile-modal-mark--import-format {
+  background: linear-gradient(145deg, #a16207, #92400e);
+}
+
+.profile-modal-mark--import-format {
+  background: linear-gradient(145deg, #059669, #047857 55%, #0d9488);
+}
+
+.data-transfer-modal-body,
+.export-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.85rem 1rem 1rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.data-transfer-callout {
+  margin: 0 0 0.75rem;
+  padding: 0.6rem 0.7rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--dt-text-soft);
+  background: var(--dt-bg-soft);
+  border: 1px solid var(--dt-border);
+  border-radius: 10px;
+}
+
+.data-transfer-callout strong {
+  color: var(--dt-text);
+  font-weight: 600;
+}
+
+.export-unlock-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.export-unlock-card {
+  padding: 0.75rem 0.8rem;
+  border-radius: 12px;
+  border: 1px solid var(--dt-border);
+  background: var(--dt-bg-soft);
+}
+
+.export-unlock-card__head {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.55rem;
+}
+
+.export-unlock-card__avatar {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: linear-gradient(145deg, #b91c1c, #991b1b);
+  box-shadow: 0 2px 6px rgba(185, 28, 28, 0.2);
+}
+
+.export-unlock-card__meta {
+  min-width: 0;
+  flex: 1;
+}
+
+.export-unlock-card__name {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--dt-text);
+  letter-spacing: -0.01em;
+  text-transform: none;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.export-unlock-card__hint {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.72rem;
+  color: var(--dt-text-soft);
+  line-height: 1.35;
+}
+
+.export-unlock-card .profile-password-input-wrap {
+  position: relative;
+}
+
+.export-unlock-card .profile-password-input-wrap input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem 2.75rem 0.5rem 0.7rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--dt-text);
+  background: #fff;
+  border: 1px solid var(--dt-border);
+  border-radius: 10px;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.export-unlock-card .profile-password-input-wrap input:focus {
+  outline: none;
+  border-color: rgba(185, 28, 28, 0.45);
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1);
+}
+
+#exportUnlockModal .profile-password-toggle {
+  position: absolute;
+  right: 0.35rem;
+  top: 0;
+  bottom: 0;
+  margin: auto 0;
+}
+
+#exportUnlockError.export-unlock-error {
+  margin: 0.65rem 0 0;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #991b1b;
+  background: #fef2f2;
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  border-radius: 10px;
+}
+
+#exportUnlockError.export-unlock-error[hidden] {
+  display: none !important;
+}
+
+.export-modal-footer {
+  display: flex;
+  flex-direction: column-reverse;
+  flex-shrink: 0;
+  gap: 0.45rem;
+  padding: 0.85rem 1rem max(0.85rem, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--dt-border);
+  background: #fff;
+}
+
+@media (min-width: 480px) {
+  .export-modal-footer {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+}
+
+.export-modal-btn {
+  flex: 1 1 auto;
+  min-height: 46px;
+  padding: 0.55rem 1rem;
+  border-radius: 11px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+  transform: none !important;
+}
+
+.export-modal-btn:hover {
+  transform: none !important;
+}
+
+.export-modal-btn--ghost {
+  background: #fff !important;
+  border: 1px solid var(--dt-border) !important;
+  color: var(--dt-text-soft) !important;
+  box-shadow: none !important;
+}
+
+.export-modal-btn--ghost:hover {
+  background: var(--dt-bg-soft) !important;
+  color: var(--dt-text) !important;
+  filter: none !important;
+}
+
+.export-modal-btn--primary {
+  background: linear-gradient(135deg, #b91c1c, #991b1b) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(185, 28, 28, 0.25) !important;
+}
+
+.export-modal-btn--primary:hover {
+  filter: brightness(1.03);
+  box-shadow: 0 6px 16px rgba(185, 28, 28, 0.3) !important;
+}
+
+.export-modal-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (min-width: 480px) {
+  .export-modal-btn {
+    flex: 0 1 auto;
+    min-width: 8rem;
+  }
+
+  .export-modal-btn--primary {
+    min-width: 10rem;
+  }
+}
+
+/* Format chooser (export & import) */
+.data-transfer-format-options,
+.export-format-options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.55rem;
+}
+
+@media (min-width: 400px) {
+  .data-transfer-format-options,
+  .export-format-options {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.data-transfer-format-option,
+.export-format-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  min-height: 0;
+  padding: 0.85rem 0.9rem !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--dt-border) !important;
+  background: #fff !important;
+  color: var(--dt-text) !important;
+  text-align: left;
+  box-shadow: none !important;
+  transform: none !important;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.data-transfer-format-option:hover,
+.export-format-option:hover {
+  border-color: rgba(185, 28, 28, 0.35) !important;
+  background: var(--dt-bg-soft) !important;
+  transform: none !important;
+  box-shadow: 0 2px 8px rgba(63, 15, 25, 0.06) !important;
+  filter: none !important;
+}
+
+.data-transfer-format-option__icon,
+.export-format-option__icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(185, 28, 28, 0.1);
+  color: var(--dt-accent);
+}
+
+.data-transfer-format-option__icon--csv,
+.export-format-option__icon--csv {
+  background: rgba(161, 98, 7, 0.12);
+  color: var(--dt-gold);
+}
+
+.data-transfer-format-option__label,
+.export-format-option__label {
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+
+.data-transfer-format-option__desc,
+.export-format-option__desc {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--dt-text-soft);
+  line-height: 1.4;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* Override global button bleed */
+#exportUnlockModal button,
+#exportFormatModal button,
+#importFormatModal button {
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .export-modal-btn,
+  .data-transfer-format-option,
+  .export-format-option {
+    transition: none;
+  }
+}

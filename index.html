@@ -9,115 +9,252 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="css/main.css" rel="stylesheet" />
+  <link href="css/workspace-modern.css" rel="stylesheet" />
+  <link href="css/header-modern.css" rel="stylesheet" />
+  <link href="css/profiles-modern.css" rel="stylesheet" />
+  <link href="css/portfolio-modern.css" rel="stylesheet" />
+  <link href="css/profile-modals-modern.css" rel="stylesheet" />
+  <link href="css/export-modals-modern.css" rel="stylesheet" />
+  <link href="css/view-toolbars-modern.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 <body>
   <div class="app-shell">
-    <header class="app-header">
-      <div class="app-title-group">
-        <span class="app-badge">Product Management Prioritization • Portfolio ready</span>
-        <div class="app-title-row">
-          <h2 class="app-title">Product Management Prioritization Tool</h2>
-        </div>
-      </div>
-      <div class="app-header-actions">
-        <div class="app-header-actions-row">
-          <div class="data-pill-group">
-            <span class="data-pill-label">Export</span>
-            <button type="button" id="exportDataBtn" class="data-pill-btn">
-              Export data
-            </button>
+    <header class="app-header app-header--modern">
+      <div class="app-header-top">
+        <div class="app-header-brand">
+          <div class="app-header-mark" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 5 5-9"/></svg>
           </div>
-          <div class="data-pill-group">
-            <span class="data-pill-label">Import</span>
-            <button type="button" id="importDataBtn" class="data-pill-btn">
-              Import data
-            </button>
-          </div>
-          <div class="data-pill-group data-pill-group--rates">
-            <span class="data-pill-label">Rates</span>
-            <button type="button" id="refreshExchangeRatesBtn" class="data-pill-btn refresh-rates-btn" aria-label="Refresh exchange rates from API" title="Refresh exchange rates (used for Financial impact in EUR)">
-              Refresh exchange rates
-            </button>
-            <p id="exchangeRatesDateLabel" class="exchange-rates-date-label" aria-live="polite"></p>
+          <div class="app-header-brand-text">
+            <div class="app-header-kicker">
+              <span class="app-header-status-dot" aria-hidden="true"></span>
+              <span>Portfolio ready</span>
+            </div>
+            <h1 class="app-title app-header-title">
+              <span class="app-title-short">PM Prioritization</span>
+              <span class="app-title-full">Product Management Prioritization Tool</span>
+            </h1>
           </div>
         </div>
+        <button
+          type="button"
+          id="appHeaderMenuBtn"
+          class="app-header-menu-toggle"
+          aria-expanded="false"
+          aria-controls="appHeaderToolbar"
+        >
+          <span class="app-header-menu-icon" aria-hidden="true">
+            <span class="app-header-menu-bar"></span>
+            <span class="app-header-menu-bar"></span>
+            <span class="app-header-menu-bar"></span>
+          </span>
+          <span class="app-header-menu-toggle-label">Actions</span>
+        </button>
       </div>
+      <nav id="appHeaderToolbar" class="app-header-toolbar" aria-label="Workspace actions">
+        <p class="app-header-toolbar-heading" id="appHeaderToolbarHeading">Quick actions</p>
+        <div class="app-header-toolbar-actions">
+          <button
+            type="button"
+            id="exportDataBtn"
+            class="app-header-action-btn"
+            aria-label="Export"
+            title="Export portfolio as JSON or CSV"
+          >
+            <span class="app-header-action-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </span>
+            <span class="app-header-action-title">Export</span>
+          </button>
+          <button
+            type="button"
+            id="importDataBtn"
+            class="app-header-action-btn"
+            aria-label="Import"
+            title="Import and merge a JSON or CSV backup"
+          >
+            <span class="app-header-action-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </span>
+            <span class="app-header-action-title">Import</span>
+          </button>
+          <button
+            type="button"
+            id="refreshExchangeRatesBtn"
+            class="app-header-action-btn app-header-action-btn--fx refresh-rates-btn"
+            aria-label="FX Rates"
+            title="Refresh FX rates used for financial impact in EUR"
+          >
+            <span class="app-header-action-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><polyline points="21 8 21 3 16 3"/><polyline points="3 16 3 21 8 21"/></svg>
+            </span>
+            <span class="app-header-action-title">FX Rates</span>
+          </button>
+        </div>
+        <p id="exchangeRatesDateLabel" class="exchange-rates-date-label app-header-rates-footnote" aria-live="polite"></p>
+      </nav>
     </header>
 
     <main class="app-layout">
       <!-- Profiles / owners -->
-      <section class="card profiles-panel">
-        <div class="card-header">
-          <div>
-            <h3 class="card-title">Profiles / Owners</h3>
-            <p class="card-caption">Create separate portfolios for different owners, teams, or products.</p>
+      <section class="card profiles-panel profiles-panel--modern profiles-panel--v2" aria-labelledby="profilesPanelTitle">
+        <header class="profiles-panel-header">
+          <div class="profiles-panel-mark" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
-        </div>
+          <div class="profiles-panel-intro">
+            <p class="profiles-panel-eyebrow">Portfolios</p>
+            <h2 id="profilesPanelTitle" class="card-title profiles-panel-title">Profiles</h2>
+            <p class="card-caption profiles-panel-caption">Separate workspaces for teams, products, or owners.</p>
+          </div>
+        </header>
 
-        <form id="addProfileForm" class="profile-form-row" autocomplete="off">
-          <div class="profile-form-field">
-            <label for="newProfileName">Profile name</label>
-            <input id="newProfileName" name="newProfileName" type="text" placeholder="e.g. Product Squad Alpha" required />
-          </div>
-          <div class="profile-form-field">
-            <label for="newProfileTeam">Team (optional)</label>
-            <input id="newProfileTeam" name="newProfileTeam" type="text" placeholder="e.g. Growth, Core PM, Platform" />
-          </div>
-          <div class="profile-icon-wrap">
-            <button type="submit" class="profile-add-btn" aria-label="Add profile">
-              <svg class="profile-add-btn-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-              <span class="profile-add-btn-text">Add</span>
-            </button>
-            <div class="cell-type-tooltip">
-              <div class="cell-type-tooltip-title">Add profile</div>
-              <div class="cell-type-tooltip-body">Create a new profile to organize projects.</div>
+        <details class="profiles-create-panel" id="profilesCreatePanel">
+          <summary class="profiles-create-summary">
+            <span class="profiles-create-summary-title">New profile</span>
+            <span class="profiles-create-summary-hint">Tap to add name, team, password</span>
+          </summary>
+          <form id="addProfileForm" class="profiles-create-form profile-form-row" autocomplete="off">
+            <div class="profiles-create-grid">
+              <div class="profile-form-field">
+                <label for="newProfileName">Profile name</label>
+                <input id="newProfileName" name="newProfileName" type="text" placeholder="e.g. Product Squad Alpha" required />
+              </div>
+              <div class="profile-form-field">
+                <label for="newProfileTeam">Team <span class="profiles-label-optional">(optional)</span></label>
+                <input id="newProfileTeam" name="newProfileTeam" type="text" placeholder="e.g. Growth, Platform" />
+              </div>
+              <div class="profile-form-field profile-form-field--full">
+                <label for="newProfilePassword">Password <span class="profiles-label-optional">(optional)</span></label>
+                <input id="newProfilePassword" name="newProfilePassword" type="password" autocomplete="new-password" placeholder="Lock this profile" />
+              </div>
+              <div class="profile-form-field profile-form-field--full">
+                <label for="newProfilePasswordConfirm">Confirm password</label>
+                <input id="newProfilePasswordConfirm" name="newProfilePasswordConfirm" type="password" autocomplete="new-password" placeholder="Re-enter password" />
+              </div>
             </div>
-          </div>
-        </form>
+            <p id="newProfilePasswordHint" class="profile-password-hint profiles-create-hint">Leave password blank for open access. Protected profiles require a password to view or delete.</p>
+            <button type="submit" class="profile-add-btn profiles-create-submit" aria-label="Create profile">
+              <svg class="profile-add-btn-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              <span class="profile-add-btn-text">Create profile</span>
+            </button>
+          </form>
+        </details>
 
-        <ul id="profileList" class="profiles-list" aria-label="Profiles list"></ul>
-        <p id="profilesEmptyState" class="profile-empty" style="display:none;">No profiles yet. Create your first profile above.</p>
+        <div class="profiles-list-section">
+          <div class="profiles-list-toolbar">
+            <h3 class="profiles-list-heading">Your profiles</h3>
+            <span id="profilesCountBadge" class="profiles-count-badge" aria-live="polite">0</span>
+          </div>
+          <label class="profiles-search" for="profilesSearchInput">
+            <span class="profiles-search-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </span>
+            <input
+              type="search"
+              id="profilesSearchInput"
+              class="profiles-search-input"
+              placeholder="Search by name or team…"
+              autocomplete="off"
+              aria-label="Search profiles"
+            />
+          </label>
+          <ul id="profileList" class="profiles-list profiles-list--modern" role="listbox" aria-label="Select a profile"></ul>
+          <p id="profilesNoResults" class="profiles-no-results" style="display:none;" role="status">
+            No profiles match your search. Try a different name or team.
+          </p>
+          <p id="profilesEmptyState" class="profiles-empty-state profile-empty" style="display:none;">
+            <span class="profiles-empty-icon" aria-hidden="true">📂</span>
+            No profiles yet. Open <strong>New profile</strong> above to get started.
+          </p>
+        </div>
       </section>
 
       <!-- Projects side -->
-      <section class="card-plain">
-        <div class="projects-header-row">
-          <div class="projects-header-left">
-            <div class="projects-header-title" id="activeProfileTitleText">No profile selected</div>
-            <div class="projects-header-subtitle" id="activeProfileSubtitleText">
-              Create a profile on the left to start prioritizing projects.
+      <section class="card-plain workspace-panel workspace-panel--v2" aria-labelledby="activeProfileTitleText">
+        <div id="profileLockedBanner" class="profile-locked-banner portfolio-locked-banner" style="display:none;" role="region" aria-labelledby="profileLockedBannerTitle">
+          <div class="profile-locked-banner__layout">
+            <div class="profile-locked-banner__message">
+              <span class="profile-locked-banner__icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </span>
+              <div class="profile-locked-banner__copy">
+                <strong id="profileLockedBannerTitle" class="profile-locked-banner__title">This profile is locked</strong>
+                <p id="profileLockedBannerText" class="profile-locked-banner-text">Enter the profile password to view and manage projects.</p>
+              </div>
             </div>
-            <div class="projects-header-badges" id="projectsHeaderBadges"></div>
+            <form id="profileLockedUnlockForm" class="profile-locked-banner__form" autocomplete="off">
+              <label class="sr-only" for="profileLockedInlinePassword">Profile password</label>
+              <div class="profile-password-input-wrap profile-locked-banner__password-wrap">
+                <input id="profileLockedInlinePassword" type="password" autocomplete="current-password" placeholder="Profile password" />
+                <button type="button" class="profile-password-toggle" data-target="profileLockedInlinePassword" aria-label="Show password">
+                  <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                </button>
+              </div>
+              <button type="submit" id="profileLockedUnlockSubmitBtn" class="profile-locked-banner__submit">Unlock</button>
+            </form>
           </div>
-          <div class="projects-header-actions">
-            <div class="view-toggle-group" role="tablist" aria-label="Projects view">
-              <button type="button" id="projectsViewTableBtn" class="view-toggle-btn view-toggle-btn--active" role="tab" aria-selected="true" data-view="table">Table</button>
-              <button type="button" id="projectsViewBoardBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="board">Board</button>
-              <button type="button" id="projectsViewMoscowBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="moscow">MOSCOW</button>
-              <button type="button" id="projectsViewMapBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="map">Map</button>
-            </div>
-            <button type="button" id="addProjectBtn" disabled>
-              + Project
-            </button>
-            <button type="button" id="bulkDeleteBtn" class="btn-danger" disabled>
-              Delete Selected
-            </button>
-          </div>
+          <p id="profileLockedInlineError" class="field-error profile-password-error profile-locked-inline-error" role="alert" style="display:none;"></p>
         </div>
+        <header class="portfolio-command-bar projects-header-row workspace-toolbar">
+          <div class="portfolio-command-intro projects-header-left">
+            <div class="portfolio-command-mark" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 12h6"/><path d="M9 16h6"/><path d="M9 8h6"/></svg>
+            </div>
+            <div class="portfolio-command-copy">
+              <p class="workspace-eyebrow portfolio-eyebrow">Active portfolio</p>
+              <h2 class="projects-header-title portfolio-title" id="activeProfileTitleText">No profile selected</h2>
+              <p class="projects-header-subtitle portfolio-subtitle" id="activeProfileSubtitleText">
+                Create a profile on the left to start prioritizing projects.
+              </p>
+              <div class="projects-header-badges portfolio-badges" id="projectsHeaderBadges"></div>
+            </div>
+          </div>
+          <div class="portfolio-command-controls projects-header-actions workspace-toolbar-actions">
+            <nav class="portfolio-view-tabs view-toggle-group view-toggle-group--modern view-toggle-group--portfolio" role="tablist" aria-label="Projects view">
+              <button type="button" id="projectsViewTableBtn" class="view-toggle-btn view-toggle-btn--active" role="tab" aria-selected="true" data-view="table">
+                <span class="view-tab-text">Table</span>
+              </button>
+              <button type="button" id="projectsViewBoardBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="board">
+                <span class="view-tab-text">Board</span>
+              </button>
+              <button type="button" id="projectsViewMoscowBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="moscow">
+                <span class="view-tab-text">MoSCoW</span>
+              </button>
+              <button type="button" id="projectsViewMapBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="map">
+                <span class="view-tab-text">Map</span>
+              </button>
+            </nav>
+            <div class="portfolio-action-group">
+              <button type="button" id="addProjectBtn" class="portfolio-btn portfolio-btn--primary" disabled>
+                New project
+              </button>
+              <button type="button" id="bulkDeleteBtn" class="portfolio-btn portfolio-btn--danger" disabled>
+                Delete selected
+              </button>
+            </div>
+          </div>
+        </header>
 
-        <section class="filters-shell" aria-label="Project filters">
-          <div class="filters-header">
-            <div>
-              <div class="filters-title">Filters</div>
-              <div class="filters-quick-label">Tune what’s visible in your table and board.</div>
+        <details class="portfolio-filters-drawer filters-shell" id="portfolioFiltersDrawer" aria-label="Project filters">
+          <summary class="portfolio-filters-summary">
+            <span class="portfolio-filters-summary-title">Search &amp; filters</span>
+            <span class="portfolio-filters-summary-hint">Title, type, status, and more</span>
+            <span id="filtersActivePill" class="filters-active-pill portfolio-filters-badge" style="display:none;" aria-hidden="true"></span>
+          </summary>
+          <div class="portfolio-filters-body">
+          <div class="filters-header portfolio-filters-toolbar">
+            <div class="filters-header-copy">
+              <div class="filters-title">Refine results</div>
+              <div class="filters-quick-label">Applies to table, board, MoSCoW, and map.</div>
             </div>
             <div class="filters-meta">
-              <span id="filtersActivePill" class="filters-active-pill" style="display:none;"></span>
-              <button type="button" id="filtersResetBtn" class="filters-reset-btn">
+              <button type="button" id="filtersResetBtn" class="filters-reset-btn portfolio-filter-btn">
                 Reset
               </button>
-              <button type="button" id="filtersToggleBtn" class="filters-toggle-btn">
+              <button type="button" id="filtersToggleBtn" class="filters-toggle-btn portfolio-filter-btn">
                 Show advanced
               </button>
             </div>
@@ -248,17 +385,32 @@
               </div>
             </div>
           </div>
-        </section>
+          </div>
+        </details>
 
-        <div id="projectsTableView" class="projects-view projects-view--table">
-        <div class="projects-table-toolbar">
-          <button type="button" id="tableFullscreenBtn" class="view-fullscreen-btn" aria-label="Expand table to full screen" title="Full screen">
-            <svg class="view-fullscreen-icon icon-expand" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-            <svg class="view-fullscreen-icon icon-compress" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v3a2 2 0 0 1 2 2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
-            <span class="view-fullscreen-label">Full screen</span>
-          </button>
+        <div class="portfolio-stage">
+        <div id="projectsTableView" class="projects-view projects-view--table portfolio-view">
+        <div class="view-toolbar view-toolbar--table projects-table-toolbar" role="region" aria-label="Table view controls">
+          <div class="view-toolbar__row view-toolbar__row--primary">
+            <div class="view-toolbar__identity">
+              <span class="view-toolbar__icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg>
+              </span>
+              <div class="view-toolbar__copy">
+                <h3 class="view-toolbar__title">Projects table</h3>
+                <p class="view-toolbar__desc">Sort columns, select rows, and open actions per project.</p>
+              </div>
+            </div>
+            <div class="view-toolbar__cluster">
+              <button type="button" id="tableFullscreenBtn" class="view-toolbar__btn view-fullscreen-btn" aria-label="Expand table to full screen" title="Full screen">
+                <svg class="view-fullscreen-icon icon-expand" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                <svg class="view-fullscreen-icon icon-compress" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v3a2 2 0 0 1 2 2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+                <span class="view-toolbar__btn-label view-fullscreen-label">Expand</span>
+              </button>
+            </div>
+          </div>
         </div>
-        <div class="table-wrapper" aria-label="Projects table">
+        <div class="table-wrapper table-wrapper--modern" aria-label="Projects table">
           <table>
             <colgroup>
               <col style="width: 40px;" />
@@ -350,56 +502,113 @@
         </div>
         </div>
 
-        <div id="projectsBoardView" class="projects-view projects-view--board" aria-hidden="true" style="display:none;">
-          <div class="scrum-board-toolbar">
-            <div id="scrumBoardLegend" class="scrum-board-legend" aria-label="Status color legend"></div>
-            <label class="scrum-board-sort-toggle" for="scrumBoardSortByRiceToggle">
-              <input type="checkbox" id="scrumBoardSortByRiceToggle" checked aria-describedby="scrumBoardSortByRiceLabel" />
-              <span id="scrumBoardSortByRiceLabel">Sort by RICE (desc)</span>
-            </label>
-            <button type="button" id="scrumBoardFullscreenBtn" class="view-fullscreen-btn" aria-label="Expand board to full screen" title="Full screen">
-              <svg class="view-fullscreen-icon icon-expand" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-              <svg class="view-fullscreen-icon icon-compress" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v3a2 2 0 0 1 2 2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
-              <span class="view-fullscreen-label">Full screen</span>
-            </button>
+        <div id="projectsBoardView" class="projects-view projects-view--board portfolio-view" aria-hidden="true" style="display:none;">
+          <div class="view-toolbar view-toolbar--board scrum-board-toolbar" role="region" aria-label="Board view controls">
+            <div class="view-toolbar__row view-toolbar__row--primary">
+              <div class="view-toolbar__identity">
+                <span class="view-toolbar__icon" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                </span>
+                <div class="view-toolbar__copy">
+                  <h3 class="view-toolbar__title">Board view</h3>
+                  <p class="view-toolbar__desc">Drag cards between columns to update status. Reorder within a column when manual sort is on.</p>
+                </div>
+              </div>
+            </div>
+            <div class="view-toolbar__row view-toolbar__row--secondary">
+              <div id="scrumBoardLegend" class="view-toolbar__legend scrum-board-legend scrum-board-legend--modern" role="group" aria-label="Filter board columns by status"></div>
+              <div class="view-toolbar__cluster">
+                <label class="view-toolbar__toggle scrum-board-sort-toggle" for="scrumBoardSortByRiceToggle">
+                  <input type="checkbox" class="view-toolbar__toggle-input" id="scrumBoardSortByRiceToggle" checked aria-describedby="scrumBoardSortByRiceLabel" />
+                  <span class="view-toolbar__toggle-track" aria-hidden="true"><span class="view-toolbar__toggle-thumb"></span></span>
+                  <span class="view-toolbar__toggle-label" id="scrumBoardSortByRiceLabel">RICE sort</span>
+                </label>
+                <button type="button" id="scrumBoardFullscreenBtn" class="view-toolbar__btn view-fullscreen-btn" aria-label="Expand board to full screen" title="Full screen">
+                  <svg class="view-fullscreen-icon icon-expand" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                  <svg class="view-fullscreen-icon icon-compress" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v3a2 2 0 0 1 2 2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+                  <span class="view-toolbar__btn-label view-fullscreen-label">Expand</span>
+                </button>
+              </div>
+            </div>
           </div>
           <div id="scrumBoardContainer" class="scrum-board" aria-label="Scrum board"></div>
         </div>
 
-        <div id="projectsMapView" class="projects-view projects-view--map" aria-hidden="true" style="display:none;">
-          <div class="projects-map-toolbar">
-            <label for="projectsMapMetricSelect" class="projects-map-metric-label">Show by</label>
-            <select id="projectsMapMetricSelect" class="projects-map-metric-select" aria-label="Map data metric">
-              <option value="projects">Number of projects</option>
-              <option value="rice">RICE score</option>
-              <option value="financial">Total financial impact (EUR)</option>
-            </select>
-            <button type="button" id="projectsMapFullscreenBtn" class="projects-map-fullscreen-btn" aria-label="Expand map to full screen" title="Full screen">
-              <svg class="projects-map-fullscreen-icon icon-expand" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-              <svg class="projects-map-fullscreen-icon icon-compress" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v3a2 2 0 0 1 2 2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
-              <span class="projects-map-fullscreen-label">Full screen</span>
-            </button>
+        <div id="projectsMapView" class="projects-view projects-view--map portfolio-view" aria-hidden="true" style="display:none;">
+          <div class="view-toolbar view-toolbar--map projects-map-toolbar" role="region" aria-label="Map view controls">
+            <div class="view-toolbar__row view-toolbar__row--primary">
+              <div class="view-toolbar__identity">
+                <span class="view-toolbar__icon" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                </span>
+                <div class="view-toolbar__copy">
+                  <h3 class="view-toolbar__title">Map view</h3>
+                  <p class="view-toolbar__desc">Geographic distribution of projects by country.</p>
+                </div>
+              </div>
+              <div class="view-toolbar__cluster view-toolbar__cluster--actions">
+                <div class="view-toolbar__metric view-toolbar__metric--map">
+                  <span id="projectsMapMetricLabel" class="view-toolbar__field-label projects-map-metric-label">Show by</span>
+                  <div id="projectsMapMetricToggle" class="map-metric-toggle" role="radiogroup" aria-labelledby="projectsMapMetricLabel">
+                    <button type="button" class="map-metric-toggle__option" data-metric="projects" role="radio" aria-checked="true" title="Number of projects per country">
+                      <span class="map-metric-toggle__short">Count</span>
+                      <span class="map-metric-toggle__long">Projects</span>
+                    </button>
+                    <button type="button" class="map-metric-toggle__option" data-metric="rice" role="radio" aria-checked="false" title="Total RICE score by country">
+                      <span class="map-metric-toggle__short">RICE</span>
+                      <span class="map-metric-toggle__long">Score</span>
+                    </button>
+                    <button type="button" class="map-metric-toggle__option" data-metric="financial" role="radio" aria-checked="false" title="Total financial impact in EUR by country">
+                      <span class="map-metric-toggle__short">EUR</span>
+                      <span class="map-metric-toggle__long">Financial</span>
+                    </button>
+                  </div>
+                </div>
+                <button type="button" id="projectsMapFullscreenBtn" class="view-toolbar__btn projects-map-fullscreen-btn view-fullscreen-btn" aria-label="Expand map to full screen" title="Full screen">
+                  <svg class="projects-map-fullscreen-icon icon-expand view-fullscreen-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                  <svg class="projects-map-fullscreen-icon icon-compress view-fullscreen-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v3a2 2 0 0 1 2 2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+                  <span class="view-toolbar__btn-label projects-map-fullscreen-label">Expand</span>
+                </button>
+              </div>
+            </div>
           </div>
           <div class="projects-map-legend" id="projectsMapLegend" aria-label="Map legend"></div>
           <div id="projectsMapContainer" class="projects-map-container" aria-label="World map of projects by country"></div>
         </div>
 
-        <div id="projectsMoscowView" class="projects-view projects-view--moscow" aria-hidden="true" style="display:none;">
-          <header class="moscow-view-header">
-            <h3 class="moscow-grid-title">MoSCoW prioritisation</h3>
-            <p class="moscow-board-hint">Drag cards between quadrants to change category, or set it in the project form.</p>
-            <label class="moscow-sort-toggle" for="moscowSortByRiceToggle">
-              <input type="checkbox" id="moscowSortByRiceToggle" checked aria-describedby="moscowSortByRiceLabel" />
-              <span id="moscowSortByRiceLabel">Sort by RICE (desc)</span>
-            </label>
-            <button type="button" id="moscowFullscreenBtn" class="view-fullscreen-btn moscow-fullscreen-btn" aria-label="Expand MOSCOW view to full screen" title="Full screen">
-              <svg class="view-fullscreen-icon icon-expand" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-              <svg class="view-fullscreen-icon icon-compress" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v3a2 2 0 0 1 2 2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
-              <span class="view-fullscreen-label">Full screen</span>
-            </button>
+        <div id="projectsMoscowView" class="projects-view projects-view--moscow portfolio-view" aria-hidden="true" style="display:none;">
+          <header class="view-toolbar view-toolbar--moscow moscow-view-header" role="region" aria-label="MoSCoW view controls">
+            <div class="view-toolbar__row view-toolbar__row--primary">
+              <div class="view-toolbar__identity">
+                <span class="view-toolbar__icon" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/></svg>
+                </span>
+                <div class="view-toolbar__copy">
+                  <h3 class="view-toolbar__title moscow-grid-title">MoSCoW prioritisation</h3>
+                  <p class="view-toolbar__desc moscow-board-hint">Drag cards between quadrants to change category, or set it in the project form.</p>
+                </div>
+              </div>
+              <div class="view-toolbar__cluster">
+                <label class="view-toolbar__toggle moscow-sort-toggle" for="moscowSortByRiceToggle">
+                  <input type="checkbox" class="view-toolbar__toggle-input" id="moscowSortByRiceToggle" checked aria-describedby="moscowSortByRiceLabel" />
+                  <span class="view-toolbar__toggle-track" aria-hidden="true"><span class="view-toolbar__toggle-thumb"></span></span>
+                  <span class="view-toolbar__toggle-label" id="moscowSortByRiceLabel">RICE sort</span>
+                </label>
+                <button type="button" id="moscowFullscreenBtn" class="view-toolbar__btn view-fullscreen-btn moscow-fullscreen-btn" aria-label="Expand MOSCOW view to full screen" title="Full screen">
+                  <svg class="view-fullscreen-icon icon-expand" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                  <svg class="view-fullscreen-icon icon-compress" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v3a2 2 0 0 1 2 2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+                  <span class="view-toolbar__btn-label view-fullscreen-label">Expand</span>
+                </button>
+              </div>
+            </div>
           </header>
           <div id="moscowBoardContainer" class="moscow-grid" aria-label="MOSCOW prioritization grid"></div>
         </div>
+        </div>
+
+        <button type="button" id="portfolioFabAddProject" class="portfolio-fab" aria-label="New project" title="New project" disabled>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+        </button>
       </section>
     </main>
   </div>
@@ -412,46 +621,105 @@
   />
   <input type="file" id="importCsvFileInput" accept=".csv,text/csv" style="display:none;" />
 
-  <!-- Export format modal -->
-  <div id="exportFormatModal" class="modal-backdrop" aria-hidden="true">
-    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="exportFormatModalTitle">
-      <header class="modal-header">
-        <div class="modal-title-group">
-          <h3 id="exportFormatModalTitle" class="modal-title">Export data</h3>
-          <p class="modal-subtitle">
-            Choose which format you’d like to export your RICE data in.
-          </p>
+  <!-- Export: verify passwords for protected profiles -->
+  <div id="exportUnlockModal" class="modal-backdrop modal-backdrop--export" aria-hidden="true">
+    <div class="modal-panel modal-panel--export" role="dialog" aria-modal="true" aria-labelledby="exportUnlockModalTitle">
+      <header class="profile-modal-header">
+        <div class="profile-modal-header-main">
+          <span class="profile-modal-mark profile-modal-mark--export" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <div class="profile-modal-title-group">
+            <h3 id="exportUnlockModalTitle" class="profile-modal-title">Unlock for export</h3>
+            <p id="exportUnlockModalSubtitle" class="profile-modal-subtitle">
+              Enter each profile password to include it in your file. Wrong or empty passwords are skipped automatically.
+            </p>
+          </div>
         </div>
       </header>
+      <div class="data-transfer-modal-body">
+        <div id="exportUnlockProfileList" class="export-unlock-list" role="list" aria-label="Protected profiles"></div>
+        <p id="exportUnlockError" class="export-unlock-error" role="alert" hidden></p>
+      </div>
+      <footer class="export-modal-footer">
+        <button type="button" class="export-modal-btn export-modal-btn--ghost" id="exportUnlockSkipBtn">Skip protected</button>
+        <button type="button" class="export-modal-btn export-modal-btn--primary" id="exportUnlockConfirmBtn">Verify &amp; export</button>
+      </footer>
+    </div>
+  </div>
 
-      <div class="modal-body" style="display:block;">
-        <div class="form-row-inline" style="justify-content:flex-end;margin-top:0.25rem;">
-          <button type="button" class="btn-secondary" id="exportAsJsonBtn">Export as JSON</button>
-          <button type="button" class="btn-secondary" id="exportAsCsvBtn">Export as CSV</button>
+  <!-- Export format modal -->
+  <div id="exportFormatModal" class="modal-backdrop modal-backdrop--export" aria-hidden="true">
+    <div class="modal-panel modal-panel--export" role="dialog" aria-modal="true" aria-labelledby="exportFormatModalTitle">
+      <header class="profile-modal-header">
+        <div class="profile-modal-header-main">
+          <span class="profile-modal-mark profile-modal-mark--export-format" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+          </span>
+          <div class="profile-modal-title-group">
+            <h3 id="exportFormatModalTitle" class="profile-modal-title">Export data</h3>
+            <p class="profile-modal-subtitle" id="exportFormatModalSubtitle">
+              Choose a format to download your data. Protected profiles need the correct password before they are included.
+            </p>
+          </div>
+        </div>
+      </header>
+      <div class="data-transfer-modal-body">
+        <div class="data-transfer-format-options" role="group" aria-label="Export format">
+          <button type="button" class="data-transfer-format-option" id="exportAsJsonBtn">
+            <span class="data-transfer-format-option__icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M10 13h4"/><path d="M10 17h4"/></svg>
+            </span>
+            <span class="data-transfer-format-option__label">JSON</span>
+            <span class="data-transfer-format-option__desc">Full backup — profiles, projects, and settings</span>
+          </button>
+          <button type="button" class="data-transfer-format-option" id="exportAsCsvBtn">
+            <span class="data-transfer-format-option__icon data-transfer-format-option__icon--csv" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
+            </span>
+            <span class="data-transfer-format-option__label">CSV</span>
+            <span class="data-transfer-format-option__desc">Spreadsheet — one row per project</span>
+          </button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Import format modal -->
-  <div id="importFormatModal" class="modal-backdrop" aria-hidden="true">
-    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="importFormatModalTitle">
-      <header class="modal-header">
-        <div class="modal-title-group">
-          <h3 id="importFormatModalTitle" class="modal-title">Import data</h3>
-          <p class="modal-subtitle">
-            Bring in profiles and projects from a previous export file.
-          </p>
+  <div id="importFormatModal" class="modal-backdrop modal-backdrop--import" aria-hidden="true">
+    <div class="modal-panel modal-panel--import" role="dialog" aria-modal="true" aria-labelledby="importFormatModalTitle">
+      <header class="profile-modal-header">
+        <div class="profile-modal-header-main">
+          <span class="profile-modal-mark profile-modal-mark--import-format" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+          </span>
+          <div class="profile-modal-title-group">
+            <h3 id="importFormatModalTitle" class="profile-modal-title">Import data</h3>
+            <p class="profile-modal-subtitle" id="importFormatModalSubtitle">
+              Choose a format, then select a file from this device. New data is merged into your workspace.
+            </p>
+          </div>
         </div>
       </header>
-
-      <div class="modal-body" style="display:block;">
-        <p class="modal-subtitle" style="margin-bottom:0.75rem;">
-          Select the format of the file you want to import. Data will be merged into your current workspace.
+      <div class="data-transfer-modal-body">
+        <p class="data-transfer-callout" id="importFormatModalCallout">
+          <strong>Merge, not replace.</strong> Matching profiles and projects are updated; new ones are added. Your current data stays unless the file overwrites matching IDs.
         </p>
-        <div class="form-row-inline" style="justify-content:flex-end;">
-          <button type="button" class="btn-secondary" id="importAsJsonBtn">Import JSON</button>
-          <button type="button" class="btn-secondary" id="importAsCsvBtn">Import CSV</button>
+        <div class="data-transfer-format-options" role="group" aria-label="Import format">
+          <button type="button" class="data-transfer-format-option" id="importAsJsonBtn">
+            <span class="data-transfer-format-option__icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M10 13h4"/><path d="M10 17h4"/></svg>
+            </span>
+            <span class="data-transfer-format-option__label">JSON</span>
+            <span class="data-transfer-format-option__desc">Full backup from this app — profiles &amp; settings</span>
+          </button>
+          <button type="button" class="data-transfer-format-option" id="importAsCsvBtn">
+            <span class="data-transfer-format-option__icon data-transfer-format-option__icon--csv" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
+            </span>
+            <span class="data-transfer-format-option__label">CSV</span>
+            <span class="data-transfer-format-option__desc">Spreadsheet export — projects by row</span>
+          </button>
         </div>
       </div>
     </div>
@@ -1002,8 +1270,8 @@
   />
 
   <!-- Profile view modal -->
-  <div id="profileViewModal" class="modal-backdrop" aria-hidden="true">
-    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="profileViewModalTitle">
+  <div id="profileViewModal" class="modal-backdrop modal-backdrop--profile" aria-hidden="true">
+    <div class="modal-panel modal-panel--profile profile-view-modal" role="dialog" aria-modal="true" aria-labelledby="profileViewModalTitle">
       <header class="modal-header">
         <div class="modal-title-group">
           <h3 id="profileViewModalTitle" class="modal-title">Profile</h3>
@@ -1059,41 +1327,131 @@
   </div>
 
   <!-- Profile edit modal -->
-  <div id="profileEditModal" class="modal-backdrop" aria-hidden="true">
-    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="profileEditModalTitle">
-      <header class="modal-header">
-        <div class="modal-title-group">
-          <h3 id="profileEditModalTitle" class="modal-title">Edit profile</h3>
-          <p id="profileEditModalSubtitle" class="modal-subtitle">Update profile name and team.</p>
+  <div id="profileEditModal" class="modal-backdrop modal-backdrop--profile" aria-hidden="true">
+    <div class="modal-panel modal-panel--profile profile-edit-modal" role="dialog" aria-modal="true" aria-labelledby="profileEditModalTitle">
+      <header class="profile-modal-header">
+        <div class="profile-modal-header-main">
+          <span class="profile-modal-mark" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </span>
+          <div class="profile-modal-title-group">
+            <h3 id="profileEditModalTitle" class="profile-modal-title">Edit profile</h3>
+            <p id="profileEditModalSubtitle" class="profile-modal-subtitle">Update profile name, team, and password protection.</p>
+          </div>
+        </div>
+        <button type="button" class="profile-modal-close" id="profileEditCloseBtn" aria-label="Close dialog">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </header>
+
+      <div class="profile-modal-body">
+        <section class="profile-form-block" aria-labelledby="profileEditSectionIdentity">
+          <h4 id="profileEditSectionIdentity" class="profile-form-block-title">Profile &amp; team</h4>
+          <div class="profile-form-fields profile-form-fields--split">
+            <div class="profile-field">
+              <label for="profileEditName">Profile name</label>
+              <input id="profileEditName" type="text" placeholder="e.g. Product Squad Alpha" required />
+            </div>
+            <div class="profile-field">
+              <label for="profileEditTeam">Team <span class="profile-field-optional">(optional)</span></label>
+              <input id="profileEditTeam" type="text" placeholder="e.g. Growth, Platform" />
+            </div>
+          </div>
+        </section>
+
+        <section class="profile-form-block profile-form-block--security" aria-labelledby="profileEditSectionSecurity">
+          <div class="profile-form-block-head">
+            <h4 id="profileEditSectionSecurity" class="profile-form-block-title">Security</h4>
+            <p id="profileEditPasswordHint" class="profile-form-block-desc">Set or change the password that locks this profile.</p>
+          </div>
+          <div class="profile-form-fields">
+            <div class="profile-field profile-field--hidden" id="profileEditCurrentPasswordWrap">
+              <label for="profileEditCurrentPassword">Current password</label>
+              <div class="profile-password-input-wrap">
+                <input id="profileEditCurrentPassword" type="password" autocomplete="current-password" placeholder="Required to save changes" />
+                <button type="button" class="profile-password-toggle" data-target="profileEditCurrentPassword" aria-label="Show password">
+                  <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="profile-field">
+              <label for="profileEditNewPassword">New password</label>
+              <div class="profile-password-input-wrap">
+                <input id="profileEditNewPassword" type="password" autocomplete="new-password" placeholder="Leave blank to keep unchanged" />
+                <button type="button" class="profile-password-toggle" data-target="profileEditNewPassword" aria-label="Show password">
+                  <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="profile-field">
+              <label for="profileEditConfirmPassword">Confirm new password</label>
+              <div class="profile-password-input-wrap">
+                <input id="profileEditConfirmPassword" type="password" autocomplete="new-password" placeholder="Re-enter new password" />
+                <button type="button" class="profile-password-toggle" data-target="profileEditConfirmPassword" aria-label="Show password">
+                  <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <label class="profile-switch" for="profileEditRemovePassword">
+            <input type="checkbox" id="profileEditRemovePassword" class="profile-switch-input" />
+            <span class="profile-switch-box" aria-hidden="true"></span>
+            <span class="profile-switch-text">
+              <span class="profile-switch-label">Remove password protection</span>
+              <span class="profile-switch-hint">Profile will be open without a password</span>
+            </span>
+          </label>
+          <p id="profileEditPasswordError" class="profile-form-error" role="alert" style="display:none;"></p>
+        </section>
+      </div>
+
+      <footer class="profile-modal-footer">
+        <button type="button" class="profile-modal-btn profile-modal-btn--ghost" id="profileEditCancelBtn">Cancel</button>
+        <button type="button" class="profile-modal-btn profile-modal-btn--primary" id="profileEditSaveBtn">Save changes</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Profile unlock modal -->
+  <div id="profileUnlockModal" class="modal-backdrop modal-backdrop--profile" aria-hidden="true">
+    <div class="modal-panel modal-panel--profile modal-panel--profile-compact profile-unlock-modal" role="dialog" aria-modal="true" aria-labelledby="profileUnlockModalTitle">
+      <header class="profile-modal-header">
+        <div class="profile-modal-header-main">
+          <span class="profile-modal-mark profile-modal-mark--unlock" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <div class="profile-modal-title-group">
+            <h3 id="profileUnlockModalTitle" class="profile-modal-title">Unlock profile</h3>
+            <p id="profileUnlockModalSubtitle" class="profile-modal-subtitle">Enter the password for this profile to continue.</p>
+          </div>
         </div>
       </header>
-      <div class="modal-body" style="display:block;">
-        <div class="form-section">
-          <div class="form-section-header">
-            <span class="form-section-title">Profile &amp; team</span>
-          </div>
-          <div class="form-grid form-grid-full">
-            <div>
-              <label for="profileEditName">Profile name</label>
-              <input id="profileEditName" type="text" placeholder="Profile name" required />
-            </div>
-            <div>
-              <label for="profileEditTeam">Team</label>
-              <input id="profileEditTeam" type="text" placeholder="Team (optional)" />
-            </div>
+      <div class="profile-modal-body profile-modal-body--compact">
+        <div class="profile-field">
+          <label for="profileUnlockPassword">Password</label>
+          <div class="profile-password-input-wrap">
+            <input id="profileUnlockPassword" type="password" autocomplete="current-password" placeholder="Profile password" />
+            <button type="button" class="profile-password-toggle" data-target="profileUnlockPassword" aria-label="Show password">
+              <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+            </button>
           </div>
         </div>
-        <div class="form-actions-row">
-          <button type="button" class="btn-secondary" id="profileEditCancelBtn">Cancel</button>
-          <button type="button" id="profileEditSaveBtn">Save</button>
-        </div>
+        <p id="profileUnlockError" class="profile-form-error" role="alert" style="display:none;"></p>
       </div>
+      <footer class="profile-modal-footer">
+        <button type="button" class="profile-modal-btn profile-modal-btn--ghost" id="profileUnlockCancelBtn">Cancel</button>
+        <button type="button" class="profile-modal-btn profile-modal-btn--primary" id="profileUnlockConfirmBtn">Unlock</button>
+      </footer>
     </div>
   </div>
 
   <!-- Profile delete confirm modal -->
-  <div id="profileDeleteModal" class="modal-backdrop" aria-hidden="true">
-    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="profileDeleteModalTitle">
+  <div id="profileDeleteModal" class="modal-backdrop modal-backdrop--profile" aria-hidden="true">
+    <div class="modal-panel modal-panel--profile profile-delete-modal" role="dialog" aria-modal="true" aria-labelledby="profileDeleteModalTitle">
       <header class="modal-header">
         <div class="modal-title-group">
           <h3 id="profileDeleteModalTitle" class="modal-title">Delete profile</h3>
@@ -1111,9 +1469,15 @@
         <p class="modal-subtitle" id="profileDeleteWarningText">
           This will permanently remove this profile and all of its projects from this browser. This action cannot be undone.
         </p>
+        <div id="profileDeletePasswordWrap" class="profile-delete-password-wrap" style="display:none;">
+          <label for="profileDeletePassword">Profile password</label>
+          <input id="profileDeletePassword" type="password" autocomplete="current-password" placeholder="Enter password to enable delete" />
+          <p id="profileDeletePasswordHint" class="profile-password-hint">Delete is disabled until the correct password is entered.</p>
+        </div>
+        <p id="profileDeletePasswordError" class="field-error profile-password-error" role="alert" style="display:none;"></p>
         <div class="form-actions" style="margin-top:1rem;justify-content:flex-end;">
           <button type="button" class="btn-ghost" id="profileDeleteCancelBtn">Keep profile</button>
-          <button type="button" class="btn-danger" id="profileDeleteConfirmBtn">Delete profile</button>
+          <button type="button" class="btn-danger" id="profileDeleteConfirmBtn" disabled>Delete profile</button>
         </div>
       </div>
     </div>
@@ -1149,6 +1513,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="src/constants.js"></script>
   <script src="src/utils.js"></script>
+  <script src="src/modules/profile-security.js"></script>
   <script src="src/rice.js"></script>
   <script src="src/modules/exchange-rates.js"></script>
   <script src="src/modules/fullscreen.js"></script>

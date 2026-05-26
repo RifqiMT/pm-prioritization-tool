@@ -55,6 +55,18 @@ Each documentation update must:
 - Traceability from requirement to implementation
 - Changelog entries for user-visible UX adjustments and bug fixes
 
+### Changelog entries (`docs/CHANGELOG.md`)
+Each entry should include where practical:
+
+| Field | Value |
+|-------|--------|
+| **Author** | **Product Team** (default label for product/documentation updates) |
+| **Date** | ISO date `YYYY-MM-DD` |
+| **Area** | Product, UI, Security, Data, Docs, Infra |
+| **Impact** | User-visible, developer, or documentation-only |
+
+Group changes under version headings (`[Unreleased]`, then `[x.y.z] - YYYY-MM-DD` on release).
+
 ## 4. Governance Workflow
 
 For any feature/code change:

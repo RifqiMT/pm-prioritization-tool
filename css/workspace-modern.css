@@ -1,0 +1,740 @@
+/**
+ * Workspace modern UI — table, board, filters, and portfolio chrome.
+ * Loaded after main.css; aligns with Indonesian red/gold light theme.
+ */
+
+/* ── Design tokens (workspace) ───────────────────────────── */
+:root {
+  --ws-radius-sm: 8px;
+  --ws-radius-md: 12px;
+  --ws-radius-lg: 16px;
+  --ws-shadow-soft: 0 1px 2px rgba(63, 15, 25, 0.06), 0 8px 24px rgba(185, 28, 28, 0.08);
+  --ws-shadow-lift: 0 4px 14px rgba(185, 28, 28, 0.12), 0 12px 32px rgba(161, 98, 7, 0.1);
+  --ws-header-grad: linear-gradient(135deg, #991b1b 0%, #b91c1c 42%, #a16207 100%);
+  --ws-surface: #ffffff;
+  --ws-surface-muted: #fffdf8;
+  --ws-border: rgba(231, 201, 120, 0.65);
+  --ws-border-strong: rgba(185, 28, 28, 0.28);
+  --ws-text: #3f0f19;
+  --ws-text-soft: #7a4b12;
+  --ws-accent: #b91c1c;
+  --ws-gold: #a16207;
+  --ws-row-hover: rgba(254, 243, 199, 0.45);
+  --ws-row-alt: rgba(255, 253, 248, 0.85);
+  --ws-focus: 0 0 0 3px rgba(220, 38, 38, 0.22);
+}
+
+/* ── Workspace panel shell ─────────────────────────────── */
+.workspace-panel.card-plain {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 !important;
+  overflow: hidden;
+  border-radius: var(--ws-radius-lg) !important;
+  border: 1px solid var(--ws-border) !important;
+  background: var(--ws-surface) !important;
+  box-shadow: var(--ws-shadow-soft) !important;
+  min-height: min(78vh, 920px);
+}
+
+.workspace-panel > .profile-locked-banner {
+  margin: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+}
+
+.workspace-toolbar {
+  padding: 1.15rem 1.35rem 1rem;
+  margin: 0 !important;
+  border-bottom: 1px solid var(--ws-border);
+  background: linear-gradient(180deg, #fffdf8 0%, #ffffff 72%);
+  gap: 1rem 1.25rem;
+  align-items: flex-start;
+}
+
+.workspace-eyebrow {
+  margin: 0 0 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ws-gold);
+}
+
+.workspace-panel .projects-header-title {
+  font-size: clamp(1.15rem, 2.2vw, 1.45rem) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.2 !important;
+  color: var(--ws-text) !important;
+}
+
+.workspace-panel .projects-header-subtitle {
+  font-size: 0.9rem !important;
+  line-height: 1.45 !important;
+  color: var(--ws-text-soft) !important;
+  max-width: 52ch;
+}
+
+.workspace-toolbar-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem 0.65rem;
+}
+
+/* View toggle — segmented control */
+.view-toggle-group--modern {
+  display: inline-flex;
+  padding: 0.22rem;
+  border-radius: 999px;
+  background: rgba(254, 243, 199, 0.55);
+  border: 1px solid var(--ws-border);
+  gap: 0.15rem;
+  box-shadow: inset 0 1px 2px rgba(63, 15, 25, 0.04);
+}
+
+.view-toggle-group--modern .view-toggle-btn {
+  border: none !important;
+  background: transparent !important;
+  color: var(--ws-text-soft) !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  padding: 0.42rem 0.85rem !important;
+  border-radius: 999px !important;
+  min-height: 36px;
+  transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.view-toggle-group--modern .view-toggle-btn:hover {
+  color: var(--ws-text) !important;
+  background: rgba(255, 255, 255, 0.7) !important;
+}
+
+.view-toggle-group--modern .view-toggle-btn--active,
+.view-toggle-group--modern .view-toggle-btn[aria-selected="true"] {
+  background: var(--ws-surface) !important;
+  color: var(--ws-accent) !important;
+  box-shadow: 0 1px 4px rgba(185, 28, 28, 0.15) !important;
+}
+
+.workspace-panel #addProjectBtn {
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  padding: 0.5rem 1rem !important;
+  min-height: 40px;
+  box-shadow: 0 2px 8px rgba(185, 28, 28, 0.2);
+}
+
+.workspace-panel #bulkDeleteBtn {
+  border-radius: 10px !important;
+  min-height: 40px;
+}
+
+/* Filters inside workspace */
+.workspace-panel .filters-shell {
+  margin: 0 !important;
+  border-radius: 0 !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  border-bottom: 1px solid var(--ws-border) !important;
+  background: var(--ws-surface-muted) !important;
+  padding: 0.95rem 1.35rem 1.1rem !important;
+}
+
+.workspace-panel .filters-title {
+  font-size: 0.82rem !important;
+  letter-spacing: 0.06em !important;
+}
+
+/* ── Projects views (shared) ─────────────────────────────── */
+.workspace-panel .projects-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 1.35rem 1.25rem;
+  gap: 0.75rem;
+}
+
+.workspace-view-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+  padding: 0.85rem 0 0.35rem;
+  margin: 0;
+  border: none;
+  background: transparent;
+}
+
+.workspace-view-toolbar-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  flex: 1 1 200px;
+}
+
+.workspace-view-toolbar-text strong {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ws-text);
+  letter-spacing: 0.01em;
+}
+
+.workspace-view-toolbar-text span {
+  font-size: 0.78rem;
+  color: var(--ws-text-soft);
+  line-height: 1.4;
+  max-width: 42ch;
+}
+
+.workspace-panel .view-fullscreen-btn {
+  flex-shrink: 0;
+  border-radius: 10px !important;
+  border: 1px solid var(--ws-border) !important;
+  background: var(--ws-surface) !important;
+  color: var(--ws-text-soft) !important;
+  padding: 0.45rem 0.75rem !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  gap: 0.4rem !important;
+  transition: border-color 0.15s, box-shadow 0.15s, color 0.15s;
+}
+
+.workspace-panel .view-fullscreen-btn:hover {
+  border-color: var(--ws-border-strong) !important;
+  color: var(--ws-accent) !important;
+  box-shadow: var(--ws-focus);
+}
+
+/* ── Table ───────────────────────────────────────────────── */
+.table-wrapper--modern {
+  flex: 1;
+  min-height: 280px;
+  max-height: min(68vh, 640px);
+  border-radius: var(--ws-radius-md) !important;
+  border: 1px solid var(--ws-border) !important;
+  background: var(--ws-surface) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  scroll-behavior: smooth;
+}
+
+/* Scroll hint on wide tables */
+.table-wrapper--modern::after {
+  content: "";
+  position: sticky;
+  left: 0;
+  bottom: 0;
+  display: block;
+  height: 0;
+  pointer-events: none;
+}
+
+@supports (scrollbar-gutter: stable) {
+  .table-wrapper--modern {
+    scrollbar-gutter: stable both-edges;
+  }
+}
+
+.table-wrapper--modern::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.table-wrapper--modern::-webkit-scrollbar-thumb {
+  background: rgba(161, 98, 7, 0.35);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.table-wrapper--modern::-webkit-scrollbar-track {
+  background: rgba(254, 243, 199, 0.35);
+  border-radius: 999px;
+}
+
+.table-wrapper--modern table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+.table-wrapper--modern thead {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+}
+
+.table-wrapper--modern thead th {
+  background: var(--ws-header-grad) !important;
+  color: #fff !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  padding: 0.65rem 0.55rem !important;
+  border-bottom: 2px solid rgba(161, 98, 7, 0.5) !important;
+  vertical-align: middle !important;
+  box-shadow: 0 2px 6px rgba(127, 29, 29, 0.2);
+}
+
+.table-wrapper--modern thead th:first-child {
+  border-top-left-radius: 0;
+}
+
+.table-wrapper--modern thead th:last-child {
+  border-top-right-radius: 0;
+}
+
+.table-wrapper--modern .sort-button {
+  color: rgba(255, 255, 255, 0.95) !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  letter-spacing: inherit !important;
+  text-transform: inherit !important;
+}
+
+.table-wrapper--modern .sort-button:hover,
+.table-wrapper--modern thead th[data-sort-active="true"] .sort-button {
+  color: #fef3c7 !important;
+}
+
+.table-wrapper--modern .sort-indicator {
+  color: rgba(254, 243, 199, 0.85) !important;
+  opacity: 0.75 !important;
+}
+
+.table-wrapper--modern thead th[data-sort-active="true"] .sort-indicator {
+  opacity: 1 !important;
+  color: #fff !important;
+}
+
+.table-wrapper--modern tbody td {
+  padding: 0.55rem 0.5rem !important;
+  font-size: 0.8rem !important;
+  color: var(--ws-text) !important;
+  border-bottom: 1px solid rgba(231, 201, 120, 0.35) !important;
+  vertical-align: middle !important;
+  line-height: 1.35 !important;
+  background: var(--ws-surface) !important;
+}
+
+.table-wrapper--modern tbody tr:nth-child(even) td {
+  background: var(--ws-row-alt) !important;
+}
+
+.table-wrapper--modern tbody tr:hover td {
+  background: var(--ws-row-hover) !important;
+}
+
+.table-wrapper--modern tbody tr:focus-within td {
+  background: var(--ws-row-hover) !important;
+  outline: none;
+}
+
+.table-wrapper--modern tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+.table-wrapper--modern .empty-state {
+  padding: 2.5rem 1.5rem !important;
+  text-align: center !important;
+  font-size: 0.92rem !important;
+  color: var(--ws-text-soft) !important;
+  background: linear-gradient(180deg, #fffdf8, #ffffff) !important;
+  border: none !important;
+}
+
+.table-wrapper--modern .empty-state::before {
+  content: "📋";
+  display: block;
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.85;
+}
+
+/* Numeric / score emphasis */
+.table-wrapper--modern td[data-cell="riceScore"],
+.table-wrapper--modern td.rice-score-cell {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #3730a3 !important;
+}
+
+.table-wrapper--modern td[data-cell="financialImpactValue"] {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #9a3412 !important;
+}
+
+/* Action buttons — horizontal compact row on desktop */
+.table-wrapper--modern .cell-actions {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  gap: 0.28rem !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+}
+
+.table-wrapper--modern .cell-actions .btn-secondary {
+  width: auto !important;
+  min-width: 0 !important;
+  min-height: 28px !important;
+  padding: 0.28rem 0.5rem !important;
+  font-size: 0.68rem !important;
+  border-radius: 7px !important;
+  white-space: nowrap;
+}
+
+.table-wrapper--modern .cell-actions button[data-action="deleteProject"] {
+  margin-left: 0.1rem;
+}
+
+/* Status / type chips in table (if rendered) */
+.table-wrapper--modern .status-pill,
+.table-wrapper--modern .tag-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  border: 1px solid var(--ws-border);
+  background: #fffdf8;
+  color: var(--ws-text-soft);
+}
+
+/* ── Board (Scrum / Kanban) ──────────────────────────────── */
+.projects-view--board {
+  padding-bottom: 1rem !important;
+}
+
+.projects-view--board .scrum-board-toolbar.workspace-view-toolbar {
+  align-items: center;
+  padding-top: 0.75rem;
+}
+
+.projects-view--board .scrum-board-toolbar .workspace-view-toolbar-text {
+  flex: 1 1 100%;
+}
+
+.projects-view--board .scrum-board-toolbar .scrum-board-legend--modern {
+  flex: 1 1 240px;
+}
+
+.projects-view--board .scrum-board-toolbar .scrum-board-sort-toggle,
+.projects-view--board .scrum-board-toolbar .view-fullscreen-btn {
+  flex: 0 0 auto;
+}
+
+.scrum-board-legend--modern {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--ws-radius-sm);
+  background: rgba(254, 243, 199, 0.4);
+  border: 1px solid var(--ws-border);
+  max-width: 100%;
+}
+
+.scrum-board-legend--modern .scrum-board-legend-item {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: var(--ws-surface);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.projects-view--board .scrum-board-sort-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--ws-border);
+  background: var(--ws-surface);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ws-text-soft);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.projects-view--board .scrum-board-sort-toggle:hover {
+  border-color: var(--ws-border-strong);
+  box-shadow: var(--ws-focus);
+}
+
+.projects-view--board .scrum-board {
+  display: flex;
+  gap: 0.85rem;
+  align-items: stretch;
+  min-height: min(520px, calc(100vh - 340px));
+  max-height: min(72vh, 720px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.35rem 0.15rem 0.75rem;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.projects-view--board .scrum-board-column {
+  flex: 1 1 280px;
+  min-width: min(300px, 88vw);
+  max-width: 360px;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--ws-radius-md) !important;
+  border: 1px solid var(--ws-border) !important;
+  background: linear-gradient(180deg, #fffdf8 0%, #ffffff 100%) !important;
+  box-shadow: var(--ws-shadow-soft) !important;
+  scroll-snap-align: start;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.projects-view--board .scrum-board-column:hover {
+  box-shadow: var(--ws-shadow-lift) !important;
+  border-color: var(--ws-border-strong) !important;
+}
+
+.projects-view--board .scrum-board-column-header {
+  padding: 0.75rem 0.85rem !important;
+  border-bottom: 1px solid var(--ws-border) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-radius: var(--ws-radius-md) var(--ws-radius-md) 0 0 !important;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.projects-view--board .scrum-board-column-title {
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  color: var(--ws-text) !important;
+}
+
+.projects-view--board .scrum-board-column-count {
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  padding: 0.12rem 0.5rem !important;
+  border-radius: 999px !important;
+  background: rgba(254, 243, 199, 0.8) !important;
+  color: var(--ws-gold) !important;
+  border: 1px solid var(--ws-border) !important;
+}
+
+.projects-view--board .scrum-board-column-cards {
+  flex: 1;
+  min-height: 120px;
+  overflow-y: auto;
+  padding: 0.55rem !important;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem !important;
+}
+
+.projects-view--board .scrum-board-card {
+  border-radius: var(--ws-radius-sm) !important;
+  border: 1px solid var(--ws-border) !important;
+  background: var(--ws-surface) !important;
+  padding: 0.7rem 0.75rem !important;
+  box-shadow: 0 1px 3px rgba(63, 15, 25, 0.06) !important;
+  cursor: grab;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.projects-view--board .scrum-board-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(185, 28, 28, 0.12) !important;
+  border-color: var(--ws-border-strong) !important;
+}
+
+.projects-view--board .scrum-board-card:active {
+  cursor: grabbing;
+}
+
+.projects-view--board .scrum-board-card-title {
+  font-size: 0.86rem !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  color: var(--ws-text) !important;
+}
+
+.projects-view--board .scrum-board-card-meta {
+  margin-top: 0.45rem !important;
+  gap: 0.35rem !important;
+}
+
+.projects-view--board .scrum-board-empty {
+  padding: 1.25rem 0.75rem !important;
+  font-size: 0.78rem !important;
+  color: var(--ws-text-soft) !important;
+  text-align: center;
+  border: 1px dashed var(--ws-border);
+  border-radius: var(--ws-radius-sm);
+  background: rgba(255, 253, 248, 0.6);
+}
+
+/* Drag-over column highlight */
+.projects-view--board .scrum-board-column.scrum-board-column--drag-over {
+  border-color: var(--ws-accent) !important;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.25), var(--ws-shadow-lift) !important;
+}
+
+/* Native fullscreen (Fullscreen module) */
+.projects-view--table:fullscreen,
+.projects-view--board:fullscreen,
+.projects-view--moscow:fullscreen,
+.projects-view--map:fullscreen {
+  display: flex !important;
+  flex-direction: column;
+  background: var(--ws-surface) !important;
+  padding: 1rem 1.35rem 1.25rem !important;
+  overflow: auto;
+  box-sizing: border-box;
+}
+
+.projects-view--table:fullscreen .table-wrapper--modern {
+  flex: 1;
+  max-height: none;
+  min-height: 0;
+}
+
+.projects-view--board:fullscreen .scrum-board {
+  flex: 1;
+  max-height: none;
+  min-height: min(480px, calc(100vh - 180px));
+}
+
+/* ── MOSCOW & Map (light polish) ─────────────────────────── */
+.workspace-panel .projects-view--moscow,
+.workspace-panel .projects-view--map {
+  padding: 0 1.35rem 1.25rem;
+}
+
+.workspace-panel .moscow-board,
+.workspace-panel .projects-map-container {
+  border-radius: var(--ws-radius-md);
+  border: 1px solid var(--ws-border);
+  box-shadow: var(--ws-shadow-soft);
+  overflow: hidden;
+}
+
+.workspace-panel .projects-map-toolbar {
+  padding: 0.85rem 0 0.5rem;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .workspace-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .workspace-toolbar-actions {
+    justify-content: flex-start;
+  }
+
+  .view-toggle-group--modern {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .view-toggle-group--modern .view-toggle-btn {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .workspace-panel.card-plain {
+    min-height: auto;
+  }
+
+  .workspace-panel .projects-view {
+    padding: 0 0.85rem 1rem;
+  }
+
+  .workspace-toolbar {
+    padding: 1rem 0.85rem 0.85rem;
+  }
+
+  .workspace-panel .filters-shell {
+    padding: 0.85rem !important;
+  }
+
+  .table-wrapper--modern {
+    max-height: min(58vh, 520px);
+  }
+
+  .table-wrapper--modern .cell-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .table-wrapper--modern .cell-actions .btn-secondary {
+    width: 100% !important;
+  }
+
+  .projects-view--board .scrum-board-toolbar.workspace-view-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .projects-view--board .scrum-board {
+    min-height: 420px;
+  }
+}
+
+@media (max-width: 480px) {
+  .workspace-view-toolbar-text span {
+    display: none;
+  }
+
+  .view-toggle-group--modern .view-toggle-btn {
+    padding: 0.38rem 0.5rem !important;
+    font-size: 0.72rem !important;
+  }
+}
+
+/* Profiles column (left) — align with workspace */
+/* Profiles panel styling lives in profiles-modern.css */
+
+/* App shell spacing */
+.app-shell {
+  gap: 0.25rem;
+}
+
+@media (min-width: 1025px) {
+  .app-layout {
+    grid-template-columns: minmax(300px, 360px) minmax(0, 1fr) !important;
+    gap: 1.25rem !important;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .projects-view--board .scrum-board-card,
+  .projects-view--board .scrum-board-column,
+  .view-toggle-group--modern .view-toggle-btn {
+    transition: none;
+  }
+
+  .projects-view--board .scrum-board-card:hover {
+    transform: none;
+  }
+}

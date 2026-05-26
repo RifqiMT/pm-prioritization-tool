@@ -41,3 +41,8 @@
 - Fewer “why are we doing this now?” escalations due to stale priority.
 - Stakeholder updates can be produced from the same portfolio view.
 
+## Relevant behaviors (board status + mobile)
+- I can quickly hide/show status columns using **clickable status toggle pills** so standups focus on the most relevant work states.
+- The UI keeps at least one status column visible to avoid empty/misleading board states.
+- On mobile/tablet, the status selector is still usable without hover-only affordances, using `aria-pressed` and touch-friendly targets.
+

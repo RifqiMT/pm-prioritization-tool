@@ -1,0 +1,529 @@
+/**
+ * Modern responsive app header — phones, tablets, desktop.
+ * Loaded after main.css and workspace-modern.css.
+ */
+
+/* Override legacy grid header layout from main.css */
+.app-header.app-header--modern {
+  display: flex !important;
+  grid-template-columns: unset !important;
+  align-items: stretch !important;
+  border-bottom: none !important;
+  padding-bottom: 1rem !important;
+}
+
+.app-header--modern {
+  --hdr-bg: linear-gradient(135deg, #ffffff 0%, #fffdf8 55%, #fef3c7 100%);
+  --hdr-border: rgba(231, 201, 120, 0.75);
+  --hdr-text: #3f0f19;
+  --hdr-text-soft: #7a4b12;
+  --hdr-accent: #b91c1c;
+  --hdr-gold: #a16207;
+  --hdr-radius: 16px;
+  --hdr-shadow: 0 2px 8px rgba(127, 29, 29, 0.06), 0 12px 32px rgba(185, 28, 28, 0.08);
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding: 0.85rem 1rem 1rem;
+  border-radius: var(--hdr-radius);
+  border: 1px solid var(--hdr-border);
+  background: var(--hdr-bg);
+  box-shadow: var(--hdr-shadow);
+  position: relative;
+  z-index: 30;
+}
+
+.app-header--modern::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* Top row: brand + menu toggle */
+.app-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 1;
+}
+
+.app-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.app-header-mark {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #b91c1c 0%, #991b1b 48%, #a16207 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(185, 28, 28, 0.35);
+}
+
+.app-header-mark svg {
+  display: block;
+}
+
+.app-header-brand-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.app-header-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hdr-gold);
+}
+
+.app-header-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25);
+  animation: hdr-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes hdr-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.75; transform: scale(0.92); }
+}
+
+.app-header--modern .app-header-title,
+.app-header--modern .app-title {
+  margin: 0 !important;
+  font-family: "Inter", system-ui, sans-serif !important;
+  font-size: clamp(1.05rem, 3.2vw, 1.35rem) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.025em !important;
+  line-height: 1.2 !important;
+  color: var(--hdr-text) !important;
+}
+
+.app-title-short {
+  display: inline;
+}
+
+.app-title-full {
+  display: none;
+}
+
+/* Mobile menu toggle */
+.app-header-menu-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 42px;
+  padding: 0.45rem 0.85rem;
+  border-radius: 11px;
+  border: 1px solid var(--hdr-border);
+  background: #ffffff;
+  color: var(--hdr-text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(63, 15, 25, 0.08);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.app-header-menu-toggle:hover {
+  border-color: rgba(185, 28, 28, 0.45);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+.app-header-menu-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.22);
+}
+
+.app-header-menu-icon {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 18px;
+  height: 14px;
+}
+
+.app-header-menu-bar {
+  display: block;
+  width: 100%;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--hdr-accent);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.app-header--menu-open .app-header-menu-bar:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.app-header--menu-open .app-header-menu-bar:nth-child(2) {
+  opacity: 0;
+}
+
+.app-header--menu-open .app-header-menu-bar:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+/* Toolbar — collapsible on small screens */
+.app-header-toolbar {
+  display: none;
+  flex-direction: column;
+  gap: 0.55rem;
+  position: relative;
+  z-index: 1;
+  padding: 0.7rem;
+  border-radius: 12px;
+  border: 1px solid rgba(231, 201, 120, 0.55);
+  background: #ffffff;
+  animation: hdr-menu-in 0.22s ease;
+}
+
+.app-header--menu-open .app-header-toolbar {
+  display: flex;
+}
+
+.app-header-toolbar-heading {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hdr-gold);
+}
+
+.app-header-toolbar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+@keyframes hdr-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Beat global `button { background: red gradient }` from main.css */
+.app-header--modern .app-header-menu-toggle,
+.app-header--modern .app-header-action-btn {
+  background: #ffffff !important;
+  color: var(--hdr-text) !important;
+  border: 1px solid rgba(231, 201, 120, 0.65) !important;
+  box-shadow: 0 1px 2px rgba(63, 15, 25, 0.06) !important;
+  text-transform: none !important;
+  letter-spacing: 0.01em !important;
+  font-size: 0.84rem !important;
+  font-weight: 600 !important;
+  filter: none !important;
+}
+
+.app-header--modern .app-header-menu-toggle:hover,
+.app-header--modern .app-header-action-btn:hover {
+  background: #fffdf8 !important;
+  color: var(--hdr-accent) !important;
+  border-color: rgba(185, 28, 28, 0.45) !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12) !important;
+}
+
+.app-header--modern .app-header-action-btn:active {
+  transform: scale(0.98);
+}
+
+.app-header-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem 0.7rem;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.app-header-action-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.22) !important;
+}
+
+.app-header-action-icon {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fef2f2 0%, #fff7ed 100%) !important;
+  color: var(--hdr-accent) !important;
+  border: 1px solid rgba(231, 201, 120, 0.5);
+}
+
+.app-header-action-icon svg {
+  display: block;
+}
+
+.app-header-action-title {
+  flex: 0 1 auto;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--hdr-text) !important;
+  white-space: nowrap;
+}
+
+.app-header-rates-footnote,
+.app-header--modern .exchange-rates-date-label.app-header-rates-footnote {
+  margin: 0 !important;
+  padding: 0.35rem 0.5rem 0.1rem;
+  font-size: 0.7rem !important;
+  line-height: 1.35 !important;
+  color: var(--hdr-text-soft) !important;
+  text-align: left;
+  border-top: 1px dashed rgba(231, 201, 120, 0.55);
+}
+
+.app-header-rates-footnote:empty {
+  display: none;
+  padding: 0;
+  border: none;
+}
+
+/* ── Tablet (640px+) ─────────────────────────────────────── */
+@media (min-width: 640px) {
+  .app-header--modern {
+    padding: 1rem 1.15rem 1.1rem;
+  }
+
+  .app-header--modern .app-header-title,
+  .app-header--modern .app-title {
+    font-size: clamp(1.12rem, 2.4vw, 1.42rem) !important;
+  }
+
+  .app-title-short {
+    display: none;
+  }
+
+  .app-title-full {
+    display: inline;
+  }
+}
+
+/* ── Desktop toolbar (768px+): always visible, horizontal ─ */
+@media (min-width: 768px) {
+  .app-header--modern {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 1.25rem;
+    padding: 0.9rem 1.15rem;
+  }
+
+  .app-header-top {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .app-header-menu-toggle {
+    display: none;
+  }
+
+  .app-header-toolbar-heading {
+    display: none;
+  }
+
+  .app-header-toolbar {
+    display: flex !important;
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+    padding: 0.4rem;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(231, 201, 120, 0.55);
+    animation: none;
+    max-width: none;
+  }
+
+  .app-header-toolbar-actions {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+  }
+
+  /* Compact toolbar: icon only (labels in aria-label / title) */
+  .app-header-action-btn {
+    width: auto;
+    flex: 0 0 auto;
+    min-width: 44px;
+    min-height: 40px;
+    padding: 0.4rem;
+    justify-content: center;
+    flex-direction: row;
+    gap: 0;
+  }
+
+  .app-header-action-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .app-header-action-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .app-header-rates-footnote,
+  .app-header--modern .exchange-rates-date-label.app-header-rates-footnote {
+    text-align: right;
+    padding: 0.2rem 0.15rem 0;
+    font-size: 0.62rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (min-width: 960px) {
+  .app-header-toolbar {
+    max-width: none;
+  }
+
+  .app-header-action-btn {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 0.45rem;
+    min-height: 42px;
+    min-width: 0;
+    padding: 0.45rem 0.7rem;
+    text-align: left;
+  }
+
+  .app-header-action-title {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    clip: auto;
+    font-size: 0.78rem;
+    text-align: left;
+  }
+
+  .app-header-action-btn--fx .app-header-action-title {
+    font-size: 0.74rem;
+  }
+}
+
+/* ── Wide: single-line header ────────────────────────────── */
+@media (min-width: 1180px) {
+  .app-header--modern {
+    margin-bottom: 1.5rem;
+  }
+
+  .app-header-brand {
+    gap: 0.85rem;
+  }
+
+  .app-header-mark {
+    width: 46px;
+    height: 46px;
+  }
+}
+
+/* Override legacy pill/header rules */
+.app-header--modern .data-pill-group,
+.app-header--modern .app-header-actions,
+.app-header--modern .app-header-actions-row {
+  display: contents;
+}
+
+.app-header--modern .data-pill-label {
+  display: none;
+}
+
+/* Shell padding on small devices */
+@media (max-width: 767px) {
+  .app-header-toolbar-heading {
+    display: block;
+  }
+}
+
+@media (max-width: 479px) {
+  .app-header--modern {
+    margin-bottom: 1rem;
+    padding: 0.75rem 0.8rem 0.85rem;
+    border-radius: 14px;
+  }
+
+  .app-header-mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+  }
+
+  .app-header-menu-toggle-label {
+    display: none;
+  }
+
+  .app-header-menu-toggle {
+    padding: 0.45rem;
+    min-width: 42px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-header-status-dot {
+    animation: none;
+  }
+
+  .app-header-toolbar {
+    animation: none;
+  }
+
+  .app-header-action-btn:hover {
+    transform: none;
+  }
+}

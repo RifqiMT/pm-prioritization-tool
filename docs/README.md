@@ -1,73 +1,106 @@
 # Documentation Hub
 
-This folder is the **source of truth** for the product documentation suite for `pm-prioritization-tool`.
+**Product:** Product Management Prioritization Tool  
+**Version:** 2.0.0  
+**Maintainer:** Product Team  
+**Last audited:** 2026-05-26  
+**Repository:** [pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool)
 
-It is written to be usable by:
-- **Product** (PRD, personas, stories, OKRs)
-- **Design** (design system, UX patterns, accessibility)
-- **Engineering** (architecture, data dictionary, guardrails, traceability)
-- **Stakeholders** (decision logic, explainability, value model transparency)
+This folder is the single source of product truth for engineering, design, product management, and stakeholders. All documents are maintained against the **current** implementation in `index.html`, `css/`, and `src/`.
 
-## Information Architecture (IA)
+---
 
-The documentation is organized into two layers:
+## How to use this documentation
 
-- **Hub documents** (high-level, stable entry points): the files in this folder root (e.g., `PRD.md`).
-- **Deep-dive artifacts** (detailed, enterprise-friendly): subfolders under `docs/` (e.g., `docs/personas/`).
+| Audience | Start here | Then read |
+|----------|------------|-----------|
+| **New contributor** | [../README.md](../README.md) | [ARCHITECTURE.md](ARCHITECTURE.md), [TECH_GUIDELINES.md](TECH_GUIDELINES.md) |
+| **Product / PM** | [PRD.md](PRD.md) | [USER_STORIES.md](USER_STORIES.md), [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md) |
+| **Design** | [DESIGN_GUIDELINES.md](DESIGN_GUIDELINES.md) | [VARIABLES.md](VARIABLES.md) (labels & tooltips) |
+| **Leadership / OKRs** | [METRICS_AND_OKRS.md](METRICS_AND_OKRS.md) | [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md) |
+| **Release / QA** | [CHANGELOG.md](CHANGELOG.md) | [GUARDRAILS.md](GUARDRAILS.md), [DEPLOYMENT.md](DEPLOYMENT.md) |
 
-This split keeps the top-level docs readable while still providing thorough depth when needed.
+---
 
-## Start Here (recommended reading order)
+## Document index
 
-1. `../README.md` (product + tech overview)
-2. `PRD.md` (requirements + scope + NFRs)
-3. `ARCHITECTURE.md` (runtime topology + data flow)
-4. `VARIABLES.md` (data dictionary hub → deep-dive variable catalog)
-5. `USER_PERSONAS.md` (personas hub → individual persona files)
-6. `USER_STORIES.md` (backlog hub → epics/stories breakdown)
-7. `DESIGN_GUIDELINES.md` (design system + interaction standards)
-8. `METRICS_AND_OKRS.md` (metrics + OKRs hub → metric catalog)
-9. `TRACEABILITY_MATRIX.md` (requirements ↔ code mapping)
-10. `GUARDRAILS.md` (business + technical constraints)
-11. `CHANGELOG.md` (historical change log)
-12. `DEPLOYMENT.md` (Vercel production deployment)
+### Standards and governance
 
-## Hub Documents (this folder root)
+| Document | Purpose |
+|----------|---------|
+| [../PRODUCT_DOCUMENTATION_STANDARD.md](../PRODUCT_DOCUMENTATION_STANDARD.md) | Authoring rules, required files, review checklist |
+| [GUARDRAILS.md](GUARDRAILS.md) | Business and technical limitations |
+| [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md) | Requirements → code → verification |
+| [CHANGELOG.md](CHANGELOG.md) | Historical development log |
 
-- `PRD.md` — Product requirements, scope, NFRs, and release criteria.
-- `USER_PERSONAS.md` — Persona overview and links to persona deep dives.
-- `USER_STORIES.md` — Epics/stories overview and links to detailed story specs.
-- `VARIABLES.md` — Variable dictionary hub, formulas, and relationships.
-- `METRICS_AND_OKRS.md` — Metrics + OKRs hub and measurement approach.
-- `DESIGN_GUIDELINES.md` — Design principles, theme/tokens, components, accessibility.
-- `ARCHITECTURE.md` — Runtime model, modules, and major responsibilities.
-- `TRACEABILITY_MATRIX.md` — Enterprise traceability (requirements → evidence → verification).
-- `GUARDRAILS.md` — Guardrails for business/tech/UX/data/delivery.
-- `CHANGELOG.md` — Change history and release notes structure.
-- `DEPLOYMENT.md` — Vercel production deployment, headers, caching, smoke tests.
+### Product definition
 
-## Deep-dive Artifacts (subfolders)
+| Document | Purpose |
+|----------|---------|
+| [PRD.md](PRD.md) | Requirements, scope, functional/non-functional specs |
+| [USER_PERSONAS.md](USER_PERSONAS.md) | Persona index |
+| [personas/PM_PRIMARY.md](personas/PM_PRIMARY.md) | Primary product manager |
+| [personas/DELIVERY_LEAD.md](personas/DELIVERY_LEAD.md) | Delivery / engineering lead |
+| [personas/GEO_FINANCE_PM.md](personas/GEO_FINANCE_PM.md) | Geo + financial planning |
+| [personas/PORTFOLIO_STAKEHOLDER.md](personas/PORTFOLIO_STAKEHOLDER.md) | Executive / stakeholder reader |
+| [USER_STORIES.md](USER_STORIES.md) | Epics, stories, acceptance criteria |
+| [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md) | Prioritization rubrics and planning norms |
 
-- `personas/` — One file per persona (goals, jobs-to-be-done, scenarios, success signals).
-- `user-stories/` — One file per epic + detailed story specifications.
-- `variables/` — Full variable catalog (inputs, derived values, storage schema, UI locations).
-- `metrics/` — Metric dictionary + OKR measurement plan.
-- `design/` — Theme tokens, component guidelines, interaction patterns.
-- `traceability/` — Extended traceability matrices (optional) and audit checklists.
+### Technical reference
 
-## Maintenance and Governance
+| Document | Purpose |
+|----------|---------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Runtime model, modules, data flow |
+| [TECH_GUIDELINES.md](TECH_GUIDELINES.md) | Coding conventions, persistence, modules |
+| [VARIABLES.md](VARIABLES.md) | Variable dictionary, formulas, relationship charts |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Vercel static hosting and smoke tests |
 
-All updates must follow `../PRODUCT_DOCUMENTATION_STANDARD.md`.
+### Design and metrics
 
-### Source of truth rule
+| Document | Purpose |
+|----------|---------|
+| [DESIGN_GUIDELINES.md](DESIGN_GUIDELINES.md) | Themes, tokens, components, CSS layers |
+| [METRICS_AND_OKRS.md](METRICS_AND_OKRS.md) | Product metrics and team OKRs |
 
-When docs conflict with runtime behavior, **the code is the source of truth**. Docs must be corrected in the same change cycle.
+---
 
-### Document hygiene expectations
+## Source code map (audited 2026-05-26)
 
-- Use stable IDs for requirements (`FR-*`) and stories (`US-*`) so traceability remains durable.
-- Prefer links to deep dives rather than inflating hub docs with too much detail.
-- Every major requirement should be traceable to:
-  - UI evidence (`index.html`, `css/main.css`)
-  - Logic evidence (`src/app.js`, `src/rice.js`, modules)
-  - A verification method (manual test plan or automated test where applicable)
+```
+pm-prioritization-tool/
+├── index.html                 # App shell, modals, views
+├── css/
+│   ├── main.css               # Base design system + legacy
+│   ├── workspace-modern.css   # Table, board, filters
+│   ├── header-modern.css      # App header
+│   ├── profiles-modern.css    # Profile panel
+│   ├── portfolio-modern.css   # Portfolio workspace
+│   ├── profile-modals-modern.css
+│   ├── export-modals-modern.css  # Export/import + unlock
+│   └── view-toolbars-modern.css
+├── src/
+│   ├── app.js                 # State, render, CRUD, I/O
+│   ├── rice.js                # RICE formula + validation
+│   ├── constants.js           # Enums, lists, tooltips
+│   ├── utils.js               # Formatting, CSV, IDs
+│   ├── main.js                # Bootstrap entry
+│   └── modules/
+│       ├── exchange-rates.js
+│       ├── fullscreen.js
+│       └── profile-security.js
+├── vercel.json
+└── package.json
+```
+
+---
+
+## Maintenance policy
+
+When changing behavior, update in the **same PR** (minimum):
+
+1. `docs/CHANGELOG.md`
+2. Affected spec (`PRD.md`, `VARIABLES.md`, or `DESIGN_GUIDELINES.md`)
+3. `TRACEABILITY_MATRIX.md` if requirements change
+4. Root `README.md` if user-facing capabilities change
+
+See [PRODUCT_DOCUMENTATION_STANDARD.md](../PRODUCT_DOCUMENTATION_STANDARD.md) for the full checklist.

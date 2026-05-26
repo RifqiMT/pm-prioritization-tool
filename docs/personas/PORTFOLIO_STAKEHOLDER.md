@@ -41,3 +41,8 @@
 - Faster approval cycles due to clear prioritization rationale.
 - Fewer alignment meetings required to reconcile “what matters”.
 
+## Relevant behaviors (auditability + portability)
+- I can inspect prioritization logic via RICE tooltips and ensure financial outputs are treated as planning estimates (not accounting truth).
+- I can use **Export** to share a consistent snapshot: password-protected portfolios are included only after correct verification, so exported files do not silently mix protected data.
+- I can focus reviews on relevant execution states using **board status toggle pills** without confusing empty board states.
+

@@ -523,6 +523,124 @@ button:disabled {
   white-space: nowrap;
 }
 
+.profile-password-hint {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.profile-password-error {
+  margin-top: 0.35rem;
+}
+
+.profile-locked-banner {
+  margin-bottom: 0.85rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(212, 175, 55, 0.55);
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.65), rgba(254, 226, 226, 0.55));
+}
+
+.profile-locked-banner-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.profile-locked-banner-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.profile-locked-banner-text {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  color: var(--id-text-soft, var(--muted));
+}
+
+.profile-locked-banner-copy {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.profile-locked-unlock-form {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex: 1 1 280px;
+  min-width: min(100%, 320px);
+}
+
+.profile-locked-unlock-form input[type="password"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 40px;
+  border-radius: 12px;
+}
+
+.profile-locked-unlock-form button[type="submit"] {
+  flex-shrink: 0;
+  min-height: 40px;
+  padding-inline: 1rem;
+}
+
+.profile-locked-unlock-alt-btn {
+  flex: 0 0 auto;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.profile-locked-inline-error {
+  margin: 0.45rem 0 0;
+}
+
+.filters-shell--locked {
+  opacity: 0.55;
+  pointer-events: none;
+  user-select: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.profile-item-lock-badge {
+  margin-left: 0.35rem;
+  font-size: 0.85rem;
+  line-height: 1;
+  opacity: 0.9;
+}
+
+.profile-item-btn--locked-active {
+  border-style: dashed;
+  opacity: 0.92;
+}
+
+.profile-delete-password-wrap {
+  margin-top: 0.75rem;
+}
+
+.profile-delete-password-wrap label {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.profile-delete-password-wrap input {
+  width: 100%;
+  max-width: 320px;
+}
+
 @media (max-width: 520px) {
   .profile-form-row {
     flex-direction: column;
@@ -3115,8 +3233,7 @@ th[data-sort-active="true"] .sort-indicator {
 #profileEditModal .modal-panel,
 #profileDeleteModal .modal-panel,
 #projectDeleteModal .modal-panel,
-#exportFormatModal .modal-panel,
-#importFormatModal .modal-panel {
+#projectDeleteModal .modal-panel {
   background: #020617;
 }
 
@@ -4979,7 +5096,9 @@ button {
 .filters-toggle-btn,
 .view-fullscreen-btn,
 .projects-map-fullscreen-btn,
-.data-pill-btn {
+.data-pill-btn,
+.app-header-menu-toggle,
+.app-header-action-btn {
   background: #fff8eb !important;
   color: #8a5b16 !important;
   border: 1px solid rgba(212, 175, 55, 0.65) !important;
@@ -4991,7 +5110,9 @@ button {
 .filters-toggle-btn:hover,
 .view-fullscreen-btn:hover,
 .projects-map-fullscreen-btn:hover,
-.data-pill-btn:hover {
+.data-pill-btn:hover,
+.app-header-menu-toggle:hover,
+.app-header-action-btn:hover {
   background: rgba(212, 175, 55, 0.2) !important;
   color: #7f1d1d !important;
 }
@@ -5345,10 +5466,15 @@ button:hover,
 .view-fullscreen-btn,
 .projects-map-fullscreen-btn,
 .data-pill-btn,
+.app-header-menu-toggle,
+.app-header-action-btn,
 .rice-info-btn,
 .sort-button,
 .country-remove-btn,
 .modal-close-btn,
+.profile-password-toggle,
+.export-modal-btn,
+.export-format-option,
 .scrum-board-card-btn,
 .moscow-board-card-btn,
 .profile-icon-btn {
@@ -5364,10 +5490,15 @@ button:hover,
 .view-fullscreen-btn:hover,
 .projects-map-fullscreen-btn:hover,
 .data-pill-btn:hover,
+.app-header-menu-toggle:hover,
+.app-header-action-btn:hover,
 .rice-info-btn:hover,
 .sort-button:hover,
 .country-remove-btn:hover,
 .modal-close-btn:hover,
+.profile-password-toggle:hover,
+.export-modal-btn:hover,
+.export-format-option:hover,
 .scrum-board-card-btn:hover,
 .moscow-board-card-btn:hover,
 .profile-icon-btn:hover {

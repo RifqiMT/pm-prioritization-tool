@@ -1,91 +1,179 @@
 # Architecture Overview
 
-## 1. Runtime Model
+**Last audited:** 2026-05-26
 
-- Local-first browser application
-- No backend dependency for core workflow
-- State persisted in browser storage
+---
 
-## 2. Current Audited Source Topology
+## 1. System context
 
-Runtime-audited files in this repository snapshot:
+```mermaid
+flowchart LR
+  User[User Browser]
+  App[Static Web App]
+  LS[(localStorage)]
+  SS[(sessionStorage)]
+  CDN[Leaflet + Fonts CDN]
+  FX[Exchange Rate APIs]
 
-- `index.html`
-- `css/main.css`
-- `src/app.js`
-- `src/rice.js`
+  User --> App
+  App --> LS
+  App --> SS
+  App --> CDN
+  App -.optional.-> FX
+```
 
-Referenced script contracts in `index.html` that are not present in this snapshot:
+The application is a **local-first static SPA** (multi-page shell, single `index.html`). There is no application server; all business logic runs client-side.
 
-- `src/constants.js`
-- `src/utils.js`
-- `src/modules/exchange-rates.js`
-- `src/modules/fullscreen.js`
+---
 
-These are treated as runtime contracts and documented accordingly.
+## 2. Module responsibilities
 
-## 3. Core Architectural Responsibilities
+| Module / file | Responsibility |
+|---------------|----------------|
+| `index.html` | DOM structure: header, profiles panel, portfolio views, modals |
+| `src/constants.js` | Storage key, enums (status, MoSCoW, currencies, countries), tooltip copy |
+| `src/utils.js` | Dates, CSV, HTML escape, country flags, IDs |
+| `src/rice.js` | `calculateRiceScore`, `validateProjectInput`, `formatRice` |
+| `src/modules/profile-security.js` | PBKDF2 password hash/verify |
+| `src/modules/exchange-rates.js` | Fetch/cache FX to EUR |
+| `src/modules/fullscreen.js` | Fullscreen API for views |
+| `src/app.js` | State, events, rendering, filters, import/export, modals |
+| `src/main.js` | `init()` bootstrap |
+| `css/*` | Layered presentation (see [TECH_GUIDELINES.md](TECH_GUIDELINES.md)) |
 
-### `index.html`
-- App shell and primary UI structure
-- Table/board/moscow/map view containers
-- Modal scaffolding and form controls
+---
 
-### `css/main.css`
-- Component and layout styling
-- Tooltip behavior and icon-pill visual semantics
-- View responsiveness and table usability constraints
+## 3. Data model (logical)
 
-### `src/rice.js`
-- RICE calculation and input validation boundary logic
+```mermaid
+erDiagram
+  PROFILE ||--o{ PROJECT : contains
+  PROFILE {
+    string id
+    string name
+    string team
+    string passwordSalt
+    string passwordHash
+    object boardOrder
+  }
+  PROJECT {
+    string id
+    string title
+    number reachValue
+    number impactValue
+    number confidenceValue
+    number effortValue
+    string financialImpactFramework
+    object financialImpactInputs
+    number financialImpactValue
+    string financialImpactCurrency
+    string projectStatus
+    string moscowCategory
+    string projectType
+    string tshirtSize
+    string projectPeriod
+    array countries
+  }
+```
 
-### `src/app.js`
-- State lifecycle, event wiring, rendering, CRUD
-- Framework compute pipelines
-- Sorting/filtering/map aggregation
-- Tooltip orchestration
-- Import/export behavior
-- Modal field tooltip auto-completion and standardized copy injection
+---
 
-## 4. Key Data Flow
+## 4. Request / interaction flow
 
-1. User updates form/view controls.
-2. `app.js` validates and normalizes inputs.
-3. Computed outputs (RICE/financial) update UI.
-4. State is persisted and re-rendered by active view.
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant UI as DOM / app.js
+  participant S as state
+  participant L as localStorage
 
-## 5. Financial Framework Pipeline
+  U->>UI: Edit field / click action
+  UI->>UI: validate + normalize
+  UI->>S: mutate state
+  UI->>L: saveState()
+  UI->>UI: renderProfiles() / renderProjects()
+  UI->>U: updated view
+```
 
-- Selector chooses active framework
-- Input sanitization limits fields by framework
-- Framework-specific compute function derives impact
-- Output feeds table and map financial displays
-- Framework icon column surfaces model identity in table
+---
 
-## 6. Tooltip Architecture
+## 5. View rendering
 
-- Unified class-driven tooltip system across heterogeneous cells
-- Shared hover/focus selectors for icon/text wrappers
-- Specialized wrappers for cells like financial and rice score
-- Single-tooltip governance through active wrapper tracking and global hide-except behavior
-- Cursor-anchored title tooltip positioning on cards for perceived alignment quality
+| View | Container | Renderer | Data gate |
+|------|-----------|----------|-----------|
+| Table | `#projectsTableBody` | `renderProjectsTable` | `getUnlockedActiveProfile()` |
+| Board | `#scrumBoardContainer` | `renderScrumBoard` | unlocked profile |
+| MoSCoW | `#moscowBoardContainer` | `renderMoscowBoard` | unlocked profile |
+| Map | `#projectsMapContainer` | `renderProjectsMap` | unlocked profile + Leaflet |
 
-## 7. Filtering Architecture
+`state.projectsView` controls visibility; switching views does not clear data.
 
-- Quick filters (title/type/countries/period) + advanced filters (impact/effort/currency/framework/status/size/MOSCOW)
-- Framework filter compares normalized framework value to selected advanced filter option
-- Active-filter pill summarizes currently engaged filter dimensions
+---
 
-## 8. Architectural Risks
+## 6. Filter pipeline
 
-- Missing module source files can create documentation/runtime drift
-- Additional columns in dense table layouts can reduce readability
-- Formula UX can be misunderstood without explanatory tooltip content
-- Complex tooltip lifecycles can regress into duplicate visible overlays without centralized policy
+1. Start from active profile’s `projects` array (if unlocked).
+2. `applyFilters(projects)` applies quick + advanced filters (title, type, countries, period, RICE ranges, framework, status, MoSCoW, etc.).
+3. `sortProjects` orders table; board/MoSCoW may apply separate RICE sort toggles.
 
-## 9. Mitigations
+---
 
-- Keep docs tied to audited code snapshot
-- Use concise column labels and icon-based semantics
-- Enforce explainable tooltip standards for derived metrics
-- Enforce single-tooltip policy in shared tooltip orchestration path
+## 7. Tooltip subsystem
+
+- Wrapper elements host `.cell-type-tooltip` content.
+- `showCellTypeTooltip` / `hideCellTypeTooltips` manage visibility.
+- `activeTooltipWrap` enforces **one tooltip at a time**.
+- Project modal: `ensureProjectFormFieldTooltips` injects standardized copy for fields.
+
+---
+
+## 8. Profile lock subsystem
+
+```mermaid
+stateDiagram-v2
+  [*] --> Locked: passwordHash set
+  Locked --> Unlocked: correct password
+  Unlocked --> Locked: tab closed / refresh
+  note right of Unlocked: unlockedProfileIds in sessionStorage
+```
+
+Locked state blocks: project list, board, MoSCoW, map, filters (disabled). Inline banner unlock + modal unlock for profile actions.
+
+---
+
+## 9. Export / import architecture
+
+```mermaid
+flowchart TD
+  A[User selects Export format] --> B{Protected profiles locked?}
+  B -->|Yes| C[Export unlock modal]
+  B -->|No| D[getExportableProfiles]
+  C --> D
+  D --> E[sanitizeProfilesForExport]
+  E --> F[JSON or CSV download]
+
+  G[User selects Import format] --> H[File picker]
+  H --> I{CSV or JSON}
+  I --> J[mergeImportedProfiles]
+  J --> K[saveState + re-render]
+```
+
+---
+
+## 10. Deployment architecture
+
+- **Vercel** serves static files from repo root.
+- `vercel.json`: security headers (CSP), cache rules.
+- Each origin (localhost, preview, production) has **isolated** `localStorage`.
+
+See [DEPLOYMENT.md](DEPLOYMENT.md).
+
+---
+
+## 11. Known architectural constraints
+
+- Monolithic `app.js` (~7k+ lines) — acceptable for static app; split only with clear module boundaries if growth continues.
+- Global namespace — naming collisions require discipline.
+- Full re-render — optimize only if measured pain at scale.
+
+See [GUARDRAILS.md](GUARDRAILS.md).

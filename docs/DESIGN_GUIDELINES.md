@@ -1,74 +1,195 @@
 # Design Guidelines
 
-## 1. Design Principles
+**Product:** Product Management Prioritization Tool  
+**Last updated:** 2026-05-26
 
-1. **Explainability first** — scoring and value signals must be understandable.
-2. **Dense but readable** — table-first workflows require compact clarity.
-3. **Consistent interaction semantics** — icon+tooltip behavior should be predictable.
-4. **Accessible defaults** — focus visibility, contrast, keyboard behavior.
+Visual and interaction standards for the local-first prioritization workspace.
 
-## 2. Color and Theme System
+---
 
-### Core palette (from current UI language)
-- Primary red actions: `#b91c1c` → `#dc2626`
-- Warm light surfaces: `#fffdf8`, `#fef2f2`, `#fffbeb`
-- Emphasis gold: `#a16207`, `#d4af37`
-- Neutral text: deep maroon/brown family currently used in app shell/table
+## 1. Design principles
 
-### Framework icon colors (table Framework column)
-- custom: slate-neutral
-- clv: cyan
-- nps: amber
-- risk: rose
-- headcount: violet
-- operational: green
+1. **Explainability first** — scores and values must be understandable in context (tooltips, labels, callouts).  
+2. **Dense but readable** — table-first workflows; compact type without broken headers.  
+3. **Consistent interaction** — icon pills, toggles, and modals behave the same across views.  
+4. **Responsive by default** — phone, tablet, and desktop layouts are first-class.  
+5. **Warm professional tone** — cream surfaces, maroon text, red accent for primary actions.
 
-## 3. Component Rules
+---
 
-### Table Header
-- Keep labels compact to avoid hard line wraps
-- Prefer concise labels (`Framework` vs long-form)
-- Sort indicators remain visible and aligned
+## 2. Theme tokens
 
-### Icon Pill Cells (Type/State/Framework)
-- Use shared structure: icon pill + tooltip
-- Tooltip content includes title and short explanatory body
-- Hover/focus behavior must match other tooltip-enabled cells
-- Card icon wrappers should reuse the same icon-pill semantics used in table cells
+### 2.1 App shell (`main.css` :root — dark chrome)
 
-### RICE Score Cell
-- Must support tooltip with:
-  - abbreviation expansions (R/I/C/E)
-  - formula line
-  - computed calculation line
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--accent` | `#e11d48` / `#b91c1c` | Legacy accents |
+| `--gold` | `#d4af37` | Borders, highlights |
+| `--text` | `#f8f8f8` | Shell text on dark bg |
 
-### Project Modal Footer Metadata
-- Left block: `Project ID`, `Created`, `Last modified`
-- Right block: `Financial (EUR)`, `Exchange rate`, `RICE score`
-- Keep both rows visually balanced and readable on reduced widths
+### 2.2 Modern workspace (`workspace-modern.css`, portfolio, profiles)
 
-## 4. Tooltip Design Standard
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--ws-surface` / `--pf-bg` | `#fffdf8`, `#ffffff` | Cards, panels |
+| `--ws-gold` / `--pf-gold` | `#a16207` | Eyebrows, labels |
+| `--ws-text` / `--pf-text` | `#3f0f19` | Headings |
+| `--ws-text-soft` | `#7a4b12` | Secondary copy |
+| `--ws-border` | `rgba(231, 201, 120, 0.65)` | Panel borders |
 
-- Structure:
-  - `cell-type-tooltip-title`
-  - `cell-type-tooltip-body` with concise paragraphs
-- Positioning:
-  - portal-aware behavior to prevent clipping
-  - project-title tooltips on cards may anchor to cursor x-position for perceived alignment
-- Lifecycle:
-  - exactly one tooltip visible at a time across app surfaces
-- Content:
-  - no ambiguous abbreviations without expansion
-  - formula or interpretation where relevant
+### 2.3 Data transfer modals (`export-modals-modern.css`)
 
-## 5. Accessibility Guidelines
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--dt-accent` | `#b91c1c` | Primary buttons, export mark |
+| `--dt-gold` | `#a16207` | CSV icon accent |
+| `--dt-bg-soft` | `#fffdf8` | Callouts, cards |
+| `--dt-radius` | `18px` | Modal corners (desktop) |
 
-- Icon-only controls require `aria-label`
-- Tooltip content must be understandable without color dependence
-- Ensure keyboard focus and hover parity for tooltip triggers
+### 2.4 View toolbars (`view-toolbars-modern.css`)
 
-## 6. Responsive Guidelines
+| Token | Usage |
+|-------|-------|
+| `--vt-gold` | Section labels (e.g. “Show by”) |
+| `--vt-text` | Toolbar titles |
+| `--vt-accent` | Toggle track active |
 
-- Preserve table usability at medium widths via concise column labels
-- Avoid introducing columns that force unreadable header wrapping
-- Prefer icon + tooltip over long textual categorical columns where possible
+---
+
+## 3. Color semantics
+
+### Project status (board pills / table)
+
+| Status | Color family |
+|--------|----------------|
+| Not Started | Slate gray |
+| In Progress | Blue |
+| On Hold | Amber |
+| Done | Green |
+| Cancelled | Red |
+
+Defined in `main.css` `.cell-type-pill[data-status=...]` and `view-toolbars-modern.css` for filter buttons.
+
+### Financial framework icons (table)
+
+| Framework | Hue |
+|-----------|-----|
+| custom | Slate |
+| clv | Cyan |
+| nps | Amber |
+| risk | Rose |
+| headcount | Violet |
+| operational | Green |
+
+---
+
+## 4. CSS file responsibilities
+
+| File | Scope |
+|------|-------|
+| `main.css` | Base reset, global buttons, legacy modals, status/framework pills |
+| `workspace-modern.css` | Workspace panel, table, board columns |
+| `header-modern.css` | App header, actions menu |
+| `profiles-modern.css` | Profile list v2 |
+| `portfolio-modern.css` | Command bar, filters, FAB, locked banner |
+| `profile-modals-modern.css` | Edit/unlock/delete profile modals |
+| `export-modals-modern.css` | Export, import, export-unlock |
+| `view-toolbars-modern.css` | Table/board/MoSCoW/map toolbars |
+
+**Load order:** see [TECH_GUIDELINES.md](TECH_GUIDELINES.md).
+
+---
+
+## 5. Components
+
+### 5.1 View toolbar
+
+- Identity block: icon + title + description (description hidden on small screens).  
+- Actions: right-aligned cluster; grid layout on mobile.  
+- Board: scrollable status filter pills + RICE sort toggle.  
+- Map: segmented metric pills (Count / RICE / EUR).
+
+### 5.2 Profile card (v2)
+
+- Avatar initials, name, team, project count.  
+- Active indicator + Locked/Active chip.  
+- Icon rail: view / edit / delete.
+
+### 5.3 Data transfer format cards
+
+- JSON and CSV as equal-width cards (stack on narrow screens).  
+- Icon badge + label + one-line description.  
+- Import adds **merge callout** above cards.
+
+### 5.4 Export unlock cards
+
+- Per-profile card: avatar, name, password field, eye toggle.  
+- Footer: ghost “Skip protected” + primary “Verify & export”.
+
+### 5.4.1 Import/export modal parity
+- **Shared structure:** profile-style header + scrollable body + bottom action footer.
+- **Shared format cards:** JSON/CSV are rendered as consistent data-transfer option cards across both import and export.
+- **Directional affordances:** export uses red accent (download tone), import uses teal/green accent (upload tone).
+- **Mobile behavior:** format cards stack into a single column and footer actions become tap-friendly stacked buttons.
+
+### 5.5 Password toggle
+
+- Neutral 34px icon button inside field (not global red button).  
+- `aria-label` toggles Show/Hide password.
+
+### 5.6 Tooltips
+
+- One visible tooltip globally.  
+- Structure: title + body (`cell-type-tooltip-*`).  
+- RICE tooltip: R/I/C/E meanings + formula + calculation.
+
+### 5.7 Tables
+
+- Sticky gradient header, zebra rows, horizontal scroll hint on mobile.  
+- Icon columns: Type, Status, Framework.
+
+---
+
+## 6. Typography
+
+- **Font:** Inter (Google Fonts), system-ui fallback.  
+- **Eyebrows:** 0.68rem, uppercase, gold, letter-spaced.  
+- **Modal titles:** ~1.05rem, sentence case, bold (not all-caps).  
+- **Avoid** legacy all-caps button labels in modern surfaces.
+
+---
+
+## 7. Responsive breakpoints (reference)
+
+| Breakpoint | Behavior |
+|------------|----------|
+| ≤639px | Stacked toolbars; icon-only header actions; FAB for new project |
+| ≤1024px | Profiles above portfolio; filters collapsed |
+| ≥900px | Profile create panel expanded; toolbar descriptions visible |
+
+---
+
+## 8. Accessibility
+
+- Focus rings on toggles and format cards (`:focus-visible`).  
+- `aria-pressed` on board status filters and map metric pills.  
+- `role="radiogroup"` / `aria-checked` where applicable.  
+- Screen-reader labels on icon-only controls.
+
+---
+
+## 9. Do / don’t
+
+| Do | Don’t |
+|----|-------|
+| Use modern CSS layers for new UI | Add unscoped rules to `main.css` without override plan |
+| Match export/import modal patterns | Mix legacy `btn-secondary` bars with new cards |
+| Keep financial EUR labeled as estimate | Present map totals as audited finance |
+| Test at 375px width | Rely on hover-only affordances on touch |
+
+---
+
+## 10. Related docs
+
+- [VARIABLES.md](VARIABLES.md) — field labels and tooltips  
+- [ARCHITECTURE.md](ARCHITECTURE.md) — module map  

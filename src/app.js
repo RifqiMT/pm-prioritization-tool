@@ -7,6 +7,7 @@
  *  - src/constants.js  (STORAGE_KEY, currencyList, countryList, countryCodeByName, countryNameAliases, ...)
  *  - src/rice.js       (calculateRiceScore, formatRice, validateProjectInput)
  *  - src/utils.js      (formatDateTime, formatDate, formatDateForFilename, compareDatesDesc, generateId, escapeHtml, countryCodeToFlag, toNumberOrNull, parseCsv, escapeCsvCell)
+ *  - src/modules/profile-security.js (ProfileSecurity: password hash/verify for profile lock)
  *
  * That means you can simply open index.html in a browser (no dev server required)
  * and everything, including export/import, will work.
@@ -20,6 +21,8 @@ let state = {
   sortDirection: "desc",
   projectsView: "table",
   scrumBoardSortByRice: true,
+  /** Status column names hidden on the board view (null = show all). */
+  boardHiddenStatuses: null,
   moscowSortByRice: true,
   mapMetric: "projects",
   exchangeRatesToEUR: {},
@@ -29,6 +32,53 @@ let state = {
 
 let editingProjectId = null;
 let projectModalMode = "create";
+
+/** Profile IDs unlocked for this browser tab session (sessionStorage, not localStorage). */
+const unlockedProfileIds = new Set();
+
+const UNLOCK_SESSION_STORAGE_KEY = "pmTool_unlockedProfileIds_v1";
+
+/** Set when unlock is required before view/edit/activate. */
+let pendingUnlockAction = null;
+
+/** Pending export format after password verification (`json` | `csv`). */
+let pendingExportFormat = null;
+
+/** Filters profile list in the profiles panel (name / team). */
+let profilesFilterQuery = "";
+
+function markProfileUnlocked(profileId) {
+  if (!profileId) return;
+  unlockedProfileIds.add(profileId);
+  persistUnlockedProfilesToSession();
+}
+
+function markProfileLocked(profileId) {
+  if (!profileId) return;
+  unlockedProfileIds.delete(profileId);
+  persistUnlockedProfilesToSession();
+}
+
+function persistUnlockedProfilesToSession() {
+  try {
+    sessionStorage.setItem(
+      UNLOCK_SESSION_STORAGE_KEY,
+      JSON.stringify(Array.from(unlockedProfileIds))
+    );
+  } catch (err) {
+    console.warn("Could not persist unlocked profiles to session", err);
+  }
+}
+
+/** Clears in-memory unlock state (every page load requires password again). */
+function resetProfileUnlockSession() {
+  unlockedProfileIds.clear();
+  try {
+    sessionStorage.removeItem(UNLOCK_SESSION_STORAGE_KEY);
+  } catch (err) {
+    /* ignore */
+  }
+}
 
 const $ = (id) => document.getElementById(id);
 
@@ -1096,6 +1146,11 @@ function ensureProjectFormFieldTooltips() {
 }
 
 function init() {
+  if (typeof ProfileSecurity === "undefined") {
+    console.error(
+      "ProfileSecurity module not loaded. Profile passwords and lock will not work until src/modules/profile-security.js is available."
+    );
+  }
   cacheElements();
   ensureProjectFormFieldTooltips();
   initProjectModalSectionNav();
@@ -1123,11 +1178,17 @@ function init() {
     }
   });
   attachEventListeners();
+  initAppHeaderMenu();
+  initProfilesPanel();
+  initProfileModals();
+  initPortfolioWorkspace();
   loadState();
+  resetProfileUnlockSession();
   ensureDefaultProfile();
   toggleFinancialFrameworkFields(FINANCIAL_FRAMEWORK_DEFAULT);
   renderProfiles();
   renderProjects();
+  focusLockedProfileUnlockIfNeeded();
   if (elements.projectsTableView && elements.projectsBoardView) {
     switchProjectsView(state.projectsView);
   }
@@ -1146,9 +1207,26 @@ function init() {
 function cacheElements() {
   elements.profileList = $("profileList");
   elements.profilesEmptyState = $("profilesEmptyState");
+  elements.profilesCountBadge = $("profilesCountBadge");
+  elements.profilesCreatePanel = $("profilesCreatePanel");
+  elements.profilesSearchInput = $("profilesSearchInput");
+  elements.profilesNoResults = $("profilesNoResults");
+  elements.portfolioFiltersDrawer = $("portfolioFiltersDrawer");
+  elements.portfolioFabAddProject = $("portfolioFabAddProject");
   elements.addProfileForm = $("addProfileForm");
   elements.newProfileName = $("newProfileName");
   elements.newProfileTeam = $("newProfileTeam");
+  elements.newProfilePassword = $("newProfilePassword");
+  elements.newProfilePasswordConfirm = $("newProfilePasswordConfirm");
+
+  elements.profileLockedBanner = $("profileLockedBanner");
+  elements.profileLockedBannerTitle = $("profileLockedBannerTitle");
+  elements.profileLockedBannerText = $("profileLockedBannerText");
+  elements.profileLockedUnlockForm = $("profileLockedUnlockForm");
+  elements.profileLockedInlinePassword = $("profileLockedInlinePassword");
+  elements.profileLockedUnlockSubmitBtn = $("profileLockedUnlockSubmitBtn");
+  elements.profileLockedInlineError = $("profileLockedInlineError");
+  elements.filtersShell = document.querySelector(".filters-shell");
 
   elements.activeProfileTitleText = $("activeProfileTitleText");
   elements.activeProfileSubtitleText = $("activeProfileSubtitleText");
@@ -1184,7 +1262,7 @@ function cacheElements() {
   elements.tableFullscreenBtn = $("tableFullscreenBtn");
   elements.projectsMapContainer = $("projectsMapContainer");
   elements.projectsMapLegend = $("projectsMapLegend");
-  elements.projectsMapMetricSelect = $("projectsMapMetricSelect");
+  elements.projectsMapMetricToggle = $("projectsMapMetricToggle");
   elements.projectsMapFullscreenBtn = $("projectsMapFullscreenBtn");
   elements.refreshExchangeRatesBtn = $("refreshExchangeRatesBtn");
   elements.exchangeRatesDateLabel = $("exchangeRatesDateLabel");
@@ -1334,6 +1412,16 @@ function cacheElements() {
   elements.profileDeleteCancelTopBtn = $("profileDeleteCancelTopBtn");
   elements.profileDeleteCancelBtn = $("profileDeleteCancelBtn");
   elements.profileDeleteConfirmBtn = $("profileDeleteConfirmBtn");
+  elements.profileDeletePasswordWrap = $("profileDeletePasswordWrap");
+  elements.profileDeletePassword = $("profileDeletePassword");
+  elements.profileDeletePasswordError = $("profileDeletePasswordError");
+
+  elements.profileUnlockModal = $("profileUnlockModal");
+  elements.profileUnlockModalSubtitle = $("profileUnlockModalSubtitle");
+  elements.profileUnlockPassword = $("profileUnlockPassword");
+  elements.profileUnlockError = $("profileUnlockError");
+  elements.profileUnlockCancelBtn = $("profileUnlockCancelBtn");
+  elements.profileUnlockConfirmBtn = $("profileUnlockConfirmBtn");
 
   elements.profileViewModal = $("profileViewModal");
   elements.profileViewName = $("profileViewName");
@@ -1350,7 +1438,15 @@ function cacheElements() {
   elements.profileEditName = $("profileEditName");
   elements.profileEditTeam = $("profileEditTeam");
   elements.profileEditCancelBtn = $("profileEditCancelBtn");
+  elements.profileEditCloseBtn = $("profileEditCloseBtn");
   elements.profileEditSaveBtn = $("profileEditSaveBtn");
+  elements.profileEditCurrentPasswordWrap = $("profileEditCurrentPasswordWrap");
+  elements.profileEditCurrentPassword = $("profileEditCurrentPassword");
+  elements.profileEditNewPassword = $("profileEditNewPassword");
+  elements.profileEditConfirmPassword = $("profileEditConfirmPassword");
+  elements.profileEditRemovePassword = $("profileEditRemovePassword");
+  elements.profileEditPasswordError = $("profileEditPasswordError");
+  elements.profileEditPasswordHint = $("profileEditPasswordHint");
 
   elements.projectDeleteModal = $("projectDeleteModal");
   elements.projectDeleteNameLabel = $("projectDeleteNameLabel");
@@ -1359,9 +1455,16 @@ function cacheElements() {
   elements.projectDeleteConfirmBtn = $("projectDeleteConfirmBtn");
 
   elements.exportFormatModal = $("exportFormatModal");
+  elements.exportFormatModalSubtitle = $("exportFormatModalSubtitle");
+  elements.exportUnlockModal = $("exportUnlockModal");
+  elements.exportUnlockProfileList = $("exportUnlockProfileList");
+  elements.exportUnlockError = $("exportUnlockError");
+  elements.exportUnlockSkipBtn = $("exportUnlockSkipBtn");
+  elements.exportUnlockConfirmBtn = $("exportUnlockConfirmBtn");
   elements.exportAsJsonBtn = $("exportAsJsonBtn");
   elements.exportAsCsvBtn = $("exportAsCsvBtn");
   elements.importFormatModal = $("importFormatModal");
+  elements.importFormatModalSubtitle = $("importFormatModalSubtitle");
   elements.importAsJsonBtn = $("importAsJsonBtn");
   elements.importAsCsvBtn = $("importAsCsvBtn");
 }
@@ -1460,6 +1563,47 @@ function initFilterProjectPeriodOptions(projects) {
   updateFilterProjectPeriodsSummary();
 }
 
+/** Mobile/tablet header actions menu (export, import, rates). */
+function initAppHeaderMenu() {
+  const header = document.querySelector(".app-header--modern");
+  const toggleBtn = $("appHeaderMenuBtn");
+  const toolbar = $("appHeaderToolbar");
+  if (!header || !toggleBtn || !toolbar) return;
+
+  const closeMenu = () => {
+    header.classList.remove("app-header--menu-open");
+    toggleBtn.setAttribute("aria-expanded", "false");
+  };
+
+  toggleBtn.addEventListener("click", () => {
+    const isOpen = header.classList.toggle("app-header--menu-open");
+    toggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && header.classList.contains("app-header--menu-open")) {
+      closeMenu();
+      toggleBtn.focus();
+    }
+  });
+
+  toolbar.querySelectorAll(".app-header-action-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (window.matchMedia("(max-width: 767px)").matches) closeMenu();
+    });
+  });
+
+  const desktopMq = window.matchMedia("(min-width: 768px)");
+  const onViewportChange = () => {
+    if (desktopMq.matches) closeMenu();
+  };
+  if (typeof desktopMq.addEventListener === "function") {
+    desktopMq.addEventListener("change", onViewportChange);
+  } else if (typeof desktopMq.addListener === "function") {
+    desktopMq.addListener(onViewportChange);
+  }
+}
+
 function attachEventListeners() {
   // --- Profiles & projects: core interactions ---
   elements.addProfileForm.addEventListener("submit", (e) => {
@@ -1467,10 +1611,36 @@ function attachEventListeners() {
     const name = (elements.newProfileName.value || "").trim();
     if (!name) return;
     const team = (elements.newProfileTeam && elements.newProfileTeam.value || "").trim();
-    addProfile(name, team);
-    elements.newProfileName.value = "";
-    if (elements.newProfileTeam) elements.newProfileTeam.value = "";
-    showToast("Profile created successfully.");
+    const pwd = elements.newProfilePassword ? elements.newProfilePassword.value : "";
+    const confirm = elements.newProfilePasswordConfirm ? elements.newProfilePasswordConfirm.value : "";
+    if (typeof ProfileSecurity === "undefined") {
+      showToast("Profile security module failed to load. Refresh the page and try again.");
+      return;
+    }
+    const validation = ProfileSecurity.validatePasswordPair(pwd, confirm, { required: false });
+    if (!validation.ok) {
+      showToast(validation.message);
+      return;
+    }
+    addProfile(name, team, validation.password)
+      .then(() => {
+        elements.newProfileName.value = "";
+        if (elements.newProfileTeam) elements.newProfileTeam.value = "";
+        if (elements.newProfilePassword) elements.newProfilePassword.value = "";
+        if (elements.newProfilePasswordConfirm) elements.newProfilePasswordConfirm.value = "";
+        showToast(
+          validation.password
+            ? "Profile created with password protection."
+            : "Profile created successfully."
+        );
+        if (elements.profilesCreatePanel && window.matchMedia("(max-width: 767px)").matches) {
+          elements.profilesCreatePanel.open = false;
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to create profile:", err);
+        showToast("Could not create profile. Please try again.");
+      });
   });
 
   elements.addProjectBtn.addEventListener("click", () => {
@@ -1531,16 +1701,7 @@ function attachEventListeners() {
     });
   }
 
-  if (elements.projectsMapMetricSelect) {
-    elements.projectsMapMetricSelect.addEventListener("change", () => {
-      const v = elements.projectsMapMetricSelect.value;
-      if (v === "projects" || v === "rice" || v === "financial") {
-        state.mapMetric = v;
-        saveState();
-        if (state.projectsView === "map" && elements.projectsMapContainer) renderProjectsMap();
-      }
-    });
-  }
+  initMapMetricToggle();
 
   if (elements.projectsMapFullscreenBtn && elements.projectsMapView) {
     elements.projectsMapFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.projectsMapView));
@@ -1574,16 +1735,17 @@ function attachEventListeners() {
   // Export and Import both open a simple format chooser (JSON or CSV).
   elements.exportDataBtn.addEventListener("click", () => {
     if (!elements.exportFormatModal) {
-      // Fallback: if modal markup is missing, still allow users to export JSON.
-      handleExportData();
+      beginExport("json");
       return;
     }
+    updateExportFormatModalNotice();
     elements.exportFormatModal.setAttribute("aria-hidden", "false");
     elements.exportFormatModal.classList.add("active");
   });
 
   elements.importDataBtn.addEventListener("click", () => {
     if (!elements.importFormatModal) return;
+    updateImportFormatModalNotice();
     elements.importFormatModal.setAttribute("aria-hidden", "false");
     elements.importFormatModal.classList.add("active");
   });
@@ -1603,16 +1765,18 @@ function attachEventListeners() {
     });
   }
 
+  initExportUnlockModal();
+
   if (elements.exportAsJsonBtn) {
     elements.exportAsJsonBtn.addEventListener("click", () => {
-      handleExportData();
       closeExportFormatModal();
+      beginExport("json");
     });
   }
   if (elements.exportAsCsvBtn) {
     elements.exportAsCsvBtn.addEventListener("click", () => {
-      handleExportCsv();
       closeExportFormatModal();
+      beginExport("csv");
     });
   }
 
@@ -1657,7 +1821,65 @@ function attachEventListeners() {
     elements.profileEditCancelBtn.addEventListener("click", () => closeProfileEditModal());
   }
   if (elements.profileEditSaveBtn) {
-    elements.profileEditSaveBtn.addEventListener("click", handleProfileEditSave);
+    elements.profileEditSaveBtn.addEventListener("click", () => {
+      handleProfileEditSave().catch((err) => {
+        console.error("Profile save failed:", err);
+        showToast("Could not save profile. Please try again.");
+      });
+    });
+  }
+
+  if (elements.profileLockedUnlockForm) {
+    elements.profileLockedUnlockForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const active = getActiveProfile();
+      if (!active) return;
+      const password = elements.profileLockedInlinePassword
+        ? elements.profileLockedInlinePassword.value
+        : "";
+      attemptProfileUnlock(active.id, password, { source: "inline" })
+        .then((ok) => {
+          if (ok) return completeProfileUnlockSuccess(active.id);
+          return null;
+        })
+        .catch((err) => {
+          console.error("Inline unlock failed:", err);
+          showProfileLockedInlineError("Something went wrong. Please try again.");
+        });
+    });
+  }
+  if (elements.profileUnlockModal) {
+    elements.profileUnlockModal.addEventListener("click", (e) => {
+      if (e.target === elements.profileUnlockModal) closeProfileUnlockModal();
+    });
+  }
+  if (elements.profileUnlockCancelBtn) {
+    elements.profileUnlockCancelBtn.addEventListener("click", () => closeProfileUnlockModal());
+  }
+  if (elements.profileUnlockConfirmBtn) {
+    elements.profileUnlockConfirmBtn.addEventListener("click", () => {
+      handleProfileUnlockConfirm().catch((err) => {
+        console.error("Unlock failed:", err);
+        showProfileUnlockError("Something went wrong. Please try again.");
+      });
+    });
+  }
+  if (elements.profileUnlockPassword) {
+    elements.profileUnlockPassword.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleProfileUnlockConfirm().catch((err) => {
+          console.error("Unlock failed:", err);
+          showProfileUnlockError("Something went wrong. Please try again.");
+        });
+      }
+    });
+  }
+
+  if (elements.profileDeletePassword) {
+    elements.profileDeletePassword.addEventListener("input", () => {
+      updateProfileDeleteConfirmState();
+    });
   }
 
   if (elements.filtersToggleBtn && elements.filtersAdvanced) {
@@ -2095,22 +2317,317 @@ function updateFiltersActivePill() {
 }
 
 // --- Export / import (JSON & CSV, merge logic) ---
-function getExportCounts() {
-  const profileCount = state.profiles.length;
-  const projectCount = state.profiles.reduce(
+
+/** Profiles that may be written to an export file (open, or unlocked with correct password this session). */
+function getExportableProfiles() {
+  return state.profiles.filter((profile) => {
+    if (!isProfilePasswordProtected(profile)) return true;
+    return isProfileUnlocked(profile.id);
+  });
+}
+
+function getLockedProfilesForExport() {
+  return state.profiles.filter(
+    (profile) => isProfilePasswordProtected(profile) && !isProfileUnlocked(profile.id)
+  );
+}
+
+function getExportCounts(profiles) {
+  const list = Array.isArray(profiles) ? profiles : getExportableProfiles();
+  const profileCount = list.length;
+  const projectCount = list.reduce(
     (n, p) => n + (Array.isArray(p.projects) ? p.projects.length : 0),
     0
   );
   return { profileCount, projectCount };
 }
 
-function handleExportData() {
+function updateExportFormatModalNotice() {
+  if (!elements.exportFormatModalSubtitle) return;
+  const locked = getLockedProfilesForExport();
+  const profileCount = state.profiles.length;
+  const base = `Choose a format to download your data (${profileCount} profile${profileCount !== 1 ? "s" : ""} in workspace).`;
+  if (locked.length === 0) {
+    elements.exportFormatModalSubtitle.textContent = base;
+    return;
+  }
+  elements.exportFormatModalSubtitle.textContent =
+    `${base} ${locked.length} protected profile${locked.length !== 1 ? "s" : ""} will ask for a password next.`;
+}
+
+function updateImportFormatModalNotice() {
+  if (!elements.importFormatModalSubtitle) return;
+  const profileCount = state.profiles.length;
+  const projectCount = state.profiles.reduce(
+    (n, p) => n + (Array.isArray(p.projects) ? p.projects.length : 0),
+    0
+  );
+  elements.importFormatModalSubtitle.textContent =
+    `Choose a format, then pick a file. Merges into your workspace (${profileCount} profile${profileCount !== 1 ? "s" : ""}, ${projectCount} project${projectCount !== 1 ? "s" : ""}).`;
+}
+
+function showExportUnlockError(message) {
+  if (!elements.exportUnlockError) return;
+  elements.exportUnlockError.textContent = message;
+  if (message) {
+    elements.exportUnlockError.hidden = false;
+    elements.exportUnlockError.removeAttribute("hidden");
+  } else {
+    elements.exportUnlockError.hidden = true;
+    elements.exportUnlockError.setAttribute("hidden", "");
+  }
+}
+
+function closeExportUnlockModal() {
+  if (!elements.exportUnlockModal) return;
+  elements.exportUnlockModal.classList.remove("active");
+  elements.exportUnlockModal.setAttribute("aria-hidden", "true");
+  showExportUnlockError("");
+}
+
+const PROFILE_PASSWORD_TOGGLE_EYE_SVG =
+  '<svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+const PROFILE_PASSWORD_TOGGLE_EYE_OFF_SVG =
+  '<svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>';
+
+function bindProfilePasswordToggles(scope) {
+  const root = scope && typeof scope.querySelectorAll === "function" ? scope : document;
+  root.querySelectorAll(".profile-password-toggle").forEach((btn) => {
+    if (btn.dataset.boundToggle === "1") return;
+    btn.dataset.boundToggle = "1";
+    btn.addEventListener("click", () => {
+      const targetId = btn.getAttribute("data-target");
+      const input = targetId ? $(targetId) : null;
+      if (!input) return;
+      const showPlain = input.type === "password";
+      input.type = showPlain ? "text" : "password";
+      btn.classList.toggle("is-visible", showPlain);
+      btn.setAttribute("aria-label", showPlain ? "Hide password" : "Show password");
+    });
+  });
+}
+
+function renderExportUnlockProfileList(lockedProfiles) {
+  if (!elements.exportUnlockProfileList) return;
+  elements.exportUnlockProfileList.innerHTML = "";
+  lockedProfiles.forEach((profile) => {
+    const inputId = `exportUnlockPwd-${profile.id}`;
+    const displayName = profile.name || "Unnamed profile";
+
+    const card = document.createElement("div");
+    card.className = "export-unlock-card";
+    card.setAttribute("role", "listitem");
+
+    const head = document.createElement("div");
+    head.className = "export-unlock-card__head";
+
+    const avatar = document.createElement("span");
+    avatar.className = "export-unlock-card__avatar";
+    avatar.setAttribute("aria-hidden", "true");
+    avatar.textContent = getProfileInitials(displayName);
+
+    const meta = document.createElement("div");
+    meta.className = "export-unlock-card__meta";
+
+    const nameEl = document.createElement("span");
+    nameEl.className = "export-unlock-card__name";
+    nameEl.textContent = displayName;
+
+    const hint = document.createElement("span");
+    hint.className = "export-unlock-card__hint";
+    hint.textContent = "Password required for export";
+
+    meta.appendChild(nameEl);
+    meta.appendChild(hint);
+    head.appendChild(avatar);
+    head.appendChild(meta);
+
+    const label = document.createElement("label");
+    label.className = "sr-only";
+    label.setAttribute("for", inputId);
+    label.textContent = `Password for ${displayName}`;
+
+    const wrap = document.createElement("div");
+    wrap.className = "profile-password-input-wrap";
+
+    const input = document.createElement("input");
+    input.type = "password";
+    input.id = inputId;
+    input.setAttribute("data-profile-id", profile.id);
+    input.setAttribute("autocomplete", "off");
+    input.placeholder = "Enter password";
+
+    const toggleBtn = document.createElement("button");
+    toggleBtn.type = "button";
+    toggleBtn.className = "profile-password-toggle";
+    toggleBtn.setAttribute("data-target", inputId);
+    toggleBtn.setAttribute("aria-label", "Show password");
+    toggleBtn.innerHTML = PROFILE_PASSWORD_TOGGLE_EYE_SVG + PROFILE_PASSWORD_TOGGLE_EYE_OFF_SVG;
+
+    wrap.appendChild(input);
+    wrap.appendChild(toggleBtn);
+    card.appendChild(head);
+    card.appendChild(label);
+    card.appendChild(wrap);
+    elements.exportUnlockProfileList.appendChild(card);
+  });
+  bindProfilePasswordToggles(elements.exportUnlockProfileList);
+}
+
+function openExportUnlockModal(lockedProfiles) {
+  if (!elements.exportUnlockModal) {
+    executeExport(pendingExportFormat);
+    return;
+  }
+  renderExportUnlockProfileList(lockedProfiles);
+  showExportUnlockError("");
+  elements.exportUnlockModal.classList.add("active");
+  elements.exportUnlockModal.setAttribute("aria-hidden", "false");
+  const firstInput = elements.exportUnlockProfileList.querySelector("input[type='password']");
+  if (firstInput) setTimeout(() => firstInput.focus(), 80);
+}
+
+async function verifyProfilePasswordForExport(profileId, password) {
+  if (typeof ProfileSecurity === "undefined") return false;
+  const profile = state.profiles.find((p) => p.id === profileId);
+  if (!profile) return false;
+  if (!isProfilePasswordProtected(profile)) return true;
+  const pwd = password != null ? String(password) : "";
+  if (!pwd.trim()) return false;
+  return ProfileSecurity.verifyProfilePassword(pwd, profile.passwordSalt, profile.passwordHash);
+}
+
+async function verifyLockedProfilesForExport(lockedProfiles) {
+  let verified = 0;
+  let failed = 0;
+  const failedNames = [];
+
+  for (const profile of lockedProfiles) {
+    const input = document.getElementById(`exportUnlockPwd-${profile.id}`);
+    const password = input ? input.value : "";
+    const ok = await verifyProfilePasswordForExport(profile.id, password);
+    if (ok) {
+      markProfileUnlocked(profile.id);
+      verified += 1;
+    } else {
+      failed += 1;
+      failedNames.push(profile.name || "Unnamed profile");
+    }
+  }
+
+  return { verified, failed, failedNames };
+}
+
+function beginExport(format) {
+  pendingExportFormat = format === "csv" ? "csv" : "json";
+  const locked = getLockedProfilesForExport();
+  if (locked.length === 0) {
+    executeExport(pendingExportFormat);
+    return;
+  }
+  openExportUnlockModal(locked);
+}
+
+function buildExportResultMessage(profileCount, projectCount, excludedCount, failedNames) {
+  let msg = `Exported ${profileCount} profile${profileCount !== 1 ? "s" : ""} and ${projectCount} project${projectCount !== 1 ? "s" : ""}.`;
+  if (excludedCount > 0) {
+    msg += ` ${excludedCount} password-protected profile${excludedCount !== 1 ? "s were" : " was"} omitted`;
+    if (failedNames.length > 0) {
+      msg += ` (${failedNames.join(", ")})`;
+    }
+    msg += " — incorrect or missing password.";
+  }
+  return msg;
+}
+
+function executeExport(format, meta) {
+  const profiles = getExportableProfiles();
+  const excludedCount = state.profiles.length - profiles.length;
+  const failedNames = (meta && meta.failedNames) || [];
+
+  if (profiles.length === 0) {
+    window.alert(
+      "Nothing to export. Enter the correct password for at least one protected profile, or export only applies to profiles without a password."
+    );
+    pendingExportFormat = null;
+    return;
+  }
+
   try {
+    if (format === "csv") {
+      handleExportCsv(profiles, { excludedCount, failedNames });
+    } else {
+      handleExportData(profiles, { excludedCount, failedNames });
+    }
+  } finally {
+    pendingExportFormat = null;
+    closeExportUnlockModal();
+  }
+}
+
+function initExportUnlockModal() {
+  if (elements.exportUnlockModal) {
+    elements.exportUnlockModal.addEventListener("click", (e) => {
+      if (e.target === elements.exportUnlockModal) closeExportUnlockModal();
+    });
+  }
+  if (elements.exportUnlockSkipBtn) {
+    elements.exportUnlockSkipBtn.addEventListener("click", () => {
+      closeExportUnlockModal();
+      executeExport(pendingExportFormat);
+    });
+  }
+  if (elements.exportUnlockConfirmBtn) {
+    elements.exportUnlockConfirmBtn.addEventListener("click", () => {
+      const locked = getLockedProfilesForExport();
+      if (locked.length === 0) {
+        closeExportUnlockModal();
+        executeExport(pendingExportFormat);
+        return;
+      }
+      if (typeof ProfileSecurity === "undefined") {
+        showExportUnlockError("Profile security module failed to load. Refresh the page.");
+        return;
+      }
+      elements.exportUnlockConfirmBtn.disabled = true;
+      verifyLockedProfilesForExport(locked)
+        .then(({ verified, failed, failedNames }) => {
+          elements.exportUnlockConfirmBtn.disabled = false;
+          if (verified === 0 && failed > 0 && getExportableProfiles().length === 0) {
+            showExportUnlockError(
+              "No profiles could be verified. Check your passwords or choose Skip protected profiles."
+            );
+            return;
+          }
+          executeExport(pendingExportFormat, { failedNames });
+        })
+        .catch((err) => {
+          console.error("Export password verification failed", err);
+          elements.exportUnlockConfirmBtn.disabled = false;
+          showExportUnlockError("Could not verify passwords. Please try again.");
+        });
+    });
+  }
+}
+
+function handleExportData(profilesForExport, exportMeta) {
+  try {
+    const profiles = Array.isArray(profilesForExport) ? profilesForExport : getExportableProfiles();
+    const excludedCount =
+      exportMeta && typeof exportMeta.excludedCount === "number"
+        ? exportMeta.excludedCount
+        : state.profiles.length - profiles.length;
+    const failedNames = (exportMeta && exportMeta.failedNames) || [];
+
+    const exportActiveId = profiles.some((p) => p.id === state.activeProfileId)
+      ? state.activeProfileId
+      : (profiles[0] && profiles[0].id) || null;
+
     const payload = {
       version: 1,
       exportedAt: new Date().toISOString(),
-      profiles: sanitizeProfilesForExport(state.profiles),
-      activeProfileId: state.activeProfileId,
+      profiles: sanitizeProfilesForExport(profiles),
+      activeProfileId: exportActiveId,
       sortField: state.sortField,
       sortDirection: state.sortDirection
     };
@@ -2125,8 +2642,8 @@ function handleExportData() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    const { profileCount, projectCount } = getExportCounts();
-    const msg = `Exported ${profileCount} profile${profileCount !== 1 ? "s" : ""} and ${projectCount} project${projectCount !== 1 ? "s" : ""} as JSON.`;
+    const { profileCount, projectCount } = getExportCounts(profiles);
+    const msg = buildExportResultMessage(profileCount, projectCount, excludedCount, failedNames);
     setTimeout(() => showToast(msg), 0);
   } catch (err) {
     console.error("Export failed", err);
@@ -2140,8 +2657,15 @@ function closeExportFormatModal() {
   elements.exportFormatModal.setAttribute("aria-hidden", "true");
 }
 
-function handleExportCsv() {
+function handleExportCsv(profilesForExport, exportMeta) {
   try {
+    const profiles = Array.isArray(profilesForExport) ? profilesForExport : getExportableProfiles();
+    const excludedCount =
+      exportMeta && typeof exportMeta.excludedCount === "number"
+        ? exportMeta.excludedCount
+        : state.profiles.length - profiles.length;
+    const failedNames = (exportMeta && exportMeta.failedNames) || [];
+
     const header = [
       "profileId",
       "profileName",
@@ -2175,7 +2699,7 @@ function handleExportCsv() {
 
     const rows = [header.join(",")];
 
-    state.profiles.forEach((profile) => {
+    profiles.forEach((profile) => {
       const profileId = profile.id || "";
       const profileName = profile.name || "";
       const profileTeam = profile.team || "";
@@ -2267,8 +2791,8 @@ function handleExportCsv() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    const { profileCount, projectCount } = getExportCounts();
-    const msg = `Exported ${profileCount} profile${profileCount !== 1 ? "s" : ""} and ${projectCount} project${projectCount !== 1 ? "s" : ""} as CSV.`;
+    const { profileCount, projectCount } = getExportCounts(profiles);
+    const msg = buildExportResultMessage(profileCount, projectCount, excludedCount, failedNames);
     setTimeout(() => showToast(msg), 0);
   } catch (err) {
     console.error("CSV export failed", err);
@@ -2518,19 +3042,19 @@ function buildProfilesFromCsvRows(header, rows) {
 
 function normalizeImportedProfile(profile) {
   if (!profile || typeof profile !== "object") return null;
-  const id = typeof profile.id === "string" && profile.id.trim() ? profile.id.trim() : generateId("profile");
-  const name = String(profile.name || "Imported profile");
-  const team = String(profile.team || "");
-  const createdAt = profile.createdAt || new Date().toISOString();
-  const projectsArray = Array.isArray(profile.projects) ? profile.projects : [];
-  const normalizedProjects = projectsArray.map(normalizeImportedProject).filter(Boolean);
-  return {
-    id,
-    name,
-    team,
-    createdAt,
-    projects: normalizedProjects
-  };
+  const base = normalizeLoadedProfile({
+    ...profile,
+    projects: Array.isArray(profile.projects) ? profile.projects : []
+  });
+  if (!base) return null;
+  if (!base.name || base.name === "Unnamed profile") {
+    base.name = String(profile.name || "Imported profile");
+  }
+  const normalizedProjects = (Array.isArray(profile.projects) ? profile.projects : [])
+    .map(normalizeImportedProject)
+    .filter(Boolean);
+  base.projects = normalizedProjects;
+  return base;
 }
 
 function normalizeImportedProject(project) {
@@ -2729,6 +3253,30 @@ function getCountriesFromControls() {
   return Array.from(new Set(values));
 }
 
+/** Preserves password hashes and board order when loading from storage or import. */
+function normalizeLoadedProfile(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const projects = Array.isArray(raw.projects)
+    ? raw.projects.map(normalizeLoadedProject).filter(Boolean)
+    : [];
+  const boardOrder = raw.boardOrder && typeof raw.boardOrder === "object" ? raw.boardOrder : {};
+  const profile = {
+    id: typeof raw.id === "string" && raw.id.trim() ? raw.id.trim() : generateId("profile"),
+    name: String(raw.name || "Unnamed profile"),
+    team: String(raw.team || ""),
+    createdAt: raw.createdAt || new Date().toISOString(),
+    projects,
+    boardOrder
+  };
+  const salt = raw.passwordSalt != null ? String(raw.passwordSalt).trim() : "";
+  const hash = raw.passwordHash != null ? String(raw.passwordHash).trim() : "";
+  if (salt && hash) {
+    profile.passwordSalt = salt;
+    profile.passwordHash = hash;
+  }
+  return profile;
+}
+
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -2740,21 +3288,7 @@ function loadState() {
     const rawProfiles = Array.isArray(parsed) ? parsed : parsed.profiles;
     if (!Array.isArray(rawProfiles)) return;
 
-    // Normalize each profile: ensure projects array and valid project shape so render/export/import don't break
-    state.profiles = rawProfiles.map((p) => {
-      const projects = Array.isArray(p.projects)
-        ? p.projects.map(normalizeLoadedProject).filter(Boolean)
-        : [];
-      const boardOrder = p.boardOrder && typeof p.boardOrder === "object" ? p.boardOrder : {};
-      return {
-        id: typeof p.id === "string" && p.id.trim() ? p.id.trim() : generateId("profile"),
-        name: String(p.name || "Unnamed profile"),
-        team: String(p.team || ""),
-        createdAt: p.createdAt || new Date().toISOString(),
-        projects,
-        boardOrder
-      };
-    });
+    state.profiles = rawProfiles.map(normalizeLoadedProfile).filter(Boolean);
 
     // Resolve active profile: use stored id only if it still exists, otherwise first profile.
     const storedActiveId = !Array.isArray(parsed) ? parsed.activeProfileId : null;
@@ -2771,6 +3305,10 @@ function loadState() {
     }
     if (!Array.isArray(parsed) && typeof parsed.scrumBoardSortByRice === "boolean") {
       state.scrumBoardSortByRice = parsed.scrumBoardSortByRice;
+    }
+    if (!Array.isArray(parsed) && Array.isArray(parsed.boardHiddenStatuses)) {
+      const hidden = parsed.boardHiddenStatuses.filter((s) => projectStatusList.includes(s));
+      state.boardHiddenStatuses = hidden.length > 0 ? hidden : null;
     }
     if (!Array.isArray(parsed) && typeof parsed.moscowSortByRice === "boolean") {
       state.moscowSortByRice = parsed.moscowSortByRice;
@@ -2852,6 +3390,7 @@ function saveState() {
     sortDirection: state.sortDirection,
     projectsView: state.projectsView,
     scrumBoardSortByRice: state.scrumBoardSortByRice,
+    boardHiddenStatuses: state.boardHiddenStatuses,
     moscowSortByRice: state.moscowSortByRice,
     mapMetric: state.mapMetric,
     exchangeRatesToEUR: state.exchangeRatesToEUR,
@@ -2881,7 +3420,95 @@ function ensureDefaultProfile() {
   }
 }
 
-function addProfile(name, team) {
+function isProfilePasswordProtected(profile) {
+  if (!profile) return false;
+  const salt = profile.passwordSalt != null ? String(profile.passwordSalt).trim() : "";
+  const hash = profile.passwordHash != null ? String(profile.passwordHash).trim() : "";
+  if (salt && hash) return true;
+  if (typeof ProfileSecurity !== "undefined") {
+    return ProfileSecurity.isProfilePasswordProtected(profile);
+  }
+  return false;
+}
+
+function isProfileUnlocked(profileId) {
+  const profile = state.profiles.find((p) => p.id === profileId);
+  if (!profile) return false;
+  if (!isProfilePasswordProtected(profile)) return true;
+  return unlockedProfileIds.has(profileId);
+}
+
+/** Active profile only when unlocked — use for any project/portfolio data access. */
+function getUnlockedActiveProfile() {
+  const profile = getActiveProfile();
+  if (!profile) return null;
+  return isProfileUnlocked(profile.id) ? profile : null;
+}
+
+async function applyProfilePassword(profile, password) {
+  if (typeof ProfileSecurity === "undefined") {
+    throw new Error("ProfileSecurity module is not available.");
+  }
+  const salt = ProfileSecurity.generateSalt();
+  const hash = await ProfileSecurity.hashProfilePassword(password, salt);
+  profile.passwordSalt = salt;
+  profile.passwordHash = hash;
+}
+
+function clearProfilePassword(profile) {
+  delete profile.passwordSalt;
+  delete profile.passwordHash;
+}
+
+function updateProfileLockedBanner() {
+  if (!elements.profileLockedBanner) return;
+  const activeProfile = getActiveProfile();
+  const locked = !!(activeProfile && !isProfileUnlocked(activeProfile.id));
+  elements.profileLockedBanner.style.display = locked ? "block" : "none";
+  elements.profileLockedBanner.setAttribute("aria-hidden", locked ? "false" : "true");
+  if (locked && elements.profileLockedBannerTitle && activeProfile) {
+    elements.profileLockedBannerTitle.textContent = `${activeProfile.name} is locked`;
+  }
+  if (locked) {
+    showProfileLockedInlineError("");
+    if (elements.profileLockedInlinePassword) {
+      elements.profileLockedInlinePassword.value = "";
+      setTimeout(() => {
+        if (document.activeElement !== elements.profileLockedInlinePassword) {
+          elements.profileLockedInlinePassword.focus();
+        }
+      }, 80);
+    }
+  }
+  if (elements.filtersShell) {
+    elements.filtersShell.classList.toggle("filters-shell--locked", locked);
+    elements.filtersShell.setAttribute("aria-disabled", locked ? "true" : "false");
+  }
+  syncPortfolioActionButtons();
+}
+
+function showProfileLockedInlineError(message) {
+  if (!elements.profileLockedInlineError) return;
+  elements.profileLockedInlineError.textContent = message;
+  elements.profileLockedInlineError.style.display = message ? "block" : "none";
+}
+
+function focusLockedProfileUnlockIfNeeded() {
+  const active = getActiveProfile();
+  if (!active || isProfileUnlocked(active.id)) return;
+  if (elements.profileLockedInlinePassword) {
+    setTimeout(() => elements.profileLockedInlinePassword.focus(), 120);
+  }
+}
+
+function requireProfileUnlocked(profileId, actionType) {
+  if (isProfileUnlocked(profileId)) return true;
+  pendingUnlockAction = { type: actionType, profileId };
+  openProfileUnlockModal(profileId);
+  return false;
+}
+
+async function addProfile(name, team, password) {
   const now = new Date().toISOString();
   const profile = {
     id: generateId("profile"),
@@ -2890,19 +3517,34 @@ function addProfile(name, team) {
     createdAt: now,
     projects: []
   };
+  const pwd = (password || "").trim();
+  if (pwd) {
+    await applyProfilePassword(profile, pwd);
+  }
   state.profiles.push(profile);
   state.activeProfileId = profile.id;
   saveState();
   renderProfiles();
   renderProjects();
+  if (pwd && !isProfileUnlocked(profile.id)) {
+    pendingUnlockAction = { type: "activate", profileId: profile.id };
+    openProfileUnlockModal(profile.id);
+    showToast("Profile created. Enter the password to access projects.");
+  }
 }
 
 function setActiveProfile(profileId) {
+  const profile = state.profiles.find((p) => p.id === profileId);
+  if (!profile) return;
   state.activeProfileId = profileId;
   saveState();
   renderProfiles();
   clearFilters();
   renderProjects();
+  if (!isProfileUnlocked(profileId)) {
+    pendingUnlockAction = { type: "activate", profileId };
+    openProfileUnlockModal(profileId);
+  }
 }
 
 function getActiveProfile() {
@@ -3038,123 +3680,305 @@ function positionProfileTooltip(wrap, anchorPoint) {
   }
 }
 
+/** Sync primary project actions (toolbar + mobile FAB). */
+function syncPortfolioActionButtons() {
+  const profile = getActiveProfile();
+  const locked = profile ? !isProfileUnlocked(profile.id) : true;
+  const disabled = !profile || locked;
+  if (elements.addProjectBtn) elements.addProjectBtn.disabled = disabled;
+  if (elements.portfolioFabAddProject) elements.portfolioFabAddProject.disabled = disabled;
+}
+
+/** Portfolio workspace: filters drawer defaults, mobile FAB. */
+function initPortfolioWorkspace() {
+  const drawer = elements.portfolioFiltersDrawer || $("portfolioFiltersDrawer");
+  const applyFiltersOpen = () => {
+    if (!drawer) return;
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      drawer.open = true;
+    }
+  };
+  applyFiltersOpen();
+  const mq = window.matchMedia("(min-width: 1024px)");
+  if (typeof mq.addEventListener === "function") {
+    mq.addEventListener("change", applyFiltersOpen);
+  } else if (typeof mq.addListener === "function") {
+    mq.addListener(applyFiltersOpen);
+  }
+
+  if (elements.portfolioFabAddProject && elements.addProjectBtn) {
+    elements.portfolioFabAddProject.addEventListener("click", () => {
+      if (!elements.addProjectBtn.disabled) elements.addProjectBtn.click();
+    });
+  }
+}
+
+/** Profile modals: password visibility toggles, close control. */
+function initProfileModals() {
+  bindProfilePasswordToggles(document);
+
+  if (elements.profileEditCloseBtn) {
+    elements.profileEditCloseBtn.addEventListener("click", () => closeProfileEditModal());
+  }
+}
+
+function resetProfileEditPasswordFieldTypes() {
+  ["profileEditCurrentPassword", "profileEditNewPassword", "profileEditConfirmPassword"].forEach((id) => {
+    const input = $(id);
+    if (input) input.type = "password";
+  });
+  elements.profileEditModal?.querySelectorAll(".profile-password-toggle").forEach((btn) => {
+    btn.classList.remove("is-visible");
+    btn.setAttribute("aria-label", "Show password");
+  });
+}
+
+/** Expand “New profile” on wide layouts; keep collapsed on phones by default. */
+function initProfilesPanel() {
+  const panel = elements.profilesCreatePanel || $("profilesCreatePanel");
+  if (!panel) return;
+  const applyDefaultOpen = () => {
+    if (window.matchMedia("(min-width: 900px)").matches) {
+      panel.open = true;
+    }
+  };
+  applyDefaultOpen();
+  const mq = window.matchMedia("(min-width: 900px)");
+  if (typeof mq.addEventListener === "function") {
+    mq.addEventListener("change", applyDefaultOpen);
+  } else if (typeof mq.addListener === "function") {
+    mq.addListener(applyDefaultOpen);
+  }
+
+  const search = elements.profilesSearchInput || $("profilesSearchInput");
+  if (search) {
+    search.addEventListener("input", () => {
+      profilesFilterQuery = search.value.trim().toLowerCase();
+      renderProfiles();
+    });
+  }
+}
+
+function getProfileInitials(name) {
+  const parts = (name || "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return "?";
+}
+
+function profileMatchesFilter(profile, query) {
+  if (!query) return true;
+  const name = (profile.name || "").toLowerCase();
+  const team = (profile.team || "").toLowerCase();
+  return name.includes(query) || team.includes(query);
+}
+
+function updateProfilesSearchUi(profileCount) {
+  const wrap = elements.profilesSearchInput?.closest(".profiles-search");
+  if (wrap) wrap.classList.toggle("profiles-search--hidden", profileCount <= 1);
+}
+
+function appendProfileActionChip(actions, classSuffix, label, tooltipTitle, tooltipBody, svg, onClick) {
+  const wrap = document.createElement("div");
+  wrap.className = "profile-icon-wrap profile-action-wrap";
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = `profile-action-chip profile-action-chip--${classSuffix} profile-icon-btn profile-icon-btn--${classSuffix}`;
+  btn.setAttribute("aria-label", label);
+  btn.innerHTML = `${svg}<span class="profile-action-label">${label}</span>`;
+  btn.addEventListener("click", onClick);
+  wrap.appendChild(btn);
+  wrap.appendChild(createProfileButtonTooltip(tooltipTitle, tooltipBody));
+  actions.appendChild(wrap);
+}
+
 function renderProfiles() {
   const { profiles, activeProfileId } = state;
+  const query = profilesFilterQuery;
 
   elements.profileList.innerHTML = "";
   elements.profilesEmptyState.style.display = profiles.length ? "none" : "block";
+  updateProfilesSearchUi(profiles.length);
 
-  profiles
+  if (elements.profilesCountBadge) {
+    elements.profilesCountBadge.textContent = String(profiles.length);
+    elements.profilesCountBadge.dataset.count = String(profiles.length);
+  }
+
+  const sorted = profiles
     .slice()
-    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-    .forEach((profile) => {
-      const li = document.createElement("li");
-      const row = document.createElement("div");
-      row.className = "profile-item-row";
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  const visible = sorted.filter((p) => profileMatchesFilter(p, query));
 
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "profile-item-btn" + (profile.id === activeProfileId ? " active" : "");
+  if (elements.profilesNoResults) {
+    elements.profilesNoResults.style.display =
+      profiles.length > 0 && visible.length === 0 ? "block" : "none";
+  }
 
-      const main = document.createElement("div");
-      main.className = "profile-item-main";
+  visible.forEach((profile) => {
+    const li = document.createElement("li");
+    li.className = "profiles-list-item";
+    li.setAttribute("role", "presentation");
 
-      const nameEl = document.createElement("div");
-      nameEl.className = "profile-item-name";
-      nameEl.textContent = profile.name;
-      main.appendChild(nameEl);
+    const isActive = profile.id === activeProfileId;
+    const isLocked = isProfilePasswordProtected(profile) && !isProfileUnlocked(profile.id);
+    const isLockedActive = isActive && isLocked;
 
-      const summary = document.createElement("div");
-      summary.className = "profile-summary";
+    const row = document.createElement("article");
+    row.className =
+      "profile-item-row profiles-card" +
+      (isActive ? " profiles-card--active" : "") +
+      (isLockedActive ? " profiles-card--locked" : "");
+    row.setAttribute("role", "option");
+    row.setAttribute("aria-selected", isActive ? "true" : "false");
 
-      const teamText = (profile.team || "").trim();
-      if (teamText) {
-        const teamSpan = document.createElement("span");
-        teamSpan.textContent = teamText;
-        summary.appendChild(teamSpan);
-      }
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className =
+      "profiles-card-select profile-item-btn" +
+      (isActive ? " active" : "") +
+      (isLockedActive ? " profile-item-btn--locked-active" : "");
+    btn.setAttribute("aria-label", `Select profile ${profile.name}`);
 
-      main.appendChild(summary);
+    const radio = document.createElement("span");
+    radio.className = "profiles-card-radio";
+    radio.setAttribute("aria-hidden", "true");
+    btn.appendChild(radio);
 
-      btn.appendChild(main);
-      btn.addEventListener("click", () => setActiveProfile(profile.id));
+    const avatar = document.createElement("span");
+    avatar.className = "profiles-card-avatar";
+    avatar.setAttribute("aria-hidden", "true");
+    avatar.textContent = getProfileInitials(profile.name);
+    btn.appendChild(avatar);
 
-      const actions = document.createElement("div");
-      actions.className = "profile-item-actions";
+    const body = document.createElement("span");
+    body.className = "profiles-card-body profile-item-main";
 
-      const viewWrap = document.createElement("div");
-      viewWrap.className = "profile-icon-wrap";
-      const viewBtn = document.createElement("button");
-      viewBtn.type = "button";
-      viewBtn.className = "profile-icon-btn profile-icon-btn--view";
-      viewBtn.setAttribute("aria-label", "View profile");
-      viewBtn.innerHTML = getProfileIconSvg("view");
-      viewBtn.addEventListener("click", (event) => {
+    const titleRow = document.createElement("span");
+    titleRow.className = "profiles-card-title-row";
+
+    const nameEl = document.createElement("span");
+    nameEl.className = "profile-item-name";
+    nameEl.textContent = profile.name;
+    titleRow.appendChild(nameEl);
+
+    if (isProfilePasswordProtected(profile)) {
+      const lockBadge = document.createElement("span");
+      lockBadge.className = "profile-item-lock-badge";
+      lockBadge.textContent = isProfileUnlocked(profile.id) ? "🔓" : "🔒";
+      lockBadge.setAttribute(
+        "aria-label",
+        isProfileUnlocked(profile.id) ? "Unlocked this session" : "Password protected"
+      );
+      titleRow.appendChild(lockBadge);
+    }
+
+    if (isActive) {
+      const status = document.createElement("span");
+      status.className = "profiles-card-status" + (isLocked ? " profiles-card-status--locked" : "");
+      status.textContent = isLocked ? "Locked" : "Active";
+      titleRow.appendChild(status);
+    }
+
+    body.appendChild(titleRow);
+
+    const summary = document.createElement("span");
+    summary.className = "profile-summary";
+
+    const teamText = (profile.team || "").trim();
+    if (teamText) {
+      const teamSpan = document.createElement("span");
+      teamSpan.className = "profile-item-team-pill";
+      teamSpan.textContent = teamText;
+      summary.appendChild(teamSpan);
+    }
+
+    const projectCount = Array.isArray(profile.projects) ? profile.projects.length : 0;
+    const countSpan = document.createElement("span");
+    countSpan.className = "profile-item-count";
+    countSpan.textContent = projectCount === 1 ? "1 project" : `${projectCount} projects`;
+    summary.appendChild(countSpan);
+
+    body.appendChild(summary);
+    btn.appendChild(body);
+    btn.addEventListener("click", () => setActiveProfile(profile.id));
+
+    const actions = document.createElement("div");
+    actions.className = "profile-item-actions profiles-card-actions";
+
+    appendProfileActionChip(
+      actions,
+      "view",
+      "View profile",
+      "View profile",
+      "Open profile details and statistics",
+      getProfileIconSvg("view"),
+      (event) => {
         event.stopPropagation();
         openProfileViewModal(profile.id);
-      });
-      viewWrap.appendChild(viewBtn);
-      viewWrap.appendChild(createProfileButtonTooltip("View profile", "Open profile details and statistics"));
-      actions.appendChild(viewWrap);
+      }
+    );
 
-      const editWrap = document.createElement("div");
-      editWrap.className = "profile-icon-wrap";
-      const editBtn = document.createElement("button");
-      editBtn.type = "button";
-      editBtn.className = "profile-icon-btn profile-icon-btn--edit";
-      editBtn.setAttribute("aria-label", "Edit profile");
-      editBtn.innerHTML = getProfileIconSvg("edit");
-      editBtn.addEventListener("click", (event) => {
+    appendProfileActionChip(
+      actions,
+      "edit",
+      "Edit profile",
+      "Edit profile",
+      "Change name, team, or profile password (current password required if locked).",
+      getProfileIconSvg("edit"),
+      (event) => {
         event.stopPropagation();
         openProfileEditModal(profile.id);
-      });
-      editWrap.appendChild(editBtn);
-      editWrap.appendChild(createProfileButtonTooltip("Edit profile", "Change profile name and team"));
-      actions.appendChild(editWrap);
+      }
+    );
 
-      const deleteWrap = document.createElement("div");
-      deleteWrap.className = "profile-icon-wrap";
-      const deleteBtn = document.createElement("button");
-      deleteBtn.type = "button";
-      deleteBtn.className = "profile-icon-btn profile-icon-btn--danger";
-      deleteBtn.setAttribute("aria-label", "Delete profile and all its projects");
-      deleteBtn.innerHTML = getProfileIconSvg("trash");
-      deleteBtn.addEventListener("click", (event) => {
+    appendProfileActionChip(
+      actions,
+      "danger",
+      "Delete profile",
+      "Delete profile",
+      "Remove this profile and all its projects permanently",
+      getProfileIconSvg("trash"),
+      (event) => {
         event.stopPropagation();
         deleteProfile(profile.id);
-      });
-      deleteWrap.appendChild(deleteBtn);
-      deleteWrap.appendChild(createProfileButtonTooltip("Delete profile", "Remove this profile and all its projects permanently"));
-      actions.appendChild(deleteWrap);
+      }
+    );
 
-      row.appendChild(btn);
-      row.appendChild(actions);
-      li.appendChild(row);
-      elements.profileList.appendChild(li);
-    });
+    row.appendChild(btn);
+    row.appendChild(actions);
+    li.appendChild(row);
+    elements.profileList.appendChild(li);
+  });
 
   const activeProfile = getActiveProfile();
   if (!activeProfile) {
     elements.activeProfileTitleText.textContent = "No profile selected";
     elements.activeProfileSubtitleText.textContent = "Create or select a profile to start adding projects.";
     elements.projectsHeaderBadges.innerHTML = "";
-    elements.addProjectBtn.disabled = true;
     elements.bulkDeleteBtn.disabled = true;
+    syncPortfolioActionButtons();
     return;
   }
 
   elements.activeProfileTitleText.textContent = activeProfile.name;
   const teamLabel = (activeProfile.team || "").trim();
-  elements.activeProfileSubtitleText.textContent = teamLabel || "Profile ready for prioritization.";
-
-  elements.addProjectBtn.disabled = false;
+  const locked = !isProfileUnlocked(activeProfile.id);
+  elements.activeProfileSubtitleText.textContent = locked
+    ? "Enter the profile password to view and manage projects."
+    : teamLabel || "Profile ready for prioritization.";
 
   elements.projectsHeaderBadges.innerHTML = "";
+  syncPortfolioActionButtons();
+  updateProfileLockedBanner();
 }
 
 function renderProjects() {
   const activeProfile = getActiveProfile();
   elements.projectsTableBody.innerHTML = "";
+  updateProfileLockedBanner();
 
   if (!activeProfile) {
     elements.projectsTableBody.innerHTML = `
@@ -3173,6 +3997,32 @@ function renderProjects() {
     }
     if (state.projectsView === "map" && elements.projectsMapContainer) {
       renderProjectsMap();
+    }
+    return;
+  }
+
+  if (!isProfileUnlocked(activeProfile.id)) {
+    elements.projectsTableBody.innerHTML = `
+      <tr>
+        <td colspan="12" class="empty-state">
+          This profile is locked. Enter your password in the banner above to unlock.
+        </td>
+      </tr>
+    `;
+    elements.bulkDeleteBtn.disabled = true;
+    syncPortfolioActionButtons();
+    if (elements.selectAllProjects) elements.selectAllProjects.checked = false;
+    if (state.projectsView === "board" && elements.scrumBoardContainer) {
+      elements.scrumBoardContainer.innerHTML =
+        '<p class="empty-state">Unlock this profile to use the board view.</p>';
+    }
+    if (state.projectsView === "moscow" && elements.moscowBoardContainer) {
+      elements.moscowBoardContainer.innerHTML =
+        '<p class="empty-state">Unlock this profile to use the MOSCOW view.</p>';
+    }
+    if (state.projectsView === "map" && elements.projectsMapContainer) {
+      elements.projectsMapContainer.innerHTML =
+        '<p class="empty-state">Unlock this profile to use the map view.</p>';
     }
     return;
   }
@@ -3779,18 +4629,12 @@ function switchProjectsView(view) {
     elements.projectsViewMapBtn.setAttribute("aria-selected", String(showMap));
   }
 
-  if (showBoard) {
-    renderScrumBoard();
-  } else if (showMoscow && elements.moscowBoardContainer) {
-    renderMoscowBoard();
-  } else if (showMap && elements.projectsMapContainer) {
-    renderProjectsMap();
-  }
+  renderProjects();
 }
 
 /** Returns a map of ISO 2-letter country code -> number of projects that target that country (active profile, filtered). */
 function getProjectCountByCountryCode() {
-  const activeProfile = getActiveProfile();
+  const activeProfile = getUnlockedActiveProfile();
   if (!activeProfile || !Array.isArray(activeProfile.projects)) return {};
   const baseProjects = activeProfile.projects.slice();
   initFilterProjectPeriodOptions(baseProjects);
@@ -3810,7 +4654,7 @@ function getProjectCountByCountryCode() {
 
 /** Returns a map of ISO 2-letter country code -> sum of RICE scores for projects that target that country (active profile, filtered). */
 function getCountryRiceByCode() {
-  const activeProfile = getActiveProfile();
+  const activeProfile = getUnlockedActiveProfile();
   if (!activeProfile || !Array.isArray(activeProfile.projects)) return {};
   const baseProjects = activeProfile.projects.slice();
   baseProjects.forEach((p) => {
@@ -3834,7 +4678,7 @@ function getCountryRiceByCode() {
 
 /** Returns a map of ISO 2-letter country code -> total financial impact in EUR (active profile, filtered). All amounts are converted to EUR using the latest exchange rates from the API; amounts in currencies without a rate are excluded. */
 function getCountryFinancialImpactByCode() {
-  const activeProfile = getActiveProfile();
+  const activeProfile = getUnlockedActiveProfile();
   if (!activeProfile || !Array.isArray(activeProfile.projects)) return {};
   const baseProjects = activeProfile.projects.slice();
   initFilterProjectPeriodOptions(baseProjects);
@@ -3886,9 +4730,61 @@ function getCountryCodeFromFeature(feature) {
   return (fromList && typeof countryCodeByName !== "undefined" && countryCodeByName[fromList]) ? countryCodeByName[fromList] : "";
 }
 
+function syncMapMetricToggleUI() {
+  if (!elements.projectsMapMetricToggle) return;
+  const metric = state.mapMetric === "rice" || state.mapMetric === "financial" ? state.mapMetric : "projects";
+  const buttons = elements.projectsMapMetricToggle.querySelectorAll("[data-metric]");
+  buttons.forEach((btn) => {
+    const active = btn.getAttribute("data-metric") === metric;
+    btn.setAttribute("aria-checked", active ? "true" : "false");
+    btn.classList.toggle("map-metric-toggle__option--active", active);
+    btn.tabIndex = active ? 0 : -1;
+  });
+}
+
+function setMapMetric(metric) {
+  if (metric !== "projects" && metric !== "rice" && metric !== "financial") return;
+  if (state.mapMetric === metric) return;
+  state.mapMetric = metric;
+  saveState();
+  syncMapMetricToggleUI();
+  if (state.projectsView === "map" && elements.projectsMapContainer) renderProjectsMap();
+}
+
+function initMapMetricToggle() {
+  if (!elements.projectsMapMetricToggle) return;
+  syncMapMetricToggleUI();
+
+  elements.projectsMapMetricToggle.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-metric]");
+    if (!btn || !elements.projectsMapMetricToggle.contains(btn)) return;
+    setMapMetric(btn.getAttribute("data-metric"));
+  });
+
+  elements.projectsMapMetricToggle.addEventListener("keydown", (e) => {
+    const buttons = Array.from(elements.projectsMapMetricToggle.querySelectorAll("[data-metric]"));
+    if (buttons.length === 0) return;
+    const currentIdx = buttons.findIndex((b) => b.getAttribute("aria-checked") === "true");
+    let nextIdx = currentIdx;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      nextIdx = (currentIdx + 1) % buttons.length;
+      e.preventDefault();
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      nextIdx = (currentIdx - 1 + buttons.length) % buttons.length;
+      e.preventDefault();
+    } else {
+      return;
+    }
+    const next = buttons[nextIdx];
+    setMapMetric(next.getAttribute("data-metric"));
+    next.focus();
+  });
+}
+
 function renderProjectsMap() {
   if (!elements.projectsMapContainer || typeof L === "undefined") return;
   const activeProfile = getActiveProfile();
+  const unlockedProfile = getUnlockedActiveProfile();
 
   if (elements.projectsMapLegend) {
     elements.projectsMapLegend.innerHTML = "";
@@ -3905,9 +4801,21 @@ function renderProjectsMap() {
     return;
   }
 
-  if (elements.projectsMapMetricSelect) {
-    elements.projectsMapMetricSelect.value = state.mapMetric;
+  if (!unlockedProfile) {
+    if (elements.projectsMapContainer._leafletMap) {
+      elements.projectsMapContainer._leafletMap.remove();
+      elements.projectsMapContainer._leafletMap = null;
+    }
+    elements.projectsMapContainer._geoLayer = null;
+    elements.projectsMapContainer.innerHTML =
+      '<div class="projects-map-empty">Unlock this profile to use the map view.</div>';
+    if (elements.projectsMapLegend) {
+      elements.projectsMapLegend.textContent = "";
+    }
+    return;
   }
+
+  syncMapMetricToggleUI();
 
   const countByCode = getProjectCountByCountryCode();
 
@@ -4126,9 +5034,86 @@ function buildCardTitleTooltipElement(titleClassName, project) {
   return wrap;
 }
 
+function getBoardHiddenStatuses() {
+  const hidden = state.boardHiddenStatuses;
+  if (!Array.isArray(hidden) || hidden.length === 0) return [];
+  return hidden.filter((s) => projectStatusList.includes(s));
+}
+
+function isBoardStatusColumnVisible(status) {
+  return !getBoardHiddenStatuses().includes(status);
+}
+
+function countVisibleBoardStatusColumns() {
+  return projectStatusList.filter((s) => isBoardStatusColumnVisible(s)).length;
+}
+
+function toggleBoardStatusColumn(status) {
+  if (!projectStatusList.includes(status)) return;
+  let hidden = getBoardHiddenStatuses().slice();
+  if (hidden.includes(status)) {
+    hidden = hidden.filter((s) => s !== status);
+  } else {
+    if (countVisibleBoardStatusColumns() <= 1) return;
+    hidden.push(status);
+  }
+  state.boardHiddenStatuses = hidden.length > 0 ? hidden : null;
+  saveState();
+  renderScrumBoard();
+}
+
+function showAllBoardStatusColumns() {
+  if (!state.boardHiddenStatuses || state.boardHiddenStatuses.length === 0) return;
+  state.boardHiddenStatuses = null;
+  saveState();
+  renderScrumBoard();
+}
+
+function renderBoardStatusLegend() {
+  if (!elements.scrumBoardLegend) return;
+  elements.scrumBoardLegend.innerHTML = "";
+
+  const legendLabel = document.createElement("span");
+  legendLabel.className = "scrum-board-legend-label view-toolbar__legend-label";
+  legendLabel.textContent = "Status";
+  elements.scrumBoardLegend.appendChild(legendLabel);
+
+  const hidden = getBoardHiddenStatuses();
+  const hasFilter = hidden.length > 0;
+
+  projectStatusList.forEach((status) => {
+    const visible = isBoardStatusColumnVisible(status);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "cell-type-pill view-toolbar__chip board-status-filter-btn";
+    if (!visible) btn.classList.add("board-status-filter-btn--off");
+    btn.setAttribute("data-status", status);
+    btn.setAttribute("aria-pressed", visible ? "true" : "false");
+    btn.setAttribute(
+      "title",
+      visible ? "Click to hide the " + status + " column" : "Click to show the " + status + " column"
+    );
+    btn.setAttribute("aria-label", (visible ? "Hide" : "Show") + " " + status + " column");
+    btn.textContent = status;
+    btn.addEventListener("click", () => toggleBoardStatusColumn(status));
+    elements.scrumBoardLegend.appendChild(btn);
+  });
+
+  if (hasFilter) {
+    const showAllBtn = document.createElement("button");
+    showAllBtn.type = "button";
+    showAllBtn.className = "view-toolbar__chip board-status-filter-reset";
+    showAllBtn.textContent = "Show all";
+    showAllBtn.setAttribute("aria-label", "Show all status columns");
+    showAllBtn.addEventListener("click", showAllBoardStatusColumns);
+    elements.scrumBoardLegend.appendChild(showAllBtn);
+  }
+}
+
 function renderScrumBoard() {
   if (!elements.scrumBoardContainer) return;
   const activeProfile = getActiveProfile();
+  const unlockedProfile = getUnlockedActiveProfile();
   elements.scrumBoardContainer.innerHTML = "";
 
   if (elements.scrumBoardSortByRiceToggle) {
@@ -4136,19 +5121,10 @@ function renderScrumBoard() {
   }
 
   if (elements.scrumBoardLegend) {
-    elements.scrumBoardLegend.innerHTML = "";
-    if (activeProfile) {
-      const legendLabel = document.createElement("span");
-      legendLabel.className = "scrum-board-legend-label";
-      legendLabel.textContent = "Status:";
-      elements.scrumBoardLegend.appendChild(legendLabel);
-      projectStatusList.forEach((status) => {
-        const pill = document.createElement("span");
-        pill.className = "cell-type-pill";
-        pill.setAttribute("data-status", status);
-        pill.textContent = status;
-        elements.scrumBoardLegend.appendChild(pill);
-      });
+    if (unlockedProfile) {
+      renderBoardStatusLegend();
+    } else {
+      elements.scrumBoardLegend.innerHTML = "";
     }
   }
 
@@ -4157,7 +5133,13 @@ function renderScrumBoard() {
     return;
   }
 
-  const baseProjects = activeProfile.projects.slice();
+  if (!unlockedProfile) {
+    elements.scrumBoardContainer.innerHTML =
+      '<div class="scrum-board-empty">Unlock this profile to use the board view.</div>';
+    return;
+  }
+
+  const baseProjects = unlockedProfile.projects.slice();
   baseProjects.forEach((p) => {
     p.riceScore = calculateRiceScore(p);
   });
@@ -4206,6 +5188,8 @@ function renderScrumBoard() {
   });
 
   projectStatusList.forEach((status) => {
+    if (!isBoardStatusColumnVisible(status)) return;
+
     const column = document.createElement("div");
     column.className = "scrum-board-column";
     column.setAttribute("data-status", status);
@@ -4558,7 +5542,7 @@ function bindScrumBoardDragAndDrop() {
       column.classList.remove("scrum-board-column--drag-over");
       if (!draggedProjectId) return;
       const newStatus = column.getAttribute("data-status");
-      const activeProfile = getActiveProfile();
+      const activeProfile = getUnlockedActiveProfile();
       if (!activeProfile) return;
       const project = activeProfile.projects.find((p) => p.id === draggedProjectId);
       if (!project) return;
@@ -4632,7 +5616,7 @@ function getBoardOrderedList(profile, status) {
 }
 
 function moveBoardProjectUp(projectId, status) {
-  const activeProfile = getActiveProfile();
+  const activeProfile = getUnlockedActiveProfile();
   if (!activeProfile) return;
   const list = getBoardOrderedList(activeProfile, status);
   const idx = list.findIndex((p) => p.id === projectId);
@@ -4653,7 +5637,7 @@ function moveBoardProjectUp(projectId, status) {
 }
 
 function moveBoardProjectDown(projectId, status) {
-  const activeProfile = getActiveProfile();
+  const activeProfile = getUnlockedActiveProfile();
   if (!activeProfile) return;
   const list = getBoardOrderedList(activeProfile, status);
   const idx = list.findIndex((p) => p.id === projectId);
@@ -4706,7 +5690,7 @@ function getMoscowOrderedList(profile, quadrant) {
 }
 
 function moveMoscowProjectUp(projectId, quadrant) {
-  const activeProfile = getActiveProfile();
+  const activeProfile = getUnlockedActiveProfile();
   if (!activeProfile) return;
   const list = getMoscowOrderedList(activeProfile, quadrant);
   const idx = list.findIndex((p) => p.id === projectId);
@@ -4727,7 +5711,7 @@ function moveMoscowProjectUp(projectId, quadrant) {
 }
 
 function moveMoscowProjectDown(projectId, quadrant) {
-  const activeProfile = getActiveProfile();
+  const activeProfile = getUnlockedActiveProfile();
   if (!activeProfile) return;
   const list = getMoscowOrderedList(activeProfile, quadrant);
   const idx = list.findIndex((p) => p.id === projectId);
@@ -4751,6 +5735,7 @@ function renderMoscowBoard() {
   if (!elements.moscowBoardContainer || typeof moscowList === "undefined") return;
   const gridOrder = typeof moscowGridOrder !== "undefined" && Array.isArray(moscowGridOrder) ? moscowGridOrder : moscowList;
   const activeProfile = getActiveProfile();
+  const unlockedProfile = getUnlockedActiveProfile();
   elements.moscowBoardContainer.innerHTML = "";
 
   if (elements.moscowSortByRiceToggle) {
@@ -4762,7 +5747,13 @@ function renderMoscowBoard() {
     return;
   }
 
-  const baseProjects = activeProfile.projects.slice();
+  if (!unlockedProfile) {
+    elements.moscowBoardContainer.innerHTML =
+      '<div class="moscow-board-empty">Unlock this profile to use the MOSCOW view.</div>';
+    return;
+  }
+
+  const baseProjects = unlockedProfile.projects.slice();
   baseProjects.forEach((p) => {
     p.riceScore = calculateRiceScore(p);
   });
@@ -5131,7 +6122,7 @@ function bindMoscowBoardDragAndDrop() {
       const targetColumn = dropColumn || column.closest(".moscow-board-column");
       if (!targetColumn) return;
       const newMoscow = targetColumn.getAttribute("data-moscow");
-      const activeProfile = getActiveProfile();
+      const activeProfile = getUnlockedActiveProfile();
       if (!activeProfile) return;
       const project = activeProfile.projects.find((p) => p.id === draggedProjectId);
       if (!project) return;
@@ -5152,7 +6143,7 @@ function bindMoscowBoardDragAndDrop() {
     e.stopPropagation();
     columns.forEach((col) => col.classList.remove("moscow-board-column--drag-over"));
     const newMoscow = dropColumn.getAttribute("data-moscow");
-    const activeProfile = getActiveProfile();
+    const activeProfile = getUnlockedActiveProfile();
     if (!activeProfile) return;
     const project = activeProfile.projects.find((p) => p.id === draggedProjectId);
     if (!project) return;
@@ -5354,7 +6345,7 @@ function syncHeaderCheckbox() {
 }
 
 function handleBulkDelete() {
-  const activeProfile = getActiveProfile();
+  const activeProfile = getUnlockedActiveProfile();
   if (!activeProfile || !elements.projectDeleteModal) return;
   const checked = elements.projectsTableBody.querySelectorAll(".project-select-checkbox:checked");
   if (!checked.length) return;
@@ -5417,6 +6408,180 @@ function closeProfileDeleteModal() {
   elements.profileDeleteModal.classList.remove("active");
   elements.profileDeleteModal.setAttribute("aria-hidden", "true");
   elements.profileDeleteModal.removeAttribute("data-profile-id");
+  if (elements.profileDeletePassword) elements.profileDeletePassword.value = "";
+  if (elements.profileDeletePasswordWrap) elements.profileDeletePasswordWrap.style.display = "none";
+  if (elements.profileDeletePasswordError) {
+    elements.profileDeletePasswordError.style.display = "none";
+    elements.profileDeletePasswordError.textContent = "";
+  }
+  if (elements.profileDeleteConfirmBtn) elements.profileDeleteConfirmBtn.disabled = true;
+}
+
+function showProfileUnlockError(message) {
+  if (!elements.profileUnlockError) return;
+  elements.profileUnlockError.textContent = message;
+  elements.profileUnlockError.style.display = message ? "block" : "none";
+}
+
+function hideProfileUnlockError() {
+  showProfileUnlockError("");
+}
+
+/**
+ * Verifies password and unlocks profile for this tab session.
+ * @returns {Promise<boolean>} true when unlocked
+ */
+async function attemptProfileUnlock(profileId, password, options) {
+  if (typeof ProfileSecurity === "undefined") {
+    const msg = "Profile security module failed to load. Refresh the page.";
+    if (options && options.source === "inline") {
+      showProfileLockedInlineError(msg);
+    } else {
+      showProfileUnlockError(msg);
+    }
+    return false;
+  }
+  const profile = state.profiles.find((p) => p.id === profileId);
+  if (!profile) return false;
+  if (!isProfilePasswordProtected(profile)) {
+    markProfileUnlocked(profileId);
+    return true;
+  }
+  if (typeof ProfileSecurity === "undefined") {
+    const msg = "Password security is unavailable. Reload the page and try again.";
+    if (options && options.source === "inline") {
+      showProfileLockedInlineError(msg);
+    } else {
+      showProfileUnlockError(msg);
+    }
+    return false;
+  }
+  const ok = await ProfileSecurity.verifyProfilePassword(
+    password,
+    profile.passwordSalt,
+    profile.passwordHash
+  );
+  if (!ok) {
+    const failMsg = "Incorrect password. Try again.";
+    if (options && options.source === "inline") {
+      showProfileLockedInlineError(failMsg);
+      if (elements.profileLockedInlinePassword) {
+        elements.profileLockedInlinePassword.focus();
+        elements.profileLockedInlinePassword.select();
+      }
+    } else {
+      showProfileUnlockError(failMsg);
+      if (elements.profileUnlockPassword) {
+        elements.profileUnlockPassword.focus();
+        elements.profileUnlockPassword.select();
+      }
+    }
+    return false;
+  }
+  markProfileUnlocked(profileId);
+  showProfileLockedInlineError("");
+  hideProfileUnlockError();
+  return true;
+}
+
+async function completeProfileUnlockSuccess(profileId) {
+  const action = pendingUnlockAction;
+  pendingUnlockAction = null;
+  closeProfileUnlockModal();
+  if (!state.activeProfileId) {
+    state.activeProfileId = profileId;
+    saveState();
+  }
+  renderProfiles();
+  renderProjects();
+  if (action && action.type === "edit") {
+    openProfileEditModal(profileId);
+  } else if (action && action.type === "view") {
+    openProfileViewModal(profileId);
+  }
+  showToast("Profile unlocked.");
+}
+
+function openProfileUnlockModal(profileId) {
+  const profile = state.profiles.find((p) => p.id === profileId);
+  if (!profile || !elements.profileUnlockModal) return;
+  hideCellTypeTooltips();
+  elements.profileUnlockModal.setAttribute("data-profile-id", profileId);
+  if (elements.profileUnlockModalSubtitle) {
+    elements.profileUnlockModalSubtitle.textContent = `Enter the password for “${profile.name || "this profile"}” to continue.`;
+  }
+  if (elements.profileUnlockPassword) {
+    elements.profileUnlockPassword.value = "";
+  }
+  hideProfileUnlockError();
+  elements.profileUnlockModal.setAttribute("aria-hidden", "false");
+  elements.profileUnlockModal.classList.add("active");
+  if (elements.profileUnlockPassword) {
+    setTimeout(() => elements.profileUnlockPassword.focus(), 50);
+  }
+}
+
+function closeProfileUnlockModal() {
+  if (!elements.profileUnlockModal) return;
+  elements.profileUnlockModal.classList.remove("active");
+  elements.profileUnlockModal.setAttribute("aria-hidden", "true");
+  elements.profileUnlockModal.removeAttribute("data-profile-id");
+  if (elements.profileUnlockPassword) elements.profileUnlockPassword.value = "";
+  hideProfileUnlockError();
+  pendingUnlockAction = null;
+}
+
+async function handleProfileUnlockConfirm() {
+  const profileId = elements.profileUnlockModal && elements.profileUnlockModal.getAttribute("data-profile-id");
+  if (!profileId) return;
+  const profile = state.profiles.find((p) => p.id === profileId);
+  if (!profile) {
+    closeProfileUnlockModal();
+    return;
+  }
+  const password = elements.profileUnlockPassword ? elements.profileUnlockPassword.value : "";
+  const ok = await attemptProfileUnlock(profileId, password, { source: "modal" });
+  if (!ok) return;
+  await completeProfileUnlockSuccess(profileId);
+}
+
+function updateProfileDeleteConfirmState() {
+  if (!elements.profileDeleteConfirmBtn || !elements.profileDeleteModal) return;
+  const profileId = elements.profileDeleteModal.getAttribute("data-profile-id");
+  const profile = state.profiles.find((p) => p.id === profileId);
+  if (!profile) {
+    elements.profileDeleteConfirmBtn.disabled = true;
+    return;
+  }
+  if (!isProfilePasswordProtected(profile)) {
+    elements.profileDeleteConfirmBtn.disabled = false;
+    if (elements.profileDeletePasswordError) {
+      elements.profileDeletePasswordError.style.display = "none";
+    }
+    return;
+  }
+  const password = elements.profileDeletePassword ? elements.profileDeletePassword.value : "";
+  if (!password) {
+    elements.profileDeleteConfirmBtn.disabled = true;
+    return;
+  }
+  ProfileSecurity.verifyProfilePassword(password, profile.passwordSalt, profile.passwordHash)
+    .then((ok) => {
+      elements.profileDeleteConfirmBtn.disabled = !ok;
+      if (elements.profileDeletePasswordError) {
+        if (password && !ok) {
+          elements.profileDeletePasswordError.textContent = "Incorrect password.";
+          elements.profileDeletePasswordError.style.display = "block";
+        } else {
+          elements.profileDeletePasswordError.style.display = "none";
+          elements.profileDeletePasswordError.textContent = "";
+        }
+      }
+    })
+    .catch((err) => {
+      console.error("Delete password check failed:", err);
+      elements.profileDeleteConfirmBtn.disabled = true;
+    });
 }
 
 function showToast(message) {
@@ -5450,6 +6615,7 @@ function showToast(message) {
 function openProfileViewModal(profileId) {
   const profile = state.profiles.find((p) => p.id === profileId);
   if (!profile || !elements.profileViewModal) return;
+  if (!requireProfileUnlocked(profileId, "view")) return;
   hideCellTypeTooltips();
   if (elements.profileViewName) {
     elements.profileViewName.textContent = profile.name || "Untitled profile";
@@ -5559,6 +6725,7 @@ function closeProfileViewModal() {
 function openProfileEditModal(profileId) {
   const profile = state.profiles.find((p) => p.id === profileId);
   if (!profile || !elements.profileEditModal) return;
+  if (!requireProfileUnlocked(profileId, "edit")) return;
   hideCellTypeTooltips();
   elements.profileEditModal.setAttribute("data-profile-id", profileId);
   if (elements.profileEditName) {
@@ -5567,8 +6734,29 @@ function openProfileEditModal(profileId) {
   if (elements.profileEditTeam) {
     elements.profileEditTeam.value = (profile.team || "").trim();
   }
+  const protectedProfile = isProfilePasswordProtected(profile);
+  if (elements.profileEditCurrentPasswordWrap) {
+    elements.profileEditCurrentPasswordWrap.classList.toggle("profile-field--hidden", !protectedProfile);
+    elements.profileEditCurrentPasswordWrap.style.display = "";
+  }
+  if (elements.profileEditCurrentPassword) elements.profileEditCurrentPassword.value = "";
+  if (elements.profileEditNewPassword) elements.profileEditNewPassword.value = "";
+  if (elements.profileEditConfirmPassword) elements.profileEditConfirmPassword.value = "";
+  if (elements.profileEditRemovePassword) elements.profileEditRemovePassword.checked = false;
+  if (elements.profileEditPasswordHint) {
+    elements.profileEditPasswordHint.textContent = protectedProfile
+      ? "Current password is required to save changes. Set a new password or remove protection."
+      : "Optionally set a password to lock this profile.";
+  }
+  if (elements.profileEditPasswordError) {
+    elements.profileEditPasswordError.style.display = "none";
+    elements.profileEditPasswordError.textContent = "";
+  }
   elements.profileEditModal.setAttribute("aria-hidden", "false");
   elements.profileEditModal.classList.add("active");
+  setTimeout(() => {
+    if (elements.profileEditName) elements.profileEditName.focus();
+  }, 80);
 }
 
 function closeProfileEditModal() {
@@ -5576,9 +6764,24 @@ function closeProfileEditModal() {
   elements.profileEditModal.classList.remove("active");
   elements.profileEditModal.setAttribute("aria-hidden", "true");
   elements.profileEditModal.removeAttribute("data-profile-id");
+  if (elements.profileEditCurrentPassword) elements.profileEditCurrentPassword.value = "";
+  if (elements.profileEditNewPassword) elements.profileEditNewPassword.value = "";
+  if (elements.profileEditConfirmPassword) elements.profileEditConfirmPassword.value = "";
+  if (elements.profileEditRemovePassword) elements.profileEditRemovePassword.checked = false;
+  resetProfileEditPasswordFieldTypes();
 }
 
-function handleProfileEditSave() {
+function showProfileEditPasswordError(message) {
+  if (!elements.profileEditPasswordError) return;
+  elements.profileEditPasswordError.textContent = message;
+  elements.profileEditPasswordError.style.display = message ? "block" : "none";
+}
+
+async function handleProfileEditSave() {
+  if (typeof ProfileSecurity === "undefined") {
+    showToast("Profile security module failed to load. Refresh the page and try again.");
+    return;
+  }
   const profileId = elements.profileEditModal.getAttribute("data-profile-id");
   if (!profileId) return;
   const profile = state.profiles.find((p) => p.id === profileId);
@@ -5591,7 +6794,45 @@ function handleProfileEditSave() {
     if (elements.profileEditName) elements.profileEditName.focus();
     return;
   }
+  showProfileEditPasswordError("");
+
   const team = (elements.profileEditTeam && elements.profileEditTeam.value || "").trim();
+  const currentPwd = elements.profileEditCurrentPassword ? elements.profileEditCurrentPassword.value : "";
+  const newPwd = elements.profileEditNewPassword ? elements.profileEditNewPassword.value : "";
+  const confirmPwd = elements.profileEditConfirmPassword ? elements.profileEditConfirmPassword.value : "";
+  const removePassword = !!(elements.profileEditRemovePassword && elements.profileEditRemovePassword.checked);
+  const protectedProfile = isProfilePasswordProtected(profile);
+
+  if (protectedProfile) {
+    const currentOk = await ProfileSecurity.verifyProfilePassword(
+      currentPwd,
+      profile.passwordSalt,
+      profile.passwordHash
+    );
+    if (!currentOk) {
+      showProfileEditPasswordError("Current password is incorrect.");
+      if (elements.profileEditCurrentPassword) elements.profileEditCurrentPassword.focus();
+      return;
+    }
+  }
+
+  if (removePassword) {
+    if (!protectedProfile) {
+      showProfileEditPasswordError("This profile does not have a password.");
+      return;
+    }
+    clearProfilePassword(profile);
+    markProfileLocked(profileId);
+  } else if (newPwd || confirmPwd) {
+    const validation = ProfileSecurity.validatePasswordPair(newPwd, confirmPwd, { required: true });
+    if (!validation.ok) {
+      showProfileEditPasswordError(validation.message);
+      return;
+    }
+    await applyProfilePassword(profile, validation.password);
+    markProfileUnlocked(profileId);
+  }
+
   profile.name = name;
   profile.team = team;
   saveState();
@@ -5624,27 +6865,71 @@ function deleteProfile(profileId) {
       "This will permanently remove this profile and all of its projects from this browser. This action cannot be undone.";
   }
 
+  const needsPassword = isProfilePasswordProtected(profile);
+  if (elements.profileDeletePasswordWrap) {
+    elements.profileDeletePasswordWrap.style.display = needsPassword ? "block" : "none";
+  }
+  if (elements.profileDeletePassword) {
+    elements.profileDeletePassword.value = "";
+  }
+  if (elements.profileDeletePasswordError) {
+    elements.profileDeletePasswordError.style.display = "none";
+    elements.profileDeletePasswordError.textContent = "";
+  }
+
   elements.profileDeleteModal.setAttribute("aria-hidden", "false");
   elements.profileDeleteModal.classList.add("active");
+  updateProfileDeleteConfirmState();
 
   if (elements.profileDeleteConfirmBtn) {
     elements.profileDeleteConfirmBtn.onclick = () => {
       const id = elements.profileDeleteModal.getAttribute("data-profile-id");
-      const idx = state.profiles.findIndex((p) => p.id === id);
-      if (idx !== -1) {
-        state.profiles.splice(idx, 1);
-        if (state.profiles.length === 0) {
-          state.activeProfileId = null;
-          ensureDefaultProfile();
-        } else if (state.activeProfileId === id) {
-          state.activeProfileId = state.profiles[0].id;
-        }
-        saveState();
-        renderProfiles();
-        renderProjects();
-        showToast("Profile deleted successfully.");
+      const target = state.profiles.find((p) => p.id === id);
+      if (!target) {
+        closeProfileDeleteModal();
+        return;
       }
-      closeProfileDeleteModal();
+      const runDelete = () => {
+        const idx = state.profiles.findIndex((p) => p.id === id);
+        if (idx !== -1) {
+          state.profiles.splice(idx, 1);
+          markProfileLocked(id);
+          if (state.profiles.length === 0) {
+            state.activeProfileId = null;
+            ensureDefaultProfile();
+          } else if (state.activeProfileId === id) {
+            state.activeProfileId = state.profiles[0].id;
+          }
+          saveState();
+          renderProfiles();
+          renderProjects();
+          showToast("Profile deleted successfully.");
+        }
+        closeProfileDeleteModal();
+      };
+
+      if (!isProfilePasswordProtected(target)) {
+        runDelete();
+        return;
+      }
+
+      const password = elements.profileDeletePassword ? elements.profileDeletePassword.value : "";
+      ProfileSecurity.verifyProfilePassword(password, target.passwordSalt, target.passwordHash)
+        .then((ok) => {
+          if (!ok) {
+            if (elements.profileDeletePasswordError) {
+              elements.profileDeletePasswordError.textContent = "Incorrect password. Profile was not deleted.";
+              elements.profileDeletePasswordError.style.display = "block";
+            }
+            updateProfileDeleteConfirmState();
+            return;
+          }
+          runDelete();
+        })
+        .catch((err) => {
+          console.error("Delete verification failed:", err);
+          showToast("Could not verify password. Profile was not deleted.");
+        });
     };
   }
 
@@ -5719,6 +7004,12 @@ function openProjectModal(mode, projectId) {
 
   const activeProfile = getActiveProfile();
   if (!activeProfile) return;
+  if (!isProfileUnlocked(activeProfile.id)) {
+    pendingUnlockAction = { type: "activate", profileId: activeProfile.id };
+    openProfileUnlockModal(activeProfile.id);
+    showToast("Unlock this profile to add or edit projects.");
+    return;
+  }
 
   let project = null;
   if (isEdit || isView) {
@@ -5853,8 +7144,11 @@ function handleProjectFormSubmit(e) {
     return;
   }
 
-  const activeProfile = getActiveProfile();
-  if (!activeProfile) return;
+  const activeProfile = getUnlockedActiveProfile();
+  if (!activeProfile) {
+    showToast("Unlock this profile to save projects.");
+    return;
+  }
 
   let period = (elements.projectPeriod.value || "").trim();
   if (period) {

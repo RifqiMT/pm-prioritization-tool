@@ -36,6 +36,39 @@
 - Run lint and sanity-pass for modified files.
 - Keep documentation aligned with audited runtime files.
 
+---
+
+## 6. Export / import Guardrails (security + data integrity)
+
+### 6.1 Export security behavior
+- Exported files must not include password-protected profile content unless:
+  - the profile has no password, or
+  - the profile is unlocked with the correct password in the current session, or
+  - the user completes verification for that specific profile in the export unlock dialog.
+- If any password is missing or incorrect during export verification:
+  - the affected profile is omitted from the exported payload.
+- The app must avoid logging or persisting plaintext passwords anywhere.
+
+### 6.2 Export omission rules
+- “At least one profile” must remain exportable:
+  - if all profiles are password-protected and verification fails for all of them, the export action must fail gracefully.
+- Export success messaging must explicitly reflect omission counts and/or skipped profile names when available.
+
+### 6.3 Import merge behavior constraints
+- Import must merge by stable IDs:
+  - profile merge: by `profile.id`
+  - project merge: by `project.id` within a profile
+- Import must not create duplicate corruption:
+  - repeated imports of the same file should converge (no duplicate insertion for the same IDs).
+- Import must handle invalid input safely:
+  - JSON parse errors and malformed shapes must be handled with user-facing errors and without partial corruption.
+
+### 6.4 UI parity constraint (export/import)
+- Export and import dialogs must:
+  - follow the same component language (header, body, footer actions)
+  - support mobile/tablet layout consistently
+  - avoid legacy all-caps or dark-background overrides that reduce usability.
+
 ## 6. Production (Vercel) Guardrails
 
 - Deploy as **static assets only**; do not add server-side secrets to the repository.

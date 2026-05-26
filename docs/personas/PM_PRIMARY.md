@@ -70,3 +70,8 @@
 - Avoid presenting financial estimates as accounting truth; position as planning support.
 - Maintain consistent rubric calibration across teams before debating scores.
 
+## Relevant behaviors (export/import + board polish)
+- When reviewing execution on the **Board**, I can use **status toggle pills** to focus on relevant work-in-progress slices. The UI prevents hiding all columns.
+- When exporting, **password-protected profiles are included only after verification** for each protected profile. Incorrect or missing passwords result in omission from the export file (with clear user feedback).
+- Password visibility controls (eye show/hide) behave consistently across profile modals and the export unlock dialog, so verification is fast and error-resistant on mobile/tablet.
+

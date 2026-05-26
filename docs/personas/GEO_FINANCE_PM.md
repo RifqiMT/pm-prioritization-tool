@@ -40,3 +40,8 @@
 - Stakeholders can see “where value is” by region in minutes.
 - Quarterly regional reviews require less manual prep work.
 
+## Relevant behaviors (EUR normalization + export gate)
+- I can switch Map metrics using the **segmented pills** (Count / RICE / EUR) and immediately understand what the legend represents.
+- I can trust EUR totals by relying on FX refresh and guardrails that prevent silent wrong numbers when exchange rates are unavailable.
+- When exporting, password-gated portfolios are included only after verification, so region/financial exports do not accidentally leak protected data.
+
