@@ -9,14 +9,21 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="css/main.css?v=20260526-sync4" rel="stylesheet" />
-  <link href="css/workspace-modern.css?v=20260526-sync4" rel="stylesheet" />
-  <link href="css/header-modern.css?v=20260526-sync4" rel="stylesheet" />
-  <link href="css/profiles-modern.css" rel="stylesheet" />
-  <link href="css/portfolio-modern.css" rel="stylesheet" />
+  <link href="css/main.css?v=20260526-ui54" rel="stylesheet" />
+  <link href="css/workspace-modern.css?v=20260526-ui54" rel="stylesheet" />
+  <link href="css/header-modern.css?v=20260526-ui54" rel="stylesheet" />
+  <link href="css/profiles-modern.css?v=20260526-ui54" rel="stylesheet" />
+  <link href="css/portfolio-modern.css?v=20260526-ui54" rel="stylesheet" />
   <link href="css/profile-modals-modern.css" rel="stylesheet" />
   <link href="css/export-modals-modern.css" rel="stylesheet" />
-  <link href="css/view-toolbars-modern.css" rel="stylesheet" />
+  <link href="css/view-toolbars-modern.css?v=20260526-ui54" rel="stylesheet" />
+  <link href="css/compact-modern.css?v=20260526-ui54" rel="stylesheet" />
+  <link href="css/moscow-compact.css?v=20260526-ui54" rel="stylesheet" />
+  <link href="css/board-compact.css?v=20260526-ui54" rel="stylesheet" />
+  <link href="css/table-compact.css?v=20260526-ui54" rel="stylesheet" />
+  <link href="css/fullscreen-modern.css?v=20260526-ui54" rel="stylesheet" />
+  <link href="css/fullscreen-compact.css?v=20260526-ui54" rel="stylesheet" />
+  <link href="css/app-footer.css?v=20260526-ui54" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 <body>
@@ -37,7 +44,7 @@
       <p class="deployment-issue-banner__text" id="deploymentIssueBannerText"></p>
       <p class="deployment-issue-banner__hint">
         Verify <code>/api/config</code> returns JSON (not a React app). See
-        <a href="/docs/VERCEL_MONGODB_FIX.md" target="_blank" rel="noopener noreferrer">Vercel + MongoDB setup</a>.
+        <a href="/docs/DEPLOYMENT.md" target="_blank" rel="noopener noreferrer">Deployment &amp; MongoDB setup</a>.
       </p>
     </div>
     <button type="button" class="deployment-issue-banner__dismiss" id="deploymentIssueBannerDismiss" aria-label="Dismiss">×</button>
@@ -50,10 +57,6 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 5 5-9"/></svg>
           </div>
           <div class="app-header-brand-text">
-            <div class="app-header-kicker">
-              <span class="app-header-status-dot" id="appStorageStatusDot" aria-hidden="true"></span>
-              <button type="button" id="appStorageStatusLabel" class="app-storage-status-label" title="Workspace storage status">Portfolio ready</button>
-            </div>
             <h1 class="app-title app-header-title">
               <span class="app-title-short">PM Prioritization</span>
               <span class="app-title-full">Product Management Prioritization Tool</span>
@@ -92,18 +95,6 @@
           </button>
           <button
             type="button"
-            id="cloudStorageConnectBtn"
-            class="app-header-action-btn app-header-action-btn--cloud"
-            aria-label="Cloud storage"
-            title="Connect MongoDB cloud storage (Vercel)"
-          >
-            <span class="app-header-action-icon" aria-hidden="true">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v6c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 11v6c0 1.66 4.03 3 9 3s9-1.34 9-3v-6"/></svg>
-            </span>
-            <span class="app-header-action-title">Cloud</span>
-          </button>
-          <button
-            type="button"
             id="importDataBtn"
             class="app-header-action-btn"
             aria-label="Import"
@@ -132,8 +123,27 @@
     </header>
 
     <main class="app-layout">
-      <!-- Profiles / owners -->
+      <!-- Profiles / owners (sidebar on desktop; bottom-sheet on tablet/phone) -->
+      <!-- Bottom-sheet backdrop (mobile only) -->
+      <div class="profiles-sheet-backdrop" id="profilesSheetBackdrop" aria-hidden="true" hidden></div>
+
       <section class="card profiles-panel profiles-panel--modern profiles-panel--v2" aria-labelledby="profilesPanelTitle">
+        <!-- Desktop: sidebar; tablet/phone: bottom sheet via profile picker -->
+        <div class="profiles-panel-sheet" id="profilesPanelSheet" role="dialog" aria-modal="true" aria-labelledby="profilesPanelTitle" hidden>
+          <div class="profiles-panel-sheet-handle" aria-hidden="true"></div>
+          <div class="profiles-panel-sheet-header">
+            <div class="profiles-panel-sheet-title-group">
+              <span class="profiles-panel-sheet-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </span>
+              <span class="profiles-panel-sheet-title">Profiles &amp; owners</span>
+              <span class="profiles-count-badge profiles-sheet-count-badge" id="profilesSheetCountBadge" aria-live="polite">0</span>
+            </div>
+            <button type="button" class="profiles-panel-sheet-close" id="profilesSheetCloseBtn" aria-label="Close profiles panel">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </div>
+          <div class="profiles-panel-sheet-body">
         <header class="profiles-panel-header">
           <div class="profiles-panel-mark" aria-hidden="true">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -145,12 +155,25 @@
           </div>
         </header>
 
+        <nav class="profiles-sheet-tabs" id="profilesSheetTabs" role="tablist" aria-label="Profile sections" hidden>
+          <button type="button" class="profiles-sheet-tab profiles-sheet-tab--active" role="tab" id="profilesSheetTabBrowse" aria-selected="true" aria-controls="profilesSheetPanelBrowse" data-profiles-tab="browse">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>Browse</span>
+          </button>
+          <button type="button" class="profiles-sheet-tab" role="tab" id="profilesSheetTabCreate" aria-selected="false" aria-controls="profilesSheetPanelCreate" data-profiles-tab="create">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            <span>New profile</span>
+          </button>
+        </nav>
+
+        <div class="profiles-sheet-panels">
+        <div id="profilesSheetPanelCreate" class="profiles-sheet-panel profiles-sheet-panel--create" role="tabpanel" aria-labelledby="profilesSheetTabCreate" hidden>
         <details class="profiles-create-panel" id="profilesCreatePanel">
           <summary class="profiles-create-summary">
             <span class="profiles-create-summary-title">New profile</span>
-            <span class="profiles-create-summary-hint">Tap to add name, team, password</span>
+            <span class="profiles-create-summary-hint">Add name, team, optional password</span>
           </summary>
-          <form id="addProfileForm" class="profiles-create-form profile-form-row" autocomplete="off">
+          <form id="addProfileForm" class="profiles-create-form" autocomplete="off">
             <div class="profiles-create-grid">
               <div class="profile-form-field">
                 <label for="newProfileName">Profile name</label>
@@ -160,14 +183,31 @@
                 <label for="newProfileTeam">Team <span class="profiles-label-optional">(optional)</span></label>
                 <input id="newProfileTeam" name="newProfileTeam" type="text" placeholder="e.g. Growth, Platform" />
               </div>
-              <div class="profile-form-field profile-form-field--full">
-                <label for="newProfilePassword">Password <span class="profiles-label-optional">(optional)</span></label>
-                <input id="newProfilePassword" name="newProfilePassword" type="password" autocomplete="new-password" placeholder="Lock this profile" />
-              </div>
-              <div class="profile-form-field profile-form-field--full">
-                <label for="newProfilePasswordConfirm">Confirm password</label>
-                <input id="newProfilePasswordConfirm" name="newProfilePasswordConfirm" type="password" autocomplete="new-password" placeholder="Re-enter password" />
-              </div>
+              <details class="profiles-create-security" id="profilesCreateSecurity">
+                <summary class="profiles-create-security-summary">Password protection <span class="profiles-label-optional">(optional)</span></summary>
+                <div class="profiles-create-security-fields">
+                  <div class="profile-form-field profile-form-field--full">
+                    <label for="newProfilePassword">Password</label>
+                    <div class="profile-password-input-wrap">
+                      <input id="newProfilePassword" name="newProfilePassword" type="password" autocomplete="new-password" placeholder="Lock this profile" />
+                      <button type="button" class="profile-password-toggle" data-target="newProfilePassword" aria-label="Show password">
+                        <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="profile-form-field profile-form-field--full">
+                    <label for="newProfilePasswordConfirm">Confirm password</label>
+                    <div class="profile-password-input-wrap">
+                      <input id="newProfilePasswordConfirm" name="newProfilePasswordConfirm" type="password" autocomplete="new-password" placeholder="Re-enter password" />
+                      <button type="button" class="profile-password-toggle" data-target="newProfilePasswordConfirm" aria-label="Show password">
+                        <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </details>
             </div>
             <p id="newProfilePasswordHint" class="profile-password-hint profiles-create-hint">Leave password blank for open access. Protected profiles require a password to view or delete.</p>
             <button type="submit" class="profile-add-btn profiles-create-submit" aria-label="Create profile">
@@ -176,8 +216,10 @@
             </button>
           </form>
         </details>
+        </div><!-- /#profilesSheetPanelCreate -->
 
-        <div class="profiles-list-section">
+        <div id="profilesSheetPanelBrowse" class="profiles-sheet-panel profiles-sheet-panel--browse" role="tabpanel" aria-labelledby="profilesSheetTabBrowse">
+        <div class="profiles-list-section" id="profilesListSection">
           <div class="profiles-list-toolbar">
             <h3 class="profiles-list-heading">Your profiles</h3>
             <span id="profilesCountBadge" class="profiles-count-badge" aria-live="polite">0</span>
@@ -200,39 +242,91 @@
             No profiles match your search. Try a different name or team.
           </p>
           <p id="profilesEmptyState" class="profiles-empty-state profile-empty" style="display:none;">
-            <span class="profiles-empty-icon" aria-hidden="true">📂</span>
-            No profiles yet. Open <strong>New profile</strong> above to get started.
+            <span class="profiles-empty-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </span>
+            <span class="profiles-empty-copy">No profiles yet. Switch to <strong>New profile</strong> to create your first workspace.</span>
           </p>
         </div>
+        </div><!-- /#profilesSheetPanelBrowse -->
+        </div><!-- /.profiles-sheet-panels -->
+          </div><!-- /.profiles-panel-sheet-body -->
+        </div><!-- /#profilesPanelSheet -->
       </section>
 
       <!-- Projects side -->
-      <section class="card-plain workspace-panel workspace-panel--v2" aria-labelledby="activeProfileTitleText">
-        <div id="profileLockedBanner" class="profile-locked-banner portfolio-locked-banner" style="display:none;" role="region" aria-labelledby="profileLockedBannerTitle">
-          <div class="profile-locked-banner__layout">
-            <div class="profile-locked-banner__message">
-              <span class="profile-locked-banner__icon" aria-hidden="true">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              </span>
-              <div class="profile-locked-banner__copy">
-                <strong id="profileLockedBannerTitle" class="profile-locked-banner__title">This profile is locked</strong>
-                <p id="profileLockedBannerText" class="profile-locked-banner-text">Enter the profile password to view and manage projects.</p>
-              </div>
-            </div>
-            <form id="profileLockedUnlockForm" class="profile-locked-banner__form" autocomplete="off">
-              <label class="sr-only" for="profileLockedInlinePassword">Profile password</label>
-              <div class="profile-password-input-wrap profile-locked-banner__password-wrap">
-                <input id="profileLockedInlinePassword" type="password" autocomplete="current-password" placeholder="Profile password" />
-                <button type="button" class="profile-password-toggle" data-target="profileLockedInlinePassword" aria-label="Show password">
-                  <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                  <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+      <section class="card-plain workspace-panel workspace-panel--v2" id="workspacePanel" aria-labelledby="activeProfileTitleText">
+        <div class="profile-picker-bar" id="profilePickerBar" hidden>
+          <label class="profile-picker-bar__label" for="profilePickerInput">Profile</label>
+          <div class="profile-picker" id="profilePicker">
+            <div class="profile-picker__field">
+              <div class="profile-picker__control" id="profilePickerControl">
+                <span class="profile-picker__avatar" id="profilePickerAvatar" aria-hidden="true">?</span>
+                <input
+                  type="text"
+                  id="profilePickerInput"
+                  class="profile-picker__input"
+                  role="combobox"
+                  aria-expanded="false"
+                  aria-controls="profilePickerListbox"
+                  aria-autocomplete="list"
+                  aria-haspopup="listbox"
+                  placeholder="Search profiles…"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+                <button type="button" class="profile-picker__toggle" id="profilePickerToggle" aria-label="Show profile list" aria-expanded="false">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
                 </button>
               </div>
-              <button type="submit" id="profileLockedUnlockSubmitBtn" class="profile-locked-banner__submit">Unlock</button>
-            </form>
+              <div class="profile-picker__dropdown" id="profilePickerDropdown" hidden>
+                <ul id="profilePickerListbox" class="profile-picker__list" role="listbox" aria-label="Profiles"></ul>
+                <p class="profile-picker__empty" id="profilePickerEmpty" hidden>No profiles match your search</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="profile-picker__manage"
+              id="mobileProfileManageBtn"
+              aria-expanded="false"
+              aria-controls="profilesPanelSheet"
+              aria-haspopup="dialog"
+              aria-label="Manage profiles"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+              <span class="profile-picker__manage-label">Manage</span>
+            </button>
           </div>
-          <p id="profileLockedInlineError" class="field-error profile-password-error profile-locked-inline-error" role="alert" style="display:none;"></p>
         </div>
+
+        <div id="profileLockedBanner" class="profile-unlock-panel" role="region" aria-labelledby="profileLockedBannerTitle" aria-hidden="true">
+          <div class="profile-unlock-panel__card">
+            <div class="profile-unlock-panel__icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <h2 id="profileLockedBannerTitle" class="profile-unlock-panel__title">This profile is locked</h2>
+            <p id="profileLockedBannerText" class="profile-unlock-panel__text">Enter the profile password to view and manage projects.</p>
+            <form id="profileLockedUnlockForm" class="profile-unlock-panel__form" autocomplete="off">
+              <label class="profile-unlock-panel__field-label" for="profileLockedInlinePassword">Password</label>
+              <div class="profile-unlock-panel__field">
+                <div class="profile-password-input-wrap profile-unlock-panel__password-wrap">
+                  <input id="profileLockedInlinePassword" type="password" autocomplete="current-password" placeholder="Enter profile password" />
+                  <button type="button" class="profile-password-toggle" data-target="profileLockedInlinePassword" aria-label="Show password">
+                    <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                  </button>
+                </div>
+                <button type="submit" id="profileLockedUnlockSubmitBtn" class="profile-unlock-panel__submit">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                  Unlock profile
+                </button>
+              </div>
+            </form>
+            <p id="profileLockedInlineError" class="field-error profile-password-error profile-unlock-panel__error" role="alert" style="display:none;"></p>
+          </div>
+        </div>
+
+        <div class="workspace-portfolio-body" id="workspacePortfolioBody">
         <header class="portfolio-command-bar projects-header-row workspace-toolbar">
           <div class="portfolio-command-intro projects-header-left">
             <div class="portfolio-command-mark" aria-hidden="true">
@@ -240,34 +334,37 @@
             </div>
             <div class="portfolio-command-copy">
               <p class="workspace-eyebrow portfolio-eyebrow">Active portfolio</p>
-              <h2 class="projects-header-title portfolio-title" id="activeProfileTitleText">No profile selected</h2>
-              <p class="projects-header-subtitle portfolio-subtitle" id="activeProfileSubtitleText">
-                Create a profile on the left to start prioritizing projects.
-              </p>
+              <div class="portfolio-command-title-row">
+                <h2 class="projects-header-title portfolio-title" id="activeProfileTitleText">No profile selected</h2>
+                <p class="projects-header-subtitle portfolio-subtitle portfolio-subtitle--inline" id="activeProfileSubtitleText">
+                  Create a profile on the left to start prioritizing projects.
+                </p>
+              </div>
               <div class="projects-header-badges portfolio-badges" id="projectsHeaderBadges"></div>
             </div>
           </div>
           <div class="portfolio-command-controls projects-header-actions workspace-toolbar-actions">
             <nav class="portfolio-view-tabs view-toggle-group view-toggle-group--modern view-toggle-group--portfolio" role="tablist" aria-label="Projects view">
-              <button type="button" id="projectsViewTableBtn" class="view-toggle-btn view-toggle-btn--active" role="tab" aria-selected="true" data-view="table">
+              <button type="button" id="projectsViewTableBtn" class="view-toggle-btn view-toggle-btn--active" role="tab" aria-selected="true" data-view="table" aria-label="Table view">
+                <svg class="view-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/></svg>
                 <span class="view-tab-text">Table</span>
               </button>
-              <button type="button" id="projectsViewBoardBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="board">
+              <button type="button" id="projectsViewBoardBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="board" aria-label="Board view">
+                <svg class="view-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="12" rx="1"/></svg>
                 <span class="view-tab-text">Board</span>
               </button>
-              <button type="button" id="projectsViewMoscowBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="moscow">
+              <button type="button" id="projectsViewMoscowBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="moscow" aria-label="MoSCoW view">
+                <svg class="view-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
                 <span class="view-tab-text">MoSCoW</span>
               </button>
-              <button type="button" id="projectsViewMapBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="map">
+              <button type="button" id="projectsViewMapBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="map" aria-label="Map view">
+                <svg class="view-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></svg>
                 <span class="view-tab-text">Map</span>
               </button>
             </nav>
             <div class="portfolio-action-group">
               <button type="button" id="addProjectBtn" class="portfolio-btn portfolio-btn--primary" disabled>
                 New project
-              </button>
-              <button type="button" id="bulkDeleteBtn" class="portfolio-btn portfolio-btn--danger" disabled>
-                Delete selected
               </button>
             </div>
           </div>
@@ -437,6 +534,10 @@
               </div>
             </div>
             <div class="view-toolbar__cluster">
+              <button type="button" id="bulkDeleteBtn" class="view-toolbar__btn view-toolbar__btn--danger" disabled hidden aria-label="Delete selected projects">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                <span class="view-toolbar__btn-label">Delete selected</span>
+              </button>
               <button type="button" id="tableFullscreenBtn" class="view-toolbar__btn view-fullscreen-btn" aria-label="Expand table to full screen" title="Full screen">
                 <svg class="view-fullscreen-icon icon-expand" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
                 <svg class="view-fullscreen-icon icon-compress" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v3a2 2 0 0 1 2 2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
@@ -584,19 +685,40 @@
               <div class="view-toolbar__cluster view-toolbar__cluster--actions">
                 <div class="view-toolbar__metric view-toolbar__metric--map">
                   <span id="projectsMapMetricLabel" class="view-toolbar__field-label projects-map-metric-label">Show by</span>
-                  <div id="projectsMapMetricToggle" class="map-metric-toggle" role="radiogroup" aria-labelledby="projectsMapMetricLabel">
-                    <button type="button" class="map-metric-toggle__option" data-metric="projects" role="radio" aria-checked="true" title="Number of projects per country">
-                      <span class="map-metric-toggle__short">Count</span>
-                      <span class="map-metric-toggle__long">Projects</span>
-                    </button>
-                    <button type="button" class="map-metric-toggle__option" data-metric="rice" role="radio" aria-checked="false" title="Total RICE score by country">
-                      <span class="map-metric-toggle__short">RICE</span>
-                      <span class="map-metric-toggle__long">Score</span>
-                    </button>
-                    <button type="button" class="map-metric-toggle__option" data-metric="financial" role="radio" aria-checked="false" title="Total financial impact in EUR by country">
-                      <span class="map-metric-toggle__short">EUR</span>
-                      <span class="map-metric-toggle__long">Financial</span>
-                    </button>
+                  <div class="map-metric-picker" id="mapMetricPicker">
+                    <div class="map-metric-picker__field">
+                      <button
+                        type="button"
+                        id="mapMetricPickerTrigger"
+                        class="map-metric-picker__trigger"
+                        aria-haspopup="listbox"
+                        aria-expanded="false"
+                        aria-controls="mapMetricPickerListbox"
+                        aria-labelledby="projectsMapMetricLabel mapMetricPickerLabel"
+                      >
+                        <span class="map-metric-picker__trigger-main">
+                          <span id="mapMetricPickerBadge" class="map-metric-picker__trigger-badge">Count</span>
+                          <span id="mapMetricPickerLabel" class="map-metric-picker__trigger-label">Project count</span>
+                        </span>
+                        <svg class="map-metric-picker__chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                      </button>
+                      <div class="map-metric-picker__dropdown" id="mapMetricPickerDropdown" hidden>
+                        <div class="map-metric-picker__search-wrap">
+                          <svg class="map-metric-picker__search-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                          <input
+                            type="search"
+                            id="mapMetricPickerSearch"
+                            class="map-metric-picker__search"
+                            placeholder="Filter metrics…"
+                            autocomplete="off"
+                            spellcheck="false"
+                            aria-label="Filter map metrics"
+                          />
+                        </div>
+                        <ul id="mapMetricPickerListbox" class="map-metric-picker__list" role="listbox" aria-label="Map metrics"></ul>
+                        <p class="map-metric-picker__empty" id="mapMetricPickerEmpty" hidden>No metrics match your filter</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <button type="button" id="projectsMapFullscreenBtn" class="view-toolbar__btn projects-map-fullscreen-btn view-fullscreen-btn" aria-label="Expand map to full screen" title="Full screen">
@@ -637,6 +759,7 @@
               </div>
             </div>
           </header>
+          <nav id="moscowCompactNav" class="moscow-compact-nav" aria-label="MoSCoW quadrants" hidden></nav>
           <div id="moscowBoardContainer" class="moscow-grid" aria-label="MOSCOW prioritization grid"></div>
         </div>
         </div>
@@ -644,8 +767,50 @@
         <button type="button" id="portfolioFabAddProject" class="portfolio-fab" aria-label="New project" title="New project" disabled>
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
         </button>
+
+        <div id="portfolioSelectionBar" class="portfolio-selection-bar" role="status" aria-live="polite" hidden>
+          <span id="portfolioSelectionCount" class="portfolio-selection-bar__count" aria-atomic="true">0 selected</span>
+          <div class="portfolio-selection-bar__actions">
+            <button type="button" id="portfolioSelectionClearBtn" class="portfolio-selection-bar__clear">Clear</button>
+            <button type="button" id="portfolioSelectionDeleteBtn" class="portfolio-selection-bar__delete" disabled>Delete selected</button>
+          </div>
+        </div>
       </section>
     </main>
+
+    <footer class="app-site-footer" role="contentinfo">
+      <div class="app-site-footer__inner">
+        <p class="app-site-footer__credit">
+          Developed, managed, and maintained by <span class="app-site-footer__name">Rifqi Tjahyono</span>
+        </p>
+        <div class="app-site-footer__links">
+          <a
+            href="https://www.linkedin.com/in/rifqi-tjahjono/"
+            class="app-site-footer__link"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg class="app-site-footer__icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+            </svg>
+            <span class="app-site-footer__link-label">LinkedIn</span>
+          </a>
+          <a
+            href="https://rifqi-tjahyono.com/"
+            class="app-site-footer__link"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg class="app-site-footer__icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M2 12h20"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+            <span class="app-site-footer__link-label">Website</span>
+          </a>
+        </div>
+      </div>
+    </footer>
   </div>
 
   <input
@@ -1307,57 +1472,73 @@
   <!-- Profile view modal -->
   <div id="profileViewModal" class="modal-backdrop modal-backdrop--profile" aria-hidden="true">
     <div class="modal-panel modal-panel--profile profile-view-modal" role="dialog" aria-modal="true" aria-labelledby="profileViewModalTitle">
-      <header class="modal-header">
-        <div class="modal-title-group">
-          <h3 id="profileViewModalTitle" class="modal-title">Profile</h3>
-          <p id="profileViewModalSubtitle" class="modal-subtitle">Profile and team details.</p>
+      <header class="profile-modal-header">
+        <div class="profile-modal-header-main">
+          <span class="profile-modal-mark profile-modal-mark--view" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          </span>
+          <div class="profile-modal-title-group">
+            <h3 id="profileViewModalTitle" class="profile-modal-title">Profile overview</h3>
+            <p id="profileViewModalSubtitle" class="profile-modal-subtitle">Summary of this profile and its projects.</p>
+          </div>
         </div>
+        <button type="button" class="profile-modal-close" id="profileViewCloseBtn" aria-label="Close dialog">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
       </header>
-      <div class="modal-body" style="display:block;">
-        <div class="form-section">
-          <div class="form-section-header">
-            <span class="form-section-title">Profile &amp; team</span>
-          </div>
-          <div class="field-meta-row">
-            <span><strong>Profile name:</strong> <span id="profileViewName">—</span></span>
-            <span><strong>Team:</strong> <span id="profileViewTeam">—</span></span>
-          </div>
-        </div>
-        <div class="form-section profile-view-stats-section">
-          <div class="form-section-header">
-            <span class="form-section-title">Profile statistics</span>
-          </div>
-          <div class="profile-view-stats">
-            <div class="profile-view-stat-row">
-              <span class="profile-view-stat-label">Total unique countries</span>
-              <span id="profileViewUniqueCountries" class="profile-view-stat-value">—</span>
-            </div>
-            <div class="profile-view-stat-row">
-              <span class="profile-view-stat-label">Total projects</span>
-              <span id="profileViewTotalProjects" class="profile-view-stat-value">—</span>
-            </div>
-            <div class="profile-view-stat-row profile-view-stat-row-multi">
-              <span class="profile-view-stat-label">By status</span>
-              <div id="profileViewByStatus" class="profile-view-chips"></div>
-            </div>
-            <div class="profile-view-stat-row profile-view-stat-row-multi">
-              <span class="profile-view-stat-label">By project type</span>
-              <div id="profileViewByType" class="profile-view-chips"></div>
-            </div>
-            <div class="profile-view-stat-row profile-view-stat-row-multi">
-              <span class="profile-view-stat-label">By T-shirt size</span>
-              <div id="profileViewByTshirt" class="profile-view-chips"></div>
-            </div>
-            <div class="profile-view-stat-row profile-view-stat-row-multi">
-              <span class="profile-view-stat-label">RICE score</span>
-              <div id="profileViewRiceStats" class="profile-view-rice"></div>
-            </div>
+
+      <div class="profile-modal-body profile-view-body">
+        <div class="profile-view-identity">
+          <span id="profileViewAvatar" class="profile-view-avatar" aria-hidden="true">—</span>
+          <div class="profile-view-identity-copy">
+            <h4 id="profileViewName" class="profile-view-name">—</h4>
+            <p id="profileViewTeamWrap" class="profile-view-team-wrap">
+              <span id="profileViewTeam" class="profile-view-team">—</span>
+            </p>
           </div>
         </div>
-        <div class="form-actions-row">
-          <button type="button" id="profileViewCloseBtnFooter">Close</button>
+
+        <div class="profile-view-kpi-grid" aria-label="Key metrics">
+          <div class="profile-view-kpi">
+            <span class="profile-view-kpi-label">Total projects</span>
+            <span id="profileViewTotalProjects" class="profile-view-kpi-value">—</span>
+          </div>
+          <div class="profile-view-kpi">
+            <span class="profile-view-kpi-label">Unique countries</span>
+            <span id="profileViewUniqueCountries" class="profile-view-kpi-value">—</span>
+          </div>
         </div>
+
+        <section class="profile-view-section" aria-labelledby="profileViewSectionStatus">
+          <h4 id="profileViewSectionStatus" class="profile-view-section-title">By status</h4>
+          <div id="profileViewByStatus" class="profile-view-chips"></div>
+        </section>
+
+        <section class="profile-view-section" aria-labelledby="profileViewSectionType">
+          <h4 id="profileViewSectionType" class="profile-view-section-title">By project type</h4>
+          <div id="profileViewByType" class="profile-view-chips"></div>
+        </section>
+
+        <section class="profile-view-section" aria-labelledby="profileViewSectionTshirt">
+          <h4 id="profileViewSectionTshirt" class="profile-view-section-title">By T-shirt size</h4>
+          <div id="profileViewByTshirt" class="profile-view-chips"></div>
+        </section>
+
+        <section class="profile-view-section profile-view-section--rice" aria-labelledby="profileViewSectionRice">
+          <h4 id="profileViewSectionRice" class="profile-view-section-title">RICE score</h4>
+          <div id="profileViewRiceStats" class="profile-view-rice-grid"></div>
+        </section>
+
+        <section class="profile-view-section profile-view-section--rice" aria-labelledby="profileViewSectionFinancial">
+          <h4 id="profileViewSectionFinancial" class="profile-view-section-title">Financial impact (EUR)</h4>
+          <p id="profileViewFinancialNote" class="profile-view-section-note" hidden></p>
+          <div id="profileViewFinancialStats" class="profile-view-rice-grid"></div>
+        </section>
       </div>
+
+      <footer class="profile-modal-footer">
+        <button type="button" class="profile-modal-btn profile-modal-btn--ghost profile-modal-btn--full" id="profileViewCloseBtnFooter">Close</button>
+      </footer>
     </div>
   </div>
 
@@ -1575,14 +1756,15 @@
 
   <!-- Classic scripts (no ES modules) so you can just open index.html directly -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="src/constants.js?v=20260526-sync4"></script>
-  <script src="src/utils.js?v=20260526-sync4"></script>
-  <script src="src/modules/profile-security.js?v=20260526-sync4"></script>
-  <script src="src/rice.js?v=20260526-sync4"></script>
-  <script src="src/modules/exchange-rates.js?v=20260526-sync4"></script>
-  <script src="src/modules/fullscreen.js?v=20260526-sync4"></script>
-  <script src="src/modules/storage.js?v=20260526-sync4"></script>
-  <script src="src/app.js?v=20260526-sync4"></script>
+  <script src="src/constants.js?v=20260526-ui54"></script>
+  <script src="src/utils.js?v=20260526-ui54"></script>
+  <script src="src/modules/profile-security.js?v=20260526-ui54"></script>
+  <script src="src/rice.js?v=20260526-ui54"></script>
+  <script src="src/modules/exchange-rates.js?v=20260526-ui54"></script>
+  <script src="src/modules/fullscreen.js?v=20260526-ui54"></script>
+  <script src="src/modules/overlay-manager.js?v=20260526-ui54"></script>
+  <script src="src/modules/storage.js?v=20260526-ui54"></script>
+  <script src="src/app.js?v=20260526-ui54"></script>
 </body>
 </html>
 

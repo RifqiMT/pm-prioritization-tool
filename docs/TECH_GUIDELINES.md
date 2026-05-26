@@ -23,12 +23,13 @@ Defined in `index.html` (order matters — globals, not ES modules):
 
 1. `src/constants.js`
 2. `src/utils.js`
-3. `src/rice.js`
-4. `src/modules/profile-security.js`
+3. `src/modules/profile-security.js`
+4. `src/rice.js`
 5. `src/modules/exchange-rates.js`
 6. `src/modules/fullscreen.js`
-7. `src/app.js`
-8. `src/main.js`
+7. `src/modules/overlay-manager.js`
+8. `src/modules/storage.js`
+9. `src/app.js` — defines `init()` and runs on `DOMContentLoaded`
 
 All shared symbols are **global functions and constants**. Do not introduce ES module imports without a planned migration.
 
@@ -46,8 +47,16 @@ Load order (later wins for equal specificity):
 6. `profile-modals-modern.css`
 7. `export-modals-modern.css`
 8. `view-toolbars-modern.css`
+9. `compact-modern.css` — compact chrome (≤1024px)
+10. `moscow-compact.css`
+11. `board-compact.css`
+12. `table-compact.css`
+13. `fullscreen-compact.css`
+14. `app-footer.css`
 
-**Rule:** Prefer new UI in `*-modern.css` files with scoped selectors. Override `main.css` `!important` globals (red buttons, flex-end toolbars) explicitly when needed.
+**Compact layout:** `initCompactLayoutClass()` in `src/app.js` toggles `html.is-compact-layout` / `is-phone-layout` at `max-width: 1024px`. Compact sheets use `html.is-compact-layout` selectors — not separate tablet breakpoints.
+
+**Rule:** Prefer new UI in `*-modern.css` or `*-compact.css` files with scoped selectors. Override `main.css` `!important` globals (red buttons, flex-end toolbars) explicitly when needed.
 
 ---
 
@@ -55,7 +64,7 @@ Load order (later wins for equal specificity):
 
 Central object: `state` in `src/app.js`.
 
-Persisted via `saveState()` → `localStorage` key `rice_prioritizer_v1` (`STORAGE_KEY` in `constants.js`).
+Persisted via `saveState()` → `localStorage` key `rice_prioritizer_v1` (`STORAGE_KEY` in `constants.js`), with optional cloud sync via `src/modules/storage.js` (`AppStorage`).
 
 | Field | Persisted | Notes |
 |-------|-----------|-------|

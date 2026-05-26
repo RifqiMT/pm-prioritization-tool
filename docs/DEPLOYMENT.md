@@ -95,19 +95,69 @@ npx vercel dev
 - Do not set `PM_ALLOW_ANONYMOUS=true` on public production URLs.
 - MongoDB user should have least privilege (read/write on one database only).
 
-## Troubleshooting
+## Troubleshooting (MongoDB sync)
+
+If the header shows **Local browser storage** or **Cloud unavailable**, work through this checklist.
+
+### 1. Disable Vercel Deployment Protection (required for `/api`)
+
+New Vercel projects often return **401 Authentication Required** on `/api/config`. Turn protection off for **Production**:
+
+1. Vercel → project linked to **`RifqiMT/pm-prioritization-tool`** → **Settings → Deployment Protection**.
+2. Set **Production** to **None** (disable Vercel Authentication).
+3. **Save** → **Redeploy** `main`.
+
+Verify:
+
+```bash
+npm run verify:deploy -- https://YOUR-DOMAIN
+```
+
+**CLI:** `./scripts/disable-vercel-deployment-protection.sh` (needs `VERCEL_TOKEN` + project id).
+
+**GitHub Actions:** Add secrets `VERCEL_TOKEN`, `VERCEL_PROJECT_ID` (and optional `VERCEL_ORG_ID`) → run **Actions → Fix Vercel Deployment Protection** → redeploy.
+
+### 2. Confirm the correct app is deployed
+
+Open `https://YOUR-DOMAIN/api/config`. Expected JSON:
+
+```json
+{ "ok": true, "storage": "mongodb", "authRequired": false, "workspaceId": "default", "version": 1 }
+```
+
+If you see **HTML** for a React app (“PM Prioritization Matrix”), the domain points at the **wrong** Vercel project. Fix **Settings → Git** to use this repo, or create a new project and move the domain. Production URL: **`pm-prioritization-tool-six.vercel.app`** — not `pm-prioritization-tool.vercel.app` (legacy React app).
+
+### 3. Environment variables and Atlas
+
+| Variable | Required | Notes |
+|----------|----------|--------|
+| `MONGODB_URI` | Yes | Atlas connection string |
+| `PM_API_SECRET` | No | Optional Bearer auth |
+| `PM_WORKSPACE_ID` | No | Default `default` |
+| `MONGODB_DB_NAME` | No | Default `pm_prioritization` |
+
+Redeploy after any env change. In Atlas: **Network Access** `0.0.0.0/0`, database user with read/write.
+
+### 4. Verify in the app
+
+1. Hard refresh → header **Saved to cloud**.
+2. Create a profile → refresh → data persists.
+3. **Cloud** menu → Pull / Save, or click the storage label.
+
+With `PM_API_SECRET`: connect via **Cloud** menu or `https://YOUR-DOMAIN/?pm_api_key=YOUR_SECRET`.
+
+### Quick reference
 
 | Symptom | Cause | Action |
 |---------|--------|--------|
-| **Local browser storage** on prod | `MONGODB_URI` missing or API failing | Check Vercel env + redeploy; verify `/api/health` |
-| **Connect cloud storage** loop | Wrong/missing `PM_API_SECRET` | Re-enter key; match Vercel env exactly |
-| 401 on `/api/state` | Bearer mismatch | Regenerate secret in Vercel + reconnect browser |
-| Data different on preview vs prod | Separate origins + workspace ids | Use same `PM_WORKSPACE_ID` only if intentional |
-| CSP blocks API | Rare | `connect-src` includes `'self'` in `vercel.json` |
+| **Local browser storage** on prod | Missing/failing API or protection | Steps 1–3 above |
+| **Connect cloud storage** loop | Wrong `PM_API_SECRET` | Re-enter key; match Vercel env |
+| 401 on `/api/state` | Bearer mismatch | Regenerate secret + reconnect |
+| `/api/config` returns HTML | Wrong Vercel project | Step 2 |
+| Data differs preview vs prod | Separate origins | Same `PM_WORKSPACE_ID` only if intentional |
 
 ## Related documentation
 
-- [VERCEL_MONGODB_FIX.md](VERCEL_MONGODB_FIX.md) — troubleshooting when sync stays on localStorage
 - [ARCHITECTURE.md](ARCHITECTURE.md) — modules and persistence
 - [GUARDRAILS.md](GUARDRAILS.md) — limits and security
 - [../.env.example](../.env.example) — variable template

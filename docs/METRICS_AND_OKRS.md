@@ -20,6 +20,8 @@
 | UX-04 | Time-to-Decision | Time from project open to saved prioritization. | median interaction time | Downward trend |
 | UX-05 | Tooltip Exclusivity Reliability | Cases where multiple tooltips overlap simultaneously. | `multi_tooltip_incidents / tooltip_sessions` | 0 |
 | UX-06 | Modal Guidance Coverage | Share of modal input/select/textarea fields with standardized tooltip. | `fields_with_standard_tooltip / total_modal_fields` | 100% |
+| UX-07 | Compact Layout Usability | QA sessions on ≤1024px with zero critical horizontal-overflow defects on board/MoSCoW. | `overflow_defects / compact_qa_sessions` | 0 critical |
+| UX-08 | Compact Task Completion | Users complete move-status (board) or jump-quadrant (MoSCoW) on compact without desktop-only controls. | `successful_compact_tasks / compact_task_attempts` | >= 95% |
 
 ## 3. Engineering Metrics
 
@@ -41,6 +43,11 @@
 ### Objective 2 — Strengthen financial planning discipline
 - KR2.1: Raise PM-02 to >= 65%
 - KR2.2: Maintain EUR display accuracy defect count at 0 high severity
+
+### Objective 4 — Excellent experience on tablets and phones
+- KR4.1: Keep UX-07 at 0 critical overflow defects per release
+- KR4.2: Raise UX-08 to >= 95% on sampled compact QA scripts
+- KR4.3: Validate footer and FAB discoverability in compact usability review
 
 ### Objective 3 — Maintain reliability at scale
 - KR3.1: Keep ENG-01 <= 0.5%
@@ -79,6 +86,8 @@ This app is local-first and does not stream telemetry by default. Metrics must t
 - **Validation Friction (UX-02):** Count distinct validation errors shown to the user during a single submit flow (project save actions), divided by total submit attempts sampled.
 - **Tooltip Exclusivity Reliability (UX-05):** A “multi-tooltip incident” is any moment where more than one tooltip is visible concurrently. For manual QA, record a failure when two tooltips overlap in the viewport at the same time.
 - **Modal Guidance Coverage (UX-06):** “Field with standardized tooltip” means the field has tooltip markup or receives fallback injection through standardized tooltip logic.
+- **Compact Layout Usability (UX-07):** Run QA at 375px, 768px, and 1024px widths on Board and MoSCoW. A critical defect is any required horizontal scroll to reach primary content or actions.
+- **Compact Task Completion (UX-08):** Sample tasks: (1) change board card status via Move to on compact; (2) jump MoSCoW quadrant via nav pill. Success = task completed without switching to desktop layout.
 
 ### Engineering metric collection
 

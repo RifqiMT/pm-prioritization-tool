@@ -95,8 +95,23 @@ Defined in `main.css` `.cell-type-pill[data-status=...]` and `view-toolbars-mode
 | `profile-modals-modern.css` | Edit/unlock/delete profile modals |
 | `export-modals-modern.css` | Export, import, export-unlock |
 | `view-toolbars-modern.css` | Table/board/MoSCoW/map toolbars |
+| `compact-modern.css` | Compact chrome: icon tabs, short title, FAB, hidden toolbar labels |
+| `moscow-compact.css` | MoSCoW nav pills, single-column quadrants (≤1024px) |
+| `board-compact.css` | Board single-column stack, card move dropdown |
+| `table-compact.css` | Table compact toolbar, selection bar, stacked actions |
+| `fullscreen-compact.css` | Fullscreen body host + compact view parity |
+| `app-footer.css` | Centered one-row site footer |
 
 **Load order:** see [TECH_GUIDELINES.md](TECH_GUIDELINES.md).
+
+### 4.1 Compact layout tokens (`compact-modern.css`)
+
+| Token / pattern | Usage |
+|-----------------|--------|
+| Icon-only portfolio tabs | Labels hidden; icons remain tappable |
+| `.portfolio-fab` | Floating action for new project on compact |
+| `.portfolio-selection-bar` | Fixed bulk-delete bar when rows selected |
+| Hidden `.view-toolbar__label` | Toolbar actions icon-only on compact |
 
 ---
 
@@ -161,11 +176,15 @@ Defined in `main.css` `.cell-type-pill[data-status=...]` and `view-toolbars-mode
 
 ## 7. Responsive breakpoints (reference)
 
-| Breakpoint | Behavior |
-|------------|----------|
-| ≤639px | Stacked toolbars; icon-only header actions; FAB for new project |
-| ≤1024px | Profiles above portfolio; filters collapsed |
-| ≥900px | Profile create panel expanded; toolbar descriptions visible |
+| Breakpoint | HTML classes | Behavior |
+|------------|--------------|----------|
+| **>1024px** | `is-desktop-layout` | Full desktop: horizontal board, 2×2 MoSCoW, table toolbar bulk delete |
+| **≤1024px** | `is-compact-layout`, `is-phone-layout` | **Unified phone UI** on tablets and phones: vertical board/MoSCoW, MoSCoW nav pills, FAB, selection bar, icon-only tabs |
+| ≤639px | (same compact classes) | Narrowest phones; footer link labels may hide (icons only) |
+
+**Implementation:** `initCompactLayoutClass()` in `src/app.js` listens to `resize` and sets classes on `document.documentElement`.
+
+**Do not** ship tablet-only hybrid layouts between 641px and 1024px — compact rules apply to the full ≤1024px range.
 
 ---
 

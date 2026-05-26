@@ -494,3 +494,96 @@ Each story includes:
 - **When** footer renders financial context
 - **Then** it shows consistent messaging without corrupt numbers.
 
+---
+
+## Epic G — Compact / mobile layout (≤1024px)
+
+### US-G1 — Unified phone UI on tablets and phones
+- **Persona:** Mobile / field PM
+- **Goal:** Use the same touch-first layout on any non-desktop width.
+- **Preconditions:** Viewport width ≤1024px.
+
+**Acceptance Criteria**
+1. **Layout classes**
+   - **Given** the viewport is 768px or 1024px wide
+   - **When** the page loads or resizes
+   - **Then** `html` has `is-compact-layout` and `is-phone-layout`
+   - **And** desktop-only horizontal board/MoSCoW layouts are not used.
+2. **No horizontal board/MoSCoW scroll**
+   - **Given** the user opens Board or MoSCoW on compact
+   - **When** the view renders
+   - **Then** columns/quadrants stack vertically
+   - **And** the user can scroll vertically only to see all content.
+
+**Error / Edge Handling**
+- **Given** the user rotates the device or resizes the window across 1024px
+- **When** layout refreshes
+- **Then** classes update without requiring a full page reload.
+
+---
+
+### US-G2 — MoSCoW compact navigator
+- **Persona:** Product Manager
+- **Goal:** Jump between MoSCoW quadrants quickly on compact.
+- **Preconditions:** MoSCoW view active; compact layout.
+
+**Acceptance Criteria**
+1. **Nav pills**
+   - **Given** four MoSCoW categories exist
+   - **When** the compact nav renders
+   - **Then** a 2×2 pill grid shows Must / Should / Could / Won't with counts.
+2. **Scroll sync**
+   - **Given** the user scrolls the quadrant list
+   - **When** a quadrant enters the observer threshold
+   - **Then** the matching nav pill receives active state (`syncMoscowCompactNav`).
+
+---
+
+### US-G3 — Table bulk actions on compact
+- **Persona:** Delivery Lead
+- **Goal:** Delete or manage multiple projects without desktop toolbar.
+- **Preconditions:** Table view; compact layout.
+
+**Acceptance Criteria**
+1. **Selection bar**
+   - **Given** one or more projects are selected
+   - **When** selection changes on compact
+   - **Then** the floating selection bar appears with bulk delete
+   - **And** the desktop toolbar bulk delete control is not the primary path.
+2. **FAB**
+   - **Given** compact layout
+   - **When** the portfolio workspace is visible
+   - **Then** a FAB is available to create a new project.
+
+---
+
+### US-G4 — Fullscreen preserves compact layouts
+- **Persona:** Stakeholder
+- **Goal:** Present MoSCoW or board on a projector or tablet in fullscreen.
+- **Preconditions:** Compact or desktop layout.
+
+**Acceptance Criteria**
+1. **Fullscreen host**
+   - **Given** the user toggles fullscreen on board, MoSCoW, table, or map
+   - **When** fullscreen activates
+   - **Then** `body` uses the fullscreen host class
+   - **And** compact CSS rules still apply when viewport ≤1024px.
+2. **Layout refresh**
+   - **Given** fullscreen was entered on compact
+   - **When** fullscreen opens
+   - **Then** `refreshCompactFullscreenEnter()` runs so grids/columns measure correctly.
+
+---
+
+### US-G5 — Site footer readability
+- **Persona:** All users
+- **Goal:** See maintainer attribution and links on all devices.
+- **Preconditions:** Page loaded.
+
+**Acceptance Criteria**
+1. **Footer layout**
+   - **Given** any viewport width
+   - **When** the user scrolls to the page footer
+   - **Then** credit, LinkedIn, and website appear in a centered one-row grid
+   - **And** text contrast meets readable maroon-on-cream styling (`app-footer.css`).
+

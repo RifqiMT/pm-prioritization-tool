@@ -1,45 +1,68 @@
-# User Personas (Hub)
+# User Personas
 
-This hub summarizes the target users for the Product Management Prioritization Tool and links to **one-file-per-persona** deep dives under `docs/personas/`.
+Target users for the Product Management Prioritization Tool.
 
-## How to use personas in this product
+## How to use personas
 
-- Use personas to validate that features remain aligned to real workflows.
-- Use them to design default behaviors (e.g., explainability tooltips, safe destructive actions).
-- Use them in prioritization: if a change breaks a persona’s critical workflow, it needs mitigation.
+- Validate features against real workflows before shipping.
+- Design defaults (tooltips, confirmations, responsive layouts) for these users.
+- If a change breaks a persona’s critical path, add mitigation or reconsider scope.
 
-## Persona set
+---
 
-### 1) Product Manager (Primary)
+## 1) Product Manager (Primary)
 
-- **Primary workflow**: capture initiatives → score (RICE) → categorize (MoSCoW) → compare in multiple views → export.
-- **Key need**: explainability (inputs + formula must be obvious).
-- **Deep dive**: `personas/PM_PRIMARY.md`
+- **Role:** Roadmap owner across teams/products  
+- **Goals:** Explainable prioritization; consistent RICE; MoSCoW alignment; portable data  
+- **Pain points:** Scores scattered in spreadsheets; inconsistent rubrics; low trust in “gut feel” confidence  
+- **Key workflows:** Create profiles → add projects with RICE/MoSCoW → filter by period/country → export for planning sessions; review MoSCoW on phone via compact nav pills  
+- **Success:** Stakeholders accept rankings because inputs and formulas are visible (RICE tooltips, financial framework breakdowns)
 
-### 2) Delivery / Team Lead
+## 2) Delivery / Team Lead
 
-- **Primary workflow**: weekly planning and status movement (board/table).
-- **Key need**: speed + clarity (fast slicing, fast status transitions).
-- **Deep dive**: `personas/DELIVERY_LEAD.md`
+- **Role:** Weekly execution and status tracking  
+- **Goals:** Fast board/table views; clear status transitions  
+- **Pain points:** Too many clicks to update status; hidden work in wrong columns  
+- **Key workflows:** Board view with status columns (desktop) or single-column stack with **Move to** dropdown (compact); toggle status pills; sort by RICE  
+- **Success:** Stand-ups run from the board on laptop or tablet without exporting to another tool
 
-### 3) Portfolio / Strategy Stakeholder
+## 3) Portfolio / Strategy Stakeholder
 
-- **Primary workflow**: review and challenge prioritization decisions.
-- **Key need**: transparency + guardrails (avoid “black-box” scoring or misleading financial certainty).
-- **Deep dive**: `personas/PORTFOLIO_STAKEHOLDER.md`
+- **Role:** Reviews and challenges prioritization  
+- **Goals:** Transparency; guardrails against misleading financial certainty  
+- **Pain points:** “Black box” scores; no audit trail for value assumptions  
+- **Key workflows:** Read-only project view; MoSCoW and map summaries; export snapshots  
+- **Success:** Can question a ranking using visible inputs, not ad-hoc spreadsheets
 
-### 4) Geo / Finance Focus PM
+## 4) Geo / Finance Focus PM
 
-- **Primary workflow**: country/period slicing + EUR-normalized aggregation (map/reporting).
-- **Key need**: usable filters + credible normalization.
-- **Deep dive**: `personas/GEO_FINANCE_PM.md`
+- **Role:** Country and EUR-normalized planning  
+- **Goals:** Credible cross-currency comparison; geographic slicing  
+- **Pain points:** Manual FX conversion; country data buried in rows  
+- **Key workflows:** Map view (count / RICE / EUR); country filters; financial frameworks  
+- **Success:** Map and table show EUR-comparable impact with daily-refreshed rates
 
-## Persona-to-feature mapping (at a glance)
+---
 
-- **Profiles**: PM Primary (portfolio separation), Delivery Lead (execution context)
-- **RICE tooltip explainability**: PM Primary, Stakeholder
-- **MOSCOW view**: PM Primary, Stakeholder
-- **Board view**: Delivery Lead
-- **Map + FX normalization**: Geo/Finance PM
-- **Export/Import**: everyone (data ownership + portability)
+## Persona-to-feature mapping
 
+| Feature | Primary personas |
+|---------|------------------|
+| Profiles + password protection | PM Primary, Delivery Lead |
+| RICE tooltips | PM Primary, Stakeholder |
+| MoSCoW view | PM Primary, Stakeholder |
+| Board + status pills | Delivery Lead |
+| Map + FX normalization | Geo/Finance PM |
+| Export / import | All |
+| Compact layout (≤1024px) | PM Primary, Delivery Lead |
+| Cloud sync (MongoDB) | PM Primary |
+
+---
+
+## 5) Mobile / field PM (secondary)
+
+- **Role:** Reviews backlog between meetings on phone or tablet  
+- **Goals:** Read rankings and move cards without horizontal scrolling  
+- **Pain points:** Cramped grids; unreadable footers; bulk actions buried in menus  
+- **Key workflows:** MoSCoW compact nav; board **Move to**; table selection bar + FAB  
+- **Success:** Full planning views usable at 375px width without sideways scroll

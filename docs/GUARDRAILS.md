@@ -23,6 +23,14 @@
 - Every create/edit modal variable field must provide standardized tooltip guidance.
 - Framework terminology must stay standardized as `Framework` in filter/table labels.
 
+### 3.1 Compact layout (≤1024px)
+
+- **Single breakpoint policy:** All widths ≤1024px use the same phone UI (`is-compact-layout` + `is-phone-layout`). Do not reintroduce tablet-only hybrid grids.
+- **No horizontal scroll** on board or MoSCoW in compact mode; use vertical stacks and nav pills instead.
+- **Bulk delete on table:** Use the floating selection bar on compact; do not rely on desktop-only toolbar delete.
+- **Touch targets:** Primary actions (FAB, nav pills, selection bar) must remain tappable (≥44px where feasible).
+- **Fullscreen:** Compact CSS must apply inside the fullscreen host (`fullscreen-compact.css`).
+
 ## 4. Data Guardrails
 
 - Keep canonical country normalization during import and rendering.
@@ -76,4 +84,5 @@
 - `localStorage` remains a **per-origin cache**; preview URLs and production are separate origins unless using the same domain and workspace id intentionally.
 - MongoDB free tier: monitor document size (~16 MB cap per document); very large portfolios may require splitting workspaces or archiving via export.
 - After changing CSP in `vercel.json`, run the post-deploy smoke test in `docs/DEPLOYMENT.md` (map tiles, exchange rates, Leaflet).
-- Remind users to export backups; Vercel does not persist portfolio data.
+- Remind users to export backups; cloud data lives in MongoDB — browser cache alone is not a backup.
+- `PM_WORKSPACE_ID` + `PM_API_SECRET` protect the cloud document; rotating secrets invalidates old clients until reconfigured.

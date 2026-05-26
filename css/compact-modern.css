@@ -1,0 +1,444 @@
+/**
+ * Compact layout — phones & tablets (≤1024px).
+ * Unified responsive revamp: tighter hierarchy, deduplicated chrome, touch-first.
+ * Requires html.is-compact-layout / html.is-phone-layout (set in app.js; both on ≤1024px).
+ */
+
+@media (max-width: 1024px) {
+  :root {
+    --compact-gap: 0.65rem;
+    --compact-gap-sm: 0.45rem;
+    --compact-radius: 14px;
+    --compact-radius-sm: 11px;
+    --compact-touch: 44px;
+    --compact-text: #3f0f19;
+    --compact-text-soft: #7a4b12;
+    --compact-accent: #b91c1c;
+    --compact-gold: #a16207;
+    --compact-border: rgba(231, 201, 120, 0.55);
+    --compact-surface: #ffffff;
+    --compact-surface-soft: #fffdf8;
+    --compact-shadow: 0 2px 10px rgba(127, 29, 29, 0.07);
+  }
+
+  /* ── App shell ─────────────────────────────────────────── */
+  .app-shell {
+    padding-left: max(0.65rem, env(safe-area-inset-left));
+    padding-right: max(0.65rem, env(safe-area-inset-right));
+  }
+
+  html.is-compact-layout .app-layout {
+    gap: var(--compact-gap) !important;
+  }
+
+  html.is-compact-layout .workspace-panel--v2 {
+    border-radius: var(--compact-radius) !important;
+    min-height: auto !important;
+    padding-bottom: calc(4.75rem + env(safe-area-inset-bottom)) !important;
+    box-shadow: var(--compact-shadow) !important;
+  }
+
+  html.is-compact-layout .profiles-panel--v2 {
+    border-radius: var(--compact-radius);
+  }
+
+  /* ── Header — slim, focused ──────────────────────────── */
+  html.is-compact-layout .app-header--modern {
+    margin-bottom: 0.75rem;
+    padding: 0.65rem 0.75rem 0.75rem;
+    border-radius: var(--compact-radius);
+    gap: 0.55rem;
+  }
+
+  html.is-compact-layout .app-header-mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+  }
+
+  html.is-compact-layout .app-header-title {
+    font-size: 0.95rem !important;
+    line-height: 1.25;
+  }
+
+  html.is-compact-layout .app-header-toolbar-heading {
+    font-size: 0.68rem;
+    margin-bottom: 0.35rem;
+  }
+
+  /* ── Profile picker — primary context lane ─────────────── */
+  html.is-compact-layout .profile-picker-bar {
+    padding: 0.55rem 0.75rem 0.6rem;
+    border-bottom: 1px solid var(--compact-border);
+    background: linear-gradient(180deg, var(--compact-surface-soft) 0%, var(--compact-surface) 100%);
+  }
+
+  html.is-compact-layout .profile-picker-bar__label {
+    font-size: 0.62rem;
+    letter-spacing: 0.11em;
+    margin-bottom: 0.3rem;
+  }
+
+  html.is-compact-layout .profile-picker__control {
+    min-height: var(--compact-touch);
+    border-radius: var(--compact-radius-sm);
+    border-color: var(--compact-border);
+    box-shadow: inset 0 1px 2px rgba(63, 15, 25, 0.04);
+  }
+
+  html.is-compact-layout .profile-picker__avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 0.72rem;
+    border-radius: 9px;
+  }
+
+  html.is-compact-layout .profile-picker__input {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  html.is-compact-layout .profile-picker__manage {
+    min-height: var(--compact-touch) !important;
+    min-width: var(--compact-touch) !important;
+    border-radius: var(--compact-radius-sm) !important;
+  }
+
+  /* ── Portfolio command — view tabs only (no duplicate title) ─ */
+  html.is-compact-layout .profile-picker-bar:not([hidden]) ~ .workspace-portfolio-body .portfolio-command-intro {
+    display: none !important;
+  }
+
+  html.is-compact-layout .portfolio-command-bar {
+    position: sticky;
+    top: 0;
+    z-index: 12;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    padding: 0.45rem 0.65rem 0.5rem !important;
+    margin: 0;
+    border-bottom: 1px solid var(--compact-border);
+    background: rgba(255, 253, 248, 0.96);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  html.is-compact-layout .portfolio-command-bar .portfolio-eyebrow,
+  html.is-compact-layout .portfolio-command-bar .workspace-eyebrow,
+  html.is-compact-layout .portfolio-command-mark {
+    display: none !important;
+  }
+
+  html.is-compact-layout .portfolio-command-controls {
+    width: 100%;
+    order: unset !important;
+  }
+
+  html.is-compact-layout .portfolio-action-group {
+    display: none !important;
+  }
+
+  html.is-compact-layout .portfolio-view-tabs.view-toggle-group--portfolio {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.22rem !important;
+    padding: 0.18rem !important;
+    border-radius: var(--compact-radius-sm);
+    background: rgba(254, 243, 199, 0.35);
+    border: 1px solid rgba(231, 201, 120, 0.45);
+  }
+
+  html.is-compact-layout .portfolio-view-tabs .view-tab-text {
+    display: none;
+  }
+
+  html.is-compact-layout .portfolio-view-tabs .view-toggle-btn {
+    min-height: 44px !important;
+    padding: 0.45rem 0.25rem !important;
+    border-radius: 9px !important;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  html.is-compact-layout .portfolio-view-tabs .view-tab-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Single create affordance — FAB on all compact widths */
+  html.is-compact-layout .portfolio-fab {
+    display: inline-flex !important;
+    right: max(0.85rem, env(safe-area-inset-right));
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+    width: 54px;
+    height: 54px;
+    box-shadow: 0 8px 22px rgba(185, 28, 28, 0.38);
+  }
+
+  /* ── Filters — one summary row, no inner duplicate header ─ */
+  html.is-compact-layout .portfolio-filters-drawer {
+    border-bottom: 1px solid var(--compact-border);
+  }
+
+  html.is-compact-layout .portfolio-filters-summary {
+    padding: 0.58rem 0.75rem;
+    padding-right: 2rem;
+  }
+
+  html.is-compact-layout .portfolio-filters-summary-hint {
+    display: none;
+  }
+
+  html.is-compact-layout .portfolio-filters-body .filters-header.portfolio-filters-toolbar {
+    display: none !important;
+  }
+
+  html.is-compact-layout .portfolio-filters-body {
+    padding: 0 0.75rem 0.85rem;
+  }
+
+  html.is-compact-layout .filters-active-pill.portfolio-filters-badge:not([style*="display: none"]) {
+    display: inline-flex !important;
+  }
+
+  /* ── Stage & views ─────────────────────────────────────── */
+  html.is-compact-layout .portfolio-stage {
+    padding: 0;
+  }
+
+  html.is-compact-layout .workspace-panel--v2 .portfolio-view,
+  html.is-compact-layout .workspace-panel--v2 .projects-view {
+    padding: 0 0.55rem 0.75rem !important;
+  }
+
+  html.is-compact-layout .app-header-title .app-title-full {
+    display: none !important;
+  }
+
+  html.is-compact-layout .app-header-title .app-title-short {
+    display: inline !important;
+  }
+
+  html.is-compact-layout .profile-picker__manage-label {
+    display: none;
+  }
+
+  html.is-compact-layout .view-toolbar__btn-label {
+    display: none;
+  }
+
+  html.is-compact-layout .view-toolbar .view-fullscreen-label,
+  html.is-compact-layout .view-toolbar .projects-map-fullscreen-label {
+    display: none;
+  }
+
+  html.is-compact-layout .view-toolbar .view-fullscreen-btn.is-fullscreen .view-fullscreen-label,
+  html.is-compact-layout .view-toolbar .view-fullscreen-btn.is-fullscreen .projects-map-fullscreen-label {
+    display: inline;
+    font-size: 0.7rem;
+  }
+
+  /* View toolbars: controls only — titles duplicate top tabs */
+  html.is-compact-layout .view-toolbar {
+    min-height: auto !important;
+    padding: 0.45rem 0.55rem !important;
+    margin-bottom: 0.45rem !important;
+    border-radius: var(--compact-radius-sm) !important;
+    background: rgba(255, 253, 248, 0.85) !important;
+  }
+
+  html.is-compact-layout .view-toolbar__identity {
+    display: none !important;
+  }
+
+  html.is-compact-layout .view-toolbar__row--primary {
+    grid-template-columns: 1fr !important;
+    gap: 0.4rem !important;
+  }
+
+  html.is-compact-layout .view-toolbar__row--secondary {
+    margin-top: 0.45rem !important;
+    padding-top: 0.45rem !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  html.is-compact-layout .view-toolbar__cluster,
+  html.is-compact-layout .view-toolbar__cluster--actions {
+    width: 100% !important;
+    justify-content: stretch !important;
+  }
+
+  html.is-compact-layout .view-toolbar--map .view-toolbar__cluster--actions {
+    display: grid !important;
+    grid-template-columns: 1fr auto;
+    gap: 0.35rem !important;
+  }
+
+  html.is-compact-layout .view-toolbar--map .view-toolbar__metric--map {
+    grid-column: 1 / -1;
+  }
+
+  html.is-compact-layout .view-toolbar .view-fullscreen-btn,
+  html.is-compact-layout .view-toolbar .projects-map-fullscreen-btn {
+    min-height: var(--compact-touch) !important;
+  }
+
+  html.is-compact-layout .workspace-panel--v2 .projects-map-container,
+  html.is-compact-layout .workspace-panel--v2 .table-wrapper--modern {
+    border-radius: var(--compact-radius-sm) !important;
+    max-height: min(62vh, 520px);
+  }
+
+  html.is-compact-layout .workspace-panel--v2 .scrum-board {
+    border-radius: var(--compact-radius-sm) !important;
+    max-height: none;
+  }
+
+  /* ── Profiles bottom sheet ─────────────────────────────── */
+  html.is-compact-layout .profiles-panel-sheet-header {
+    padding: 0.65rem 0.85rem 0.5rem;
+  }
+
+  html.is-compact-layout .profiles-panel-sheet-title {
+    font-size: 0.92rem;
+  }
+
+  html.is-compact-layout .profiles-sheet-tabs {
+    margin: 0 0.75rem 0.55rem;
+    padding: 0.18rem;
+    border-radius: var(--compact-radius-sm);
+  }
+
+  html.is-compact-layout .profiles-list-toolbar .profiles-list-heading {
+    display: none;
+  }
+
+  html.is-compact-layout .profiles-list-toolbar {
+    margin-bottom: 0.35rem;
+  }
+
+  html.is-compact-layout .profiles-search {
+    min-height: var(--compact-touch);
+    border-radius: var(--compact-radius-sm);
+  }
+
+  html.is-compact-layout .profiles-card--compact,
+  html.is-compact-layout .profile-item-btn {
+    border-radius: var(--compact-radius-sm);
+  }
+
+  html.is-compact-layout .profile-unlock-panel {
+    padding: 0.65rem 0.75rem 0.75rem;
+  }
+
+  html.is-compact-layout .profile-unlock-panel__card {
+    border-radius: var(--compact-radius);
+    padding: 1.25rem 0.85rem 1.1rem;
+  }
+
+  /* ── Fullscreen host — match portfolio tabs, hide duplicate toolbar chrome ─ */
+  html.is-compact-layout .view-fullscreen-chrome {
+    padding: 0.45rem 0.6rem 0.4rem;
+    gap: 0.4rem;
+    background: rgba(255, 253, 248, 0.98);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  html.is-compact-layout .view-fullscreen-tabs {
+    gap: 0.2rem;
+    padding: 0.16rem;
+    border-radius: var(--compact-radius-sm);
+    background: rgba(254, 243, 199, 0.35);
+    border: 1px solid rgba(231, 201, 120, 0.45);
+  }
+
+  html.is-compact-layout .view-fullscreen-tab {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.12rem;
+    min-height: 38px;
+    font-size: 0.68rem;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+  }
+
+  html.is-compact-layout .view-fullscreen-tab-icon {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+  }
+
+  html.is-compact-layout .view-fullscreen-tab-label {
+    display: none;
+    line-height: 1;
+    font-weight: 700;
+  }
+
+  html.is-compact-layout .view-fullscreen-tab {
+    min-height: 42px;
+    padding: 0.3rem;
+  }
+
+  html.is-compact-layout .view-fullscreen-exit-label {
+    display: none;
+  }
+
+  html.is-compact-layout .view-fullscreen-exit-btn {
+    min-width: 42px;
+    padding: 0.35rem;
+  }
+
+  html.is-compact-layout .view-fullscreen-tab--active,
+  html.is-compact-layout .view-fullscreen-tab[aria-selected="true"] {
+    background: #fff;
+    border-color: rgba(185, 28, 28, 0.28);
+    color: var(--compact-accent);
+    box-shadow: 0 1px 3px rgba(185, 28, 28, 0.1);
+  }
+
+  html.is-compact-layout .view-fullscreen-exit-btn {
+    min-height: 38px;
+    border-radius: 9px;
+  }
+
+  html.is-compact-layout .view-in-fullscreen-host .view-toolbar__identity {
+    display: none !important;
+  }
+
+  html.is-compact-layout .view-in-fullscreen-host .view-fullscreen-btn,
+  html.is-compact-layout .view-in-fullscreen-host .projects-map-fullscreen-btn {
+    display: none !important;
+  }
+
+  html.is-compact-layout .view-in-fullscreen-host .view-toolbar {
+    padding: 0.4rem 0.5rem !important;
+    margin-bottom: 0.35rem !important;
+  }
+
+  html.is-compact-layout .view-in-fullscreen-host {
+    padding: 0.45rem 0.6rem 0.6rem !important;
+  }
+
+  /* Hide app chrome behind fullscreen overlay */
+  html.is-compact-layout.pseudo-view-fullscreen .app-header--modern,
+  html.is-compact-layout.pseudo-view-fullscreen .profiles-panel--v2 {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  /* ── Selection bar + FAB spacing ───────────────────────── */
+  html.is-compact-layout .portfolio-selection-bar {
+    bottom: calc(4.85rem + env(safe-area-inset-bottom));
+    border-radius: var(--compact-radius-sm);
+  }
+
+  html.is-compact-layout.has-portfolio-selection-bar .portfolio-fab {
+    bottom: calc(8.35rem + env(safe-area-inset-bottom));
+  }
+}

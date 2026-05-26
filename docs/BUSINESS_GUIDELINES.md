@@ -6,7 +6,7 @@ Guidelines for teams using the Product Management Prioritization Tool in plannin
 
 ## 1. Purpose of the tool
 
-The application supports **portfolio-level prioritization** without requiring a backend. It is designed for:
+The application supports **portfolio-level prioritization** in the browser, with optional **cloud sync** when deployed on Vercel with MongoDB. It is designed for:
 
 - Capturing initiatives as **projects** within **profiles** (portfolios)
 - Ranking with **RICE**

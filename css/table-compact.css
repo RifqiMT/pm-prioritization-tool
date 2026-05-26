@@ -1,0 +1,89 @@
+/**
+ * Table view — phones & tablets (≤1024px).
+ * Same compact UI as phone: FAB + selection bar, stacked row actions, touch toolbars.
+ * Requires html.is-compact-layout (app.js).
+ */
+
+@media (max-width: 1024px) {
+  html.is-compact-layout .projects-view--table {
+    padding-left: 0.55rem !important;
+    padding-right: 0.55rem !important;
+  }
+
+  html.is-compact-layout .view-toolbar--table .view-toolbar__row--primary {
+    grid-template-columns: 1fr !important;
+  }
+
+  html.is-compact-layout .view-toolbar--table .view-toolbar__cluster {
+    display: grid !important;
+    grid-template-columns: 1fr auto;
+    gap: 0.45rem;
+    width: 100% !important;
+  }
+
+  /* Bulk delete uses floating selection bar on compact (not toolbar) */
+  html.is-compact-layout #bulkDeleteBtn.view-toolbar__btn--danger {
+    display: none !important;
+  }
+
+  html.is-compact-layout .view-toolbar--table .view-toolbar__btn-label,
+  html.is-compact-layout .view-toolbar--table .view-fullscreen-label {
+    display: none;
+  }
+
+  html.is-compact-layout .view-toolbar--table .view-fullscreen-btn.is-fullscreen .view-fullscreen-label {
+    display: inline;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  html.is-compact-layout .view-toolbar--table .view-toolbar__btn,
+  html.is-compact-layout .view-toolbar--table .view-fullscreen-btn {
+    min-width: 44px;
+    min-height: var(--compact-touch, 44px);
+    padding-left: 0.55rem !important;
+    padding-right: 0.55rem !important;
+  }
+
+  html.is-compact-layout .workspace-panel--v2 .table-wrapper--modern {
+    max-height: min(58vh, 520px);
+  }
+
+  html.is-compact-layout .table-wrapper--modern .cell-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.35rem !important;
+  }
+
+  html.is-compact-layout .table-wrapper--modern .cell-actions .btn-secondary {
+    width: 100% !important;
+    min-height: 40px;
+    justify-content: center;
+  }
+
+  html.is-compact-layout .table-wrapper--modern tbody td,
+  html.is-compact-layout .table-wrapper--modern thead th {
+    font-size: 0.78rem !important;
+  }
+
+  html.is-compact-layout .table-wrapper--modern thead th {
+    padding: 0.55rem 0.45rem !important;
+  }
+
+  html.is-compact-layout .table-wrapper--modern tbody td {
+    padding: 0.5rem 0.45rem !important;
+  }
+}
+
+/* Fullscreen table on compact */
+@media (max-width: 1024px) {
+  html.is-compact-layout .view-in-fullscreen-host.projects-view--table .table-wrapper--modern {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+
+  html.is-compact-layout .view-in-fullscreen-host #bulkDeleteBtn.view-toolbar__btn--danger {
+    display: none !important;
+  }
+}

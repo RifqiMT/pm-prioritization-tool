@@ -554,17 +554,30 @@
   padding: 0.7rem 0.75rem !important;
   box-shadow: 0 1px 3px rgba(63, 15, 25, 0.06) !important;
   cursor: grab;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  transition: none !important;
 }
 
 .projects-view--board .scrum-board-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(185, 28, 28, 0.12) !important;
-  border-color: var(--ws-border-strong) !important;
+  transform: none !important;
+  box-shadow: 0 1px 3px rgba(63, 15, 25, 0.06) !important;
+  border-color: var(--ws-border) !important;
+}
+
+html.is-compact-layout .projects-view--board .scrum-board-card {
+  cursor: default !important;
 }
 
 .projects-view--board .scrum-board-card:active {
   cursor: grabbing;
+}
+
+.projects-view--board .scrum-board-card.scrum-board-card--dragging {
+  opacity: 0.94;
+  transform: none !important;
+  box-shadow: 0 8px 20px rgba(127, 29, 29, 0.14) !important;
+  border-color: rgba(185, 28, 28, 0.4) !important;
+  cursor: grabbing;
+  z-index: 20;
 }
 
 .projects-view--board .scrum-board-card-title {
@@ -595,11 +608,177 @@
   box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.25), var(--ws-shadow-lift) !important;
 }
 
-/* Native fullscreen (Fullscreen module) */
+/* ── Mobile/tablet fullscreen host (teleport to body) ─────── */
+.view-fullscreen-host {
+  position: fixed;
+  inset: 0;
+  z-index: 960;
+  display: flex;
+  flex-direction: column;
+  background: var(--ws-surface, #fff);
+  box-sizing: border-box;
+  padding:
+    env(safe-area-inset-top, 0px)
+    env(safe-area-inset-right, 0px)
+    env(safe-area-inset-bottom, 0px)
+    env(safe-area-inset-left, 0px);
+}
+
+.view-fullscreen-host[hidden] {
+  display: none !important;
+}
+
+.view-fullscreen-chrome {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.65rem 0.45rem;
+  border-bottom: 1px solid rgba(231, 201, 120, 0.55);
+  background: linear-gradient(180deg, #fffdf8 0%, #ffffff 100%);
+}
+
+.view-fullscreen-tabs {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.view-fullscreen-tab {
+  min-height: 40px;
+  padding: 0.35rem 0.25rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ws-text-soft, #7a4b12);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.view-fullscreen-tab--active,
+.view-fullscreen-tab[aria-selected="true"] {
+  background: #fff;
+  border-color: rgba(185, 28, 28, 0.28);
+  color: var(--ws-accent, #b91c1c);
+  box-shadow: 0 1px 4px rgba(185, 28, 28, 0.1);
+}
+
+.view-fullscreen-exit-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  min-height: 40px;
+  padding: 0.35rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid rgba(185, 28, 28, 0.35);
+  background: rgba(254, 243, 199, 0.55);
+  color: var(--ws-accent, #b91c1c);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.view-fullscreen-exit-btn svg {
+  flex-shrink: 0;
+}
+
+.view-fullscreen-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.view-fullscreen-stage > .projects-view.view-in-fullscreen-host {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0.55rem 0.75rem 0.75rem !important;
+  position: relative !important;
+  inset: auto !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box;
+  background: var(--ws-surface, #fff) !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.view-in-fullscreen-host .view-toolbar {
+  flex: 0 0 auto;
+  position: relative !important;
+  top: auto !important;
+  z-index: 2;
+  margin-bottom: 0.5rem !important;
+}
+
+.view-in-fullscreen-host .projects-map-container,
+.view-in-fullscreen-host .scrum-board,
+.view-in-fullscreen-host .moscow-grid,
+.view-in-fullscreen-host .table-wrapper--modern {
+  flex: 1 1 auto;
+  min-height: 0 !important;
+  max-height: none !important;
+  height: auto !important;
+}
+
+.view-in-fullscreen-host .table-wrapper--modern {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+html:not(.is-compact-layout) .view-in-fullscreen-host .scrum-board {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+html:not(.is-compact-layout) .view-in-fullscreen-host .moscow-grid {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.view-in-fullscreen-host .projects-map-container {
+  overflow: hidden;
+}
+
+
+.view-in-fullscreen-host .projects-map-legend {
+  flex: 0 0 auto;
+}
+
+html.view-fullscreen-lock,
+html.view-fullscreen-lock body {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+html.pseudo-view-fullscreen .app-header--modern,
+html.pseudo-view-fullscreen .profiles-panel--modern {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Native + pseudo fullscreen (desktop in-place fallback) */
 .projects-view--table:fullscreen,
 .projects-view--board:fullscreen,
 .projects-view--moscow:fullscreen,
-.projects-view--map:fullscreen {
+.projects-view--map:fullscreen,
+.projects-view.view-pseudo-fullscreen {
   display: flex !important;
   flex-direction: column;
   background: var(--ws-surface) !important;
@@ -608,16 +787,135 @@
   box-sizing: border-box;
 }
 
-.projects-view--table:fullscreen .table-wrapper--modern {
+.projects-view.view-pseudo-fullscreen:not(.view-in-fullscreen-host) {
+  position: fixed;
+  inset: 0;
+  z-index: 880;
+  width: 100%;
+  height: 100%;
+  max-height: 100dvh;
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding:
+    calc(0.65rem + env(safe-area-inset-top, 0px))
+    calc(0.85rem + env(safe-area-inset-right, 0px))
+    calc(0.85rem + env(safe-area-inset-bottom, 0px))
+    calc(0.85rem + env(safe-area-inset-left, 0px)) !important;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Pseudo fullscreen — hide portfolio chrome; view fills the screen */
+html.pseudo-view-fullscreen .workspace-portfolio-body > .projects-header-row,
+html.pseudo-view-fullscreen .workspace-portfolio-body > .filters-shell,
+html.pseudo-view-fullscreen .workspace-portfolio-body > .profile-picker-bar,
+html.pseudo-view-fullscreen .workspace-portfolio-body > .profile-unlock-panel {
+  display: none !important;
+}
+
+html.pseudo-view-fullscreen .projects-view.view-pseudo-fullscreen {
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: auto !important;
+  max-height: none !important;
+  padding-top: calc(0.65rem + env(safe-area-inset-top, 0px)) !important;
+  padding-bottom: calc(0.85rem + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+body.view-pseudo-fullscreen-active {
+  overflow: hidden !important;
+  position: fixed;
+  width: 100%;
+  left: 0;
+  right: 0;
+}
+
+html.has-view-fullscreen .portfolio-fab,
+html.has-view-fullscreen .profile-picker-bar,
+html.has-view-fullscreen .profile-unlock-panel {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.projects-view--table:fullscreen .table-wrapper--modern,
+.projects-view.view-pseudo-fullscreen.projects-view--table .table-wrapper--modern {
   flex: 1;
   max-height: none;
   min-height: 0;
 }
 
-.projects-view--board:fullscreen .scrum-board {
+.projects-view--board:fullscreen .scrum-board,
+.projects-view.view-pseudo-fullscreen.projects-view--board .scrum-board {
   flex: 1;
   max-height: none;
-  min-height: min(480px, calc(100vh - 180px));
+  min-height: min(480px, calc(100dvh - 180px));
+}
+
+.projects-view.view-pseudo-fullscreen .projects-header-row,
+.projects-view.view-pseudo-fullscreen .filters-shell {
+  flex-shrink: 0;
+}
+
+.projects-view.view-pseudo-fullscreen.projects-view--map {
+  display: flex !important;
+  flex-direction: column;
+}
+
+.projects-view.view-pseudo-fullscreen.projects-view--map .projects-map-container {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.projects-view.view-pseudo-fullscreen.projects-view--moscow .moscow-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+}
+
+.projects-view.view-pseudo-fullscreen .view-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--ws-surface, #fff);
+  border-bottom: 1px solid rgba(231, 201, 120, 0.45);
+  margin-bottom: 0.5rem !important;
+}
+
+.projects-view.view-pseudo-fullscreen .view-fullscreen-btn.is-fullscreen {
+  border-color: rgba(185, 28, 28, 0.35) !important;
+  background: rgba(254, 243, 199, 0.55) !important;
+  color: var(--ws-accent, #b91c1c) !important;
+}
+
+/* After fullscreen exit: ensure view shells reflow in the portfolio stage */
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view {
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  position: relative !important;
+  inset: auto !important;
+  transform: none !important;
+  width: 100% !important;
+}
+
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--map,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--board,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--table,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--moscow {
+  min-height: 0 !important;
+  padding: 0 1.15rem 1.15rem !important;
 }
 
 /* ── MOSCOW & Map (light polish) ─────────────────────────── */
@@ -649,14 +947,49 @@
     justify-content: flex-start;
   }
 
-  .view-toggle-group--modern {
+  .view-toggle-group--modern:not(.view-toggle-group--portfolio) {
     width: 100%;
     justify-content: stretch;
   }
 
-  .view-toggle-group--modern .view-toggle-btn {
+  .view-toggle-group--modern:not(.view-toggle-group--portfolio) .view-toggle-btn {
     flex: 1 1 auto;
     text-align: center;
+  }
+}
+
+@media (max-width: 639px) {
+  .view-fullscreen-exit-btn span {
+    display: none;
+  }
+
+  .view-fullscreen-exit-btn {
+    min-width: 40px;
+    padding: 0.35rem;
+  }
+
+  .view-in-fullscreen-host .view-toolbar__desc {
+    display: none;
+  }
+
+  .view-in-fullscreen-host .view-toolbar {
+    padding: 0.55rem 0.65rem !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .table-wrapper--modern tbody .checkbox-input,
+  .table-wrapper--modern thead .checkbox-input {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+  }
+
+  .table-wrapper--modern tbody td:first-child,
+  .table-wrapper--modern thead th:first-child {
+    padding: 0.55rem 0.45rem !important;
+    vertical-align: middle;
   }
 }
 
@@ -734,7 +1067,19 @@
     transition: none;
   }
 
-  .projects-view--board .scrum-board-card:hover {
+  .projects-view--board .scrum-board-card:hover,
+  .projects-view--board .scrum-board-card.scrum-board-card--dragging {
     transform: none;
   }
+}
+
+/* Portfolio cards: no hover highlight in workspace board */
+.workspace-panel--v2 .projects-view--board .scrum-board-card {
+  transition: none !important;
+}
+
+.workspace-panel--v2 .projects-view--board .scrum-board-card:hover {
+  transform: none !important;
+  box-shadow: 0 1px 3px rgba(63, 15, 25, 0.06) !important;
+  border-color: var(--ws-border) !important;
 }

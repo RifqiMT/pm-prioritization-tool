@@ -41,12 +41,12 @@ The UI is a **static SPA** (`index.html` + `src/`). On Vercel, **serverless rout
 | `src/modules/profile-security.js` | PBKDF2 password hash/verify |
 | `src/modules/exchange-rates.js` | Fetch/cache FX to EUR |
 | `src/modules/fullscreen.js` | Fullscreen API for views |
+| `src/modules/overlay-manager.js` | Single-popup coordination (modals, sheets, menus) |
 | `src/modules/storage.js` | MongoDB vs local persistence, migration, debounced sync |
 | `api/health.js` | Storage backend probe |
 | `api/state.js` | GET/PUT workspace document |
-| `src/app.js` | State, events, rendering, filters, import/export, modals |
-| `src/main.js` | `init()` bootstrap |
-| `css/*` | Layered presentation (see [TECH_GUIDELINES.md](TECH_GUIDELINES.md)) |
+| `src/app.js` | `init()` bootstrap, state, events, rendering, filters, import/export, modals |
+| `css/*` | Layered presentation: modern workspace + **compact-*** layers for ≤1024px (see [DESIGN_GUIDELINES.md](DESIGN_GUIDELINES.md)) |
 
 ---
 

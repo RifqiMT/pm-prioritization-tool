@@ -510,8 +510,7 @@
   }
 }
 
-/* Legacy view / delete modal content inside new shell */
-#profileViewModal .modal-body,
+/* Legacy delete modal content inside new shell */
 #profileDeleteModal .modal-body {
   display: block !important;
   flex: 1 1 auto;
@@ -521,7 +520,6 @@
   background: transparent !important;
 }
 
-#profileViewModal .form-section,
 #profileDeleteModal .form-section {
   border: none !important;
   background: transparent !important;
@@ -530,12 +528,10 @@
   box-shadow: none !important;
 }
 
-#profileViewModal .form-section-header,
 #profileDeleteModal .form-section-header {
   margin-bottom: 0.45rem;
 }
 
-#profileViewModal .form-section-title,
 #profileDeleteModal .form-section-title {
   font-size: 0.78rem !important;
   letter-spacing: 0.06em !important;
@@ -543,7 +539,6 @@
   text-transform: uppercase !important;
 }
 
-#profileViewModal .modal-header,
 #profileDeleteModal .modal-header {
   padding: 1rem !important;
   margin: 0 !important;
@@ -551,13 +546,11 @@
   background: linear-gradient(180deg, #fffdf8, #fff) !important;
 }
 
-#profileViewModal .modal-title,
 #profileDeleteModal .modal-title {
   text-transform: none !important;
   color: var(--pm-text) !important;
 }
 
-#profileViewModal label,
 #profileDeleteModal label {
   font-size: 0.75rem !important;
   font-weight: 600 !important;
@@ -574,7 +567,6 @@
   box-sizing: border-box;
 }
 
-#profileViewModal .form-actions-row,
 #profileDeleteModal .form-actions,
 #profileDeleteModal .form-actions-row {
   display: flex !important;
@@ -587,7 +579,6 @@
   justify-content: stretch !important;
 }
 
-#profileViewModal .form-actions-row button,
 #profileDeleteModal .form-actions button,
 #profileDeleteModal #profileDeleteConfirmBtn {
   flex: 1 1 0;
@@ -603,13 +594,296 @@
   border: none !important;
 }
 
-#profileViewModal .profile-view-stats {
-  gap: 0.45rem;
+/* ── Profile view modal (overview) ── */
+.profile-view-modal {
+  max-width: min(560px, 100%) !important;
 }
 
-#profileViewModal .profile-view-stat-row {
-  padding: 0.45rem 0;
-  border-bottom: 1px solid rgba(231, 201, 120, 0.35);
+.profile-modal-mark--view {
+  background: linear-gradient(145deg, #b91c1c, #991b1b 55%, #7f1d1d);
+}
+
+.profile-view-body {
+  gap: 1rem !important;
+  padding: 1rem 1rem 0.5rem !important;
+}
+
+.profile-view-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(231, 201, 120, 0.55);
+  background: linear-gradient(135deg, #fffdf8 0%, #fff 100%);
+  box-shadow: 0 2px 8px rgba(127, 29, 29, 0.06);
+}
+
+.profile-view-avatar {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #b91c1c, #991b1b);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: 0 3px 10px rgba(185, 28, 28, 0.22);
+}
+
+.profile-view-identity-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.profile-view-name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--pm-text);
+  letter-spacing: -0.01em;
+  word-break: break-word;
+}
+
+.profile-view-team-wrap {
+  margin: 0.35rem 0 0;
+}
+
+.profile-view-team {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #92400e;
+  background: rgba(251, 191, 36, 0.22);
+  border: 1px solid rgba(217, 119, 6, 0.28);
+}
+
+.profile-view-team--empty {
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--pm-text-soft);
+  background: rgba(122, 75, 18, 0.08);
+  border-color: rgba(231, 201, 120, 0.35);
+}
+
+.profile-view-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.profile-view-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid rgba(231, 201, 120, 0.45);
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(63, 15, 25, 0.04);
+}
+
+.profile-view-kpi-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pm-text-soft);
+}
+
+.profile-view-kpi-value {
+  font-size: 1.65rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--pm-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-view-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding-top: 0.15rem;
+}
+
+.profile-view-section--rice {
+  padding-bottom: 0.25rem;
+}
+
+.profile-view-section-title {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pm-gold);
+}
+
+.profile-view-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: flex-start;
+}
+
+.profile-view-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 100%;
+  padding: 0.35rem 0.55rem 0.35rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid rgba(231, 201, 120, 0.5);
+  background: #fffdf8;
+  box-shadow: 0 1px 2px rgba(63, 15, 25, 0.04);
+}
+
+.profile-view-chip-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--pm-text);
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.profile-view-chip-count {
+  flex: 0 0 auto;
+  min-width: 1.35rem;
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  color: #991b1b;
+  background: rgba(254, 226, 226, 0.85);
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-view-empty {
+  font-size: 0.84rem;
+  color: var(--pm-text-soft);
+  font-style: italic;
+}
+
+.profile-view-section-note {
+  margin: -0.15rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--pm-text-soft);
+}
+
+.profile-view-section-note[hidden] {
+  display: none !important;
+}
+
+.profile-view-rice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.profile-view-rice-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 11px;
+  border: 1px solid rgba(231, 201, 120, 0.45);
+  background: linear-gradient(180deg, #fff 0%, #fffdf8 100%);
+}
+
+.profile-view-rice-card--total {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border-color: rgba(185, 28, 28, 0.22);
+  background: linear-gradient(135deg, rgba(254, 226, 226, 0.35), rgba(255, 251, 235, 0.9));
+}
+
+.profile-view-rice-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pm-text-soft);
+}
+
+.profile-view-rice-value {
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--pm-text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.profile-view-rice-card--total .profile-view-rice-value {
+  font-size: 1.15rem;
+  color: #991b1b;
+}
+
+.profile-view-rice-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0.75rem;
+  border-radius: 11px;
+  font-size: 0.84rem;
+  color: var(--pm-text-soft);
+  text-align: center;
+  background: rgba(122, 75, 18, 0.06);
+  border: 1px dashed rgba(231, 201, 120, 0.55);
+}
+
+#profileViewModal .profile-modal-footer {
+  padding-top: 0.65rem;
+}
+
+.profile-modal-btn--full {
+  flex: 1 1 100%;
+  min-width: 100%;
+}
+
+@media (max-width: 380px) {
+  .profile-view-kpi-value {
+    font-size: 1.45rem;
+  }
+
+  .profile-view-rice-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-view-rice-card--total {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (min-width: 480px) {
+  .profile-view-rice-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .profile-view-rice-card--total {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+  }
 }
 
 /* Kill global red button bleed inside profile modals */
@@ -629,7 +903,8 @@
 }
 
 #profileEditModal #profileEditCancelBtn,
-#profileUnlockModal #profileUnlockCancelBtn {
+#profileUnlockModal #profileUnlockCancelBtn,
+#profileViewModal #profileViewCloseBtnFooter {
   background: #fff !important;
   border: 1px solid var(--pm-border) !important;
   color: var(--pm-text-soft) !important;

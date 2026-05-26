@@ -1,0 +1,349 @@
+/**
+ * Fullscreen overlay — desktop & shared host styling.
+ * Works with #viewFullscreenHost (body-level teleport from fullscreen.js).
+ */
+
+/* ── Hide app chrome while fullscreen host is active ─────── */
+html.pseudo-view-fullscreen .app-shell {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+html.pseudo-view-fullscreen .view-fullscreen-host:not([hidden]) {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* ── Host shell ──────────────────────────────────────────── */
+.view-fullscreen-host {
+  position: fixed;
+  inset: 0;
+  z-index: 980;
+  display: flex;
+  flex-direction: column;
+  background: #fffdf8;
+  box-sizing: border-box;
+}
+
+.view-fullscreen-host[hidden] {
+  display: none !important;
+}
+
+/* ── Top chrome bar ──────────────────────────────────────── */
+.view-fullscreen-chrome {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 1rem 1.25rem;
+  padding: 0.65rem 1.25rem;
+  border-bottom: 1px solid rgba(231, 201, 120, 0.55);
+  background: linear-gradient(180deg, #ffffff 0%, #fffdf8 100%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85), 0 4px 18px rgba(127, 29, 29, 0.06);
+}
+
+.view-fullscreen-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.view-fullscreen-mark {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: linear-gradient(145deg, #b91c1c 0%, #991b1b 48%, #a16207 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(185, 28, 28, 0.28);
+}
+
+.view-fullscreen-mark svg {
+  display: block;
+}
+
+.view-fullscreen-context {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.view-fullscreen-eyebrow {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a16207;
+}
+
+.view-fullscreen-profile {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #3f0f19;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.view-fullscreen-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.22rem;
+  border-radius: 12px;
+  background: rgba(254, 243, 199, 0.38);
+  border: 1px solid rgba(231, 201, 120, 0.5);
+}
+
+.view-fullscreen-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 40px;
+  padding: 0.4rem 0.85rem;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #7a4b12;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.view-fullscreen-tab-icon {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+}
+
+.view-fullscreen-tab--active,
+.view-fullscreen-tab[aria-selected="true"] {
+  background: #fff;
+  border-color: rgba(185, 28, 28, 0.28);
+  color: #b91c1c;
+  box-shadow: 0 1px 4px rgba(185, 28, 28, 0.12);
+}
+
+.view-fullscreen-tab:hover:not(.view-fullscreen-tab--active):not([aria-selected="true"]) {
+  background: rgba(255, 255, 255, 0.65);
+  border-color: rgba(231, 201, 120, 0.45);
+}
+
+.view-fullscreen-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.view-fullscreen-exit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 40px;
+  padding: 0.45rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid rgba(185, 28, 28, 0.35);
+  background: linear-gradient(180deg, #fff5f5 0%, #fef2f2 100%);
+  color: #b91c1c;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.view-fullscreen-exit-btn:hover {
+  background: #fee2e2;
+  border-color: rgba(185, 28, 28, 0.5);
+  box-shadow: 0 2px 8px rgba(185, 28, 28, 0.12);
+}
+
+.view-fullscreen-exit-btn svg {
+  flex-shrink: 0;
+}
+
+/* ── Stage & view ────────────────────────────────────────── */
+.view-fullscreen-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+}
+
+.view-fullscreen-stage > .projects-view.view-in-fullscreen-host {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  margin: 0 !important;
+  position: relative !important;
+  inset: auto !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box;
+  background: #fff !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Dedupe: chrome owns navigation + exit; toolbar is controls-only */
+.view-in-fullscreen-host .view-toolbar__identity {
+  display: none !important;
+}
+
+.view-in-fullscreen-host .view-fullscreen-btn,
+.view-in-fullscreen-host .projects-map-fullscreen-btn {
+  display: none !important;
+}
+
+.view-in-fullscreen-host .view-toolbar {
+  flex: 0 0 auto;
+  position: relative !important;
+  top: auto !important;
+  z-index: 2;
+  margin-bottom: 0.55rem !important;
+  border-radius: 12px !important;
+  background: rgba(255, 253, 248, 0.92) !important;
+}
+
+.view-in-fullscreen-host .view-toolbar__row--primary {
+  grid-template-columns: 1fr !important;
+}
+
+.view-in-fullscreen-host .projects-map-container,
+.view-in-fullscreen-host .scrum-board,
+.view-in-fullscreen-host .moscow-grid,
+.view-in-fullscreen-host .table-wrapper--modern {
+  flex: 1 1 auto;
+  min-height: 0 !important;
+  max-height: none !important;
+  height: auto !important;
+}
+
+.view-in-fullscreen-host .table-wrapper--modern {
+  overflow: auto;
+}
+
+html:not(.is-compact-layout) .view-in-fullscreen-host .scrum-board {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+html:not(.is-compact-layout) .view-in-fullscreen-host .moscow-grid {
+  overflow: auto;
+}
+
+.view-in-fullscreen-host .projects-map-container {
+  overflow: hidden;
+}
+
+.view-in-fullscreen-host .projects-map-legend {
+  flex: 0 0 auto;
+}
+
+/* ── Desktop fullscreen ──────────────────────────────────── */
+.view-fullscreen-host--desktop {
+  padding: 0;
+}
+
+.view-fullscreen-host--desktop .view-fullscreen-chrome {
+  grid-template-columns: minmax(12rem, 1fr) auto auto;
+  padding: 0.75rem 1.5rem;
+  min-height: 64px;
+}
+
+.view-fullscreen-host--desktop .view-fullscreen-profile {
+  font-size: 1.02rem;
+  max-width: 28ch;
+}
+
+.view-fullscreen-host--desktop .view-fullscreen-tabs {
+  gap: 0.32rem;
+  padding: 0.25rem;
+}
+
+.view-fullscreen-host--desktop .view-fullscreen-tab {
+  min-height: 42px;
+  padding: 0.45rem 1rem;
+}
+
+.view-fullscreen-host--desktop .view-fullscreen-stage > .projects-view.view-in-fullscreen-host {
+  padding: 0.85rem 1.35rem 1.15rem !important;
+}
+
+.view-fullscreen-host--desktop .view-in-fullscreen-host .view-toolbar {
+  padding: 0.65rem 0.85rem !important;
+  margin-bottom: 0.65rem !important;
+}
+
+.view-fullscreen-host--desktop .view-in-fullscreen-host .view-toolbar__desc {
+  display: none;
+}
+
+/* ── Compact host overrides (phone/tablet) ───────────────── */
+.view-fullscreen-host--compact .view-fullscreen-chrome {
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 0.45rem 0.5rem;
+  padding: 0.5rem 0.65rem 0.45rem;
+}
+
+.view-fullscreen-host--compact .view-fullscreen-brand {
+  grid-column: 1 / -1;
+  display: none;
+}
+
+.view-fullscreen-host--compact .view-fullscreen-tabs {
+  grid-column: 1;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.view-fullscreen-host--compact .view-fullscreen-tab {
+  flex-direction: column;
+  gap: 0.12rem;
+  min-height: 38px;
+  padding: 0.35rem 0.25rem;
+  font-size: 0.68rem;
+}
+
+.view-fullscreen-host--compact .view-fullscreen-actions {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.view-fullscreen-host--compact .view-fullscreen-stage > .projects-view.view-in-fullscreen-host {
+  padding: 0.45rem 0.6rem 0.65rem !important;
+}
+
+/* Icon-only fullscreen tabs handled in compact-modern.css for ≤1024px */
+
+@media (min-width: 1025px) {
+  html.is-desktop-layout.pseudo-view-fullscreen {
+    overflow: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .view-fullscreen-tab,
+  .view-fullscreen-exit-btn {
+    transition: none;
+  }
+}

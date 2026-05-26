@@ -46,6 +46,42 @@ let pendingExportFormat = null;
 
 /** Filters profile list in the profiles panel (name / team). */
 let profilesFilterQuery = "";
+let profilePickerOpen = false;
+let profilePickerHighlightIndex = -1;
+let profilePickerIsSearching = false;
+let profilePickerSuppressFocusOpen = false;
+let profilePickerPointerSelecting = false;
+
+const MAP_METRIC_OPTIONS = [
+  {
+    id: "projects",
+    label: "Project count",
+    short: "Count",
+    description: "Number of projects per country",
+    keywords: ["count", "projects", "number", "volume", "quantity"]
+  },
+  {
+    id: "rice",
+    label: "RICE score",
+    short: "RICE",
+    description: "Total RICE score by country",
+    keywords: ["rice", "score", "priority", "reach", "impact", "confidence", "effort"]
+  },
+  {
+    id: "financial",
+    label: "Financial impact (EUR)",
+    short: "EUR",
+    description: "Total financial impact in EUR by country",
+    keywords: ["financial", "eur", "money", "impact", "revenue", "cost", "euro"]
+  }
+];
+
+let mapMetricPickerOpen = false;
+let mapMetricPickerHighlightIndex = -1;
+let mapMetricPickerPointerSelecting = false;
+
+let profilesSheetTab = "browse";
+let profilesSheetCloseTimer = null;
 
 function markProfileUnlocked(profileId) {
   if (!profileId) return;
@@ -1250,27 +1286,39 @@ function refreshUiAfterCloudDataChange() {
 function showCloudWorkspaceToast(extra) {
   const count = state.profiles.length;
   if (count === 0) return;
+  const status =
+    typeof AppStorage !== "undefined" && AppStorage.getStatus
+      ? AppStorage.getStatus()
+      : null;
+  const syncedLabel = formatStorageSyncTime(
+    (extra && extra.updatedAt) ||
+      (status && status.lastSyncedAt) ||
+      null
+  );
+  let msg = count + " profile" + (count !== 1 ? "s" : "");
+  if (syncedLabel) {
+    msg += " · synced " + syncedLabel;
+  }
   const lockedCount = state.profiles.filter(
     (p) => isProfilePasswordProtected(p) && !isProfileUnlocked(p.id)
   ).length;
-  let msg =
-    extra && extra.source === "pull"
-      ? "Updated from cloud: "
-      : "Loaded from cloud: ";
-  msg += count + " profile" + (count !== 1 ? "s" : "");
   if (lockedCount > 0) {
     msg +=
       ". " +
       lockedCount +
       " locked — unlock to view projects on this device.";
   }
-  showToast(msg);
+  showStorageStatusToast(msg);
+}
+
+let lastStorageStatusToastKey = "";
+
+function showStorageStatusToast(message) {
+  if (!message) return;
+  showToast(message);
 }
 
 function updateStorageStatusUI(status) {
-  if (!elements.appStorageStatusLabel) return;
-  const dot = elements.appStorageStatusDot;
-  const label = elements.appStorageStatusLabel;
   const mode = status && status.mode ? status.mode : "unknown";
   const sync = status && status.syncStatus ? status.syncStatus : "idle";
   const profileCount = state.profiles.length;
@@ -1278,55 +1326,47 @@ function updateStorageStatusUI(status) {
     status && status.lastSyncedAt ? status.lastSyncedAt : null
   );
 
-  label.classList.remove("storage-status--cloud", "storage-status--local", "storage-status--warn");
-  if (dot) {
-    dot.classList.remove("storage-status-dot--cloud", "storage-status-dot--warn", "storage-status-dot--sync");
-  }
-
+  let message = null;
   if (mode === "mongodb") {
-    const profilePart =
-      profileCount > 0 ? profileCount + " profile" + (profileCount !== 1 ? "s" : "") + " · " : "";
-    label.textContent =
-      sync === "syncing"
-        ? "Saving to cloud…"
-        : sync === "error"
-          ? "Cloud sync issue"
-          : profilePart + (syncedLabel ? "synced " + syncedLabel : "Saved to cloud");
-    label.title =
-      sync === "error" && status && status.lastError
-        ? status.lastError
-        : "MongoDB workspace · click to sync now";
-    label.classList.add("storage-status--cloud");
-    label.dataset.cloudActive = "1";
-    if (dot) dot.classList.add(sync === "syncing" ? "storage-status-dot--sync" : "storage-status-dot--cloud");
-    return;
+    if (sync === "syncing") {
+      return;
+    }
+    if (sync === "error") {
+      message =
+        (status && status.lastError) ||
+        "Cloud sync issue — check your connection and try again.";
+    } else if (profileCount > 0 && syncedLabel) {
+      message =
+        profileCount +
+        " profile" +
+        (profileCount !== 1 ? "s" : "") +
+        " · synced " +
+        syncedLabel;
+    } else if (syncedLabel) {
+      message = "Synced " + syncedLabel;
+    } else {
+      message = "Saved to cloud";
+    }
+  } else if (mode === "mongodb-pending-auth") {
+    message = "Connect cloud storage to sync this workspace.";
+  } else if (mode === "local" && sync === "offline") {
+    message =
+      (status && status.lastError) ||
+      "Cloud unavailable — using browser cache on this device.";
+  } else if (mode === "local" && window.location.protocol !== "file:") {
+    message = "Local browser storage — open the production URL for cloud sync.";
   }
 
-  if (label.dataset) delete label.dataset.cloudActive;
+  if (!message) return;
 
-  if (mode === "mongodb-pending-auth") {
-    label.textContent = "Connect cloud storage";
-    label.classList.add("storage-status--warn");
-    if (dot) dot.classList.add("storage-status-dot--warn");
-    return;
-  }
-
-  if (mode === "local" && sync === "offline") {
-    label.textContent = "Cloud unavailable";
-    label.title = (status && status.lastError) || "Using browser cache only";
-    label.classList.add("storage-status--warn");
-    if (dot) dot.classList.add("storage-status-dot--warn");
-    return;
-  }
-
-  label.title = (status && status.lastError) || "";
-  label.textContent = window.location.protocol === "file:" ? "Local file mode" : "Local browser storage";
-  label.classList.add("storage-status--local");
+  const toastKey = mode + "|" + sync + "|" + profileCount + "|" + syncedLabel + "|" + message;
+  if (toastKey === lastStorageStatusToastKey) return;
+  lastStorageStatusToastKey = toastKey;
+  showStorageStatusToast(message);
 }
 
 function initCloudStorageModal() {
   const modal = $("cloudStorageModal");
-  const openBtn = $("cloudStorageConnectBtn");
   const cancelBtn = $("cloudStorageCancelBtn");
   const submitBtn = $("cloudStorageSubmitBtn");
   const input = $("cloudStorageApiKeyInput");
@@ -1388,6 +1428,7 @@ function initCloudStorageModal() {
   }
 
   function openModal() {
+    prepareAppOverlay("cloudStorage");
     modal.classList.add("active");
     modal.setAttribute("aria-hidden", "false");
     input.value =
@@ -1399,33 +1440,16 @@ function initCloudStorageModal() {
     input.focus();
   }
 
-  function closeModal() {
-    modal.classList.remove("active");
-    modal.setAttribute("aria-hidden", "true");
+  function closeModal({ immediate = false } = {}) {
+    closeModalBackdrop(modal, { immediate });
     setError("");
   }
 
-  if (openBtn) openBtn.addEventListener("click", openModal);
-  if (elements.appStorageStatusLabel) {
-    elements.appStorageStatusLabel.addEventListener("click", async () => {
-      if (typeof AppStorage === "undefined" || !AppStorage.getMode) return;
-      const mode = AppStorage.getMode();
-      if (mode === "mongodb-pending-auth") {
-        openModal();
-        return;
-      }
-      if (mode === "mongodb" && AppStorage.forceSyncNow) {
-        try {
-          await AppStorage.pullFromCloud({ force: true });
-          refreshUiAfterCloudDataChange();
-          await AppStorage.forceSyncNow();
-          showToast("Workspace synced with cloud.");
-        } catch (err) {
-          showToast(err && err.message ? err.message : "Cloud sync failed.");
-        }
-      }
-    });
+  if (typeof OverlayManager !== "undefined") {
+    OverlayManager.register("cloudStorage", () => closeModal({ immediate: true }));
   }
+
+  if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
 
   const pullBtn = $("cloudStoragePullBtn");
   const pushBtn = $("cloudStoragePushBtn");
@@ -1532,20 +1556,26 @@ async function init() {
     getState: () => state,
     getElements: () => elements,
     switchView: switchProjectsView,
+    syncViewTabs: syncPortfolioViewTabState,
     getViewElement(view) {
       if (view === "table") return elements.projectsTableView;
       if (view === "board") return elements.projectsBoardView;
       if (view === "moscow") return elements.projectsMoscowView;
       if (view === "map") return elements.projectsMapView;
       return null;
-    }
+    },
+    onExitFullscreen: refreshWorkspaceAfterFullscreenExit,
+    onEnterFullscreen: refreshCompactFullscreenEnter,
   });
   attachEventListeners();
+  initCompactLayoutClass();
   initAppHeaderMenu();
   initProfilesPanel();
+  initProfilePicker();
   initProfileModals();
   initPortfolioWorkspace();
   initCloudStorageModal();
+  registerAppOverlays();
 
   if (typeof AppStorage !== "undefined") {
     const boot = await AppStorage.bootstrap({
@@ -1564,16 +1594,9 @@ async function init() {
       showDeploymentIssueBanner(boot);
     }
     if (boot && boot.needsAuth && $("cloudStorageModal")) {
+      prepareAppOverlay("cloudStorage");
       $("cloudStorageModal").classList.add("active");
       $("cloudStorageModal").setAttribute("aria-hidden", "false");
-    }
-    if (
-      boot &&
-      boot.mode === "mongodb" &&
-      (boot.loadSource === "remote" || boot.migrated) &&
-      state.profiles.length > 0
-    ) {
-      showCloudWorkspaceToast({ source: boot.loadSource });
     }
   } else {
     applyStatePayload(
@@ -1611,16 +1634,39 @@ async function init() {
 }
 
 function cacheElements() {
-  elements.appStorageStatusDot = $("appStorageStatusDot");
-  elements.appStorageStatusLabel = $("appStorageStatusLabel");
   elements.profileList = $("profileList");
   elements.profilesEmptyState = $("profilesEmptyState");
   elements.profilesCountBadge = $("profilesCountBadge");
   elements.profilesCreatePanel = $("profilesCreatePanel");
+  elements.profilesSheetTabs = $("profilesSheetTabs");
+  elements.profilesSheetTabBrowse = $("profilesSheetTabBrowse");
+  elements.profilesSheetTabCreate = $("profilesSheetTabCreate");
+  elements.profilesSheetPanelBrowse = $("profilesSheetPanelBrowse");
+  elements.profilesSheetPanelCreate = $("profilesSheetPanelCreate");
+  elements.profilesPanelSheet = $("profilesPanelSheet");
+  elements.profilesSheetCountBadge = $("profilesSheetCountBadge");
+  elements.profilesSheetBackdrop = $("profilesSheetBackdrop");
+  elements.profilesSheetCloseBtn = $("profilesSheetCloseBtn");
+  elements.workspacePanel = $("workspacePanel");
+  elements.workspacePortfolioBody = $("workspacePortfolioBody");
+  elements.profilePickerBar = $("profilePickerBar");
+  elements.profilePicker = $("profilePicker");
+  elements.profilePickerControl = $("profilePickerControl");
+  elements.profilePickerInput = $("profilePickerInput");
+  elements.profilePickerAvatar = $("profilePickerAvatar");
+  elements.profilePickerToggle = $("profilePickerToggle");
+  elements.profilePickerDropdown = $("profilePickerDropdown");
+  elements.profilePickerListbox = $("profilePickerListbox");
+  elements.profilePickerEmpty = $("profilePickerEmpty");
+  elements.mobileProfileManageBtn = $("mobileProfileManageBtn");
   elements.profilesSearchInput = $("profilesSearchInput");
   elements.profilesNoResults = $("profilesNoResults");
   elements.portfolioFiltersDrawer = $("portfolioFiltersDrawer");
   elements.portfolioFabAddProject = $("portfolioFabAddProject");
+  elements.portfolioSelectionBar = $("portfolioSelectionBar");
+  elements.portfolioSelectionCount = $("portfolioSelectionCount");
+  elements.portfolioSelectionDeleteBtn = $("portfolioSelectionDeleteBtn");
+  elements.portfolioSelectionClearBtn = $("portfolioSelectionClearBtn");
   elements.addProfileForm = $("addProfileForm");
   elements.newProfileName = $("newProfileName");
   elements.newProfileTeam = $("newProfileTeam");
@@ -1670,7 +1716,14 @@ function cacheElements() {
   elements.tableFullscreenBtn = $("tableFullscreenBtn");
   elements.projectsMapContainer = $("projectsMapContainer");
   elements.projectsMapLegend = $("projectsMapLegend");
-  elements.projectsMapMetricToggle = $("projectsMapMetricToggle");
+  elements.mapMetricPicker = $("mapMetricPicker");
+  elements.mapMetricPickerTrigger = $("mapMetricPickerTrigger");
+  elements.mapMetricPickerBadge = $("mapMetricPickerBadge");
+  elements.mapMetricPickerLabel = $("mapMetricPickerLabel");
+  elements.mapMetricPickerSearch = $("mapMetricPickerSearch");
+  elements.mapMetricPickerDropdown = $("mapMetricPickerDropdown");
+  elements.mapMetricPickerListbox = $("mapMetricPickerListbox");
+  elements.mapMetricPickerEmpty = $("mapMetricPickerEmpty");
   elements.projectsMapFullscreenBtn = $("projectsMapFullscreenBtn");
   elements.refreshExchangeRatesBtn = $("refreshExchangeRatesBtn");
   elements.exchangeRatesDateLabel = $("exchangeRatesDateLabel");
@@ -1679,6 +1732,7 @@ function cacheElements() {
   elements.scrumBoardSortByRiceToggle = $("scrumBoardSortByRiceToggle");
   elements.scrumBoardFullscreenBtn = $("scrumBoardFullscreenBtn");
   elements.moscowBoardContainer = $("moscowBoardContainer");
+  elements.moscowCompactNav = $("moscowCompactNav");
   elements.moscowFullscreenBtn = $("moscowFullscreenBtn");
   elements.moscowSortByRiceToggle = $("moscowSortByRiceToggle");
   elements.moscowSortByRiceLabel = $("moscowSortByRiceLabel");
@@ -1832,8 +1886,10 @@ function cacheElements() {
   elements.profileUnlockConfirmBtn = $("profileUnlockConfirmBtn");
 
   elements.profileViewModal = $("profileViewModal");
+  elements.profileViewAvatar = $("profileViewAvatar");
   elements.profileViewName = $("profileViewName");
   elements.profileViewTeam = $("profileViewTeam");
+  elements.profileViewCloseBtn = $("profileViewCloseBtn");
   elements.profileViewCloseBtnFooter = $("profileViewCloseBtnFooter");
   elements.profileViewUniqueCountries = $("profileViewUniqueCountries");
   elements.profileViewTotalProjects = $("profileViewTotalProjects");
@@ -1841,6 +1897,8 @@ function cacheElements() {
   elements.profileViewByType = $("profileViewByType");
   elements.profileViewByTshirt = $("profileViewByTshirt");
   elements.profileViewRiceStats = $("profileViewRiceStats");
+  elements.profileViewFinancialStats = $("profileViewFinancialStats");
+  elements.profileViewFinancialNote = $("profileViewFinancialNote");
 
   elements.profileEditModal = $("profileEditModal");
   elements.profileEditName = $("profileEditName");
@@ -1972,38 +2030,65 @@ function initFilterProjectPeriodOptions(projects) {
 }
 
 /** Mobile/tablet header actions menu (export, import, rates). */
+function initCompactLayoutClass() {
+  const compactMq = window.matchMedia("(max-width: 1024px)");
+
+  const apply = () => {
+    const compact = compactMq.matches;
+    document.documentElement.classList.toggle("is-compact-layout", compact);
+    /* Non-desktop uses the same phone UI on tablets and phones (Android / iPhone). */
+    document.documentElement.classList.toggle("is-phone-layout", compact);
+    document.documentElement.classList.toggle("is-desktop-layout", !compact);
+    if (typeof Fullscreen !== "undefined" && typeof Fullscreen.updateHostLayoutClass === "function") {
+      Fullscreen.updateHostLayoutClass();
+    }
+    if (state.projectsView === "moscow") {
+      renderMoscowBoard();
+      syncMoscowCompactNav();
+    } else if (state.projectsView === "board") {
+      renderScrumBoard();
+    } else if (state.projectsView === "table") {
+      updateBulkDeleteButton();
+    }
+  };
+
+  apply();
+  if (typeof compactMq.addEventListener === "function") {
+    compactMq.addEventListener("change", apply);
+  } else if (typeof compactMq.addListener === "function") {
+    compactMq.addListener(apply);
+  }
+}
+
 function initAppHeaderMenu() {
   const header = document.querySelector(".app-header--modern");
   const toggleBtn = $("appHeaderMenuBtn");
   const toolbar = $("appHeaderToolbar");
   if (!header || !toggleBtn || !toolbar) return;
 
-  const closeMenu = () => {
-    header.classList.remove("app-header--menu-open");
-    toggleBtn.setAttribute("aria-expanded", "false");
-  };
-
   toggleBtn.addEventListener("click", () => {
+    const willOpen = !header.classList.contains("app-header--menu-open");
+    if (willOpen) prepareAppOverlay("appHeaderMenu");
     const isOpen = header.classList.toggle("app-header--menu-open");
     toggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
   });
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && header.classList.contains("app-header--menu-open")) {
-      closeMenu();
+      closeAppHeaderMenu();
       toggleBtn.focus();
     }
   });
 
   toolbar.querySelectorAll(".app-header-action-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      if (window.matchMedia("(max-width: 767px)").matches) closeMenu();
+      if (window.matchMedia("(max-width: 767px)").matches) closeAppHeaderMenu();
     });
   });
 
   const desktopMq = window.matchMedia("(min-width: 768px)");
   const onViewportChange = () => {
-    if (desktopMq.matches) closeMenu();
+    if (desktopMq.matches) closeAppHeaderMenu();
   };
   if (typeof desktopMq.addEventListener === "function") {
     desktopMq.addEventListener("change", onViewportChange);
@@ -2036,12 +2121,16 @@ function attachEventListeners() {
         if (elements.newProfileTeam) elements.newProfileTeam.value = "";
         if (elements.newProfilePassword) elements.newProfilePassword.value = "";
         if (elements.newProfilePasswordConfirm) elements.newProfilePasswordConfirm.value = "";
+        resetProfilePasswordToggles(elements.addProfileForm || $("addProfileForm"));
         showToast(
           validation.password
             ? "Profile created with password protection."
             : "Profile created successfully."
         );
-        if (elements.profilesCreatePanel && window.matchMedia("(max-width: 767px)").matches) {
+        if (isCompactProfilesLayout()) {
+          setProfilesSheetTab("browse");
+          if (elements.profilesCreatePanel) elements.profilesCreatePanel.open = false;
+        } else if (elements.profilesCreatePanel && window.matchMedia("(max-width: 767px)").matches) {
           elements.profilesCreatePanel.open = false;
         }
       })
@@ -2055,12 +2144,20 @@ function attachEventListeners() {
     openProjectModal("create");
   });
 
-  elements.bulkDeleteBtn.addEventListener("click", handleBulkDelete);
+  if (elements.bulkDeleteBtn) {
+    elements.bulkDeleteBtn.addEventListener("click", handleBulkDelete);
+  }
+  if (elements.portfolioSelectionDeleteBtn) {
+    elements.portfolioSelectionDeleteBtn.addEventListener("click", handleBulkDelete);
+  }
+  if (elements.portfolioSelectionClearBtn) {
+    elements.portfolioSelectionClearBtn.addEventListener("click", clearProjectSelection);
+  }
 
   if (elements.projectsViewTableBtn) {
     elements.projectsViewTableBtn.addEventListener("click", () => {
       if (Fullscreen.isViewFullscreen() && state.projectsView !== "table") {
-        Fullscreen.requestViewSwitchWhileFullscreen("table");
+        Fullscreen.switchViewWhileFullscreen("table");
       } else {
         switchProjectsView("table");
       }
@@ -2069,7 +2166,7 @@ function attachEventListeners() {
   if (elements.projectsViewBoardBtn) {
     elements.projectsViewBoardBtn.addEventListener("click", () => {
       if (Fullscreen.isViewFullscreen() && state.projectsView !== "board") {
-        Fullscreen.requestViewSwitchWhileFullscreen("board");
+        Fullscreen.switchViewWhileFullscreen("board");
       } else {
         switchProjectsView("board");
       }
@@ -2078,7 +2175,7 @@ function attachEventListeners() {
   if (elements.projectsViewMoscowBtn) {
     elements.projectsViewMoscowBtn.addEventListener("click", () => {
       if (Fullscreen.isViewFullscreen() && state.projectsView !== "moscow") {
-        Fullscreen.requestViewSwitchWhileFullscreen("moscow");
+        Fullscreen.switchViewWhileFullscreen("moscow");
       } else {
         switchProjectsView("moscow");
       }
@@ -2087,12 +2184,22 @@ function attachEventListeners() {
   if (elements.projectsViewMapBtn) {
     elements.projectsViewMapBtn.addEventListener("click", () => {
       if (Fullscreen.isViewFullscreen() && state.projectsView !== "map") {
-        Fullscreen.requestViewSwitchWhileFullscreen("map");
+        Fullscreen.switchViewWhileFullscreen("map");
       } else {
         switchProjectsView("map");
       }
     });
   }
+
+  [elements.projectsViewTableBtn, elements.projectsViewBoardBtn, elements.projectsViewMoscowBtn, elements.projectsViewMapBtn]
+    .filter(Boolean)
+    .forEach((btn) => {
+      btn.addEventListener("touchend", () => {
+        window.setTimeout(() => {
+          if (document.activeElement === btn) btn.blur();
+        }, 0);
+      });
+    });
 
   if (elements.scrumBoardSortByRiceToggle) {
     elements.scrumBoardSortByRiceToggle.addEventListener("change", () => {
@@ -2109,7 +2216,7 @@ function attachEventListeners() {
     });
   }
 
-  initMapMetricToggle();
+  initMapMetricPicker();
 
   if (elements.projectsMapFullscreenBtn && elements.projectsMapView) {
     elements.projectsMapFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.projectsMapView));
@@ -2147,6 +2254,7 @@ function attachEventListeners() {
       return;
     }
     updateExportFormatModalNotice();
+    prepareAppOverlay("exportFormatModal");
     elements.exportFormatModal.setAttribute("aria-hidden", "false");
     elements.exportFormatModal.classList.add("active");
   });
@@ -2154,6 +2262,7 @@ function attachEventListeners() {
   elements.importDataBtn.addEventListener("click", () => {
     if (!elements.importFormatModal) return;
     updateImportFormatModalNotice();
+    prepareAppOverlay("importFormatModal");
     elements.importFormatModal.setAttribute("aria-hidden", "false");
     elements.importFormatModal.classList.add("active");
   });
@@ -2218,6 +2327,9 @@ function attachEventListeners() {
   }
   if (elements.profileViewCloseBtnFooter) {
     elements.profileViewCloseBtnFooter.addEventListener("click", () => closeProfileViewModal());
+  }
+  if (elements.profileViewCloseBtn) {
+    elements.profileViewCloseBtn.addEventListener("click", () => closeProfileViewModal());
   }
 
   if (elements.profileEditModal) {
@@ -2309,8 +2421,10 @@ function attachEventListeners() {
       event.stopPropagation();
       const container = elements.filterCountriesToggle.closest(".filter-countries");
       if (!container) return;
-      const isOpen = container.classList.toggle("open");
-      if (isOpen && elements.filterCountriesSearch) {
+      const willOpen = !container.classList.contains("open");
+      if (willOpen) prepareAppOverlay("filterCountries");
+      container.classList.toggle("open");
+      if (willOpen && elements.filterCountriesSearch) {
         elements.filterCountriesSearch.focus();
         elements.filterCountriesSearch.select();
       }
@@ -2322,8 +2436,10 @@ function attachEventListeners() {
       event.stopPropagation();
       const container = elements.filterProjectPeriodToggle.closest(".filter-countries");
       if (!container) return;
-      const isOpen = container.classList.toggle("open");
-      if (isOpen && elements.filterProjectPeriodSearch) {
+      const willOpen = !container.classList.contains("open");
+      if (willOpen) prepareAppOverlay("filterProjectPeriod");
+      container.classList.toggle("open");
+      if (willOpen && elements.filterProjectPeriodSearch) {
         elements.filterProjectPeriodSearch.focus();
         elements.filterProjectPeriodSearch.select();
       }
@@ -2444,21 +2560,37 @@ function attachEventListeners() {
     input.addEventListener("change", handler);
   });
 
-  elements.selectAllProjects.addEventListener("change", (e) => {
-    const checked = e.target.checked;
-    const checkboxes = elements.projectsTableBody.querySelectorAll(".project-select-checkbox");
-    checkboxes.forEach((cb) => {
-      cb.checked = checked;
+  if (elements.selectAllProjects) {
+    elements.selectAllProjects.addEventListener("change", (e) => {
+      const checked = e.target.checked;
+      const checkboxes = elements.projectsTableBody.querySelectorAll(".project-select-checkbox");
+      checkboxes.forEach((cb) => {
+        cb.checked = checked;
+      });
+      syncProjectTableSelection();
     });
-    updateBulkDeleteButton();
-  });
+  }
 
-  elements.projectsTableBody.addEventListener("change", (e) => {
-    if (e.target.classList.contains("project-select-checkbox")) {
-      syncHeaderCheckbox();
-      updateBulkDeleteButton();
-    }
-  });
+  if (elements.projectsTableBody) {
+    elements.projectsTableBody.addEventListener("change", (e) => {
+      if (e.target.classList.contains("project-select-checkbox")) {
+        syncProjectTableSelection();
+      }
+    });
+
+    /* Touch devices: ensure selection state syncs even when change is delayed */
+    elements.projectsTableBody.addEventListener("input", (e) => {
+      if (e.target.classList.contains("project-select-checkbox")) {
+        syncProjectTableSelection();
+      }
+    });
+
+    elements.projectsTableBody.addEventListener("click", (e) => {
+      if (e.target.classList.contains("project-select-checkbox")) {
+        requestAnimationFrame(() => syncProjectTableSelection());
+      }
+    });
+  }
 
   elements.projectsTableBody.addEventListener("click", (e) => {
     const viewBtn = e.target.closest("[data-action='viewProject']");
@@ -2786,10 +2918,9 @@ function showExportUnlockError(message) {
   }
 }
 
-function closeExportUnlockModal() {
+function closeExportUnlockModal({ immediate = false } = {}) {
   if (!elements.exportUnlockModal) return;
-  elements.exportUnlockModal.classList.remove("active");
-  elements.exportUnlockModal.setAttribute("aria-hidden", "true");
+  closeModalBackdrop(elements.exportUnlockModal, { immediate });
   showExportUnlockError("");
 }
 
@@ -2797,6 +2928,17 @@ const PROFILE_PASSWORD_TOGGLE_EYE_SVG =
   '<svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
 const PROFILE_PASSWORD_TOGGLE_EYE_OFF_SVG =
   '<svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>';
+
+function resetProfilePasswordToggles(scope) {
+  const root = scope && typeof scope.querySelectorAll === "function" ? scope : document;
+  root.querySelectorAll(".profile-password-toggle").forEach((btn) => {
+    btn.classList.remove("is-visible");
+    btn.setAttribute("aria-label", "Show password");
+    const targetId = btn.getAttribute("data-target");
+    const input = targetId ? $(targetId) : null;
+    if (input) input.type = "password";
+  });
+}
 
 function bindProfilePasswordToggles(scope) {
   const root = scope && typeof scope.querySelectorAll === "function" ? scope : document;
@@ -2889,6 +3031,7 @@ function openExportUnlockModal(lockedProfiles) {
   }
   renderExportUnlockProfileList(lockedProfiles);
   showExportUnlockError("");
+  prepareAppOverlay("exportUnlockModal");
   elements.exportUnlockModal.classList.add("active");
   elements.exportUnlockModal.setAttribute("aria-hidden", "false");
   const firstInput = elements.exportUnlockProfileList.querySelector("input[type='password']");
@@ -3059,10 +3202,9 @@ function handleExportData(profilesForExport, exportMeta) {
   }
 }
 
-function closeExportFormatModal() {
+function closeExportFormatModal({ immediate = false } = {}) {
   if (!elements.exportFormatModal) return;
-  elements.exportFormatModal.classList.remove("active");
-  elements.exportFormatModal.setAttribute("aria-hidden", "true");
+  closeModalBackdrop(elements.exportFormatModal, { immediate });
 }
 
 function handleExportCsv(profilesForExport, exportMeta) {
@@ -3208,10 +3350,9 @@ function handleExportCsv(profilesForExport, exportMeta) {
   }
 }
 
-function closeImportFormatModal() {
+function closeImportFormatModal({ immediate = false } = {}) {
   if (!elements.importFormatModal) return;
-  elements.importFormatModal.classList.remove("active");
-  elements.importFormatModal.setAttribute("aria-hidden", "true");
+  closeModalBackdrop(elements.importFormatModal, { immediate });
 }
 
 function mergeImportedProfiles(importedProfiles) {
@@ -3885,10 +4026,18 @@ function updateProfileLockedBanner() {
   if (!elements.profileLockedBanner) return;
   const activeProfile = getActiveProfile();
   const locked = !!(activeProfile && !isProfileUnlocked(activeProfile.id));
-  elements.profileLockedBanner.style.display = locked ? "block" : "none";
+
+  if (elements.workspacePanel) {
+    elements.workspacePanel.classList.toggle("workspace-panel--profile-locked", locked);
+  }
   elements.profileLockedBanner.setAttribute("aria-hidden", locked ? "false" : "true");
+
   if (locked && elements.profileLockedBannerTitle && activeProfile) {
     elements.profileLockedBannerTitle.textContent = `${activeProfile.name} is locked`;
+  }
+  if (locked && elements.profileLockedBannerText) {
+    elements.profileLockedBannerText.textContent =
+      "Enter your password below to access projects, filters, and all portfolio views.";
   }
   if (locked) {
     showProfileLockedInlineError("");
@@ -3964,7 +4113,12 @@ function setActiveProfile(profileId) {
   renderProjects();
   if (!isProfileUnlocked(profileId)) {
     pendingUnlockAction = { type: "activate", profileId };
-    openProfileUnlockModal(profileId);
+    if (isCompactProfilesLayout()) {
+      updateProfileLockedBanner();
+      focusLockedProfileUnlockIfNeeded();
+    } else {
+      openProfileUnlockModal(profileId);
+    }
   }
 }
 
@@ -4002,7 +4156,155 @@ function createProfileButtonTooltip(titleText, bodyText) {
 
 /** Return the root element where tooltips should be appended (fullscreen element when in fullscreen, else body) so they remain visible. */
 function getTooltipRoot() {
-  return document.fullscreenElement || document.webkitFullscreenElement || document.body;
+  const host = document.getElementById("viewFullscreenHost");
+  if (host && !host.hidden) return host;
+  const pseudo = typeof Fullscreen !== "undefined" && Fullscreen.getPseudoFullscreenElement
+    ? Fullscreen.getPseudoFullscreenElement()
+    : document.querySelector(".projects-view.view-pseudo-fullscreen");
+  return document.fullscreenElement || document.webkitFullscreenElement || pseudo || document.body;
+}
+
+function invalidateMapSizeAfterFullscreenExit() {
+  const map = elements.projectsMapContainer && elements.projectsMapContainer._leafletMap;
+  if (!map) return;
+  map.invalidateSize();
+  requestAnimationFrame(() => map.invalidateSize());
+  setTimeout(() => map.invalidateSize(), 120);
+  setTimeout(() => map.invalidateSize(), 320);
+}
+
+function syncProjectsViewVisibility() {
+  if (!elements.projectsTableView || !elements.projectsBoardView) return;
+  const view = state.projectsView;
+  const showTable = view === "table";
+  const showBoard = view === "board";
+  const showMoscow = view === "moscow";
+  const showMap = view === "map";
+
+  elements.projectsTableView.style.display = showTable ? "flex" : "none";
+  elements.projectsBoardView.style.display = showBoard ? "flex" : "none";
+  elements.projectsBoardView.setAttribute("aria-hidden", String(!showBoard));
+  if (elements.projectsMoscowView) {
+    elements.projectsMoscowView.style.display = showMoscow ? "flex" : "none";
+    elements.projectsMoscowView.setAttribute("aria-hidden", String(!showMoscow));
+  }
+  if (elements.projectsMapView) {
+    elements.projectsMapView.style.display = showMap ? "flex" : "none";
+    elements.projectsMapView.setAttribute("aria-hidden", String(!showMap));
+  }
+}
+
+function getActiveProjectsViewRoot() {
+  if (state.projectsView === "table") return elements.projectsTableView;
+  if (state.projectsView === "board") return elements.projectsBoardView;
+  if (state.projectsView === "moscow") return elements.projectsMoscowView;
+  if (state.projectsView === "map") return elements.projectsMapView;
+  return null;
+}
+
+function resetActiveViewShellLayout() {
+  const viewRoot = getActiveProjectsViewRoot();
+  if (!viewRoot) return;
+
+  const presentationProps = [
+    "position", "top", "left", "right", "bottom", "inset", "z-index",
+    "height", "min-height", "max-height", "width", "transform", "visibility", "opacity",
+    "flex", "flex-basis", "flex-grow", "flex-shrink", "overflow", "margin", "padding"
+  ];
+
+  const resetNode = (node) => {
+    if (!node || !node.style) return;
+    presentationProps.forEach((prop) => node.style.removeProperty(prop));
+  };
+
+  resetNode(viewRoot);
+  viewRoot.querySelectorAll(
+    ".view-toolbar, .view-toolbar__row, .projects-map-container, .projects-map-legend, .scrum-board, .moscow-grid, .table-wrapper"
+  ).forEach(resetNode);
+
+  const toolbar = viewRoot.querySelector(".view-toolbar");
+  if (toolbar) {
+    toolbar.removeAttribute("hidden");
+    toolbar.setAttribute("aria-hidden", "false");
+  }
+}
+
+function resetPortfolioScrollAfterFullscreen() {
+  if (typeof Fullscreen !== "undefined" && typeof Fullscreen.resetPortfolioStageScroll === "function") {
+    Fullscreen.resetPortfolioStageScroll();
+    return;
+  }
+  const stage = document.querySelector(".portfolio-stage");
+  if (stage) {
+    stage.scrollTop = 0;
+    stage.scrollLeft = 0;
+  }
+}
+
+function getActiveViewToolbar() {
+  const root = getActiveProjectsViewRoot();
+  return root ? root.querySelector(".view-toolbar") : null;
+}
+
+function scrollActiveViewToolbarIntoView() {
+  resetPortfolioScrollAfterFullscreen();
+  const stage = document.querySelector(".portfolio-stage");
+  const toolbar = getActiveViewToolbar();
+  if (stage && toolbar) {
+    const stageTop = stage.getBoundingClientRect().top;
+    const toolbarTop = toolbar.getBoundingClientRect().top;
+    if (toolbarTop < stageTop + 2) {
+      stage.scrollTop = 0;
+    }
+  }
+}
+
+function refreshCompactFullscreenEnter() {
+  if (!document.documentElement.classList.contains("pseudo-view-fullscreen")) return;
+
+  if (state.projectsView === "moscow") {
+    syncMoscowCompactNav();
+  }
+
+  if (state.projectsView === "board" && elements.scrumBoardLegend && !elements.scrumBoardLegend.children.length) {
+    renderBoardStatusLegend();
+  }
+
+  const stage = document.querySelector(".view-fullscreen-stage");
+  if (stage) {
+    stage.scrollTop = 0;
+    stage.scrollLeft = 0;
+  }
+}
+
+function refreshWorkspaceAfterFullscreenExit() {
+  if (typeof Fullscreen.restoreWorkspaceChrome === "function") {
+    Fullscreen.restoreWorkspaceChrome();
+  }
+  if (typeof Fullscreen.restoreViewShell === "function") {
+    Fullscreen.restoreViewShell();
+  }
+
+  closeMapMetricPickerDropdown();
+  returnTooltipsToOwner();
+  hideCellTypeTooltips();
+  resetActiveViewShellLayout();
+  syncProjectsViewVisibility();
+  syncPortfolioViewTabState();
+  updateBulkDeleteButton();
+
+  const view = state.projectsView;
+  if (view === "board" && elements.scrumBoardLegend && !elements.scrumBoardLegend.children.length) {
+    renderBoardStatusLegend();
+  }
+  if (view === "moscow") {
+    syncMoscowCompactNav();
+  }
+
+  resetPortfolioScrollAfterFullscreen();
+  scrollActiveViewToolbarIntoView();
+  scrollActivePortfolioViewTabIntoView();
+  invalidateMapSizeAfterFullscreenExit();
 }
 
 /** Return any tooltip that was moved to body/fullscreen back to its owner wrap (so positioning works in all contexts, including fullscreen). */
@@ -4132,6 +4434,8 @@ function initPortfolioWorkspace() {
       if (!elements.addProjectBtn.disabled) elements.addProjectBtn.click();
     });
   }
+
+  window.addEventListener("resize", () => updateBulkDeleteButton());
 }
 
 /** Profile modals: password visibility toggles, close control. */
@@ -4154,9 +4458,650 @@ function resetProfileEditPasswordFieldTypes() {
   });
 }
 
+/** Close other popups before opening one; also dismiss floating tooltips. */
+function markOverlayCloseImmediate(el) {
+  if (!el) return;
+  el.classList.add("overlay-close-immediate");
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => el.classList.remove("overlay-close-immediate"));
+  });
+}
+
+function closeModalBackdrop(el, { immediate = false } = {}) {
+  if (!el) return;
+  if (immediate) markOverlayCloseImmediate(el);
+  el.classList.remove("active");
+  el.setAttribute("aria-hidden", "true");
+}
+
+function prepareAppOverlay(id) {
+  if (typeof OverlayManager !== "undefined") OverlayManager.prepareOpen(id);
+  hideCellTypeTooltips();
+}
+
+function closeAppHeaderMenu() {
+  const header = document.querySelector(".app-header--modern");
+  const toggleBtn = $("appHeaderMenuBtn");
+  if (!header) return;
+  header.classList.remove("app-header--menu-open");
+  if (toggleBtn) toggleBtn.setAttribute("aria-expanded", "false");
+}
+
+function closeFilterCountriesPopup() {
+  const container = elements.filterCountriesToggle?.closest(".filter-countries");
+  if (container) container.classList.remove("open");
+}
+
+function closeFilterProjectPeriodPopup() {
+  const container = elements.filterProjectPeriodToggle?.closest(".filter-countries");
+  if (container) container.classList.remove("open");
+}
+
+function registerAppOverlays() {
+  if (typeof OverlayManager === "undefined") return;
+
+  const closeNow = (fn) => () => fn({ immediate: true });
+
+  OverlayManager.register("profilesSheet", closeNow(closeProfilesSheet));
+  OverlayManager.register("profilePicker", closeProfilePickerDropdown);
+  OverlayManager.register("mapMetricPicker", closeMapMetricPickerDropdown);
+  OverlayManager.register("appHeaderMenu", closeAppHeaderMenu);
+  OverlayManager.register("filterCountries", closeFilterCountriesPopup);
+  OverlayManager.register("filterProjectPeriod", closeFilterProjectPeriodPopup);
+  OverlayManager.register("projectModal", closeNow(closeProjectModal));
+  OverlayManager.register("profileViewModal", closeNow(closeProfileViewModal));
+  OverlayManager.register("profileEditModal", closeNow(closeProfileEditModal));
+  OverlayManager.register("profileDeleteModal", closeNow(closeProfileDeleteModal));
+  OverlayManager.register("profileUnlockModal", closeNow(closeProfileUnlockModal));
+  OverlayManager.register("projectDeleteModal", closeNow(closeProjectDeleteModal));
+  OverlayManager.register("exportFormatModal", closeNow(closeExportFormatModal));
+  OverlayManager.register("importFormatModal", closeNow(closeImportFormatModal));
+  OverlayManager.register("exportUnlockModal", closeNow(closeExportUnlockModal));
+}
+
 /** Expand “New profile” on wide layouts; keep collapsed on phones by default. */
+function isCompactProfilesLayout() {
+  return window.matchMedia("(max-width: 1024px)").matches;
+}
+
+function updateProfilesShellSummary(activeProfile, profileCount) {
+  const badge = elements.profilesSheetCountBadge || $("profilesSheetCountBadge");
+  if (badge) {
+    badge.textContent = String(profileCount);
+    badge.hidden = profileCount === 0;
+  }
+}
+
+function updatePortfolioHeaderSubtitle(text, { hideWhenEmpty = true, hideWhenSameAsTitle = false, title = "" } = {}) {
+  const el = elements.activeProfileSubtitleText || $("activeProfileSubtitleText");
+  if (!el) return;
+
+  const normalized = (text || "").trim();
+  const titleNorm = (title || "").trim().toLowerCase();
+  const shouldHide =
+    (hideWhenEmpty && !normalized) ||
+    (hideWhenSameAsTitle && normalized.toLowerCase() === titleNorm) ||
+    (isCompactProfilesLayout() && normalized === "Profile ready for prioritization.");
+
+  if (shouldHide) {
+    el.textContent = "";
+    el.classList.add("portfolio-subtitle--empty");
+    el.hidden = true;
+  } else {
+    el.textContent = normalized;
+    el.classList.remove("portfolio-subtitle--empty");
+    el.hidden = false;
+  }
+}
+
+function scrollActivePortfolioViewTabIntoView() {
+  const tabs = document.querySelector(".portfolio-view-tabs");
+  if (!tabs) return;
+  if (tabs.scrollWidth <= tabs.clientWidth + 2) return;
+  const active = tabs.querySelector(".view-toggle-btn--active, .view-toggle-btn[aria-selected='true']");
+  if (active && typeof active.scrollIntoView === "function") {
+    requestAnimationFrame(() => {
+      active.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    });
+  }
+}
+
+function blurPortfolioViewTabs() {
+  const tabs = [
+    elements.projectsViewTableBtn,
+    elements.projectsViewBoardBtn,
+    elements.projectsViewMoscowBtn,
+    elements.projectsViewMapBtn
+  ].filter(Boolean);
+  tabs.forEach((btn) => {
+    btn.classList.remove("view-toggle-btn--pressed");
+    btn.removeAttribute("title");
+    if (document.activeElement === btn) btn.blur();
+  });
+}
+
+function syncPortfolioViewTabState(view) {
+  const activeView = view || state.projectsView;
+  const tabMap = [
+    [elements.projectsViewTableBtn, "table"],
+    [elements.projectsViewBoardBtn, "board"],
+    [elements.projectsViewMoscowBtn, "moscow"],
+    [elements.projectsViewMapBtn, "map"]
+  ];
+
+  tabMap.forEach(([btn, name]) => {
+    if (!btn) return;
+    const isActive = activeView === name;
+    btn.classList.toggle("view-toggle-btn--active", isActive);
+    btn.setAttribute("aria-selected", String(isActive));
+    btn.classList.remove("view-toggle-btn--pressed");
+    btn.removeAttribute("title");
+    if (!isActive && document.activeElement === btn) btn.blur();
+  });
+}
+
+function getSortedProfiles() {
+  return state.profiles
+    .slice()
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+}
+
+function getProfilePickerQuery() {
+  if (!profilePickerIsSearching) return "";
+  return (elements.profilePickerInput?.value || "").trim().toLowerCase();
+}
+
+function syncProfilePickerInputDisplay() {
+  const input = elements.profilePickerInput || $("profilePickerInput");
+  const avatar = elements.profilePickerAvatar || $("profilePickerAvatar");
+  if (!input) return;
+
+  const activeProfile = getActiveProfile();
+  if (!profilePickerIsSearching) {
+    if (activeProfile) {
+      input.value = activeProfile.name;
+      input.placeholder = "Search profiles…";
+      if (avatar) avatar.textContent = getProfileInitials(activeProfile.name);
+    } else {
+      input.value = "";
+      input.placeholder = "Search or select a profile…";
+      if (avatar) avatar.textContent = "?";
+    }
+  } else if (avatar && activeProfile) {
+    avatar.textContent = getProfileInitials(activeProfile.name);
+  }
+}
+
+function setProfilePickerOpen(open) {
+  const field = elements.profilePicker?.querySelector(".profile-picker__field");
+  const dropdown = elements.profilePickerDropdown || $("profilePickerDropdown");
+  const input = elements.profilePickerInput || $("profilePickerInput");
+  const toggle = elements.profilePickerToggle || $("profilePickerToggle");
+
+  if (open) prepareAppOverlay("profilePicker");
+
+  profilePickerOpen = !!open;
+  if (field) field.classList.toggle("profile-picker__field--open", profilePickerOpen);
+
+  if (dropdown) dropdown.hidden = !profilePickerOpen;
+  if (input) input.setAttribute("aria-expanded", profilePickerOpen ? "true" : "false");
+  if (toggle) toggle.setAttribute("aria-expanded", profilePickerOpen ? "true" : "false");
+
+  if (profilePickerOpen) {
+    renderProfilePickerOptions();
+  } else {
+    profilePickerIsSearching = false;
+    profilePickerHighlightIndex = -1;
+    syncProfilePickerInputDisplay();
+  }
+}
+
+function openProfilePickerDropdown() {
+  if (!isCompactProfilesLayout()) return;
+  setProfilePickerOpen(true);
+  const input = elements.profilePickerInput || $("profilePickerInput");
+  if (input) {
+    profilePickerIsSearching = true;
+    input.value = "";
+    input.focus();
+  }
+}
+
+function closeProfilePickerDropdown() {
+  profilePickerIsSearching = false;
+  profilePickerHighlightIndex = -1;
+  setProfilePickerOpen(false);
+}
+
+function selectProfileFromPicker(profileId) {
+  if (!profileId) return;
+  profilePickerPointerSelecting = true;
+  profilePickerIsSearching = false;
+  profilePickerHighlightIndex = -1;
+  profilePickerSuppressFocusOpen = true;
+  setProfilePickerOpen(false);
+
+  const input = elements.profilePickerInput || $("profilePickerInput");
+  if (input) {
+    input.blur();
+  }
+
+  setActiveProfile(profileId);
+
+  window.setTimeout(() => {
+    profilePickerPointerSelecting = false;
+    profilePickerSuppressFocusOpen = false;
+    syncProfilePickerInputDisplay();
+  }, 0);
+}
+
+function renderProfilePickerOptions() {
+  const listbox = elements.profilePickerListbox || $("profilePickerListbox");
+  const empty = elements.profilePickerEmpty || $("profilePickerEmpty");
+  if (!listbox) return;
+
+  const query = getProfilePickerQuery();
+  const profiles = getSortedProfiles().filter((profile) => profileMatchesFilter(profile, query));
+  listbox.innerHTML = "";
+
+  if (profiles.length === 0) {
+    if (empty) empty.hidden = false;
+    profilePickerHighlightIndex = -1;
+    return;
+  }
+
+  if (empty) empty.hidden = true;
+  if (profilePickerHighlightIndex >= profiles.length) {
+    profilePickerHighlightIndex = profiles.length - 1;
+  }
+
+  profiles.forEach((profile, index) => {
+    const isActive = profile.id === state.activeProfileId;
+    const isLocked = isProfilePasswordProtected(profile) && !isProfileUnlocked(profile.id);
+    const teamLabel = (profile.team || "").trim();
+    const metaParts = [];
+    if (teamLabel) metaParts.push(teamLabel);
+    if (isProfilePasswordProtected(profile)) {
+      metaParts.push(isLocked ? "Password required" : "Unlocked");
+    }
+
+    const option = document.createElement("button");
+    option.type = "button";
+    option.className =
+      "profile-picker__option" +
+      (isActive ? " profile-picker__option--active" : "") +
+      (index === profilePickerHighlightIndex ? " profile-picker__option--highlight" : "");
+    option.setAttribute("role", "option");
+    option.setAttribute("aria-selected", isActive ? "true" : "false");
+    option.dataset.profileId = profile.id;
+
+    const avatar = document.createElement("span");
+    avatar.className = "profile-picker__option-avatar";
+    avatar.textContent = getProfileInitials(profile.name);
+    avatar.setAttribute("aria-hidden", "true");
+
+    const copy = document.createElement("span");
+    copy.className = "profile-picker__option-copy";
+
+    const name = document.createElement("span");
+    name.className = "profile-picker__option-name";
+    name.textContent = profile.name;
+
+    const meta = document.createElement("span");
+    meta.className = "profile-picker__option-meta";
+    meta.textContent = metaParts.join(" · ") || "Profile workspace";
+
+    copy.appendChild(name);
+    copy.appendChild(meta);
+
+    const check = document.createElement("span");
+    check.className = "profile-picker__option-check";
+    check.setAttribute("aria-hidden", "true");
+    check.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+
+    option.appendChild(avatar);
+    option.appendChild(copy);
+
+    if (isProfilePasswordProtected(profile)) {
+      const lock = document.createElement("span");
+      lock.className = "profile-picker__option-lock";
+      lock.setAttribute("aria-hidden", "true");
+      lock.innerHTML = isLocked
+        ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>'
+        : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>';
+      option.appendChild(lock);
+    }
+
+    option.appendChild(check);
+
+    option.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      selectProfileFromPicker(profile.id);
+    });
+
+    listbox.appendChild(option);
+  });
+}
+
+function renderProfilePicker() {
+  const bar = elements.profilePickerBar || $("profilePickerBar");
+  if (!bar) return;
+
+  const compact = isCompactProfilesLayout();
+  const { profiles } = state;
+
+  if (!compact || profiles.length === 0) {
+    bar.hidden = true;
+    closeProfilePickerDropdown();
+    return;
+  }
+
+  bar.hidden = false;
+  if (!profilePickerOpen) {
+    profilePickerIsSearching = false;
+  }
+  syncProfilePickerInputDisplay();
+  if (profilePickerOpen) {
+    renderProfilePickerOptions();
+  }
+}
+
+function initProfilePicker() {
+  const input = elements.profilePickerInput || $("profilePickerInput");
+  const toggle = elements.profilePickerToggle || $("profilePickerToggle");
+  const field = elements.profilePicker?.querySelector(".profile-picker__field");
+
+  if (input) {
+    input.addEventListener("focus", () => {
+      if (!isCompactProfilesLayout()) return;
+      if (profilePickerSuppressFocusOpen) return;
+      profilePickerIsSearching = true;
+      setProfilePickerOpen(true);
+      input.select();
+    });
+
+    input.addEventListener("input", () => {
+      profilePickerIsSearching = true;
+      profilePickerHighlightIndex = -1;
+      if (!profilePickerOpen) setProfilePickerOpen(true);
+      renderProfilePickerOptions();
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (!profilePickerOpen) {
+        if (e.key === "ArrowDown" || e.key === "Enter") {
+          e.preventDefault();
+          openProfilePickerDropdown();
+        }
+        return;
+      }
+
+      const options = Array.from(
+        (elements.profilePickerListbox || $("profilePickerListbox"))?.querySelectorAll(".profile-picker__option") || []
+      );
+
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeProfilePickerDropdown();
+        input.blur();
+        return;
+      }
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (options.length === 0) return;
+        profilePickerHighlightIndex = Math.min(profilePickerHighlightIndex + 1, options.length - 1);
+        renderProfilePickerOptions();
+        options[profilePickerHighlightIndex]?.scrollIntoView({ block: "nearest" });
+        return;
+      }
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (options.length === 0) return;
+        profilePickerHighlightIndex = Math.max(profilePickerHighlightIndex - 1, 0);
+        renderProfilePickerOptions();
+        options[profilePickerHighlightIndex]?.scrollIntoView({ block: "nearest" });
+        return;
+      }
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const highlighted = options[profilePickerHighlightIndex];
+        const targetId = highlighted?.dataset.profileId || options[0]?.dataset.profileId;
+        if (targetId) selectProfileFromPicker(targetId);
+      }
+    });
+
+    input.addEventListener("blur", (e) => {
+      if (profilePickerPointerSelecting) return;
+      window.setTimeout(() => {
+        if (profilePickerPointerSelecting) return;
+        const related = e.relatedTarget;
+        const dropdown = elements.profilePickerDropdown || $("profilePickerDropdown");
+        const picker = elements.profilePicker || $("profilePicker");
+        if (related && (dropdown?.contains(related) || picker?.contains(related))) return;
+        const active = document.activeElement;
+        if (field && field.contains(active)) return;
+        closeProfilePickerDropdown();
+      }, 150);
+    });
+  }
+
+  if (toggle) {
+    toggle.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (profilePickerOpen) {
+        closeProfilePickerDropdown();
+      } else {
+        openProfilePickerDropdown();
+      }
+    });
+  }
+
+  document.addEventListener("click", (e) => {
+    if (!profilePickerOpen) return;
+    const picker = elements.profilePicker || $("profilePicker");
+    if (picker && !picker.contains(e.target)) {
+      closeProfilePickerDropdown();
+    }
+  });
+
+  const mqCompact = window.matchMedia("(max-width: 1024px)");
+  const handleBreakpoint = (e) => {
+    if (!e.matches) closeProfilePickerDropdown();
+    renderProfilePicker();
+  };
+  if (typeof mqCompact.addEventListener === "function") {
+    mqCompact.addEventListener("change", handleBreakpoint);
+  } else if (typeof mqCompact.addListener === "function") {
+    mqCompact.addListener(handleBreakpoint);
+  }
+}
+
+/* ─── Bottom-sheet helpers ──────────────────────────────── */
+function syncProfilesSheetTabsUi() {
+  const compact = isCompactProfilesLayout();
+  const tabs = elements.profilesSheetTabs;
+  const browseTab = elements.profilesSheetTabBrowse;
+  const createTab = elements.profilesSheetTabCreate;
+  const browsePanel = elements.profilesSheetPanelBrowse;
+  const createPanel = elements.profilesSheetPanelCreate;
+  const sheetBody = document.querySelector(".profiles-panel-sheet-body");
+
+  if (tabs) tabs.hidden = !compact;
+
+  if (!compact) {
+    if (browsePanel) browsePanel.hidden = false;
+    if (createPanel) createPanel.hidden = false;
+    if (sheetBody) {
+      sheetBody.classList.remove("profiles-sheet-body--tab-browse", "profiles-sheet-body--tab-create");
+    }
+    return;
+  }
+
+  const showBrowse = profilesSheetTab !== "create";
+  if (browseTab) {
+    browseTab.classList.toggle("profiles-sheet-tab--active", showBrowse);
+    browseTab.setAttribute("aria-selected", showBrowse ? "true" : "false");
+  }
+  if (createTab) {
+    createTab.classList.toggle("profiles-sheet-tab--active", !showBrowse);
+    createTab.setAttribute("aria-selected", !showBrowse ? "true" : "false");
+  }
+  if (browsePanel) browsePanel.hidden = !showBrowse;
+  if (createPanel) createPanel.hidden = showBrowse;
+
+  const createDetails = elements.profilesCreatePanel || $("profilesCreatePanel");
+  if (createDetails && compact) createDetails.open = true;
+
+  if (sheetBody) {
+    sheetBody.classList.toggle("profiles-sheet-body--tab-browse", showBrowse);
+    sheetBody.classList.toggle("profiles-sheet-body--tab-create", !showBrowse);
+  }
+}
+
+function setProfilesSheetTab(tab) {
+  profilesSheetTab = tab === "create" ? "create" : "browse";
+  syncProfilesSheetTabsUi();
+  if (profilesSheetTab === "create") {
+    const nameInput = $("newProfileName");
+    requestAnimationFrame(() => nameInput?.focus());
+  } else {
+    const search = elements.profilesSearchInput;
+    requestAnimationFrame(() => search?.focus());
+  }
+}
+
+function openProfilesSheet() {
+  const sheet = elements.profilesPanelSheet || $("profilesPanelSheet");
+  const backdrop = elements.profilesSheetBackdrop || $("profilesSheetBackdrop");
+  const manageBtn = elements.mobileProfileManageBtn || $("mobileProfileManageBtn");
+  if (!sheet || !isCompactProfilesLayout()) return;
+
+  prepareAppOverlay("profilesSheet");
+
+  profilesSheetTab = "browse";
+  syncProfilesSheetTabsUi();
+
+  sheet.hidden = false;
+  // Force reflow so CSS transition fires
+  void sheet.offsetHeight;
+  sheet.classList.add("profiles-panel-sheet--open");
+
+  if (backdrop) {
+    backdrop.hidden = false;
+    void backdrop.offsetHeight;
+    backdrop.classList.add("profiles-sheet-backdrop--visible");
+  }
+
+  if (manageBtn) manageBtn.setAttribute("aria-expanded", "true");
+
+  // Scroll lock
+  document.body.style.overflow = "hidden";
+
+  // Focus search when opening browse tab
+  const search = elements.profilesSearchInput;
+  if (search) {
+    setTimeout(() => { try { search.focus(); } catch (_) {} }, 120);
+  }
+}
+
+function closeProfilesSheet({ immediate = false } = {}) {
+  const sheet = elements.profilesPanelSheet || $("profilesPanelSheet");
+  const backdrop = elements.profilesSheetBackdrop || $("profilesSheetBackdrop");
+  const manageBtn = elements.mobileProfileManageBtn || $("mobileProfileManageBtn");
+  if (!sheet) return;
+
+  if (profilesSheetCloseTimer) {
+    clearTimeout(profilesSheetCloseTimer);
+    profilesSheetCloseTimer = null;
+  }
+
+  sheet.classList.remove("profiles-panel-sheet--open");
+  if (backdrop) backdrop.classList.remove("profiles-sheet-backdrop--visible");
+  if (manageBtn) manageBtn.setAttribute("aria-expanded", "false");
+  document.body.style.overflow = "";
+
+  if (immediate) {
+    markOverlayCloseImmediate(sheet);
+    if (backdrop) markOverlayCloseImmediate(backdrop);
+    sheet.hidden = true;
+    if (backdrop) backdrop.hidden = true;
+    return;
+  }
+
+  profilesSheetCloseTimer = setTimeout(() => {
+    profilesSheetCloseTimer = null;
+    if (!sheet.classList.contains("profiles-panel-sheet--open")) {
+      sheet.hidden = true;
+    }
+    if (backdrop && !backdrop.classList.contains("profiles-sheet-backdrop--visible")) {
+      backdrop.hidden = true;
+    }
+  }, 380);
+}
+
 function initProfilesPanel() {
   const panel = elements.profilesCreatePanel || $("profilesCreatePanel");
+  const manageBtn = elements.mobileProfileManageBtn || $("mobileProfileManageBtn");
+  const closeBtn = elements.profilesSheetCloseBtn || $("profilesSheetCloseBtn");
+  const backdrop = elements.profilesSheetBackdrop || $("profilesSheetBackdrop");
+
+  syncProfilesSheetTabsUi();
+
+  [elements.profilesSheetTabBrowse, elements.profilesSheetTabCreate].filter(Boolean).forEach((btn) => {
+    btn.addEventListener("click", () => {
+      setProfilesSheetTab(btn.dataset.profilesTab || "browse");
+    });
+  });
+
+  if (manageBtn) {
+    manageBtn.addEventListener("click", () => {
+      if (isCompactProfilesLayout()) {
+        openProfilesSheet();
+      }
+    });
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener("click", closeProfilesSheet);
+  }
+
+  if (backdrop) {
+    backdrop.addEventListener("click", closeProfilesSheet);
+  }
+
+  // Close on Escape
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || !isCompactProfilesLayout()) return;
+    const sheet = elements.profilesPanelSheet || $("profilesPanelSheet");
+    if (sheet && sheet.classList.contains("profiles-panel-sheet--open")) {
+      closeProfilesSheet();
+      return;
+    }
+    closeProfilePickerDropdown();
+  });
+
+  // On breakpoint change to desktop: ensure sheet is closed
+  const mqCompact = window.matchMedia("(max-width: 1024px)");
+  const handleBreakpoint = (e) => {
+    if (!e.matches) {
+      closeProfilesSheet();
+    }
+    syncProfilesSheetTabsUi();
+    renderProfiles();
+  };
+  if (typeof mqCompact.addEventListener === "function") {
+    mqCompact.addEventListener("change", handleBreakpoint);
+  } else if (typeof mqCompact.addListener === "function") {
+    mqCompact.addListener(handleBreakpoint);
+  }
+
   if (!panel) return;
   const applyDefaultOpen = () => {
     if (window.matchMedia("(min-width: 900px)").matches) {
@@ -4201,14 +5146,16 @@ function updateProfilesSearchUi(profileCount) {
   if (wrap) wrap.classList.toggle("profiles-search--hidden", profileCount <= 1);
 }
 
-function appendProfileActionChip(actions, classSuffix, label, tooltipTitle, tooltipBody, svg, onClick) {
+function appendProfileActionChip(actions, classSuffix, label, tooltipTitle, tooltipBody, svg, onClick, { showLabel = false } = {}) {
   const wrap = document.createElement("div");
   wrap.className = "profile-icon-wrap profile-action-wrap";
   const btn = document.createElement("button");
   btn.type = "button";
   btn.className = `profile-action-chip profile-action-chip--${classSuffix} profile-icon-btn profile-icon-btn--${classSuffix}`;
   btn.setAttribute("aria-label", label);
-  btn.innerHTML = `${svg}<span class="profile-action-label">${label}</span>`;
+  btn.innerHTML = showLabel
+    ? `${svg}<span class="profile-action-label profile-action-label--visible">${label}</span>`
+    : `${svg}<span class="profile-action-label">${label}</span>`;
   btn.addEventListener("click", onClick);
   wrap.appendChild(btn);
   wrap.appendChild(createProfileButtonTooltip(tooltipTitle, tooltipBody));
@@ -4246,10 +5193,12 @@ function renderProfiles() {
     const isActive = profile.id === activeProfileId;
     const isLocked = isProfilePasswordProtected(profile) && !isProfileUnlocked(profile.id);
     const isLockedActive = isActive && isLocked;
+    const compactCard = isCompactProfilesLayout();
 
     const row = document.createElement("article");
     row.className =
       "profile-item-row profiles-card" +
+      (compactCard ? " profiles-card--compact" : "") +
       (isActive ? " profiles-card--active" : "") +
       (isLockedActive ? " profiles-card--locked" : "");
     row.setAttribute("role", "option");
@@ -4263,10 +5212,12 @@ function renderProfiles() {
       (isLockedActive ? " profile-item-btn--locked-active" : "");
     btn.setAttribute("aria-label", `Select profile ${profile.name}`);
 
-    const radio = document.createElement("span");
-    radio.className = "profiles-card-radio";
-    radio.setAttribute("aria-hidden", "true");
-    btn.appendChild(radio);
+    if (!compactCard) {
+      const radio = document.createElement("span");
+      radio.className = "profiles-card-radio";
+      radio.setAttribute("aria-hidden", "true");
+      btn.appendChild(radio);
+    }
 
     const avatar = document.createElement("span");
     avatar.className = "profiles-card-avatar";
@@ -4288,7 +5239,10 @@ function renderProfiles() {
     if (isProfilePasswordProtected(profile)) {
       const lockBadge = document.createElement("span");
       lockBadge.className = "profile-item-lock-badge";
-      lockBadge.textContent = isProfileUnlocked(profile.id) ? "🔓" : "🔒";
+      lockBadge.setAttribute("aria-hidden", "true");
+      lockBadge.innerHTML = isProfileUnlocked(profile.id)
+        ? '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>'
+        : '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
       lockBadge.setAttribute(
         "aria-label",
         isProfileUnlocked(profile.id) ? "Unlocked this session" : "Password protected"
@@ -4327,69 +5281,97 @@ function renderProfiles() {
     btn.addEventListener("click", () => setActiveProfile(profile.id));
 
     const actions = document.createElement("div");
-    actions.className = "profile-item-actions profiles-card-actions";
+    actions.className =
+      "profile-item-actions profiles-card-actions" +
+      (compactCard ? " profiles-card-actions--footer" : "");
+
+    const actionOpts = { showLabel: compactCard };
 
     appendProfileActionChip(
       actions,
       "view",
-      "View profile",
+      "View",
       "View profile",
       "Open profile details and statistics",
       getProfileIconSvg("view"),
       (event) => {
         event.stopPropagation();
         openProfileViewModal(profile.id);
-      }
+      },
+      actionOpts
     );
 
     appendProfileActionChip(
       actions,
       "edit",
-      "Edit profile",
+      "Edit",
       "Edit profile",
       "Change name, team, or profile password (current password required if locked).",
       getProfileIconSvg("edit"),
       (event) => {
         event.stopPropagation();
         openProfileEditModal(profile.id);
-      }
+      },
+      actionOpts
     );
 
     appendProfileActionChip(
       actions,
       "danger",
-      "Delete profile",
+      "Delete",
       "Delete profile",
       "Remove this profile and all its projects permanently",
       getProfileIconSvg("trash"),
       (event) => {
         event.stopPropagation();
         deleteProfile(profile.id);
-      }
+      },
+      actionOpts
     );
 
-    row.appendChild(btn);
-    row.appendChild(actions);
+    if (compactCard) {
+      row.appendChild(btn);
+      row.appendChild(actions);
+    } else {
+      row.appendChild(btn);
+      row.appendChild(actions);
+    }
     li.appendChild(row);
     elements.profileList.appendChild(li);
   });
 
   const activeProfile = getActiveProfile();
+  updateProfilesShellSummary(activeProfile, profiles.length);
+  renderProfilePicker();
+
   if (!activeProfile) {
     elements.activeProfileTitleText.textContent = "No profile selected";
-    elements.activeProfileSubtitleText.textContent = "Create or select a profile to start adding projects.";
+    if (typeof Fullscreen !== "undefined" && typeof Fullscreen.syncChromeContext === "function") {
+      Fullscreen.syncChromeContext();
+    }
+    updatePortfolioHeaderSubtitle(
+      isCompactProfilesLayout()
+        ? "Use the profile picker above or Manage to add workspaces."
+        : "Create or select a profile to start adding projects."
+    );
     elements.projectsHeaderBadges.innerHTML = "";
-    elements.bulkDeleteBtn.disabled = true;
+    updateBulkDeleteButton();
     syncPortfolioActionButtons();
     return;
   }
 
   elements.activeProfileTitleText.textContent = activeProfile.name;
+  if (typeof Fullscreen !== "undefined" && typeof Fullscreen.syncChromeContext === "function") {
+    Fullscreen.syncChromeContext();
+  }
   const teamLabel = (activeProfile.team || "").trim();
   const locked = !isProfileUnlocked(activeProfile.id);
-  elements.activeProfileSubtitleText.textContent = locked
-    ? "Enter the profile password to view and manage projects."
-    : teamLabel || "Profile ready for prioritization.";
+  updatePortfolioHeaderSubtitle(
+    locked
+      ? "Enter the profile password to view and manage projects."
+      : teamLabel || "Profile ready for prioritization.",
+    { hideWhenSameAsTitle: true, title: activeProfile.name }
+  );
 
   elements.projectsHeaderBadges.innerHTML = "";
   syncPortfolioActionButtons();
@@ -4409,7 +5391,7 @@ function renderProjects() {
         </td>
       </tr>
     `;
-    elements.bulkDeleteBtn.disabled = true;
+    updateBulkDeleteButton();
     if (state.projectsView === "board" && elements.scrumBoardContainer) {
       renderScrumBoard();
     }
@@ -4430,7 +5412,7 @@ function renderProjects() {
         </td>
       </tr>
     `;
-    elements.bulkDeleteBtn.disabled = true;
+    updateBulkDeleteButton();
     syncPortfolioActionButtons();
     if (elements.selectAllProjects) elements.selectAllProjects.checked = false;
     if (state.projectsView === "board" && elements.scrumBoardContainer) {
@@ -4467,7 +5449,7 @@ function renderProjects() {
         </td>
       </tr>
     `;
-    elements.bulkDeleteBtn.disabled = true;
+    updateBulkDeleteButton();
     elements.selectAllProjects.checked = false;
     if (state.projectsView === "board" && elements.scrumBoardContainer) {
       renderScrumBoard();
@@ -5033,24 +6015,28 @@ function switchProjectsView(view) {
     elements.projectsMapView.setAttribute("aria-hidden", String(!showMap));
   }
 
-  if (elements.projectsViewTableBtn) {
-    elements.projectsViewTableBtn.classList.toggle("view-toggle-btn--active", showTable);
-    elements.projectsViewTableBtn.setAttribute("aria-selected", String(showTable));
-  }
-  if (elements.projectsViewBoardBtn) {
-    elements.projectsViewBoardBtn.classList.toggle("view-toggle-btn--active", showBoard);
-    elements.projectsViewBoardBtn.setAttribute("aria-selected", String(showBoard));
-  }
-  if (elements.projectsViewMoscowBtn) {
-    elements.projectsViewMoscowBtn.classList.toggle("view-toggle-btn--active", showMoscow);
-    elements.projectsViewMoscowBtn.setAttribute("aria-selected", String(showMoscow));
-  }
-  if (elements.projectsViewMapBtn) {
-    elements.projectsViewMapBtn.classList.toggle("view-toggle-btn--active", showMap);
-    elements.projectsViewMapBtn.setAttribute("aria-selected", String(showMap));
+  if (!showTable) {
+    clearProjectSelection();
   }
 
+  if (typeof Fullscreen !== "undefined" && !Fullscreen.isViewFullscreen()) {
+    if (typeof Fullscreen.restoreWorkspaceChrome === "function") {
+      Fullscreen.restoreWorkspaceChrome();
+    }
+  }
+
+  syncPortfolioViewTabState(view);
+  scrollActivePortfolioViewTabIntoView();
+  blurPortfolioViewTabs();
   renderProjects();
+  updateBulkDeleteButton();
+  if (showMap) {
+    requestAnimationFrame(() => {
+      if (state.projectsView !== "map" || !elements.projectsMapContainer) return;
+      invalidateMapSizeAfterFullscreenExit();
+    });
+  }
+  syncMoscowCompactNav();
 }
 
 /** Returns a map of ISO 2-letter country code -> number of projects that target that country (active profile, filtered). */
@@ -5151,16 +6137,160 @@ function getCountryCodeFromFeature(feature) {
   return (fromList && typeof countryCodeByName !== "undefined" && countryCodeByName[fromList]) ? countryCodeByName[fromList] : "";
 }
 
-function syncMapMetricToggleUI() {
-  if (!elements.projectsMapMetricToggle) return;
-  const metric = state.mapMetric === "rice" || state.mapMetric === "financial" ? state.mapMetric : "projects";
-  const buttons = elements.projectsMapMetricToggle.querySelectorAll("[data-metric]");
-  buttons.forEach((btn) => {
-    const active = btn.getAttribute("data-metric") === metric;
-    btn.setAttribute("aria-checked", active ? "true" : "false");
-    btn.classList.toggle("map-metric-toggle__option--active", active);
-    btn.tabIndex = active ? 0 : -1;
+function getCurrentMapMetric() {
+  return state.mapMetric === "rice" || state.mapMetric === "financial" ? state.mapMetric : "projects";
+}
+
+function getMapMetricOption(metricId) {
+  return MAP_METRIC_OPTIONS.find((opt) => opt.id === metricId) || MAP_METRIC_OPTIONS[0];
+}
+
+function getMapMetricPickerQuery() {
+  return (elements.mapMetricPickerSearch?.value || "").trim().toLowerCase();
+}
+
+function mapMetricOptionMatchesQuery(option, query) {
+  if (!query) return true;
+  const haystack = [
+    option.label,
+    option.short,
+    option.description,
+    ...(option.keywords || [])
+  ].join(" ").toLowerCase();
+  return haystack.includes(query);
+}
+
+function syncMapMetricPickerDisplay() {
+  const option = getMapMetricOption(getCurrentMapMetric());
+  if (elements.mapMetricPickerBadge) elements.mapMetricPickerBadge.textContent = option.short;
+  if (elements.mapMetricPickerLabel) elements.mapMetricPickerLabel.textContent = option.label;
+}
+
+function setMapMetricPickerOpen(open) {
+  const field = elements.mapMetricPicker?.querySelector(".map-metric-picker__field");
+  const dropdown = elements.mapMetricPickerDropdown;
+  const trigger = elements.mapMetricPickerTrigger;
+  const search = elements.mapMetricPickerSearch;
+
+  if (open) prepareAppOverlay("mapMetricPicker");
+
+  mapMetricPickerOpen = !!open;
+  if (field) field.classList.toggle("map-metric-picker__field--open", mapMetricPickerOpen);
+  if (dropdown) dropdown.hidden = !mapMetricPickerOpen;
+  if (trigger) trigger.setAttribute("aria-expanded", mapMetricPickerOpen ? "true" : "false");
+
+  if (mapMetricPickerOpen) {
+    if (search) search.value = "";
+    mapMetricPickerHighlightIndex = -1;
+    renderMapMetricPickerOptions();
+    requestAnimationFrame(() => search?.focus());
+  } else {
+    mapMetricPickerHighlightIndex = -1;
+    if (search) search.value = "";
+    syncMapMetricPickerDisplay();
+  }
+}
+
+function openMapMetricPickerDropdown() {
+  setMapMetricPickerOpen(true);
+}
+
+function closeMapMetricPickerDropdown() {
+  setMapMetricPickerOpen(false);
+}
+
+function renderMapMetricPickerOptions() {
+  const listbox = elements.mapMetricPickerListbox;
+  const empty = elements.mapMetricPickerEmpty;
+  if (!listbox) return;
+
+  const query = getMapMetricPickerQuery();
+  const currentMetric = getCurrentMapMetric();
+  const options = MAP_METRIC_OPTIONS.filter((opt) => mapMetricOptionMatchesQuery(opt, query));
+
+  listbox.innerHTML = "";
+
+  if (options.length === 0) {
+    if (empty) empty.hidden = false;
+    mapMetricPickerHighlightIndex = -1;
+    return;
+  }
+
+  if (empty) empty.hidden = true;
+  if (mapMetricPickerHighlightIndex >= options.length) {
+    mapMetricPickerHighlightIndex = options.length - 1;
+  }
+
+  options.forEach((option, index) => {
+    const isActive = option.id === currentMetric;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className =
+      "map-metric-picker__option" +
+      (isActive ? " map-metric-picker__option--active" : "") +
+      (index === mapMetricPickerHighlightIndex ? " map-metric-picker__option--highlight" : "");
+    btn.setAttribute("role", "option");
+    btn.setAttribute("aria-selected", isActive ? "true" : "false");
+    btn.dataset.metric = option.id;
+
+    const badge = document.createElement("span");
+    badge.className = "map-metric-picker__option-badge";
+    badge.textContent = option.short;
+    badge.setAttribute("aria-hidden", "true");
+
+    const copy = document.createElement("span");
+    copy.className = "map-metric-picker__option-copy";
+
+    const label = document.createElement("span");
+    label.className = "map-metric-picker__option-label";
+    label.textContent = option.label;
+
+    const desc = document.createElement("span");
+    desc.className = "map-metric-picker__option-desc";
+    desc.textContent = option.description;
+
+    copy.appendChild(label);
+    copy.appendChild(desc);
+
+    const check = document.createElement("span");
+    check.className = "map-metric-picker__option-check";
+    check.setAttribute("aria-hidden", "true");
+    check.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+
+    btn.appendChild(badge);
+    btn.appendChild(copy);
+    btn.appendChild(check);
+
+    btn.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      selectMapMetricFromPicker(option.id);
+    });
+
+    listbox.appendChild(btn);
   });
+}
+
+function selectMapMetricFromPicker(metricId) {
+  mapMetricPickerPointerSelecting = true;
+  mapMetricPickerHighlightIndex = -1;
+  closeMapMetricPickerDropdown();
+  setMapMetric(metricId);
+
+  const trigger = elements.mapMetricPickerTrigger;
+  if (trigger) trigger.focus();
+
+  window.setTimeout(() => {
+    mapMetricPickerPointerSelecting = false;
+    syncMapMetricPickerDisplay();
+  }, 0);
+}
+
+function syncMapMetricPickerUI() {
+  syncMapMetricPickerDisplay();
+  if (mapMetricPickerOpen) renderMapMetricPickerOptions();
 }
 
 function setMapMetric(metric) {
@@ -5168,37 +6298,86 @@ function setMapMetric(metric) {
   if (state.mapMetric === metric) return;
   state.mapMetric = metric;
   saveState();
-  syncMapMetricToggleUI();
+  syncMapMetricPickerUI();
   if (state.projectsView === "map" && elements.projectsMapContainer) renderProjectsMap();
 }
 
-function initMapMetricToggle() {
-  if (!elements.projectsMapMetricToggle) return;
-  syncMapMetricToggleUI();
+function initMapMetricPicker() {
+  const trigger = elements.mapMetricPickerTrigger;
+  const search = elements.mapMetricPickerSearch;
+  const field = elements.mapMetricPicker?.querySelector(".map-metric-picker__field");
 
-  elements.projectsMapMetricToggle.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-metric]");
-    if (!btn || !elements.projectsMapMetricToggle.contains(btn)) return;
-    setMapMetric(btn.getAttribute("data-metric"));
+  if (!trigger) return;
+  syncMapMetricPickerUI();
+
+  trigger.addEventListener("click", () => {
+    if (mapMetricPickerOpen) {
+      closeMapMetricPickerDropdown();
+    } else {
+      openMapMetricPickerDropdown();
+    }
   });
 
-  elements.projectsMapMetricToggle.addEventListener("keydown", (e) => {
-    const buttons = Array.from(elements.projectsMapMetricToggle.querySelectorAll("[data-metric]"));
-    if (buttons.length === 0) return;
-    const currentIdx = buttons.findIndex((b) => b.getAttribute("aria-checked") === "true");
-    let nextIdx = currentIdx;
-    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-      nextIdx = (currentIdx + 1) % buttons.length;
+  trigger.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-      nextIdx = (currentIdx - 1 + buttons.length) % buttons.length;
-      e.preventDefault();
-    } else {
-      return;
+      if (!mapMetricPickerOpen) openMapMetricPickerDropdown();
     }
-    const next = buttons[nextIdx];
-    setMapMetric(next.getAttribute("data-metric"));
-    next.focus();
+    if (e.key === "Escape" && mapMetricPickerOpen) {
+      e.preventDefault();
+      closeMapMetricPickerDropdown();
+    }
+  });
+
+  if (search) {
+    search.addEventListener("input", () => {
+      mapMetricPickerHighlightIndex = -1;
+      renderMapMetricPickerOptions();
+    });
+
+    search.addEventListener("keydown", (e) => {
+      const options = Array.from(
+        elements.mapMetricPickerListbox?.querySelectorAll(".map-metric-picker__option") || []
+      );
+
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeMapMetricPickerDropdown();
+        trigger.focus();
+        return;
+      }
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (options.length === 0) return;
+        mapMetricPickerHighlightIndex = Math.min(mapMetricPickerHighlightIndex + 1, options.length - 1);
+        renderMapMetricPickerOptions();
+        options[mapMetricPickerHighlightIndex]?.scrollIntoView({ block: "nearest" });
+        return;
+      }
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (options.length === 0) return;
+        mapMetricPickerHighlightIndex = Math.max(mapMetricPickerHighlightIndex - 1, 0);
+        renderMapMetricPickerOptions();
+        options[mapMetricPickerHighlightIndex]?.scrollIntoView({ block: "nearest" });
+        return;
+      }
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const highlighted = options[mapMetricPickerHighlightIndex];
+        const targetMetric = highlighted?.dataset.metric || options[0]?.dataset.metric;
+        if (targetMetric) selectMapMetricFromPicker(targetMetric);
+      }
+    });
+  }
+
+  document.addEventListener("pointerdown", (e) => {
+    if (!mapMetricPickerOpen || !field) return;
+    if (field.contains(e.target)) return;
+    closeMapMetricPickerDropdown();
   });
 }
 
@@ -5236,7 +6415,7 @@ function renderProjectsMap() {
     return;
   }
 
-  syncMapMetricToggleUI();
+  syncMapMetricPickerUI();
 
   const countByCode = getProjectCountByCountryCode();
 
@@ -5783,6 +6962,11 @@ function renderScrumBoard() {
       }
       card.appendChild(meta);
 
+      const cardStatus = (project.projectStatus || "Not Started").toString().trim();
+      if (document.documentElement.classList.contains("is-compact-layout")) {
+        card.appendChild(buildBoardCardMoveSelect(project, cardStatus));
+      }
+
       const actions = document.createElement("div");
       actions.className = "scrum-board-card-actions";
       const isFirst = index === 0;
@@ -5900,7 +7084,7 @@ function bindScrumBoardDragAndDrop() {
 
   cards.forEach((card) => {
     card.addEventListener("dragstart", (e) => {
-      if (e.target.closest(".scrum-board-card-actions")) {
+      if (e.target.closest(".scrum-board-card-actions, .portfolio-card-move")) {
         e.preventDefault();
         return;
       }
@@ -6110,6 +7294,251 @@ function getMoscowOrderedList(profile, quadrant) {
   return list;
 }
 
+let moscowCompactNavObserver = null;
+
+function setProjectMoscowCategory(projectId, newMoscow) {
+  const activeProfile = getUnlockedActiveProfile();
+  if (!activeProfile || !newMoscow) return false;
+  const project = activeProfile.projects.find((p) => p.id === projectId);
+  if (!project || project.moscowCategory === newMoscow) return false;
+  project.moscowCategory = newMoscow;
+  project.modifiedAt = new Date().toISOString();
+  saveState();
+  renderMoscowBoard();
+  renderProjects();
+  return true;
+}
+
+function setProjectBoardStatus(projectId, newStatus) {
+  const activeProfile = getUnlockedActiveProfile();
+  if (!activeProfile || !newStatus) return false;
+  if (typeof projectStatusList === "undefined" || !projectStatusList.includes(newStatus)) return false;
+  const project = activeProfile.projects.find((p) => p.id === projectId);
+  if (!project) return false;
+  const currentStatus = (project.projectStatus || "Not Started").toString().trim();
+  if (currentStatus === newStatus) return false;
+
+  project.projectStatus = newStatus;
+  project.modifiedAt = new Date().toISOString();
+
+  if (!state.scrumBoardSortByRice) {
+    activeProfile.boardOrder = activeProfile.boardOrder || {};
+    if (Array.isArray(activeProfile.boardOrder[currentStatus])) {
+      activeProfile.boardOrder[currentStatus] = activeProfile.boardOrder[currentStatus].filter((id) => id !== projectId);
+    }
+    const nextOrder = Array.isArray(activeProfile.boardOrder[newStatus])
+      ? activeProfile.boardOrder[newStatus].filter((id) => id !== projectId)
+      : [];
+    nextOrder.push(projectId);
+    activeProfile.boardOrder[newStatus] = nextOrder;
+  }
+
+  saveState();
+  renderScrumBoard();
+  renderProjects();
+  return true;
+}
+
+function buildPortfolioCardMoveSelect(project, currentValue, config) {
+  const wrap = document.createElement("div");
+  wrap.className = "portfolio-card-move";
+  const label = document.createElement("label");
+  label.className = "portfolio-card-move-label";
+  label.textContent = "Move to";
+  label.setAttribute("for", config.idPrefix + "-" + project.id);
+  const select = document.createElement("select");
+  select.id = config.idPrefix + "-" + project.id;
+  select.className = "portfolio-card-move-select";
+  select.setAttribute("aria-label", config.ariaLabel);
+  config.values.forEach((value) => {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = value;
+    if (value === currentValue) opt.selected = true;
+    select.appendChild(opt);
+  });
+  select.addEventListener("click", (e) => e.stopPropagation());
+  select.addEventListener("mousedown", (e) => e.stopPropagation());
+  select.addEventListener("change", (e) => {
+    e.stopPropagation();
+    const next = select.value;
+    if (next !== currentValue) {
+      config.onSelect(project.id, next);
+    }
+  });
+  wrap.appendChild(label);
+  wrap.appendChild(select);
+  return wrap;
+}
+
+function buildMoscowCardMoveSelect(project, currentMoscow) {
+  return buildPortfolioCardMoveSelect(project, currentMoscow, {
+    idPrefix: "moscowMove",
+    ariaLabel: "Move project to another MoSCoW category",
+    values: moscowList,
+    onSelect: (projectId, value) => setProjectMoscowCategory(projectId, value),
+  });
+}
+
+function buildBoardCardMoveSelect(project, currentStatus) {
+  const statuses = typeof projectStatusList !== "undefined" ? projectStatusList.slice() : [];
+  return buildPortfolioCardMoveSelect(project, currentStatus, {
+    idPrefix: "boardMove",
+    ariaLabel: "Move project to another board column",
+    values: statuses,
+    onSelect: (projectId, value) => setProjectBoardStatus(projectId, value),
+  });
+}
+
+function syncMoscowCompactNav() {
+  const nav = elements.moscowCompactNav;
+  if (!nav || !elements.moscowBoardContainer) return;
+
+  const isCompact = document.documentElement.classList.contains("is-compact-layout");
+  const showNav = isCompact && state.projectsView === "moscow";
+  const columns = elements.moscowBoardContainer.querySelectorAll(".moscow-board-column");
+
+  if (!showNav || !columns.length) {
+    nav.hidden = true;
+    nav.innerHTML = "";
+    if (moscowCompactNavObserver) {
+      moscowCompactNavObserver.disconnect();
+      moscowCompactNavObserver = null;
+    }
+    return;
+  }
+
+  const shortLabels = {
+    "Must have": "Must",
+    "Should have": "Should",
+    "Could have": "Could",
+    "Won't have": "Won't"
+  };
+  const abbrLabels = {
+    "Must have": "M",
+    "Should have": "S",
+    "Could have": "C",
+    "Won't have": "W"
+  };
+
+  nav.hidden = false;
+  nav.innerHTML = "";
+
+  const header = document.createElement("div");
+  header.className = "moscow-compact-nav__header";
+  const headerTitle = document.createElement("span");
+  headerTitle.className = "moscow-compact-nav__title";
+  headerTitle.textContent = "Jump to quadrant";
+  header.appendChild(headerTitle);
+  nav.appendChild(header);
+
+  const track = document.createElement("div");
+  track.className = "moscow-compact-nav__track";
+  track.setAttribute("role", "tablist");
+  track.setAttribute("aria-label", "MoSCoW quadrants");
+
+  columns.forEach((column, index) => {
+    const moscow = column.getAttribute("data-moscow") || "";
+    const countEl = column.querySelector(".moscow-board-column-count");
+    const count = countEl ? countEl.textContent : "0";
+    const pill = document.createElement("button");
+    pill.type = "button";
+    pill.className = "moscow-compact-nav__pill" + (index === 0 ? " is-active" : "");
+    pill.setAttribute("role", "tab");
+    pill.setAttribute("aria-selected", index === 0 ? "true" : "false");
+    pill.setAttribute("data-moscow", moscow);
+    pill.setAttribute("aria-controls", "moscow-col-" + index);
+
+    const main = document.createElement("span");
+    main.className = "moscow-compact-nav__pill-main";
+
+    const abbr = document.createElement("span");
+    abbr.className = "moscow-compact-nav__abbr";
+    abbr.textContent = abbrLabels[moscow] || moscow.charAt(0).toUpperCase();
+
+    const label = document.createElement("span");
+    label.className = "moscow-compact-nav__label";
+    label.textContent = shortLabels[moscow] || moscow;
+
+    const countBadge = document.createElement("span");
+    countBadge.className = "moscow-compact-nav__count";
+    countBadge.textContent = count;
+    countBadge.setAttribute("aria-label", count + " projects");
+
+    main.appendChild(abbr);
+    main.appendChild(label);
+    pill.appendChild(main);
+    pill.appendChild(countBadge);
+
+    pill.addEventListener("click", () => {
+      column.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+      track.querySelectorAll(".moscow-compact-nav__pill").forEach((p) => {
+        p.classList.remove("is-active");
+        p.setAttribute("aria-selected", "false");
+      });
+      pill.classList.add("is-active");
+      pill.setAttribute("aria-selected", "true");
+    });
+
+    track.appendChild(pill);
+    column.id = "moscow-col-" + index;
+  });
+
+  nav.appendChild(track);
+
+  const hint = document.createElement("p");
+  hint.className = "moscow-compact-nav__hint";
+  hint.textContent = document.documentElement.classList.contains("is-phone-layout")
+    ? "Tap a quadrant, then swipe the board below for projects"
+    : "Tap a quadrant to scroll the board to that column";
+  nav.appendChild(hint);
+
+  bindMoscowCompactNavScrollSync(track, columns);
+}
+
+function bindMoscowCompactNavScrollSync(track, columns) {
+  if (moscowCompactNavObserver) {
+    moscowCompactNavObserver.disconnect();
+    moscowCompactNavObserver = null;
+  }
+  if (!track || !columns.length || !elements.moscowBoardContainer) return;
+
+  const pills = track.querySelectorAll(".moscow-compact-nav__pill");
+  const setActivePill = (index) => {
+    pills.forEach((pill, i) => {
+      const active = i === index;
+      pill.classList.toggle("is-active", active);
+      pill.setAttribute("aria-selected", active ? "true" : "false");
+    });
+  };
+
+  if (document.documentElement.classList.contains("is-compact-layout") && typeof IntersectionObserver !== "undefined") {
+    moscowCompactNavObserver = new IntersectionObserver(
+      (entries) => {
+        let best = null;
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          if (!best || entry.intersectionRatio > best.ratio) {
+            best = { index: Number(entry.target.dataset.moscowIndex), ratio: entry.intersectionRatio };
+          }
+        });
+        if (best != null && Number.isFinite(best.index)) {
+          setActivePill(best.index);
+        }
+      },
+      {
+        root: null,
+        rootMargin: "-12% 0px -48% 0px",
+        threshold: [0.12, 0.28, 0.45, 0.6]
+      }
+    );
+    columns.forEach((column, index) => {
+      column.dataset.moscowIndex = String(index);
+      moscowCompactNavObserver.observe(column);
+    });
+  }
+}
+
 function moveMoscowProjectUp(projectId, quadrant) {
   const activeProfile = getUnlockedActiveProfile();
   if (!activeProfile) return;
@@ -6165,12 +7594,14 @@ function renderMoscowBoard() {
 
   if (!activeProfile) {
     elements.moscowBoardContainer.innerHTML = '<div class="moscow-board-empty">Select a profile to see the MOSCOW grid.</div>';
+    syncMoscowCompactNav();
     return;
   }
 
   if (!unlockedProfile) {
     elements.moscowBoardContainer.innerHTML =
       '<div class="moscow-board-empty">Unlock this profile to use the MOSCOW view.</div>';
+    syncMoscowCompactNav();
     return;
   }
 
@@ -6228,21 +7659,31 @@ function renderMoscowBoard() {
     header.className = "moscow-quadrant-header";
     const tip = moscowTooltips && moscowTooltips[moscow];
     const gridDesc = tip && tip.gridDescription ? tip.gridDescription : "";
+    const headerTop = document.createElement("div");
+    headerTop.className = "moscow-quadrant-header__top";
     const labelBox = document.createElement("div");
     labelBox.className = "moscow-quadrant-label";
     const shortLabels = { "Must have": "MUST", "Should have": "SHOULD", "Could have": "COULD", "Won't have": "WON'T" };
-    labelBox.textContent = shortLabels[moscow] || moscow.toUpperCase().replace("'", "'");
-    header.appendChild(labelBox);
+    const shortSpan = document.createElement("span");
+    shortSpan.className = "moscow-quadrant-short";
+    shortSpan.textContent = shortLabels[moscow] || moscow.toUpperCase().replace("'", "'");
+    labelBox.appendChild(shortSpan);
+    headerTop.appendChild(labelBox);
+    const count = document.createElement("span");
+    count.className = "moscow-board-column-count";
+    count.textContent = String((byMoscow[moscow] || []).length);
+    headerTop.appendChild(count);
+    header.appendChild(headerTop);
+    const fullName = document.createElement("p");
+    fullName.className = "moscow-quadrant-fullname";
+    fullName.textContent = moscow;
+    header.appendChild(fullName);
     if (gridDesc) {
       const descEl = document.createElement("p");
       descEl.className = "moscow-quadrant-description";
       descEl.textContent = gridDesc;
       header.appendChild(descEl);
     }
-    const count = document.createElement("span");
-    count.className = "moscow-board-column-count";
-    count.textContent = String((byMoscow[moscow] || []).length);
-    header.appendChild(count);
     cell.appendChild(header);
 
     const cardsContainer = document.createElement("div");
@@ -6399,6 +7840,10 @@ function renderMoscowBoard() {
       }
       card.appendChild(meta);
 
+      if (document.documentElement.classList.contains("is-compact-layout")) {
+        card.appendChild(buildMoscowCardMoveSelect(project, moscow));
+      }
+
       const actions = document.createElement("div");
       actions.className = "moscow-board-card-actions";
       const listForQuadrant = byMoscow[moscow] || [];
@@ -6481,6 +7926,7 @@ function renderMoscowBoard() {
   });
 
   bindMoscowBoardDragAndDrop();
+  syncMoscowCompactNav();
 }
 
 function bindMoscowBoardDragAndDrop() {
@@ -6495,7 +7941,7 @@ function bindMoscowBoardDragAndDrop() {
 
   cards.forEach((card) => {
     card.addEventListener("dragstart", (e) => {
-      if (e.target.closest(".moscow-board-card-actions")) {
+      if (e.target.closest(".moscow-board-card-actions, .portfolio-card-move")) {
         e.preventDefault();
         return;
       }
@@ -6543,17 +7989,7 @@ function bindMoscowBoardDragAndDrop() {
       const targetColumn = dropColumn || column.closest(".moscow-board-column");
       if (!targetColumn) return;
       const newMoscow = targetColumn.getAttribute("data-moscow");
-      const activeProfile = getUnlockedActiveProfile();
-      if (!activeProfile) return;
-      const project = activeProfile.projects.find((p) => p.id === draggedProjectId);
-      if (!project) return;
-
-      project.moscowCategory = newMoscow;
-      project.modifiedAt = new Date().toISOString();
-
-      saveState();
-      renderMoscowBoard();
-      renderProjects();
+      setProjectMoscowCategory(draggedProjectId, newMoscow);
     });
   });
 
@@ -6564,15 +8000,7 @@ function bindMoscowBoardDragAndDrop() {
     e.stopPropagation();
     columns.forEach((col) => col.classList.remove("moscow-board-column--drag-over"));
     const newMoscow = dropColumn.getAttribute("data-moscow");
-    const activeProfile = getUnlockedActiveProfile();
-    if (!activeProfile) return;
-    const project = activeProfile.projects.find((p) => p.id === draggedProjectId);
-    if (!project) return;
-    project.moscowCategory = newMoscow;
-    project.modifiedAt = new Date().toISOString();
-    saveState();
-    renderMoscowBoard();
-    renderProjects();
+    setProjectMoscowCategory(draggedProjectId, newMoscow);
   }, true);
 }
 
@@ -6750,12 +8178,59 @@ function clearFilters() {
   updateFilterCountriesSummary();
 }
 
+function isTableCompactLayout() {
+  return document.documentElement.classList.contains("is-compact-layout");
+}
+
+function getTableSelectionCount() {
+  if (!elements.projectsTableBody) return 0;
+  return elements.projectsTableBody.querySelectorAll(".project-select-checkbox:checked").length;
+}
+
+function syncProjectTableSelection() {
+  syncHeaderCheckbox();
+  updateBulkDeleteButton();
+}
+
+function clearProjectSelection() {
+  if (!elements.projectsTableBody) return;
+  elements.projectsTableBody.querySelectorAll(".project-select-checkbox").forEach((cb) => {
+    cb.checked = false;
+  });
+  if (elements.selectAllProjects) elements.selectAllProjects.checked = false;
+  syncProjectTableSelection();
+}
+
 function updateBulkDeleteButton() {
-  const anyChecked = !!elements.projectsTableBody.querySelector(".project-select-checkbox:checked");
-  elements.bulkDeleteBtn.disabled = !anyChecked;
+  if (!elements.projectsTableBody) return;
+  const count = getTableSelectionCount();
+  const anyChecked = count > 0;
+  const inTableView = state.projectsView === "table";
+  const isCompactTable = isTableCompactLayout();
+
+  if (elements.bulkDeleteBtn) {
+    const showToolbarBtn = inTableView && anyChecked && !isCompactTable;
+    elements.bulkDeleteBtn.hidden = !showToolbarBtn;
+    elements.bulkDeleteBtn.disabled = !anyChecked;
+  }
+
+  const showMobileBar = inTableView && anyChecked && isCompactTable;
+  if (elements.portfolioSelectionBar) {
+    elements.portfolioSelectionBar.hidden = !showMobileBar;
+    elements.portfolioSelectionBar.classList.toggle("portfolio-selection-bar--visible", showMobileBar);
+  }
+  document.documentElement.classList.toggle("has-portfolio-selection-bar", showMobileBar);
+  if (elements.portfolioSelectionCount) {
+    elements.portfolioSelectionCount.textContent =
+      count === 1 ? "1 selected" : `${count} selected`;
+  }
+  if (elements.portfolioSelectionDeleteBtn) {
+    elements.portfolioSelectionDeleteBtn.disabled = !anyChecked;
+  }
 }
 
 function syncHeaderCheckbox() {
+  if (!elements.selectAllProjects || !elements.projectsTableBody) return;
   const checkboxes = elements.projectsTableBody.querySelectorAll(".project-select-checkbox");
   if (!checkboxes.length) {
     elements.selectAllProjects.checked = false;
@@ -6766,12 +8241,13 @@ function syncHeaderCheckbox() {
 }
 
 function handleBulkDelete() {
+  if (state.projectsView !== "table") return;
   const activeProfile = getUnlockedActiveProfile();
   if (!activeProfile || !elements.projectDeleteModal) return;
   const checked = elements.projectsTableBody.querySelectorAll(".project-select-checkbox:checked");
   if (!checked.length) return;
 
-  hideCellTypeTooltips();
+  prepareAppOverlay("projectDeleteModal");
   const ids = Array.from(checked).map((cb) => cb.getAttribute("data-id"));
 
   elements.projectDeleteModal.setAttribute("data-delete-mode", "bulk");
@@ -6815,19 +8291,17 @@ function handleBulkDelete() {
   }
 }
 
-function closeProjectDeleteModal() {
+function closeProjectDeleteModal({ immediate = false } = {}) {
   if (!elements.projectDeleteModal) return;
-  elements.projectDeleteModal.classList.remove("active");
-  elements.projectDeleteModal.setAttribute("aria-hidden", "true");
+  closeModalBackdrop(elements.projectDeleteModal, { immediate });
   elements.projectDeleteModal.removeAttribute("data-project-id");
   elements.projectDeleteModal.removeAttribute("data-project-ids");
   elements.projectDeleteModal.removeAttribute("data-delete-mode");
 }
 
-function closeProfileDeleteModal() {
+function closeProfileDeleteModal({ immediate = false } = {}) {
   if (!elements.profileDeleteModal) return;
-  elements.profileDeleteModal.classList.remove("active");
-  elements.profileDeleteModal.setAttribute("aria-hidden", "true");
+  closeModalBackdrop(elements.profileDeleteModal, { immediate });
   elements.profileDeleteModal.removeAttribute("data-profile-id");
   if (elements.profileDeletePassword) elements.profileDeletePassword.value = "";
   if (elements.profileDeletePasswordWrap) elements.profileDeletePasswordWrap.style.display = "none";
@@ -6926,7 +8400,7 @@ async function completeProfileUnlockSuccess(profileId) {
 function openProfileUnlockModal(profileId) {
   const profile = state.profiles.find((p) => p.id === profileId);
   if (!profile || !elements.profileUnlockModal) return;
-  hideCellTypeTooltips();
+  prepareAppOverlay("profileUnlockModal");
   elements.profileUnlockModal.setAttribute("data-profile-id", profileId);
   if (elements.profileUnlockModalSubtitle) {
     elements.profileUnlockModalSubtitle.textContent = `Enter the password for “${profile.name || "this profile"}” to continue.`;
@@ -6942,10 +8416,9 @@ function openProfileUnlockModal(profileId) {
   }
 }
 
-function closeProfileUnlockModal() {
+function closeProfileUnlockModal({ immediate = false } = {}) {
   if (!elements.profileUnlockModal) return;
-  elements.profileUnlockModal.classList.remove("active");
-  elements.profileUnlockModal.setAttribute("aria-hidden", "true");
+  closeModalBackdrop(elements.profileUnlockModal, { immediate });
   elements.profileUnlockModal.removeAttribute("data-profile-id");
   if (elements.profileUnlockPassword) elements.profileUnlockPassword.value = "";
   hideProfileUnlockError();
@@ -7033,17 +8506,185 @@ function showToast(message) {
   });
 }
 
+function computeNumericStats(values) {
+  if (!values.length) return null;
+  const sorted = values.slice().sort((a, b) => a - b);
+  const n = sorted.length;
+  const sum = sorted.reduce((acc, v) => acc + v, 0);
+  const mid = Math.floor(n / 2);
+  const median = n % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+  return {
+    mean: sum / n,
+    median,
+    min: sorted[0],
+    max: sorted[n - 1],
+    total: sum
+  };
+}
+
+function renderProfileViewStatsGrid(container, values, { formatValue, emptyMessage } = {}) {
+  if (!container) return;
+  container.innerHTML = "";
+  const format = typeof formatValue === "function" ? formatValue : (v) => String(v);
+
+  if (!values.length) {
+    const empty = document.createElement("p");
+    empty.className = "profile-view-rice-empty";
+    empty.textContent = emptyMessage || "No data yet.";
+    container.appendChild(empty);
+    return;
+  }
+
+  const stats = computeNumericStats(values);
+  if (!stats) return;
+
+  const rows = [
+    ["Mean", stats.mean, false],
+    ["Median", stats.median, false],
+    ["Min", stats.min, false],
+    ["Max", stats.max, false],
+    ["Total", stats.total, true]
+  ];
+
+  rows.forEach(([label, value, isTotal]) => {
+    const card = document.createElement("div");
+    card.className = "profile-view-rice-card" + (isTotal ? " profile-view-rice-card--total" : "");
+
+    const labelEl = document.createElement("span");
+    labelEl.className = "profile-view-rice-label";
+    labelEl.textContent = label;
+
+    const valueEl = document.createElement("span");
+    valueEl.className = "profile-view-rice-value";
+    valueEl.textContent = format(value);
+
+    card.appendChild(labelEl);
+    card.appendChild(valueEl);
+    container.appendChild(card);
+  });
+}
+
+function formatProfileViewFinancialEur(value) {
+  if (!Number.isFinite(value)) return "€—";
+  const short = typeof formatFinancialShort === "function"
+    ? formatFinancialShort(value)
+    : Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  return `€${short}`;
+}
+
+function getProjectFinancialImpactEurAmount(project) {
+  if (!project || project.financialImpactValue == null || project.financialImpactValue === "") return null;
+  const raw = project.financialImpactValue;
+  const amount = Number.isFinite(raw) ? raw : Number(raw);
+  if (!Number.isFinite(amount)) return null;
+  const currency = (project.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
+  if (typeof ExchangeRates !== "undefined" && typeof ExchangeRates.convertToEUR === "function") {
+    const amountEur = ExchangeRates.convertToEUR(amount, currency);
+    return Number.isFinite(amountEur) ? amountEur : null;
+  }
+  return currency === "EUR" ? amount : null;
+}
+
+function renderProfileViewFinancialStats(projects) {
+  const container = elements.profileViewFinancialStats;
+  const note = elements.profileViewFinancialNote;
+  if (!container) return;
+
+  const showLoading = () => {
+    container.innerHTML = "";
+    const loading = document.createElement("p");
+    loading.className = "profile-view-rice-empty";
+    loading.textContent = "Loading exchange rates…";
+    container.appendChild(loading);
+    if (note) note.hidden = true;
+  };
+
+  const render = () => {
+    const amounts = [];
+    let skippedCount = 0;
+    projects.forEach((p) => {
+      if (p.financialImpactValue == null || p.financialImpactValue === "") return;
+      const eur = getProjectFinancialImpactEurAmount(p);
+      if (Number.isFinite(eur)) {
+        amounts.push(eur);
+      } else {
+        skippedCount += 1;
+      }
+    });
+
+    if (note) {
+      if (skippedCount > 0) {
+        note.hidden = false;
+        note.textContent =
+          skippedCount === 1
+            ? "1 project with a non-EUR amount could not be converted. Exchange rates refresh daily."
+            : `${skippedCount} projects with non-EUR amounts could not be converted. Exchange rates refresh daily.`;
+      } else {
+        note.hidden = true;
+        note.textContent = "";
+      }
+    }
+
+    renderProfileViewStatsGrid(container, amounts, {
+      formatValue: formatProfileViewFinancialEur,
+      emptyMessage: "No financial impact yet. Add financial impact to projects."
+    });
+  };
+
+  showLoading();
+  if (typeof ExchangeRates !== "undefined" && typeof ExchangeRates.ensure === "function") {
+    ExchangeRates.ensure().then(render).catch(render);
+  } else {
+    render();
+  }
+}
+
+function renderProfileViewBreakdownChips(container, counts) {
+  if (!container) return;
+  container.innerHTML = "";
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  if (!entries.length) {
+    const empty = document.createElement("span");
+    empty.className = "profile-view-empty";
+    empty.textContent = "No data yet";
+    container.appendChild(empty);
+    return;
+  }
+  entries.forEach(([label, count]) => {
+    const chip = document.createElement("span");
+    chip.className = "profile-view-chip";
+
+    const labelEl = document.createElement("span");
+    labelEl.className = "profile-view-chip-label";
+    labelEl.textContent = label;
+
+    const countEl = document.createElement("span");
+    countEl.className = "profile-view-chip-count";
+    countEl.textContent = String(count);
+
+    chip.appendChild(labelEl);
+    chip.appendChild(countEl);
+    container.appendChild(chip);
+  });
+}
+
 function openProfileViewModal(profileId) {
   const profile = state.profiles.find((p) => p.id === profileId);
   if (!profile || !elements.profileViewModal) return;
   if (!requireProfileUnlocked(profileId, "view")) return;
-  hideCellTypeTooltips();
+  prepareAppOverlay("profileViewModal");
+
+  const profileName = profile.name || "Untitled profile";
+  if (elements.profileViewAvatar) {
+    elements.profileViewAvatar.textContent = getProfileInitials(profileName);
+  }
   if (elements.profileViewName) {
-    elements.profileViewName.textContent = profile.name || "Untitled profile";
+    elements.profileViewName.textContent = profileName;
   }
   if (elements.profileViewTeam) {
     const teamText = (profile.team || "").trim();
-    elements.profileViewTeam.textContent = teamText || "—";
+    elements.profileViewTeam.textContent = teamText || "No team set";
+    elements.profileViewTeam.classList.toggle("profile-view-team--empty", !teamText);
   }
 
   const projects = Array.isArray(profile.projects) ? profile.projects.slice() : [];
@@ -7069,85 +8710,41 @@ function openProfileViewModal(profileId) {
   const tshirtCounts = {};
   const riceScores = [];
   projects.forEach((p) => {
-    const statusKey = (p.projectStatus || "—").toString();
+    const statusKey = (p.projectStatus || "Not set").toString();
     statusCounts[statusKey] = (statusCounts[statusKey] || 0) + 1;
-    const typeKey = (p.projectType || "—").toString();
+    const typeKey = (p.projectType || "Not set").toString();
     typeCounts[typeKey] = (typeCounts[typeKey] || 0) + 1;
-    const tshirtKey = (p.tshirtSize || "—").toString();
+    const tshirtKey = (p.tshirtSize || "Not set").toString();
     tshirtCounts[tshirtKey] = (tshirtCounts[tshirtKey] || 0) + 1;
     const score = calculateRiceScore(p);
     if (Number.isFinite(score)) riceScores.push(score);
   });
 
-  function renderChips(container, counts) {
-    if (!container) return;
-    container.innerHTML = "";
-    const entries = Object.entries(counts);
-    if (!entries.length) {
-      const span = document.createElement("span");
-      span.className = "profile-view-chip profile-view-chip-muted";
-      span.textContent = "None";
-      container.appendChild(span);
-      return;
-    }
-    entries.forEach(([label, count]) => {
-      const chip = document.createElement("span");
-      chip.className = "profile-view-chip";
-      chip.textContent = `${label}: ${count}`;
-      container.appendChild(chip);
-    });
-  }
-  renderChips(elements.profileViewByStatus, statusCounts);
-  renderChips(elements.profileViewByType, typeCounts);
-  renderChips(elements.profileViewByTshirt, tshirtCounts);
+  renderProfileViewBreakdownChips(elements.profileViewByStatus, statusCounts);
+  renderProfileViewBreakdownChips(elements.profileViewByType, typeCounts);
+  renderProfileViewBreakdownChips(elements.profileViewByTshirt, tshirtCounts);
 
-  if (elements.profileViewRiceStats) {
-    elements.profileViewRiceStats.innerHTML = "";
-    if (!riceScores.length) {
-      const span = document.createElement("span");
-      span.className = "profile-view-rice-empty";
-      span.textContent = "No RICE scores yet.";
-      elements.profileViewRiceStats.appendChild(span);
-    } else {
-      riceScores.sort((a, b) => a - b);
-      const n = riceScores.length;
-      const sum = riceScores.reduce((acc, v) => acc + v, 0);
-      const mean = sum / n;
-      const mid = Math.floor(n / 2);
-      const median = n % 2 === 0 ? (riceScores[mid - 1] + riceScores[mid]) / 2 : riceScores[mid];
-      const min = riceScores[0];
-      const max = riceScores[n - 1];
-      const stats = [
-        ["Mean", mean],
-        ["Median", median],
-        ["Min", min],
-        ["Max", max],
-        ["Total", sum]
-      ];
-      stats.forEach(([label, value]) => {
-        const span = document.createElement("span");
-        span.className = "profile-view-rice-item";
-        span.textContent = `${label}: ${formatRice(value)}`;
-        elements.profileViewRiceStats.appendChild(span);
-      });
-    }
-  }
+  renderProfileViewStatsGrid(elements.profileViewRiceStats, riceScores, {
+    formatValue: formatRice,
+    emptyMessage: "No RICE scores yet. Add reach, impact, confidence, and effort to projects."
+  });
+
+  renderProfileViewFinancialStats(projects);
 
   elements.profileViewModal.setAttribute("aria-hidden", "false");
   elements.profileViewModal.classList.add("active");
 }
 
-function closeProfileViewModal() {
+function closeProfileViewModal({ immediate = false } = {}) {
   if (!elements.profileViewModal) return;
-  elements.profileViewModal.classList.remove("active");
-  elements.profileViewModal.setAttribute("aria-hidden", "true");
+  closeModalBackdrop(elements.profileViewModal, { immediate });
 }
 
 function openProfileEditModal(profileId) {
   const profile = state.profiles.find((p) => p.id === profileId);
   if (!profile || !elements.profileEditModal) return;
   if (!requireProfileUnlocked(profileId, "edit")) return;
-  hideCellTypeTooltips();
+  prepareAppOverlay("profileEditModal");
   elements.profileEditModal.setAttribute("data-profile-id", profileId);
   if (elements.profileEditName) {
     elements.profileEditName.value = profile.name || "";
@@ -7180,10 +8777,9 @@ function openProfileEditModal(profileId) {
   }, 80);
 }
 
-function closeProfileEditModal() {
+function closeProfileEditModal({ immediate = false } = {}) {
   if (!elements.profileEditModal) return;
-  elements.profileEditModal.classList.remove("active");
-  elements.profileEditModal.setAttribute("aria-hidden", "true");
+  closeModalBackdrop(elements.profileEditModal, { immediate });
   elements.profileEditModal.removeAttribute("data-profile-id");
   if (elements.profileEditCurrentPassword) elements.profileEditCurrentPassword.value = "";
   if (elements.profileEditNewPassword) elements.profileEditNewPassword.value = "";
@@ -7266,7 +8862,7 @@ async function handleProfileEditSave() {
 function deleteProfile(profileId) {
   const index = state.profiles.findIndex((p) => p.id === profileId);
   if (index === -1 || !elements.profileDeleteModal) return;
-  hideCellTypeTooltips();
+  prepareAppOverlay("profileDeleteModal");
   const profile = state.profiles[index];
   const projectCount = profile.projects ? profile.projects.length : 0;
 
@@ -7373,7 +8969,7 @@ function handleSingleDelete(projectId) {
   const project = activeProfile.projects.find((p) => p.id === projectId);
   if (!project) return;
 
-  hideCellTypeTooltips();
+  prepareAppOverlay("projectDeleteModal");
   elements.projectDeleteModal.setAttribute("data-delete-mode", "single");
   elements.projectDeleteModal.setAttribute("data-project-id", projectId);
   elements.projectDeleteModal.removeAttribute("data-project-ids");
@@ -7419,7 +9015,6 @@ function openProjectModal(mode, projectId) {
   const isView = mode === "view";
   projectModalMode = mode;
   editingProjectId = isEdit ? projectId : null;
-  hideCellTypeTooltips();
   elements.projectFormError.style.display = "none";
   elements.projectFormError.textContent = "";
 
@@ -7520,6 +9115,7 @@ function openProjectModal(mode, projectId) {
 
   updateModalRicePreview();
   resetProjectModalSectionNav();
+  prepareAppOverlay("projectModal");
   elements.projectModal.setAttribute("aria-hidden", "false");
   elements.projectModal.classList.add("active");
   elements.projectTitle.focus();
@@ -7548,10 +9144,9 @@ function openProjectModal(mode, projectId) {
   }
 }
 
-function closeProjectModal() {
+function closeProjectModal({ immediate = false } = {}) {
   hideCellTypeTooltips();
-  elements.projectModal.classList.remove("active");
-  elements.projectModal.setAttribute("aria-hidden", "true");
+  closeModalBackdrop(elements.projectModal, { immediate });
   editingProjectId = null;
 }
 

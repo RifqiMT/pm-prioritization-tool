@@ -27,6 +27,34 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Docs — Comprehensive audit — Product Team — Impact: internal
+
+- Re-audited codebase against documentation suite (2026-05-26).
+- Added [PRODUCT_DOCUMENTATION.md](PRODUCT_DOCUMENTATION.md) and restored [PRODUCT_DOCUMENTATION_STANDARD.md](PRODUCT_DOCUMENTATION_STANDARD.md).
+- Updated README, PRD, personas, user stories, variables (compact layout), design guidelines, traceability, metrics, guardrails, architecture, and hub index for `20260526-ui54` baseline.
+
+### UI — Unified compact / phone layout (≤1024px) — Product Team — Impact: user-visible
+
+- **Breakpoint model:** `html.is-compact-layout` and `html.is-phone-layout` for viewport ≤1024px; desktop remains >1024px (`initCompactLayoutClass()` in `src/app.js`).
+- **MoSCoW:** `moscow-compact.css` — 2×2 navigator pills, single-column quadrant stack, no horizontal board scroll; compact nav sync via `syncMoscowCompactNav()` and `IntersectionObserver`.
+- **Board:** `board-compact.css` — single-column status stacks; card **Move to** dropdown for status changes.
+- **Table:** `table-compact.css` — phone-style toolbar, floating **selection bar** for bulk delete, FAB for new project.
+- **Fullscreen:** `fullscreen-compact.css` — body-level host; board/MoSCoW/table match workspace compact layouts inside fullscreen.
+- **Chrome:** `compact-modern.css` — icon-only portfolio tabs, short header title, hidden toolbar labels on compact.
+- **Footer:** `app-footer.css` — centered one-row attribution (credit, LinkedIn, website).
+- Cache bust: `APP_ASSET_VERSION` = `20260526-ui54`.
+
+### Docs — Cleanup — Product Team — Impact: internal
+
+- Removed redundant docs: `VERCEL_MONGODB_FIX.md`, `SETUP_VERCEL_GITHUB.md`, `docs/personas/*` (merged into `USER_PERSONAS.md` and `DEPLOYMENT.md`).
+- Fixed stale references to non-existent `src/main.js`; updated source map for `storage.js` and `overlay-manager.js`.
+- Deleted unused `site-config.json`.
+
+### Code — Cleanup — Product Team — Impact: developer
+
+- Removed legacy CSS for old map metric `<select>` and profile-view fallbacks in `main.css`.
+- Removed unused `OverlayManager.unregister` API and unused `profileViewTeamWrap` element cache.
+
 ### Data — Cross-device cloud sync — Product Team — Impact: user-visible
 
 - Smarter load merge using `_storageMeta.updatedAt` (newer local vs remote wins).
@@ -39,7 +67,7 @@ When updating this file after a change:
 ### Deploy — Vercel protection + diagnostics — Product Team — Impact: user-visible
 
 - Detect Vercel Deployment Protection (401 on `/api`) and show setup banner.
-- Add `scripts/disable-vercel-deployment-protection.sh` and Step 0 in `VERCEL_MONGODB_FIX.md`.
+- Add `scripts/disable-vercel-deployment-protection.sh`; troubleshooting consolidated in `DEPLOYMENT.md`.
 
 ### Data — MongoDB persistence on Vercel — Product Team — Impact: user-visible
 

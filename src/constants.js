@@ -9,7 +9,7 @@
 const STORAGE_KEY = "rice_prioritizer_v1";
 
 /** Bump when shipping client changes so browsers fetch fresh JS (Vercel caches /src with long TTL). */
-const APP_ASSET_VERSION = "20260526-sync4";
+const APP_ASSET_VERSION = "20260526-ui54";
 
 /** Canonical production deployment (MongoDB + /api). Do not use pm-prioritization-tool.vercel.app (legacy React app). */
 const PRODUCTION_APP_ORIGIN = "https://pm-prioritization-tool-six.vercel.app";

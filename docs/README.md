@@ -15,7 +15,7 @@ This folder is the single source of product truth for engineering, design, produ
 | Audience | Start here | Then read |
 |----------|------------|-----------|
 | **New contributor** | [../README.md](../README.md) | [ARCHITECTURE.md](ARCHITECTURE.md), [TECH_GUIDELINES.md](TECH_GUIDELINES.md) |
-| **Product / PM** | [PRD.md](PRD.md) | [USER_STORIES.md](USER_STORIES.md), [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md) |
+| **Product / PM** | [PRODUCT_DOCUMENTATION.md](PRODUCT_DOCUMENTATION.md) | [PRD.md](PRD.md), [USER_STORIES.md](USER_STORIES.md), [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md) |
 | **Design** | [DESIGN_GUIDELINES.md](DESIGN_GUIDELINES.md) | [VARIABLES.md](VARIABLES.md) (labels & tooltips) |
 | **Leadership / OKRs** | [METRICS_AND_OKRS.md](METRICS_AND_OKRS.md) | [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md) |
 | **Release / QA** | [CHANGELOG.md](CHANGELOG.md) | [GUARDRAILS.md](GUARDRAILS.md), [DEPLOYMENT.md](DEPLOYMENT.md) |
@@ -28,7 +28,6 @@ This folder is the single source of product truth for engineering, design, produ
 
 | Document | Purpose |
 |----------|---------|
-| [../PRODUCT_DOCUMENTATION_STANDARD.md](../PRODUCT_DOCUMENTATION_STANDARD.md) | Authoring rules, required files, review checklist |
 | [GUARDRAILS.md](GUARDRAILS.md) | Business and technical limitations |
 | [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md) | Requirements → code → verification |
 | [CHANGELOG.md](CHANGELOG.md) | Historical development log |
@@ -37,12 +36,10 @@ This folder is the single source of product truth for engineering, design, produ
 
 | Document | Purpose |
 |----------|---------|
+| [PRODUCT_DOCUMENTATION.md](PRODUCT_DOCUMENTATION.md) | Product overview, benefits, features, logic, guidelines |
+| [PRODUCT_DOCUMENTATION_STANDARD.md](PRODUCT_DOCUMENTATION_STANDARD.md) | Documentation maintenance standard |
 | [PRD.md](PRD.md) | Requirements, scope, functional/non-functional specs |
-| [USER_PERSONAS.md](USER_PERSONAS.md) | Persona index |
-| [personas/PM_PRIMARY.md](personas/PM_PRIMARY.md) | Primary product manager |
-| [personas/DELIVERY_LEAD.md](personas/DELIVERY_LEAD.md) | Delivery / engineering lead |
-| [personas/GEO_FINANCE_PM.md](personas/GEO_FINANCE_PM.md) | Geo + financial planning |
-| [personas/PORTFOLIO_STAKEHOLDER.md](personas/PORTFOLIO_STAKEHOLDER.md) | Executive / stakeholder reader |
+| [USER_PERSONAS.md](USER_PERSONAS.md) | Target users and workflow context |
 | [USER_STORIES.md](USER_STORIES.md) | Epics, stories, acceptance criteria |
 | [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md) | Prioritization rubrics and planning norms |
 
@@ -53,7 +50,7 @@ This folder is the single source of product truth for engineering, design, produ
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Runtime model, modules, data flow |
 | [TECH_GUIDELINES.md](TECH_GUIDELINES.md) | Coding conventions, persistence, modules |
 | [VARIABLES.md](VARIABLES.md) | Variable dictionary, formulas, relationship charts |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | Vercel static hosting and smoke tests |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Vercel, MongoDB, and troubleshooting |
 
 ### Design and metrics
 
@@ -68,29 +65,39 @@ This folder is the single source of product truth for engineering, design, produ
 
 ```
 pm-prioritization-tool/
-├── index.html                 # App shell, modals, views
+├── index.html                 # App shell, modals, views, footer
 ├── css/
-│   ├── main.css               # Base design system + legacy
+│   ├── main.css               # Base design system
 │   ├── workspace-modern.css   # Table, board, filters
 │   ├── header-modern.css      # App header
 │   ├── profiles-modern.css    # Profile panel
-│   ├── portfolio-modern.css   # Portfolio workspace
+│   ├── portfolio-modern.css   # Portfolio workspace, FAB
 │   ├── profile-modals-modern.css
-│   ├── export-modals-modern.css  # Export/import + unlock
-│   └── view-toolbars-modern.css
+│   ├── export-modals-modern.css
+│   ├── view-toolbars-modern.css
+│   ├── compact-modern.css     # Compact chrome (≤1024px)
+│   ├── moscow-compact.css     # MoSCoW compact layout
+│   ├── board-compact.css      # Board compact layout
+│   ├── table-compact.css      # Table compact layout
+│   ├── fullscreen-compact.css # Fullscreen compact host
+│   └── app-footer.css         # Site footer
 ├── src/
-│   ├── app.js                 # State, render, CRUD, I/O
+│   ├── app.js                 # init(), state, render, CRUD, compact layout
 │   ├── rice.js                # RICE formula + validation
-│   ├── constants.js           # Enums, lists, tooltips
+│   ├── constants.js           # Enums, APP_ASSET_VERSION, tooltips
 │   ├── utils.js               # Formatting, CSV, IDs
-│   ├── main.js                # Bootstrap entry
 │   └── modules/
 │       ├── exchange-rates.js
 │       ├── fullscreen.js
-│       └── profile-security.js
+│       ├── overlay-manager.js
+│       ├── profile-security.js
+│       └── storage.js
+├── api/                       # Vercel serverless (health, state, config)
 ├── vercel.json
 └── package.json
 ```
+
+**Layout baseline:** `APP_ASSET_VERSION` = `20260526-ui54` — desktop >1024px; compact ≤1024px uses unified phone UI (`is-compact-layout`, `is-phone-layout`).
 
 ---
 
@@ -103,4 +110,4 @@ When changing behavior, update in the **same PR** (minimum):
 3. `TRACEABILITY_MATRIX.md` if requirements change
 4. Root `README.md` if user-facing capabilities change
 
-See [PRODUCT_DOCUMENTATION_STANDARD.md](../PRODUCT_DOCUMENTATION_STANDARD.md) for the full checklist.
+Documentation updates must reflect current runtime behavior, use readable structure, and reference implementation locations where relevant.

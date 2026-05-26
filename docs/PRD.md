@@ -11,7 +11,7 @@
 
 ## 1. Executive summary
 
-A browser-based portfolio workspace for product teams to capture initiatives, score priority with **RICE**, classify delivery intent with **MoSCoW**, estimate value through **financial frameworks**, and communicate via **Table**, **Board**, **MoSCoW**, and **Map** views. Data stays on the user’s device (`localStorage`) with JSON/CSV portability. Optional **profile passwords** protect sensitive portfolios.
+A browser-based portfolio workspace for product teams to capture initiatives, score priority with **RICE**, classify delivery intent with **MoSCoW**, estimate value through **financial frameworks**, and communicate via **Table**, **Board**, **MoSCoW**, and **Map** views. Data persists in the browser (`localStorage` cache) with optional **MongoDB cloud sync** on Vercel, plus JSON/CSV export/import. Optional **profile passwords** protect sensitive portfolios. **Responsive UI:** desktop layout above 1024px; tablets and phones share a unified compact phone layout at ≤1024px.
 
 ---
 
@@ -37,7 +37,7 @@ A browser-based portfolio workspace for product teams to capture initiatives, sc
 
 ## 4. Target users
 
-See [USER_PERSONAS.md](USER_PERSONAS.md) and `docs/personas/*`.
+See [USER_PERSONAS.md](USER_PERSONAS.md).
 
 ---
 
@@ -93,10 +93,11 @@ See [USER_PERSONAS.md](USER_PERSONAS.md) and `docs/personas/*`.
 |----|------|-------------|
 | FR-5.1 | Table | Sort, filter, icon columns, actions |
 | FR-5.2 | Board | Columns by status; DnD order; status filter pills |
-| FR-5.3 | MoSCoW | 2×2 grid; optional RICE sort |
+| FR-5.3 | MoSCoW | Desktop: 2×2 grid; compact: nav pills + single-column quadrants; optional RICE sort |
 | FR-5.4 | Map | Leaflet choropleth; metric: count / RICE / EUR |
-| FR-5.5 | All | Fullscreen mode |
+| FR-5.5 | All | Fullscreen mode (compact layouts preserved in fullscreen host) |
 | FR-5.6 | Locked profile | No project data in any view |
+| FR-5.7 | Compact layout | ≤1024px: unified phone UI; no horizontal scroll on board/MoSCoW; table bulk delete via selection bar |
 
 #### FR-5.2 Board status filter pills (expanded acceptance)
 - **Toggle semantics:** clicking a status pill hides or shows the matching board column without reloading the page.
@@ -141,7 +142,8 @@ Manual refresh; rates cached in state; EUR conversion for table/map financial di
 |----|-------------|
 | FR-9.1 | Single visible tooltip app-wide |
 | FR-9.2 | Modal field tooltips for all variables |
-| FR-9.3 | Responsive header, profiles, portfolio (mobile/tablet) |
+| FR-9.3 | Responsive header, profiles, portfolio (compact ≤1024px = phone UI; desktop >1024px) |
+| FR-9.6 | Site footer | Attribution and external links visible on all breakpoints |
 | FR-9.4 | Password show/hide on all password fields |
 | FR-9.5 | Delete confirmations |
 
@@ -153,7 +155,7 @@ Manual refresh; rates cached in state; EUR conversion for table/map financial di
 |----|----------|-------------|
 | NFR-1 | Performance | Usable with hundreds of projects per profile on modern browsers |
 | NFR-2 | Security | Passwords hashed (PBKDF2); never plaintext in storage |
-| NFR-3 | Privacy | No telemetry requirement; data local by default |
+| NFR-3 | Privacy | No telemetry requirement; data in browser cache by default; optional cloud document on Vercel |
 | NFR-4 | Deploy | Static hosting; CSP in `vercel.json` |
 | NFR-5 | Offline | Core features work without network except map tiles and FX |
 | NFR-6 | Portability | Chrome, Firefox, Safari, Edge (current versions) |
@@ -162,9 +164,10 @@ Manual refresh; rates cached in state; EUR conversion for table/map financial di
 
 ## 7. Data retention
 
-- **localStorage:** profiles, projects, UI preferences, FX cache, password hashes
+- **localStorage:** browser cache of workspace JSON, UI preferences, FX cache
+- **MongoDB (optional):** canonical workspace document when `MONGODB_URI` configured
 - **sessionStorage:** unlocked profile IDs for current tab session
-- **User responsibility:** export backups; clearing site data deletes portfolios
+- **User responsibility:** export backups; clearing site data deletes local cache (cloud may retain copy)
 
 ---
 
@@ -179,6 +182,7 @@ Manual refresh; rates cached in state; EUR conversion for table/map financial di
 
 ## 9. References
 
+- [PRODUCT_DOCUMENTATION.md](PRODUCT_DOCUMENTATION.md) — comprehensive product reference  
 - [VARIABLES.md](VARIABLES.md) — formulas and field dictionary  
 - [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md) — requirement mapping  
 - [CHANGELOG.md](CHANGELOG.md) — release history  

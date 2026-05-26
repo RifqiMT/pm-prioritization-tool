@@ -253,9 +253,46 @@ flowchart TD
   RENDER --> LEGEND[map legend text/scale]
 ```
 
+### 8.7 Compact layout classes
+
+```mermaid
+flowchart TD
+  VW[viewport width] --> INIT[initCompactLayoutClass]
+  INIT -->|≤1024px| COMPACT[html.is-compact-layout + is-phone-layout]
+  INIT -->|>1024px| DESK[html.is-desktop-layout]
+  COMPACT --> MCSS[moscow-compact.css]
+  COMPACT --> BCSS[board-compact.css]
+  COMPACT --> TCSS[table-compact.css]
+  COMPACT --> FCCSS[fullscreen-compact.css]
+  COMPACT --> CM[compact-modern.css]
+  COMPACT --> NAV[syncMoscowCompactNav + IntersectionObserver]
+```
+
 ---
 
-## 9. Related documents
+## 9. Layout, DOM, and build constants
+
+| Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
+|----------------|---------------|------------|-----------------|--------------|---------|
+| `APP_ASSET_VERSION` | Asset Cache Version | Query-string cache buster for CSS/JS in `index.html`. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260526-ui54"` |
+| `is-compact-layout` | Compact Layout Class | Viewport ≤1024px; enables compact CSS. | Set on `<html>` by `initCompactLayoutClass()`. | Global layout | class present |
+| `is-phone-layout` | Phone Layout Class | Same threshold as compact (unified phone UI). | Set together with compact class. | Global layout | class present |
+| `is-desktop-layout` | Desktop Layout Class | Viewport >1024px. | Mutually exclusive with compact. | Global layout | class present |
+| `moscowCompactNav` | MoSCoW Compact Navigator | 2×2 pill bar to jump between quadrants on compact. | `syncMoscowCompactNav()` updates active pill. | MoSCoW view (compact) | DOM `#moscowCompactNav` |
+| `portfolioSelectionBar` | Portfolio Selection Bar | Floating bar for bulk delete when rows selected on compact table. | Shown when `selectedProjectIds` non-empty. | Table view (compact) | DOM element |
+| `view-in-fullscreen-host` | Fullscreen Host Class | Body class when a view is fullscreen. | `fullscreen.js` + `fullscreen-compact.css`. | Fullscreen | class on `body` |
+| `PRODUCTION_APP_ORIGIN` | Production URL | Canonical deployed origin for links/docs. | Constant string. | `src/constants.js` | `https://pm-prioritization-tool-six.vercel.app` |
+
+### Cloud storage metadata (`_storageMeta` on workspace)
+
+| Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
+|----------------|---------------|------------|-----------------|--------------|---------|
+| `_storageMeta.updatedAt` | Workspace Updated At | ISO timestamp for merge conflict resolution. | Newer local vs remote wins on load. | `storage.js` | `"2026-05-26T12:00:00.000Z"` |
+| `_storageMeta.source` | Last Save Source | Whether last write was local or cloud. | Set on save paths. | Cloud modal / debug | `"cloud"` |
+
+---
+
+## 10. Related documents
 
 - [PRD.md](PRD.md) — requirements  
 - [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md) — rubrics  
