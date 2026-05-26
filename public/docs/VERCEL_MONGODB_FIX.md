@@ -22,11 +22,16 @@ If you see `FAIL: Vercel Deployment Protection blocks /api`, Step 0 is not done 
 **CLI alternative** (needs `VERCEL_TOKEN` + project id from Vercel → Settings → General):
 
 ```bash
-curl -X PATCH "https://api.vercel.com/v9/projects/YOUR_PROJECT_ID" \
-  -H "Authorization: Bearer $VERCEL_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"ssoProtection":null}'
+./scripts/disable-vercel-deployment-protection.sh
 ```
+
+**GitHub Actions (recommended if you use GitHub secrets):**
+
+1. Add secrets `VERCEL_TOKEN`, `VERCEL_PROJECT_ID` (see [SETUP_VERCEL_GITHUB.md](../../docs/SETUP_VERCEL_GITHUB.md)).
+2. Run **Actions → Fix Vercel Deployment Protection → Run workflow**.
+3. Redeploy Production in Vercel.
+
+**Hobby plan note:** Preview URLs (`pm-prioritization-tool-….vercel.app`) are often protected; your **production** `.vercel.app` domain may be public once assigned to **this** repo’s project. Still disable protection if `/api/config` returns 401.
 
 ---
 

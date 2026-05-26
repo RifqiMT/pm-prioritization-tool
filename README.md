@@ -111,6 +111,8 @@ Connect the GitHub repo → deploy `main` on Vercel with `MONGODB_URI`. Details:
 npm run verify:deploy -- https://YOUR-DOMAIN
 ```
 
+**Automated fix (one-time):** add GitHub secrets and run **Actions → Fix Vercel Deployment Protection** — see **[docs/SETUP_VERCEL_GITHUB.md](docs/SETUP_VERCEL_GITHUB.md)**.
+
 ### First-use checklist
 
 1. Create a **profile** (optionally set a password).  

@@ -1,0 +1,40 @@
+name: Fix Vercel Deployment Protection
+
+# One-time (or repeat) fix: makes /api/* publicly reachable for MongoDB sync.
+# Required GitHub secrets: VERCEL_TOKEN, VERCEL_PROJECT_ID
+# Optional: VERCEL_ORG_ID (team id from Vercel → Settings → General)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  disable-protection:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.VERCEL_TOKEN != '' && secrets.VERCEL_PROJECT_ID != '' }}
+    steps:
+      - name: Disable Vercel SSO / Deployment Protection
+        run: |
+          URL="https://api.vercel.com/v9/projects/${{ secrets.VERCEL_PROJECT_ID }}"
+          if [ -n "${{ secrets.VERCEL_ORG_ID }}" ]; then
+            URL="${URL}?teamId=${{ secrets.VERCEL_ORG_ID }}"
+          fi
+          echo "PATCH $URL"
+          curl -fsS -X PATCH "$URL" \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"ssoProtection":null}'
+          echo ""
+          echo "Deployment protection disabled. Redeploy Production in Vercel, then verify:"
+          echo "  npm run verify:deploy -- https://YOUR-PRODUCTION-DOMAIN"
+
+  missing-secrets:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.VERCEL_TOKEN == '' || secrets.VERCEL_PROJECT_ID == '' }}
+    steps:
+      - name: Explain required secrets
+        run: |
+          echo "Add GitHub repository secrets:"
+          echo "  VERCEL_TOKEN — https://vercel.com/account/tokens"
+          echo "  VERCEL_PROJECT_ID — Vercel project → Settings → General → Project ID"
+          echo "  VERCEL_ORG_ID (optional) — Team ID if the project is under a team"
+          exit 1

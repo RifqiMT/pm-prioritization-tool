@@ -30,8 +30,19 @@ jobs:
       - name: Validate Vercel layout
         run: npm run build
 
+      - name: Disable Deployment Protection (public /api)
+        run: |
+          URL="https://api.vercel.com/v9/projects/${{ secrets.VERCEL_PROJECT_ID }}"
+          if [ -n "${{ secrets.VERCEL_ORG_ID }}" ]; then
+            URL="${URL}?teamId=${{ secrets.VERCEL_ORG_ID }}"
+          fi
+          curl -fsS -X PATCH "$URL" \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"ssoProtection":null}' || echo "Warning: could not PATCH ssoProtection (check VERCEL_PROJECT_ID)"
+
       - name: Install Vercel CLI
-        run: npm install -g vercel@39.7.0
+        run: npm install -g vercel@latest
 
       - name: Pull Vercel settings
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
