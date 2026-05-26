@@ -26,7 +26,7 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 
 - **Explainable prioritization** — stakeholders see inputs, formula, and computed RICE in one tooltip  
 - **No infrastructure** — open the app or deploy static files to Vercel  
-- **Data ownership** — `localStorage` on your device; export anytime  
+- **Data ownership** — MongoDB on Vercel when configured, with browser cache + export anytime  
 - **Planning flexibility** — filter by country, quarter, framework, status; map by count, RICE, or EUR  
 - **Professional UX** — responsive layout for phone, tablet, and desktop (2026 UI refresh)
 
@@ -70,7 +70,7 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 | Frontend | HTML5, CSS3, vanilla JavaScript |
 | Map | Leaflet 1.9.4 (CDN) |
 | Crypto | Web Crypto PBKDF2 (`profile-security.js`) |
-| Storage | `localStorage` + `sessionStorage` |
+| Storage | MongoDB (Vercel `/api`) + `localStorage` cache + `sessionStorage` unlock |
 | Hosting | Static (Vercel) |
 
 **CSS layers:** `main.css` + `*-modern.css` (workspace, header, profiles, portfolio, modals, export, toolbars).

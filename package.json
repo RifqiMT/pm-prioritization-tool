@@ -2,14 +2,14 @@
   "name": "pm-prioritization-tool",
   "version": "2.0.0",
   "private": true,
-  "description": "Local-first Product Management Prioritization Tool (RICE, MoSCoW, financial frameworks, multi-view planning).",
+  "description": "Product Management Prioritization Tool (RICE, MoSCoW, financial frameworks) with browser cache and optional MongoDB on Vercel.",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=18"
   },
   "scripts": {
     "dev": "npx --yes serve . -l 5173",
-    "build": "node -e \"console.log('Static site — no compile step. Vercel serves index.html, css/, and src/ from repo root.')\"",
+    "build": "node -e \"console.log('Static UI + Vercel serverless API (/api). Set MONGODB_URI on Vercel for cloud persistence.')\"",
     "start": "npm run dev"
   },
   "keywords": [
@@ -18,5 +18,8 @@
     "rice",
     "moscow",
     "static-site"
-  ]
+  ],
+  "dependencies": {
+    "mongodb": "^6.16.0"
+  }
 }

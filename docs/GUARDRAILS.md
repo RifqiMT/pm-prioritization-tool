@@ -3,7 +3,7 @@
 ## 1. Business Guardrails
 
 - Keep prioritization explainable; no hidden scoring paths.
-- Maintain local-first operation as a core product value.
+- Support **local-only** mode (file:// or static serve without API) and **cloud** mode (MongoDB on Vercel) without breaking either path.
 - Preserve user data ownership via export/import capability.
 - Present financial outputs as planning estimates, not accounting truth.
 
@@ -72,6 +72,8 @@
 ## 6. Production (Vercel) Guardrails
 
 - Deploy as **static assets only**; do not add server-side secrets to the repository.
-- Treat `localStorage` as **per-origin**: production URL, preview URLs, and localhost each have separate data.
+- **Cloud workspace** is keyed by `PM_WORKSPACE_ID` + `PM_API_SECRET`; protect the secret like a password.
+- `localStorage` remains a **per-origin cache**; preview URLs and production are separate origins unless using the same domain and workspace id intentionally.
+- MongoDB free tier: monitor document size (~16 MB cap per document); very large portfolios may require splitting workspaces or archiving via export.
 - After changing CSP in `vercel.json`, run the post-deploy smoke test in `docs/DEPLOYMENT.md` (map tiles, exchange rates, Leaflet).
 - Remind users to export backups; Vercel does not persist portfolio data.

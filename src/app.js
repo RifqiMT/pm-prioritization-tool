@@ -1145,7 +1145,130 @@ function ensureProjectFormFieldTooltips() {
   });
 }
 
-function init() {
+function updateStorageStatusUI(status) {
+  if (!elements.appStorageStatusLabel) return;
+  const dot = elements.appStorageStatusDot;
+  const label = elements.appStorageStatusLabel;
+  const mode = status && status.mode ? status.mode : "unknown";
+  const sync = status && status.syncStatus ? status.syncStatus : "idle";
+
+  label.classList.remove("storage-status--cloud", "storage-status--local", "storage-status--warn");
+  if (dot) {
+    dot.classList.remove("storage-status-dot--cloud", "storage-status-dot--warn", "storage-status-dot--sync");
+  }
+
+  if (mode === "mongodb") {
+    label.textContent =
+      sync === "syncing"
+        ? "Saving to cloud…"
+        : sync === "error"
+          ? "Cloud sync issue"
+          : "Saved to cloud";
+    label.classList.add("storage-status--cloud");
+    if (dot) dot.classList.add(sync === "syncing" ? "storage-status-dot--sync" : "storage-status-dot--cloud");
+    return;
+  }
+
+  if (mode === "mongodb-pending-auth") {
+    label.textContent = "Connect cloud storage";
+    label.classList.add("storage-status--warn");
+    if (dot) dot.classList.add("storage-status-dot--warn");
+    return;
+  }
+
+  if (mode === "local" && sync === "offline") {
+    label.textContent = "Local backup (offline)";
+    label.classList.add("storage-status--local");
+    return;
+  }
+
+  label.textContent = window.location.protocol === "file:" ? "Local file mode" : "Local browser storage";
+  label.classList.add("storage-status--local");
+}
+
+function initCloudStorageModal() {
+  const modal = $("cloudStorageModal");
+  const openBtn = $("cloudStorageConnectBtn");
+  const cancelBtn = $("cloudStorageCancelBtn");
+  const submitBtn = $("cloudStorageSubmitBtn");
+  const input = $("cloudStorageApiKeyInput");
+  const errorEl = $("cloudStorageError");
+  if (!modal || !submitBtn || !input) return;
+
+  function setError(msg) {
+    if (!errorEl) return;
+    if (msg) {
+      errorEl.textContent = msg;
+      errorEl.hidden = false;
+    } else {
+      errorEl.textContent = "";
+      errorEl.hidden = true;
+    }
+  }
+
+  function openModal() {
+    modal.classList.add("active");
+    modal.setAttribute("aria-hidden", "false");
+    input.value =
+      typeof AppStorage !== "undefined" && AppStorage.getApiSecret
+        ? AppStorage.getApiSecret()
+        : "";
+    setError("");
+    input.focus();
+  }
+
+  function closeModal() {
+    modal.classList.remove("active");
+    modal.setAttribute("aria-hidden", "true");
+    setError("");
+  }
+
+  if (openBtn) openBtn.addEventListener("click", openModal);
+  if (elements.appStorageStatusLabel) {
+    elements.appStorageStatusLabel.addEventListener("click", () => {
+      if (
+        typeof AppStorage !== "undefined" &&
+        AppStorage.getMode &&
+        AppStorage.getMode() === "mongodb-pending-auth"
+      ) {
+        openModal();
+      }
+    });
+  }
+  if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  submitBtn.addEventListener("click", async () => {
+    const secret = input.value.trim();
+    if (!secret) {
+      setError("Enter the API key from your Vercel environment (PM_API_SECRET).");
+      return;
+    }
+    submitBtn.disabled = true;
+    setError("");
+    try {
+      if (typeof AppStorage === "undefined") {
+        throw new Error("Storage module is not loaded.");
+      }
+      await AppStorage.connectWithApiSecret(secret);
+      closeModal();
+      resetProfileUnlockSession();
+      ensureDefaultProfile();
+      renderProfiles();
+      renderProjects();
+      focusLockedProfileUnlockIfNeeded();
+      showToast("Connected to cloud storage. Your workspace is now saved in MongoDB.");
+    } catch (err) {
+      setError(err && err.message ? err.message : "Could not connect to cloud storage.");
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+}
+
+async function init() {
   if (typeof ProfileSecurity === "undefined") {
     console.error(
       "ProfileSecurity module not loaded. Profile passwords and lock will not work until src/modules/profile-security.js is available."
@@ -1182,7 +1305,32 @@ function init() {
   initProfilesPanel();
   initProfileModals();
   initPortfolioWorkspace();
-  loadState();
+  initCloudStorageModal();
+
+  if (typeof AppStorage !== "undefined") {
+    const boot = await AppStorage.bootstrap({
+      apply: applyStatePayload,
+      serialize: serializeStatePayload,
+      onStatusChange: updateStorageStatusUI
+    });
+    if (boot && boot.needsAuth && $("cloudStorageModal")) {
+      $("cloudStorageModal").classList.add("active");
+      $("cloudStorageModal").setAttribute("aria-hidden", "false");
+    }
+  } else {
+    applyStatePayload(
+      (() => {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          return raw ? JSON.parse(raw) : null;
+        } catch {
+          return null;
+        }
+      })()
+    );
+    updateStorageStatusUI({ mode: "local", syncStatus: "idle" });
+  }
+
   resetProfileUnlockSession();
   ensureDefaultProfile();
   toggleFinancialFrameworkFields(FINANCIAL_FRAMEWORK_DEFAULT);
@@ -1205,6 +1353,8 @@ function init() {
 }
 
 function cacheElements() {
+  elements.appStorageStatusDot = $("appStorageStatusDot");
+  elements.appStorageStatusLabel = $("appStorageStatusLabel");
   elements.profileList = $("profileList");
   elements.profilesEmptyState = $("profilesEmptyState");
   elements.profilesCountBadge = $("profilesCountBadge");
@@ -3277,20 +3427,32 @@ function normalizeLoadedProfile(raw) {
   return profile;
 }
 
-function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const parsed = JSON.parse(raw);
-    if (!parsed) return;
+function serializeStatePayload() {
+  return {
+    profiles: state.profiles,
+    activeProfileId: state.activeProfileId,
+    sortField: state.sortField,
+    sortDirection: state.sortDirection,
+    projectsView: state.projectsView,
+    scrumBoardSortByRice: state.scrumBoardSortByRice,
+    boardHiddenStatuses: state.boardHiddenStatuses,
+    moscowSortByRice: state.moscowSortByRice,
+    mapMetric: state.mapMetric,
+    exchangeRatesToEUR: state.exchangeRatesToEUR,
+    exchangeRatesDate: state.exchangeRatesDate,
+    exchangeRatesLastSource: state.exchangeRatesLastSource
+  };
+}
 
-    // Support both legacy format (plain array of profiles) and current format ({ profiles, ... })
+function applyStatePayload(parsed) {
+  if (!parsed) return;
+
+  try {
     const rawProfiles = Array.isArray(parsed) ? parsed : parsed.profiles;
     if (!Array.isArray(rawProfiles)) return;
 
     state.profiles = rawProfiles.map(normalizeLoadedProfile).filter(Boolean);
 
-    // Resolve active profile: use stored id only if it still exists, otherwise first profile.
     const storedActiveId = !Array.isArray(parsed) ? parsed.activeProfileId : null;
     const validActiveId =
       state.profiles.some((p) => p.id === (storedActiveId || ""))
@@ -3326,7 +3488,7 @@ function loadState() {
       state.exchangeRatesLastSource = parsed.exchangeRatesLastSource;
     }
   } catch (err) {
-    console.error("Failed to load stored state", err);
+    console.error("Failed to apply stored state", err);
   }
 }
 
@@ -3383,22 +3545,13 @@ function normalizeLoadedProject(project) {
 }
 
 function saveState() {
-  const payload = {
-    profiles: state.profiles,
-    activeProfileId: state.activeProfileId,
-    sortField: state.sortField,
-    sortDirection: state.sortDirection,
-    projectsView: state.projectsView,
-    scrumBoardSortByRice: state.scrumBoardSortByRice,
-    boardHiddenStatuses: state.boardHiddenStatuses,
-    moscowSortByRice: state.moscowSortByRice,
-    mapMetric: state.mapMetric,
-    exchangeRatesToEUR: state.exchangeRatesToEUR,
-    exchangeRatesDate: state.exchangeRatesDate,
-    exchangeRatesLastSource: state.exchangeRatesLastSource
-  };
+  const payload = serializeStatePayload();
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    if (typeof AppStorage !== "undefined") {
+      AppStorage.persistState(payload);
+    } else {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    }
   } catch (err) {
     console.error("Failed to persist state", err);
   }

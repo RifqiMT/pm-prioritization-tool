@@ -1,132 +1,112 @@
-# Production Deployment (Vercel)
+# Production Deployment (Vercel + MongoDB)
 
-This application is a **static, local-first** web app. There is no backend server, database, or build-time bundler. Vercel serves the repository root (`index.html`, `css/`, `src/`) over HTTPS.
+The app is a **static UI** plus **Vercel serverless API** routes under `/api`. Portfolio data is stored in **MongoDB Atlas** when `MONGODB_URI` is configured; the browser keeps a **local cache** for faster reload and offline fallback.
 
 ## Architecture on Vercel
 
 | Layer | Responsibility |
 |--------|----------------|
-| **Vercel Edge / CDN** | Host static assets, TLS, compression, cache headers |
-| **Browser** | UI, RICE/financial logic, `localStorage` persistence |
-| **External APIs (browser)** | Exchange rates (Frankfurter, MoneyConvert), map tiles (OpenStreetMap), GeoJSON (jsDelivr), Leaflet (unpkg) |
+| **Vercel CDN** | Host `index.html`, `css/`, `src/` |
+| **Vercel Functions** | `GET /api/health`, `GET/PUT /api/state` → MongoDB |
+| **MongoDB Atlas** | Primary workspace document (`workspaces` collection) |
+| **Browser** | UI logic; `sessionStorage` for profile unlock + API key; `localStorage` cache when cloud is active |
+| **External APIs** | Exchange rates, map tiles, GeoJSON |
 
-Data **does not** leave the user’s browser except when the user explicitly uses export, or when the app fetches public exchange-rate / map resources.
+## Required environment variables (Vercel)
 
-## Prerequisites
+Set these in **Project → Settings → Environment Variables** (Production and Preview):
 
-- A [Vercel](https://vercel.com) account
-- Git repository: `https://github.com/RifqiMT/pm-prioritization-tool`
-- **No environment variables are required** for core functionality
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `MONGODB_URI` | **Yes** (for cloud) | Atlas connection string |
+| `PM_API_SECRET` | **Yes** (recommended) | Bearer token the browser sends on `/api/state` |
+| `PM_WORKSPACE_ID` | No | Document id (default: `default`) |
+| `MONGODB_DB_NAME` | No | Database name (default: `pm_prioritization`) |
+| `PM_ALLOW_ANONYMOUS` | No | Set `true` only for private dev (skips Bearer check) |
 
-## One-time Vercel project setup
+Copy from [`.env.example`](../.env.example). **Never commit** real secrets to Git.
 
-1. In Vercel: **Add New → Project** → Import the GitHub repository.
-2. **Root Directory**: leave as repository root (where `index.html` lives).
-3. **Framework Preset**: Other (or detect as static).
-4. **Build Command**: leave empty, or use `npm run build` (no-op placeholder).
-5. **Output Directory**: `.` (repository root).
-6. **Install Command**: optional; can be empty for zero-dependency deploy.
-7. Deploy.
+Generate a secret:
 
-Configuration is also declared in `vercel.json` at the repo root.
+```bash
+openssl rand -hex 32
+```
 
-## Configuration files
+## One-time Vercel setup
 
-| File | Purpose |
-|------|---------|
-| `vercel.json` | Static output, SPA fallback rewrite, security headers, asset caching |
-| `package.json` | Project metadata; optional `npm run dev` for local preview |
-| `.vercelignore` | Exclude dev-only paths from upload |
-| `.gitignore` | Keep secrets and `.vercel/` out of Git |
+1. Import the GitHub repository in Vercel.
+2. **Root Directory:** repository root (where `index.html` lives).
+3. **Install Command:** `npm install` (installs `mongodb` for API routes).
+4. **Build Command:** `npm run build` (no-op; validates project).
+5. **Output Directory:** `.`
+6. Add environment variables above → **Redeploy**.
 
-## Security headers (production)
+## Connecting the browser to cloud storage
 
-`vercel.json` applies:
+After deploy, open the production URL:
 
-- `X-Content-Type-Options: nosniff`
-- `X-Frame-Options: SAMEORIGIN`
-- `Referrer-Policy: strict-origin-when-cross-origin`
-- `Permissions-Policy` (restricts camera/mic/geo)
-- **Content-Security-Policy** allowing required CDNs:
-  - Fonts: Google Fonts
-  - Scripts/styles: unpkg (Leaflet)
-  - Connect: Frankfurter, MoneyConvert, jsDelivr
-  - Images: OpenStreetMap tiles
+1. Header status should show **Saved to cloud** when `PM_API_SECRET` is already in session, or prompt **Connect cloud storage**.
+2. Click **Cloud** in the header (or the status label when auth is required).
+3. Paste the same value as `PM_API_SECRET` → **Connect & sync**.
 
-If a third-party endpoint changes or is blocked, update CSP `connect-src` / `img-src` in `vercel.json`.
+**One-time URL bootstrap** (bookmark without storing key in UI):
 
-## Caching strategy
+```
+https://YOUR_DOMAIN/?pm_api_key=YOUR_PM_API_SECRET
+```
 
-| Asset | Cache-Control |
-|-------|----------------|
-| `index.html` | `max-age=0, must-revalidate` (fast rollout of HTML changes) |
-| `css/*`, `src/*` | `max-age=31536000, immutable` (long cache; bump by changing file contents) |
+The key is saved to `sessionStorage` and removed from the address bar.
 
-After deployments, users may need a hard refresh once if they cached old JS/CSS aggressively.
+## Data flow
 
-## Custom domain
+1. On load, the app calls `GET /api/health`.
+2. If `storage: "mongodb"`, it loads `GET /api/state` with `Authorization: Bearer <key>`.
+3. If the cloud workspace is empty but `localStorage` has data, it **migrates** local data to MongoDB once.
+4. On each change, state is written to `localStorage` (cache) and debounced to `PUT /api/state`.
 
-1. Vercel project → **Settings → Domains**
-2. Add your domain and follow DNS instructions (CNAME / nameservers).
-3. Production branch is typically `main`.
+Profile passwords remain **hashed in the payload** (PBKDF2); unlock state stays in **sessionStorage** only.
 
-## Preview vs production
+## Local development
 
-| Environment | Trigger | URL pattern |
-|-------------|---------|-------------|
-| **Preview** | Pull request / non-production branch | `*.vercel.app` preview URL |
-| **Production** | Push to production branch (`main`) | Production domain |
+| Command | Storage |
+|---------|---------|
+| `npm run dev` (static serve) | `localStorage` only (no `/api`) |
+| `npx vercel dev` | Full stack + `.env` local |
 
-Each deployment is isolated; **user data remains in browser `localStorage`** per origin (preview URL ≠ production URL).
+Pull env for local API testing:
+
+```bash
+npx vercel env pull .env.local
+npx vercel dev
+```
 
 ## Post-deploy smoke test
 
-Run after each production deploy:
+1. `GET /api/health` → `{ "storage": "mongodb" }`
+2. Open `/` → connect cloud with API key → status **Saved to cloud**
+3. Create a profile and project → refresh → data persists (from MongoDB)
+4. Open in another browser (same key) → same workspace data
+5. Export/import still works as backup
 
-1. Open `/` — app shell loads, no console CSP errors.
-2. Create a profile and project — RICE score computes.
-3. Switch views: Table, Board, MOSCOW, Map.
-4. **Refresh exchange rates** — rates label updates or shows graceful error.
-5. Open Map view — tiles and country layer render.
-6. Export JSON — file downloads.
-7. Import JSON — merge works without duplicates corruption.
-8. Filters: Countries and Project period popovers open and apply.
+## Security notes
 
-## Local production-like preview
-
-```bash
-npm run dev
-# Open http://localhost:5173
-```
-
-Or:
-
-```bash
-python3 -m http.server 5173
-```
-
-## Operational guardrails (production)
-
-- **No server-side backup**: remind users to export JSON/CSV regularly.
-- **Exchange rates**: depend on third-party APIs; fallback rates apply when APIs fail.
-- **Privacy**: portfolio data stays in the browser unless exported by the user.
-- **Secrets**: never commit API keys; this app does not require them today.
+- Treat `PM_API_SECRET` like a password; anyone with the key can read/write the workspace.
+- Use a unique secret per environment (preview vs production).
+- Do not set `PM_ALLOW_ANONYMOUS=true` on public production URLs.
+- MongoDB user should have least privilege (read/write on one database only).
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Action |
-|---------|----------------|--------|
-| Blank page / 404 on deep links | Rewrite misconfiguration | Confirm `vercel.json` rewrites; root contains `index.html` |
-| Map or rates fail | CSP or CORS | Check browser console; update `vercel.json` CSP `connect-src` |
-| Stale UI after deploy | Browser cache | Hard refresh; verify `index.html` cache headers |
-| Data missing on new URL | Different origin | `localStorage` is per-domain; export from old URL and import on new |
-
-## Rollback
-
-In Vercel: **Deployments** → select a previous successful deployment → **Promote to Production**.
+| Symptom | Cause | Action |
+|---------|--------|--------|
+| **Local browser storage** on prod | `MONGODB_URI` missing or API failing | Check Vercel env + redeploy; verify `/api/health` |
+| **Connect cloud storage** loop | Wrong/missing `PM_API_SECRET` | Re-enter key; match Vercel env exactly |
+| 401 on `/api/state` | Bearer mismatch | Regenerate secret in Vercel + reconnect browser |
+| Data different on preview vs prod | Separate origins + workspace ids | Use same `PM_WORKSPACE_ID` only if intentional |
+| CSP blocks API | Rare | `connect-src` includes `'self'` in `vercel.json` |
 
 ## Related documentation
 
-- `../README.md` — product overview and local setup
-- `ARCHITECTURE.md` — runtime modules and data flow
-- `GUARDRAILS.md` — business and technical limits
+- [ARCHITECTURE.md](ARCHITECTURE.md) — modules and persistence
+- [GUARDRAILS.md](GUARDRAILS.md) — limits and security
+- [../.env.example](../.env.example) — variable template

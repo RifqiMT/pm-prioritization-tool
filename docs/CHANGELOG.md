@@ -27,7 +27,12 @@ When updating this file after a change:
 
 ## [Unreleased]
 
-_No pending changes at last audit (2026-05-26). Add new entries here before the next release._
+### Data — MongoDB persistence on Vercel — Product Team — Impact: user-visible
+
+- Added `/api/health` and `/api/state` serverless routes with MongoDB Atlas storage.
+- Frontend `AppStorage` module: loads/saves workspace to cloud when `MONGODB_URI` is configured; migrates existing `localStorage` data on first connect.
+- Header storage status, **Cloud** action, and connect modal for `PM_API_SECRET`.
+- See [DEPLOYMENT.md](DEPLOYMENT.md) for required Vercel environment variables.
 
 ---
 

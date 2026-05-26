@@ -106,6 +106,64 @@
   animation: hdr-pulse 2.4s ease-in-out infinite;
 }
 
+.app-storage-status-label {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: default;
+}
+
+.app-storage-status-label.storage-status--warn {
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.storage-status-dot--cloud {
+  background: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+  animation: none;
+}
+
+.storage-status-dot--sync {
+  background: #d97706;
+  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.25);
+  animation: hdr-pulse 1.2s ease-in-out infinite;
+}
+
+.storage-status-dot--warn {
+  background: #dc2626;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+  animation: none;
+}
+
+.storage-status--cloud {
+  color: #1d4ed8;
+}
+
+.storage-status--warn {
+  color: #b45309;
+}
+
+.cloud-storage-hint {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-muted, #5c5348);
+}
+
+.cloud-storage-hint code {
+  font-size: 0.8em;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.06);
+}
+
 @keyframes hdr-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.75; transform: scale(0.92); }

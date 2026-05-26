@@ -10,19 +10,23 @@
 flowchart LR
   User[User Browser]
   App[Static Web App]
-  LS[(localStorage)]
+  API[Vercel /api/state]
+  DB[(MongoDB Atlas)]
+  LS[(localStorage cache)]
   SS[(sessionStorage)]
   CDN[Leaflet + Fonts CDN]
   FX[Exchange Rate APIs]
 
   User --> App
+  App --> API
+  API --> DB
   App --> LS
   App --> SS
   App --> CDN
   App -.optional.-> FX
 ```
 
-The application is a **local-first static SPA** (multi-page shell, single `index.html`). There is no application server; all business logic runs client-side.
+The UI is a **static SPA** (`index.html` + `src/`). On Vercel, **serverless routes** persist workspace JSON in MongoDB. Business logic (RICE, filters, render) remains client-side; `src/modules/storage.js` coordinates load/save.
 
 ---
 
@@ -37,6 +41,9 @@ The application is a **local-first static SPA** (multi-page shell, single `index
 | `src/modules/profile-security.js` | PBKDF2 password hash/verify |
 | `src/modules/exchange-rates.js` | Fetch/cache FX to EUR |
 | `src/modules/fullscreen.js` | Fullscreen API for views |
+| `src/modules/storage.js` | MongoDB vs local persistence, migration, debounced sync |
+| `api/health.js` | Storage backend probe |
+| `api/state.js` | GET/PUT workspace document |
 | `src/app.js` | State, events, rendering, filters, import/export, modals |
 | `src/main.js` | `init()` bootstrap |
 | `css/*` | Layered presentation (see [TECH_GUIDELINES.md](TECH_GUIDELINES.md)) |
