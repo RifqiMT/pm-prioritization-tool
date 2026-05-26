@@ -28,14 +28,37 @@ You see **HTML** for a React app (“PM Prioritization Matrix”, `create-react-
 
 That means the Vercel project on this domain is **not** this repository. MongoDB env vars on another project will not help.
 
-**Fix:**
+**Fix (choose one path):**
 
-1. Vercel → **Add New → Project** → Import **`RifqiMT/pm-prioritization-tool`** (or open the existing project linked to that repo).
-2. Do **not** use an old “matrix” React repo on the same domain if you want this tool.
-3. **Settings → Git** → confirm repository = `RifqiMT/pm-prioritization-tool`, branch = `main`.
-4. **Redeploy** the latest commit.
+### Path A — Fix the existing Vercel project
 
-After deploy, `/` should show **Product Management Prioritization Tool** (vanilla HTML, not a React bundle), and `/api/config` must return JSON.
+1. Vercel → open the project that owns your domain → **Settings → Git**.
+2. Set repository to **`RifqiMT/pm-prioritization-tool`**, branch **`main`**.
+3. **Settings → Environment Variables** → add `MONGODB_URI` (Production).
+4. **Deployments** → **Redeploy** latest `main`.
+
+### Path B — New project (recommended if Path A still shows React)
+
+1. Vercel → **Add New → Project** → import **`RifqiMT/pm-prioritization-tool`**.
+2. Name it e.g. `pm-prioritization-tool-app` (avoid clashing with the old React project).
+3. Add `MONGODB_URI` → Deploy.
+4. **Settings → Domains** → attach your custom domain; **remove** that domain from the old React project.
+
+### Path C — GitHub Actions deploy (optional)
+
+Repo includes `.github/workflows/vercel-production.yml`. Add GitHub secrets:
+
+| Secret | Where to get it |
+|--------|------------------|
+| `VERCEL_TOKEN` | [vercel.com/account/tokens](https://vercel.com/account/tokens) |
+| `VERCEL_ORG_ID` | Vercel project → Settings → General |
+| `VERCEL_PROJECT_ID` | Same page |
+
+Push to `main` → Action deploys this repo to that Vercel project.
+
+After deploy, `/` must show **Product Management Prioritization Tool** (static HTML with `app-shell`, not `create-react-app`), and `/api/config` must return JSON.
+
+**Repo layout on Vercel:** static files in `public/`, serverless API in `api/` (do not set Output Directory to a React `build/` folder).
 
 ---
 

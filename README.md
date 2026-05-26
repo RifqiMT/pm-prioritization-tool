@@ -78,13 +78,9 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 **Source layout:**
 
 ```
-index.html
-css/          → main + modern theme layers
-src/
-  app.js      → state, render, CRUD, I/O
-  rice.js     → RICE + validation
-  constants.js, utils.js, main.js
-  modules/    → exchange-rates, fullscreen, profile-security
+public/       → static UI (index.html, css/, src/)
+api/          → Vercel serverless (MongoDB /api/state, /api/config)
+docs/         → symlink to public/docs (product documentation)
 ```
 
 ---
@@ -99,7 +95,7 @@ npm run dev
 # Open http://localhost:5173
 ```
 
-Or: `python3 -m http.server 5173` and open `index.html` via that URL.
+Or: `cd public && python3 -m http.server 5173` (UI only; use `npx vercel dev` for `/api` + MongoDB).
 
 ### Production (Vercel)
 
@@ -112,7 +108,7 @@ Connect the GitHub repo → deploy `main` on Vercel with `MONGODB_URI`. Details:
 1. Create a **profile** (optionally set a password).  
 2. **Add projects** with RICE and optional financial framework.  
 3. Use **Table / Board / MoSCoW / Map** to plan and present.  
-4. **Export JSON** regularly — data lives in browser storage only.  
+4. **Export JSON** regularly as backup (primary store is MongoDB when cloud is connected).  
 
 ---
 

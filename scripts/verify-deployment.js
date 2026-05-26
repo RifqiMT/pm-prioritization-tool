@@ -9,6 +9,21 @@ if (!base) {
 }
 
 async function main() {
+  const rootRes = await fetch(base + "/");
+  const rootText = await rootRes.text();
+  if (
+    rootText.includes("create-react-app") ||
+    (rootText.includes("PM Prioritization Matrix") &&
+      !rootText.includes("Product Management Prioritization Tool"))
+  ) {
+    console.error("FAIL: Homepage is the old React app, not this repository.");
+    console.error("Re-link Vercel to github.com/RifqiMT/pm-prioritization-tool");
+    process.exit(6);
+  }
+  if (!rootText.includes("PM Prioritization") && !rootText.includes("app-shell")) {
+    console.warn("WARN: Homepage may not be the expected static app.");
+  }
+
   const url = base + "/api/config";
   console.log("Checking", url);
 
