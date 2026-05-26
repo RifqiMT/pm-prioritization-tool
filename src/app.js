@@ -1221,12 +1221,62 @@ function showDeploymentIssueBanner(boot) {
   }
 }
 
+function formatStorageSyncTime(iso) {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit"
+    });
+  } catch {
+    return "";
+  }
+}
+
+function refreshUiAfterCloudDataChange() {
+  renderProfiles();
+  renderProjects();
+  updateProfileLockedBanner();
+  focusLockedProfileUnlockIfNeeded();
+  if (state.projectsView === "map" && elements.projectsMapContainer) {
+    renderProjectsMap();
+  }
+}
+
+function showCloudWorkspaceToast(extra) {
+  const count = state.profiles.length;
+  if (count === 0) return;
+  const lockedCount = state.profiles.filter(
+    (p) => isProfilePasswordProtected(p) && !isProfileUnlocked(p.id)
+  ).length;
+  let msg =
+    extra && extra.source === "pull"
+      ? "Updated from cloud: "
+      : "Loaded from cloud: ";
+  msg += count + " profile" + (count !== 1 ? "s" : "");
+  if (lockedCount > 0) {
+    msg +=
+      ". " +
+      lockedCount +
+      " locked — unlock to view projects on this device.";
+  }
+  showToast(msg);
+}
+
 function updateStorageStatusUI(status) {
   if (!elements.appStorageStatusLabel) return;
   const dot = elements.appStorageStatusDot;
   const label = elements.appStorageStatusLabel;
   const mode = status && status.mode ? status.mode : "unknown";
   const sync = status && status.syncStatus ? status.syncStatus : "idle";
+  const profileCount = state.profiles.length;
+  const syncedLabel = formatStorageSyncTime(
+    status && status.lastSyncedAt ? status.lastSyncedAt : null
+  );
 
   label.classList.remove("storage-status--cloud", "storage-status--local", "storage-status--warn");
   if (dot) {
@@ -1234,20 +1284,25 @@ function updateStorageStatusUI(status) {
   }
 
   if (mode === "mongodb") {
+    const profilePart =
+      profileCount > 0 ? profileCount + " profile" + (profileCount !== 1 ? "s" : "") + " · " : "";
     label.textContent =
       sync === "syncing"
         ? "Saving to cloud…"
         : sync === "error"
           ? "Cloud sync issue"
-          : "Saved to cloud";
+          : profilePart + (syncedLabel ? "synced " + syncedLabel : "Saved to cloud");
     label.title =
       sync === "error" && status && status.lastError
         ? status.lastError
-        : "Workspace is stored in MongoDB";
+        : "MongoDB workspace · click to sync now";
     label.classList.add("storage-status--cloud");
+    label.dataset.cloudActive = "1";
     if (dot) dot.classList.add(sync === "syncing" ? "storage-status-dot--sync" : "storage-status-dot--cloud");
     return;
   }
+
+  if (label.dataset) delete label.dataset.cloudActive;
 
   if (mode === "mongodb-pending-auth") {
     label.textContent = "Connect cloud storage";
@@ -1308,13 +1363,60 @@ function initCloudStorageModal() {
 
   if (openBtn) openBtn.addEventListener("click", openModal);
   if (elements.appStorageStatusLabel) {
-    elements.appStorageStatusLabel.addEventListener("click", () => {
-      if (
-        typeof AppStorage !== "undefined" &&
-        AppStorage.getMode &&
-        AppStorage.getMode() === "mongodb-pending-auth"
-      ) {
+    elements.appStorageStatusLabel.addEventListener("click", async () => {
+      if (typeof AppStorage === "undefined" || !AppStorage.getMode) return;
+      const mode = AppStorage.getMode();
+      if (mode === "mongodb-pending-auth") {
         openModal();
+        return;
+      }
+      if (mode === "mongodb" && AppStorage.forceSyncNow) {
+        try {
+          await AppStorage.pullFromCloud({ force: true });
+          refreshUiAfterCloudDataChange();
+          await AppStorage.forceSyncNow();
+          showToast("Workspace synced with cloud.");
+        } catch (err) {
+          showToast(err && err.message ? err.message : "Cloud sync failed.");
+        }
+      }
+    });
+  }
+
+  const pullBtn = $("cloudStoragePullBtn");
+  const pushBtn = $("cloudStoragePushBtn");
+  if (pullBtn) {
+    pullBtn.addEventListener("click", async () => {
+      if (typeof AppStorage === "undefined" || !AppStorage.pullFromCloud) return;
+      pullBtn.disabled = true;
+      setError("");
+      try {
+        const result = await AppStorage.pullFromCloud({ force: true });
+        refreshUiAfterCloudDataChange();
+        if (result && result.updated) {
+          showCloudWorkspaceToast({ source: "pull" });
+        } else {
+          showToast("Cloud workspace is already up to date on this device.");
+        }
+      } catch (err) {
+        setError(err && err.message ? err.message : "Could not pull from cloud.");
+      } finally {
+        pullBtn.disabled = false;
+      }
+    });
+  }
+  if (pushBtn) {
+    pushBtn.addEventListener("click", async () => {
+      if (typeof AppStorage === "undefined" || !AppStorage.forceSyncNow) return;
+      pushBtn.disabled = true;
+      setError("");
+      try {
+        await AppStorage.forceSyncNow();
+        showToast("Saved this device to cloud.");
+      } catch (err) {
+        setError(err && err.message ? err.message : "Could not save to cloud.");
+      } finally {
+        pushBtn.disabled = false;
       }
     });
   }
@@ -1404,7 +1506,13 @@ async function init() {
     const boot = await AppStorage.bootstrap({
       apply: applyStatePayload,
       serialize: serializeStatePayload,
-      onStatusChange: updateStorageStatusUI
+      onStatusChange: updateStorageStatusUI,
+      onCloudDataRefreshed: (extra) => {
+        refreshUiAfterCloudDataChange();
+        if (extra && extra.updated) {
+          showCloudWorkspaceToast(extra);
+        }
+      }
     });
     if (boot && boot.apiIssue) {
       showDeploymentIssueBanner(boot);
@@ -1412,6 +1520,14 @@ async function init() {
     if (boot && boot.needsAuth && $("cloudStorageModal")) {
       $("cloudStorageModal").classList.add("active");
       $("cloudStorageModal").setAttribute("aria-hidden", "false");
+    }
+    if (
+      boot &&
+      boot.mode === "mongodb" &&
+      (boot.loadSource === "remote" || boot.migrated) &&
+      state.profiles.length > 0
+    ) {
+      showCloudWorkspaceToast({ source: boot.loadSource });
     }
   } else {
     applyStatePayload(
@@ -3655,6 +3771,16 @@ function saveState() {
 
 function ensureDefaultProfile() {
   if (state.profiles.length === 0) {
+    if (
+      typeof AppStorage !== "undefined" &&
+      typeof AppStorage.shouldSeedDefaultProfile === "function" &&
+      !AppStorage.shouldSeedDefaultProfile()
+    ) {
+      console.warn(
+        "Skipping default profile: cloud workspace has data but profiles did not load. Use Cloud → Pull from cloud."
+      );
+      return;
+    }
     const now = new Date().toISOString();
     const profile = {
       id: generateId("profile"),

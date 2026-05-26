@@ -164,6 +164,24 @@
   background: rgba(0, 0, 0, 0.06);
 }
 
+.cloud-storage-hint--secondary {
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+}
+
+.cloud-storage-sync-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.app-storage-status-label.storage-status--cloud {
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
 .deployment-issue-banner {
   display: flex;
   align-items: flex-start;

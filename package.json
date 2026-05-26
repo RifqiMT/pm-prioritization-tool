@@ -12,7 +12,8 @@
     "build": "node -e \"const fs=require('fs'); if(!fs.existsSync('index.html')) throw new Error('missing index.html'); if(!fs.existsSync('api/state.js')) throw new Error('missing api/state.js'); console.log('OK: static root + api/ ready for Vercel');\"",
     "start": "npm run dev",
     "verify:deploy": "node scripts/verify-deployment.js",
-    "verify:production": "node scripts/verify-deployment.js https://pm-prioritization-tool-six.vercel.app"
+    "verify:production": "node scripts/verify-deployment.js https://pm-prioritization-tool-six.vercel.app",
+    "test:storage": "node scripts/test-storage-sync-logic.js"
   },
   "keywords": [
     "product-management",

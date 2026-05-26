@@ -121,9 +121,11 @@ Vercel → Project → **Settings → Environment Variables** → **Production**
 ## Step 4 — Verify in the app
 
 1. Hard refresh the site (Ctrl+Shift+R / Cmd+Shift+R).
-2. Header should show **Saved to cloud**.
+2. Header should show **Saved to cloud** (with profile count and last sync time when data exists).
 3. Create a test profile → refresh → data should remain.
-4. Optional: **Cloud** → **Sync now** (when already connected).
+4. On another device, open the **same** URL: `https://pm-prioritization-tool-six.vercel.app` (not `pm-prioritization-tool.vercel.app` — that is a different legacy app).
+5. You should see a toast: **Loaded from cloud: N profiles**. If a profile is password-protected, unlock it on that device (unlock state is per browser tab, not stored in MongoDB).
+6. **Cloud** menu → **Pull from cloud** / **Save to cloud**, or click the header storage label to pull then push.
 
 If you use `PM_API_SECRET`, connect once via **Cloud** or:
 

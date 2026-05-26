@@ -27,6 +27,15 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Data — Cross-device cloud sync — Product Team — Impact: user-visible
+
+- Smarter load merge using `_storageMeta.updatedAt` (newer local vs remote wins).
+- Auto-pull from MongoDB on tab focus, visibility, and every 45s while the tab is open.
+- Faster debounced saves, reliable flush on tab close/hide.
+- Cloud modal: **Pull from cloud** / **Save to cloud**; header status click syncs.
+- Toast when workspace loads from cloud; warns when password-protected profiles need unlock on a new device.
+- Prevents seeding an empty “Default Profile” over a populated cloud workspace when load fails.
+
 ### Deploy — Vercel protection + diagnostics — Product Team — Impact: user-visible
 
 - Detect Vercel Deployment Protection (401 on `/api`) and show setup banner.

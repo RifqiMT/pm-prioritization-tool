@@ -4,7 +4,11 @@
  */
 const AppStorage = (function () {
   const API_SECRET_STORAGE_KEY = "pm_cloud_api_secret_v1";
+  const LOCAL_META_KEY = "pm_local_storage_meta_v1";
+  const CLIENT_ID_KEY = "pm_storage_client_id_v1";
   const URL_KEY_PARAM = "pm_api_key";
+  const SAVE_DEBOUNCE_MS = 250;
+  const PULL_INTERVAL_MS = 45000;
 
   /** @type {"unknown"|"local"|"mongodb"|"mongodb-pending-auth"} */
   let mode = "unknown";
@@ -12,14 +16,20 @@ const AppStorage = (function () {
   let syncStatus = "idle";
   let lastError = null;
   let lastSyncedAt = null;
+  let lastAppliedRemoteAt = null;
+  let remoteWorkspaceHadData = false;
+  let lastLoadSource = null;
   let cloudConfig = null;
   let applyPayloadFn = null;
   let serializePayloadFn = null;
   let onStatusChangeFn = null;
+  let onCloudDataRefreshedFn = null;
 
   let saveTimer = null;
+  let pullTimer = null;
   let pendingPayload = null;
   let inFlightSave = null;
+  let cloudListenersBound = false;
 
   function notifyStatus() {
     if (typeof onStatusChangeFn === "function") {
@@ -28,6 +38,9 @@ const AppStorage = (function () {
         syncStatus,
         lastError,
         lastSyncedAt,
+        lastAppliedRemoteAt,
+        lastLoadSource,
+        remoteWorkspaceHadData,
         cloudConfig
       });
     }
@@ -37,6 +50,23 @@ const AppStorage = (function () {
     syncStatus = next;
     lastError = error || null;
     notifyStatus();
+  }
+
+  function getClientId() {
+    try {
+      let id = localStorage.getItem(CLIENT_ID_KEY);
+      if (!id) {
+        id =
+          "pm_" +
+          Date.now().toString(36) +
+          "_" +
+          Math.random().toString(36).slice(2, 10);
+        localStorage.setItem(CLIENT_ID_KEY, id);
+      }
+      return id;
+    } catch {
+      return "pm_anonymous";
+    }
   }
 
   function isLocalFileOrigin() {
@@ -89,6 +119,23 @@ const AppStorage = (function () {
     }
   }
 
+  function readLocalMeta() {
+    try {
+      const raw = localStorage.getItem(LOCAL_META_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function writeLocalMeta(meta) {
+    try {
+      localStorage.setItem(LOCAL_META_KEY, JSON.stringify(meta));
+    } catch (err) {
+      console.warn("Failed to write local storage meta", err);
+    }
+  }
+
   function readLocalPayload() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -112,6 +159,119 @@ const AppStorage = (function () {
     if (!payload || typeof payload !== "object") return true;
     if (!Array.isArray(payload.profiles)) return true;
     return payload.profiles.length === 0;
+  }
+
+  function getPayloadUpdatedAtMs(payload, fallbackIso) {
+    const meta =
+      payload && payload._storageMeta && typeof payload._storageMeta === "object"
+        ? payload._storageMeta
+        : null;
+    if (meta && meta.updatedAt) {
+      const parsed = Date.parse(meta.updatedAt);
+      if (!Number.isNaN(parsed)) return parsed;
+    }
+    if (fallbackIso) {
+      const parsed = Date.parse(fallbackIso);
+      if (!Number.isNaN(parsed)) return parsed;
+    }
+    return 0;
+  }
+
+  function stampPayload(payload) {
+    if (!payload || typeof payload !== "object") return payload;
+    const stamped = Object.assign({}, payload);
+    stamped._storageMeta = {
+      updatedAt: new Date().toISOString(),
+      clientId: getClientId()
+    };
+    return stamped;
+  }
+
+  /**
+   * Pick newer workspace on load: remote wins ties unless local is strictly newer.
+   */
+  function resolvePayloadForLoad(remoteBody, localPayload) {
+    const remotePayload =
+      remoteBody && remoteBody.payload ? remoteBody.payload : null;
+    const remoteDocAt = remoteBody && remoteBody.updatedAt ? remoteBody.updatedAt : null;
+    const remoteAt = getPayloadUpdatedAtMs(remotePayload, remoteDocAt);
+    const localMeta = readLocalMeta();
+    const localAt = Math.max(
+      getPayloadUpdatedAtMs(localPayload, null),
+      localMeta.updatedAt ? Date.parse(localMeta.updatedAt) || 0 : 0
+    );
+
+    const remoteEmpty = isEmptyPayload(remotePayload);
+    const localEmpty = isEmptyPayload(localPayload);
+
+    if (!remoteEmpty && remoteWorkspaceHadData !== false) {
+      remoteWorkspaceHadData = true;
+    }
+
+    if (!remoteEmpty && !localEmpty) {
+      if (localAt > remoteAt) {
+        return {
+          payload: localPayload,
+          source: "local",
+          pushToCloud: true,
+          remoteUpdatedAt: remoteDocAt
+        };
+      }
+      return {
+        payload: remotePayload,
+        source: "remote",
+        pushToCloud: false,
+        remoteUpdatedAt: remoteDocAt || null
+      };
+    }
+
+    if (!remoteEmpty) {
+      return {
+        payload: remotePayload,
+        source: "remote",
+        pushToCloud: false,
+        remoteUpdatedAt: remoteDocAt || null
+      };
+    }
+
+    if (!localEmpty) {
+      return {
+        payload: localPayload,
+        source: "local",
+        pushToCloud: true,
+        remoteUpdatedAt: null
+      };
+    }
+
+    return { payload: null, source: "none", pushToCloud: false, remoteUpdatedAt: null };
+  }
+
+  function commitLoadedPayload(payload, source, remoteUpdatedAt) {
+    applyPayload(payload);
+    writeLocalCache(payload);
+    lastLoadSource = source;
+    const appliedAt =
+      source === "remote"
+        ? remoteUpdatedAt || getPayloadUpdatedAtMs(payload, null)
+        : new Date().toISOString();
+    if (source === "remote" && appliedAt) {
+      lastAppliedRemoteAt = appliedAt;
+      lastSyncedAt = appliedAt;
+      writeLocalMeta({ updatedAt: appliedAt, source: "remote" });
+    } else if (payload) {
+      const localAt = getPayloadUpdatedAtMs(payload, null) || Date.now();
+      writeLocalMeta({
+        updatedAt: new Date(localAt).toISOString(),
+        source: source || "local"
+      });
+    }
+    setSyncStatus("synced");
+  }
+
+  function notifyCloudDataRefreshed(extra) {
+    if (typeof onCloudDataRefreshedFn === "function") {
+      onCloudDataRefreshedFn(extra || {});
+    }
   }
 
   function buildAuthHeaders() {
@@ -209,11 +369,15 @@ const AppStorage = (function () {
     if (!res.ok) {
       throw new Error(body.error || "Failed to load cloud workspace");
     }
+    if (body && body.payload && !isEmptyPayload(body.payload)) {
+      remoteWorkspaceHadData = true;
+    }
     return body;
   }
 
   async function putRemoteState(payload) {
-    const bodyJson = JSON.stringify({ payload });
+    const stamped = stampPayload(payload);
+    const bodyJson = JSON.stringify({ payload: stamped });
     const headers = buildAuthHeaders();
     let res = await fetch("/api/state", {
       method: "PUT",
@@ -244,8 +408,12 @@ const AppStorage = (function () {
   async function saveRemoteNow(payload) {
     setSyncStatus("syncing");
     try {
-      const result = await putRemoteState(payload);
+      const stamped = stampPayload(payload);
+      writeLocalCache(stamped);
+      const result = await putRemoteState(stamped);
       lastSyncedAt = (result && result.updatedAt) || new Date().toISOString();
+      lastAppliedRemoteAt = lastSyncedAt;
+      writeLocalMeta({ updatedAt: lastSyncedAt, source: "remote" });
       setSyncStatus("synced");
       return true;
     } catch (err) {
@@ -259,8 +427,17 @@ const AppStorage = (function () {
   }
 
   function scheduleRemoteSave(payload) {
-    pendingPayload = payload;
-    writeLocalCache(payload);
+    const stamped = stampPayload(payload);
+    pendingPayload = stamped;
+    writeLocalCache(stamped);
+    writeLocalMeta({
+      updatedAt: stamped._storageMeta.updatedAt,
+      source: "local"
+    });
+    if (mode === "mongodb-pending-auth") {
+      setSyncStatus("error", "Connect cloud storage to sync changes.");
+      return;
+    }
     if (mode !== "mongodb") return;
 
     if (saveTimer) clearTimeout(saveTimer);
@@ -272,7 +449,7 @@ const AppStorage = (function () {
       inFlightSave = saveRemoteNow(toSave).finally(() => {
         inFlightSave = null;
       });
-    }, 400);
+    }, SAVE_DEBOUNCE_MS);
   }
 
   async function flushPendingSave() {
@@ -284,17 +461,30 @@ const AppStorage = (function () {
     pendingPayload = null;
     if (mode !== "mongodb" || !payload) return;
 
+    if (inFlightSave) {
+      try {
+        await inFlightSave;
+      } catch {
+        /* saveRemoteNow already logged */
+      }
+      return;
+    }
+
     try {
-      await fetch("/api/state", {
-        method: "PUT",
-        headers: buildAuthHeaders(),
-        body: JSON.stringify({ payload }),
-        keepalive: true
-      });
-      lastSyncedAt = new Date().toISOString();
-      setSyncStatus("synced");
+      await saveRemoteNow(payload);
     } catch (err) {
-      console.warn("Flush save on unload failed", err);
+      try {
+        await fetch("/api/state", {
+          method: "PUT",
+          headers: buildAuthHeaders(),
+          body: JSON.stringify({ payload: stampPayload(payload) }),
+          keepalive: true
+        });
+        lastSyncedAt = new Date().toISOString();
+        setSyncStatus("synced");
+      } catch (flushErr) {
+        console.warn("Flush save on unload failed", flushErr || err);
+      }
     }
   }
 
@@ -304,6 +494,8 @@ const AppStorage = (function () {
     try {
       await putRemoteState(localPayload);
       lastSyncedAt = new Date().toISOString();
+      lastAppliedRemoteAt = lastSyncedAt;
+      writeLocalMeta({ updatedAt: lastSyncedAt, source: "remote" });
       setSyncStatus("synced");
       return true;
     } catch (err) {
@@ -329,31 +521,105 @@ const AppStorage = (function () {
 
   async function loadFromCloud() {
     const remote = await fetchRemoteState();
-    const remotePayload = remote && remote.payload ? remote.payload : null;
     const localPayload = readLocalPayload();
+    const resolved = resolvePayloadForLoad(remote, localPayload);
 
-    if (!isEmptyPayload(remotePayload)) {
-      applyPayload(remotePayload);
-      writeLocalCache(remotePayload);
-      lastSyncedAt = remote.updatedAt || null;
-      setSyncStatus("synced");
-      return { migrated: false };
-    }
-
-    if (!isEmptyPayload(localPayload)) {
-      applyPayload(localPayload);
-      const migrated = await migrateLocalToRemote(localPayload);
-      return { migrated };
+    if (resolved.payload) {
+      commitLoadedPayload(
+        resolved.payload,
+        resolved.source,
+        resolved.remoteUpdatedAt
+      );
+      if (resolved.pushToCloud) {
+        const migrated = await migrateLocalToRemote(resolved.payload);
+        return { migrated, source: resolved.source };
+      }
+      return { migrated: false, source: resolved.source };
     }
 
     setSyncStatus("synced");
-    return { migrated: false };
+    return { migrated: false, source: "none" };
+  }
+
+  async function pullFromCloudIfNewer(options) {
+    if (mode !== "mongodb") {
+      return { updated: false, reason: "not_cloud" };
+    }
+    try {
+      const remote = await fetchRemoteState();
+      const remoteAt = remote.updatedAt
+        ? Date.parse(remote.updatedAt)
+        : getPayloadUpdatedAtMs(remote.payload, null);
+      const lastAt = lastAppliedRemoteAt
+        ? Date.parse(lastAppliedRemoteAt)
+        : 0;
+      const force = options && options.force === true;
+
+      if (isEmptyPayload(remote.payload)) {
+        return { updated: false, reason: "remote_empty" };
+      }
+
+      if (!force && remoteAt && lastAt && remoteAt <= lastAt) {
+        return { updated: false, reason: "already_current" };
+      }
+
+      commitLoadedPayload(remote.payload, "remote", remote.updatedAt || null);
+      notifyCloudDataRefreshed({
+        profileCount: remote.payload.profiles.length,
+        source: "pull"
+      });
+      return {
+        updated: true,
+        profileCount: remote.payload.profiles.length,
+        updatedAt: remote.updatedAt
+      };
+    } catch (err) {
+      console.warn("Cloud pull failed", err);
+      return { updated: false, reason: "error", error: err.message || String(err) };
+    }
+  }
+
+  function setupCloudLifecycle() {
+    if (cloudListenersBound) return;
+    cloudListenersBound = true;
+
+    window.addEventListener("beforeunload", flushPendingSave);
+    window.addEventListener("pagehide", flushPendingSave);
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") {
+        flushPendingSave();
+        return;
+      }
+      if (document.visibilityState === "visible") {
+        pullFromCloudIfNewer().then((result) => {
+          if (result && result.updated) {
+            notifyCloudDataRefreshed(result);
+          }
+        });
+      }
+    });
+
+    window.addEventListener("focus", () => {
+      pullFromCloudIfNewer().then((result) => {
+        if (result && result.updated) {
+          notifyCloudDataRefreshed(result);
+        }
+      });
+    });
+
+    if (pullTimer) clearInterval(pullTimer);
+    pullTimer = setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      pullFromCloudIfNewer();
+    }, PULL_INTERVAL_MS);
   }
 
   async function bootstrap(options) {
     applyPayloadFn = options && options.apply;
     serializePayloadFn = options && options.serialize;
     onStatusChangeFn = options && options.onStatusChange;
+    onCloudDataRefreshedFn = options && options.onCloudDataRefreshed;
 
     consumeApiKeyFromUrl();
 
@@ -361,7 +627,7 @@ const AppStorage = (function () {
       mode = "local";
       applyPayload(readLocalPayload());
       setSyncStatus("offline");
-      return { mode, migrated: false };
+      return { mode, migrated: false, loadSource: "local" };
     }
 
     const configResult = await fetchCloudConfig();
@@ -372,22 +638,25 @@ const AppStorage = (function () {
       mode = "local";
       applyPayload(readLocalPayload());
       setSyncStatus("idle", lastError || null);
-      return { mode, migrated: false, apiIssue };
+      return { mode, migrated: false, apiIssue, loadSource: "local" };
     }
 
     if (needsClientSecret(config) && !getApiSecret()) {
       mode = "mongodb-pending-auth";
       applyPayload(readLocalPayload());
       setSyncStatus("error", "Set PM_API_SECRET on Vercel, then connect via Cloud menu.");
-      return { mode, migrated: false, needsAuth: true, apiIssue: null };
+      return { mode, migrated: false, needsAuth: true, apiIssue: null, loadSource: "local" };
     }
 
     mode = "mongodb";
     let migrated = false;
+    let loadSource = "none";
 
     try {
       const result = await loadFromCloud();
       migrated = result.migrated;
+      loadSource = result.source || "none";
+      setupCloudLifecycle();
     } catch (err) {
       console.error("Cloud load failed; using local cache", err);
       if (err && err.code === "UNAUTHORIZED") {
@@ -398,31 +667,34 @@ const AppStorage = (function () {
         setSyncStatus("offline", err.message || String(err));
       }
       applyPayload(readLocalPayload());
+      loadSource = "local";
     }
 
-    window.addEventListener("beforeunload", flushPendingSave);
     notifyStatus();
     return {
       mode,
       migrated,
       needsAuth: mode === "mongodb-pending-auth",
-      apiIssue: null
+      apiIssue: null,
+      loadSource,
+      remoteWorkspaceHadData
     };
   }
 
   function persistState(payload) {
     if (!payload) return;
+    scheduleRemoteSave(payload);
+  }
 
-    writeLocalCache(payload);
-
-    if (mode === "mongodb") {
-      scheduleRemoteSave(payload);
-      return;
+  function shouldSeedDefaultProfile() {
+    if (mode === "mongodb" && remoteWorkspaceHadData) {
+      return false;
     }
+    return true;
+  }
 
-    if (mode === "mongodb-pending-auth") {
-      setSyncStatus("error", "Connect cloud storage to sync changes.");
-    }
+  function isRemoteWorkspacePopulated() {
+    return remoteWorkspaceHadData;
   }
 
   async function connectWithApiSecret(secret) {
@@ -447,12 +719,13 @@ const AppStorage = (function () {
 
     mode = "mongodb";
     await loadFromCloud();
+    setupCloudLifecycle();
 
     const serialized =
       typeof serializePayloadFn === "function" ? serializePayloadFn() : null;
     if (serialized) {
       await saveRemoteNow(serialized);
-      writeLocalCache(serialized);
+      writeLocalCache(stampPayload(serialized));
     }
 
     setSyncStatus("synced");
@@ -466,12 +739,30 @@ const AppStorage = (function () {
     if (mode !== "mongodb") {
       throw new Error("Cloud storage is not active.");
     }
+    await flushPendingSave();
     const serialized =
       typeof serializePayloadFn === "function" ? serializePayloadFn() : pendingPayload;
     if (!serialized) {
       throw new Error("Nothing to sync.");
     }
-    return saveRemoteNow(serialized);
+    const ok = await saveRemoteNow(serialized);
+    if (!ok) {
+      throw new Error(lastError || "Cloud sync failed.");
+    }
+    return true;
+  }
+
+  async function pullFromCloud(options) {
+    if (mode !== "mongodb") {
+      throw new Error("Cloud storage is not active on this device.");
+    }
+    const result = await pullFromCloudIfNewer(
+      Object.assign({ force: true }, options || {})
+    );
+    if (!result.updated && result.reason === "error") {
+      throw new Error(result.error || "Could not load workspace from cloud.");
+    }
+    return result;
   }
 
   function getMode() {
@@ -479,7 +770,16 @@ const AppStorage = (function () {
   }
 
   function getStatus() {
-    return { mode, syncStatus, lastError, lastSyncedAt, cloudConfig };
+    return {
+      mode,
+      syncStatus,
+      lastError,
+      lastSyncedAt,
+      lastAppliedRemoteAt,
+      lastLoadSource,
+      remoteWorkspaceHadData,
+      cloudConfig
+    };
   }
 
   function isCloudActive() {
@@ -491,10 +791,14 @@ const AppStorage = (function () {
     persistState,
     connectWithApiSecret,
     forceSyncNow,
+    pullFromCloud,
+    pullFromCloudIfNewer,
     flushPendingSave,
     getMode,
     getStatus,
     isCloudActive,
+    shouldSeedDefaultProfile,
+    isRemoteWorkspacePopulated,
     getApiSecret,
     setApiSecret
   };

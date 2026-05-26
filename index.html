@@ -1557,6 +1557,11 @@
           <input type="password" id="cloudStorageApiKeyInput" class="form-input" autocomplete="off" placeholder="PM_API_SECRET if configured" />
         </label>
         <p id="cloudStorageError" class="form-error" hidden></p>
+        <div class="cloud-storage-sync-actions" role="group" aria-label="Cloud sync actions">
+          <button type="button" class="btn-secondary" id="cloudStoragePullBtn">Pull from cloud</button>
+          <button type="button" class="btn-secondary" id="cloudStoragePushBtn">Save to cloud</button>
+        </div>
+        <p class="cloud-storage-hint cloud-storage-hint--secondary">Use the same URL on every device: <strong>pm-prioritization-tool-six.vercel.app</strong>. Pull loads the latest MongoDB workspace; Save pushes this browser’s data.</p>
       </div>
       <footer class="modal-footer profile-modal-footer">
         <button type="button" class="btn-ghost" id="cloudStorageCancelBtn">Cancel</button>
