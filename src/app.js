@@ -1344,6 +1344,49 @@ function initCloudStorageModal() {
     }
   }
 
+  async function refreshCloudDiagnostics() {
+    const diagEl = $("cloudStorageDiagnostics");
+    if (!diagEl || typeof AppStorage === "undefined" || !AppStorage.getCloudDiagnostics) {
+      return;
+    }
+    diagEl.hidden = false;
+    diagEl.textContent = "Checking cloud workspace…";
+    try {
+      const d = await AppStorage.getCloudDiagnostics();
+      const cloud =
+        d.cloudProfileCount != null
+          ? d.cloudProfileCount + " profile" + (d.cloudProfileCount !== 1 ? "s" : "")
+          : d.cloudError
+            ? "unreachable"
+            : "—";
+      const device =
+        d.deviceProfileCount +
+        " profile" +
+        (d.deviceProfileCount !== 1 ? "s" : "") +
+        " on this device";
+      const modeLabel = d.mode || "unknown";
+      let line =
+        "Cloud: " + cloud + " · Device: " + device + " · Storage: " + modeLabel;
+      if (d.cloudUpdatedAt) {
+        line += " · Cloud updated " + formatStorageSyncTime(d.cloudUpdatedAt);
+      }
+      if (d.hostname && d.hostname.indexOf("pm-prioritization-tool-six") < 0) {
+        line += " · Warning: not on production URL";
+      }
+      diagEl.textContent = line;
+      if (
+        d.cloudProfileCount != null &&
+        d.cloudProfileCount > d.deviceProfileCount
+      ) {
+        diagEl.classList.add("cloud-storage-diagnostics--warn");
+      } else {
+        diagEl.classList.remove("cloud-storage-diagnostics--warn");
+      }
+    } catch (err) {
+      diagEl.textContent = err && err.message ? err.message : "Could not read diagnostics.";
+    }
+  }
+
   function openModal() {
     modal.classList.add("active");
     modal.setAttribute("aria-hidden", "false");
@@ -1352,6 +1395,7 @@ function initCloudStorageModal() {
         ? AppStorage.getApiSecret()
         : "";
     setError("");
+    refreshCloudDiagnostics();
     input.focus();
   }
 
@@ -1398,6 +1442,7 @@ function initCloudStorageModal() {
         } else {
           showToast("Cloud workspace is already up to date on this device.");
         }
+        refreshCloudDiagnostics();
       } catch (err) {
         setError(err && err.message ? err.message : "Could not pull from cloud.");
       } finally {
@@ -1506,10 +1551,11 @@ async function init() {
     const boot = await AppStorage.bootstrap({
       apply: applyStatePayload,
       serialize: serializeStatePayload,
+      getProfileCount: () => state.profiles.length,
       onStatusChange: updateStorageStatusUI,
       onCloudDataRefreshed: (extra) => {
         refreshUiAfterCloudDataChange();
-        if (extra && extra.updated) {
+        if (extra && (extra.updated || extra.source === "reconcile" || extra.source === "pull")) {
           showCloudWorkspaceToast(extra);
         }
       }

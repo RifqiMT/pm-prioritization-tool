@@ -22,6 +22,7 @@ const AppStorage = (function () {
   let cloudConfig = null;
   let applyPayloadFn = null;
   let serializePayloadFn = null;
+  let getProfileCountFn = null;
   let onStatusChangeFn = null;
   let onCloudDataRefreshedFn = null;
 
@@ -128,12 +129,32 @@ const AppStorage = (function () {
     }
   }
 
-  function writeLocalMeta(meta) {
+  function writeLocalMeta(patch) {
     try {
-      localStorage.setItem(LOCAL_META_KEY, JSON.stringify(meta));
+      const prev = readLocalMeta();
+      localStorage.setItem(
+        LOCAL_META_KEY,
+        JSON.stringify(Object.assign({}, prev, patch || {}))
+      );
     } catch (err) {
       console.warn("Failed to write local storage meta", err);
     }
+  }
+
+  function markRemoteApplied(iso) {
+    const at = iso || new Date().toISOString();
+    lastAppliedRemoteAt = at;
+    writeLocalMeta({ lastRemoteAppliedAt: at, updatedAt: at, source: "remote" });
+  }
+
+  function markLocalModified(iso) {
+    const at = iso || new Date().toISOString();
+    writeLocalMeta({ lastLocalModifiedAt: at, updatedAt: at, source: "local" });
+  }
+
+  function countProfiles(payload) {
+    if (!payload || !Array.isArray(payload.profiles)) return 0;
+    return payload.profiles.length;
   }
 
   function readLocalPayload() {
@@ -188,28 +209,58 @@ const AppStorage = (function () {
   }
 
   /**
-   * Pick newer workspace on load: remote wins ties unless local is strictly newer.
+   * Pick workspace on load. MongoDB document time is authoritative; richer cloud
+   * workspaces always beat smaller stale local caches (common on new devices).
    */
   function resolvePayloadForLoad(remoteBody, localPayload) {
     const remotePayload =
       remoteBody && remoteBody.payload ? remoteBody.payload : null;
     const remoteDocAt = remoteBody && remoteBody.updatedAt ? remoteBody.updatedAt : null;
     const remoteAt = getPayloadUpdatedAtMs(remotePayload, remoteDocAt);
+    const remoteDocMs = remoteDocAt ? Date.parse(remoteDocAt) || remoteAt : remoteAt;
     const localMeta = readLocalMeta();
-    const localAt = Math.max(
-      getPayloadUpdatedAtMs(localPayload, null),
-      localMeta.updatedAt ? Date.parse(localMeta.updatedAt) || 0 : 0
-    );
+    const lastLocalMs = localMeta.lastLocalModifiedAt
+      ? Date.parse(localMeta.lastLocalModifiedAt) || 0
+      : getPayloadUpdatedAtMs(localPayload, null);
+    const lastRemoteMs = localMeta.lastRemoteAppliedAt
+      ? Date.parse(localMeta.lastRemoteAppliedAt) || 0
+      : 0;
+    const remoteCount = countProfiles(remotePayload);
+    const localCount = countProfiles(localPayload);
 
     const remoteEmpty = isEmptyPayload(remotePayload);
     const localEmpty = isEmptyPayload(localPayload);
 
-    if (!remoteEmpty && remoteWorkspaceHadData !== false) {
+    if (!remoteEmpty) {
       remoteWorkspaceHadData = true;
     }
 
     if (!remoteEmpty && !localEmpty) {
-      if (localAt > remoteAt) {
+      if (remoteCount > localCount) {
+        return {
+          payload: remotePayload,
+          source: "remote",
+          pushToCloud: false,
+          remoteUpdatedAt: remoteDocAt || null
+        };
+      }
+      if (localCount > remoteCount && lastLocalMs > remoteDocMs) {
+        return {
+          payload: localPayload,
+          source: "local",
+          pushToCloud: true,
+          remoteUpdatedAt: remoteDocAt
+        };
+      }
+      if (!lastRemoteMs || remoteDocMs >= lastRemoteMs) {
+        return {
+          payload: remotePayload,
+          source: "remote",
+          pushToCloud: false,
+          remoteUpdatedAt: remoteDocAt || null
+        };
+      }
+      if (lastLocalMs > remoteDocMs && lastLocalMs > lastRemoteMs) {
         return {
           payload: localPayload,
           source: "local",
@@ -250,20 +301,19 @@ const AppStorage = (function () {
     applyPayload(payload);
     writeLocalCache(payload);
     lastLoadSource = source;
-    const appliedAt =
-      source === "remote"
-        ? remoteUpdatedAt || getPayloadUpdatedAtMs(payload, null)
-        : new Date().toISOString();
-    if (source === "remote" && appliedAt) {
-      lastAppliedRemoteAt = appliedAt;
+    if (source === "remote") {
+      const appliedAt =
+        remoteUpdatedAt ||
+        (payload && payload._storageMeta && payload._storageMeta.updatedAt) ||
+        new Date().toISOString();
       lastSyncedAt = appliedAt;
-      writeLocalMeta({ updatedAt: appliedAt, source: "remote" });
-    } else if (payload) {
-      const localAt = getPayloadUpdatedAtMs(payload, null) || Date.now();
-      writeLocalMeta({
-        updatedAt: new Date(localAt).toISOString(),
-        source: source || "local"
-      });
+      markRemoteApplied(appliedAt);
+    } else if (payload && source === "local") {
+      markLocalModified(
+        getPayloadUpdatedAtMs(payload, null)
+          ? new Date(getPayloadUpdatedAtMs(payload, null)).toISOString()
+          : new Date().toISOString()
+      );
     }
     setSyncStatus("synced");
   }
@@ -412,8 +462,7 @@ const AppStorage = (function () {
       writeLocalCache(stamped);
       const result = await putRemoteState(stamped);
       lastSyncedAt = (result && result.updatedAt) || new Date().toISOString();
-      lastAppliedRemoteAt = lastSyncedAt;
-      writeLocalMeta({ updatedAt: lastSyncedAt, source: "remote" });
+      markRemoteApplied(lastSyncedAt);
       setSyncStatus("synced");
       return true;
     } catch (err) {
@@ -430,10 +479,7 @@ const AppStorage = (function () {
     const stamped = stampPayload(payload);
     pendingPayload = stamped;
     writeLocalCache(stamped);
-    writeLocalMeta({
-      updatedAt: stamped._storageMeta.updatedAt,
-      source: "local"
-    });
+    markLocalModified(stamped._storageMeta.updatedAt);
     if (mode === "mongodb-pending-auth") {
       setSyncStatus("error", "Connect cloud storage to sync changes.");
       return;
@@ -494,8 +540,7 @@ const AppStorage = (function () {
     try {
       await putRemoteState(localPayload);
       lastSyncedAt = new Date().toISOString();
-      lastAppliedRemoteAt = lastSyncedAt;
-      writeLocalMeta({ updatedAt: lastSyncedAt, source: "remote" });
+      markRemoteApplied(lastSyncedAt);
       setSyncStatus("synced");
       return true;
     } catch (err) {
@@ -539,6 +584,57 @@ const AppStorage = (function () {
 
     setSyncStatus("synced");
     return { migrated: false, source: "none" };
+  }
+
+  /** If cloud has more profiles than this tab, apply cloud (fixes stale local cache). */
+  async function reconcileWithRemoteAfterLoad() {
+    if (mode !== "mongodb") return { reconciled: false };
+    try {
+      const remote = await fetchRemoteState();
+      const remoteCount = countProfiles(remote.payload);
+      const localCount =
+        typeof getProfileCountFn === "function" ? getProfileCountFn() : countProfiles(readLocalPayload());
+      if (remoteCount > localCount && !isEmptyPayload(remote.payload)) {
+        commitLoadedPayload(remote.payload, "remote", remote.updatedAt || null);
+        notifyCloudDataRefreshed({
+          profileCount: remoteCount,
+          source: "reconcile"
+        });
+        return { reconciled: true, remoteCount, localCount };
+      }
+      return { reconciled: false, remoteCount, localCount };
+    } catch (err) {
+      console.warn("Cloud reconcile failed", err);
+      return { reconciled: false, error: err.message || String(err) };
+    }
+  }
+
+  async function getCloudDiagnostics() {
+    const deviceCount =
+      typeof getProfileCountFn === "function" ? getProfileCountFn() : countProfiles(readLocalPayload());
+    const status = getStatus();
+    let cloudCount = null;
+    let cloudUpdatedAt = null;
+    let cloudError = null;
+    try {
+      if (mode === "mongodb" || (cloudConfig && cloudConfig.storage === "mongodb")) {
+        const remote = await fetchRemoteState();
+        cloudCount = countProfiles(remote.payload);
+        cloudUpdatedAt = remote.updatedAt || null;
+      }
+    } catch (err) {
+      cloudError = err.message || String(err);
+    }
+    return {
+      mode: status.mode,
+      syncStatus: status.syncStatus,
+      deviceProfileCount: deviceCount,
+      cloudProfileCount: cloudCount,
+      cloudUpdatedAt,
+      cloudError,
+      hostname: window.location.hostname,
+      href: window.location.href
+    };
   }
 
   async function pullFromCloudIfNewer(options) {
@@ -618,6 +714,7 @@ const AppStorage = (function () {
   async function bootstrap(options) {
     applyPayloadFn = options && options.apply;
     serializePayloadFn = options && options.serialize;
+    getProfileCountFn = options && options.getProfileCount;
     onStatusChangeFn = options && options.onStatusChange;
     onCloudDataRefreshedFn = options && options.onCloudDataRefreshed;
 
@@ -656,6 +753,10 @@ const AppStorage = (function () {
       const result = await loadFromCloud();
       migrated = result.migrated;
       loadSource = result.source || "none";
+      const reconcile = await reconcileWithRemoteAfterLoad();
+      if (reconcile && reconcile.reconciled) {
+        loadSource = "remote";
+      }
       setupCloudLifecycle();
     } catch (err) {
       console.error("Cloud load failed; using local cache", err);
@@ -793,6 +894,8 @@ const AppStorage = (function () {
     forceSyncNow,
     pullFromCloud,
     pullFromCloudIfNewer,
+    getCloudDiagnostics,
+    reconcileWithRemoteAfterLoad,
     flushPendingSave,
     getMode,
     getStatus,

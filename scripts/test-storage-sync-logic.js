@@ -25,21 +25,40 @@ function getPayloadUpdatedAtMs(payload, fallbackIso) {
   return 0;
 }
 
+function countProfiles(payload) {
+  if (!payload || !Array.isArray(payload.profiles)) return 0;
+  return payload.profiles.length;
+}
+
 function resolvePayloadForLoad(remoteBody, localPayload, localMeta) {
   const remotePayload =
     remoteBody && remoteBody.payload ? remoteBody.payload : null;
   const remoteDocAt = remoteBody && remoteBody.updatedAt ? remoteBody.updatedAt : null;
   const remoteAt = getPayloadUpdatedAtMs(remotePayload, remoteDocAt);
-  const localAt = Math.max(
-    getPayloadUpdatedAtMs(localPayload, null),
-    localMeta.updatedAt ? Date.parse(localMeta.updatedAt) || 0 : 0
-  );
+  const remoteDocMs = remoteDocAt ? Date.parse(remoteDocAt) || remoteAt : remoteAt;
+  const lastLocalMs = localMeta.lastLocalModifiedAt
+    ? Date.parse(localMeta.lastLocalModifiedAt) || 0
+    : getPayloadUpdatedAtMs(localPayload, null);
+  const lastRemoteMs = localMeta.lastRemoteAppliedAt
+    ? Date.parse(localMeta.lastRemoteAppliedAt) || 0
+    : 0;
+  const remoteCount = countProfiles(remotePayload);
+  const localCount = countProfiles(localPayload);
 
   const remoteEmpty = isEmptyPayload(remotePayload);
   const localEmpty = isEmptyPayload(localPayload);
 
   if (!remoteEmpty && !localEmpty) {
-    if (localAt > remoteAt) {
+    if (remoteCount > localCount) {
+      return { source: "remote", pushToCloud: false };
+    }
+    if (localCount > remoteCount && lastLocalMs > remoteDocMs) {
+      return { source: "local", pushToCloud: true };
+    }
+    if (!lastRemoteMs || remoteDocMs >= lastRemoteMs) {
+      return { source: "remote", pushToCloud: false };
+    }
+    if (lastLocalMs > remoteDocMs && lastLocalMs > lastRemoteMs) {
       return { source: "local", pushToCloud: true };
     }
     return { source: "remote", pushToCloud: false };
@@ -69,16 +88,26 @@ assert.strictEqual(remoteNewer.pushToCloud, false);
 const localNewer = resolvePayloadForLoad(
   {
     payload: {
-      profiles: [{ id: "r1", name: "Remote", projects: [] }],
+      profiles: [
+        { id: "r1", name: "Remote", projects: [] },
+        { id: "r2", name: "Remote 2", projects: [] }
+      ],
       _storageMeta: { updatedAt: "2026-05-26T10:00:00.000Z" }
     },
     updatedAt: "2026-05-26T10:00:00.000Z"
   },
   {
-    profiles: [{ id: "l1", name: "Local", projects: [] }],
+    profiles: [
+      { id: "l1", name: "Local", projects: [] },
+      { id: "l2", projects: [] },
+      { id: "l3", projects: [] }
+    ],
     _storageMeta: { updatedAt: "2026-05-26T18:00:00.000Z" }
   },
-  { updatedAt: "2026-05-26T18:00:00.000Z" }
+  {
+    lastLocalModifiedAt: "2026-05-26T18:00:00.000Z",
+    lastRemoteAppliedAt: "2026-05-26T09:00:00.000Z"
+  }
 );
 assert.strictEqual(localNewer.source, "local");
 assert.strictEqual(localNewer.pushToCloud, true);
@@ -88,5 +117,26 @@ const migrateLocal = resolvePayloadForLoad({ payload: null, updatedAt: null }, {
 }, {});
 assert.strictEqual(migrateLocal.source, "local");
 assert.strictEqual(migrateLocal.pushToCloud, true);
+
+const remoteRicher = resolvePayloadForLoad(
+  {
+    payload: {
+      profiles: [
+        { id: "r1", projects: [] },
+        { id: "r2", projects: [] },
+        { id: "r3", projects: [] }
+      ],
+      _storageMeta: { updatedAt: "2026-05-26T10:00:00.000Z" }
+    },
+    updatedAt: "2026-05-26T10:00:00.000Z"
+  },
+  {
+    profiles: [{ id: "l1", name: "Local", projects: [] }],
+    _storageMeta: { updatedAt: "2026-05-26T18:00:00.000Z" }
+  },
+  { updatedAt: "2026-05-26T18:00:00.000Z", lastLocalModifiedAt: "2026-05-26T18:00:00.000Z" }
+);
+assert.strictEqual(remoteRicher.source, "remote");
+assert.strictEqual(remoteRicher.pushToCloud, false);
 
 console.log("OK: storage sync logic tests passed");

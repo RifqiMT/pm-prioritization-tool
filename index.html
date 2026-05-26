@@ -9,9 +9,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="css/main.css" rel="stylesheet" />
-  <link href="css/workspace-modern.css" rel="stylesheet" />
-  <link href="css/header-modern.css" rel="stylesheet" />
+  <link href="css/main.css?v=20260526-sync4" rel="stylesheet" />
+  <link href="css/workspace-modern.css?v=20260526-sync4" rel="stylesheet" />
+  <link href="css/header-modern.css?v=20260526-sync4" rel="stylesheet" />
   <link href="css/profiles-modern.css" rel="stylesheet" />
   <link href="css/portfolio-modern.css" rel="stylesheet" />
   <link href="css/profile-modals-modern.css" rel="stylesheet" />
@@ -1561,7 +1561,8 @@
           <button type="button" class="btn-secondary" id="cloudStoragePullBtn">Pull from cloud</button>
           <button type="button" class="btn-secondary" id="cloudStoragePushBtn">Save to cloud</button>
         </div>
-        <p class="cloud-storage-hint cloud-storage-hint--secondary">Use the same URL on every device: <strong>pm-prioritization-tool-six.vercel.app</strong>. Pull loads the latest MongoDB workspace; Save pushes this browser’s data.</p>
+        <p id="cloudStorageDiagnostics" class="cloud-storage-diagnostics" hidden></p>
+        <p class="cloud-storage-hint cloud-storage-hint--secondary">Use the same URL on every device: <strong>pm-prioritization-tool-six.vercel.app</strong>. Pull loads the latest MongoDB workspace; Save pushes this browser’s data. If counts differ, tap <strong>Pull from cloud</strong>.</p>
       </div>
       <footer class="modal-footer profile-modal-footer">
         <button type="button" class="btn-ghost" id="cloudStorageCancelBtn">Cancel</button>
@@ -1574,14 +1575,14 @@
 
   <!-- Classic scripts (no ES modules) so you can just open index.html directly -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="src/constants.js"></script>
-  <script src="src/utils.js"></script>
-  <script src="src/modules/profile-security.js"></script>
-  <script src="src/rice.js"></script>
-  <script src="src/modules/exchange-rates.js"></script>
-  <script src="src/modules/fullscreen.js"></script>
-  <script src="src/modules/storage.js"></script>
-  <script src="src/app.js"></script>
+  <script src="src/constants.js?v=20260526-sync4"></script>
+  <script src="src/utils.js?v=20260526-sync4"></script>
+  <script src="src/modules/profile-security.js?v=20260526-sync4"></script>
+  <script src="src/rice.js?v=20260526-sync4"></script>
+  <script src="src/modules/exchange-rates.js?v=20260526-sync4"></script>
+  <script src="src/modules/fullscreen.js?v=20260526-sync4"></script>
+  <script src="src/modules/storage.js?v=20260526-sync4"></script>
+  <script src="src/app.js?v=20260526-sync4"></script>
 </body>
 </html>
 
