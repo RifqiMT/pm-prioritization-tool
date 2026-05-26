@@ -146,10 +146,11 @@ const AppStorage = (function () {
   }
 
   async function fetchCloudConfig() {
-    if (isLocalFileOrigin()) return null;
+    if (isLocalFileOrigin()) return { config: null, apiIssue: null };
 
     const endpoints = ["/api/config", "/api/health"];
     let configError = null;
+    let apiIssue = null;
 
     for (let i = 0; i < endpoints.length; i++) {
       try {
@@ -165,13 +166,17 @@ const AppStorage = (function () {
         const data = await parseJsonResponse(res);
         if (data && data.storage === "mongodb") {
           cloudConfig = data;
-          return data;
+          return { config: data, apiIssue: null };
         }
         if (data && data.storage === "unavailable") {
           configError = new Error("MongoDB is not configured on the server (MONGODB_URI).");
+          apiIssue = "mongodb_not_configured";
         }
       } catch (err) {
         configError = err;
+        if (err && err.code === "INVALID_API_RESPONSE") {
+          apiIssue = "html_response";
+        }
       }
     }
 
@@ -179,7 +184,7 @@ const AppStorage = (function () {
       lastError = configError.message || String(configError);
       console.warn("Cloud config unavailable", configError);
     }
-    return null;
+    return { config: null, apiIssue: apiIssue || (configError ? "unavailable" : null) };
   }
 
   async function fetchRemoteState() {
@@ -352,19 +357,22 @@ const AppStorage = (function () {
       return { mode, migrated: false };
     }
 
-    const config = await fetchCloudConfig();
+    const configResult = await fetchCloudConfig();
+    const config = configResult && configResult.config ? configResult.config : null;
+    const apiIssue = configResult && configResult.apiIssue ? configResult.apiIssue : null;
+
     if (!config || config.storage !== "mongodb") {
       mode = "local";
       applyPayload(readLocalPayload());
       setSyncStatus("idle", lastError || null);
-      return { mode, migrated: false };
+      return { mode, migrated: false, apiIssue };
     }
 
     if (needsClientSecret(config) && !getApiSecret()) {
       mode = "mongodb-pending-auth";
       applyPayload(readLocalPayload());
       setSyncStatus("error", "Set PM_API_SECRET on Vercel, then connect via Cloud menu.");
-      return { mode, migrated: false, needsAuth: true };
+      return { mode, migrated: false, needsAuth: true, apiIssue: null };
     }
 
     mode = "mongodb";
@@ -387,7 +395,12 @@ const AppStorage = (function () {
 
     window.addEventListener("beforeunload", flushPendingSave);
     notifyStatus();
-    return { mode, migrated, needsAuth: mode === "mongodb-pending-auth" };
+    return {
+      mode,
+      migrated,
+      needsAuth: mode === "mongodb-pending-auth",
+      apiIssue: null
+    };
   }
 
   function persistState(payload) {
@@ -409,8 +422,14 @@ const AppStorage = (function () {
     if (secret && String(secret).trim()) {
       setApiSecret(secret);
     }
-    const config = await fetchCloudConfig();
+    const configResult = await fetchCloudConfig();
+    const config = configResult && configResult.config ? configResult.config : null;
     if (!config || config.storage !== "mongodb") {
+      if (configResult && configResult.apiIssue === "html_response") {
+        throw new Error(
+          "This URL is not running the PM Prioritization Tool API (got HTML). Re-link the Vercel project to github.com/RifqiMT/pm-prioritization-tool."
+        );
+      }
       throw new Error(
         "Cloud storage is not available. Confirm MONGODB_URI is set on Vercel and redeploy."
       );

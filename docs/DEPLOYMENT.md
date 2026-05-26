@@ -107,6 +107,7 @@ npx vercel dev
 
 ## Related documentation
 
+- [VERCEL_MONGODB_FIX.md](VERCEL_MONGODB_FIX.md) — troubleshooting when sync stays on localStorage
 - [ARCHITECTURE.md](ARCHITECTURE.md) — modules and persistence
 - [GUARDRAILS.md](GUARDRAILS.md) — limits and security
 - [../.env.example](../.env.example) — variable template

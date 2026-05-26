@@ -1145,6 +1145,46 @@ function ensureProjectFormFieldTooltips() {
   });
 }
 
+function showDeploymentIssueBanner(boot) {
+  const banner = $("deploymentIssueBanner");
+  const titleEl = $("deploymentIssueBannerTitle");
+  const textEl = $("deploymentIssueBannerText");
+  const dismissBtn = $("deploymentIssueBannerDismiss");
+  if (!banner || !boot || !boot.apiIssue) return;
+
+  if (boot.apiIssue === "html_response") {
+    if (titleEl) {
+      titleEl.textContent = "Wrong app deployed on this domain";
+    }
+    if (textEl) {
+      textEl.textContent =
+        "This site returned HTML for /api/config (often an old React “Prioritization Matrix” build). " +
+        "Point your Vercel project to GitHub repo RifqiMT/pm-prioritization-tool, add MONGODB_URI, and redeploy.";
+    }
+  } else if (boot.apiIssue === "mongodb_not_configured") {
+    if (titleEl) {
+      titleEl.textContent = "MongoDB not configured on server";
+    }
+    if (textEl) {
+      textEl.textContent =
+        "The API is running but MONGODB_URI is missing in Vercel environment variables. Add it for Production and redeploy.";
+    }
+  } else {
+    if (textEl) {
+      textEl.textContent =
+        "Could not reach the cloud API. Data is stored in this browser only until the server is fixed.";
+    }
+  }
+
+  banner.hidden = false;
+  if (dismissBtn && !dismissBtn.dataset.bound) {
+    dismissBtn.dataset.bound = "1";
+    dismissBtn.addEventListener("click", () => {
+      banner.hidden = true;
+    });
+  }
+}
+
 function updateStorageStatusUI(status) {
   if (!elements.appStorageStatusLabel) return;
   const dot = elements.appStorageStatusDot;
@@ -1326,6 +1366,9 @@ async function init() {
       serialize: serializeStatePayload,
       onStatusChange: updateStorageStatusUI
     });
+    if (boot && boot.apiIssue) {
+      showDeploymentIssueBanner(boot);
+    }
     if (boot && boot.needsAuth && $("cloudStorageModal")) {
       $("cloudStorageModal").classList.add("active");
       $("cloudStorageModal").setAttribute("aria-hidden", "false");

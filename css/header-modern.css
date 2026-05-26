@@ -164,6 +164,60 @@
   background: rgba(0, 0, 0, 0.06);
 }
 
+.deployment-issue-banner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  background: linear-gradient(90deg, #fef3c7 0%, #fff7ed 100%);
+  border-bottom: 1px solid #f59e0b;
+  color: #78350f;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.deployment-issue-banner[hidden] {
+  display: none !important;
+}
+
+.deployment-issue-banner__title {
+  margin: 0 0 0.35rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.deployment-issue-banner__text,
+.deployment-issue-banner__hint {
+  margin: 0 0 0.35rem;
+}
+
+.deployment-issue-banner__hint code {
+  font-size: 0.85em;
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.deployment-issue-banner__hint a {
+  color: #b45309;
+  font-weight: 600;
+}
+
+.deployment-issue-banner__dismiss {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.06);
+  color: inherit;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
 @keyframes hdr-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.75; transform: scale(0.92); }

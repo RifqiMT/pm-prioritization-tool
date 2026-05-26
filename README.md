@@ -103,7 +103,9 @@ Or: `python3 -m http.server 5173` and open `index.html` via that URL.
 
 ### Production (Vercel)
 
-Connect the GitHub repo → deploy `main` as static site. Details: **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
+Connect the GitHub repo → deploy `main` on Vercel with `MONGODB_URI`. Details: **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
+
+**MongoDB not syncing?** See **[docs/VERCEL_MONGODB_FIX.md](docs/VERCEL_MONGODB_FIX.md)** — verify `/api/config` returns JSON (not an old React app on the same domain).
 
 ### First-use checklist
 

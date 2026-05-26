@@ -19,6 +19,17 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 <body>
+  <div id="deploymentIssueBanner" class="deployment-issue-banner" hidden role="alert">
+    <div class="deployment-issue-banner__inner">
+      <p class="deployment-issue-banner__title" id="deploymentIssueBannerTitle">Cloud storage is not available on this URL</p>
+      <p class="deployment-issue-banner__text" id="deploymentIssueBannerText"></p>
+      <p class="deployment-issue-banner__hint">
+        Verify <code>/api/config</code> returns JSON (not a React app). See
+        <a href="docs/VERCEL_MONGODB_FIX.md" target="_blank" rel="noopener noreferrer">Vercel + MongoDB setup</a>.
+      </p>
+    </div>
+    <button type="button" class="deployment-issue-banner__dismiss" id="deploymentIssueBannerDismiss" aria-label="Dismiss">×</button>
+  </div>
   <div class="app-shell">
     <header class="app-header app-header--modern">
       <div class="app-header-top">
