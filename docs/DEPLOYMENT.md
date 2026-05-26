@@ -19,7 +19,7 @@ Set these in **Project → Settings → Environment Variables** (Production and 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `MONGODB_URI` | **Yes** (for cloud) | Atlas connection string |
-| `PM_API_SECRET` | **Yes** (recommended) | Bearer token the browser sends on `/api/state` |
+| `PM_API_SECRET` | No (optional) | If set, browser must connect via **Cloud** menu. If omitted, API works with `MONGODB_URI` only (single-tenant). |
 | `PM_WORKSPACE_ID` | No | Document id (default: `default`) |
 | `MONGODB_DB_NAME` | No | Database name (default: `pm_prioritization`) |
 | `PM_ALLOW_ANONYMOUS` | No | Set `true` only for private dev (skips Bearer check) |
@@ -45,17 +45,17 @@ openssl rand -hex 32
 
 After deploy, open the production URL:
 
-1. Header status should show **Saved to cloud** when `PM_API_SECRET` is already in session, or prompt **Connect cloud storage**.
-2. Click **Cloud** in the header (or the status label when auth is required).
-3. Paste the same value as `PM_API_SECRET` → **Connect & sync**.
+1. Visit `https://YOUR_DOMAIN/api/config` — expect JSON: `"storage": "mongodb"`.
+2. If you **only** set `MONGODB_URI` (no `PM_API_SECRET`), the header should show **Saved to cloud** automatically after redeploy.
+3. If you set `PM_API_SECRET`, click **Cloud** → paste the secret → **Connect & sync** (stored in `localStorage` for return visits).
 
-**One-time URL bootstrap** (bookmark without storing key in UI):
+**Verify API is not static HTML:** `/api/config` must return JSON, not your `index.html` page. If you see HTML, redeploy after pulling the latest `vercel.json` (no `outputDirectory: "."`).
+
+**One-time URL bootstrap** (when using `PM_API_SECRET`):
 
 ```
 https://YOUR_DOMAIN/?pm_api_key=YOUR_PM_API_SECRET
 ```
-
-The key is saved to `sessionStorage` and removed from the address bar.
 
 ## Data flow
 

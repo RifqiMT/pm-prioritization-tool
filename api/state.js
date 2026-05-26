@@ -14,6 +14,38 @@ function validatePayload(payload) {
   return { ok: true };
 }
 
+async function handleWrite(req, res, workspaceId) {
+  const body = await readJsonBody(req);
+  const payload = body && body.payload != null ? body.payload : body;
+  const validation = validatePayload(payload);
+  if (!validation.ok) {
+    return sendJson(res, 400, { ok: false, error: validation.error });
+  }
+
+  const db = await getDb();
+  const collection = db.collection(COLLECTION);
+  const updatedAt = new Date().toISOString();
+
+  await collection.updateOne(
+    { workspaceId },
+    {
+      $set: {
+        workspaceId,
+        payload,
+        updatedAt,
+        version: 1
+      }
+    },
+    { upsert: true }
+  );
+
+  return sendJson(res, 200, {
+    ok: true,
+    workspaceId,
+    updatedAt
+  });
+}
+
 module.exports = async function handler(req, res) {
   if (!isMongoConfigured()) {
     return sendJson(res, 503, {
@@ -28,12 +60,13 @@ module.exports = async function handler(req, res) {
   }
 
   const workspaceId = auth.workspaceId;
+  const method = String(req.method || "GET").toUpperCase();
 
   try {
     const db = await getDb();
     const collection = db.collection(COLLECTION);
 
-    if (req.method === "GET") {
+    if (method === "GET") {
       const doc = await collection.findOne({ workspaceId });
       return sendJson(res, 200, {
         ok: true,
@@ -43,42 +76,18 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    if (req.method === "PUT") {
-      const body = await readJsonBody(req);
-      const payload = body && body.payload != null ? body.payload : body;
-      const validation = validatePayload(payload);
-      if (!validation.ok) {
-        return sendJson(res, 400, { ok: false, error: validation.error });
-      }
-
-      const updatedAt = new Date().toISOString();
-      await collection.updateOne(
-        { workspaceId },
-        {
-          $set: {
-            workspaceId,
-            payload,
-            updatedAt,
-            version: 1
-          }
-        },
-        { upsert: true }
-      );
-
-      return sendJson(res, 200, {
-        ok: true,
-        workspaceId,
-        updatedAt
-      });
+    if (method === "PUT" || method === "POST") {
+      return await handleWrite(req, res, workspaceId);
     }
 
-    res.setHeader("Allow", "GET, PUT");
+    res.setHeader("Allow", "GET, PUT, POST");
     return sendJson(res, 405, { ok: false, error: "Method not allowed" });
   } catch (err) {
     console.error("api/state error", err);
     return sendJson(res, 500, {
       ok: false,
-      error: "Failed to access workspace storage"
+      error: "Failed to access workspace storage",
+      detail: process.env.NODE_ENV === "development" ? String(err.message || err) : undefined
     });
   }
 };

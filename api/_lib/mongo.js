@@ -1,6 +1,15 @@
 const { MongoClient } = require("mongodb");
 
-const uri = process.env.MONGODB_URI;
+function getMongoUri() {
+  return (
+    process.env.MONGODB_URI ||
+    process.env.MONGODB_URL ||
+    process.env.MONGO_URL ||
+    ""
+  );
+}
+
+const uri = getMongoUri();
 const dbName = process.env.MONGODB_DB_NAME || "pm_prioritization";
 
 /** @type {Promise<MongoClient> | null} */
@@ -16,16 +25,15 @@ function getClientPromise() {
   }
   if (!clientPromise) {
     const client = new MongoClient(uri, {
-      maxPoolSize: 5
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000
     });
-    if (process.env.NODE_ENV === "development") {
-      if (!global._pmMongoClientPromise) {
-        global._pmMongoClientPromise = client.connect();
-      }
-      clientPromise = global._pmMongoClientPromise;
-    } else {
-      clientPromise = client.connect();
+    const globalKey = "_pmMongoClientPromise";
+    if (!global[globalKey]) {
+      global[globalKey] = client.connect();
     }
+    clientPromise = global[globalKey];
   }
   return clientPromise;
 }
@@ -38,5 +46,6 @@ async function getDb() {
 module.exports = {
   isMongoConfigured,
   getDb,
-  dbName
+  dbName,
+  getMongoUri
 };

@@ -3,7 +3,7 @@
  * When remote is active, localStorage is used only as an offline cache.
  */
 const AppStorage = (function () {
-  const API_SECRET_SESSION_KEY = "pm_cloud_api_secret_v1";
+  const API_SECRET_STORAGE_KEY = "pm_cloud_api_secret_v1";
   const URL_KEY_PARAM = "pm_api_key";
 
   /** @type {"unknown"|"local"|"mongodb"|"mongodb-pending-auth"} */
@@ -12,6 +12,7 @@ const AppStorage = (function () {
   let syncStatus = "idle";
   let lastError = null;
   let lastSyncedAt = null;
+  let cloudConfig = null;
   let applyPayloadFn = null;
   let serializePayloadFn = null;
   let onStatusChangeFn = null;
@@ -26,7 +27,8 @@ const AppStorage = (function () {
         mode,
         syncStatus,
         lastError,
-        lastSyncedAt
+        lastSyncedAt,
+        cloudConfig
       });
     }
   }
@@ -43,8 +45,10 @@ const AppStorage = (function () {
 
   function getApiSecret() {
     try {
-      const fromSession = sessionStorage.getItem(API_SECRET_SESSION_KEY);
+      const fromSession = sessionStorage.getItem(API_SECRET_STORAGE_KEY);
       if (fromSession && fromSession.trim()) return fromSession.trim();
+      const fromLocal = localStorage.getItem(API_SECRET_STORAGE_KEY);
+      if (fromLocal && fromLocal.trim()) return fromLocal.trim();
     } catch {
       /* ignore */
     }
@@ -55,12 +59,14 @@ const AppStorage = (function () {
     const value = secret && String(secret).trim() ? String(secret).trim() : "";
     try {
       if (value) {
-        sessionStorage.setItem(API_SECRET_SESSION_KEY, value);
+        sessionStorage.setItem(API_SECRET_STORAGE_KEY, value);
+        localStorage.setItem(API_SECRET_STORAGE_KEY, value);
       } else {
-        sessionStorage.removeItem(API_SECRET_SESSION_KEY);
+        sessionStorage.removeItem(API_SECRET_STORAGE_KEY);
+        localStorage.removeItem(API_SECRET_STORAGE_KEY);
       }
     } catch (err) {
-      console.warn("Could not store API secret in session", err);
+      console.warn("Could not store API secret", err);
     }
   }
 
@@ -109,7 +115,10 @@ const AppStorage = (function () {
   }
 
   function buildAuthHeaders() {
-    const headers = { "Content-Type": "application/json" };
+    const headers = {
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    };
     const secret = getApiSecret();
     if (secret) {
       headers.Authorization = "Bearer " + secret;
@@ -117,19 +126,60 @@ const AppStorage = (function () {
     return headers;
   }
 
-  async function fetchHealth() {
-    if (isLocalFileOrigin()) return null;
-    try {
-      const res = await fetch("/api/health", {
-        method: "GET",
-        headers: { Accept: "application/json" },
-        cache: "no-store"
-      });
-      if (!res.ok) return null;
-      return await res.json();
-    } catch {
-      return null;
+  async function parseJsonResponse(res) {
+    const contentType = (res.headers.get("content-type") || "").toLowerCase();
+    const text = await res.text();
+    if (contentType.indexOf("text/html") >= 0 || /^\s*</.test(text)) {
+      const err = new Error(
+        "Cloud API returned HTML instead of JSON. Check Vercel deploy includes /api routes (not only static files)."
+      );
+      err.code = "INVALID_API_RESPONSE";
+      throw err;
     }
+    try {
+      return text ? JSON.parse(text) : {};
+    } catch {
+      const err = new Error("Cloud API returned invalid JSON.");
+      err.code = "INVALID_API_RESPONSE";
+      throw err;
+    }
+  }
+
+  async function fetchCloudConfig() {
+    if (isLocalFileOrigin()) return null;
+
+    const endpoints = ["/api/config", "/api/health"];
+    let configError = null;
+
+    for (let i = 0; i < endpoints.length; i++) {
+      try {
+        const res = await fetch(endpoints[i], {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          cache: "no-store"
+        });
+        if (!res.ok) {
+          configError = new Error("Cloud config HTTP " + res.status);
+          continue;
+        }
+        const data = await parseJsonResponse(res);
+        if (data && data.storage === "mongodb") {
+          cloudConfig = data;
+          return data;
+        }
+        if (data && data.storage === "unavailable") {
+          configError = new Error("MongoDB is not configured on the server (MONGODB_URI).");
+        }
+      } catch (err) {
+        configError = err;
+      }
+    }
+
+    if (configError) {
+      lastError = configError.message || String(configError);
+      console.warn("Cloud config unavailable", configError);
+    }
+    return null;
   }
 
   async function fetchRemoteState() {
@@ -138,34 +188,45 @@ const AppStorage = (function () {
       headers: buildAuthHeaders(),
       cache: "no-store"
     });
+    const body = await parseJsonResponse(res);
     if (res.status === 401) {
-      const err = new Error("Unauthorized");
+      const err = new Error(body.error || "Unauthorized");
       err.code = "UNAUTHORIZED";
       throw err;
     }
     if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
       throw new Error(body.error || "Failed to load cloud workspace");
     }
-    return await res.json();
+    return body;
   }
 
   async function putRemoteState(payload) {
-    const res = await fetch("/api/state", {
+    const bodyJson = JSON.stringify({ payload });
+    const headers = buildAuthHeaders();
+    let res = await fetch("/api/state", {
       method: "PUT",
-      headers: buildAuthHeaders(),
-      body: JSON.stringify({ payload })
+      headers,
+      body: bodyJson
     });
+
+    if (res.status === 405 || res.status === 501) {
+      res = await fetch("/api/state", {
+        method: "POST",
+        headers,
+        body: bodyJson
+      });
+    }
+
+    const body = await parseJsonResponse(res);
     if (res.status === 401) {
-      const err = new Error("Unauthorized");
+      const err = new Error(body.error || "Unauthorized");
       err.code = "UNAUTHORIZED";
       throw err;
     }
     if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
       throw new Error(body.error || "Failed to save cloud workspace");
     }
-    return await res.json();
+    return body;
   }
 
   async function saveRemoteNow(payload) {
@@ -199,7 +260,7 @@ const AppStorage = (function () {
       inFlightSave = saveRemoteNow(toSave).finally(() => {
         inFlightSave = null;
       });
-    }, 700);
+    }, 400);
   }
 
   async function flushPendingSave() {
@@ -246,6 +307,37 @@ const AppStorage = (function () {
     }
   }
 
+  function canUseCloudWithoutClientSecret(config) {
+    return config && config.storage === "mongodb" && config.authRequired === false;
+  }
+
+  function needsClientSecret(config) {
+    return config && config.storage === "mongodb" && config.authRequired === true;
+  }
+
+  async function loadFromCloud() {
+    const remote = await fetchRemoteState();
+    const remotePayload = remote && remote.payload ? remote.payload : null;
+    const localPayload = readLocalPayload();
+
+    if (!isEmptyPayload(remotePayload)) {
+      applyPayload(remotePayload);
+      writeLocalCache(remotePayload);
+      lastSyncedAt = remote.updatedAt || null;
+      setSyncStatus("synced");
+      return { migrated: false };
+    }
+
+    if (!isEmptyPayload(localPayload)) {
+      applyPayload(localPayload);
+      const migrated = await migrateLocalToRemote(localPayload);
+      return { migrated };
+    }
+
+    setSyncStatus("synced");
+    return { migrated: false };
+  }
+
   async function bootstrap(options) {
     applyPayloadFn = options && options.apply;
     serializePayloadFn = options && options.serialize;
@@ -260,19 +352,18 @@ const AppStorage = (function () {
       return { mode, migrated: false };
     }
 
-    const health = await fetchHealth();
-    if (!health || health.storage !== "mongodb") {
+    const config = await fetchCloudConfig();
+    if (!config || config.storage !== "mongodb") {
       mode = "local";
       applyPayload(readLocalPayload());
-      setSyncStatus("idle");
+      setSyncStatus("idle", lastError || null);
       return { mode, migrated: false };
     }
 
-    const authRequired = Boolean(health.authRequired);
-    if (authRequired && !getApiSecret()) {
+    if (needsClientSecret(config) && !getApiSecret()) {
       mode = "mongodb-pending-auth";
       applyPayload(readLocalPayload());
-      setSyncStatus("error", "Cloud storage requires an API key.");
+      setSyncStatus("error", "Set PM_API_SECRET on Vercel, then connect via Cloud menu.");
       return { mode, migrated: false, needsAuth: true };
     }
 
@@ -280,27 +371,13 @@ const AppStorage = (function () {
     let migrated = false;
 
     try {
-      const remote = await fetchRemoteState();
-      const remotePayload = remote && remote.payload ? remote.payload : null;
-      const localPayload = readLocalPayload();
-
-      if (!isEmptyPayload(remotePayload)) {
-        applyPayload(remotePayload);
-        writeLocalCache(remotePayload);
-        lastSyncedAt = remote.updatedAt || null;
-        setSyncStatus("synced");
-      } else if (!isEmptyPayload(localPayload)) {
-        applyPayload(localPayload);
-        migrated = await migrateLocalToRemote(localPayload);
-        if (migrated) writeLocalCache(localPayload);
-      } else {
-        setSyncStatus("synced");
-      }
+      const result = await loadFromCloud();
+      migrated = result.migrated;
     } catch (err) {
       console.error("Cloud load failed; using local cache", err);
       if (err && err.code === "UNAUTHORIZED") {
         mode = "mongodb-pending-auth";
-        setSyncStatus("error", "Invalid or missing API key.");
+        setSyncStatus("error", "Invalid API key. Open Cloud and enter PM_API_SECRET.");
       } else {
         mode = "local";
         setSyncStatus("offline", err.message || String(err));
@@ -314,40 +391,36 @@ const AppStorage = (function () {
   }
 
   function persistState(payload) {
-    if (!payload || typeof serializePayloadFn !== "function") {
-      writeLocalCache(payload);
-      return;
-    }
+    if (!payload) return;
+
+    writeLocalCache(payload);
 
     if (mode === "mongodb") {
       scheduleRemoteSave(payload);
       return;
     }
 
-    writeLocalCache(payload);
     if (mode === "mongodb-pending-auth") {
       setSyncStatus("error", "Connect cloud storage to sync changes.");
     }
   }
 
   async function connectWithApiSecret(secret) {
-    setApiSecret(secret);
-    const health = await fetchHealth();
-    if (!health || health.storage !== "mongodb") {
-      throw new Error("Cloud storage is not available on this deployment.");
+    if (secret && String(secret).trim()) {
+      setApiSecret(secret);
     }
-    mode = "mongodb";
-    const remote = await fetchRemoteState();
-    const remotePayload = remote && remote.payload ? remote.payload : null;
-    const localPayload = readLocalPayload();
+    const config = await fetchCloudConfig();
+    if (!config || config.storage !== "mongodb") {
+      throw new Error(
+        "Cloud storage is not available. Confirm MONGODB_URI is set on Vercel and redeploy."
+      );
+    }
+    if (needsClientSecret(config) && !getApiSecret()) {
+      throw new Error("API key is required for this deployment.");
+    }
 
-    if (!isEmptyPayload(remotePayload)) {
-      applyPayload(remotePayload);
-      writeLocalCache(remotePayload);
-    } else if (!isEmptyPayload(localPayload)) {
-      applyPayload(localPayload);
-      await migrateLocalToRemote(localPayload);
-    }
+    mode = "mongodb";
+    await loadFromCloud();
 
     const serialized =
       typeof serializePayloadFn === "function" ? serializePayloadFn() : null;
@@ -360,12 +433,27 @@ const AppStorage = (function () {
     return { ok: true };
   }
 
+  async function forceSyncNow() {
+    if (mode !== "mongodb" && cloudConfig && cloudConfig.storage === "mongodb") {
+      mode = "mongodb";
+    }
+    if (mode !== "mongodb") {
+      throw new Error("Cloud storage is not active.");
+    }
+    const serialized =
+      typeof serializePayloadFn === "function" ? serializePayloadFn() : pendingPayload;
+    if (!serialized) {
+      throw new Error("Nothing to sync.");
+    }
+    return saveRemoteNow(serialized);
+  }
+
   function getMode() {
     return mode;
   }
 
   function getStatus() {
-    return { mode, syncStatus, lastError, lastSyncedAt };
+    return { mode, syncStatus, lastError, lastSyncedAt, cloudConfig };
   }
 
   function isCloudActive() {
@@ -376,6 +464,7 @@ const AppStorage = (function () {
     bootstrap,
     persistState,
     connectWithApiSecret,
+    forceSyncNow,
     flushPendingSave,
     getMode,
     getStatus,

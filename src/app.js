@@ -1164,6 +1164,10 @@ function updateStorageStatusUI(status) {
         : sync === "error"
           ? "Cloud sync issue"
           : "Saved to cloud";
+    label.title =
+      sync === "error" && status && status.lastError
+        ? status.lastError
+        : "Workspace is stored in MongoDB";
     label.classList.add("storage-status--cloud");
     if (dot) dot.classList.add(sync === "syncing" ? "storage-status-dot--sync" : "storage-status-dot--cloud");
     return;
@@ -1177,11 +1181,14 @@ function updateStorageStatusUI(status) {
   }
 
   if (mode === "local" && sync === "offline") {
-    label.textContent = "Local backup (offline)";
-    label.classList.add("storage-status--local");
+    label.textContent = "Cloud unavailable";
+    label.title = (status && status.lastError) || "Using browser cache only";
+    label.classList.add("storage-status--warn");
+    if (dot) dot.classList.add("storage-status-dot--warn");
     return;
   }
 
+  label.title = (status && status.lastError) || "";
   label.textContent = window.location.protocol === "file:" ? "Local file mode" : "Local browser storage";
   label.classList.add("storage-status--local");
 }
@@ -1242,7 +1249,13 @@ function initCloudStorageModal() {
 
   submitBtn.addEventListener("click", async () => {
     const secret = input.value.trim();
-    if (!secret) {
+    const status =
+      typeof AppStorage !== "undefined" && AppStorage.getStatus
+        ? AppStorage.getStatus()
+        : null;
+    const authRequired =
+      status && status.cloudConfig && status.cloudConfig.authRequired === true;
+    if (!secret && authRequired) {
       setError("Enter the API key from your Vercel environment (PM_API_SECRET).");
       return;
     }

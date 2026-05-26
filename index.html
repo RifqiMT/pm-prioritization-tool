@@ -1528,10 +1528,10 @@
         </div>
       </header>
       <div class="modal-body profile-modal-body">
-        <p class="cloud-storage-hint">Use the same value as <strong>PM_API_SECRET</strong> in your Vercel project settings. You can also open the app once with <code>?pm_api_key=YOUR_SECRET</code> in the URL (the key is removed from the address bar after save).</p>
+        <p class="cloud-storage-hint">If your Vercel project only has <strong>MONGODB_URI</strong> (no <strong>PM_API_SECRET</strong>), leave the key empty and click Connect — the app will sync automatically. Otherwise paste <strong>PM_API_SECRET</strong>, or use <code>?pm_api_key=YOUR_SECRET</code> once in the URL.</p>
         <label class="form-field" for="cloudStorageApiKeyInput">
-          <span class="form-label">API key</span>
-          <input type="password" id="cloudStorageApiKeyInput" class="form-input" autocomplete="off" placeholder="Paste PM_API_SECRET" />
+          <span class="form-label">API key (optional)</span>
+          <input type="password" id="cloudStorageApiKeyInput" class="form-input" autocomplete="off" placeholder="PM_API_SECRET if configured" />
         </label>
         <p id="cloudStorageError" class="form-error" hidden></p>
       </div>

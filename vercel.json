@@ -4,12 +4,22 @@
   "framework": null,
   "installCommand": "npm install",
   "buildCommand": "npm run build",
-  "outputDirectory": ".",
   "cleanUrls": true,
   "trailingSlash": false,
+  "functions": {
+    "api/**/*.js": {
+      "maxDuration": 15
+    }
+  },
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    },
+    {
+      "source": "/((?!api/).*)",
       "headers": [
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
