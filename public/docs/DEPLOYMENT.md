@@ -45,7 +45,7 @@ openssl rand -hex 32
 
 After deploy, open the production URL:
 
-1. Visit `https://YOUR_DOMAIN/api/config` — expect JSON: `"storage": "mongodb"`.
+1. Visit `https://pm-prioritization-tool-six.vercel.app/api/config` — expect JSON: `"storage": "mongodb"`.
 2. If you **only** set `MONGODB_URI` (no `PM_API_SECRET`), the header should show **Saved to cloud** automatically after redeploy.
 3. If you set `PM_API_SECRET`, click **Cloud** → paste the secret → **Connect & sync** (stored in `localStorage` for return visits).
 

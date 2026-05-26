@@ -8,6 +8,12 @@
  */
 const STORAGE_KEY = "rice_prioritizer_v1";
 
+/** Canonical production deployment (MongoDB + /api). Do not use pm-prioritization-tool.vercel.app (legacy React app). */
+const PRODUCTION_APP_ORIGIN = "https://pm-prioritization-tool-six.vercel.app";
+
+/** Hostnames that serve a different app; users should open PRODUCTION_APP_ORIGIN instead. */
+const LEGACY_WRONG_HOSTNAMES = ["pm-prioritization-tool.vercel.app"];
+
 const projectStatusList = [
   "Not Started",
   "In Progress",

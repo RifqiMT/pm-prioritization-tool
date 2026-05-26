@@ -40,7 +40,7 @@ If you see `FAIL: Vercel Deployment Protection blocks /api`, Step 0 is not done 
 Open in your browser:
 
 ```text
-https://YOUR-DOMAIN/api/config
+https://pm-prioritization-tool-six.vercel.app/api/config
 ```
 
 ### Expected (correct)

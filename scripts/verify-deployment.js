@@ -2,9 +2,11 @@
 /**
  * Usage: node scripts/verify-deployment.js https://your-domain.vercel.app
  */
-const base = (process.argv[2] || "").replace(/\/$/, "");
+const DEFAULT_PRODUCTION = "https://pm-prioritization-tool-six.vercel.app";
+const base = (process.argv[2] || DEFAULT_PRODUCTION).replace(/\/$/, "");
 if (!base) {
-  console.error("Usage: node scripts/verify-deployment.js <origin>");
+  console.error("Usage: node scripts/verify-deployment.js [origin]");
+  console.error("Default production:", DEFAULT_PRODUCTION);
   process.exit(1);
 }
 
@@ -17,10 +19,13 @@ async function main() {
       !rootText.includes("Product Management Prioritization Tool"))
   ) {
     console.error("FAIL: Homepage is the old React app, not this repository.");
-    console.error("Re-link Vercel to github.com/RifqiMT/pm-prioritization-tool");
+    console.error("Use production URL:", DEFAULT_PRODUCTION);
     process.exit(6);
   }
-  if (!rootText.includes("PM Prioritization") && !rootText.includes("app-shell")) {
+  if (
+    !rootText.includes("app-shell") &&
+    !rootText.includes("Product Management Prioritization Tool")
+  ) {
     console.warn("WARN: Homepage may not be the expected static app.");
   }
 

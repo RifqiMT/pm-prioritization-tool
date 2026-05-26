@@ -101,20 +101,15 @@ Or: `cd public && python3 -m http.server 5173` (UI only; use `npx vercel dev` fo
 
 Connect the GitHub repo → deploy `main` on Vercel with `MONGODB_URI`. Details: **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
 
-**Live app (this repo):** [https://pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app) — MongoDB + `/api` enabled.  
-(`pm-prioritization-tool.vercel.app` may still point at a different legacy project until you move the domain in Vercel.)
-
-**MongoDB not syncing?** See **[docs/VERCEL_MONGODB_FIX.md](docs/VERCEL_MONGODB_FIX.md)**.
-
-1. **`/api/config` must return JSON** (not HTML / not “Authentication Required”).  
-2. **`pm-prioritization-tool.vercel.app` may be the wrong app** (old React matrix) — use the deployment URL from your linked Vercel project or your custom domain.  
-3. **Disable Vercel Deployment Protection** on Production so `/api` is public.
+**Production app:** [https://pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app) — MongoDB cloud sync + `/api` enabled.
 
 ```bash
-npm run verify:deploy -- https://YOUR-DOMAIN
+npm run verify:production
 ```
 
-**Automated fix (one-time):** add GitHub secrets and run **Actions → Fix Vercel Deployment Protection** — see **[docs/SETUP_VERCEL_GITHUB.md](docs/SETUP_VERCEL_GITHUB.md)**.
+Do not use `pm-prioritization-tool.vercel.app` (legacy React app on another Vercel project).
+
+**MongoDB / deploy help:** [docs/VERCEL_MONGODB_FIX.md](docs/VERCEL_MONGODB_FIX.md) · [docs/SETUP_VERCEL_GITHUB.md](docs/SETUP_VERCEL_GITHUB.md)
 
 ### First-use checklist
 

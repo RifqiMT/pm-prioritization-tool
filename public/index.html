@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Capture projects per profile, score them with RICE (reach, impact, confidence, effort) and optional financial impact, and auto-rank by priority—all in the browser." />
+  <link rel="canonical" href="https://pm-prioritization-tool-six.vercel.app/" />
   <title>Product Management Prioritization Tool</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -19,6 +20,17 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 <body>
+  <div id="wrongHostBanner" class="deployment-issue-banner deployment-issue-banner--redirect" hidden role="alert">
+    <div class="deployment-issue-banner__inner">
+      <p class="deployment-issue-banner__title">This URL is not the PM Prioritization Tool</p>
+      <p class="deployment-issue-banner__text">
+        <code>pm-prioritization-tool.vercel.app</code> points at a legacy React app. Open the production app with MongoDB sync:
+      </p>
+      <p class="deployment-issue-banner__actions">
+        <a id="wrongHostBannerLink" class="btn-primary deployment-issue-banner__cta" href="https://pm-prioritization-tool-six.vercel.app/">Open pm-prioritization-tool-six.vercel.app</a>
+      </p>
+    </div>
+  </div>
   <div id="deploymentIssueBanner" class="deployment-issue-banner" hidden role="alert">
     <div class="deployment-issue-banner__inner">
       <p class="deployment-issue-banner__title" id="deploymentIssueBannerTitle">Cloud storage is not available on this URL</p>

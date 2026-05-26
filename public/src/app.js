@@ -1145,6 +1145,29 @@ function ensureProjectFormFieldTooltips() {
   });
 }
 
+function isLegacyWrongHostname() {
+  if (typeof LEGACY_WRONG_HOSTNAMES === "undefined" || !Array.isArray(LEGACY_WRONG_HOSTNAMES)) {
+    return false;
+  }
+  const host = window.location.hostname || "";
+  return LEGACY_WRONG_HOSTNAMES.some((h) => h === host);
+}
+
+function showWrongHostBanner() {
+  const banner = $("wrongHostBanner");
+  const link = $("wrongHostBannerLink");
+  if (!banner) return true;
+  const origin =
+    typeof PRODUCTION_APP_ORIGIN !== "undefined" && PRODUCTION_APP_ORIGIN
+      ? PRODUCTION_APP_ORIGIN
+      : "https://pm-prioritization-tool-six.vercel.app";
+  if (link) link.href = origin.replace(/\/$/, "") + "/";
+  banner.hidden = false;
+  const shell = document.querySelector(".app-shell");
+  if (shell) shell.setAttribute("aria-hidden", "true");
+  return true;
+}
+
 function showDeploymentIssueBanner(boot) {
   const banner = $("deploymentIssueBanner");
   const titleEl = $("deploymentIssueBannerTitle");
@@ -1166,9 +1189,13 @@ function showDeploymentIssueBanner(boot) {
       titleEl.textContent = "Wrong app deployed on this domain";
     }
     if (textEl) {
+      const prod =
+        typeof PRODUCTION_APP_ORIGIN !== "undefined"
+          ? PRODUCTION_APP_ORIGIN
+          : "https://pm-prioritization-tool-six.vercel.app";
       textEl.textContent =
-        "This site returned HTML for /api/config (often an old React “Prioritization Matrix” build). " +
-        "Point your Vercel project to GitHub repo RifqiMT/pm-prioritization-tool, add MONGODB_URI, and redeploy.";
+        "This site returned HTML for /api/config (often the legacy React app). " +
+        "Use the production URL: " + prod;
     }
   } else if (boot.apiIssue === "mongodb_not_configured") {
     if (titleEl) {
@@ -1331,6 +1358,10 @@ function initCloudStorageModal() {
 }
 
 async function init() {
+  if (isLegacyWrongHostname() && showWrongHostBanner()) {
+    return;
+  }
+
   if (typeof ProfileSecurity === "undefined") {
     console.error(
       "ProfileSecurity module not loaded. Profile passwords and lock will not work until src/modules/profile-security.js is available."

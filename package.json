@@ -11,7 +11,8 @@
     "dev": "npx --yes serve public -l 5173",
     "build": "node -e \"const fs=require('fs'); if(!fs.existsSync('public/index.html')) throw new Error('missing public/index.html'); if(!fs.existsSync('api/state.js')) throw new Error('missing api/state.js'); console.log('OK: public/ + api/ ready for Vercel');\"",
     "start": "npm run dev",
-    "verify:deploy": "node scripts/verify-deployment.js"
+    "verify:deploy": "node scripts/verify-deployment.js",
+    "verify:production": "node scripts/verify-deployment.js https://pm-prioritization-tool-six.vercel.app"
   },
   "keywords": [
     "product-management",
