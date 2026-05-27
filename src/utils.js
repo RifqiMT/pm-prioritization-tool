@@ -18,17 +18,6 @@ function formatDateTime(isoString) {
   });
 }
 
-function formatDate(isoString) {
-  if (!isoString) return "—";
-  const dt = new Date(isoString);
-  if (Number.isNaN(dt.getTime())) return "—";
-  return dt.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "2-digit"
-  });
-}
-
 function formatDateForFilename(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -184,6 +173,28 @@ function debounce(fn, ms) {
 }
 
 /**
+ * Removes deprecated workspace keys from a parsed payload object.
+ * Returns true when at least one legacy field was removed.
+ */
+function stripLegacyWorkspaceFields(payload) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return false;
+  }
+  const keys =
+    typeof LEGACY_WORKSPACE_FIELDS !== "undefined" && Array.isArray(LEGACY_WORKSPACE_FIELDS)
+      ? LEGACY_WORKSPACE_FIELDS
+      : [];
+  let removed = false;
+  keys.forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(payload, key)) {
+      delete payload[key];
+      removed = true;
+    }
+  });
+  return removed;
+}
+
+/**
  * Formats a financial amount in short form: K (thousands), Mn (millions), Bn (billions), Tn (trillions).
  * Examples: 1000 -> "1 K", 1000000 -> "1 Mn", 1000000000 -> "1 Bn", 1000000000000 -> "1 Tn".
  * Uses 1 decimal when the value is not a whole unit (e.g. 1.5 Mn); otherwise no decimals.
@@ -210,5 +221,41 @@ function formatFinancialShort(num) {
     return sign + (v % 1 === 0 ? v.toFixed(0) : v.toFixed(1)) + " K";
   }
   return sign + (abs % 1 === 0 ? abs.toFixed(0) : abs.toFixed(2));
+}
+
+/** Returns the display symbol for an ISO currency code, or the code itself as fallback. */
+function getCurrencySymbol(code) {
+  const upper = (code != null ? String(code).trim().toUpperCase() : "") || "";
+  if (!upper) return "";
+  if (typeof CURRENCY_SYMBOLS !== "undefined" && CURRENCY_SYMBOLS[upper]) {
+    return CURRENCY_SYMBOLS[upper];
+  }
+  return upper;
+}
+
+/** Formats a financial amount in its original currency with symbol when available. */
+function formatOriginalCurrencyAmount(amount, code) {
+  const n = Number(amount);
+  if (!Number.isFinite(n)) return "—";
+  const upper = (code != null ? String(code).trim().toUpperCase() : "") || "";
+  const short = formatFinancialShort(n);
+  if (!upper) return short;
+  const symbol = getCurrencySymbol(upper);
+  const suffix =
+    typeof CURRENCY_SYMBOL_SUFFIX !== "undefined" &&
+    Array.isArray(CURRENCY_SYMBOL_SUFFIX) &&
+    CURRENCY_SYMBOL_SUFFIX.includes(upper);
+  if (suffix) return `${short} ${symbol}`;
+  if (symbol === upper) return `${short} ${upper}`;
+  return `${symbol}${short}`;
+}
+
+/** Chip-friendly label, e.g. "€ EUR" or "Rp IDR". */
+function formatCurrencyChipLabel(code) {
+  const upper = (code != null ? String(code).trim().toUpperCase() : "") || "";
+  if (!upper) return "Not set";
+  const symbol = getCurrencySymbol(upper);
+  if (!symbol || symbol === upper) return upper;
+  return `${symbol} ${upper}`;
 }
 

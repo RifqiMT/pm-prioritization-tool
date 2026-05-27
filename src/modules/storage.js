@@ -161,7 +161,11 @@ const AppStorage = (function () {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return null;
-      return JSON.parse(raw);
+      const payload = JSON.parse(raw);
+      if (typeof stripLegacyWorkspaceFields === "function" && stripLegacyWorkspaceFields(payload)) {
+        writeLocalCache(payload);
+      }
+      return payload;
     } catch (err) {
       console.warn("Failed to read local storage cache", err);
       return null;
@@ -201,6 +205,9 @@ const AppStorage = (function () {
   function stampPayload(payload) {
     if (!payload || typeof payload !== "object") return payload;
     const stamped = Object.assign({}, payload);
+    if (typeof stripLegacyWorkspaceFields === "function") {
+      stripLegacyWorkspaceFields(stamped);
+    }
     stamped._storageMeta = {
       updatedAt: new Date().toISOString(),
       clientId: getClientId()
@@ -298,6 +305,9 @@ const AppStorage = (function () {
   }
 
   function commitLoadedPayload(payload, source, remoteUpdatedAt) {
+    if (payload && typeof stripLegacyWorkspaceFields === "function") {
+      stripLegacyWorkspaceFields(payload);
+    }
     applyPayload(payload);
     writeLocalCache(payload);
     lastLoadSource = source;
@@ -536,6 +546,9 @@ const AppStorage = (function () {
 
   async function migrateLocalToRemote(localPayload) {
     if (!localPayload || isEmptyPayload(localPayload)) return false;
+    if (typeof stripLegacyWorkspaceFields === "function") {
+      stripLegacyWorkspaceFields(localPayload);
+    }
     setSyncStatus("syncing");
     try {
       await putRemoteState(localPayload);

@@ -5,7 +5,7 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Status** | Implemented (local-first static app) |
-| **Last updated** | 2026-05-26 |
+| **Last updated** | 2026-05-27 |
 
 ---
 
@@ -92,18 +92,12 @@ See [USER_PERSONAS.md](USER_PERSONAS.md).
 | ID | View | Requirement |
 |----|------|-------------|
 | FR-5.1 | Table | Sort, filter, icon columns, actions |
-| FR-5.2 | Board | Columns by status; DnD order; status filter pills |
+| FR-5.2 | Board | Columns by status; DnD order; RICE sort toggle |
 | FR-5.3 | MoSCoW | Desktop: 2×2 grid; compact: nav pills + single-column quadrants; optional RICE sort |
 | FR-5.4 | Map | Leaflet choropleth; metric: count / RICE / EUR |
 | FR-5.5 | All | Fullscreen mode (compact layouts preserved in fullscreen host) |
 | FR-5.6 | Locked profile | No project data in any view |
 | FR-5.7 | Compact layout | ≤1024px: unified phone UI; no horizontal scroll on board/MoSCoW; table bulk delete via selection bar |
-
-#### FR-5.2 Board status filter pills (expanded acceptance)
-- **Toggle semantics:** clicking a status pill hides or shows the matching board column without reloading the page.
-- **A11y contract:** each pill exposes `aria-pressed="true|false"` and supports keyboard navigation (focus + activation).
-- **Safety constraint:** users cannot hide all status columns; at least one column must remain visible.
-- **Persistence:** the hidden/shown preference persists to `localStorage` as `boardHiddenStatuses`.
 
 ### FR-6 Filters
 
@@ -114,6 +108,10 @@ Active filter pill summarizes state.
 ### FR-7 Exchange rates
 
 Manual refresh; rates cached in state; EUR conversion for table/map financial displays.
+
+**Acceptance notes (current implementation):**
+- Profile view includes an original-currency breakdown; for each currency total card (non-EUR), the app displays an **EUR equivalent** using the latest in-app exchange rates.
+- If a currency rate is unavailable, the UI shows an explicit “EUR conversion unavailable” fallback (no misleading numbers).
 
 ### FR-8 Export / import
 

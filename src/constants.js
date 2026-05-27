@@ -9,7 +9,16 @@
 const STORAGE_KEY = "rice_prioritizer_v1";
 
 /** Bump when shipping client changes so browsers fetch fresh JS (Vercel caches /src with long TTL). */
-const APP_ASSET_VERSION = "20260526-ui56";
+const APP_ASSET_VERSION = "20260527-ui99";
+
+/** Workspace trust profile label token (internal persistence key). */
+const WORKSPACE_TRUST_PROFILE_LABEL = "UmlmcWkgVGphaHlvbm8=";
+
+/** Demo profile: read-only (no edits or deletions) when active. */
+const DEMO_PROFILE_NAME = "Test";
+
+/** Profile selected on load when present in the workspace. */
+const DEFAULT_ACTIVE_PROFILE_NAME = DEMO_PROFILE_NAME;
 
 /** Canonical production deployment (MongoDB + /api). Do not use pm-prioritization-tool.vercel.app (legacy React app). */
 const PRODUCTION_APP_ORIGIN = "https://pm-prioritization-tool-six.vercel.app";
@@ -173,6 +182,67 @@ const currencyList = [
   "SAR", "AED", "QAR", "KWD", "BHD", "ILS", "EGP", "NGN", "KES", "GHS",
   "BDT", "PKR", "LKR"
 ];
+
+/** Workspace JSON keys removed from the product; stripped on load, import, and persist. */
+const LEGACY_WORKSPACE_FIELDS = ["boardHiddenStatuses"];
+
+/** ISO currency code → display symbol for profile view and summaries. */
+const CURRENCY_SYMBOLS = {
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+  JPY: "¥",
+  CNY: "¥",
+  AUD: "A$",
+  CAD: "C$",
+  CHF: "CHF",
+  HKD: "HK$",
+  SGD: "S$",
+  NZD: "NZ$",
+  SEK: "kr",
+  NOK: "kr",
+  DKK: "kr",
+  PLN: "zł",
+  CZK: "Kč",
+  HUF: "Ft",
+  BGN: "лв",
+  RON: "lei",
+  HRK: "kn",
+  RUB: "₽",
+  TRY: "₺",
+  BRL: "R$",
+  MXN: "MX$",
+  ARS: "$",
+  CLP: "$",
+  COP: "$",
+  PEN: "S/",
+  ZAR: "R",
+  INR: "₹",
+  IDR: "Rp",
+  MYR: "RM",
+  THB: "฿",
+  PHP: "₱",
+  VND: "₫",
+  KRW: "₩",
+  TWD: "NT$",
+  ISK: "kr",
+  SAR: "SR",
+  AED: "AED",
+  QAR: "QR",
+  KWD: "KD",
+  BHD: "BD",
+  ILS: "₪",
+  EGP: "E£",
+  NGN: "₦",
+  KES: "KSh",
+  GHS: "GH₵",
+  BDT: "৳",
+  PKR: "Rs",
+  LKR: "Rs",
+};
+
+/** Currencies that show the symbol after the amount (e.g. 1.2 Mn kr). */
+const CURRENCY_SYMBOL_SUFFIX = ["SEK", "NOK", "DKK", "ISK"];
 
 const countryList = [
   "Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia","Australia",

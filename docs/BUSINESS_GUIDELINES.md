@@ -85,7 +85,7 @@ Frameworks produce a **planning estimate** in project currency, with optional **
 
 ### Weekly execution
 
-1. **Board** view by **project status**; hide columns via status pills if needed.
+1. **Board** view by **project status**; use RICE sort or drag-and-drop to reorder within columns.
 2. Drag-and-drop order when RICE sort is off (per-status order persisted per profile).
 3. Update status as work progresses.
 

@@ -779,10 +779,267 @@
 }
 
 .profile-view-section-note {
-  margin: -0.15rem 0 0;
+  margin: 0.15rem 0 0;
   font-size: 0.78rem;
-  line-height: 1.4;
+  line-height: 1.45;
   color: var(--pm-text-soft);
+}
+
+.profile-view-section--currency {
+  gap: 0.65rem !important;
+}
+
+.profile-view-currency-details {
+  width: 100%;
+  max-width: 480px;
+  margin: 0.15rem auto 0;
+  border: 1px solid rgba(231, 201, 120, 0.45);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fffdf8 0%, #ffffff 100%);
+  box-shadow: 0 1px 3px rgba(63, 15, 25, 0.04);
+  overflow: hidden;
+}
+
+.profile-view-currency-summary {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.18rem;
+  padding: 0.68rem 2.1rem 0.68rem 1rem;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  text-align: center;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.profile-view-currency-summary:hover {
+  background: rgba(185, 28, 28, 0.04);
+}
+
+.profile-view-currency-summary:focus-visible {
+  outline: 2px solid rgba(185, 28, 28, 0.45);
+  outline-offset: -2px;
+}
+
+.profile-view-currency-summary::-webkit-details-marker {
+  display: none;
+}
+
+.profile-view-currency-summary::after {
+  content: "▾";
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--pm-gold);
+  font-size: 0.85rem;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.profile-view-currency-details[open] .profile-view-currency-summary::after {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.profile-view-currency-details[open] .profile-view-currency-summary {
+  border-bottom: 1px solid rgba(231, 201, 120, 0.35);
+}
+
+.profile-view-currency-summary-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pm-gold);
+}
+
+.profile-view-currency-details[open] .profile-view-currency-summary-hint {
+  display: none;
+}
+
+.profile-view-currency-summary-hint {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--pm-text-soft);
+}
+
+.profile-view-currency-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.65rem 0.75rem 0.75rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.profile-view-section--currency .profile-view-section-note {
+  margin: 0;
+  text-align: center;
+  max-width: 36rem;
+}
+
+.profile-view-currency-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.profile-view-currency-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  gap: 0.35rem 0.65rem;
+  padding: 0.72rem 0.85rem 0.78rem;
+  border-radius: 11px;
+  border: 1px solid rgba(231, 201, 120, 0.45);
+  background: linear-gradient(180deg, #fff 0%, #fffdf8 100%);
+  min-width: 0;
+}
+
+.profile-view-currency-card--dual .profile-view-currency-card-values {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: stretch;
+}
+
+.profile-view-currency-card-head {
+  display: contents;
+}
+
+.profile-view-currency-card-label {
+  grid-column: 1;
+  grid-row: 1;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--pm-text);
+  line-height: 1.25;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-view-currency-card-count {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  flex: 0 0 auto;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--pm-text-soft);
+  white-space: nowrap;
+  text-align: right;
+}
+
+.profile-view-currency-card-values {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.45rem;
+  min-width: 0;
+  margin-top: 0.08rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(231, 201, 120, 0.28);
+}
+
+.profile-view-currency-card-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.14rem;
+  min-width: 0;
+}
+
+.profile-view-currency-card-amount--eur {
+  align-items: flex-end;
+  text-align: right;
+  padding-left: 0.65rem;
+  border-left: 1px solid rgba(231, 201, 120, 0.35);
+}
+
+.profile-view-currency-card-amount-caption {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pm-text-soft);
+  line-height: 1.2;
+}
+
+.profile-view-currency-card-amount--eur .profile-view-currency-card-amount-caption {
+  color: #64748b;
+}
+
+.profile-view-currency-card-value {
+  font-size: 1.02rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #9a3412;
+  font-variant-numeric: tabular-nums;
+  word-break: break-word;
+}
+
+.profile-view-currency-card-eur-value {
+  font-size: 1.02rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #334155;
+  font-variant-numeric: tabular-nums;
+  word-break: break-word;
+}
+
+.profile-view-currency-card-eur-meta {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #94a3b8;
+  line-height: 1.25;
+}
+
+.profile-view-currency-card-eur {
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-view-currency-card-eur--unavailable {
+  color: var(--pm-text-soft);
+  font-style: italic;
+  font-weight: 500;
+}
+
+@media (max-width: 360px) {
+  .profile-view-currency-card--dual .profile-view-currency-card-values {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-view-currency-card-amount--eur {
+    padding-left: 0;
+    border-left: none;
+    padding-top: 0.45rem;
+    border-top: 1px dashed rgba(231, 201, 120, 0.35);
+    align-items: flex-start;
+    text-align: left;
+  }
+}
+
+.profile-view-currency-grid .profile-view-rice-empty {
+  width: 100%;
 }
 
 .profile-view-section-note[hidden] {

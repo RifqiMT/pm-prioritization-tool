@@ -2,7 +2,7 @@
 
 **Product:** Product Management Prioritization Tool  
 **Version:** 2.0.0  
-**Last updated:** 2026-05-26  
+**Last updated:** 2026-05-27  
 **Purpose:** This document turns epics into user-story contracts with clear **Given / When / Then** acceptance criteria, including edge cases and error handling.
 
 ---
@@ -231,29 +231,25 @@ Each story includes:
 
 ---
 
-### US-D2 — Board status drag/drop and toggleable columns
+### US-D2 — Board status drag/drop and RICE sort
 - **Persona:** Team Lead
 - **Goal:** Efficient execution changes via board.
+- **Preconditions:** Active profile unlocked; board view visible.
 
 **Acceptance Criteria**
 1. **Drag/drop status transition**
-   - **Given** RICE sort is off (board allows ordering)
+   - **Given** RICE sort is off (board allows manual ordering)
    - **When** the user drags a card to a different status column
    - **Then** the project’s status updates
    - **And** the card moves to the correct column.
-2. **Clickable status filter pills**
-   - **Given** the board legend displays status pills
-   - **When** the user clicks a status pill
-   - **Then** that status column is hidden or shown
-   - **And** the clicked pill reflects its active state via `aria-pressed`.
-3. **At least one column visible**
-   - **Given** multiple statuses exist
-   - **When** the user attempts to hide the last visible column
-   - **Then** the app prevents hiding all columns.
-4. **Persistence**
-   - **Given** a user hides columns
-   - **When** they reload the page
-   - **Then** hidden state persists via saved state (boardHiddenStatuses).
+2. **All status columns visible**
+   - **Given** the board renders on desktop or compact
+   - **When** the user views the board
+   - **Then** every configured status column is shown (no hide/show column pills).
+3. **RICE sort toggle**
+   - **Given** the board RICE sort toggle is enabled
+   - **When** the board re-renders
+   - **Then** cards within each column are ordered by RICE score descending.
 
 **Error / Edge Handling**
 - **Given** a project has an unexpected/missing status value

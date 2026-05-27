@@ -139,4 +139,29 @@ const remoteRicher = resolvePayloadForLoad(
 assert.strictEqual(remoteRicher.source, "remote");
 assert.strictEqual(remoteRicher.pushToCloud, false);
 
+function stripLegacyWorkspaceFields(payload) {
+  const LEGACY_WORKSPACE_FIELDS = ["boardHiddenStatuses"];
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return false;
+  }
+  let removed = false;
+  LEGACY_WORKSPACE_FIELDS.forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(payload, key)) {
+      delete payload[key];
+      removed = true;
+    }
+  });
+  return removed;
+}
+
+const legacyPayload = {
+  profiles: [{ id: "p1", name: "Demo", projects: [] }],
+  boardHiddenStatuses: ["Cancelled"],
+  sortField: "riceScore"
+};
+assert.strictEqual(stripLegacyWorkspaceFields(legacyPayload), true);
+assert.strictEqual(Object.prototype.hasOwnProperty.call(legacyPayload, "boardHiddenStatuses"), false);
+assert.strictEqual(legacyPayload.sortField, "riceScore");
+assert.strictEqual(stripLegacyWorkspaceFields(null), false);
+
 console.log("OK: storage sync logic tests passed");

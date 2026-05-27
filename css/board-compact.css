@@ -16,7 +16,7 @@
     grid-template-columns: minmax(0, 1fr) !important;
     grid-auto-rows: auto !important;
     align-items: stretch !important;
-    gap: 0.65rem !important;
+    gap: 0.4rem !important;
     width: 100% !important;
     max-width: 100% !important;
     min-height: auto !important;

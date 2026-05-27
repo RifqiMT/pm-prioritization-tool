@@ -11,10 +11,11 @@
   --pf-text-soft: #7a4b12;
   --pf-accent: #b91c1c;
   --pf-gold: #a16207;
-  --pf-radius: 16px;
-  --pf-shadow: 0 4px 20px rgba(127, 29, 29, 0.08);
+  --pf-radius: 0;
+  --pf-shadow: none;
 
-  min-height: min(75vh, 900px) !important;
+  min-height: 0 !important;
+  height: auto !important;
   background: var(--pf-bg) !important;
   border: 1px solid var(--pf-border) !important;
   box-shadow: var(--pf-shadow) !important;
@@ -28,11 +29,11 @@
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch !important;
-  padding: 0.85rem 1rem 0.75rem !important;
+  padding: 0.75rem 0.9rem 0.65rem !important;
   margin: 0 !important;
   border-bottom: 1px solid var(--pf-border) !important;
   background: linear-gradient(180deg, #fffdf8 0%, #ffffff 88%) !important;
-  gap: 0.65rem !important;
+  gap: 0.55rem !important;
 }
 
 .portfolio-command-intro {
@@ -98,6 +99,20 @@
   flex-wrap: wrap;
   gap: 0.35rem;
   margin-top: 0.35rem;
+}
+
+.portfolio-demo-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
 .portfolio-command-controls {
@@ -344,7 +359,12 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .workspace-panel--v2
   border-bottom: 1px solid var(--pf-border) !important;
   border-radius: 0 !important;
   margin: 0 !important;
+  padding: 0 !important;
   background: var(--pf-bg-soft) !important;
+}
+
+.workspace-panel--v2 .portfolio-filters-drawer.filters-shell {
+  padding: 0 !important;
 }
 
 .portfolio-filters-summary {
@@ -359,6 +379,16 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .workspace-panel--v2
   background: var(--pf-bg-soft);
   position: relative;
   padding-right: 2.25rem;
+  transition: background 0.16s ease;
+}
+
+.portfolio-filters-summary:hover {
+  background: rgba(185, 28, 28, 0.045);
+}
+
+.portfolio-filters-summary:focus-visible {
+  outline: 2px solid var(--pf-accent, #b91c1c);
+  outline-offset: -2px;
 }
 
 .portfolio-filters-summary::-webkit-details-marker {
@@ -378,6 +408,18 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .workspace-panel--v2
 
 .portfolio-filters-drawer[open] .portfolio-filters-summary::after {
   transform: translateY(-50%) rotate(180deg);
+}
+
+.portfolio-filters-drawer[open] .portfolio-filters-summary {
+  border-bottom: 1px solid rgba(231, 201, 120, 0.35);
+}
+
+.portfolio-filters-drawer:not([open]) .portfolio-filters-summary-hint {
+  display: inline;
+}
+
+.portfolio-filters-drawer[open] .portfolio-filters-summary-hint {
+  display: none;
 }
 
 .portfolio-filters-summary-title {
@@ -472,29 +514,32 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .workspace-panel--v2
   font-weight: 600 !important;
 }
 
-/* Desktop: filters always expanded */
-@media (min-width: 1024px) {
-  .portfolio-filters-summary {
-    pointer-events: none;
-    padding-right: 1.15rem;
-  }
+html.filters-drawer-collapsed .portfolio-filters-drawer:not([open]) {
+  border-bottom-color: rgba(231, 201, 120, 0.45);
+}
 
-  .portfolio-filters-summary::after {
-    display: none;
-  }
+html.filters-drawer-open .portfolio-filters-body {
+  animation: portfolio-filters-body-in 0.18s ease-out;
+}
 
-  .portfolio-filters-summary-hint {
-    display: none;
+@keyframes portfolio-filters-body-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
 /* ── Stage (views container) ─────────────────────────────── */
 .portfolio-stage {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: auto;
+  overflow: visible;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -561,12 +606,33 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .workspace-panel--v2
   max-width: 320px;
 }
 
-/* Map */
+/* Map — fixed height shell; Leaflet fills container (no flex dead space) */
+.workspace-panel--v2 .projects-view--map {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  align-self: start !important;
+  padding: 0 1.15rem 0.45rem !important;
+}
+
 .workspace-panel--v2 .projects-map-container {
-  flex: 1 1 auto;
-  min-height: min(36vh, 320px);
-  max-height: min(58vh, 560px);
+  flex: 0 0 auto !important;
+  position: relative !important;
+  width: 100% !important;
+  aspect-ratio: 2.05 / 1 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: min(42vh, 480px) !important;
   border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+.workspace-panel--v2 .projects-map-container .leaflet-container {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
 }
 
 .workspace-panel--v2 .projects-map-toolbar {
@@ -1088,6 +1154,12 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .workspace-panel--v2
   box-shadow: 0 10px 28px rgba(127, 29, 29, 0.18);
 }
 
+.has-portfolio-selection-bar .portfolio-fab {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+}
+
 .portfolio-selection-bar[hidden] {
   display: none !important;
 }
@@ -1248,8 +1320,8 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .workspace-panel--v2
 @media (max-width: 1024px) {
   /* Compact portfolio header — stack title above tabs */
   .portfolio-command-bar {
-    padding: 0.65rem 0.85rem 0.7rem !important;
-    gap: 0.55rem !important;
+    padding: 0.32rem 0.4rem 0.36rem !important;
+    gap: 0.35rem !important;
     flex-direction: column !important;
     align-items: stretch !important;
   }
@@ -1362,5 +1434,9 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .workspace-panel--v2
   .portfolio-fab,
   .portfolio-filters-summary::after {
     transition: none;
+  }
+
+  html.filters-drawer-open .portfolio-filters-body {
+    animation: none;
   }
 }

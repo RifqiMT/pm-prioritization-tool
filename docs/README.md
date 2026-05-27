@@ -3,7 +3,7 @@
 **Product:** Product Management Prioritization Tool  
 **Version:** 2.0.0  
 **Maintainer:** Product Team  
-**Last audited:** 2026-05-26  
+**Last audited:** 2026-05-27  
 **Repository:** [pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool)
 
 This folder is the single source of product truth for engineering, design, product management, and stakeholders. All documents are maintained against the **current** implementation in `index.html`, `css/`, and `src/`.
@@ -61,7 +61,7 @@ This folder is the single source of product truth for engineering, design, produ
 
 ---
 
-## Source code map (audited 2026-05-26)
+## Source code map (audited 2026-05-27)
 
 ```
 pm-prioritization-tool/
@@ -79,7 +79,14 @@ pm-prioritization-tool/
 │   ├── moscow-compact.css     # MoSCoW compact layout
 │   ├── board-compact.css      # Board compact layout
 │   ├── table-compact.css      # Table compact layout
+│   ├── project-actions-modern.css  # Table action toolbar and row actions
+│   ├── fullscreen-modern.css   # Fullscreen view host (desktop + compact)
 │   ├── fullscreen-compact.css # Fullscreen compact host
+│   ├── views-density.css       # Density/scaling helpers
+│   ├── layout-flow.css         # Flow/layout helpers across views
+│   ├── portfolio-cards-compact.css # Compact card stacks in portfolio surfaces
+│   ├── table-rows-modern.css   # Modern row styling & alignment
+│   ├── table-revamp-modern.css # Modern table structure and spacing rules
 │   └── app-footer.css         # Site footer
 ├── src/
 │   ├── app.js                 # init(), state, render, CRUD, compact layout
@@ -97,7 +104,7 @@ pm-prioritization-tool/
 └── package.json
 ```
 
-**Layout baseline:** `APP_ASSET_VERSION` = `20260526-ui54` — desktop >1024px; compact ≤1024px uses unified phone UI (`is-compact-layout`, `is-phone-layout`).
+**Layout baseline:** `APP_ASSET_VERSION` = `20260527-ui99` — desktop >1024px; compact ≤1024px uses unified phone UI (`is-compact-layout`, `is-phone-layout`).
 
 ---
 

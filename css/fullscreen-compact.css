@@ -15,12 +15,47 @@
     overscroll-behavior: contain;
   }
 
-  html.is-compact-layout .view-fullscreen-stage > .projects-view.view-in-fullscreen-host {
+  /* Board/MoSCoW/table scroll inside stage; map must fill stage (Leaflet needs height) */
+  html.is-compact-layout .view-fullscreen-stage > .projects-view.view-in-fullscreen-host:not(.projects-view--map) {
     overflow: visible !important;
     height: auto !important;
     min-height: 0;
     flex: 0 0 auto !important;
     max-width: 100% !important;
+  }
+
+  html.is-compact-layout.pseudo-view-fullscreen .view-fullscreen-stage:has(> .projects-view--map.view-in-fullscreen-host) {
+    overflow: hidden !important;
+  }
+
+  html.is-compact-layout .view-fullscreen-stage > .projects-view--map.view-in-fullscreen-host {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: none !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  html.is-compact-layout .view-in-fullscreen-host.projects-view--map .projects-map-toolbar,
+  html.is-compact-layout .view-in-fullscreen-host.projects-view--map .projects-map-legend {
+    flex: 0 0 auto !important;
+  }
+
+  html.is-compact-layout .view-in-fullscreen-host.projects-view--map .projects-map-container {
+    flex: 1 1 auto !important;
+    min-height: min(280px, 42dvh) !important;
+    height: 100% !important;
+    max-height: none !important;
+    width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  html.is-compact-layout .view-in-fullscreen-host.projects-view--map .projects-map-container .leaflet-container {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: inherit;
   }
 
   html.is-compact-layout .view-in-fullscreen-host.projects-view--board,

@@ -12,20 +12,23 @@
   --pr-text-soft: #7a4b12;
   --pr-accent: #b91c1c;
   --pr-gold: #a16207;
-  --pr-radius: 16px;
+  --pr-radius: 4px;
   --pr-shadow: 0 4px 20px rgba(127, 29, 29, 0.07);
 
   display: flex !important;
   flex-direction: column !important;
-  gap: 0.9rem !important;
-  padding: 1rem 1.05rem 1.15rem !important;
+  gap: 0.75rem !important;
+  padding: 1rem 1.05rem 0.55rem !important;
   border-radius: var(--pr-radius) !important;
   border: 1px solid var(--pr-border) !important;
   background: linear-gradient(180deg, #ffffff 0%, #fffdf8 100%) !important;
   box-shadow: var(--pr-shadow) !important;
   height: auto !important;
+  max-height: none !important;
+  align-self: start !important;
+  flex: 0 0 auto !important;
   min-height: 0 !important;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* ── Header ─────────────────────────────────────────────── */
@@ -196,9 +199,11 @@
 .profiles-panel--v2 .profiles-list-section {
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 0.45rem;
   min-height: 0;
-  flex: 1 1 auto;
+  flex: 0 0 auto;
+  padding-bottom: 0;
+  margin-bottom: 0;
 }
 
 .profiles-panel--v2 .profiles-list-toolbar {
@@ -277,11 +282,14 @@
 .profiles-panel--v2 .profiles-list--modern {
   display: flex !important;
   flex-direction: column !important;
-  gap: 0.5rem !important;
+  gap: 0.4rem !important;
   margin: 0 !important;
   padding: 0 !important;
   list-style: none !important;
-  max-height: min(48vh, 480px) !important;
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: min(42vh, 520px) !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
   scrollbar-gutter: stable;
@@ -306,12 +314,14 @@
 .profiles-panel--v2 .profile-item-row {
   display: flex !important;
   flex-direction: row !important;
-  align-items: stretch !important;
+  align-items: center !important;
   gap: 0 !important;
   grid-template-columns: unset !important;
   padding: 0 !important;
   margin: 0 !important;
-  border-radius: 14px !important;
+  min-height: 0 !important;
+  height: auto !important;
+  border-radius: 12px !important;
   border: 1px solid var(--pr-border) !important;
   background: var(--pr-bg) !important;
   overflow: hidden;
@@ -351,11 +361,12 @@
   flex: 1 1 auto !important;
   display: flex !important;
   align-items: center !important;
-  gap: 0.65rem !important;
+  gap: 0.55rem !important;
   min-width: 0 !important;
-  min-height: 56px !important;
+  min-height: 0 !important;
+  height: auto !important;
   width: auto !important;
-  padding: 0.55rem 0.65rem 0.55rem 0.75rem !important;
+  padding: 0.42rem 0.5rem 0.42rem 0.62rem !important;
   margin: 0 !important;
   border: none !important;
   border-radius: 0 !important;
@@ -406,9 +417,9 @@
 /* Avatar initials */
 .profiles-panel--v2 .profiles-card-avatar {
   flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
-  border-radius: 11px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: grid;
   place-items: center;
   font-size: 0.78rem;
@@ -428,7 +439,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.12rem;
 }
 
 .profiles-panel--v2 .profile-item-main {
@@ -656,7 +667,7 @@
 .profiles-panel--v2 .profiles-card--compact {
   flex-direction: column !important;
   align-items: stretch !important;
-  border-radius: 14px !important;
+  border-radius: 12px !important;
   border: 1px solid rgba(231, 201, 120, 0.45) !important;
   background: #fff !important;
   overflow: hidden;
@@ -664,24 +675,25 @@
 
 .profiles-panel--v2 .profiles-card--compact.profiles-card--active {
   border-color: rgba(185, 28, 28, 0.35) !important;
-  box-shadow: 0 0 0 1px rgba(185, 28, 28, 0.08), 0 8px 20px rgba(185, 28, 28, 0.08) !important;
+  box-shadow: 0 0 0 1px rgba(185, 28, 28, 0.08), 0 6px 16px rgba(185, 28, 28, 0.08) !important;
 }
 
 .profiles-panel--v2 .profiles-card--compact .profiles-card-select,
 .profiles-panel--v2 .profiles-card--compact .profile-item-btn {
   min-height: 0 !important;
-  padding: 0.75rem 0.85rem 0.55rem !important;
+  padding: 0.45rem 0.6rem 0.4rem !important;
   border-bottom: 1px solid rgba(231, 201, 120, 0.28) !important;
 }
 
 .profiles-panel--v2 .profiles-card-actions--footer {
   flex-direction: row !important;
-  align-items: stretch !important;
+  align-items: center !important;
   justify-content: stretch !important;
-  gap: 0 !important;
-  padding: 0 !important;
+  gap: 0.35rem !important;
+  padding: 0.45rem 0.55rem !important;
   border-left: none !important;
-  background: rgba(255, 253, 248, 0.92) !important;
+  border-top: 1px solid rgba(148, 163, 184, 0.18) !important;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%) !important;
 }
 
 .profiles-panel--v2 .profiles-card-actions--footer .profile-action-wrap {
@@ -690,22 +702,16 @@
 }
 
 .profiles-panel--v2 .profiles-card-actions--footer .profile-action-wrap + .profile-action-wrap {
-  border-left: 1px solid rgba(231, 201, 120, 0.35);
+  border-left: none;
 }
 
 .profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip,
 .profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn {
-  width: 100% !important;
-  min-width: 0 !important;
-  min-height: 44px !important;
+  width: auto !important;
   height: auto !important;
-  padding: 0.45rem 0.35rem !important;
-  border-radius: 0 !important;
-  border: none !important;
-  background: transparent !important;
-  color: var(--pr-text-soft) !important;
-  flex-direction: column;
-  gap: 0.12rem;
+  min-width: 0 !important;
+  flex-direction: row !important;
+  gap: 0.35rem !important;
 }
 
 .profiles-panel--v2 .profiles-card-actions--footer .profile-action-label--visible {
@@ -715,15 +721,10 @@
   margin: 0 !important;
   overflow: visible !important;
   clip: auto !important;
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip--danger,
-.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn--danger {
-  color: #991b1b !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+  text-transform: none !important;
 }
 
 .profiles-panel--v2 .profile-item-lock-badge {
@@ -792,15 +793,18 @@
   color: var(--pr-text-soft);
 }
 
-/* Action rail */
+/* Action rail — compact horizontal row on all breakpoints */
 .profiles-panel--v2 .profiles-card-actions,
 .profiles-panel--v2 .profile-item-actions {
   flex: 0 0 auto !important;
+  align-self: center !important;
   display: flex !important;
-  flex-direction: column !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
   justify-content: center !important;
-  gap: 0.2rem !important;
-  padding: 0.35rem 0.4rem !important;
+  gap: 0.15rem !important;
+  padding: 0.28rem 0.35rem !important;
   margin: 0 !important;
   width: auto !important;
   background: rgba(255, 253, 248, 0.85) !important;
@@ -808,18 +812,14 @@
   grid-auto-flow: unset !important;
 }
 
-.profiles-panel--v2 .profile-action-wrap {
-  display: flex;
-}
-
 .profiles-panel--v2 .profile-action-chip,
 .profiles-panel--v2 .profile-icon-btn {
-  width: 36px !important;
-  height: 36px !important;
-  min-width: 36px !important;
-  min-height: 36px !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
   padding: 0 !important;
-  border-radius: 9px !important;
+  border-radius: 8px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -832,8 +832,12 @@
 
 .profiles-panel--v2 .profile-action-chip svg,
 .profiles-panel--v2 .profile-icon-btn svg {
-  width: 17px !important;
-  height: 17px !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.profiles-panel--v2 .profile-action-wrap {
+  display: flex;
 }
 
 .profiles-panel--v2 .profile-action-label {
@@ -892,34 +896,47 @@
 }
 
 @media (min-width: 1025px) {
+  html.is-desktop-layout .app-layout {
+    align-items: start !important;
+  }
+
   .profiles-panel--modern.profiles-panel--v2 {
-    height: 100% !important;
-    max-height: calc(100vh - 8rem);
+    height: auto !important;
+    max-height: none !important;
+    align-self: start !important;
+  }
+
+  .profiles-panel--v2 .profiles-list-section {
+    flex: 0 0 auto !important;
+    height: auto !important;
+  }
+
+  .profiles-panel--v2 .profiles-list--modern {
+    max-height: min(48vh, 560px) !important;
   }
 }
 
 @media (max-width: 1024px) {
   .profiles-panel--v2 .profiles-list,
   .profiles-panel--v2 .profiles-list--modern {
-    max-height: min(38vh, 320px) !important;
+    flex: 0 1 auto !important;
+    max-height: min(52dvh, 420px) !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
   }
 
   .profiles-panel--v2 .profiles-card-actions,
   .profiles-panel--v2 .profile-item-actions {
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    padding: 0.45rem 0.5rem !important;
+    padding: 0.32rem 0.38rem !important;
+    gap: 0.18rem !important;
   }
 
   .profiles-panel--v2 .profile-action-chip,
   .profiles-panel--v2 .profile-icon-btn {
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px !important;
-    min-height: 40px !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
   }
 }
 
@@ -963,9 +980,11 @@
 .profiles-panel.profiles-panel--modern.profiles-panel--v2 .profiles-card {
   display: flex !important;
   flex-direction: row !important;
-  align-items: stretch !important;
+  align-items: center !important;
   grid-template-columns: none !important;
   grid-template-rows: none !important;
+  min-height: 0 !important;
+  height: auto !important;
 }
 
 .profiles-panel.profiles-panel--modern.profiles-panel--v2 .profile-item-btn,
@@ -973,7 +992,13 @@
   display: flex !important;
   flex: 1 1 auto !important;
   grid-column: unset !important;
-  min-height: 56px !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 0.42rem 0.5rem 0.42rem 0.62rem !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }
 
 .profiles-panel.profiles-panel--modern.profiles-panel--v2 .profile-item-actions,
@@ -982,6 +1007,15 @@
   grid-auto-flow: unset !important;
   width: auto !important;
   border-bottom: none !important;
+}
+
+/* Beat legacy main.css flex stretch on profile list */
+.profiles-panel.profiles-panel--modern.profiles-panel--v2 .profiles-list,
+.profiles-panel.profiles-panel--modern.profiles-panel--v2 .profiles-list--modern {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin-top: 0 !important;
 }
 
 /* ── Bottom-sheet backdrop + sheet (tablet/phone ≤1024px) ── */
@@ -1022,6 +1056,9 @@
 
   .profiles-panel-sheet--open {
     display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    max-height: 92dvh !important;
     transform: translateY(0) !important;
     opacity: 1 !important;
   }
@@ -1127,14 +1164,14 @@
     box-shadow: none !important;
   }
 
-  /* Scrollable body */
+  /* Scrollable body — shrink-wrap content; scroll list only when needed */
   .profiles-panel-sheet-body {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: 0.65rem;
-    padding: 0.65rem 1rem 1.25rem;
+    gap: 0.55rem;
+    padding: 0.55rem 1rem 0.65rem;
     min-height: 0;
   }
 
@@ -1146,7 +1183,7 @@
   .profiles-sheet-panels {
     display: flex;
     flex-direction: column;
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     min-height: 0;
     overflow: hidden;
   }
@@ -1154,7 +1191,7 @@
   .profiles-sheet-panel {
     display: flex;
     flex-direction: column;
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     min-height: 0;
     overflow: hidden;
   }
@@ -1164,12 +1201,12 @@
   }
 
   .profiles-sheet-panel--browse .profiles-list-section {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     min-height: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: 0.55rem;
+    gap: 0.45rem;
   }
 
   .profiles-sheet-panel--browse .profiles-search {
@@ -1182,9 +1219,10 @@
 
   .profiles-sheet-panel--browse .profiles-list,
   .profiles-sheet-panel--browse .profiles-list--modern {
-    flex: 1 1 auto;
-    min-height: 0;
-    max-height: none !important;
+    flex: 0 1 auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: min(52dvh, 420px) !important;
     overflow-y: auto !important;
     padding-right: 0.15rem;
   }
@@ -1235,10 +1273,10 @@
   }
 
   .profiles-panel-sheet .profiles-card--compact .profiles-card-avatar {
-    width: 42px !important;
-    height: 42px !important;
-    font-size: 0.8rem !important;
-    border-radius: 12px !important;
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 0.74rem !important;
+    border-radius: 10px !important;
   }
 
   .profiles-panel-sheet .profiles-card-actions--footer .profile-action-chip svg,
@@ -1288,10 +1326,34 @@
 
 @media (max-width: 640px) {
   .profiles-panel-sheet-body {
-    padding: 0.7rem 0.85rem 1.5rem !important;
+    padding: 0.5rem 0.85rem 0.55rem !important;
   }
 
   .profiles-panel--v2 .profiles-create-summary-hint {
     display: none;
   }
+}
+
+/* Shrink-wrap profile panel — no dead space below list (wins over main.css v3/v4) */
+.profiles-panel.card.profiles-panel--modern.profiles-panel--v2,
+section.profiles-panel.profiles-panel--v2 {
+  height: auto !important;
+  max-height: none !important;
+  align-self: start !important;
+  flex: 0 0 auto !important;
+}
+
+.profiles-panel--v2 .profiles-list-section {
+  flex: 0 0 auto !important;
+  height: auto !important;
+}
+
+.profiles-panel.card.profiles-panel--modern.profiles-panel--v2 .profiles-list,
+.profiles-panel.card.profiles-panel--modern.profiles-panel--v2 .profiles-list--modern,
+section.profiles-panel--v2 .profiles-list,
+section.profiles-panel--v2 .profiles-list--modern {
+  flex: 0 0 auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin-top: 0 !important;
 }

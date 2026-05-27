@@ -27,11 +27,36 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Code — Legacy workspace field migration — 2026-05-27 — Product Team — Impact: internal
+
+- Added `LEGACY_WORKSPACE_FIELDS` and `stripLegacyWorkspaceFields()` to remove deprecated `boardHiddenStatuses` from local cache, cloud payloads, and JSON imports on load.
+- Legacy keys are stripped before the next persist so MongoDB/local exports converge to the current schema.
+- Cache bust: `APP_ASSET_VERSION` = `20260527-ui99`.
+
+### Code — Dead code cleanup — 2026-05-27 — Product Team — Impact: internal
+
+- Removed unused `formatDate()` utility (`src/utils.js`).
+- Removed duplicate `#importFileInput` and legacy `#importCsvFileInput` from `index.html` (unified import uses a single hidden input).
+- Removed dead board column filter code: `boardHiddenStatuses` state, toggle helpers, and ~90 lines of unused `.board-status-filter-*` CSS.
+- Dropped unused DOM element caches in `cacheElements()` (`scrumBoardLegend`, `importCsvFileInput`, popup wrappers never read in JS).
+- Cache bust: `APP_ASSET_VERSION` = `20260527-ui98`.
+
+### UI — Table revamp + actions overlap fixes — 2026-05-27 — Product Team — Impact: user-visible
+
+- Modernized table layout to prevent header/row overlaps and cramped columns, especially the Actions cell.
+- Actions render as an icon-only horizontal toolbar inside the Actions cell (stable alignment across breakpoints).
+- Additional layout layers loaded: `table-revamp-modern.css`, `table-rows-modern.css`, `project-actions-modern.css`, `layout-flow.css`, `views-density.css`, `portfolio-cards-compact.css`.
+
+### UI — Profile original-currency breakdown with EUR equivalents — 2026-05-27 — Product Team — Impact: user-visible
+
+- Profile view currency totals now show original totals **and** EUR equivalents side-by-side for non-EUR currencies (using latest in-app exchange rates).
+- Graceful fallback messaging when a currency cannot be converted to EUR.
+
 ### Docs — Comprehensive audit — Product Team — Impact: internal
 
-- Re-audited codebase against documentation suite (2026-05-26).
+- Re-audited codebase against documentation suite (2026-05-27).
 - Added [PRODUCT_DOCUMENTATION.md](PRODUCT_DOCUMENTATION.md) and restored [PRODUCT_DOCUMENTATION_STANDARD.md](PRODUCT_DOCUMENTATION_STANDARD.md).
-- Updated README, PRD, personas, user stories, variables (compact layout), design guidelines, traceability, metrics, guardrails, architecture, and hub index for `20260526-ui54` baseline.
+- Updated README, PRD, personas, user stories, variables, design guidelines, traceability, metrics, guardrails, architecture, and hub index for `20260527-ui97` baseline.
 
 ### UI — Unified compact / phone layout (≤1024px) — Product Team — Impact: user-visible
 
@@ -42,7 +67,7 @@ When updating this file after a change:
 - **Fullscreen:** `fullscreen-compact.css` — body-level host; board/MoSCoW/table match workspace compact layouts inside fullscreen.
 - **Chrome:** `compact-modern.css` — icon-only portfolio tabs, short header title, hidden toolbar labels on compact.
 - **Footer:** `app-footer.css` — centered one-row attribution (credit, LinkedIn, website).
-- Cache bust: `APP_ASSET_VERSION` = `20260526-ui54`.
+- Cache bust: `APP_ASSET_VERSION` = `20260527-ui97`.
 
 ### Docs — Cleanup — Product Team — Impact: internal
 

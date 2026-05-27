@@ -1,0 +1,249 @@
+/**
+ * View density — tight spacing for Table, Board, MoSCoW, and Map.
+ * Loaded last; reduces unnecessary padding inside feature views.
+ */
+
+/* ── Portfolio chrome above views ─────────────────────────── */
+.workspace-panel--v2 .portfolio-command-bar {
+  padding: 0.5rem 0.6rem 0.45rem !important;
+  gap: 0.4rem !important;
+}
+
+.workspace-panel .filters-shell,
+.workspace-panel--v2 .portfolio-filters-body,
+.portfolio-filters-body {
+  padding: 0.45rem 0.6rem 0.5rem !important;
+}
+
+.portfolio-filters-toolbar {
+  margin-bottom: 0.4rem !important;
+  padding-top: 0.2rem !important;
+}
+
+/* ── View stage containers ────────────────────────────────── */
+.workspace-panel .projects-view,
+.workspace-panel--v2 .portfolio-view,
+.workspace-panel--v2 .projects-view,
+.workspace-panel .projects-view--moscow,
+.workspace-panel .projects-view--map,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--table,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--board,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--moscow,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--map {
+  padding: 0 0.45rem 0.45rem !important;
+  gap: 0.35rem !important;
+}
+
+/* ── View toolbars (Table / Board / MoSCoW / Map) ─────────── */
+.view-toolbar,
+.projects-table-toolbar.view-toolbar,
+.projects-map-toolbar.view-toolbar,
+.scrum-board-toolbar.view-toolbar,
+.moscow-view-header.view-toolbar {
+  padding: 0.4rem 0.5rem !important;
+  margin: 0 0 0.3rem !important;
+  min-height: auto !important;
+}
+
+.view-toolbar__row {
+  gap: 0.4rem 0.55rem !important;
+}
+
+.view-toolbar__row--primary {
+  gap: 0.4rem 0.55rem !important;
+}
+
+.view-toolbar__row--secondary {
+  margin-top: 0.35rem !important;
+  padding-top: 0.35rem !important;
+  gap: 0.35rem 0.45rem !important;
+}
+
+.portfolio-view-bar,
+.workspace-panel--v2 .workspace-view-toolbar,
+.workspace-view-toolbar {
+  padding: 0.35rem 0 !important;
+  margin-bottom: 0.3rem !important;
+}
+
+.workspace-panel .projects-map-toolbar {
+  padding: 0.3rem 0 0.2rem !important;
+}
+
+/* ── Table ────────────────────────────────────────────────── */
+.table-wrapper--modern thead th {
+  padding: 0.42rem 0.38rem !important;
+}
+
+.table-wrapper--modern tbody td {
+  padding: 0.38rem 0.36rem !important;
+}
+
+.table-wrapper--modern .empty-state,
+.workspace-panel--v2 .empty-state {
+  padding: 1.25rem 0.75rem !important;
+}
+
+.workspace-panel--v2 .table-wrapper--modern::before {
+  padding: 0.28rem 0.45rem !important;
+}
+
+/* ── Board ────────────────────────────────────────────────── */
+.projects-view--board .scrum-board {
+  padding: 0.15rem 0 0.3rem !important;
+  gap: 0.5rem !important;
+}
+
+.projects-view--board .scrum-board-column-header {
+  padding: 0.45rem 0.5rem !important;
+}
+
+.projects-view--board .scrum-board-column-cards {
+  padding: 0.3rem !important;
+  gap: 0.35rem !important;
+}
+
+.projects-view--board .scrum-board-card {
+  padding: 0.45rem 0.5rem !important;
+}
+
+.projects-view--board .scrum-board-empty {
+  padding: 0.75rem 0.5rem !important;
+}
+
+.workspace-panel--v2 .scrum-board {
+  padding-bottom: 0.25rem !important;
+}
+
+/* ── MoSCoW ───────────────────────────────────────────────── */
+.moscow-quadrant-header {
+  padding: 0.45rem 0.55rem 0.4rem !important;
+  min-height: auto !important;
+  gap: 0.3rem !important;
+}
+
+.moscow-quadrant-label {
+  padding: 0.28rem 0.6rem !important;
+}
+
+.moscow-board-column-cards {
+  padding: 0.35rem !important;
+  gap: 0.35rem !important;
+}
+
+.moscow-board-card {
+  padding: 0.45rem 0.55rem !important;
+  min-height: 56px !important;
+}
+
+.moscow-view-header {
+  margin-bottom: 0.15rem !important;
+}
+
+/* ── Map ──────────────────────────────────────────────────── */
+.projects-map-legend {
+  margin-bottom: 0.3rem !important;
+  font-size: 0.8rem !important;
+}
+
+.workspace-panel--v2 .projects-map-container,
+.workspace-panel .projects-map-container {
+  position: relative !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  aspect-ratio: 2.05 / 1 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: min(42vh, 480px) !important;
+}
+
+.workspace-panel--v2 .projects-map-container .leaflet-container,
+.workspace-panel .projects-map-container .leaflet-container {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+/* ── Compact (phones & tablets ≤1024px) — minimal padding ─── */
+@media (max-width: 1024px) {
+  html.is-compact-layout .app-layout {
+    gap: 0.35rem !important;
+  }
+
+  html.is-compact-layout .app-shell {
+    padding-top: max(0.2rem, env(safe-area-inset-top)) !important;
+    padding-bottom: max(0.2rem, env(safe-area-inset-bottom)) !important;
+    padding-left: env(safe-area-inset-left) !important;
+    padding-right: env(safe-area-inset-right) !important;
+  }
+
+  html.is-compact-layout .portfolio-command-bar,
+  html.is-compact-layout .workspace-panel--v2 .portfolio-command-bar {
+    padding: 0.3rem 0.38rem 0.32rem !important;
+    gap: 0.3rem !important;
+  }
+
+  html.is-compact-layout .portfolio-filters-body,
+  html.is-compact-layout .workspace-panel .filters-shell {
+    padding: 0.35rem 0.4rem 0.4rem !important;
+  }
+
+  html.is-compact-layout .workspace-panel--v2 .portfolio-view,
+  html.is-compact-layout .workspace-panel--v2 .projects-view,
+  html.is-compact-layout .workspace-panel .projects-view--table,
+  html.is-compact-layout .workspace-panel .projects-view--board,
+  html.is-compact-layout .workspace-panel .projects-view--moscow,
+  html.is-compact-layout .workspace-panel .projects-view--map {
+    padding: 0 0.25rem 0.3rem !important;
+    gap: 0.25rem !important;
+  }
+
+  html.is-compact-layout .view-toolbar,
+  html.is-compact-layout .workspace-panel--v2 .view-toolbar,
+  html.is-compact-layout .view-toolbar--table,
+  html.is-compact-layout .view-toolbar--board,
+  html.is-compact-layout .view-toolbar--moscow,
+  html.is-compact-layout .view-toolbar--map {
+    padding: 0.25rem 0.35rem !important;
+    margin: 0 0 0.18rem !important;
+  }
+
+  html.is-compact-layout .view-toolbar__row--secondary {
+    margin-top: 0.2rem !important;
+    padding-top: 0.2rem !important;
+    gap: 0.25rem !important;
+  }
+
+  html.is-compact-layout .table-wrapper--modern thead th {
+    padding: 0.36rem 0.3rem !important;
+  }
+
+  html.is-compact-layout .table-wrapper--modern tbody td {
+    padding: 0.34rem 0.28rem !important;
+  }
+
+  html.is-compact-layout .projects-view--board .scrum-board-column-header {
+    padding: 0.38rem 0.42rem !important;
+  }
+
+  html.is-compact-layout .projects-view--board .scrum-board-column-cards {
+    padding: var(--pcard-space-3, 0.75rem) !important;
+    gap: var(--pcard-space-3, 0.75rem) !important;
+  }
+
+  html.is-compact-layout .moscow-board-column-cards {
+    padding: var(--pcard-space-3, 0.75rem) !important;
+    gap: var(--pcard-space-3, 0.75rem) !important;
+  }
+
+  html.is-compact-layout .projects-map-legend {
+    margin-bottom: 0.2rem !important;
+  }
+
+  html.is-compact-layout .workspace-panel--v2 {
+    padding-bottom: calc(4.25rem + env(safe-area-inset-bottom)) !important;
+  }
+}

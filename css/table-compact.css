@@ -6,8 +6,8 @@
 
 @media (max-width: 1024px) {
   html.is-compact-layout .projects-view--table {
-    padding-left: 0.55rem !important;
-    padding-right: 0.55rem !important;
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
   }
 
   html.is-compact-layout .view-toolbar--table .view-toolbar__row--primary {
@@ -41,21 +41,21 @@
   html.is-compact-layout .view-toolbar--table .view-fullscreen-btn {
     min-width: 44px;
     min-height: var(--compact-touch, 44px);
-    padding-left: 0.55rem !important;
-    padding-right: 0.55rem !important;
+    padding-left: 0.35rem !important;
+    padding-right: 0.35rem !important;
   }
 
   html.is-compact-layout .workspace-panel--v2 .table-wrapper--modern {
     max-height: min(58vh, 520px);
   }
 
-  html.is-compact-layout .table-wrapper--modern .cell-actions {
+  html.is-compact-layout .table-wrapper--modern .cell-actions:not(.cell-actions--project) {
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 0.35rem !important;
   }
 
-  html.is-compact-layout .table-wrapper--modern .cell-actions .btn-secondary {
+  html.is-compact-layout .table-wrapper--modern .cell-actions:not(.cell-actions--project) .btn-secondary {
     width: 100% !important;
     min-height: 40px;
     justify-content: center;
@@ -67,11 +67,11 @@
   }
 
   html.is-compact-layout .table-wrapper--modern thead th {
-    padding: 0.55rem 0.45rem !important;
+    padding: 0.38rem 0.32rem !important;
   }
 
   html.is-compact-layout .table-wrapper--modern tbody td {
-    padding: 0.5rem 0.45rem !important;
+    padding: 0.36rem 0.3rem !important;
   }
 }
 

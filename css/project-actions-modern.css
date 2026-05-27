@@ -1,0 +1,394 @@
+/**
+ * Modern project & profile action controls — table, board, MoSCoW, profiles.
+ * Loaded last so it overrides legacy stacked / segmented layouts.
+ */
+
+:root {
+  --action-view: #4338ca;
+  --action-view-bg: #eef2ff;
+  --action-view-border: rgba(99, 102, 241, 0.28);
+  --action-edit: #b45309;
+  --action-edit-bg: #fffbeb;
+  --action-edit-border: rgba(245, 158, 11, 0.35);
+  --action-delete: #b91c1c;
+  --action-delete-bg: #fef2f2;
+  --action-delete-border: rgba(239, 68, 68, 0.32);
+  --action-surface: #ffffff;
+  --action-group-bg: #f8fafc;
+  --action-group-border: rgba(148, 163, 184, 0.28);
+  --action-radius: 10px;
+  --action-radius-sm: 8px;
+  --action-transition: 0.16s ease;
+}
+
+/* ── Shared action button ─────────────────────────────────── */
+.project-action-btn,
+.profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip,
+.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.38rem !important;
+  min-height: 34px !important;
+  padding: 0.34rem 0.62rem !important;
+  border-radius: var(--action-radius-sm) !important;
+  border: 1px solid var(--action-group-border) !important;
+  background: var(--action-surface) !important;
+  color: #334155 !important;
+  font-family: inherit !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+  line-height: 1.1 !important;
+  text-transform: none !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  transition:
+    background var(--action-transition),
+    border-color var(--action-transition),
+    color var(--action-transition),
+    box-shadow var(--action-transition),
+    transform var(--action-transition) !important;
+}
+
+.project-action-btn__icon,
+.profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip svg,
+.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn svg {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+  width: 15px !important;
+  height: 15px !important;
+  line-height: 0 !important;
+}
+
+.project-action-btn__icon svg {
+  width: 15px !important;
+  height: 15px !important;
+  display: block !important;
+}
+
+.project-action-btn__label,
+.profiles-panel--v2 .profiles-card-actions--footer .profile-action-label--visible {
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  clip: auto !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+  text-transform: none !important;
+}
+
+.project-action-btn--view {
+  color: var(--action-view) !important;
+  background: var(--action-view-bg) !important;
+  border-color: var(--action-view-border) !important;
+}
+
+.project-action-btn--edit {
+  color: var(--action-edit) !important;
+  background: var(--action-edit-bg) !important;
+  border-color: var(--action-edit-border) !important;
+}
+
+.project-action-btn--delete {
+  color: var(--action-delete) !important;
+  background: var(--action-delete-bg) !important;
+  border-color: var(--action-delete-border) !important;
+}
+
+.project-action-btn:hover:not(:disabled),
+.profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip:hover:not(:disabled),
+.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn:hover:not(:disabled) {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+}
+
+.project-action-btn--view:hover:not(:disabled) {
+  background: #e0e7ff !important;
+  border-color: rgba(99, 102, 241, 0.45) !important;
+}
+
+.project-action-btn--edit:hover:not(:disabled) {
+  background: #fef3c7 !important;
+  border-color: rgba(245, 158, 11, 0.5) !important;
+}
+
+.project-action-btn--delete:hover:not(:disabled) {
+  background: #fee2e2 !important;
+  border-color: rgba(239, 68, 68, 0.45) !important;
+}
+
+.project-action-btn:active:not(:disabled) {
+  transform: translateY(0) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+}
+
+.project-action-btn:disabled,
+.profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip:disabled,
+.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn:disabled {
+  opacity: 0.58 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.project-action-btn:focus-visible,
+.profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip:focus-visible {
+  outline: 2px solid rgba(99, 102, 241, 0.45) !important;
+  outline-offset: 2px !important;
+}
+
+.project-action-btn--icon-only {
+  min-width: 34px !important;
+  min-height: 34px !important;
+  padding: 0.34rem !important;
+  gap: 0 !important;
+}
+
+.project-action-btn--icon-only .project-action-btn__label {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* ── Table row actions ────────────────────────────────────── */
+.project-row-actions,
+.cell-actions--project,
+.table-wrapper--modern .cell-actions--project,
+.table-wrapper .cell-actions--project {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.35rem !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+/* ── Profile compact card footer ──────────────────────────── */
+.profiles-panel--v2 .profiles-card-actions--footer {
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: stretch !important;
+  gap: 0.35rem !important;
+  padding: 0.45rem 0.55rem 0.5rem !important;
+  margin: 0 !important;
+  border-left: none !important;
+  border-top: 1px solid rgba(148, 163, 184, 0.18) !important;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%) !important;
+}
+
+.profiles-panel--v2 .profiles-card-actions--footer .profile-action-wrap {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  border-left: none !important;
+}
+
+.profiles-panel--v2 .profiles-card-actions--footer .profile-action-wrap + .profile-action-wrap {
+  border-left: none !important;
+}
+
+.profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip--view,
+.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn--view {
+  color: var(--action-view) !important;
+  background: var(--action-view-bg) !important;
+  border-color: var(--action-view-border) !important;
+}
+
+.profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip--edit,
+.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn--edit {
+  color: var(--action-edit) !important;
+  background: var(--action-edit-bg) !important;
+  border-color: var(--action-edit-border) !important;
+}
+
+.profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip--danger,
+.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn--danger {
+  color: var(--action-delete) !important;
+  background: var(--action-delete-bg) !important;
+  border-color: var(--action-delete-border) !important;
+}
+
+.profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip--view:hover:not(:disabled),
+.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn--view:hover:not(:disabled) {
+  background: #e0e7ff !important;
+}
+
+.profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip--edit:hover:not(:disabled),
+.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn--edit:hover:not(:disabled) {
+  background: #fef3c7 !important;
+}
+
+.profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip--danger:hover:not(:disabled),
+.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn--danger:hover:not(:disabled) {
+  background: #fee2e2 !important;
+}
+
+/* ── Board / MoSCoW card actions ────────────────────────── */
+.scrum-board-card-actions,
+.moscow-board-card-actions {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+}
+
+.scrum-board-card-btn,
+.moscow-board-card-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.35rem !important;
+  min-height: 32px !important;
+  padding: 0.32rem 0.58rem !important;
+  border-radius: var(--action-radius-sm) !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+  text-transform: none !important;
+  border: 1px solid var(--action-group-border) !important;
+  background: var(--action-surface) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  transition:
+    background var(--action-transition),
+    border-color var(--action-transition),
+    transform var(--action-transition),
+    box-shadow var(--action-transition) !important;
+}
+
+.scrum-board-card-btn--view,
+.moscow-board-card-btn--view {
+  color: var(--action-view) !important;
+  background: var(--action-view-bg) !important;
+  border-color: var(--action-view-border) !important;
+}
+
+.scrum-board-card-btn--edit,
+.moscow-board-card-btn--edit {
+  color: var(--action-edit) !important;
+  background: var(--action-edit-bg) !important;
+  border-color: var(--action-edit-border) !important;
+}
+
+.scrum-board-card-btn--delete,
+.moscow-board-card-btn--delete {
+  color: var(--action-delete) !important;
+  background: var(--action-delete-bg) !important;
+  border-color: var(--action-delete-border) !important;
+}
+
+.scrum-board-card-btn:hover:not(:disabled),
+.moscow-board-card-btn:hover:not(:disabled) {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+}
+
+.portfolio-card-action-icon svg {
+  width: 15px !important;
+  height: 15px !important;
+}
+
+/* ── Compact / touch layouts ─────────────────────────────── */
+@media (max-width: 1024px) {
+  html.is-compact-layout .cell-actions--project {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.3rem !important;
+  }
+
+  html.is-compact-layout .project-action-btn {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    padding: 0.38rem 0.35rem !important;
+  }
+
+  html.is-compact-layout .project-action-btn__label {
+    font-size: 0.68rem !important;
+  }
+
+  html.is-compact-layout .moscow-board-card-actions,
+  html.is-compact-layout .scrum-board-card-actions {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 0.3rem !important;
+    width: auto !important;
+    min-width: 0 !important;
+  }
+
+  html.is-compact-layout .portfolio-card-action-btn,
+  html.is-compact-layout .moscow-board-card-btn,
+  html.is-compact-layout .scrum-board-card-btn {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    min-height: 36px !important;
+    max-height: none !important;
+    padding: 0.34rem 0.35rem !important;
+    gap: 0.28rem !important;
+  }
+
+  html.is-compact-layout .portfolio-card-action-text {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    clip: auto !important;
+    font-size: 0.66rem !important;
+    font-weight: 600 !important;
+  }
+}
+
+@media (max-width: 420px) {
+  html.is-compact-layout .project-action-btn__label,
+  html.is-compact-layout .portfolio-card-action-text {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
+
+  html.is-compact-layout .project-action-btn,
+  html.is-compact-layout .portfolio-card-action-btn,
+  html.is-compact-layout .moscow-board-card-btn,
+  html.is-compact-layout .scrum-board-card-btn {
+    padding: 0.38rem !important;
+    min-width: 38px !important;
+  }
+
+  .profiles-panel--v2 .profiles-card-actions--footer .profile-action-label--visible {
+    font-size: 0.64rem !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-action-btn,
+  .scrum-board-card-btn,
+  .moscow-board-card-btn,
+  .profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip {
+    transition: none !important;
+  }
+}

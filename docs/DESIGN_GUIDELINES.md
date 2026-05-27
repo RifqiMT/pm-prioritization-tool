@@ -1,7 +1,7 @@
 # Design Guidelines
 
 **Product:** Product Management Prioritization Tool  
-**Last updated:** 2026-05-26
+**Last updated:** 2026-05-27
 
 Visual and interaction standards for the local-first prioritization workspace.
 
@@ -99,7 +99,14 @@ Defined in `main.css` `.cell-type-pill[data-status=...]` and `view-toolbars-mode
 | `moscow-compact.css` | MoSCoW nav pills, single-column quadrants (≤1024px) |
 | `board-compact.css` | Board single-column stack, card move dropdown |
 | `table-compact.css` | Table compact toolbar, selection bar, stacked actions |
+| `project-actions-modern.css` | Table row action toolbar (icon-only), alignment + spacing |
+| `table-rows-modern.css` | Modern row alignment, spacing, and typography for table rows |
+| `table-revamp-modern.css` | Modern table shell/layout rules (overlap prevention, action cell constraints) |
+| `fullscreen-modern.css` | Fullscreen host layout (desktop + compact parity) |
 | `fullscreen-compact.css` | Fullscreen body host + compact view parity |
+| `views-density.css` | Density scaling helpers (compact/desktop readability tuning) |
+| `layout-flow.css` | Shared flow/layout helpers across surfaces |
+| `portfolio-cards-compact.css` | Compact card stacks for portfolio surfaces |
 | `app-footer.css` | Centered one-row site footer |
 
 **Load order:** see [TECH_GUIDELINES.md](TECH_GUIDELINES.md).
@@ -121,7 +128,7 @@ Defined in `main.css` `.cell-type-pill[data-status=...]` and `view-toolbars-mode
 
 - Identity block: icon + title + description (description hidden on small screens).  
 - Actions: right-aligned cluster; grid layout on mobile.  
-- Board: scrollable status filter pills + RICE sort toggle.  
+- Board: scrollable status columns + RICE sort toggle (all columns always visible).  
 - Map: segmented metric pills (Count / RICE / EUR).
 
 ### 5.2 Profile card (v2)
@@ -160,8 +167,9 @@ Defined in `main.css` `.cell-type-pill[data-status=...]` and `view-toolbars-mode
 
 ### 5.7 Tables
 
-- Sticky gradient header, zebra rows, horizontal scroll hint on mobile.  
-- Icon columns: Type, Status, Framework.
+- Sticky gradient header (where enabled), zebra rows, horizontal scroll hint on mobile.  
+- Icon columns: Type, Status, Framework.  
+- Actions: compact **icon-only** action rail aligned inside the Actions cell to prevent overlap on narrow widths.
 
 ---
 

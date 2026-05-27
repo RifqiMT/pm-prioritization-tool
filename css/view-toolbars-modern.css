@@ -14,8 +14,8 @@
   --vt-text-soft: #7a4b12;
   --vt-accent: #b91c1c;
   --vt-gold: #a16207;
-  --vt-radius: 14px;
-  --vt-shadow: 0 1px 3px rgba(63, 15, 25, 0.06);
+  --vt-radius: 0;
+  --vt-shadow: none;
 
   display: block !important;
   flex: 0 0 auto !important;
@@ -54,50 +54,11 @@
 }
 
 .view-toolbar--board .view-toolbar__row--primary {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.view-toolbar--board {
-  display: grid !important;
-  grid-template-columns: minmax(240px, 1fr) minmax(320px, 1fr) auto;
-  align-items: center;
-  gap: 0.65rem 0.85rem;
-}
-
-/* Flatten the two-row markup into a single-row grid layout */
-.view-toolbar--board .view-toolbar__row {
-  display: contents !important;
-}
-
-.view-toolbar--board .view-toolbar__identity {
-  width: auto !important;
-}
-
-.view-toolbar--board .view-toolbar__legend {
-  align-self: center;
-  justify-self: stretch;
-  min-width: 0;
-}
-
-.view-toolbar--board .view-toolbar__cluster {
-  justify-self: end;
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .view-toolbar--board .view-toolbar__row--secondary {
-  margin-top: 0 !important;
-  padding-top: 0 !important;
-  border-top: none !important;
-}
-
-/* Allow wrapping on narrower widths without looking broken */
-@media (max-width: 900px) {
-  .view-toolbar--board {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .view-toolbar--board .view-toolbar__legend {
-    grid-column: 1 / -1;
-  }
+  display: none !important;
 }
 
 .view-toolbar__row--secondary {
@@ -190,17 +151,28 @@
 }
 
 .view-toolbar--map .view-toolbar__row--primary {
-  align-items: end;
+  align-items: center;
 }
 
 .view-toolbar--map .view-toolbar__metric--map {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 0.4rem;
-  flex: 0 1 auto;
+  gap: 0.45rem;
+  flex: 1 1 auto;
   min-width: 0;
   max-width: 100%;
+}
+
+.view-toolbar--map .view-toolbar__field-label,
+.view-toolbar--map .projects-map-metric-label {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.view-toolbar--map .map-metric-picker {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .view-toolbar--map .view-toolbar__cluster--actions {
@@ -405,12 +377,24 @@
   top: calc(100% + 0.35rem);
   left: 0;
   right: 0;
-  z-index: 120;
+  z-index: 220;
   border-radius: 12px;
   border: 1px solid rgba(231, 201, 120, 0.65);
   background: #fffdf8;
   box-shadow: 0 10px 28px rgba(63, 15, 25, 0.12);
   overflow: hidden;
+}
+
+.view-toolbar--map:has(.map-metric-picker__field--open),
+.projects-view--map .projects-map-toolbar:has(.map-metric-picker__field--open) {
+  position: relative;
+  z-index: 200;
+  overflow: visible !important;
+}
+
+.projects-view--map .projects-map-legend {
+  position: relative;
+  z-index: 1;
 }
 
 .map-metric-picker__dropdown[hidden] {
@@ -423,7 +407,7 @@
   gap: 0.45rem;
   padding: 0.45rem 0.55rem;
   border-bottom: 1px solid rgba(231, 201, 120, 0.35);
-  background: rgba(255, 253, 248, 0.95);
+  background: #fffdf8;
 }
 
 .map-metric-picker__search-icon {
@@ -459,9 +443,10 @@
 .map-metric-picker__list {
   list-style: none;
   margin: 0;
-  padding: 0.3rem;
-  max-height: min(220px, 40dvh);
+  padding: 0.35rem;
+  max-height: min(280px, 45dvh);
   overflow-y: auto;
+  background: #fffdf8;
 }
 
 .map-metric-picker__option {
@@ -678,7 +663,8 @@
 
 .view-toolbar__toggle-label,
 .view-toolbar #scrumBoardSortByRiceLabel,
-.view-toolbar #moscowSortByRiceLabel {
+.view-toolbar #moscowSortByRiceLabel,
+.view-toolbar #tableSortByRiceLabel {
   font-size: 0.8rem !important;
   font-weight: 600 !important;
   color: var(--vt-text-soft) !important;
@@ -742,104 +728,11 @@
   color: var(--vt-text-soft) !important;
 }
 
-/* Board status column filters — toggle pills */
-.view-toolbar__legend .board-status-filter-btn {
-  cursor: pointer;
-  font-family: inherit;
-  line-height: 1.25;
-  transition:
-    transform 0.12s ease,
-    box-shadow 0.12s ease,
-    opacity 0.12s ease,
-    background 0.12s ease;
-}
-
-.view-toolbar__legend .board-status-filter-btn:hover:not(.board-status-filter-btn--off) {
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
-}
-
-.view-toolbar__legend .board-status-filter-btn:focus-visible {
-  outline: 2px solid var(--vt-gold, #b8860b);
-  outline-offset: 2px;
-}
-
-.view-toolbar__legend .board-status-filter-btn[aria-pressed="true"] {
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
-}
-
-.view-toolbar__legend .board-status-filter-btn--off {
-  opacity: 0.55;
-  background: #f8fafc !important;
-  color: #94a3b8 !important;
-  border: 1px dashed rgba(148, 163, 184, 0.55) !important;
-  box-shadow: none;
-  text-decoration: line-through;
-  text-decoration-color: rgba(148, 163, 184, 0.7);
-  text-decoration-thickness: 1px;
-}
-
-.view-toolbar__legend .board-status-filter-btn--off:hover {
-  opacity: 0.85;
-  transform: none;
-}
-
-.view-toolbar__legend .board-status-filter-btn[aria-pressed="true"][data-status="Not Started"] {
-  border-color: rgba(148, 163, 184, 0.6) !important;
-  background: rgba(71, 85, 105, 0.2) !important;
-  color: #64748b !important;
-}
-
-.view-toolbar__legend .board-status-filter-btn[aria-pressed="true"][data-status="In Progress"] {
-  border-color: rgba(59, 130, 246, 0.75) !important;
-  background: rgba(37, 99, 235, 0.18) !important;
-  color: #2563eb !important;
-}
-
-.view-toolbar__legend .board-status-filter-btn[aria-pressed="true"][data-status="On Hold"] {
-  border-color: rgba(251, 191, 36, 0.75) !important;
-  background: rgba(245, 158, 11, 0.15) !important;
-  color: #d97706 !important;
-}
-
-.view-toolbar__legend .board-status-filter-btn[aria-pressed="true"][data-status="Done"] {
-  border-color: rgba(52, 211, 153, 0.75) !important;
-  background: rgba(16, 185, 129, 0.15) !important;
-  color: #059669 !important;
-}
-
-.view-toolbar__legend .board-status-filter-btn[aria-pressed="true"][data-status="Cancelled"] {
-  border-color: rgba(248, 113, 113, 0.75) !important;
-  background: rgba(239, 68, 68, 0.15) !important;
-  color: #dc2626 !important;
-}
-
-.view-toolbar__legend .board-status-filter-reset {
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 0.65rem !important;
-  font-weight: 700 !important;
-  padding: 0.2rem 0.55rem !important;
-  border-radius: 999px !important;
-  border: 1px solid var(--vt-gold, #b8860b) !important;
-  background: rgba(184, 134, 11, 0.08) !important;
-  color: var(--vt-gold, #92680a) !important;
-  white-space: nowrap;
-}
-
-.view-toolbar__legend .board-status-filter-reset:hover {
-  background: rgba(184, 134, 11, 0.16) !important;
-}
-
-.view-toolbar__legend .board-status-filter-reset:focus-visible {
-  outline: 2px solid var(--vt-gold, #b8860b);
-  outline-offset: 2px;
-}
-
 /* ── Non-desktop (≤1024px) — phone UI on tablets & phones ── */
 @media (max-width: 1024px) {
   .view-toolbar {
-    padding: 0.65rem 0.7rem;
-    border-radius: 12px;
+    padding: 0.35rem 0.4rem;
+    border-radius: 10px;
   }
 
   .view-toolbar__row--primary,
@@ -911,9 +804,9 @@
   }
 
   .view-toolbar--map .view-toolbar__metric--map {
-    grid-column: 1 / -1;
     width: 100%;
     max-width: none;
+    min-width: 0;
   }
 
   .view-toolbar--map .map-metric-picker__trigger {
@@ -921,7 +814,8 @@
   }
 
   .view-toolbar--moscow .view-toolbar__cluster,
-  .view-toolbar--board .view-toolbar__row--secondary .view-toolbar__cluster {
+  .view-toolbar--board .view-toolbar__row--primary .view-toolbar__cluster,
+  .view-toolbar--table .view-toolbar__cluster {
     display: grid !important;
     grid-template-columns: 1fr auto;
     gap: 0.45rem;
@@ -947,6 +841,17 @@
   border-style: solid !important;
   margin-bottom: 0.65rem !important;
   padding: 0.75rem 0.85rem !important;
+}
+
+@media (max-width: 1024px) {
+  html.is-compact-layout .workspace-panel--v2 .view-toolbar,
+  html.is-compact-layout .workspace-panel--v2 .projects-table-toolbar.view-toolbar,
+  html.is-compact-layout .workspace-panel--v2 .scrum-board-toolbar.view-toolbar,
+  html.is-compact-layout .workspace-panel--v2 .moscow-view-header.view-toolbar,
+  html.is-compact-layout .workspace-panel--v2 .projects-map-toolbar.view-toolbar {
+    padding: 0.28rem 0.38rem !important;
+    margin-bottom: 0.2rem !important;
+  }
 }
 
 .workspace-panel--v2 .workspace-view-toolbar:not(.view-toolbar) {
@@ -1098,7 +1003,33 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .view-toolbar__row--
   transform: none !important;
 }
 
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-view--map .projects-map-container,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-view--map .projects-map-container {
+  position: relative !important;
+  z-index: 1 !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  aspect-ratio: 2.05 / 1 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: min(42vh, 480px) !important;
+  overflow: hidden !important;
+}
+
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-view--map .projects-map-container .leaflet-container {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-view--map {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  align-self: start !important;
+}
+
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-view--board .scrum-board,
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-view--moscow .moscow-grid {
   position: relative !important;

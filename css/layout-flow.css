@@ -1,0 +1,425 @@
+/**
+ * Flat connected layout — no stacked “curvy” boxes.
+ * Structural surfaces use square corners + hairline dividers; radius only on controls (pills, FAB).
+ */
+
+:root {
+  --flow-divider: rgba(231, 201, 120, 0.45);
+  --flow-surface: #ffffff;
+  --flow-surface-soft: #fffdf8;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PHONES & TABLETS (≤1024px) — fully flat workspace flow
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  html.is-compact-layout {
+    --flow-radius-control: 8px;
+  }
+
+  /* ── Shell panels: square, single outline ───────────────── */
+  html.is-compact-layout .app-header--modern {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-bottom: 1px solid var(--flow-divider) !important;
+    background: var(--flow-surface) !important;
+    margin-bottom: 0 !important;
+  }
+
+  html.is-compact-layout .app-header--modern::after {
+    display: none !important;
+  }
+
+  html.is-compact-layout .workspace-panel--v2.card-plain,
+  html.is-compact-layout .workspace-panel.card-plain.workspace-panel--v2,
+  html.is-compact-layout section#workspacePanel.workspace-panel--v2 {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-top: 1px solid var(--flow-divider) !important;
+    background: var(--flow-surface) !important;
+  }
+
+  html.is-compact-layout .profiles-panel--modern.profiles-panel--v2 {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: 1px solid var(--flow-divider) !important;
+  }
+
+  /* ── In-workspace sections: dividers only ───────────────── */
+  html.is-compact-layout .profile-picker-bar,
+  html.is-compact-layout .portfolio-command-bar,
+  html.is-compact-layout .portfolio-filters-drawer,
+  html.is-compact-layout .portfolio-filters-summary,
+  html.is-compact-layout .profile-unlock-panel {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-bottom: 1px solid var(--flow-divider) !important;
+    background: var(--flow-surface) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  html.is-compact-layout .portfolio-filters-body,
+  html.is-compact-layout .workspace-panel .filters-shell {
+    border-radius: 0 !important;
+    border: none !important;
+    border-bottom: 1px solid var(--flow-divider) !important;
+    box-shadow: none !important;
+  }
+
+  html.is-compact-layout .portfolio-stage {
+    background: var(--flow-surface);
+  }
+
+  /* View toolbars — not separate rounded cards */
+  html.is-compact-layout .view-toolbar,
+  html.is-compact-layout .projects-table-toolbar.view-toolbar,
+  html.is-compact-layout .scrum-board-toolbar.view-toolbar,
+  html.is-compact-layout .moscow-view-header.view-toolbar,
+  html.is-compact-layout .projects-map-toolbar.view-toolbar,
+  html.is-compact-layout .workspace-panel--v2 .view-toolbar,
+  html.is-compact-layout .workspace-view-toolbar.view-toolbar {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-bottom: 1px solid var(--flow-divider) !important;
+    background: transparent !important;
+    margin: 0 !important;
+  }
+
+  html.is-compact-layout .view-toolbar__row--secondary {
+    border-top: 1px solid rgba(231, 201, 120, 0.32) !important;
+    border-bottom: none !important;
+    margin-top: 0 !important;
+    padding-top: 0.3rem !important;
+  }
+
+  /* Table / board / map — flush inside workspace (no inner box) */
+  html.is-compact-layout .workspace-panel--v2 .table-wrapper--modern,
+  html.is-compact-layout .workspace-panel--v2 .projects-map-container,
+  html.is-compact-layout .workspace-panel--v2 .scrum-board,
+  html.is-compact-layout .workspace-panel .projects-map-container,
+  html.is-compact-layout .workspace-panel .moscow-grid {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-top: 1px solid var(--flow-divider) !important;
+  }
+
+  html.is-compact-layout .workspace-panel--v2 .table-wrapper--modern::before {
+    border-radius: 0 !important;
+    border-bottom: 1px solid var(--flow-divider);
+  }
+
+  /* Board columns — list rows, not rounded pods */
+  html.is-compact-layout .projects-view--board .scrum-board-column {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-bottom: 1px solid var(--flow-divider) !important;
+    background: var(--flow-surface) !important;
+  }
+
+  html.is-compact-layout .projects-view--board .scrum-board-column:last-child {
+    border-bottom: none !important;
+  }
+
+  html.is-compact-layout .projects-view--board .scrum-board-column-header {
+    border-radius: 0 !important;
+    background: var(--flow-surface-soft) !important;
+    border-bottom: 1px solid var(--flow-divider) !important;
+  }
+
+  html.is-compact-layout .projects-view--board .scrum-board-card,
+  html.is-compact-layout .moscow-board-card,
+  html.is-compact-layout .projects-view--moscow .moscow-board-card {
+    border-radius: var(--flow-radius-control) !important;
+    box-shadow: none !important;
+    border: 1px solid rgba(231, 201, 120, 0.38) !important;
+  }
+
+  /* MoSCoW — flat stack */
+  html.is-compact-layout .projects-view--moscow .moscow-grid,
+  html.is-compact-layout .view-in-fullscreen-host .moscow-grid {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-top: 1px solid var(--flow-divider) !important;
+    overflow: visible !important;
+  }
+
+  html.is-compact-layout .moscow-board-column.moscow-grid-cell {
+    border-radius: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-bottom: 1px solid var(--flow-divider) !important;
+    background: var(--flow-surface) !important;
+  }
+
+  html.is-compact-layout .moscow-board-column.moscow-grid-cell:last-child {
+    border-bottom: none !important;
+  }
+
+  html.is-compact-layout .moscow-quadrant-header {
+    border-radius: 0 !important;
+    border-bottom: 1px solid var(--flow-divider) !important;
+    background: var(--flow-surface-soft) !important;
+  }
+
+  html.is-compact-layout .moscow-compact-nav {
+    margin-bottom: 0 !important;
+    border-bottom: 1px solid var(--flow-divider);
+  }
+
+  html.is-compact-layout .moscow-compact-nav__track {
+    border-radius: var(--flow-radius-control) !important;
+    box-shadow: none !important;
+    border: 1px solid rgba(231, 201, 120, 0.4) !important;
+  }
+
+  /* Segmented tabs — only controls stay softly rounded */
+  html.is-compact-layout .portfolio-view-tabs.view-toggle-group--portfolio {
+    border-radius: var(--flow-radius-control) !important;
+    box-shadow: none !important;
+  }
+
+  html.is-compact-layout .view-fullscreen-chrome,
+  html.is-compact-layout .view-in-fullscreen-host {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Kill theme “card” rounding inside workspace */
+  html.is-compact-layout .workspace-panel--v2 .card,
+  html.is-compact-layout .workspace-panel--v2 .card-plain,
+  html.is-compact-layout .workspace-panel--v2 .filters-shell,
+  html.is-compact-layout .workspace-panel--v2 .portfolio-view-bar {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DESKTOP — one workspace panel, flat inner sections
+   ═══════════════════════════════════════════════════════════ */
+@media (min-width: 1025px) {
+  html.is-desktop-layout .app-header--modern {
+    border-radius: 4px !important;
+    box-shadow: none !important;
+    border: 1px solid var(--flow-divider) !important;
+  }
+
+  html.is-desktop-layout .app-header--modern::after {
+    display: none !important;
+  }
+
+  html.is-desktop-layout .workspace-panel--v2.card-plain,
+  html.is-desktop-layout .workspace-panel.card-plain.workspace-panel--v2 {
+    border-radius: 4px !important;
+    box-shadow: none !important;
+    border: 1px solid var(--flow-divider) !important;
+    overflow: hidden;
+  }
+
+  html.is-desktop-layout .profiles-panel--modern.profiles-panel--v2 {
+    border-radius: 4px !important;
+    box-shadow: none !important;
+    border: 1px solid var(--flow-divider) !important;
+  }
+
+  html.is-desktop-layout .portfolio-command-bar,
+  html.is-desktop-layout .workspace-panel--v2 .portfolio-command-bar {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-bottom: 1px solid var(--flow-divider) !important;
+  }
+
+  html.is-desktop-layout .workspace-panel--v2 .view-toolbar,
+  html.is-desktop-layout .workspace-panel--v2 .projects-table-toolbar.view-toolbar,
+  html.is-desktop-layout .workspace-panel--v2 .scrum-board-toolbar.view-toolbar,
+  html.is-desktop-layout .workspace-panel--v2 .moscow-view-header.view-toolbar,
+  html.is-desktop-layout .workspace-panel--v2 .projects-map-toolbar.view-toolbar,
+  html.is-desktop-layout .view-toolbar {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-bottom: 1px solid var(--flow-divider) !important;
+    background: transparent !important;
+  }
+
+  html.is-desktop-layout .workspace-panel--v2 .filters-shell,
+  html.is-desktop-layout .workspace-panel--v2 .portfolio-filters-body {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border-left: none !important;
+    border-right: none !important;
+  }
+
+  html.is-desktop-layout .workspace-panel--v2 .table-wrapper--modern,
+  html.is-desktop-layout .workspace-panel--v2 .projects-map-container,
+  html.is-desktop-layout .workspace-panel--v2 .scrum-board,
+  html.is-desktop-layout .workspace-panel .moscow-grid {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-top: 1px solid var(--flow-divider) !important;
+  }
+
+  html.is-desktop-layout .projects-view--board .scrum-board-column,
+  html.is-desktop-layout .moscow-board-column.moscow-grid-cell {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  html.is-desktop-layout .moscow-grid {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-top: 1px solid var(--flow-divider) !important;
+  }
+
+  html.is-desktop-layout .scrum-board-card,
+  html.is-desktop-layout .moscow-board-card {
+    border-radius: 4px !important;
+    box-shadow: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GLOBAL OVERRIDES (theme layers in main.css)
+   ═══════════════════════════════════════════════════════════ */
+.card-plain.workspace-panel,
+.workspace-panel.card-plain {
+  box-shadow: none !important;
+}
+
+/* ── App shell: content-height rows (no dead space under profiles) ── */
+.app-layout {
+  grid-template-rows: auto !important;
+  align-items: start !important;
+  flex: 0 1 auto !important;
+  min-height: 0 !important;
+}
+
+.app-layout > .profiles-panel--v2,
+.app-layout > section.profiles-panel {
+  align-self: start !important;
+  height: auto !important;
+  max-height: none !important;
+  margin-bottom: 0 !important;
+}
+
+.app-layout > .workspace-panel--v2,
+.app-layout > section.workspace-panel {
+  align-self: start !important;
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+@media (max-width: 1024px) {
+  html.is-compact-layout .app-layout > section.profiles-panel.profiles-panel--v2 {
+    height: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: visible !important;
+    gap: 0 !important;
+  }
+}
+
+.view-toolbar,
+.projects-table-toolbar.view-toolbar,
+.scrum-board-toolbar.view-toolbar,
+.moscow-view-header.view-toolbar,
+.projects-map-toolbar.view-toolbar {
+  background-image: none !important;
+}
+
+.moscow-grid,
+.projects-view--moscow .moscow-grid {
+  box-shadow: none !important;
+}
+
+.scrum-board-column,
+.moscow-board-column.moscow-grid-cell {
+  box-shadow: none !important;
+}
+
+/* Beat main.css theme radii (20px card-plain, etc.) */
+@media (max-width: 1024px) {
+  html.is-compact-layout .card,
+  html.is-compact-layout .card-plain,
+  html.is-compact-layout .filters-shell,
+  html.is-compact-layout .table-wrapper,
+  html.is-compact-layout .table-wrapper--modern,
+  html.is-compact-layout .moscow-grid,
+  html.is-compact-layout .scrum-board-column {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+}
+
+@media (min-width: 1025px) {
+  html.is-desktop-layout .card-plain.workspace-panel--v2,
+  html.is-desktop-layout .workspace-panel.card-plain {
+    border-radius: 4px !important;
+    box-shadow: none !important;
+  }
+
+  html.is-desktop-layout .card,
+  html.is-desktop-layout .card-plain,
+  html.is-desktop-layout .filters-shell,
+  html.is-desktop-layout .table-wrapper--modern,
+  html.is-desktop-layout .moscow-grid {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+}
+
+/* ── Map view: Leaflet fills shell; no dead space below map ── */
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage:has(#projectsMapView[aria-hidden="false"]) {
+  flex: 0 0 auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  align-self: start !important;
+}
+
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .workspace-panel--v2:has(#projectsMapView[aria-hidden="false"]) {
+  min-height: 0 !important;
+  height: auto !important;
+}
+
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-view--map {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  align-self: start !important;
+  padding-bottom: 0.35rem !important;
+  gap: 0.35rem !important;
+}
+
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-map-container {
+  position: relative !important;
+  display: block !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  aspect-ratio: 2.05 / 1 !important;
+  height: auto !important;
+  max-height: min(42vh, 480px) !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-map-container .leaflet-container {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}

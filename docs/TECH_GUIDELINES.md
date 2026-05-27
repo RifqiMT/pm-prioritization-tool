@@ -51,8 +51,15 @@ Load order (later wins for equal specificity):
 10. `moscow-compact.css`
 11. `board-compact.css`
 12. `table-compact.css`
-13. `fullscreen-compact.css`
-14. `app-footer.css`
+13. `project-actions-modern.css`
+14. `fullscreen-modern.css`
+15. `fullscreen-compact.css`
+16. `app-footer.css`
+17. `views-density.css`
+18. `layout-flow.css`
+19. `portfolio-cards-compact.css`
+20. `table-rows-modern.css`
+21. `table-revamp-modern.css`
 
 **Compact layout:** `initCompactLayoutClass()` in `src/app.js` toggles `html.is-compact-layout` / `is-phone-layout` at `max-width: 1024px`. Compact sheets use `html.is-compact-layout` selectors — not separate tablet breakpoints.
 
@@ -73,11 +80,12 @@ Persisted via `saveState()` → `localStorage` key `rice_prioritizer_v1` (`STORA
 | `sortField`, `sortDirection` | Yes | |
 | `projectsView` | Yes | `table\|board\|moscow\|map` |
 | `scrumBoardSortByRice`, `moscowSortByRice` | Yes | |
-| `boardHiddenStatuses` | Yes | Board column visibility |
 | `mapMetric` | Yes | |
 | `exchangeRatesToEUR`, `exchangeRatesDate`, `exchangeRatesLastSource` | Yes | |
 
 **Not persisted:** `unlockedProfileIds` (session only, `sessionStorage`).
+
+**Legacy field migration:** Deprecated workspace keys (currently `boardHiddenStatuses` in `LEGACY_WORKSPACE_FIELDS`) are removed by `stripLegacyWorkspaceFields()` in `utils.js` when loading local cache, applying cloud payloads, importing JSON, and stamping payloads before persist.
 
 ---
 

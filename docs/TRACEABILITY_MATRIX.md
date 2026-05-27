@@ -38,7 +38,7 @@
 | FR-4.7 | Switching framework clears non-relevant inputs | `src/app.js` framework switch reset/sanitization | Switching framework clears prior framework-specific fields |
 | FR-4.8 | Table Framework column + filter consistency | `index.html` table headers/filters; `src/app.js` framework icon + filter mapping | Framework icon/tooltip exists; filtering by Framework matches project records |
 | FR-5.1 | Table view sorting/filtering | `index.html` table view; `src/app.js` `sortProjects`, `applyFilters` | Sorting and filtering match expected results across multiple fields |
-| FR-5.2 | Board view status columns + DnD + status filter pills | `index.html` board containers; `src/app.js` `renderScrumBoard`, `toggleBoardStatusColumn`, `renderBoardStatusLegend` | DnD updates status; status pills hide/show columns; active state via `aria-pressed` |
+| FR-5.2 | Board view status columns + DnD + RICE sort | `index.html` board containers; `src/app.js` `renderScrumBoard` | DnD updates status; all status columns always visible; RICE sort toggle works |
 | FR-5.3 | MoSCoW view quadrant grid | `index.html` MOSCOW containers; `src/app.js` MoSCoW rendering | Projects appear in correct quadrant; optional MoSCoW RICE sort works |
 | FR-5.4 | Map view aggregation + metric switching | `index.html` map container; `src/app.js` `renderProjectsMap` and map metric pills wiring | Metric switch updates map values and legend; error states are graceful |
 | FR-5.5 | Fullscreen mode across views | `src/modules/fullscreen.js`; `css/fullscreen-compact.css`; `src/app.js` fullscreen toggle handlers | Fullscreen toggles correctly; compact layouts preserved in host |
@@ -46,7 +46,7 @@
 | FR-5.7 | Compact layout ≤1024px (unified phone UI) | `src/app.js` `initCompactLayoutClass()`; `css/compact-modern.css`, `moscow-compact.css`, `board-compact.css`, `table-compact.css` | At 768px and 1024px widths: no horizontal MoSCoW/board scroll; FAB visible; selection bar for bulk delete |
 | FR-9.6 | Site footer attribution | `index.html` `.app-site-footer`; `css/app-footer.css` | Footer visible; links work; centered one-row layout on compact |
 | FR-6 | Filters (quick + advanced) | Filters UI in `index.html`; `src/app.js` `applyFilters` | Quick and advanced filters restrict results; active filter pill matches state |
-| FR-7 | Exchange rates refresh and EUR normalization | `src/modules/exchange-rates.js`; `src/app.js` integration for cached rates and EUR display | Refresh updates rates; EUR totals reflect updated rates where possible |
+| FR-7 | Exchange rates refresh and EUR normalization | `src/modules/exchange-rates.js`; `src/app.js` integration for cached rates and EUR display (table, map, profile currency totals) | Refresh updates rates; EUR totals reflect updated rates where possible; profile currency breakdown shows EUR equivalents per currency and falls back safely when rates are missing |
 | FR-8.1 | Export JSON | `src/app.js` export handlers + `sanitizeProfilesForExport()` + `getExportableProfiles()` | JSON export downloads; includes only allowed profiles after password gate |
 | FR-8.2 | Export CSV | `src/app.js` CSV export logic; project row generation | CSV has correct header and one-row-per-project; protected omission rules applied |
 | FR-8.3 | Export password gate | `src/app.js` export unlock modal + verification (`getLockedProfilesForExport`, `verifyLockedProfilesForExport`) and `executeExport` | Wrong/missing passwords omit protected profiles from export file |

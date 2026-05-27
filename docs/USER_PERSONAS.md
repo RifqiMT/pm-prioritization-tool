@@ -23,7 +23,7 @@ Target users for the Product Management Prioritization Tool.
 - **Role:** Weekly execution and status tracking  
 - **Goals:** Fast board/table views; clear status transitions  
 - **Pain points:** Too many clicks to update status; hidden work in wrong columns  
-- **Key workflows:** Board view with status columns (desktop) or single-column stack with **Move to** dropdown (compact); toggle status pills; sort by RICE  
+- **Key workflows:** Board view with status columns (desktop) or single-column stack with **Move to** dropdown (compact); sort by RICE  
 - **Success:** Stand-ups run from the board on laptop or tablet without exporting to another tool
 
 ## 3) Portfolio / Strategy Stakeholder
@@ -51,7 +51,7 @@ Target users for the Product Management Prioritization Tool.
 | Profiles + password protection | PM Primary, Delivery Lead |
 | RICE tooltips | PM Primary, Stakeholder |
 | MoSCoW view | PM Primary, Stakeholder |
-| Board + status pills | Delivery Lead |
+| Board + RICE sort | Delivery Lead |
 | Map + FX normalization | Geo/Finance PM |
 | Export / import | All |
 | Compact layout (≤1024px) | PM Primary, Delivery Lead |

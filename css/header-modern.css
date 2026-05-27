@@ -19,8 +19,8 @@
   --hdr-text-soft: #7a4b12;
   --hdr-accent: #b91c1c;
   --hdr-gold: #a16207;
-  --hdr-radius: 16px;
-  --hdr-shadow: 0 2px 8px rgba(127, 29, 29, 0.06), 0 12px 32px rgba(185, 28, 28, 0.08);
+  --hdr-radius: 4px;
+  --hdr-shadow: none;
 
   display: flex;
   flex-direction: column;

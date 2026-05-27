@@ -1,6 +1,6 @@
 # Architecture Overview
 
-**Last audited:** 2026-05-26
+**Last audited:** 2026-05-27
 
 ---
 

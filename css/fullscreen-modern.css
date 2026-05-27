@@ -226,7 +226,6 @@ html.pseudo-view-fullscreen .view-fullscreen-host:not([hidden]) {
   grid-template-columns: 1fr !important;
 }
 
-.view-in-fullscreen-host .projects-map-container,
 .view-in-fullscreen-host .scrum-board,
 .view-in-fullscreen-host .moscow-grid,
 .view-in-fullscreen-host .table-wrapper--modern {
@@ -250,6 +249,10 @@ html:not(.is-compact-layout) .view-in-fullscreen-host .moscow-grid {
 }
 
 .view-in-fullscreen-host .projects-map-container {
+  flex: 1 1 auto;
+  min-height: 0 !important;
+  max-height: none !important;
+  height: 100% !important;
   overflow: hidden;
 }
 
@@ -298,10 +301,11 @@ html:not(.is-compact-layout) .view-in-fullscreen-host .moscow-grid {
 
 /* ── Compact host overrides (phone/tablet) ───────────────── */
 .view-fullscreen-host--compact .view-fullscreen-chrome {
-  grid-template-columns: 1fr auto;
-  grid-template-rows: auto auto;
-  gap: 0.45rem 0.5rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto;
+  gap: 0.35rem 0.45rem;
   padding: 0.5rem 0.65rem 0.45rem;
+  align-items: center;
 }
 
 .view-fullscreen-host--compact .view-fullscreen-brand {
@@ -311,9 +315,17 @@ html:not(.is-compact-layout) .view-in-fullscreen-host .moscow-grid {
 
 .view-fullscreen-host--compact .view-fullscreen-tabs {
   grid-column: 1;
+  grid-row: 1;
   width: 100%;
+  min-width: 0;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.view-fullscreen-host--compact .view-fullscreen-actions {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
 }
 
 .view-fullscreen-host--compact .view-fullscreen-tab {
@@ -322,11 +334,6 @@ html:not(.is-compact-layout) .view-in-fullscreen-host .moscow-grid {
   min-height: 38px;
   padding: 0.35rem 0.25rem;
   font-size: 0.68rem;
-}
-
-.view-fullscreen-host--compact .view-fullscreen-actions {
-  grid-column: 2;
-  grid-row: 2;
 }
 
 .view-fullscreen-host--compact .view-fullscreen-stage > .projects-view.view-in-fullscreen-host {

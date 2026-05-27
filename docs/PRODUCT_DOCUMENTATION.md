@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Document owner** | Product Team |
-| **Last audited** | 2026-05-26 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260526-ui54` |
+| **Last audited** | 2026-05-27 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260527-ui99` |
 
 ---
 
@@ -85,6 +85,7 @@ Computed in `computeFrameworkFinancialImpact()` (`src/app.js`). Table shows a **
 
 - Refresh FX rates to EUR (`src/modules/exchange-rates.js`).
 - EUR column in table; **Financial (EUR)** map metric.
+- Profile view: original-currency breakdown shows **EUR equivalents** per currency card using the latest in-app exchange rates (graceful fallback when unavailable).
 
 ### 3.7 Cloud storage (optional)
 

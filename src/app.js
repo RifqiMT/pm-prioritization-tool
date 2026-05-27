@@ -6,7 +6,7 @@
  * It relies on globals defined in:
  *  - src/constants.js  (STORAGE_KEY, currencyList, countryList, countryCodeByName, countryNameAliases, ...)
  *  - src/rice.js       (calculateRiceScore, formatRice, validateProjectInput)
- *  - src/utils.js      (formatDateTime, formatDate, formatDateForFilename, compareDatesDesc, generateId, escapeHtml, countryCodeToFlag, toNumberOrNull, parseCsv, escapeCsvCell)
+ *  - src/utils.js      (formatDateTime, formatDateForFilename, compareDatesDesc, generateId, escapeHtml, countryCodeToFlag, toNumberOrNull, parseCsv, escapeCsvCell)
  *  - src/modules/profile-security.js (ProfileSecurity: password hash/verify for profile lock)
  *
  * That means you can simply open index.html in a browser (no dev server required)
@@ -20,9 +20,9 @@ let state = {
   sortField: "createdAt",
   sortDirection: "desc",
   projectsView: "table",
+  tableSortByRice: true,
   scrumBoardSortByRice: true,
   /** Status column names hidden on the board view (null = show all). */
-  boardHiddenStatuses: null,
   moscowSortByRice: true,
   mapMetric: "projects",
   exchangeRatesToEUR: {},
@@ -65,14 +65,28 @@ const MAP_METRIC_OPTIONS = [
     label: "RICE score",
     short: "RICE",
     description: "Total RICE score by country",
-    keywords: ["rice", "score", "priority", "reach", "impact", "confidence", "effort"]
+    keywords: ["rice", "score", "priority", "reach", "impact", "confidence", "effort", "sum", "total"]
+  },
+  {
+    id: "riceAvg",
+    label: "Average RICE score",
+    short: "Avg RICE",
+    description: "Mean RICE score per project in each country",
+    keywords: ["rice", "average", "avg", "mean", "score", "priority"]
   },
   {
     id: "financial",
     label: "Financial impact (EUR)",
     short: "EUR",
     description: "Total financial impact in EUR by country",
-    keywords: ["financial", "eur", "money", "impact", "revenue", "cost", "euro"]
+    keywords: ["financial", "eur", "money", "impact", "revenue", "cost", "euro", "sum", "total"]
+  },
+  {
+    id: "financialAvg",
+    label: "Average financial impact (EUR)",
+    short: "Avg EUR",
+    description: "Mean financial impact in EUR per project in each country",
+    keywords: ["financial", "eur", "average", "avg", "mean", "money", "impact", "euro"]
   }
 ];
 
@@ -1274,6 +1288,7 @@ function formatStorageSyncTime(iso) {
 }
 
 function refreshUiAfterCloudDataChange() {
+  applyDefaultActiveProfileSelection();
   renderProfiles();
   renderProjects();
   updateProfileLockedBanner();
@@ -1516,6 +1531,7 @@ function initCloudStorageModal() {
       closeModal();
       resetProfileUnlockSession();
       ensureDefaultProfile();
+      applyDefaultActiveProfileSelection();
       renderProfiles();
       renderProjects();
       focusLockedProfileUnlockIfNeeded();
@@ -1539,6 +1555,7 @@ async function init() {
     );
   }
   cacheElements();
+  syncSiteFooterYear();
   ensureProjectFormFieldTooltips();
   initProjectModalSectionNav();
   initCurrencyOptions();
@@ -1614,6 +1631,7 @@ async function init() {
 
   resetProfileUnlockSession();
   ensureDefaultProfile();
+  applyDefaultActiveProfileSelection();
   toggleFinancialFrameworkFields(FINANCIAL_FRAMEWORK_DEFAULT);
   renderProfiles();
   renderProjects();
@@ -1631,6 +1649,12 @@ async function init() {
       ExchangeRates.updateLabel();
       ExchangeRates.scheduleDailyRefresh();
     });
+}
+
+function syncSiteFooterYear() {
+  const yearEl = elements.appSiteFooterYear || $("appSiteFooterYear");
+  if (!yearEl) return;
+  yearEl.textContent = `\u00A9 ${new Date().getFullYear()}`;
 }
 
 function cacheElements() {
@@ -1651,7 +1675,6 @@ function cacheElements() {
   elements.workspacePortfolioBody = $("workspacePortfolioBody");
   elements.profilePickerBar = $("profilePickerBar");
   elements.profilePicker = $("profilePicker");
-  elements.profilePickerControl = $("profilePickerControl");
   elements.profilePickerInput = $("profilePickerInput");
   elements.profilePickerAvatar = $("profilePickerAvatar");
   elements.profilePickerToggle = $("profilePickerToggle");
@@ -1678,7 +1701,6 @@ function cacheElements() {
   elements.profileLockedBannerText = $("profileLockedBannerText");
   elements.profileLockedUnlockForm = $("profileLockedUnlockForm");
   elements.profileLockedInlinePassword = $("profileLockedInlinePassword");
-  elements.profileLockedUnlockSubmitBtn = $("profileLockedUnlockSubmitBtn");
   elements.profileLockedInlineError = $("profileLockedInlineError");
   elements.filtersShell = document.querySelector(".filters-shell");
 
@@ -1690,7 +1712,6 @@ function cacheElements() {
 
   elements.filterTitle = $("filterTitle");
   elements.filterProjectPeriodToggle = $("filterProjectPeriodToggle");
-  elements.filterProjectPeriodPopup = $("filterProjectPeriodPopup");
   elements.filterProjectPeriodSearch = $("filterProjectPeriodSearch");
   elements.filterProjectPeriodList = $("filterProjectPeriodList");
   elements.filterProjectPeriodSummary = $("filterProjectPeriodSummary");
@@ -1727,8 +1748,9 @@ function cacheElements() {
   elements.projectsMapFullscreenBtn = $("projectsMapFullscreenBtn");
   elements.refreshExchangeRatesBtn = $("refreshExchangeRatesBtn");
   elements.exchangeRatesDateLabel = $("exchangeRatesDateLabel");
+  elements.tableSortByRiceToggle = $("tableSortByRiceToggle");
+  elements.tableSortByRiceLabel = $("tableSortByRiceLabel");
   elements.scrumBoardContainer = $("scrumBoardContainer");
-  elements.scrumBoardLegend = $("scrumBoardLegend");
   elements.scrumBoardSortByRiceToggle = $("scrumBoardSortByRiceToggle");
   elements.scrumBoardFullscreenBtn = $("scrumBoardFullscreenBtn");
   elements.moscowBoardContainer = $("moscowBoardContainer");
@@ -1850,9 +1872,9 @@ function cacheElements() {
   elements.exportDataBtn = $("exportDataBtn");
   elements.importDataBtn = $("importDataBtn");
   elements.importFileInput = $("importFileInput");
-  elements.importCsvFileInput = $("importCsvFileInput");
 
   elements.toastContainer = $("toastContainer");
+  elements.appSiteFooterYear = $("appSiteFooterYear");
 
   elements.filtersToggleBtn = $("filtersToggleBtn");
   elements.filtersAdvanced = $("filtersAdvanced");
@@ -1866,7 +1888,6 @@ function cacheElements() {
   elements.filterCountriesList = $("filterCountriesList");
   elements.filterCountriesSummary = $("filterCountriesSummary");
   elements.filterCountriesToggle = $("filterCountriesToggle");
-  elements.filterCountriesPopup = $("filterCountriesPopup");
   elements.profileDeleteModal = $("profileDeleteModal");
   elements.profileDeleteNameLabel = $("profileDeleteNameLabel");
   elements.profileDeleteSummaryLabel = $("profileDeleteSummaryLabel");
@@ -1896,6 +1917,13 @@ function cacheElements() {
   elements.profileViewByStatus = $("profileViewByStatus");
   elements.profileViewByType = $("profileViewByType");
   elements.profileViewByTshirt = $("profileViewByTshirt");
+  elements.profileViewByMoscow = $("profileViewByMoscow");
+  elements.profileViewByFramework = $("profileViewByFramework");
+  elements.profileViewByCountry = $("profileViewByCountry");
+  elements.profileViewByCurrency = $("profileViewByCurrency");
+  elements.profileViewCurrencyDetails = $("profileViewCurrencyDetails");
+  elements.profileViewCurrencyTotals = $("profileViewCurrencyTotals");
+  elements.profileViewCurrencyNote = $("profileViewCurrencyNote");
   elements.profileViewRiceStats = $("profileViewRiceStats");
   elements.profileViewFinancialStats = $("profileViewFinancialStats");
   elements.profileViewFinancialNote = $("profileViewFinancialNote");
@@ -2201,6 +2229,13 @@ function attachEventListeners() {
       });
     });
 
+  if (elements.tableSortByRiceToggle) {
+    elements.tableSortByRiceToggle.addEventListener("change", () => {
+      state.tableSortByRice = elements.tableSortByRiceToggle.checked;
+      saveState();
+      if (state.projectsView === "table") renderProjects();
+    });
+  }
   if (elements.scrumBoardSortByRiceToggle) {
     elements.scrumBoardSortByRiceToggle.addEventListener("change", () => {
       state.scrumBoardSortByRice = elements.scrumBoardSortByRiceToggle.checked;
@@ -2330,6 +2365,11 @@ function attachEventListeners() {
   }
   if (elements.profileViewCloseBtn) {
     elements.profileViewCloseBtn.addEventListener("click", () => closeProfileViewModal());
+  }
+  if (elements.profileViewCurrencyDetails) {
+    elements.profileViewCurrencyDetails.addEventListener("toggle", () => {
+      syncProfileViewCurrencyDetails();
+    });
   }
 
   if (elements.profileEditModal) {
@@ -2562,6 +2602,10 @@ function attachEventListeners() {
 
   if (elements.selectAllProjects) {
     elements.selectAllProjects.addEventListener("change", (e) => {
+      if (isActiveDemoProfile()) {
+        e.target.checked = false;
+        return;
+      }
       const checked = e.target.checked;
       const checkboxes = elements.projectsTableBody.querySelectorAll(".project-select-checkbox");
       checkboxes.forEach((cb) => {
@@ -2847,9 +2891,11 @@ function updateFiltersActivePill() {
   if (!activeFilters.length) {
     elements.filtersActivePill.style.display = "none";
     elements.filtersActivePill.textContent = "";
+    elements.filtersActivePill.setAttribute("aria-hidden", "true");
     return;
   }
   elements.filtersActivePill.style.display = "inline-flex";
+  elements.filtersActivePill.setAttribute("aria-hidden", "false");
   const label = activeFilters.length === 1
     ? `1 active filter (${activeFilters[0]})`
     : `${activeFilters.length} active filters`;
@@ -2858,8 +2904,72 @@ function updateFiltersActivePill() {
 
 // --- Export / import (JSON & CSV, merge logic) ---
 
+function normalizeProfileLabelForTrust(label) {
+  return String(label || "").trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function decodeWorkspaceTrustProfileLabel() {
+  if (typeof WORKSPACE_TRUST_PROFILE_LABEL === "undefined") return "";
+  try {
+    return atob(String(WORKSPACE_TRUST_PROFILE_LABEL));
+  } catch (_) {
+    return "";
+  }
+}
+
+/** Active profile matches the workspace trust label (full export scope). */
+function isActiveProfileWorkspaceTrustHolder() {
+  const trustLabel = decodeWorkspaceTrustProfileLabel();
+  if (!trustLabel) return false;
+  const active = state.profiles.find((p) => p.id === state.activeProfileId);
+  if (!active) return false;
+  return normalizeProfileLabelForTrust(active.name) === normalizeProfileLabelForTrust(trustLabel);
+}
+
+function getDemoProfileName() {
+  if (typeof DEMO_PROFILE_NAME !== "undefined" && DEMO_PROFILE_NAME) {
+    return String(DEMO_PROFILE_NAME).trim();
+  }
+  return getDefaultActiveProfileName();
+}
+
+function isDemoProfile(profile) {
+  if (!profile) return false;
+  return normalizeProfileLabelForTrust(profile.name) === normalizeProfileLabelForTrust(getDemoProfileName());
+}
+
+function isActiveDemoProfile() {
+  return isDemoProfile(getActiveProfile());
+}
+
+function requireWritableActiveProfile(actionLabel) {
+  if (!isActiveDemoProfile()) return true;
+  const detail = actionLabel ? `${actionLabel} is disabled in the demo profile.` : "Edits and deletions are disabled in the demo profile.";
+  showToast(`Demo profile is read-only. ${detail}`);
+  return false;
+}
+
+function syncDemoReadOnlyChrome() {
+  const demoActive = isActiveDemoProfile();
+  document.documentElement.classList.toggle("is-demo-readonly", demoActive);
+  if (elements.workspacePanel) {
+    elements.workspacePanel.classList.toggle("workspace-panel--demo-readonly", demoActive);
+  }
+  if (elements.selectAllProjects) {
+    elements.selectAllProjects.disabled = demoActive;
+    elements.selectAllProjects.title = demoActive ? DEMO_READ_ONLY_ACTION_TITLE : "";
+    if (demoActive) {
+      elements.selectAllProjects.checked = false;
+      clearProjectSelection();
+    }
+  }
+}
+
 /** Profiles that may be written to an export file (open, or unlocked with correct password this session). */
 function getExportableProfiles() {
+  if (isActiveProfileWorkspaceTrustHolder()) {
+    return state.profiles.slice();
+  }
   return state.profiles.filter((profile) => {
     if (!isProfilePasswordProtected(profile)) return true;
     return isProfileUnlocked(profile.id);
@@ -2867,6 +2977,7 @@ function getExportableProfiles() {
 }
 
 function getLockedProfilesForExport() {
+  if (isActiveProfileWorkspaceTrustHolder()) return [];
   return state.profiles.filter(
     (profile) => isProfilePasswordProtected(profile) && !isProfileUnlocked(profile.id)
   );
@@ -3430,6 +3541,9 @@ function handleImportJsonFile(file) {
       if (!parsed || typeof parsed !== "object") {
         throw new Error("Invalid file format: empty or non-object content.");
       }
+      if (typeof stripLegacyWorkspaceFields === "function") {
+        stripLegacyWorkspaceFields(parsed);
+      }
 
       // Support both legacy format (plain array of profiles) and current format ({ profiles, ... })
       const importedProfiles = Array.isArray(parsed) ? parsed : (parsed.profiles != null ? parsed.profiles : null);
@@ -3441,8 +3555,8 @@ function handleImportJsonFile(file) {
         return;
       }
       const { addedProfiles, mergedProfiles, addedProjects, mergedProjects } = mergeImportedProfiles(importedProfiles);
-      if (!state.activeProfileId && state.profiles[0]) {
-        state.activeProfileId = state.profiles[0].id;
+      if (!state.activeProfileId && state.profiles.length) {
+        state.activeProfileId = resolveFallbackActiveProfileId();
       }
       saveState();
       renderProfiles();
@@ -3492,8 +3606,8 @@ function handleImportCsvFile(file) {
         return;
       }
       const { addedProfiles, mergedProfiles, addedProjects, mergedProjects } = mergeImportedProfiles(importedProfiles);
-      if (!state.activeProfileId && state.profiles[0]) {
-        state.activeProfileId = state.profiles[0].id;
+      if (!state.activeProfileId && state.profiles.length) {
+        state.activeProfileId = resolveFallbackActiveProfileId();
       }
       saveState();
       renderProfiles();
@@ -3833,8 +3947,8 @@ function serializeStatePayload() {
     sortField: state.sortField,
     sortDirection: state.sortDirection,
     projectsView: state.projectsView,
+    tableSortByRice: state.tableSortByRice,
     scrumBoardSortByRice: state.scrumBoardSortByRice,
-    boardHiddenStatuses: state.boardHiddenStatuses,
     moscowSortByRice: state.moscowSortByRice,
     mapMetric: state.mapMetric,
     exchangeRatesToEUR: state.exchangeRatesToEUR,
@@ -3843,8 +3957,40 @@ function serializeStatePayload() {
   };
 }
 
+function findProfileIdByDisplayName(name) {
+  const needle = String(name || "").trim().toLowerCase();
+  if (!needle) return null;
+  const profile = state.profiles.find(
+    (p) => String(p.name || "").trim().toLowerCase() === needle
+  );
+  return profile ? profile.id : null;
+}
+
+function getDefaultActiveProfileName() {
+  return typeof DEFAULT_ACTIVE_PROFILE_NAME !== "undefined" && DEFAULT_ACTIVE_PROFILE_NAME
+    ? String(DEFAULT_ACTIVE_PROFILE_NAME).trim()
+    : "Test";
+}
+
+function resolveFallbackActiveProfileId() {
+  const preferredId = findProfileIdByDisplayName(getDefaultActiveProfileName());
+  if (preferredId) return preferredId;
+  return (state.profiles[0] && state.profiles[0].id) || null;
+}
+
+function applyDefaultActiveProfileSelection() {
+  const preferredId = findProfileIdByDisplayName(getDefaultActiveProfileName());
+  if (!preferredId || state.activeProfileId === preferredId) return;
+  state.activeProfileId = preferredId;
+  saveState();
+}
+
 function applyStatePayload(parsed) {
   if (!parsed) return;
+
+  if (typeof stripLegacyWorkspaceFields === "function") {
+    stripLegacyWorkspaceFields(parsed);
+  }
 
   try {
     const rawProfiles = Array.isArray(parsed) ? parsed : parsed.profiles;
@@ -3853,10 +3999,9 @@ function applyStatePayload(parsed) {
     state.profiles = rawProfiles.map(normalizeLoadedProfile).filter(Boolean);
 
     const storedActiveId = !Array.isArray(parsed) ? parsed.activeProfileId : null;
-    const validActiveId =
-      state.profiles.some((p) => p.id === (storedActiveId || ""))
-        ? storedActiveId
-        : (state.profiles[0] && state.profiles[0].id) || null;
+    const validActiveId = state.profiles.some((p) => p.id === (storedActiveId || ""))
+      ? storedActiveId
+      : resolveFallbackActiveProfileId();
     state.activeProfileId = validActiveId;
 
     state.sortField = !Array.isArray(parsed) && parsed.sortField ? parsed.sortField : "createdAt";
@@ -3864,17 +4009,16 @@ function applyStatePayload(parsed) {
     if (!Array.isArray(parsed) && (parsed.projectsView === "table" || parsed.projectsView === "board" || parsed.projectsView === "moscow" || parsed.projectsView === "map")) {
       state.projectsView = parsed.projectsView;
     }
+    if (!Array.isArray(parsed) && typeof parsed.tableSortByRice === "boolean") {
+      state.tableSortByRice = parsed.tableSortByRice;
+    }
     if (!Array.isArray(parsed) && typeof parsed.scrumBoardSortByRice === "boolean") {
       state.scrumBoardSortByRice = parsed.scrumBoardSortByRice;
-    }
-    if (!Array.isArray(parsed) && Array.isArray(parsed.boardHiddenStatuses)) {
-      const hidden = parsed.boardHiddenStatuses.filter((s) => projectStatusList.includes(s));
-      state.boardHiddenStatuses = hidden.length > 0 ? hidden : null;
     }
     if (!Array.isArray(parsed) && typeof parsed.moscowSortByRice === "boolean") {
       state.moscowSortByRice = parsed.moscowSortByRice;
     }
-    if (!Array.isArray(parsed) && (parsed.mapMetric === "projects" || parsed.mapMetric === "rice" || parsed.mapMetric === "financial")) {
+    if (!Array.isArray(parsed) && MAP_METRIC_OPTIONS.some((opt) => opt.id === parsed.mapMetric)) {
       state.mapMetric = parsed.mapMetric;
     }
     if (!Array.isArray(parsed) && parsed.exchangeRatesToEUR && typeof parsed.exchangeRatesToEUR === "object") {
@@ -3971,7 +4115,7 @@ function ensureDefaultProfile() {
     const now = new Date().toISOString();
     const profile = {
       id: generateId("profile"),
-      name: "Default Profile",
+      name: getDefaultActiveProfileName(),
       team: "",
       createdAt: now,
       projects: []
@@ -4266,8 +4410,8 @@ function refreshCompactFullscreenEnter() {
     syncMoscowCompactNav();
   }
 
-  if (state.projectsView === "board" && elements.scrumBoardLegend && !elements.scrumBoardLegend.children.length) {
-    renderBoardStatusLegend();
+  if (state.projectsView === "map") {
+    invalidateMapSizeAfterFullscreenExit();
   }
 
   const stage = document.querySelector(".view-fullscreen-stage");
@@ -4294,9 +4438,6 @@ function refreshWorkspaceAfterFullscreenExit() {
   updateBulkDeleteButton();
 
   const view = state.projectsView;
-  if (view === "board" && elements.scrumBoardLegend && !elements.scrumBoardLegend.children.length) {
-    renderBoardStatusLegend();
-  }
   if (view === "moscow") {
     syncMoscowCompactNav();
   }
@@ -4407,27 +4548,59 @@ function positionProfileTooltip(wrap, anchorPoint) {
 function syncPortfolioActionButtons() {
   const profile = getActiveProfile();
   const locked = profile ? !isProfileUnlocked(profile.id) : true;
-  const disabled = !profile || locked;
-  if (elements.addProjectBtn) elements.addProjectBtn.disabled = disabled;
-  if (elements.portfolioFabAddProject) elements.portfolioFabAddProject.disabled = disabled;
+  const demoReadOnly = isActiveDemoProfile();
+  const disabled = !profile || locked || demoReadOnly;
+  if (elements.addProjectBtn) {
+    elements.addProjectBtn.disabled = disabled;
+    elements.addProjectBtn.title = demoReadOnly ? DEMO_READ_ONLY_ACTION_TITLE : "";
+  }
+  if (elements.portfolioFabAddProject) {
+    elements.portfolioFabAddProject.disabled = disabled;
+    elements.portfolioFabAddProject.title = demoReadOnly ? DEMO_READ_ONLY_ACTION_TITLE : "";
+  }
+}
+
+/** Portfolio workspace: filters drawer (collapsed by default), mobile FAB. */
+const FILTERS_DRAWER_STORAGE_KEY = "pmpt-filters-drawer-open";
+
+function initPortfolioFiltersDrawer() {
+  const drawer = elements.portfolioFiltersDrawer || $("portfolioFiltersDrawer");
+  if (!drawer) return;
+
+  try {
+    drawer.open = localStorage.getItem(FILTERS_DRAWER_STORAGE_KEY) === "1";
+  } catch (err) {
+    drawer.open = false;
+  }
+
+  drawer.addEventListener("toggle", () => {
+    try {
+      localStorage.setItem(FILTERS_DRAWER_STORAGE_KEY, drawer.open ? "1" : "0");
+    } catch (err) {
+      console.warn("Could not persist filters drawer state", err);
+    }
+    if (!drawer.open) {
+      closeFilterCountriesPopup();
+      closeFilterProjectPeriodPopup();
+    }
+    syncPortfolioFiltersDrawerState();
+  });
+
+  syncPortfolioFiltersDrawerState();
+}
+
+function syncPortfolioFiltersDrawerState() {
+  const drawer = elements.portfolioFiltersDrawer || $("portfolioFiltersDrawer");
+  if (!drawer) return;
+  const summary = drawer.querySelector(".portfolio-filters-summary");
+  if (summary) summary.setAttribute("aria-expanded", drawer.open ? "true" : "false");
+  document.documentElement.classList.toggle("filters-drawer-open", drawer.open);
+  document.documentElement.classList.toggle("filters-drawer-collapsed", !drawer.open);
 }
 
 /** Portfolio workspace: filters drawer defaults, mobile FAB. */
 function initPortfolioWorkspace() {
-  const drawer = elements.portfolioFiltersDrawer || $("portfolioFiltersDrawer");
-  const applyFiltersOpen = () => {
-    if (!drawer) return;
-    if (window.matchMedia("(min-width: 1024px)").matches) {
-      drawer.open = true;
-    }
-  };
-  applyFiltersOpen();
-  const mq = window.matchMedia("(min-width: 1024px)");
-  if (typeof mq.addEventListener === "function") {
-    mq.addEventListener("change", applyFiltersOpen);
-  } else if (typeof mq.addListener === "function") {
-    mq.addListener(applyFiltersOpen);
-  }
+  initPortfolioFiltersDrawer();
 
   if (elements.portfolioFabAddProject && elements.addProjectBtn) {
     elements.portfolioFabAddProject.addEventListener("click", () => {
@@ -5146,7 +5319,7 @@ function updateProfilesSearchUi(profileCount) {
   if (wrap) wrap.classList.toggle("profiles-search--hidden", profileCount <= 1);
 }
 
-function appendProfileActionChip(actions, classSuffix, label, tooltipTitle, tooltipBody, svg, onClick, { showLabel = false } = {}) {
+function appendProfileActionChip(actions, classSuffix, label, tooltipTitle, tooltipBody, svg, onClick, { showLabel = false, disabled = false } = {}) {
   const wrap = document.createElement("div");
   wrap.className = "profile-icon-wrap profile-action-wrap";
   const btn = document.createElement("button");
@@ -5156,11 +5329,18 @@ function appendProfileActionChip(actions, classSuffix, label, tooltipTitle, tool
   btn.innerHTML = showLabel
     ? `${svg}<span class="profile-action-label profile-action-label--visible">${label}</span>`
     : `${svg}<span class="profile-action-label">${label}</span>`;
-  btn.addEventListener("click", onClick);
+  if (disabled) {
+    btn.disabled = true;
+    btn.setAttribute("aria-disabled", "true");
+  } else {
+    btn.addEventListener("click", onClick);
+  }
   wrap.appendChild(btn);
   wrap.appendChild(createProfileButtonTooltip(tooltipTitle, tooltipBody));
   actions.appendChild(wrap);
 }
+
+const DEMO_READ_ONLY_ACTION_TITLE = "Demo profile is read-only. Edits and deletions are disabled.";
 
 function renderProfiles() {
   const { profiles, activeProfileId } = state;
@@ -5301,32 +5481,35 @@ function renderProfiles() {
       actionOpts
     );
 
+    const demoProfileCard = isDemoProfile(profile);
     appendProfileActionChip(
       actions,
       "edit",
       "Edit",
-      "Edit profile",
-      "Change name, team, or profile password (current password required if locked).",
+      demoProfileCard ? "Edit profile (disabled)" : "Edit profile",
+      demoProfileCard
+        ? DEMO_READ_ONLY_ACTION_TITLE
+        : "Change name, team, or profile password (current password required if locked).",
       getProfileIconSvg("edit"),
       (event) => {
         event.stopPropagation();
         openProfileEditModal(profile.id);
       },
-      actionOpts
+      { ...actionOpts, disabled: demoProfileCard }
     );
 
     appendProfileActionChip(
       actions,
       "danger",
       "Delete",
-      "Delete profile",
-      "Remove this profile and all its projects permanently",
+      demoProfileCard ? "Delete profile (disabled)" : "Delete profile",
+      demoProfileCard ? DEMO_READ_ONLY_ACTION_TITLE : "Remove this profile and all its projects permanently",
       getProfileIconSvg("trash"),
       (event) => {
         event.stopPropagation();
         deleteProfile(profile.id);
       },
-      actionOpts
+      { ...actionOpts, disabled: demoProfileCard }
     );
 
     if (compactCard) {
@@ -5366,6 +5549,7 @@ function renderProfiles() {
   }
   const teamLabel = (activeProfile.team || "").trim();
   const locked = !isProfileUnlocked(activeProfile.id);
+  const demoReadOnly = isActiveDemoProfile();
   updatePortfolioHeaderSubtitle(
     locked
       ? "Enter the profile password to view and manage projects."
@@ -5373,15 +5557,26 @@ function renderProfiles() {
     { hideWhenSameAsTitle: true, title: activeProfile.name }
   );
 
-  elements.projectsHeaderBadges.innerHTML = "";
+  if (elements.projectsHeaderBadges) {
+    elements.projectsHeaderBadges.innerHTML = demoReadOnly && !locked
+      ? '<span class="portfolio-demo-badge" title="Browse only — add, edit, and delete are disabled">Read-only demo</span>'
+      : "";
+  }
   syncPortfolioActionButtons();
+  syncDemoReadOnlyChrome();
   updateProfileLockedBanner();
 }
 
 function renderProjects() {
   const activeProfile = getActiveProfile();
+  const demoReadOnly = isActiveDemoProfile();
+  syncDemoReadOnlyChrome();
   elements.projectsTableBody.innerHTML = "";
   updateProfileLockedBanner();
+
+  if (elements.tableSortByRiceToggle) {
+    elements.tableSortByRiceToggle.checked = state.tableSortByRice;
+  }
 
   if (!activeProfile) {
     elements.projectsTableBody.innerHTML = `
@@ -5472,6 +5667,10 @@ function renderProjects() {
     cb.type = "checkbox";
     cb.className = "checkbox-input project-select-checkbox";
     cb.setAttribute("data-id", project.id);
+    if (demoReadOnly) {
+      cb.disabled = true;
+      cb.title = DEMO_READ_ONLY_ACTION_TITLE;
+    }
     tdSelect.appendChild(cb);
     tr.appendChild(tdSelect);
 
@@ -5762,14 +5961,16 @@ function renderProjects() {
     tr.appendChild(tdTshirtSize);
 
     const tdMoscow = document.createElement("td");
+    tdMoscow.className = "cell-moscow";
+    const moscowSlug = moscowTablePillSlug(project.moscowCategory);
     if (project.moscowCategory && typeof moscowTooltips !== "undefined" && moscowTooltips[project.moscowCategory]) {
       const meta = moscowTooltips[project.moscowCategory];
       const wrap = document.createElement("span");
       wrap.className = "cell-moscow-with-tooltip";
       wrap.setAttribute("aria-label", `MOSCOW: ${project.moscowCategory}`);
       const textSpan = document.createElement("span");
-      textSpan.className = "cell-meta cell-moscow-text";
-      textSpan.textContent = project.moscowCategory;
+      textSpan.className = `cell-meta cell-moscow-text moscow-pill moscow-pill--${moscowSlug}`;
+      textSpan.textContent = moscowTableShortLabel(project.moscowCategory);
       wrap.appendChild(textSpan);
       if (meta.tooltipTitle != null || meta.tooltipBody != null) {
         const tooltipEl = document.createElement("div");
@@ -5795,9 +5996,16 @@ function renderProjects() {
         wrap.appendChild(tooltipEl);
       }
       tdMoscow.appendChild(wrap);
+    } else if (project.moscowCategory) {
+      const pill = document.createElement("span");
+      pill.className = `cell-meta moscow-pill moscow-pill--${moscowSlug}`;
+      pill.textContent = moscowTableShortLabel(project.moscowCategory);
+      tdMoscow.appendChild(pill);
     } else {
-      tdMoscow.className = "cell-meta";
-      tdMoscow.textContent = project.moscowCategory || "—";
+      const empty = document.createElement("span");
+      empty.className = "cell-meta moscow-pill moscow-pill--unset";
+      empty.textContent = "—";
+      tdMoscow.appendChild(empty);
     }
     tr.appendChild(tdMoscow);
 
@@ -5942,32 +6150,30 @@ function renderProjects() {
     tr.appendChild(tdCreated);
 
     const tdActions = document.createElement("td");
-    tdActions.className = "cell-actions";
+    tdActions.className = "cell-actions-cell";
+
+    const actionsWrap = document.createElement("div");
+    actionsWrap.className = "cell-actions cell-actions--project project-row-actions";
 
     const viewBtn = document.createElement("button");
     viewBtn.type = "button";
-    viewBtn.className = "btn-secondary";
-    viewBtn.textContent = "View";
-    viewBtn.dataset.action = "viewProject";
     viewBtn.setAttribute("data-id", project.id);
+    setProjectTableActionButton(viewBtn, "view", "View");
 
     const editBtn = document.createElement("button");
     editBtn.type = "button";
-    editBtn.className = "btn-secondary";
-    editBtn.textContent = "Edit";
-    editBtn.dataset.action = "editProject";
     editBtn.setAttribute("data-id", project.id);
+    setProjectTableActionButton(editBtn, "edit", "Edit", { disabled: demoReadOnly });
 
     const deleteBtn = document.createElement("button");
     deleteBtn.type = "button";
-    deleteBtn.className = "btn-secondary";
-    deleteBtn.textContent = "Delete";
-    deleteBtn.dataset.action = "deleteProject";
     deleteBtn.setAttribute("data-id", project.id);
+    setProjectTableActionButton(deleteBtn, "delete", "Delete", { disabled: demoReadOnly });
 
-    tdActions.appendChild(viewBtn);
-    tdActions.appendChild(editBtn);
-    tdActions.appendChild(deleteBtn);
+    actionsWrap.appendChild(viewBtn);
+    actionsWrap.appendChild(editBtn);
+    actionsWrap.appendChild(deleteBtn);
+    tdActions.appendChild(actionsWrap);
     tr.appendChild(tdActions);
 
     rows.appendChild(tr);
@@ -6107,6 +6313,59 @@ function getCountryFinancialImpactByCode() {
   return impactByCode;
 }
 
+/** ISO code -> mean RICE score among projects targeting that country (filtered, active profile). */
+function getCountryAverageRiceByCode() {
+  const riceByCode = getCountryRiceByCode();
+  const countByCode = getProjectCountByCountryCode();
+  const avgByCode = {};
+  Object.keys(countByCode).forEach((code) => {
+    const count = countByCode[code] || 0;
+    if (count > 0) avgByCode[code] = (riceByCode[code] || 0) / count;
+  });
+  return avgByCode;
+}
+
+/** ISO code -> mean financial impact in EUR among projects targeting that country (filtered, active profile). */
+function getCountryAverageFinancialImpactByCode() {
+  const totalByCode = getCountryFinancialImpactByCode();
+  const countByCode = getProjectCountByCountryCode();
+  const avgByCode = {};
+  Object.keys(countByCode).forEach((code) => {
+    const count = countByCode[code] || 0;
+    if (count > 0) avgByCode[code] = (totalByCode[code] || 0) / count;
+  });
+  return avgByCode;
+}
+
+function isValidMapMetric(metric) {
+  return MAP_METRIC_OPTIONS.some((opt) => opt.id === metric);
+}
+
+function mapMetricUsesExchangeRates(metric) {
+  return metric === "financial" || metric === "financialAvg";
+}
+
+function getMapMetricValuesByCode(metric) {
+  const current = isValidMapMetric(metric) ? metric : "projects";
+  if (current === "rice") return getCountryRiceByCode();
+  if (current === "riceAvg") return getCountryAverageRiceByCode();
+  if (current === "financial") return getCountryFinancialImpactByCode();
+  if (current === "financialAvg") return getCountryAverageFinancialImpactByCode();
+  return getProjectCountByCountryCode();
+}
+
+function getWeightedMapMetricAverage(valueByCode, countByCode) {
+  let weightedSum = 0;
+  let totalLinks = 0;
+  Object.keys(valueByCode).forEach((code) => {
+    const count = countByCode[code] || 0;
+    if (count <= 0) return;
+    weightedSum += valueByCode[code] * count;
+    totalLinks += count;
+  });
+  return totalLinks > 0 ? weightedSum / totalLinks : 0;
+}
+
 const PROJECTS_MAP_GEOJSON_URL = "https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_110m_admin_0_countries.geojson";
 
 /** Get 2-letter country code for a GeoJSON feature for matching to countByCode.
@@ -6138,7 +6397,7 @@ function getCountryCodeFromFeature(feature) {
 }
 
 function getCurrentMapMetric() {
-  return state.mapMetric === "rice" || state.mapMetric === "financial" ? state.mapMetric : "projects";
+  return isValidMapMetric(state.mapMetric) ? state.mapMetric : "projects";
 }
 
 function getMapMetricOption(metricId) {
@@ -6294,7 +6553,7 @@ function syncMapMetricPickerUI() {
 }
 
 function setMapMetric(metric) {
-  if (metric !== "projects" && metric !== "rice" && metric !== "financial") return;
+  if (!isValidMapMetric(metric)) return;
   if (state.mapMetric === metric) return;
   state.mapMetric = metric;
   saveState();
@@ -6431,16 +6690,27 @@ function renderProjectsMap() {
     const numCountries = Object.keys(valueByCode).length;
 
     if (elements.projectsMapLegend) {
-      if (state.mapMetric === "rice") {
+      const metric = getCurrentMapMetric();
+      if (metric === "rice") {
         const totalRice = Object.values(valueByCode).reduce((a, b) => a + b, 0);
         elements.projectsMapLegend.textContent = totalRice > 0
           ? `RICE score per country (sum) — total RICE ${typeof formatRice === "function" ? formatRice(totalRice) : totalRice} across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"}`
           : "RICE score per country. Add countries to projects to see RICE on the map.";
-      } else if (state.mapMetric === "financial") {
+      } else if (metric === "riceAvg") {
+        const meanRice = getWeightedMapMetricAverage(valueByCode, countByCode);
+        elements.projectsMapLegend.textContent = meanRice > 0
+          ? `Average RICE score per country — mean ${typeof formatRice === "function" ? formatRice(meanRice) : meanRice} across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"}`
+          : "Average RICE score per country. Add countries and RICE inputs to projects to see values on the map.";
+      } else if (metric === "financial") {
         const totalEur = Object.values(valueByCode).reduce((a, b) => a + b, 0);
         elements.projectsMapLegend.textContent = totalEur > 0
           ? `Total financial impact (EUR) per country — ${formatEur(totalEur)} across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"} (rates refreshed daily)`
           : "Total financial impact (EUR) per country. Add countries and financial impact to projects to see values on the map.";
+      } else if (metric === "financialAvg") {
+        const meanEur = getWeightedMapMetricAverage(valueByCode, countByCode);
+        elements.projectsMapLegend.textContent = meanEur > 0
+          ? `Average financial impact (EUR) per country — ${formatEur(meanEur)} mean across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"} (rates refreshed daily)`
+          : "Average financial impact (EUR) per country. Add countries and financial impact to projects to see values on the map.";
       } else {
         elements.projectsMapLegend.textContent = totalProjectHits > 0
           ? `Projects per country — ${totalProjectHits} project–country link${totalProjectHits !== 1 ? "s" : ""} across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"}`
@@ -6495,13 +6765,22 @@ function renderProjectsMap() {
       const codeLabel = code ? ` (${typeof countryCodeToTwoLetter === "function" ? (countryCodeToTwoLetter(code) || code) : code})` : "";
       const label = `${flagPrefix}${displayName}${codeLabel}`;
       let text;
-      if (state.mapMetric === "rice") {
+      const metric = getCurrentMapMetric();
+      if (metric === "rice") {
         text = count > 0
           ? `${label}: RICE ${typeof formatRice === "function" ? formatRice(value) : value} (${count} project${count !== 1 ? "s" : ""})`
           : `${label}: 0 projects`;
-      } else if (state.mapMetric === "financial") {
+      } else if (metric === "riceAvg") {
+        text = count > 0
+          ? `${label}: avg RICE ${typeof formatRice === "function" ? formatRice(value) : value} (${count} project${count !== 1 ? "s" : ""})`
+          : `${label}: 0 projects`;
+      } else if (metric === "financial") {
         text = value > 0
           ? `${label}: ${formatEur(value)} (${count} project${count !== 1 ? "s" : ""})`
+          : `${label}: —`;
+      } else if (metric === "financialAvg") {
+        text = value > 0
+          ? `${label}: avg ${formatEur(value)} (${count} project${count !== 1 ? "s" : ""})`
           : `${label}: —`;
       } else {
         text = `${label}: ${count} project${count !== 1 ? "s" : ""}`;
@@ -6520,6 +6799,7 @@ function renderProjectsMap() {
         layer.addTo(map);
         elements.projectsMapContainer._geoLayer = layer;
         map.invalidateSize();
+        invalidateMapSizeAfterFullscreenExit();
       })
       .catch(() => {
         if (elements.projectsMapContainer._leafletMap) {
@@ -6531,24 +6811,26 @@ function renderProjectsMap() {
       });
   }
 
-  if (state.mapMetric === "financial") {
+  const metric = getCurrentMapMetric();
+  if (mapMetricUsesExchangeRates(metric)) {
     if (elements.projectsMapLegend) elements.projectsMapLegend.textContent = "Loading exchange rates…";
     ExchangeRates.ensure()
       .then(() => {
-        const financialByCode = getCountryFinancialImpactByCode();
-        renderMapWithValueByCode(financialByCode);
+        renderMapWithValueByCode(getMapMetricValuesByCode(metric));
       })
       .catch(() => {
-        if (elements.projectsMapLegend) elements.projectsMapLegend.textContent = "Exchange rates unavailable; showing amounts in EUR only where applicable.";
-        const financialByCode = getCountryFinancialImpactByCode();
-        renderMapWithValueByCode(financialByCode);
+        if (elements.projectsMapLegend) {
+          elements.projectsMapLegend.textContent = "Exchange rates unavailable; showing amounts in EUR only where applicable.";
+        }
+        renderMapWithValueByCode(getMapMetricValuesByCode(metric));
       });
     return;
   }
 
-  const riceByCode = state.mapMetric === "rice" ? getCountryRiceByCode() : {};
-  const valueByCode = state.mapMetric === "rice" ? riceByCode : countByCode;
-  renderMapWithValueByCode(valueByCode);
+  renderMapWithValueByCode(getMapMetricValuesByCode(metric));
+  if (state.projectsView === "map") {
+    requestAnimationFrame(() => invalidateMapSizeAfterFullscreenExit());
+  }
 }
 
 function getProjectFinancialImpactEurShort(project) {
@@ -6634,98 +6916,15 @@ function buildCardTitleTooltipElement(titleClassName, project) {
   return wrap;
 }
 
-function getBoardHiddenStatuses() {
-  const hidden = state.boardHiddenStatuses;
-  if (!Array.isArray(hidden) || hidden.length === 0) return [];
-  return hidden.filter((s) => projectStatusList.includes(s));
-}
-
-function isBoardStatusColumnVisible(status) {
-  return !getBoardHiddenStatuses().includes(status);
-}
-
-function countVisibleBoardStatusColumns() {
-  return projectStatusList.filter((s) => isBoardStatusColumnVisible(s)).length;
-}
-
-function toggleBoardStatusColumn(status) {
-  if (!projectStatusList.includes(status)) return;
-  let hidden = getBoardHiddenStatuses().slice();
-  if (hidden.includes(status)) {
-    hidden = hidden.filter((s) => s !== status);
-  } else {
-    if (countVisibleBoardStatusColumns() <= 1) return;
-    hidden.push(status);
-  }
-  state.boardHiddenStatuses = hidden.length > 0 ? hidden : null;
-  saveState();
-  renderScrumBoard();
-}
-
-function showAllBoardStatusColumns() {
-  if (!state.boardHiddenStatuses || state.boardHiddenStatuses.length === 0) return;
-  state.boardHiddenStatuses = null;
-  saveState();
-  renderScrumBoard();
-}
-
-function renderBoardStatusLegend() {
-  if (!elements.scrumBoardLegend) return;
-  elements.scrumBoardLegend.innerHTML = "";
-
-  const legendLabel = document.createElement("span");
-  legendLabel.className = "scrum-board-legend-label view-toolbar__legend-label";
-  legendLabel.textContent = "Status";
-  elements.scrumBoardLegend.appendChild(legendLabel);
-
-  const hidden = getBoardHiddenStatuses();
-  const hasFilter = hidden.length > 0;
-
-  projectStatusList.forEach((status) => {
-    const visible = isBoardStatusColumnVisible(status);
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "cell-type-pill view-toolbar__chip board-status-filter-btn";
-    if (!visible) btn.classList.add("board-status-filter-btn--off");
-    btn.setAttribute("data-status", status);
-    btn.setAttribute("aria-pressed", visible ? "true" : "false");
-    btn.setAttribute(
-      "title",
-      visible ? "Click to hide the " + status + " column" : "Click to show the " + status + " column"
-    );
-    btn.setAttribute("aria-label", (visible ? "Hide" : "Show") + " " + status + " column");
-    btn.textContent = status;
-    btn.addEventListener("click", () => toggleBoardStatusColumn(status));
-    elements.scrumBoardLegend.appendChild(btn);
-  });
-
-  if (hasFilter) {
-    const showAllBtn = document.createElement("button");
-    showAllBtn.type = "button";
-    showAllBtn.className = "view-toolbar__chip board-status-filter-reset";
-    showAllBtn.textContent = "Show all";
-    showAllBtn.setAttribute("aria-label", "Show all status columns");
-    showAllBtn.addEventListener("click", showAllBoardStatusColumns);
-    elements.scrumBoardLegend.appendChild(showAllBtn);
-  }
-}
-
 function renderScrumBoard() {
   if (!elements.scrumBoardContainer) return;
   const activeProfile = getActiveProfile();
   const unlockedProfile = getUnlockedActiveProfile();
+  const demoReadOnly = isActiveDemoProfile();
   elements.scrumBoardContainer.innerHTML = "";
 
   if (elements.scrumBoardSortByRiceToggle) {
     elements.scrumBoardSortByRiceToggle.checked = state.scrumBoardSortByRice;
-  }
-
-  if (elements.scrumBoardLegend) {
-    if (unlockedProfile) {
-      renderBoardStatusLegend();
-    } else {
-      elements.scrumBoardLegend.innerHTML = "";
-    }
   }
 
   if (!activeProfile) {
@@ -6788,8 +6987,6 @@ function renderScrumBoard() {
   });
 
   projectStatusList.forEach((status) => {
-    if (!isBoardStatusColumnVisible(status)) return;
-
     const column = document.createElement("div");
     column.className = "scrum-board-column";
     column.setAttribute("data-status", status);
@@ -6815,9 +7012,14 @@ function renderScrumBoard() {
     (listForStatus).forEach((project, index) => {
       const card = document.createElement("div");
       card.className = "scrum-board-card";
-      card.setAttribute("draggable", "true");
+      card.setAttribute("draggable", demoReadOnly ? "false" : "true");
       card.setAttribute("data-project-id", project.id);
-      card.setAttribute("aria-label", "Project: " + (project.title || "Untitled") + ". Drag to change status. View, Edit, Delete.");
+      card.setAttribute(
+        "aria-label",
+        demoReadOnly
+          ? "Project: " + (project.title || "Untitled") + ". View only."
+          : "Project: " + (project.title || "Untitled") + ". Drag to change status. View, Edit, Delete."
+      );
 
       const titleRow = document.createElement("div");
       titleRow.className = "scrum-board-card-title-row";
@@ -6860,7 +7062,6 @@ function renderScrumBoard() {
         }
         titleRow.appendChild(typeWrap);
       }
-      card.appendChild(titleRow);
 
       const meta = document.createElement("div");
       meta.className = "scrum-board-card-meta";
@@ -6960,18 +7161,18 @@ function renderScrumBoard() {
       if (iconGroup.childElementCount > 0) {
         meta.appendChild(iconGroup);
       }
-      card.appendChild(meta);
+      appendPortfolioCardBody(card, titleRow, meta);
 
       const cardStatus = (project.projectStatus || "Not Started").toString().trim();
-      if (document.documentElement.classList.contains("is-compact-layout")) {
-        card.appendChild(buildBoardCardMoveSelect(project, cardStatus));
-      }
+      const moveEl = isCompactPortfolioLayout()
+        ? buildBoardCardMoveSelect(project, cardStatus, { disabled: demoReadOnly })
+        : null;
 
       const actions = document.createElement("div");
       actions.className = "scrum-board-card-actions";
       const isFirst = index === 0;
       const isLast = index === listForStatus.length - 1;
-      const orderDisabled = state.scrumBoardSortByRice;
+      const orderDisabled = demoReadOnly || state.scrumBoardSortByRice;
       const upBtn = document.createElement("button");
       upBtn.type = "button";
       upBtn.className = "scrum-board-card-btn scrum-board-card-btn--order";
@@ -6990,14 +7191,19 @@ function renderScrumBoard() {
       downBtn.title = "Move down";
       downBtn.innerHTML = "↓";
       downBtn.disabled = orderDisabled || isLast;
-      upBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        moveBoardProjectUp(project.id, status);
-      });
-      downBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        moveBoardProjectDown(project.id, status);
-      });
+      if (!demoReadOnly) {
+        upBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          moveBoardProjectUp(project.id, status);
+        });
+        downBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          moveBoardProjectDown(project.id, status);
+        });
+      } else {
+        upBtn.title = DEMO_READ_ONLY_ACTION_TITLE;
+        downBtn.title = DEMO_READ_ONLY_ACTION_TITLE;
+      }
       const orderGroup = document.createElement("div");
       orderGroup.className = "scrum-board-card-actions-order";
       orderGroup.appendChild(upBtn);
@@ -7006,37 +7212,42 @@ function renderScrumBoard() {
       viewBtn.type = "button";
       viewBtn.className = "scrum-board-card-btn scrum-board-card-btn--view";
       viewBtn.setAttribute("data-project-id", project.id);
-      viewBtn.setAttribute("aria-label", "View project");
-      viewBtn.textContent = "View";
+      setPortfolioCardActionButton(viewBtn, "view", "View");
       const editBtn = document.createElement("button");
       editBtn.type = "button";
       editBtn.className = "scrum-board-card-btn scrum-board-card-btn--edit";
       editBtn.setAttribute("data-project-id", project.id);
-      editBtn.setAttribute("aria-label", "Edit project");
-      editBtn.textContent = "Edit";
+      setPortfolioCardActionButton(editBtn, "edit", "Edit");
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
       deleteBtn.className = "scrum-board-card-btn scrum-board-card-btn--delete";
       deleteBtn.setAttribute("data-project-id", project.id);
-      deleteBtn.setAttribute("aria-label", "Delete project");
-      deleteBtn.textContent = "Delete";
+      setPortfolioCardActionButton(deleteBtn, "delete", "Delete");
+      if (demoReadOnly) {
+        editBtn.disabled = true;
+        deleteBtn.disabled = true;
+        editBtn.title = DEMO_READ_ONLY_ACTION_TITLE;
+        deleteBtn.title = DEMO_READ_ONLY_ACTION_TITLE;
+      }
       viewBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         openProjectModal("view", project.id);
       });
-      editBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        openProjectModal("edit", project.id);
-      });
-      deleteBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        handleSingleDelete(project.id);
-      });
+      if (!demoReadOnly) {
+        editBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          openProjectModal("edit", project.id);
+        });
+        deleteBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          handleSingleDelete(project.id);
+        });
+      }
       actions.appendChild(viewBtn);
       actions.appendChild(editBtn);
       actions.appendChild(deleteBtn);
       actions.appendChild(orderGroup);
-      card.appendChild(actions);
+      appendPortfolioCardFooter(card, moveEl, actions);
 
       cardsContainer.appendChild(card);
     });
@@ -7084,6 +7295,10 @@ function bindScrumBoardDragAndDrop() {
 
   cards.forEach((card) => {
     card.addEventListener("dragstart", (e) => {
+      if (isActiveDemoProfile()) {
+        e.preventDefault();
+        return;
+      }
       if (e.target.closest(".scrum-board-card-actions, .portfolio-card-move")) {
         e.preventDefault();
         return;
@@ -7146,6 +7361,7 @@ function bindScrumBoardDragAndDrop() {
       e.preventDefault();
       column.classList.remove("scrum-board-column--drag-over");
       if (!draggedProjectId) return;
+      if (!requireWritableActiveProfile("Move project")) return;
       const newStatus = column.getAttribute("data-status");
       const activeProfile = getUnlockedActiveProfile();
       if (!activeProfile) return;
@@ -7221,6 +7437,7 @@ function getBoardOrderedList(profile, status) {
 }
 
 function moveBoardProjectUp(projectId, status) {
+  if (!requireWritableActiveProfile("Reorder project")) return;
   const activeProfile = getUnlockedActiveProfile();
   if (!activeProfile) return;
   const list = getBoardOrderedList(activeProfile, status);
@@ -7242,6 +7459,7 @@ function moveBoardProjectUp(projectId, status) {
 }
 
 function moveBoardProjectDown(projectId, status) {
+  if (!requireWritableActiveProfile("Reorder project")) return;
   const activeProfile = getUnlockedActiveProfile();
   if (!activeProfile) return;
   const list = getBoardOrderedList(activeProfile, status);
@@ -7297,6 +7515,7 @@ function getMoscowOrderedList(profile, quadrant) {
 let moscowCompactNavObserver = null;
 
 function setProjectMoscowCategory(projectId, newMoscow) {
+  if (!requireWritableActiveProfile("Move project")) return false;
   const activeProfile = getUnlockedActiveProfile();
   if (!activeProfile || !newMoscow) return false;
   const project = activeProfile.projects.find((p) => p.id === projectId);
@@ -7310,6 +7529,7 @@ function setProjectMoscowCategory(projectId, newMoscow) {
 }
 
 function setProjectBoardStatus(projectId, newStatus) {
+  if (!requireWritableActiveProfile("Move project")) return false;
   const activeProfile = getUnlockedActiveProfile();
   if (!activeProfile || !newStatus) return false;
   if (typeof projectStatusList === "undefined" || !projectStatusList.includes(newStatus)) return false;
@@ -7339,12 +7559,42 @@ function setProjectBoardStatus(projectId, newStatus) {
   return true;
 }
 
+function isCompactPortfolioLayout() {
+  return document.documentElement.classList.contains("is-compact-layout");
+}
+
+function appendPortfolioCardBody(card, titleRow, metaEl) {
+  if (!isCompactPortfolioLayout()) {
+    card.appendChild(titleRow);
+    card.appendChild(metaEl);
+    return;
+  }
+  const body = document.createElement("div");
+  body.className = "portfolio-card-body";
+  body.appendChild(titleRow);
+  body.appendChild(metaEl);
+  card.appendChild(body);
+}
+
+function appendPortfolioCardFooter(card, moveEl, actionsEl) {
+  if (!isCompactPortfolioLayout()) {
+    if (moveEl) card.appendChild(moveEl);
+    card.appendChild(actionsEl);
+    return;
+  }
+  const footer = document.createElement("div");
+  footer.className = "portfolio-card-footer";
+  if (moveEl) footer.appendChild(moveEl);
+  footer.appendChild(actionsEl);
+  card.appendChild(footer);
+}
+
 function buildPortfolioCardMoveSelect(project, currentValue, config) {
   const wrap = document.createElement("div");
   wrap.className = "portfolio-card-move";
   const label = document.createElement("label");
   label.className = "portfolio-card-move-label";
-  label.textContent = "Move to";
+  label.textContent = config.label || "Move to";
   label.setAttribute("for", config.idPrefix + "-" + project.id);
   const select = document.createElement("select");
   select.id = config.idPrefix + "-" + project.id;
@@ -7359,35 +7609,112 @@ function buildPortfolioCardMoveSelect(project, currentValue, config) {
   });
   select.addEventListener("click", (e) => e.stopPropagation());
   select.addEventListener("mousedown", (e) => e.stopPropagation());
-  select.addEventListener("change", (e) => {
-    e.stopPropagation();
-    const next = select.value;
-    if (next !== currentValue) {
-      config.onSelect(project.id, next);
-    }
-  });
+  if (config.disabled) {
+    select.disabled = true;
+    select.title = DEMO_READ_ONLY_ACTION_TITLE;
+  } else {
+    select.addEventListener("change", (e) => {
+      e.stopPropagation();
+      const next = select.value;
+      if (next !== currentValue) {
+        config.onSelect(project.id, next);
+      }
+    });
+  }
   wrap.appendChild(label);
   wrap.appendChild(select);
   return wrap;
 }
 
-function buildMoscowCardMoveSelect(project, currentMoscow) {
+function buildMoscowCardMoveSelect(project, currentMoscow, { disabled = false } = {}) {
   return buildPortfolioCardMoveSelect(project, currentMoscow, {
     idPrefix: "moscowMove",
+    label: "MoSCoW category",
     ariaLabel: "Move project to another MoSCoW category",
     values: moscowList,
     onSelect: (projectId, value) => setProjectMoscowCategory(projectId, value),
+    disabled,
   });
 }
 
-function buildBoardCardMoveSelect(project, currentStatus) {
+function buildBoardCardMoveSelect(project, currentStatus, { disabled = false } = {}) {
   const statuses = typeof projectStatusList !== "undefined" ? projectStatusList.slice() : [];
   return buildPortfolioCardMoveSelect(project, currentStatus, {
     idPrefix: "boardMove",
+    label: "Status",
     ariaLabel: "Move project to another board column",
     values: statuses,
     onSelect: (projectId, value) => setProjectBoardStatus(projectId, value),
+    disabled,
   });
+}
+
+const PORTFOLIO_CARD_ACTION_ICONS = {
+  view:
+    '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
+  edit:
+    '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+  delete:
+    '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+};
+
+const PROJECT_TABLE_ACTION_MAP = {
+  view: "viewProject",
+  edit: "editProject",
+  delete: "deleteProject",
+};
+
+const MOSCOW_TABLE_SHORT_LABELS = {
+  "Must have": "Must",
+  "Should have": "Should",
+  "Could have": "Could",
+  "Won't have": "Won't",
+};
+
+const MOSCOW_TABLE_PILL_SLUGS = {
+  "Must have": "must",
+  "Should have": "should",
+  "Could have": "could",
+  "Won't have": "wont",
+};
+
+function moscowTableShortLabel(category) {
+  if (!category) return "—";
+  return MOSCOW_TABLE_SHORT_LABELS[category] || category;
+}
+
+function moscowTablePillSlug(category) {
+  if (!category) return "unset";
+  return MOSCOW_TABLE_PILL_SLUGS[category] || "unset";
+}
+
+function setProjectTableActionButton(btn, kind, label, { disabled = false, title = "" } = {}) {
+  const action = PROJECT_TABLE_ACTION_MAP[kind] || kind;
+  btn.className = `project-action-btn project-action-btn--${kind} project-action-btn--icon-only`;
+  btn.dataset.action = action;
+  btn.setAttribute("aria-label", label);
+  btn.title = disabled ? title || DEMO_READ_ONLY_ACTION_TITLE : title || label;
+  btn.disabled = disabled;
+  const icon = PORTFOLIO_CARD_ACTION_ICONS[kind] || "";
+  btn.innerHTML =
+    '<span class="project-action-btn__icon">' +
+    icon +
+    '</span><span class="project-action-btn__label">' +
+    label +
+    "</span>";
+}
+
+function setPortfolioCardActionButton(btn, kind, label) {
+  btn.classList.add("project-action-btn", `project-action-btn--${kind}`, "portfolio-card-action-btn");
+  btn.setAttribute("aria-label", label);
+  btn.title = label;
+  const icon = PORTFOLIO_CARD_ACTION_ICONS[kind] || "";
+  btn.innerHTML =
+    '<span class="portfolio-card-action-icon project-action-btn__icon">' +
+    icon +
+    '</span><span class="portfolio-card-action-text project-action-btn__label">' +
+    label +
+    "</span>";
 }
 
 function syncMoscowCompactNav() {
@@ -7540,6 +7867,7 @@ function bindMoscowCompactNavScrollSync(track, columns) {
 }
 
 function moveMoscowProjectUp(projectId, quadrant) {
+  if (!requireWritableActiveProfile("Reorder project")) return;
   const activeProfile = getUnlockedActiveProfile();
   if (!activeProfile) return;
   const list = getMoscowOrderedList(activeProfile, quadrant);
@@ -7561,6 +7889,7 @@ function moveMoscowProjectUp(projectId, quadrant) {
 }
 
 function moveMoscowProjectDown(projectId, quadrant) {
+  if (!requireWritableActiveProfile("Reorder project")) return;
   const activeProfile = getUnlockedActiveProfile();
   if (!activeProfile) return;
   const list = getMoscowOrderedList(activeProfile, quadrant);
@@ -7586,6 +7915,7 @@ function renderMoscowBoard() {
   const gridOrder = typeof moscowGridOrder !== "undefined" && Array.isArray(moscowGridOrder) ? moscowGridOrder : moscowList;
   const activeProfile = getActiveProfile();
   const unlockedProfile = getUnlockedActiveProfile();
+  const demoReadOnly = isActiveDemoProfile();
   elements.moscowBoardContainer.innerHTML = "";
 
   if (elements.moscowSortByRiceToggle) {
@@ -7693,9 +8023,14 @@ function renderMoscowBoard() {
     (byMoscow[moscow] || []).forEach((project, index) => {
       const card = document.createElement("div");
       card.className = "moscow-board-card";
-      card.setAttribute("draggable", "true");
+      card.setAttribute("draggable", demoReadOnly ? "false" : "true");
       card.setAttribute("data-project-id", project.id);
-      card.setAttribute("aria-label", "Project: " + (project.title || "Untitled") + ". Drag to change MOSCOW category. View, Edit, Delete.");
+      card.setAttribute(
+        "aria-label",
+        demoReadOnly
+          ? "Project: " + (project.title || "Untitled") + ". View only."
+          : "Project: " + (project.title || "Untitled") + ". Drag to change MOSCOW category. View, Edit, Delete."
+      );
 
       const titleRow = document.createElement("div");
       titleRow.className = "moscow-board-card-title-row";
@@ -7738,7 +8073,6 @@ function renderMoscowBoard() {
         }
         titleRow.appendChild(typeWrap);
       }
-      card.appendChild(titleRow);
 
       const meta = document.createElement("div");
       meta.className = "moscow-board-card-meta";
@@ -7838,18 +8172,18 @@ function renderMoscowBoard() {
       if (iconGroup.childElementCount > 0) {
         meta.appendChild(iconGroup);
       }
-      card.appendChild(meta);
+      appendPortfolioCardBody(card, titleRow, meta);
 
-      if (document.documentElement.classList.contains("is-compact-layout")) {
-        card.appendChild(buildMoscowCardMoveSelect(project, moscow));
-      }
+      const moveEl = isCompactPortfolioLayout()
+        ? buildMoscowCardMoveSelect(project, moscow, { disabled: demoReadOnly })
+        : null;
 
       const actions = document.createElement("div");
       actions.className = "moscow-board-card-actions";
       const listForQuadrant = byMoscow[moscow] || [];
       const isFirst = index === 0;
       const isLast = index === listForQuadrant.length - 1;
-      const orderDisabled = state.moscowSortByRice;
+      const orderDisabled = demoReadOnly || state.moscowSortByRice;
       const upBtn = document.createElement("button");
       upBtn.type = "button";
       upBtn.className = "moscow-board-card-btn moscow-board-card-btn--order";
@@ -7870,14 +8204,19 @@ function renderMoscowBoard() {
       downBtn.title = "Move down";
       downBtn.innerHTML = "↓";
       downBtn.disabled = orderDisabled || isLast;
-      upBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        moveMoscowProjectUp(project.id, moscow);
-      });
-      downBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        moveMoscowProjectDown(project.id, moscow);
-      });
+      if (!demoReadOnly) {
+        upBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          moveMoscowProjectUp(project.id, moscow);
+        });
+        downBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          moveMoscowProjectDown(project.id, moscow);
+        });
+      } else {
+        upBtn.title = DEMO_READ_ONLY_ACTION_TITLE;
+        downBtn.title = DEMO_READ_ONLY_ACTION_TITLE;
+      }
       const orderGroup = document.createElement("div");
       orderGroup.className = "moscow-board-card-actions-order";
       orderGroup.appendChild(upBtn);
@@ -7886,37 +8225,42 @@ function renderMoscowBoard() {
       viewBtn.type = "button";
       viewBtn.className = "moscow-board-card-btn moscow-board-card-btn--view";
       viewBtn.setAttribute("data-project-id", project.id);
-      viewBtn.setAttribute("aria-label", "View project");
-      viewBtn.textContent = "View";
+      setPortfolioCardActionButton(viewBtn, "view", "View");
       const editBtn = document.createElement("button");
       editBtn.type = "button";
       editBtn.className = "moscow-board-card-btn moscow-board-card-btn--edit";
       editBtn.setAttribute("data-project-id", project.id);
-      editBtn.setAttribute("aria-label", "Edit project");
-      editBtn.textContent = "Edit";
+      setPortfolioCardActionButton(editBtn, "edit", "Edit");
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
       deleteBtn.className = "moscow-board-card-btn moscow-board-card-btn--delete";
       deleteBtn.setAttribute("data-project-id", project.id);
-      deleteBtn.setAttribute("aria-label", "Delete project");
-      deleteBtn.textContent = "Delete";
+      setPortfolioCardActionButton(deleteBtn, "delete", "Delete");
+      if (demoReadOnly) {
+        editBtn.disabled = true;
+        deleteBtn.disabled = true;
+        editBtn.title = DEMO_READ_ONLY_ACTION_TITLE;
+        deleteBtn.title = DEMO_READ_ONLY_ACTION_TITLE;
+      }
       viewBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         openProjectModal("view", project.id);
       });
-      editBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        openProjectModal("edit", project.id);
-      });
-      deleteBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        handleSingleDelete(project.id);
-      });
       actions.appendChild(viewBtn);
+      if (!demoReadOnly) {
+        editBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          openProjectModal("edit", project.id);
+        });
+        deleteBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          handleSingleDelete(project.id);
+        });
+      }
       actions.appendChild(editBtn);
       actions.appendChild(deleteBtn);
       actions.appendChild(orderGroup);
-      card.appendChild(actions);
+      appendPortfolioCardFooter(card, moveEl, actions);
 
       cardsContainer.appendChild(card);
     });
@@ -7941,6 +8285,10 @@ function bindMoscowBoardDragAndDrop() {
 
   cards.forEach((card) => {
     card.addEventListener("dragstart", (e) => {
+      if (isActiveDemoProfile()) {
+        e.preventDefault();
+        return;
+      }
       if (e.target.closest(".moscow-board-card-actions, .portfolio-card-move")) {
         e.preventDefault();
         return;
@@ -8082,6 +8430,17 @@ function applyFilters(projects) {
 }
 
 function sortProjects(projects) {
+  if (state.tableSortByRice) {
+    return projects.slice().sort((a, b) => {
+      const scoreA = a.riceScore != null ? a.riceScore : calculateRiceScore(a);
+      const scoreB = b.riceScore != null ? b.riceScore : calculateRiceScore(b);
+      if (scoreA === scoreB) {
+        return compareDatesDesc(a.createdAt, b.createdAt);
+      }
+      return scoreB - scoreA;
+    });
+  }
+
   const field = state.sortField || "createdAt";
   const direction = state.sortDirection === "asc" ? 1 : -1;
 
@@ -8116,6 +8475,10 @@ function sortProjects(projects) {
 }
 
 function toggleSort(field) {
+  if (state.tableSortByRice) {
+    state.tableSortByRice = false;
+    if (elements.tableSortByRiceToggle) elements.tableSortByRiceToggle.checked = false;
+  }
   if (state.sortField === field) {
     state.sortDirection = state.sortDirection === "asc" ? "desc" : "asc";
   } else {
@@ -8131,14 +8494,16 @@ function updateSortIndicators() {
   const headerCells = document.querySelectorAll("th[data-sort-field]");
   headerCells.forEach((th) => {
     const field = th.getAttribute("data-sort-field");
-    const active = field === state.sortField;
+    const active = state.tableSortByRice ? field === "riceScore" : field === state.sortField;
     th.dataset.sortActive = active ? "true" : "false";
     const indicator = th.querySelector(".sort-indicator");
     if (indicator) {
       if (!active) {
         indicator.textContent = "↕";
       } else {
-        indicator.textContent = state.sortDirection === "asc" ? "↑" : "↓";
+        const direction =
+          state.tableSortByRice && field === "riceScore" ? "desc" : state.sortDirection;
+        indicator.textContent = direction === "asc" ? "↑" : "↓";
       }
     }
   });
@@ -8211,7 +8576,12 @@ function updateBulkDeleteButton() {
   if (elements.bulkDeleteBtn) {
     const showToolbarBtn = inTableView && anyChecked && !isCompactTable;
     elements.bulkDeleteBtn.hidden = !showToolbarBtn;
-    elements.bulkDeleteBtn.disabled = !anyChecked;
+    elements.bulkDeleteBtn.disabled = !anyChecked || isActiveDemoProfile();
+    if (isActiveDemoProfile()) {
+      elements.bulkDeleteBtn.title = DEMO_READ_ONLY_ACTION_TITLE;
+    } else {
+      elements.bulkDeleteBtn.removeAttribute("title");
+    }
   }
 
   const showMobileBar = inTableView && anyChecked && isCompactTable;
@@ -8225,7 +8595,12 @@ function updateBulkDeleteButton() {
       count === 1 ? "1 selected" : `${count} selected`;
   }
   if (elements.portfolioSelectionDeleteBtn) {
-    elements.portfolioSelectionDeleteBtn.disabled = !anyChecked;
+    elements.portfolioSelectionDeleteBtn.disabled = !anyChecked || isActiveDemoProfile();
+    if (isActiveDemoProfile()) {
+      elements.portfolioSelectionDeleteBtn.title = DEMO_READ_ONLY_ACTION_TITLE;
+    } else {
+      elements.portfolioSelectionDeleteBtn.removeAttribute("title");
+    }
   }
 }
 
@@ -8242,6 +8617,7 @@ function syncHeaderCheckbox() {
 
 function handleBulkDelete() {
   if (state.projectsView !== "table") return;
+  if (!requireWritableActiveProfile("Bulk delete")) return;
   const activeProfile = getUnlockedActiveProfile();
   if (!activeProfile || !elements.projectDeleteModal) return;
   const checked = elements.projectsTableBody.querySelectorAll(".project-select-checkbox:checked");
@@ -8639,10 +9015,28 @@ function renderProfileViewFinancialStats(projects) {
   }
 }
 
-function renderProfileViewBreakdownChips(container, counts) {
+function renderProfileViewBreakdownChips(container, counts, { sortOrder, labelFor, titleFor } = {}) {
   if (!container) return;
   container.innerHTML = "";
-  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  const formatLabel = typeof labelFor === "function" ? labelFor : (key) => key;
+  const formatTitle = typeof titleFor === "function" ? titleFor : null;
+  let entries;
+  if (Array.isArray(sortOrder) && sortOrder.length) {
+    const used = new Set();
+    entries = [];
+    sortOrder.forEach((key) => {
+      const count = counts[key] || 0;
+      if (count > 0) {
+        entries.push([key, count]);
+        used.add(key);
+      }
+    });
+    Object.entries(counts).forEach(([key, count]) => {
+      if (!used.has(key) && count > 0) entries.push([key, count]);
+    });
+  } else {
+    entries = Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }
   if (!entries.length) {
     const empty = document.createElement("span");
     empty.className = "profile-view-empty";
@@ -8653,10 +9047,13 @@ function renderProfileViewBreakdownChips(container, counts) {
   entries.forEach(([label, count]) => {
     const chip = document.createElement("span");
     chip.className = "profile-view-chip";
+    const displayLabel = formatLabel(label);
+    const tooltipText = formatTitle ? formatTitle(label) : displayLabel !== label ? label : "";
+    if (tooltipText) chip.setAttribute("title", tooltipText);
 
     const labelEl = document.createElement("span");
     labelEl.className = "profile-view-chip-label";
-    labelEl.textContent = label;
+    labelEl.textContent = displayLabel;
 
     const countEl = document.createElement("span");
     countEl.className = "profile-view-chip-count";
@@ -8666,6 +9063,332 @@ function renderProfileViewBreakdownChips(container, counts) {
     chip.appendChild(countEl);
     container.appendChild(chip);
   });
+}
+
+const PROFILE_VIEW_MOSCOW_SHORT_LABELS = {
+  "Must have": "Must",
+  "Should have": "Should",
+  "Could have": "Could",
+  "Won't have": "Won't",
+};
+
+function getProfileViewFrameworkChipLabel(frameworkKey) {
+  const key = normalizeFinancialFramework(frameworkKey);
+  const meta = FINANCIAL_FRAMEWORK_ICONS[key];
+  return (meta && meta.label) || key;
+}
+
+function getProfileViewFrameworkChipTitle(frameworkKey) {
+  const key = normalizeFinancialFramework(frameworkKey);
+  const meta = FINANCIAL_FRAMEWORK_ICONS[key];
+  if (meta && meta.tooltipTitle && meta.tooltipBody) {
+    return `${meta.tooltipTitle} — ${meta.tooltipBody}`;
+  }
+  if (meta && meta.tooltipTitle) return meta.tooltipTitle;
+  if (meta && meta.tooltipBody) return meta.tooltipBody;
+  return getProfileViewFrameworkChipLabel(key);
+}
+
+const PROFILE_VIEW_NO_COUNTRIES_KEY = "No countries";
+
+function buildProfileViewCountryCounts(projects) {
+  const counts = {};
+  const list = Array.isArray(projects) ? projects : [];
+  list.forEach((project) => {
+    const countries = normalizeCountryNames(
+      Array.isArray(project.countries) ? project.countries : []
+    );
+    if (!countries.length) {
+      counts[PROFILE_VIEW_NO_COUNTRIES_KEY] = (counts[PROFILE_VIEW_NO_COUNTRIES_KEY] || 0) + 1;
+      return;
+    }
+    countries.forEach((countryName) => {
+      counts[countryName] = (counts[countryName] || 0) + 1;
+    });
+  });
+  return counts;
+}
+
+function getProfileViewCountryChipLabel(countryName) {
+  if (countryName === PROFILE_VIEW_NO_COUNTRIES_KEY) return countryName;
+  const code =
+    typeof countryCodeByName !== "undefined" && countryCodeByName[countryName]
+      ? countryCodeByName[countryName]
+      : "";
+  const flag = code && typeof countryCodeToFlag === "function" ? countryCodeToFlag(code) : "";
+  if (flag && code) return `${flag} ${code}`;
+  if (code) return code;
+  return countryName;
+}
+
+function getProfileViewCountryChipTitle(countryName) {
+  if (countryName === PROFILE_VIEW_NO_COUNTRIES_KEY) {
+    return "Projects without any target country set";
+  }
+  const code =
+    typeof countryCodeByName !== "undefined" && countryCodeByName[countryName]
+      ? countryCodeByName[countryName]
+      : "";
+  if (code) return `${countryName} (${code}) — projects targeting this country`;
+  return `${countryName} — projects targeting this country`;
+}
+
+const PROFILE_VIEW_NO_CURRENCY_KEY = "Not set";
+
+function getProfileViewProjectCurrencyKey(project) {
+  const currency = normalizeCurrency(project && project.financialImpactCurrency);
+  return currency ? currency.toUpperCase() : PROFILE_VIEW_NO_CURRENCY_KEY;
+}
+
+function buildProfileViewCurrencyData(projects) {
+  const counts = {};
+  const totals = {};
+  const list = Array.isArray(projects) ? projects : [];
+  list.forEach((project) => {
+    const key = getProfileViewProjectCurrencyKey(project);
+    counts[key] = (counts[key] || 0) + 1;
+    if (project.financialImpactValue == null || project.financialImpactValue === "") return;
+    const amount = Number(project.financialImpactValue);
+    if (!Number.isFinite(amount)) return;
+    totals[key] = (totals[key] || 0) + amount;
+  });
+  return { counts, totals };
+}
+
+function buildProfileViewCurrencySortOrder(counts, totals) {
+  const keys = Object.keys(counts).filter((key) => (counts[key] || 0) > 0);
+  const priority =
+    typeof currencyList !== "undefined" && Array.isArray(currencyList)
+      ? currencyList.slice()
+      : ["EUR", "USD", "GBP"];
+  return keys.sort((a, b) => {
+    if (a === PROFILE_VIEW_NO_CURRENCY_KEY) return 1;
+    if (b === PROFILE_VIEW_NO_CURRENCY_KEY) return -1;
+    const pa = priority.indexOf(a);
+    const pb = priority.indexOf(b);
+    if (pa !== -1 || pb !== -1) {
+      if (pa === -1) return 1;
+      if (pb === -1) return -1;
+      return pa - pb;
+    }
+    const totalDiff = (totals[b] || 0) - (totals[a] || 0);
+    if (totalDiff !== 0) return totalDiff;
+    return a.localeCompare(b);
+  });
+}
+
+function getProfileViewCurrencyChipLabel(currencyKey) {
+  if (currencyKey === PROFILE_VIEW_NO_CURRENCY_KEY) return currencyKey;
+  return typeof formatCurrencyChipLabel === "function"
+    ? formatCurrencyChipLabel(currencyKey)
+    : currencyKey;
+}
+
+function getProfileViewCurrencyChipTitle(currencyKey, count, total) {
+  const projectsLabel = `${count} project${count === 1 ? "" : "s"}`;
+  if (currencyKey === PROFILE_VIEW_NO_CURRENCY_KEY) {
+    let title = `Projects without a currency set — ${projectsLabel}`;
+    if (Number.isFinite(total) && total !== 0) {
+      title += `, total impact ${typeof formatFinancialShort === "function" ? formatFinancialShort(total) : total} (no currency)`;
+    }
+    return title;
+  }
+  let title = `Projects with original currency ${currencyKey} — ${projectsLabel}`;
+  if (Number.isFinite(total) && total !== 0) {
+    const formatted =
+      typeof formatOriginalCurrencyAmount === "function"
+        ? formatOriginalCurrencyAmount(total, currencyKey)
+        : String(total);
+    title += `, combined impact ${formatted}`;
+    const eur = convertProfileViewCurrencyTotalToEur(total, currencyKey);
+    if (Number.isFinite(eur) && currencyKey.toUpperCase() !== "EUR") {
+      title += ` (${formatProfileViewFinancialEur(eur)} at latest rate)`;
+    }
+  }
+  return title;
+}
+
+function convertProfileViewCurrencyTotalToEur(total, currencyKey) {
+  if (!Number.isFinite(total)) return null;
+  const code = (currencyKey || "").toString().trim().toUpperCase();
+  if (!code || code === PROFILE_VIEW_NO_CURRENCY_KEY) return null;
+  if (code === "EUR") return total;
+  if (typeof ExchangeRates !== "undefined" && typeof ExchangeRates.convertToEUR === "function") {
+    const eur = ExchangeRates.convertToEUR(total, code);
+    return Number.isFinite(eur) ? eur : null;
+  }
+  return null;
+}
+
+function formatProfileViewCurrencyEurLine(total, currencyKey) {
+  const code = (currencyKey || "").toString().trim().toUpperCase();
+  if (code === "EUR") return null;
+  const eur = convertProfileViewCurrencyTotalToEur(total, currencyKey);
+  if (Number.isFinite(eur)) {
+    return {
+      amount: formatProfileViewFinancialEur(eur),
+      caption: "Latest rate",
+      variant: "converted",
+    };
+  }
+  const hasRateApi =
+    typeof ExchangeRates !== "undefined" && typeof ExchangeRates.hasRate === "function";
+  if (hasRateApi && !ExchangeRates.hasRate(code)) {
+    return {
+      text: "EUR conversion unavailable for this currency",
+      variant: "unavailable",
+    };
+  }
+  return { text: "EUR conversion unavailable", variant: "unavailable" };
+}
+
+function renderProfileViewCurrencyTotals(container, note, projects) {
+  if (!container) return;
+
+  const showLoading = () => {
+    container.innerHTML = "";
+    const loading = document.createElement("p");
+    loading.className = "profile-view-rice-empty";
+    loading.textContent = "Loading exchange rates…";
+    container.appendChild(loading);
+    if (note) note.hidden = false;
+  };
+
+  const render = () => {
+    container.innerHTML = "";
+    const { counts, totals } = buildProfileViewCurrencyData(projects);
+    const sortOrder = buildProfileViewCurrencySortOrder(counts, totals);
+    const entries = sortOrder.filter(
+      (key) => key !== PROFILE_VIEW_NO_CURRENCY_KEY && Number.isFinite(totals[key]) && totals[key] !== 0
+    );
+
+    let unavailableConversions = 0;
+
+    if (!entries.length) {
+      if (note) note.hidden = true;
+      const empty = document.createElement("p");
+      empty.className = "profile-view-rice-empty";
+      empty.textContent = "No original-currency financial amounts yet.";
+      container.appendChild(empty);
+      return;
+    }
+
+    entries.forEach((currencyKey) => {
+      const total = totals[currencyKey];
+      const count = counts[currencyKey] || 0;
+      const eurLine = formatProfileViewCurrencyEurLine(total, currencyKey);
+      if (eurLine && eurLine.variant === "unavailable") unavailableConversions += 1;
+
+      const card = document.createElement("div");
+      card.className = "profile-view-currency-card";
+      if (eurLine && eurLine.variant === "converted") {
+        card.classList.add("profile-view-currency-card--dual");
+      }
+      const titleParts = [getProfileViewCurrencyChipTitle(currencyKey, count, total)];
+      if (eurLine && eurLine.variant === "converted") {
+        titleParts.push(`≈ ${eurLine.amount} at latest rate`);
+      }
+      card.setAttribute("title", titleParts.join(" · "));
+
+      const head = document.createElement("div");
+      head.className = "profile-view-currency-card-head";
+
+      const labelEl = document.createElement("span");
+      labelEl.className = "profile-view-currency-card-label";
+      labelEl.textContent = getProfileViewCurrencyChipLabel(currencyKey);
+
+      const countEl = document.createElement("span");
+      countEl.className = "profile-view-currency-card-count";
+      countEl.textContent = `${count} project${count === 1 ? "" : "s"}`;
+
+      head.appendChild(labelEl);
+      head.appendChild(countEl);
+
+      const valuesWrap = document.createElement("div");
+      valuesWrap.className = "profile-view-currency-card-values";
+
+      const originalBlock = document.createElement("div");
+      originalBlock.className =
+        "profile-view-currency-card-amount profile-view-currency-card-amount--original";
+      const isNativeEur = (currencyKey || "").toString().trim().toUpperCase() === "EUR";
+
+      if (!isNativeEur) {
+        const originalCaption = document.createElement("span");
+        originalCaption.className = "profile-view-currency-card-amount-caption";
+        originalCaption.textContent = "Original";
+        originalBlock.appendChild(originalCaption);
+      }
+
+      const valueEl = document.createElement("span");
+      valueEl.className = "profile-view-currency-card-value";
+      valueEl.textContent =
+        typeof formatOriginalCurrencyAmount === "function"
+          ? formatOriginalCurrencyAmount(total, currencyKey)
+          : String(total);
+
+      originalBlock.appendChild(valueEl);
+      valuesWrap.appendChild(originalBlock);
+
+      if (eurLine && eurLine.variant === "converted") {
+        const eurBlock = document.createElement("div");
+        eurBlock.className = "profile-view-currency-card-amount profile-view-currency-card-amount--eur";
+
+        const eurCaption = document.createElement("span");
+        eurCaption.className = "profile-view-currency-card-amount-caption";
+        eurCaption.textContent = "≈ EUR";
+
+        const eurValueEl = document.createElement("span");
+        eurValueEl.className = "profile-view-currency-card-eur-value";
+        eurValueEl.textContent = eurLine.amount;
+
+        const eurMeta = document.createElement("span");
+        eurMeta.className = "profile-view-currency-card-eur-meta";
+        eurMeta.textContent = eurLine.caption || "Latest rate";
+
+        eurBlock.appendChild(eurCaption);
+        eurBlock.appendChild(eurValueEl);
+        eurBlock.appendChild(eurMeta);
+        valuesWrap.appendChild(eurBlock);
+      } else if (eurLine && eurLine.variant === "unavailable") {
+        const unavailableEl = document.createElement("p");
+        unavailableEl.className = "profile-view-currency-card-eur profile-view-currency-card-eur--unavailable";
+        unavailableEl.textContent = eurLine.text;
+        valuesWrap.appendChild(unavailableEl);
+      }
+
+      card.appendChild(head);
+      card.appendChild(valuesWrap);
+      container.appendChild(card);
+    });
+
+    if (note) {
+      note.hidden = false;
+      if (unavailableConversions > 0) {
+        note.textContent =
+          unavailableConversions === 1
+            ? "Totals use each project's stored amount in its original currency. EUR equivalents use the app's latest exchange rates; 1 currency could not be converted."
+            : `Totals use each project's stored amount in its original currency. EUR equivalents use the app's latest exchange rates; ${unavailableConversions} currencies could not be converted.`;
+      } else {
+        note.textContent =
+          "Totals use each project's stored amount in its original currency. EUR equivalents below use the app's latest exchange rates (refreshed daily).";
+      }
+    }
+  };
+
+  showLoading();
+  if (typeof ExchangeRates !== "undefined" && typeof ExchangeRates.ensure === "function") {
+    ExchangeRates.ensure().then(render).catch(render);
+  } else {
+    render();
+  }
+}
+
+function syncProfileViewCurrencyDetails({ resetCollapsed = false } = {}) {
+  const details = elements.profileViewCurrencyDetails;
+  if (!details) return;
+  if (resetCollapsed) details.open = false;
+  const summary = details.querySelector(".profile-view-currency-summary");
+  if (summary) summary.setAttribute("aria-expanded", details.open ? "true" : "false");
 }
 
 function openProfileViewModal(profileId) {
@@ -8708,6 +9431,8 @@ function openProfileViewModal(profileId) {
   const statusCounts = {};
   const typeCounts = {};
   const tshirtCounts = {};
+  const moscowCounts = {};
+  const frameworkCounts = {};
   const riceScores = [];
   projects.forEach((p) => {
     const statusKey = (p.projectStatus || "Not set").toString();
@@ -8716,6 +9441,10 @@ function openProfileViewModal(profileId) {
     typeCounts[typeKey] = (typeCounts[typeKey] || 0) + 1;
     const tshirtKey = (p.tshirtSize || "Not set").toString();
     tshirtCounts[tshirtKey] = (tshirtCounts[tshirtKey] || 0) + 1;
+    const moscowKey = (p.moscowCategory || "Not set").toString();
+    moscowCounts[moscowKey] = (moscowCounts[moscowKey] || 0) + 1;
+    const frameworkKey = normalizeFinancialFramework(p.financialImpactFramework);
+    frameworkCounts[frameworkKey] = (frameworkCounts[frameworkKey] || 0) + 1;
     const score = calculateRiceScore(p);
     if (Number.isFinite(score)) riceScores.push(score);
   });
@@ -8723,6 +9452,42 @@ function openProfileViewModal(profileId) {
   renderProfileViewBreakdownChips(elements.profileViewByStatus, statusCounts);
   renderProfileViewBreakdownChips(elements.profileViewByType, typeCounts);
   renderProfileViewBreakdownChips(elements.profileViewByTshirt, tshirtCounts);
+  renderProfileViewBreakdownChips(elements.profileViewByMoscow, moscowCounts, {
+    sortOrder: typeof moscowList !== "undefined" ? moscowList.slice() : [],
+    labelFor: (key) => PROFILE_VIEW_MOSCOW_SHORT_LABELS[key] || key,
+  });
+  renderProfileViewBreakdownChips(elements.profileViewByFramework, frameworkCounts, {
+    sortOrder: FINANCIAL_FRAMEWORKS.slice(),
+    labelFor: (key) => getProfileViewFrameworkChipLabel(key),
+    titleFor: (key) => getProfileViewFrameworkChipTitle(key),
+  });
+  renderProfileViewBreakdownChips(
+    elements.profileViewByCountry,
+    buildProfileViewCountryCounts(projects),
+    {
+      labelFor: (key) => getProfileViewCountryChipLabel(key),
+      titleFor: (key) => getProfileViewCountryChipTitle(key),
+    }
+  );
+
+  const currencyData = buildProfileViewCurrencyData(projects);
+  renderProfileViewBreakdownChips(elements.profileViewByCurrency, currencyData.counts, {
+    sortOrder: buildProfileViewCurrencySortOrder(currencyData.counts, currencyData.totals),
+    labelFor: (key) => getProfileViewCurrencyChipLabel(key),
+    titleFor: (key) =>
+      getProfileViewCurrencyChipTitle(
+        key,
+        currencyData.counts[key] || 0,
+        currencyData.totals[key]
+      ),
+  });
+  renderProfileViewCurrencyTotals(
+    elements.profileViewCurrencyTotals,
+    elements.profileViewCurrencyNote,
+    projects
+  );
+
+  syncProfileViewCurrencyDetails({ resetCollapsed: true });
 
   renderProfileViewStatsGrid(elements.profileViewRiceStats, riceScores, {
     formatValue: formatRice,
@@ -8743,6 +9508,10 @@ function closeProfileViewModal({ immediate = false } = {}) {
 function openProfileEditModal(profileId) {
   const profile = state.profiles.find((p) => p.id === profileId);
   if (!profile || !elements.profileEditModal) return;
+  if (isDemoProfile(profile)) {
+    showToast("Demo profile is read-only. Profile edits are disabled.");
+    return;
+  }
   if (!requireProfileUnlocked(profileId, "edit")) return;
   prepareAppOverlay("profileEditModal");
   elements.profileEditModal.setAttribute("data-profile-id", profileId);
@@ -8806,6 +9575,11 @@ async function handleProfileEditSave() {
     closeProfileEditModal();
     return;
   }
+  if (isDemoProfile(profile)) {
+    showToast("Demo profile is read-only. Profile edits are disabled.");
+    closeProfileEditModal();
+    return;
+  }
   const name = (elements.profileEditName && elements.profileEditName.value || "").trim();
   if (!name) {
     if (elements.profileEditName) elements.profileEditName.focus();
@@ -8862,8 +9636,12 @@ async function handleProfileEditSave() {
 function deleteProfile(profileId) {
   const index = state.profiles.findIndex((p) => p.id === profileId);
   if (index === -1 || !elements.profileDeleteModal) return;
-  prepareAppOverlay("profileDeleteModal");
   const profile = state.profiles[index];
+  if (isDemoProfile(profile)) {
+    showToast("Demo profile is read-only. Profile deletion is disabled.");
+    return;
+  }
+  prepareAppOverlay("profileDeleteModal");
   const projectCount = profile.projects ? profile.projects.length : 0;
 
   elements.profileDeleteModal.setAttribute("data-profile-id", profileId);
@@ -8915,7 +9693,7 @@ function deleteProfile(profileId) {
             state.activeProfileId = null;
             ensureDefaultProfile();
           } else if (state.activeProfileId === id) {
-            state.activeProfileId = state.profiles[0].id;
+            state.activeProfileId = resolveFallbackActiveProfileId();
           }
           saveState();
           renderProfiles();
@@ -8963,6 +9741,7 @@ function deleteProfile(profileId) {
 }
 
 function handleSingleDelete(projectId) {
+  if (!requireWritableActiveProfile("Delete")) return;
   const activeProfile = getActiveProfile();
   if (!activeProfile || !elements.projectDeleteModal) return;
 
@@ -9013,6 +9792,7 @@ function handleSingleDelete(projectId) {
 function openProjectModal(mode, projectId) {
   const isEdit = mode === "edit";
   const isView = mode === "view";
+  if (!isView && !requireWritableActiveProfile(isEdit ? "Edit" : "Add project")) return;
   projectModalMode = mode;
   editingProjectId = isEdit ? projectId : null;
   elements.projectFormError.style.display = "none";
@@ -9159,6 +9939,8 @@ function handleProjectFormSubmit(e) {
     closeProjectModal();
     return;
   }
+
+  if (!requireWritableActiveProfile("Save project")) return;
 
   const activeProfile = getUnlockedActiveProfile();
   if (!activeProfile) {

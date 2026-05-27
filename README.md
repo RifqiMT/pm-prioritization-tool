@@ -5,7 +5,7 @@
 [![Deploy on Vercel](https://img.shields.io/badge/deploy-Vercel-black)](docs/DEPLOYMENT.md)
 
 **Production:** [https://pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app)  
-**Asset baseline:** `APP_ASSET_VERSION` = `20260526-ui54`
+**Asset baseline:** `APP_ASSET_VERSION` = `20260527-ui99`
 
 ---
 
@@ -189,4 +189,4 @@ UNLICENSED (private). See `package.json`.
 - LinkedIn: [rifqi-tjahjono](https://www.linkedin.com/in/rifqi-tjahjono/)  
 - Website: [rifqi-tjahyono.com](https://rifqi-tjahyono.com/)
 
-Product documentation last comprehensively audited: **2026-05-26**.
+Product documentation last comprehensively audited: **2026-05-27**.

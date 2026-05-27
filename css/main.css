@@ -50,7 +50,8 @@ body {
     radial-gradient(ellipse 80% 50% at 80% 50%, rgba(212, 175, 55, 0.12), transparent 50%),
     linear-gradient(180deg, #12080b 0%, #14060b 38%, #08070a 100%);
   color: var(--text);
-  padding: clamp(0.75rem, 2.5vw, 1.5rem);
+  /* Reduce outer whitespace; spacing handled by modern panels. */
+  padding: 0;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -59,20 +60,22 @@ body {
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: clamp(1.25rem, 3vw, 2rem);
+  /* Minimal outer inset for the whole app. */
+  padding: 0.35rem;
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(165deg, rgba(38, 10, 16, 0.94) 0%, rgba(22, 10, 14, 0.98) 100%);
-  border-radius: 20px;
-  border: 1px solid rgba(212, 175, 55, 0.28);
-  box-shadow: var(--shadow-soft);
-  transition: box-shadow var(--transition-normal);
+  /* Let the inner panels (cards) define structure; remove outdated outer frame. */
+  background: transparent;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  transition: none;
 }
 
 .app-shell:hover {
-  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.5);
+  box-shadow: none;
 }
 
 .app-header {
@@ -80,9 +83,9 @@ body {
   align-items: flex-start;
   justify-content: space-between;
   gap: 1.25rem;
-  margin-bottom: 1.75rem;
+  margin-bottom: 1rem;
   flex-wrap: wrap;
-  padding-bottom: 1rem;
+  padding-bottom: 0.75rem;
   border-bottom: 1px solid rgba(148, 163, 184, 0.15);
 }
 
@@ -220,23 +223,24 @@ body {
 .app-layout {
   display: grid;
   grid-template-columns: minmax(280px, 340px) minmax(0, 1.9fr);
-  grid-template-rows: minmax(0, 1fr);
-  gap: 1.5rem;
-  align-items: stretch;
-  flex: 1;
+  grid-template-rows: auto;
+  gap: 1rem;
+  align-items: start;
+  flex: 0 1 auto;
   min-height: 0;
+  width: 100%;
 }
 
 @media (max-width: 1024px) {
   .app-layout {
     grid-template-columns: 1fr;
-    gap: 1.25rem;
+    gap: 0.85rem;
   }
 }
 
 @media (max-width: 640px) {
   .app-layout {
-    gap: 1rem;
+    gap: 0.75rem;
   }
 }
 
@@ -262,7 +266,7 @@ body {
   background: linear-gradient(165deg, rgba(185, 28, 28, 0.18) 0%, rgba(26, 12, 16, 0.98) 100%);
   border-radius: var(--radius-lg);
   border: 1px solid rgba(148, 163, 184, 0.22);
-  padding: 1.25rem 1.35rem;
+  padding: 1.05rem 1.15rem;
   box-shadow: var(--shadow-card);
   transition: border-color var(--transition-normal), box-shadow var(--transition-normal), transform var(--transition-normal);
 }
@@ -276,7 +280,7 @@ body {
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.97) 0%, rgba(15, 23, 42, 0.94) 100%);
   border-radius: var(--radius-lg);
   border: 1px solid rgba(51, 65, 85, 0.75);
-  padding: 1.25rem 1.35rem;
+  padding: 1.05rem 1.15rem;
   box-shadow: var(--shadow-card);
   min-height: 0;
   display: flex;
@@ -957,26 +961,43 @@ button:disabled {
 }
 
 .projects-view--map {
-  flex: 1;
+  flex: 0 0 auto;
   flex-direction: column;
-  min-height: 400px;
+  min-height: 0;
+  align-self: start;
 }
 
 .projects-view--map .projects-map-toolbar {
   flex-shrink: 0;
   position: relative;
-  z-index: 2;
+  z-index: 5;
+  overflow: visible;
 }
 
 .projects-view--map .projects-map-legend {
   flex-shrink: 0;
   position: relative;
-  z-index: 2;
+  z-index: 1;
 }
 
 .projects-view--map .projects-map-container {
   position: relative;
   z-index: 1;
+  flex: 0 0 auto;
+  width: 100%;
+  aspect-ratio: 2.05 / 1;
+  height: auto;
+  max-height: min(42vh, 480px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.projects-view--map .projects-map-container .leaflet-container {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
 }
 
 .projects-map-toolbar {
@@ -1085,8 +1106,13 @@ button:disabled {
 }
 
 .projects-map-container {
-  flex: 1;
-  min-height: 360px;
+  position: relative;
+  flex: 0 0 auto;
+  width: 100%;
+  aspect-ratio: 2.05 / 1;
+  height: auto;
+  max-height: min(42vh, 480px);
+  min-height: 0;
   background: var(--bg-subtle);
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -1242,7 +1268,8 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 360px;
+  height: 100%;
+  min-height: 0;
   color: var(--muted);
   font-size: 0.95rem;
 }
@@ -4093,9 +4120,10 @@ body {
 }
 
 .app-shell {
-  background: linear-gradient(180deg, #ffffff 0%, #fffaf2 100%);
-  border: 1px solid rgba(212, 175, 55, 0.5);
-  box-shadow: 0 22px 48px rgba(185, 28, 28, 0.12);
+  /* Remove the legacy “outer frame” so panels/cards own the visual structure. */
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .app-badge {
@@ -4467,17 +4495,19 @@ tbody tr:hover {
 }
 
 body {
-  padding: clamp(0.55rem, 1.2vw, 1rem);
+  /* Minimal outer inset: edge-to-edge feel; spacing is handled by inner panels. */
+  padding: 0 !important;
 }
 
 .app-shell {
-  border-radius: var(--ui-radius-xl);
-  padding: clamp(1rem, 2.2vw, 1.5rem);
+  border-radius: 0 !important;
+  /* Desktop: no unnecessary outer padding (cards/panels own layout). */
+  padding: 0 !important;
 }
 
 .app-header {
-  margin-bottom: 1.2rem;
-  padding-bottom: 0.9rem;
+  margin-bottom: 0.65rem !important;
+  padding-bottom: 0.55rem !important;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--ui-gap-lg);
@@ -4486,20 +4516,21 @@ body {
 
 .app-layout {
   grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
-  gap: var(--ui-gap-xl);
+  /* Reduce spacing between sidebar and workspace. */
+  gap: 0.65rem !important;
 }
 
 .card,
 .card-plain {
-  border-radius: var(--ui-radius-xl);
+  border-radius: 4px;
 }
 
 .card {
-  padding: clamp(1rem, 1.9vw, 1.35rem);
+  padding: 0.65rem 0.8rem !important;
 }
 
 .card-plain {
-  padding: clamp(1rem, 1.7vw, 1.35rem);
+  padding: 0.65rem 0.8rem !important;
 }
 
 .projects-header-row {
@@ -5992,6 +6023,40 @@ tbody tr:hover {
   color: #7f1d1d !important;
 }
 
+html.is-demo-readonly .cell-actions button[data-action="editProject"]:disabled {
+  background: #fffbeb !important;
+  border: 1px solid rgba(212, 175, 55, 0.5) !important;
+  color: #a16207 !important;
+  opacity: 0.88 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+html.is-demo-readonly .cell-actions button[data-action="deleteProject"]:disabled {
+  background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%) !important;
+  border: 1px solid rgba(220, 38, 38, 0.4) !important;
+  color: #b91c1c !important;
+  opacity: 0.88 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+html.is-demo-readonly .scrum-board-card-btn--edit:disabled,
+html.is-demo-readonly .scrum-board-card-btn--delete:disabled,
+html.is-demo-readonly .moscow-board-card-btn--edit:disabled,
+html.is-demo-readonly .moscow-board-card-btn--delete:disabled {
+  opacity: 0.75 !important;
+  cursor: not-allowed !important;
+}
+
+html.is-demo-readonly tbody .checkbox-input:disabled,
+html.is-demo-readonly #selectAllProjects:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 tbody .checkbox-input {
   border-color: rgba(212, 175, 55, 0.75) !important;
   accent-color: var(--id-red-600);
@@ -6286,15 +6351,24 @@ tbody .checkbox-input {
 /* =========================================================
    Profiles panel v3 (complete UX revamp for side-column)
    ========================================================= */
-.profiles-panel {
+.profiles-panel.profiles-panel--v2,
+.profiles-panel:not(.profiles-panel--v2) {
   padding: 1.2rem !important;
   border-radius: 18px !important;
   border: 1px solid rgba(212, 175, 55, 0.65) !important;
   background: linear-gradient(180deg, #ffffff 0%, #fffdf8 100%) !important;
   display: flex !important;
   flex-direction: column !important;
-  height: 100% !important;
   min-height: 0 !important;
+}
+
+.profiles-panel:not(.profiles-panel--v2) {
+  height: 100% !important;
+}
+
+.profiles-panel.profiles-panel--v2 {
+  height: auto !important;
+  padding-bottom: 0.55rem !important;
 }
 
 .profiles-panel .card-header {
@@ -6362,7 +6436,20 @@ tbody .checkbox-input {
   justify-content: center !important;
 }
 
-.profiles-list {
+.profiles-panel--v2 .profiles-list,
+.profiles-panel--v2 .profiles-list--modern {
+  margin-top: 0 !important;
+  max-height: min(42vh, 520px) !important;
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  gap: 0.7rem !important;
+  padding-right: 0.2rem !important;
+}
+
+.profiles-list:not(.profiles-list--modern) {
   margin-top: 0.35rem !important;
   max-height: none !important;
   flex: 1 1 auto !important;

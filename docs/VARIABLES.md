@@ -2,7 +2,7 @@
 
 **Purpose:** Authoritative dictionary of application variables — technical name, friendly name, definition, formula, UI location, and examples.  
 **Audience:** Product, engineering, QA, analytics.  
-**Last audited:** 2026-05-26
+**Last audited:** 2026-05-27
 
 ---
 
@@ -32,8 +32,7 @@ Persisted to `localStorage` under `rice_prioritizer_v1` unless noted.
 | `projectsView` | Active Planning View | Which workspace tab is visible. | `table` \| `board` \| `moscow` \| `map`. | View tabs | `"board"` |
 | `scrumBoardSortByRice` | Board RICE Sort | When true, board cards sorted by RICE per column. | Boolean; persisted. | Board toolbar toggle | `true` |
 | `moscowSortByRice` | MoSCoW RICE Sort | When true, cards in each MoSCoW quadrant sorted by RICE. | Boolean; persisted. | MoSCoW toolbar toggle | `true` |
-| `boardHiddenStatuses` | Hidden Board Columns | Status column names hidden on board. | `null` = all visible; else string array of hidden statuses. App enforces “at least one column visible”. | Board status pills | `["Cancelled"]` |
-| `mapMetric` | Map Aggregation Metric | What the choropleth represents. | `projects` \| `rice` \| `financial`. | Map toolbar pills | `"financial"` |
+| `mapMetric` | Map Aggregation Metric | What the choropleth represents. | `projects` \| `rice` \| `riceAvg` \| `financial` \| `financialAvg` | Map metric picker | `"financial"` |
 | `exchangeRatesToEUR` | FX Rates to EUR | Map of currency code → EUR multiplier. | `amountEUR = amount × rate`. | FX refresh; table/map EUR | `{ "USD": 0.92, "IDR": 0.000058 }` |
 | `exchangeRatesDate` | FX Rates Date | ISO timestamp of last rate fetch. | Set on refresh. | Header FX footnote | `"2026-05-26T10:00:00.000Z"` |
 | `exchangeRatesLastSource` | FX Source | Whether rates were manual or auto. | `manual` \| `auto`. | Internal | `"auto"` |
@@ -102,6 +101,15 @@ financialImpactEUR = financialImpactValue × exchangeRatesToEUR[currency]
 
 If rate missing, EUR display may be omitted or stale per [GUARDRAILS.md](GUARDRAILS.md).
 
+**Profile currency totals (original-currency breakdown):**
+- For each currency total card (non-EUR), the app computes:
+
+```
+currencyTotalEUR = currencyTotalOriginal × exchangeRatesToEUR[currency]
+```
+
+- If `exchangeRatesToEUR[currency]` is missing or non-finite, the UI shows “EUR conversion unavailable” (no implied precision).
+
 ### 4.3 Financial frameworks (summary)
 
 | Framework | Friendly Name | Output |
@@ -162,7 +170,9 @@ Full input field whitelists: `sanitizeFinancialImpactInputs` in `src/app.js`.
 | `moscowList` | MoSCoW Enum | Allowed MoSCoW values. | 4 categories |
 | `tshirtSizeList` | T-Shirt Enum | Allowed sizes. | XS–XL |
 | `currencyList` | Currency List | Selectable currencies. | EUR, USD, IDR, … |
+| `LEGACY_WORKSPACE_FIELDS` | Legacy Workspace Keys | Deprecated workspace JSON keys stripped on load/import/persist. | `["boardHiddenStatuses"]` |
 | `countryList` | Country List | Normalized country names for geo. | `"Germany"` |
+| `CURRENCY_SYMBOLS` | Currency Symbol Map | Display symbol for each supported currency code. | `{ EUR: "€", GBP: "£", IDR: "Rp", ... }` |
 
 ---
 
@@ -204,6 +214,18 @@ flowchart LR
   SEL --> FLT[Advanced Framework Filter]
 ```
 
+### 8.8 Profile currency totals (original currency → EUR)
+
+```mermaid
+flowchart TD
+  P[profile.projects] --> SUM[buildProfileViewCurrencyData totals per currency]
+  SUM --> CARD[Currency total cards (original currency)]
+  SUM -->|non-EUR| ENSURE[ExchangeRates.ensure]
+  ENSURE --> CONV[convertToEUR(total, currency)]
+  CONV --> EUR2[EUR equivalent display]
+  CONV -->|missing rate| FALLBACK["EUR conversion unavailable"]
+```
+
 ### 8.3 Profile lock and export
 
 ```mermaid
@@ -230,19 +252,7 @@ flowchart LR
   INSERT --> LS
 ```
 
-### 8.5 Board status column visibility
-
-```mermaid
-flowchart TD
-  BHS[boardHiddenStatuses (persisted)] --> GHS[getBoardHiddenStatuses]
-  GHS --> VIS{isBoardStatusColumnVisible?}
-  VIS -->|Visible| COL[renderScrumBoard renders column + cards]
-  VIS -->|Hidden| SKIP[Column omitted from DOM]
-  toggle[toggleBoardStatusColumn(status)] --> BHS
-  BHS --> LOAD[renderScrumBoard uses persisted preference]
-```
-
-### 8.6 Map aggregation metric selection
+### 8.5 Map aggregation metric selection
 
 ```mermaid
 flowchart TD
@@ -253,7 +263,7 @@ flowchart TD
   RENDER --> LEGEND[map legend text/scale]
 ```
 
-### 8.7 Compact layout classes
+### 8.6 Compact layout classes
 
 ```mermaid
 flowchart TD
@@ -274,7 +284,7 @@ flowchart TD
 
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
-| `APP_ASSET_VERSION` | Asset Cache Version | Query-string cache buster for CSS/JS in `index.html`. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260526-ui54"` |
+| `APP_ASSET_VERSION` | Asset Cache Version | Query-string cache buster for CSS/JS in `index.html`. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260527-ui99"` |
 | `is-compact-layout` | Compact Layout Class | Viewport ≤1024px; enables compact CSS. | Set on `<html>` by `initCompactLayoutClass()`. | Global layout | class present |
 | `is-phone-layout` | Phone Layout Class | Same threshold as compact (unified phone UI). | Set together with compact class. | Global layout | class present |
 | `is-desktop-layout` | Desktop Layout Class | Viewport >1024px. | Mutually exclusive with compact. | Global layout | class present |

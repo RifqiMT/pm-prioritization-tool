@@ -2,7 +2,7 @@
 
 **Purpose:** Define how product, design, and engineering maintain documentation for the Product Management Prioritization Tool.  
 **Audience:** Contributors, reviewers, release owners.  
-**Last updated:** 2026-05-26
+**Last updated:** 2026-05-27
 
 ---
 
