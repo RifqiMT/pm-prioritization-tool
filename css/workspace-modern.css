@@ -218,10 +218,10 @@
   flex: 1;
   min-height: 280px;
   max-height: min(68vh, 640px);
-  border-radius: var(--ws-radius-md) !important;
-  border: 1px solid var(--ws-border) !important;
-  background: var(--ws-surface) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border-radius: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   position: relative;
@@ -274,16 +274,16 @@
 }
 
 .table-wrapper--modern thead th {
-  background: var(--ws-header-grad) !important;
-  color: #fff !important;
+  background: linear-gradient(180deg, #fef9c3 0%, #fef3c7 40%, #fff7ed 100%) !important;
+  color: #3f0f19 !important;
   font-size: 0.7rem !important;
   font-weight: 700 !important;
   letter-spacing: 0.05em !important;
   text-transform: uppercase !important;
   padding: 0.65rem 0.55rem !important;
-  border-bottom: 2px solid rgba(161, 98, 7, 0.5) !important;
+  border-bottom: 1px solid rgba(231, 201, 120, 0.7) !important;
   vertical-align: middle !important;
-  box-shadow: 0 2px 6px rgba(127, 29, 29, 0.2);
+  box-shadow: none;
 }
 
 .table-wrapper--modern thead th:first-child {
@@ -295,7 +295,7 @@
 }
 
 .table-wrapper--modern .sort-button {
-  color: rgba(255, 255, 255, 0.95) !important;
+  color: #7a4b12 !important;
   font-size: inherit !important;
   font-weight: inherit !important;
   letter-spacing: inherit !important;
@@ -304,11 +304,11 @@
 
 .table-wrapper--modern .sort-button:hover,
 .table-wrapper--modern thead th[data-sort-active="true"] .sort-button {
-  color: #fef3c7 !important;
+  color: #b91c1c !important;
 }
 
 .table-wrapper--modern .sort-indicator {
-  color: rgba(254, 243, 199, 0.85) !important;
+  color: rgba(148, 92, 6, 0.75) !important;
   opacity: 0.75 !important;
 }
 
@@ -497,10 +497,10 @@
   max-height: 100%;
   display: flex;
   flex-direction: column;
-  border-radius: var(--ws-radius-md) !important;
-  border: 1px solid var(--ws-border) !important;
-  background: linear-gradient(180deg, #fffdf8 0%, #ffffff 100%) !important;
-  box-shadow: var(--ws-shadow-soft) !important;
+  border-radius: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
   scroll-snap-align: start;
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
@@ -512,9 +512,9 @@
 
 .projects-view--board .scrum-board-column-header {
   padding: 0.75rem 0.85rem !important;
-  border-bottom: 1px solid var(--ws-border) !important;
-  background: rgba(255, 255, 255, 0.92) !important;
-  border-radius: var(--ws-radius-md) var(--ws-radius-md) 0 0 !important;
+  border-bottom: 1px solid rgba(231, 201, 120, 0.7) !important;
+  background: linear-gradient(180deg, #fffdf8 0%, #ffffff 80%) !important;
+  border-radius: 0 !important;
   position: sticky;
   top: 0;
   z-index: 1;
@@ -921,15 +921,15 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .pr
 /* ── MOSCOW & Map (light polish) ─────────────────────────── */
 .workspace-panel .projects-view--moscow,
 .workspace-panel .projects-view--map {
-  padding: 0 1.35rem 1.25rem;
+  padding: 0 0.85rem 0.7rem;
 }
 
 .workspace-panel .moscow-board,
 .workspace-panel .projects-map-container {
-  border-radius: var(--ws-radius-md);
-  border: 1px solid var(--ws-border);
-  box-shadow: var(--ws-shadow-soft);
-  overflow: hidden;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  overflow: visible;
 }
 
 .workspace-panel .projects-map-toolbar {

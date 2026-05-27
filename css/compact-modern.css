@@ -21,12 +21,7 @@
     --compact-shadow: 0 2px 10px rgba(127, 29, 29, 0.07);
   }
 
-  /* ── App shell ─────────────────────────────────────────── */
-  .app-shell {
-    padding-left: max(0.65rem, env(safe-area-inset-left));
-    padding-right: max(0.65rem, env(safe-area-inset-right));
-  }
-
+  /* App shell edge padding: sharp-layout.css (--app-edge-pad-compact + safe-area) */
   html.is-compact-layout .app-layout {
     gap: var(--compact-gap) !important;
   }

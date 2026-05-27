@@ -57,6 +57,49 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
+.view-toolbar--board {
+  display: grid !important;
+  grid-template-columns: minmax(240px, 1fr) minmax(320px, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem 0.85rem;
+}
+
+/* Flatten the two-row markup into a single-row grid layout */
+.view-toolbar--board .view-toolbar__row {
+  display: contents !important;
+}
+
+.view-toolbar--board .view-toolbar__identity {
+  width: auto !important;
+}
+
+.view-toolbar--board .view-toolbar__legend {
+  align-self: center;
+  justify-self: stretch;
+  min-width: 0;
+}
+
+.view-toolbar--board .view-toolbar__cluster {
+  justify-self: end;
+}
+
+.view-toolbar--board .view-toolbar__row--secondary {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  border-top: none !important;
+}
+
+/* Allow wrapping on narrower widths without looking broken */
+@media (max-width: 900px) {
+  .view-toolbar--board {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .view-toolbar--board .view-toolbar__legend {
+    grid-column: 1 / -1;
+  }
+}
+
 .view-toolbar__row--secondary {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -152,8 +195,9 @@
 
 .view-toolbar--map .view-toolbar__metric--map {
   display: flex;
-  flex-direction: column;
-  gap: 0.28rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
   flex: 0 1 auto;
   min-width: 0;
   max-width: 100%;
