@@ -27,11 +27,35 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### UI — Project modal footer meta on desktop — 2026-05-28 — Product Team — Impact: user-visible
+
+- Fixed empty desktop footer: project metadata cards were hidden because `<details>` stayed closed; desktop now forces `details.open = true` and re-syncs when resizing across the 1024px breakpoint.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui116`.
+
+### UI — Project modal footer actions row (phones/tablets) — 2026-05-28 — Product Team — Impact: user-visible
+
+- Cancel and Save (or a single Close in view mode) stay **side by side in one row** on all phone and tablet widths; removed the ≤520px rule that stacked them vertically.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui115`.
+
+### UI — Project modal footer meta collapsible (phones/tablets) — 2026-05-28 — Product Team — Impact: user-visible
+
+- Project modal footer metadata (Project ID, dates, financial EUR, exchange rate, RICE) is wrapped in a `<details>` disclosure on viewports ≤1024px, **collapsed by default** to save vertical space; tap **Project details** to expand.
+- Desktop (>1024px) continues to show both meta cards without a toggle.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui115`.
+
+### UI — Project modal touch scroll (phones/tablets) — 2026-05-28 — Product Team — Impact: user-visible
+
+- Fixed project create/view/edit modal scrolling on touch devices by completing the flex height chain through `#projectForm` so `#projectModalScrollRegion` has a bounded height and `overflow-y: auto` can scroll.
+- Footer bar is pinned with flex layout instead of `position: sticky`, which prevented overlap when content could not scroll.
+- Removed conflicting `height: 100%` override at ≤920px that broke the full-viewport panel sizing from the ≤1024px rules.
+- Footer polish (phones/tablets): meta cards are easier to scan (right-aligned values, monospaced + ellipsis for Project ID), and actions sit on a clean second row on compact layouts.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui113`.
+
 ### Code — Legacy workspace field migration — 2026-05-27 — Product Team — Impact: internal
 
 - Added `LEGACY_WORKSPACE_FIELDS` and `stripLegacyWorkspaceFields()` to remove deprecated `boardHiddenStatuses` from local cache, cloud payloads, and JSON imports on load.
 - Legacy keys are stripped before the next persist so MongoDB/local exports converge to the current schema.
-- Cache bust: `APP_ASSET_VERSION` = `20260527-ui99`.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui113`.
 
 ### Code — Dead code cleanup — 2026-05-27 — Product Team — Impact: internal
 
@@ -39,7 +63,20 @@ When updating this file after a change:
 - Removed duplicate `#importFileInput` and legacy `#importCsvFileInput` from `index.html` (unified import uses a single hidden input).
 - Removed dead board column filter code: `boardHiddenStatuses` state, toggle helpers, and ~90 lines of unused `.board-status-filter-*` CSS.
 - Dropped unused DOM element caches in `cacheElements()` (`scrumBoardLegend`, `importCsvFileInput`, popup wrappers never read in JS).
-- Cache bust: `APP_ASSET_VERSION` = `20260527-ui98`.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui113`.
+
+### UI — Project modal footer meta (tablet/phone) — 2026-05-28 — Product Team — Impact: user-visible
+
+- Project modal footer metadata cards use a **2-column grid** on tablets/phones for faster scanning.
+- Cards only stack to a single column on very narrow screens.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui113`.
+
+### UI — Project modal max height (phones/tablets) — 2026-05-28 — Product Team — Impact: user-visible
+
+- Project modal now uses **near full-screen height** on phones and tablets (iOS + Android) to show more project context.
+- Content scrolls within the modal; footer remains accessible.
+- Safe-area padding is respected on iOS notch devices.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui113`.
 
 ### UI — Table revamp + actions overlap fixes — 2026-05-27 — Product Team — Impact: user-visible
 
@@ -56,7 +93,7 @@ When updating this file after a change:
 
 - Re-audited codebase against documentation suite (2026-05-27).
 - Added [PRODUCT_DOCUMENTATION.md](PRODUCT_DOCUMENTATION.md) and restored [PRODUCT_DOCUMENTATION_STANDARD.md](PRODUCT_DOCUMENTATION_STANDARD.md).
-- Updated README, PRD, personas, user stories, variables, design guidelines, traceability, metrics, guardrails, architecture, and hub index for `20260527-ui97` baseline.
+- Updated README, PRD, personas, user stories, variables, design guidelines, traceability, metrics, guardrails, architecture, and hub index for `20260528-ui113` baseline.
 
 ### UI — Unified compact / phone layout (≤1024px) — Product Team — Impact: user-visible
 
@@ -67,7 +104,7 @@ When updating this file after a change:
 - **Fullscreen:** `fullscreen-compact.css` — body-level host; board/MoSCoW/table match workspace compact layouts inside fullscreen.
 - **Chrome:** `compact-modern.css` — icon-only portfolio tabs, short header title, hidden toolbar labels on compact.
 - **Footer:** `app-footer.css` — centered one-row attribution (credit, LinkedIn, website).
-- Cache bust: `APP_ASSET_VERSION` = `20260527-ui97`.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui113`.
 
 ### Docs — Cleanup — Product Team — Impact: internal
 

@@ -9,7 +9,7 @@
 const STORAGE_KEY = "rice_prioritizer_v1";
 
 /** Bump when shipping client changes so browsers fetch fresh JS (Vercel caches /src with long TTL). */
-const APP_ASSET_VERSION = "20260527-ui99";
+const APP_ASSET_VERSION = "20260528-ui116";
 
 /** Workspace trust profile label token (internal persistence key). */
 const WORKSPACE_TRUST_PROFILE_LABEL = "UmlmcWkgVGphaHlvbm8=";

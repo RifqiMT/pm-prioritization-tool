@@ -104,7 +104,7 @@ pm-prioritization-tool/
 └── package.json
 ```
 
-**Layout baseline:** `APP_ASSET_VERSION` = `20260527-ui99` — desktop >1024px; compact ≤1024px uses unified phone UI (`is-compact-layout`, `is-phone-layout`).
+**Layout baseline:** `APP_ASSET_VERSION` = `20260528-ui115` — desktop >1024px; compact ≤1024px uses unified phone UI (`is-compact-layout`, `is-phone-layout`).
 
 ---
 

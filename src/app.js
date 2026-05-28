@@ -1868,6 +1868,7 @@ function cacheElements() {
   elements.projectMetaRice = $("projectMetaRice");
   elements.projectMetaFinancialEur = $("projectMetaFinancialEur");
   elements.projectMetaExchangeRate = $("projectMetaExchangeRate");
+  elements.projectModalFooterMetaDetails = $("projectModalFooterMetaDetails");
 
   elements.exportDataBtn = $("exportDataBtn");
   elements.importDataBtn = $("importDataBtn");
@@ -2077,6 +2078,9 @@ function initCompactLayoutClass() {
       renderScrumBoard();
     } else if (state.projectsView === "table") {
       updateBulkDeleteButton();
+    }
+    if (elements.projectModal?.classList.contains("active")) {
+      syncProjectModalFooterMetaDetails({ resetCollapsed: compact });
     }
   };
 
@@ -2369,6 +2373,11 @@ function attachEventListeners() {
   if (elements.profileViewCurrencyDetails) {
     elements.profileViewCurrencyDetails.addEventListener("toggle", () => {
       syncProfileViewCurrencyDetails();
+    });
+  }
+  if (elements.projectModalFooterMetaDetails) {
+    elements.projectModalFooterMetaDetails.addEventListener("toggle", () => {
+      syncProjectModalFooterMetaDetails();
     });
   }
 
@@ -9391,6 +9400,19 @@ function syncProfileViewCurrencyDetails({ resetCollapsed = false } = {}) {
   if (summary) summary.setAttribute("aria-expanded", details.open ? "true" : "false");
 }
 
+function syncProjectModalFooterMetaDetails({ resetCollapsed = false } = {}) {
+  const details = elements.projectModalFooterMetaDetails;
+  if (!details) return;
+  const isCompact = window.matchMedia("(max-width: 1024px)").matches;
+  if (!isCompact) {
+    details.open = true;
+  } else if (resetCollapsed) {
+    details.open = false;
+  }
+  const summary = details.querySelector(".project-modal-footer-meta-summary");
+  if (summary) summary.setAttribute("aria-expanded", details.open ? "true" : "false");
+}
+
 function openProfileViewModal(profileId) {
   const profile = state.profiles.find((p) => p.id === profileId);
   if (!profile || !elements.profileViewModal) return;
@@ -9895,6 +9917,7 @@ function openProjectModal(mode, projectId) {
 
   updateModalRicePreview();
   resetProjectModalSectionNav();
+  syncProjectModalFooterMetaDetails({ resetCollapsed: true });
   prepareAppOverlay("projectModal");
   elements.projectModal.setAttribute("aria-hidden", "false");
   elements.projectModal.classList.add("active");

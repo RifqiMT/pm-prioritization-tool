@@ -5,7 +5,7 @@
 [![Deploy on Vercel](https://img.shields.io/badge/deploy-Vercel-black)](docs/DEPLOYMENT.md)
 
 **Production:** [https://pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app)  
-**Asset baseline:** `APP_ASSET_VERSION` = `20260527-ui99`
+**Asset baseline:** `APP_ASSET_VERSION` = `20260528-ui116`
 
 ---
 

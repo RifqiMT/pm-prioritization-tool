@@ -3266,6 +3266,11 @@ th[data-sort-active="true"] .sort-indicator {
   pointer-events: auto;
 }
 
+.modal-backdrop {
+  --modal-safe-pad-y: 1.5rem;
+  --modal-safe-pad-x: 0.75rem;
+}
+
 .modal-panel {
   max-width: 900px;
   width: 100%;
@@ -3289,6 +3294,9 @@ th[data-sort-active="true"] .sort-indicator {
 
 /* Project modal: refined padding and spacing for a polished layout */
 #projectModal .modal-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   max-width: min(1120px, 96vw);
   max-height: min(92vh, 980px);
   padding: 1.2rem 1.2rem 1.05rem;
@@ -3299,9 +3307,19 @@ th[data-sort-active="true"] .sort-indicator {
 }
 
 #projectModal .modal-header {
+  flex-shrink: 0;
   margin-bottom: 0.85rem;
   padding: 0.15rem 0.2rem 0.85rem;
   border-bottom: 1px solid rgba(202, 138, 4, 0.25);
+}
+
+/* Form must participate in the panel flex column so the scroll region gets a bounded height. */
+#projectModal #projectForm {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 #projectModal .modal-body.project-modal-body {
@@ -3309,9 +3327,49 @@ th[data-sort-active="true"] .sort-indicator {
   flex-direction: column;
   gap: 0;
   padding: 0.2rem 0.2rem 0.1rem;
-  max-height: calc(min(92vh, 980px) - 190px);
   min-height: 0;
   overflow: hidden;
+  flex: 1 1 0%;
+}
+
+#projectModal #projectFormError {
+  flex-shrink: 0;
+}
+
+/* Phones + tablets: allow the project modal to use the screen height for more context. */
+@media (max-width: 1024px) {
+  #projectModal.modal-backdrop {
+    --project-modal-pad-top: max(var(--modal-safe-pad-y), env(safe-area-inset-top));
+    --project-modal-pad-right: max(var(--modal-safe-pad-x), env(safe-area-inset-right));
+    --project-modal-pad-bottom: max(var(--modal-safe-pad-y), env(safe-area-inset-bottom));
+    --project-modal-pad-left: max(var(--modal-safe-pad-x), env(safe-area-inset-left));
+
+    padding: var(--project-modal-pad-top) var(--project-modal-pad-right)
+      var(--project-modal-pad-bottom) var(--project-modal-pad-left);
+    align-items: stretch;
+    overflow: hidden;
+  }
+
+  #projectModal .modal-panel {
+    height: calc(100dvh - var(--project-modal-pad-top) - var(--project-modal-pad-bottom));
+    max-height: none;
+    max-width: min(1120px, 100%);
+    overflow: hidden;
+  }
+
+  #projectModal .modal-body.project-modal-body {
+    flex: 1 1 auto;
+    max-height: none;
+    overflow: hidden;
+  }
+
+  #projectModal .project-modal-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
 }
 
 #projectModal .project-modal-main-row {
@@ -3319,19 +3377,20 @@ th[data-sort-active="true"] .sort-indicator {
   flex-direction: row;
   align-items: stretch;
   gap: 0.5rem;
-  flex: 1 1 auto;
+  flex: 1 1 0%;
   min-height: 0;
   overflow: hidden;
 }
 
 #projectModal .project-modal-scroll {
-  flex: 1 1 auto;
+  flex: 1 1 0%;
   min-width: 0;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   padding-right: 0.05rem;
 }
 
@@ -3492,8 +3551,8 @@ th[data-sort-active="true"] .sort-indicator {
 }
 
 #projectModal .project-modal-footer-bar {
-  position: sticky;
-  bottom: 0;
+  position: relative;
+  flex-shrink: 0;
   z-index: 6;
   display: flex;
   flex-wrap: nowrap;
@@ -3503,9 +3562,18 @@ th[data-sort-active="true"] .sort-indicator {
   margin-top: 0.85rem;
   padding: 0.62rem 0.25rem 0.3rem;
   border-top: 1px solid rgba(202, 138, 4, 0.24);
-  background: linear-gradient(180deg, rgba(255, 251, 242, 0.75), rgba(255, 247, 234, 0.98));
-  backdrop-filter: blur(6px);
-  box-shadow: 0 -8px 22px rgba(120, 53, 15, 0.08);
+  background: linear-gradient(180deg, rgba(255, 251, 242, 0.98), rgba(255, 247, 234, 1));
+  box-shadow: 0 -4px 14px rgba(120, 53, 15, 0.06);
+}
+
+#projectModal .project-modal-footer-meta-details {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+#projectModal .project-modal-footer-meta-summary {
+  display: none;
 }
 
 #projectModal .project-modal-footer-meta-group {
@@ -3532,6 +3600,46 @@ th[data-sort-active="true"] .sort-indicator {
   line-height: 1.3;
 }
 
+#projectModal .project-modal-footer-meta-group .field-meta-row > span {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+#projectModal .project-modal-footer-meta-group .field-meta-row > span strong {
+  flex: 0 0 auto;
+  color: #92400e;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+#projectModal .project-modal-footer-meta-group .field-meta-row > span strong + span {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: right;
+  color: #451a03;
+  font-weight: 650;
+}
+
+#projectModal #projectMetaId {
+  display: inline-block;
+  max-width: 18ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+#projectModal #projectMetaCreated,
+#projectModal #projectMetaModified,
+#projectModal #projectMetaFinancialEur,
+#projectModal #projectMetaExchangeRate,
+#projectModal #projectMetaRice {
+  white-space: nowrap;
+}
+
 #projectModal .project-modal-footer-meta-group .field-meta-row.field-meta-row--financial-eur {
   margin-top: 0;
 }
@@ -3549,12 +3657,150 @@ th[data-sort-active="true"] .sort-indicator {
   gap: 0.55rem;
 }
 
-@media (max-width: 1180px) {
+/* Tablets + phones: collapsible meta (collapsed by default), actions always visible. */
+@media (max-width: 1024px) {
   #projectModal .project-modal-footer-bar {
-    flex-wrap: wrap;
+    /* Use grid instead of flex to prevent "meta left / buttons right" bugs on narrow screens. */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.55rem;
+    align-items: stretch;
+    justify-content: stretch;
+    padding-bottom: calc(0.4rem + env(safe-area-inset-bottom, 0px));
   }
+
+  #projectModal .project-modal-footer-meta-details {
+    width: 100%;
+    border: 1px solid rgba(202, 138, 4, 0.26);
+    border-radius: 12px;
+    background: #fff9ee;
+    box-shadow: 0 2px 8px rgba(120, 53, 15, 0.06);
+    overflow: hidden;
+  }
+
+  #projectModal .project-modal-footer-meta-summary {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0.12rem;
+    padding: 0.52rem 2rem 0.52rem 0.65rem;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    text-align: left;
+    background: transparent;
+    transition: background 0.15s ease;
+    min-height: 44px;
+  }
+
+  #projectModal .project-modal-footer-meta-summary:hover {
+    background: rgba(202, 138, 4, 0.08);
+  }
+
+  #projectModal .project-modal-footer-meta-summary:focus-visible {
+    outline: 2px solid rgba(180, 83, 9, 0.45);
+    outline-offset: -2px;
+  }
+
+  #projectModal .project-modal-footer-meta-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  #projectModal .project-modal-footer-meta-summary::after {
+    content: "▾";
+    position: absolute;
+    right: 0.7rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #b45309;
+    font-size: 0.85rem;
+    line-height: 1;
+    transition: transform 0.2s ease;
+  }
+
+  #projectModal .project-modal-footer-meta-details[open] .project-modal-footer-meta-summary::after {
+    transform: translateY(-50%) rotate(180deg);
+  }
+
+  #projectModal .project-modal-footer-meta-details[open] .project-modal-footer-meta-summary {
+    border-bottom: 1px solid rgba(202, 138, 4, 0.22);
+  }
+
+  #projectModal .project-modal-footer-meta-details[open] .project-modal-footer-meta-summary-hint {
+    display: none;
+  }
+
+  #projectModal .project-modal-footer-meta-summary-title {
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #92400e;
+  }
+
+  #projectModal .project-modal-footer-meta-summary-hint {
+    font-size: 0.7rem;
+    line-height: 1.35;
+    color: #78350f;
+  }
+
+  #projectModal .project-modal-footer-meta-details .project-modal-footer-meta-group {
+    display: grid !important;
+    padding: 0.45rem 0.45rem 0.5rem;
+    gap: 0.4rem;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  #projectModal .project-modal-footer-meta-group {
+    width: 100%;
+  }
+
+  #projectModal .project-modal-footer-bar .form-actions-row.project-modal-form-actions {
+    width: 100%;
+    justify-content: stretch;
+    margin-top: 0;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 0.55rem;
+  }
+
+  #projectModal .project-modal-footer-bar .form-actions-row.project-modal-form-actions > button {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    min-height: 44px;
+    white-space: nowrap;
+  }
+}
+
+/* Desktop: meta cards always visible (details forced open via JS). */
+@media (min-width: 1025px) {
+  #projectModal .project-modal-footer-meta-details {
+    display: block;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  #projectModal .project-modal-footer-meta-details .project-modal-footer-meta-group {
+    display: grid !important;
+  }
+}
+
+/* Very narrow phones: stack meta cards only; action buttons stay in one row. */
+@media (max-width: 520px) {
   #projectModal .project-modal-footer-meta-group {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  #projectModal #projectMetaId {
+    max-width: 22ch;
   }
 }
 
@@ -3693,10 +3939,8 @@ th[data-sort-active="true"] .sort-indicator {
 @media (max-width: 920px) {
   #projectModal .modal-panel {
     padding: 1rem 0.85rem 0.85rem;
-    max-height: 94vh;
   }
   #projectModal .modal-body.project-modal-body {
-    max-height: calc(94vh - 180px);
     padding: 0.15rem 0.08rem 0.1rem;
   }
   #projectModal .form-section {
@@ -3748,9 +3992,6 @@ th[data-sort-active="true"] .sort-indicator {
   }
   #projectModal .project-modal-footer-bar .form-actions-row.project-modal-form-actions {
     justify-content: stretch;
-  }
-  #projectModal .project-modal-footer-bar .form-actions-row button {
-    flex: 1 1 0;
   }
   #projectModal [data-framework-fields] {
     padding: 0.58rem;

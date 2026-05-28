@@ -6,7 +6,7 @@
 | **Version** | 2.0.0 |
 | **Document owner** | Product Team |
 | **Last audited** | 2026-05-27 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260527-ui99` |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui115` |
 
 ---
 
