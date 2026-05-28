@@ -992,7 +992,7 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .pr
   }
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   .table-wrapper--modern tbody .checkbox-input,
   .table-wrapper--modern thead .checkbox-input {
     width: 22px;
@@ -1067,7 +1067,7 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .pr
   gap: 0.25rem;
 }
 
-@media (min-width: 1025px) {
+@media (min-width: 1401px) {
   .app-layout {
     grid-template-columns: minmax(300px, 360px) minmax(0, 1fr) !important;
     gap: 1.25rem !important;

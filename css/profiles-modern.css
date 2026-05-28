@@ -895,7 +895,7 @@
   }
 }
 
-@media (min-width: 1025px) {
+@media (min-width: 1401px) {
   html.is-desktop-layout .app-layout {
     align-items: start !important;
   }
@@ -916,7 +916,7 @@
   }
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   .profiles-panel--v2 .profiles-list,
   .profiles-panel--v2 .profiles-list--modern {
     flex: 0 1 auto !important;
@@ -1018,13 +1018,13 @@
   margin-top: 0 !important;
 }
 
-/* ── Bottom-sheet backdrop + sheet (tablet/phone ≤1024px) ── */
+/* ── Bottom-sheet backdrop + sheet (tablet/phone ≤1400px) ── */
 .profiles-sheet-backdrop {
   display: none;
 }
 
 /* Sheet hidden by default (desktop uses display:contents so renders inline) */
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   /* Desktop content frame hides; sheet becomes overlay */
   .profiles-panel--modern.profiles-panel--v2 {
     padding: 0 !important;
@@ -1286,7 +1286,7 @@
   }
 }
 
-@media (min-width: 1025px) {
+@media (min-width: 1401px) {
   /* On desktop the section renders the sheet inline as normal content */
   .profiles-panel-sheet {
     display: contents !important;

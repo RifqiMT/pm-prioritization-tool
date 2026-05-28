@@ -27,6 +27,101 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Fix — Desktop countries tooltip: hover bridge + scroll — 2026-05-28 — Product Team — Impact: user-visible
+
+- Desktop EU/countries tooltip stays open while moving the pointer onto the panel (delayed hide + hover zone includes floating tooltip).
+- Wheel events scroll inside the tooltip instead of closing it or scrolling the table underneath.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui131`.
+
+### UI — EU region badge in project table/countries row — 2026-05-28 — Product Team — Impact: user-visible
+
+- When a project targets all EU member states, the summary shows **🇪🇺 EU** (desktop badge + compact card chip) instead of `AT, BE, BG +24 more`.
+- Full member list remains in the tooltip only.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui130`.
+
+### Fix — Countries tooltip scroll on desktop + compact — 2026-05-28 — Product Team — Impact: user-visible
+
+- Desktop table target-countries tooltip uses the same scrollable panel as compact cards (max height ~55vh, wheel/touch scroll).
+- Shared `buildCountriesListTooltip()` for desktop and card views; viewport clamping applies on all layouts.
+- Press **Escape** to close a pinned tooltip.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui129`.
+
+### Fix — Compact countries tooltip: scroll + dismiss — 2026-05-28 — Product Team — Impact: user-visible
+
+- Floating country tooltips (moved to `body`) now receive touch events (`pointer-events`) so the list scrolls on phones/tablets.
+- Tap outside or on the dimmed backdrop to close; removed `preventDefault` on tap that blocked scrolling.
+- Removed duplicate `focusin` open that fought tap-to-toggle; document-level dismiss for taps outside the card list.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui128`.
+
+### Fix — Compact cards: scrollable countries tooltip — 2026-05-28 — Product Team — Impact: user-visible
+
+- Long target-country lists (e.g. EU) no longer overflow off-screen on phones/tablets; tooltip is viewport-clamped with a scrollable body (max ~50vh).
+- Title shows country count (e.g. “Target countries (27)”).
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui127`.
+
+### UI — Compact cards: drop duplicate T-shirt badge — 2026-05-28 — Product Team — Impact: user-visible
+
+- Phones/tablets: removed T-shirt size from the top badge row on project cards (still shown in the **Size** metric with tooltip).
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui126`.
+
+### Fix — Compact table cards: T-shirt size tooltip — 2026-05-28 — Product Team — Impact: user-visible
+
+- T-shirt size badge and **Size** metric on project cards now include `cell-tshirt-with-tooltip` (tap for sprint guidance from `tshirtSizeTooltips`).
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui125`.
+
+### Fix — Compact table view tooltips (phones/tablets) — 2026-05-28 — Product Team — Impact: user-visible
+
+- Tooltips on project cards now work on touch: **tap to show/hide**, tap outside to dismiss, keyboard focus support.
+- Added structured tooltips to card title, status, MoSCoW, type/framework icons, RICE, financial impact, countries row, and +N overflow badge.
+- Improved tooltip positioning (viewport clamping, wide layout for long content).
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui124`.
+
+### UI — Compact project cards: badge row capped at three — 2026-05-28 — Product Team — Impact: user-visible
+
+- Phones/tablets: project card badge strip stays on **one row** with at most **3** pills (Status → MoSCoW → Size priority); extra attributes collapse to a **+N** chip with tooltip.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui123`.
+
+### UI — Compact project cards: three metrics only — 2026-05-28 — Product Team — Impact: user-visible
+
+- Phones/tablets: project card metrics show **RICE**, **Impact**, and **Size** only (max 3); **Created** date removed.
+- Metrics grid fixed to three equal columns on compact layout.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui122`.
+
+### Feature — EU target countries shortcut — 2026-05-28 — Product Team — Impact: user-visible
+
+- Added **EU** option to target countries in project create, view, and edit; selecting it auto-fills all **27 EU member states**.
+- CSV import and saved projects with `EU` expand to member countries on load.
+- Country filter includes the same EU shortcut (checks all member countries).
+- Constants: `COUNTRY_OPTION_EU`, `EU_MEMBER_COUNTRIES` in `src/constants.js`.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui121`.
+
+### UI — Compact table cards: type/framework icons & country flags — 2026-05-28 — Product Team — Impact: user-visible
+
+- On phones/tablets (compact layout), **financial framework** icon sits beside **project type** in the title row (not in the meta row below metrics).
+- Target countries row shows **flag + ISO code** per country (e.g. 🇹🇼 TW) instead of code-only text.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui120`.
+
+### UI — Unified compact breakpoint (tablets & narrow desktop) — 2026-05-28 — Product Team — Impact: user-visible
+
+- Raised compact layout breakpoint from 1024px to **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) so iPad landscape, split-screen, and narrow laptop windows use the same phone/tablet UI (profile picker, profiles bottom sheet, card table, FAB) instead of the desktop sidebar.
+- Profiles panel no longer stacks above the workspace in the compact range.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui119`.
+
+### UI — Projects table cards: polish + group by (phones/tablets) — 2026-05-28 — Product Team — Impact: user-visible
+
+- Refined compact table cards: clearer metrics, labeled action buttons, selected-state ring, sticky section headers when grouped.
+- Added **Group by** control (Status, MoSCoW, T-shirt size, Financial framework, Project type, Currency) with persisted preference and per-group project counts.
+- Cards hide the attribute shown in the active group header to reduce repetition.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui118`.
+
+### UI — Projects table card list (phones/tablets) — 2026-05-28 — Product Team — Impact: user-visible
+
+- Table view on viewports ≤1024px now uses a **touch-friendly project card list** instead of a horizontally scrolled 12-column grid.
+- Each card shows status, MOSCOW, period, title, description excerpt, RICE, financial impact, size, created date, framework, countries, and labeled View / Edit / Delete actions.
+- Selection, bulk delete bar, tooltips, and fullscreen mode work with the new card list; desktop keeps the full data table.
+- Removed map-only `aspect-ratio` constraint from the table wrapper on compact layouts.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui117`.
+
 ### UI — Project modal footer meta on desktop — 2026-05-28 — Product Team — Impact: user-visible
 
 - Fixed empty desktop footer: project metadata cards were hidden because `<details>` stayed closed; desktop now forces `details.open = true` and re-syncs when resizing across the 1024px breakpoint.

@@ -183,7 +183,7 @@
 }
 
 /* Tablet / phone — one centered row, tighter copy */
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   .app-site-footer {
     --footer-row-h: 2.35rem;
     padding-top: 0.45rem;

@@ -1,10 +1,10 @@
 /**
- * Table view — phones & tablets (≤1024px).
+ * Table view — phones & tablets (≤1400px).
  * Same compact UI as phone: FAB + selection bar, stacked row actions, touch toolbars.
  * Requires html.is-compact-layout (app.js).
  */
 
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   html.is-compact-layout .projects-view--table {
     padding-left: 0.25rem !important;
     padding-right: 0.25rem !important;
@@ -12,6 +12,76 @@
 
   html.is-compact-layout .view-toolbar--table .view-toolbar__row--primary {
     grid-template-columns: 1fr !important;
+  }
+
+  html.is-compact-layout .projects-table-group-bar {
+    display: grid !important;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "label control"
+      "summary summary";
+    align-items: center;
+    gap: 0.4rem 0.55rem;
+    width: 100%;
+    margin-top: 0.45rem;
+    padding: 0.55rem 0.62rem;
+    border-radius: 12px;
+    border: 1px solid rgba(202, 138, 4, 0.22);
+    background: linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(255, 249, 240, 1));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+
+  html.is-compact-layout .projects-table-group-label {
+    grid-area: label;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #92400e;
+  }
+
+  html.is-compact-layout .projects-table-group-label__icon {
+    display: inline-flex;
+    color: #b45309;
+  }
+
+  html.is-compact-layout .projects-table-group-control-wrap {
+    grid-area: control;
+    min-width: 0;
+  }
+
+  html.is-compact-layout .projects-table-group-select {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.45rem 2rem 0.45rem 0.65rem;
+    border-radius: 10px;
+    border: 1px solid rgba(202, 138, 4, 0.35);
+    background-color: #fff;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23b45309' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.65rem center;
+    font-size: 0.84rem;
+    font-weight: 650;
+    color: #1c1917;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  html.is-compact-layout .projects-table-group-select:focus-visible {
+    outline: 2px solid rgba(180, 83, 9, 0.45);
+    outline-offset: 1px;
+  }
+
+  html.is-compact-layout .projects-table-group-summary {
+    grid-area: summary;
+    margin: 0;
+    font-size: 0.72rem;
+    line-height: 1.35;
+    color: #78716c;
   }
 
   html.is-compact-layout .view-toolbar--table .view-toolbar__cluster {
@@ -76,7 +146,7 @@
 }
 
 /* Fullscreen table on compact */
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   html.is-compact-layout .view-in-fullscreen-host.projects-view--table .table-wrapper--modern {
     flex: 1 1 auto !important;
     min-height: 0 !important;

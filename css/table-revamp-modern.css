@@ -395,7 +395,7 @@
   text-align: center !important;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   html.is-compact-layout .table-wrapper--modern.projects-table-shell table.projects-data-table {
     min-width: 1280px !important;
   }

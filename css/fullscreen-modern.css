@@ -340,9 +340,9 @@ html:not(.is-compact-layout) .view-in-fullscreen-host .moscow-grid {
   padding: 0.45rem 0.6rem 0.65rem !important;
 }
 
-/* Icon-only fullscreen tabs handled in compact-modern.css for ≤1024px */
+/* Icon-only fullscreen tabs handled in compact-modern.css for ≤1400px */
 
-@media (min-width: 1025px) {
+@media (min-width: 1401px) {
   html.is-desktop-layout.pseudo-view-fullscreen {
     overflow: hidden;
   }

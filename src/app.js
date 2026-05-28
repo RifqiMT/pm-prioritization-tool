@@ -21,6 +21,8 @@ let state = {
   sortDirection: "desc",
   projectsView: "table",
   tableSortByRice: true,
+  /** Compact table cards: group by attribute (see TABLE_GROUP_BY_OPTIONS). */
+  tableGroupBy: "none",
   scrumBoardSortByRice: true,
   /** Status column names hidden on the board view (null = show all). */
   moscowSortByRice: true,
@@ -139,17 +141,49 @@ function getCanonicalCountryName(name) {
   if (!name || typeof name !== "string") return "";
   const t = name.trim();
   if (!t) return "";
+  if (typeof COUNTRY_OPTION_EU !== "undefined" && t.toUpperCase() === COUNTRY_OPTION_EU) return COUNTRY_OPTION_EU;
   if (typeof countryList !== "undefined" && countryList.includes(t)) return t;
   if (typeof countryNameAliases !== "undefined" && countryNameAliases[t]) return countryNameAliases[t];
   return t;
 }
 
-/** Returns canonical names only; drops any not in countryList (after alias resolution). */
+function isEuRegionOption(name) {
+  return typeof COUNTRY_OPTION_EU !== "undefined" && name === COUNTRY_OPTION_EU;
+}
+
+/** Expands EU pseudo-option into all EU member countries; dedupes and keeps only countryList entries. */
+function expandEuRegionInCountryNames(names) {
+  const result = [];
+  const seen = new Set();
+  (names || []).forEach((raw) => {
+    const name = typeof raw === "string" ? raw.trim() : "";
+    if (!name) return;
+    if (isEuRegionOption(name)) {
+      if (typeof EU_MEMBER_COUNTRIES !== "undefined") {
+        EU_MEMBER_COUNTRIES.forEach((member) => {
+          if (!seen.has(member)) {
+            seen.add(member);
+            result.push(member);
+          }
+        });
+      }
+      return;
+    }
+    if (typeof countryList !== "undefined" && countryList.includes(name) && !seen.has(name)) {
+      seen.add(name);
+      result.push(name);
+    }
+  });
+  return result;
+}
+
+/** Returns canonical names only; expands EU to all member states; drops invalid entries. */
 function normalizeCountryNames(names) {
   if (!Array.isArray(names)) return [];
-  return names
+  const resolved = names
     .map((c) => getCanonicalCountryName(String(c).trim()))
-    .filter((c) => c && typeof countryList !== "undefined" && countryList.includes(c));
+    .filter((c) => c);
+  return expandEuRegionInCountryNames(resolved);
 }
 
 /** Returns a trimmed currency string or null; use for consistent storage and comparison. */
@@ -1725,6 +1759,8 @@ function cacheElements() {
   elements.filterProjectType = $("filterProjectType");
 
   elements.projectsTableBody = $("projectsTableBody");
+  elements.projectsTableCardsList = $("projectsTableCardsList");
+  elements.projectsTableCardsShell = $("projectsTableCardsShell");
   elements.selectAllProjects = $("selectAllProjects");
   elements.projectsViewTableBtn = $("projectsViewTableBtn");
   elements.projectsViewBoardBtn = $("projectsViewBoardBtn");
@@ -1750,6 +1786,9 @@ function cacheElements() {
   elements.exchangeRatesDateLabel = $("exchangeRatesDateLabel");
   elements.tableSortByRiceToggle = $("tableSortByRiceToggle");
   elements.tableSortByRiceLabel = $("tableSortByRiceLabel");
+  elements.tableGroupBySelect = $("tableGroupBySelect");
+  elements.tableGroupBySummary = $("tableGroupBySummary");
+  elements.projectsTableGroupBar = $("projectsTableGroupBar");
   elements.scrumBoardContainer = $("scrumBoardContainer");
   elements.scrumBoardSortByRiceToggle = $("scrumBoardSortByRiceToggle");
   elements.scrumBoardFullscreenBtn = $("scrumBoardFullscreenBtn");
@@ -2000,7 +2039,27 @@ function initFilterCountriesOptions() {
   if (!elements.filterCountriesList) return;
   elements.filterCountriesList.innerHTML = "";
   const sorted = countryList.slice().sort();
-  const selected = new Set(getSelectedFilterCountries());
+  const selected = new Set(getSelectedFilterCountriesRaw());
+
+  if (typeof COUNTRY_OPTION_EU !== "undefined") {
+    const euRow = document.createElement("div");
+    euRow.className = "filter-country-option filter-country-option--eu";
+    euRow.dataset.name = COUNTRY_OPTION_EU;
+    const euCb = document.createElement("input");
+    euCb.type = "checkbox";
+    euCb.value = COUNTRY_OPTION_EU;
+    const allEuSelected =
+      typeof EU_MEMBER_COUNTRIES !== "undefined" &&
+      EU_MEMBER_COUNTRIES.length > 0 &&
+      EU_MEMBER_COUNTRIES.every((c) => selected.has(c));
+    euCb.checked = selected.has(COUNTRY_OPTION_EU) || allEuSelected;
+    const euLabel = document.createElement("span");
+    euLabel.textContent = "EU (European Union)";
+    euRow.appendChild(euCb);
+    euRow.appendChild(euLabel);
+    elements.filterCountriesList.appendChild(euRow);
+  }
+
   sorted.forEach((name) => {
     const row = document.createElement("div");
     row.className = "filter-country-option";
@@ -2058,9 +2117,21 @@ function initFilterProjectPeriodOptions(projects) {
   updateFilterProjectPeriodsSummary();
 }
 
+function getCompactLayoutMediaQueryString() {
+  const w =
+    typeof COMPACT_LAYOUT_MAX_WIDTH_PX !== "undefined" && Number(COMPACT_LAYOUT_MAX_WIDTH_PX) > 0
+      ? Number(COMPACT_LAYOUT_MAX_WIDTH_PX)
+      : 1400;
+  return `(max-width: ${w}px)`;
+}
+
+function isCompactLayoutViewport() {
+  return window.matchMedia(getCompactLayoutMediaQueryString()).matches;
+}
+
 /** Mobile/tablet header actions menu (export, import, rates). */
 function initCompactLayoutClass() {
-  const compactMq = window.matchMedia("(max-width: 1024px)");
+  const compactMq = window.matchMedia(getCompactLayoutMediaQueryString());
 
   const apply = () => {
     const compact = compactMq.matches;
@@ -2077,7 +2148,7 @@ function initCompactLayoutClass() {
     } else if (state.projectsView === "board") {
       renderScrumBoard();
     } else if (state.projectsView === "table") {
-      updateBulkDeleteButton();
+      renderProjects();
     }
     if (elements.projectModal?.classList.contains("active")) {
       syncProjectModalFooterMetaDetails({ resetCollapsed: compact });
@@ -2240,6 +2311,8 @@ function attachEventListeners() {
       if (state.projectsView === "table") renderProjects();
     });
   }
+
+  initTableGroupByControls();
   if (elements.scrumBoardSortByRiceToggle) {
     elements.scrumBoardSortByRiceToggle.addEventListener("change", () => {
       state.scrumBoardSortByRice = elements.scrumBoardSortByRiceToggle.checked;
@@ -2539,6 +2612,7 @@ function attachEventListeners() {
     elements.filterCountriesList.addEventListener("change", (event) => {
       const target = event.target;
       if (target && target.type === "checkbox") {
+        syncFilterEuRegionCheckbox(target);
         renderProjects();
         updateFiltersActivePill();
         updateFilterCountriesSummary();
@@ -2582,6 +2656,12 @@ function attachEventListeners() {
         addCountryRow();
       }
     });
+    elements.countriesContainer.addEventListener("change", (event) => {
+      if (projectModalMode === "view") return;
+      const select = event.target.closest(".country-row select");
+      if (!select || !isEuRegionOption(select.value)) return;
+      applyEuRegionToProjectCountries();
+    });
   }
 
   const filterInputs = [
@@ -2616,89 +2696,82 @@ function attachEventListeners() {
         return;
       }
       const checked = e.target.checked;
-      const checkboxes = elements.projectsTableBody.querySelectorAll(".project-select-checkbox");
-      checkboxes.forEach((cb) => {
+      getProjectSelectCheckboxes().forEach((cb) => {
         cb.checked = checked;
       });
       syncProjectTableSelection();
     });
   }
 
-  if (elements.projectsTableBody) {
-    elements.projectsTableBody.addEventListener("change", (e) => {
-      if (e.target.classList.contains("project-select-checkbox")) {
-        syncProjectTableSelection();
-      }
-    });
-
-    /* Touch devices: ensure selection state syncs even when change is delayed */
-    elements.projectsTableBody.addEventListener("input", (e) => {
-      if (e.target.classList.contains("project-select-checkbox")) {
-        syncProjectTableSelection();
-      }
-    });
-
-    elements.projectsTableBody.addEventListener("click", (e) => {
-      if (e.target.classList.contains("project-select-checkbox")) {
-        requestAnimationFrame(() => syncProjectTableSelection());
-      }
-    });
-  }
-
-  elements.projectsTableBody.addEventListener("click", (e) => {
+  function handleProjectTableRowActionClick(e) {
     const viewBtn = e.target.closest("[data-action='viewProject']");
     const editBtn = e.target.closest("[data-action='editProject']");
     const deleteBtn = e.target.closest("[data-action='deleteProject']");
 
     if (viewBtn) {
-      const id = viewBtn.getAttribute("data-id");
-      openProjectModal("view", id);
+      openProjectModal("view", viewBtn.getAttribute("data-id"));
     } else if (editBtn) {
-      const id = editBtn.getAttribute("data-id");
-      openProjectModal("edit", id);
+      openProjectModal("edit", editBtn.getAttribute("data-id"));
     } else if (deleteBtn) {
-      const id = deleteBtn.getAttribute("data-id");
-      handleSingleDelete(id);
+      handleSingleDelete(deleteBtn.getAttribute("data-id"));
+    }
+  }
+
+  function handleProjectTableSelectionChange(e) {
+    if (e.target.classList.contains("project-select-checkbox")) {
+      syncProjectTableSelection();
+    }
+  }
+
+  function handleProjectTableSelectionClick(e) {
+    if (e.target.classList.contains("project-select-checkbox")) {
+      requestAnimationFrame(() => syncProjectTableSelection());
+    }
+  }
+
+  function handleProjectTableTooltipMouseEnter(e) {
+    if (isCompactLayoutViewport()) return;
+    const wrap = findTableViewTooltipTrigger(e.target);
+    if (!wrap) return;
+    cancelTooltipHoverHide();
+    positionProfileTooltip(wrap);
+  }
+
+  if (elements.projectsTableBody) {
+    elements.projectsTableBody.addEventListener("change", handleProjectTableSelectionChange);
+    elements.projectsTableBody.addEventListener("input", handleProjectTableSelectionChange);
+    elements.projectsTableBody.addEventListener("click", handleProjectTableSelectionClick);
+    elements.projectsTableBody.addEventListener("click", handleProjectTableRowActionClick);
+    elements.projectsTableBody.addEventListener("mouseenter", handleProjectTableTooltipMouseEnter, true);
+  }
+
+  if (elements.projectsTableCardsList) {
+    elements.projectsTableCardsList.addEventListener("change", handleProjectTableSelectionChange);
+    elements.projectsTableCardsList.addEventListener("input", handleProjectTableSelectionChange);
+    elements.projectsTableCardsList.addEventListener("click", (e) => {
+      handleCompactTableTooltipClick(e);
+      handleProjectTableSelectionClick(e);
+      handleProjectTableRowActionClick(e);
+    }, true);
+    elements.projectsTableCardsList.addEventListener("mouseenter", handleProjectTableTooltipMouseEnter, true);
+  }
+
+  document.addEventListener("pointerdown", handleCompactTooltipDismissPointerDown, true);
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && activeTooltipWrap) {
+      hideCellTypeTooltips();
     }
   });
-
-  elements.projectsTableBody.addEventListener("mouseenter", (e) => {
-    const wrap = e.target.closest(".cell-type-icon-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip");
-    if (!wrap) return;
-    const tooltip = wrap.querySelector(".cell-type-tooltip");
-    if (!tooltip) return;
-    document.body.classList.remove("cell-type-tooltip-hidden");
-    hideAllTooltipsExcept(tooltip);
-    const rect = wrap.getBoundingClientRect();
-    returnTooltipsToOwner();
-    getTooltipRoot().appendChild(tooltip);
-    tooltip._ownerWrap = wrap;
-    tooltip.classList.add("cell-type-tooltip-visible");
-    const viewportHeight = window.innerHeight;
-    const spaceAbove = rect.top;
-    const spaceBelow = viewportHeight - rect.bottom;
-    const minSpace = 200;
-    let showBelow;
-    if (spaceBelow < minSpace && spaceAbove > spaceBelow) {
-      showBelow = false;
-    } else if (spaceAbove < minSpace && spaceBelow > spaceAbove) {
-      showBelow = true;
-    } else {
-      showBelow = spaceBelow >= spaceAbove;
-    }
-    tooltip.style.left = (rect.left + rect.width / 2) + "px";
-    if (showBelow) {
-      tooltip.classList.add("cell-type-tooltip--below");
-      tooltip.style.top = (rect.bottom + 8) + "px";
-    } else {
-      tooltip.classList.remove("cell-type-tooltip--below");
-      tooltip.style.top = (rect.top - 8) + "px";
-    }
-  }, true);
 
   const tableWrapper = elements.projectsTableBody && elements.projectsTableBody.closest(".table-wrapper");
   if (tableWrapper) {
     tableWrapper.addEventListener("scroll", () => {
+      hideCellTypeTooltips();
+    }, { passive: true });
+  }
+  if (elements.projectsTableCardsList) {
+    elements.projectsTableCardsList.addEventListener("scroll", () => {
       hideCellTypeTooltips();
     }, { passive: true });
   }
@@ -2721,11 +2794,11 @@ function attachEventListeners() {
   }, true);
 
   document.body.addEventListener("mouseenter", (e) => {
+    if (isCompactLayoutViewport() && e.target.closest(".projects-table-card")) return;
     const wrap = e.target.closest(".cell-type-icon-wrap, .scrum-board-card-type-wrap, .card-meta-with-tooltip, .card-title-with-tooltip");
     if (!wrap) return;
     const tooltip = wrap.querySelector(".cell-type-tooltip");
     if (!tooltip) return;
-    document.body.classList.remove("cell-type-tooltip-hidden");
     const anchorPoint = wrap.classList.contains("card-title-with-tooltip")
       ? { x: e.clientX, y: e.clientY }
       : null;
@@ -2738,19 +2811,39 @@ function attachEventListeners() {
     positionProfileTooltip(wrap);
   }, true);
 
-  document.body.addEventListener("mouseout", (e) => {
-    const wrap = e.target.closest(".profile-icon-wrap, .cell-type-icon-wrap, .scrum-board-card-type-wrap, .project-field-tooltip-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip");
-    if (!wrap || (e.relatedTarget && wrap.contains(e.relatedTarget))) return;
-    document.querySelectorAll(".cell-type-tooltip").forEach((el) => {
-      if (el._ownerWrap === wrap) {
-        el.classList.remove("cell-type-tooltip-visible");
-        wrap.appendChild(el);
-        el._ownerWrap = null;
-      }
-    });
-    if (activeTooltipWrap === wrap) {
-      activeTooltipWrap = null;
+  document.body.addEventListener("mouseenter", (e) => {
+    if (isCompactLayoutViewport()) return;
+    const tooltip = e.target.closest(".cell-type-tooltip.cell-type-tooltip-visible");
+    if (tooltip && tooltip._ownerWrap) {
+      cancelTooltipHoverHide();
+      return;
     }
+    const wrap = e.target.closest(
+      ".profile-icon-wrap, .cell-type-icon-wrap, .scrum-board-card-type-wrap, .project-field-tooltip-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip"
+    );
+    if (wrap) cancelTooltipHoverHide();
+  }, true);
+
+  document.body.addEventListener("mouseout", (e) => {
+    if (isCompactLayoutViewport() && e.target.closest(".projects-table-card")) return;
+
+    const tooltipEl = e.target.closest(".cell-type-tooltip.cell-type-tooltip-visible");
+    if (tooltipEl && tooltipEl._ownerWrap) {
+      const ownerWrap = tooltipEl._ownerWrap;
+      if (e.relatedTarget && isWithinTooltipHoverZone(e.relatedTarget, ownerWrap)) return;
+      scheduleTooltipHoverHide(ownerWrap, 100);
+      return;
+    }
+
+    const wrap = e.target.closest(
+      ".profile-icon-wrap, .cell-type-icon-wrap, .scrum-board-card-type-wrap, .project-field-tooltip-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip"
+    );
+    if (!wrap) return;
+    if (e.relatedTarget && isWithinTooltipHoverZone(e.relatedTarget, wrap)) {
+      cancelTooltipHoverHide();
+      return;
+    }
+    scheduleTooltipHoverHide(wrap, 160);
   }, true);
 
   if (elements.profileList) {
@@ -3780,13 +3873,51 @@ function normalizeImportedProject(project) {
 }
 
 // --- Filters (country options, filter UI, clear) ---
-function getSelectedFilterCountries() {
+function getSelectedFilterCountriesRaw() {
   if (!elements.filterCountriesList) return [];
   const checkboxes = elements.filterCountriesList.querySelectorAll("input[type=\"checkbox\"]");
   const values = Array.from(checkboxes)
     .filter((cb) => cb.checked)
     .map((cb) => cb.value);
   return Array.from(new Set(values));
+}
+
+function getSelectedFilterCountries() {
+  return expandEuRegionInCountryNames(getSelectedFilterCountriesRaw());
+}
+
+function syncFilterEuRegionCheckbox(changedCheckbox) {
+  if (
+    !elements.filterCountriesList ||
+    typeof COUNTRY_OPTION_EU === "undefined" ||
+    typeof EU_MEMBER_COUNTRIES === "undefined"
+  ) {
+    return;
+  }
+  const euCb = elements.filterCountriesList.querySelector(
+    `input[type="checkbox"][value="${COUNTRY_OPTION_EU}"]`
+  );
+  if (!euCb) return;
+
+  if (changedCheckbox && changedCheckbox.value === COUNTRY_OPTION_EU) {
+    EU_MEMBER_COUNTRIES.forEach((member) => {
+      const memberCb = elements.filterCountriesList.querySelector(
+        `input[type="checkbox"][value="${member}"]`
+      );
+      if (memberCb) memberCb.checked = changedCheckbox.checked;
+    });
+    return;
+  }
+
+  if (changedCheckbox && EU_MEMBER_COUNTRIES.includes(changedCheckbox.value)) {
+    const allChecked = EU_MEMBER_COUNTRIES.every((member) => {
+      const memberCb = elements.filterCountriesList.querySelector(
+        `input[type="checkbox"][value="${member}"]`
+      );
+      return memberCb && memberCb.checked;
+    });
+    euCb.checked = allChecked;
+  }
 }
 
 function getSelectedFilterProjectPeriods() {
@@ -3881,8 +4012,37 @@ function updateFilterProjectPeriodsSummary() {
 function renderCountriesControls(countries) {
   if (!elements.countriesContainer) return;
   elements.countriesContainer.innerHTML = "";
-  const list = Array.isArray(countries) && countries.length ? countries : [""];
+  const normalized = normalizeCountryNames(Array.isArray(countries) ? countries : []);
+  const list = normalized.length ? normalized : [""];
   list.forEach((country) => addCountryRow(country));
+}
+
+function populateProjectCountrySelect(select, selectedCountry) {
+  select.innerHTML = "";
+  const emptyOpt = document.createElement("option");
+  emptyOpt.value = "";
+  emptyOpt.textContent = "Select country";
+  select.appendChild(emptyOpt);
+
+  if (typeof COUNTRY_OPTION_EU !== "undefined") {
+    const euOpt = document.createElement("option");
+    euOpt.value = COUNTRY_OPTION_EU;
+    euOpt.textContent = "EU (European Union)";
+    select.appendChild(euOpt);
+  }
+
+  countryList.slice().sort().forEach((name) => {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    select.appendChild(opt);
+  });
+
+  if (isEuRegionOption(selectedCountry)) {
+    select.value = COUNTRY_OPTION_EU;
+  } else if (selectedCountry && countryList.includes(selectedCountry)) {
+    select.value = selectedCountry;
+  }
 }
 
 function addCountryRow(selectedCountry) {
@@ -3891,20 +4051,7 @@ function addCountryRow(selectedCountry) {
   row.className = "country-row";
 
   const select = document.createElement("select");
-  select.innerHTML = "";
-  const emptyOpt = document.createElement("option");
-  emptyOpt.value = "";
-  emptyOpt.textContent = "Select country";
-  select.appendChild(emptyOpt);
-  countryList.slice().sort().forEach((name) => {
-    const opt = document.createElement("option");
-    opt.value = name;
-    opt.textContent = name;
-    select.appendChild(opt);
-  });
-  if (selectedCountry && countryList.includes(selectedCountry)) {
-    select.value = selectedCountry;
-  }
+  populateProjectCountrySelect(select, selectedCountry);
 
   const removeBtn = document.createElement("button");
   removeBtn.type = "button";
@@ -3916,13 +4063,25 @@ function addCountryRow(selectedCountry) {
   elements.countriesContainer.appendChild(row);
 }
 
-function getCountriesFromControls() {
+function applyEuRegionToProjectCountries() {
+  if (!elements.countriesContainer || projectModalMode === "view") return;
+  const current = getCountriesFromControlsRaw();
+  const withoutEu = current.filter((c) => !isEuRegionOption(c));
+  const merged = normalizeCountryNames([...withoutEu, COUNTRY_OPTION_EU]);
+  renderCountriesControls(merged);
+}
+
+function getCountriesFromControlsRaw() {
   if (!elements.countriesContainer) return [];
   const selects = elements.countriesContainer.querySelectorAll("select");
   const values = Array.from(selects)
     .map((s) => (s.value || "").trim())
     .filter((v) => v);
   return Array.from(new Set(values));
+}
+
+function getCountriesFromControls() {
+  return normalizeCountryNames(getCountriesFromControlsRaw());
 }
 
 /** Preserves password hashes and board order when loading from storage or import. */
@@ -3957,6 +4116,7 @@ function serializeStatePayload() {
     sortDirection: state.sortDirection,
     projectsView: state.projectsView,
     tableSortByRice: state.tableSortByRice,
+    tableGroupBy: state.tableGroupBy,
     scrumBoardSortByRice: state.scrumBoardSortByRice,
     moscowSortByRice: state.moscowSortByRice,
     mapMetric: state.mapMetric,
@@ -4020,6 +4180,13 @@ function applyStatePayload(parsed) {
     }
     if (!Array.isArray(parsed) && typeof parsed.tableSortByRice === "boolean") {
       state.tableSortByRice = parsed.tableSortByRice;
+    }
+    if (
+      !Array.isArray(parsed) &&
+      typeof TABLE_GROUP_BY_OPTIONS !== "undefined" &&
+      TABLE_GROUP_BY_OPTIONS.some((opt) => opt.id === parsed.tableGroupBy)
+    ) {
+      state.tableGroupBy = parsed.tableGroupBy;
     }
     if (!Array.isArray(parsed) && typeof parsed.scrumBoardSortByRice === "boolean") {
       state.scrumBoardSortByRice = parsed.scrumBoardSortByRice;
@@ -4462,7 +4629,7 @@ function returnTooltipsToOwner() {
   document.querySelectorAll(".cell-type-tooltip").forEach((el) => {
     if (!el._ownerWrap) return;
     if (el.parentNode === el._ownerWrap) return;
-    el.classList.remove("cell-type-tooltip-visible");
+    el.classList.remove("cell-type-tooltip-visible", "cell-type-tooltip--floating");
     el._ownerWrap.appendChild(el);
     el._ownerWrap = null;
   });
@@ -4472,7 +4639,7 @@ function returnTooltipsToOwner() {
 function hideAllTooltipsExcept(keepTooltip) {
   document.querySelectorAll(".cell-type-tooltip").forEach((el) => {
     if (keepTooltip && el === keepTooltip) return;
-    el.classList.remove("cell-type-tooltip-visible");
+    el.classList.remove("cell-type-tooltip-visible", "cell-type-tooltip--floating");
     if (el._ownerWrap && el.parentNode !== el._ownerWrap) {
       el._ownerWrap.appendChild(el);
       el._ownerWrap = null;
@@ -4482,17 +4649,176 @@ function hideAllTooltipsExcept(keepTooltip) {
 
 /** Hide all cell-type tooltips and return any that were moved to body back to their owner. */
 function hideCellTypeTooltips() {
+  cancelTooltipHoverHide();
   activeTooltipWrap = null;
   hideAllTooltipsExcept(null);
   returnTooltipsToOwner();
   document.body.classList.add("cell-type-tooltip-hidden");
+  syncCompactTooltipBackdrop(null);
 }
 
 let activeTooltipWrap = null;
+let tooltipHoverHideTimer = null;
+
+function cancelTooltipHoverHide() {
+  if (tooltipHoverHideTimer != null) {
+    clearTimeout(tooltipHoverHideTimer);
+    tooltipHoverHideTimer = null;
+  }
+}
+
+function getFloatingTooltipForWrap(wrap) {
+  if (!wrap) return null;
+  const inWrap = wrap.querySelector(".cell-type-tooltip");
+  if (inWrap && inWrap.classList.contains("cell-type-tooltip-visible")) return inWrap;
+  const floating = document.querySelectorAll(".cell-type-tooltip.cell-type-tooltip-visible");
+  for (let i = 0; i < floating.length; i++) {
+    if (floating[i]._ownerWrap === wrap) return floating[i];
+  }
+  return null;
+}
+
+function isWithinTooltipHoverZone(node, wrap) {
+  if (!node || !wrap || !(node instanceof Node)) return false;
+  if (wrap.contains(node)) return true;
+  const tooltip = getFloatingTooltipForWrap(wrap);
+  return !!(tooltip && tooltip.contains(node));
+}
+
+function hideTooltipForWrap(wrap) {
+  if (!wrap) return;
+  const tooltip = getFloatingTooltipForWrap(wrap);
+  if (tooltip) {
+    tooltip.classList.remove("cell-type-tooltip-visible", "cell-type-tooltip--floating");
+    if (tooltip.parentNode !== wrap) wrap.appendChild(tooltip);
+    tooltip._ownerWrap = null;
+  }
+  if (activeTooltipWrap === wrap) activeTooltipWrap = null;
+}
+
+function scheduleTooltipHoverHide(wrap, delayMs) {
+  cancelTooltipHoverHide();
+  if (!wrap) return;
+  const delay = typeof delayMs === "number" ? delayMs : 140;
+  tooltipHoverHideTimer = setTimeout(() => {
+    tooltipHoverHideTimer = null;
+    hideTooltipForWrap(wrap);
+  }, delay);
+}
+let compactTooltipBackdropEl = null;
+
+function getCompactTooltipBackdrop() {
+  if (compactTooltipBackdropEl) return compactTooltipBackdropEl;
+  compactTooltipBackdropEl = document.createElement("div");
+  compactTooltipBackdropEl.className = "compact-tooltip-backdrop";
+  compactTooltipBackdropEl.setAttribute("aria-hidden", "true");
+  compactTooltipBackdropEl.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    hideCellTypeTooltips();
+  });
+  return compactTooltipBackdropEl;
+}
+
+function syncCompactTooltipBackdrop(tooltip) {
+  const useBackdrop =
+    typeof isCompactLayoutViewport === "function" &&
+    isCompactLayoutViewport() &&
+    tooltip &&
+    tooltip.classList.contains("cell-type-tooltip--scroll");
+  const backdrop = getCompactTooltipBackdrop();
+  if (!useBackdrop) {
+    backdrop.classList.remove("compact-tooltip-backdrop--visible");
+    if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+    return;
+  }
+  const root = getTooltipRoot();
+  if (backdrop.parentNode !== root) root.appendChild(backdrop);
+  backdrop.classList.add("compact-tooltip-backdrop--visible");
+}
+
+const TABLE_VIEW_TOOLTIP_TRIGGER_SELECTOR =
+  ".cell-type-icon-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip, .projects-table-card__status-pill, .projects-table-card__chip--more";
+
+function findTableViewTooltipTrigger(target) {
+  if (!target || !(target instanceof Element)) return null;
+  return target.closest(TABLE_VIEW_TOOLTIP_TRIGGER_SELECTOR);
+}
+
+function isTableCardActionControl(target) {
+  return !!(
+    target &&
+    target.closest(
+      ".project-action-btn, .project-select-checkbox, .country-remove-btn, .country-row select, .country-row button"
+    )
+  );
+}
+
+function clampTooltipHorizontal(tooltip, centerX) {
+  const viewportWidth = window.innerWidth;
+  const minMargin = 12;
+  let left = centerX;
+  const tooltipRect = tooltip.getBoundingClientRect();
+  if (centerX - tooltipRect.width / 2 < minMargin) {
+    left = minMargin + tooltipRect.width / 2;
+  } else if (centerX + tooltipRect.width / 2 > viewportWidth - minMargin) {
+    left = viewportWidth - minMargin - tooltipRect.width / 2;
+  }
+  tooltip.style.left = left + "px";
+}
+
+/** Keeps fixed tooltips inside the viewport; scrollable variant for long country lists (desktop + compact). */
+function finalizeTooltipViewportPosition(tooltip, anchorRect) {
+  if (!tooltip || !anchorRect) return;
+  const margin = 12;
+  const vh = window.innerHeight;
+  const isScroll = tooltip.classList.contains("cell-type-tooltip--scroll");
+
+  if (isScroll) {
+    tooltip.classList.add("cell-type-tooltip--below");
+    const gap = 2;
+    let top = anchorRect.bottom + gap;
+    const maxHeightCap = Math.min(Math.floor(vh * 0.55), 320);
+    let maxHeight = Math.max(120, Math.min(maxHeightCap, vh - margin - top));
+    if (maxHeight < 120) {
+      top = margin;
+      maxHeight = Math.max(120, vh - margin * 2);
+    }
+    tooltip.style.top = top + "px";
+    tooltip.style.maxHeight = maxHeight + "px";
+  }
+
+  let rect = tooltip.getBoundingClientRect();
+
+  if (rect.bottom > vh - margin) {
+    const top = Math.max(margin, vh - margin - rect.height);
+    tooltip.style.top = top + "px";
+    if (isScroll) {
+      const available = vh - margin - top;
+      tooltip.style.maxHeight = Math.max(120, available) + "px";
+    }
+    rect = tooltip.getBoundingClientRect();
+  }
+
+  if (rect.top < margin) {
+    tooltip.style.top = margin + "px";
+    tooltip.classList.add("cell-type-tooltip--below");
+    if (isScroll) {
+      tooltip.style.maxHeight = Math.max(120, vh - margin * 2) + "px";
+    }
+    rect = tooltip.getBoundingClientRect();
+  }
+
+  const centerX = parseFloat(tooltip.style.left);
+  if (Number.isFinite(centerX)) {
+    clampTooltipHorizontal(tooltip, centerX);
+  }
+}
 
 function positionProfileTooltip(wrap, anchorPoint) {
   const tooltip = wrap.querySelector(".cell-type-tooltip");
   if (!tooltip) return;
+  cancelTooltipHoverHide();
   document.body.classList.remove("cell-type-tooltip-hidden");
 
   let rect;
@@ -4507,11 +4833,11 @@ function positionProfileTooltip(wrap, anchorPoint) {
   returnTooltipsToOwner();
   getTooltipRoot().appendChild(tooltip);
   tooltip._ownerWrap = wrap;
-  tooltip.classList.add("cell-type-tooltip-visible");
+  tooltip.classList.add("cell-type-tooltip-visible", "cell-type-tooltip--floating");
   activeTooltipWrap = wrap;
+  syncCompactTooltipBackdrop(tooltip);
 
   const viewportHeight = window.innerHeight;
-  const viewportWidth = window.innerWidth;
   const spaceAbove = rect.top;
   const spaceBelow = viewportHeight - rect.bottom;
   const minSpace = 200;
@@ -4539,18 +4865,62 @@ function positionProfileTooltip(wrap, anchorPoint) {
 
   if (wrap.classList.contains("project-field-tooltip-wrap")) {
     tooltip.classList.add("cell-type-tooltip--field");
-    const tooltipRect = tooltip.getBoundingClientRect();
-    const minMargin = 12;
-    let left = centerX;
-    if (centerX - tooltipRect.width / 2 < minMargin) {
-      left = minMargin + tooltipRect.width / 2;
-    } else if (centerX + tooltipRect.width / 2 > viewportWidth - minMargin) {
-      left = viewportWidth - minMargin - tooltipRect.width / 2;
-    }
-    tooltip.style.left = left + "px";
   } else {
     tooltip.classList.remove("cell-type-tooltip--field");
   }
+
+  const useWideTooltip =
+    wrap.classList.contains("card-title-with-tooltip") ||
+    wrap.classList.contains("cell-countries-with-tooltip") ||
+    wrap.classList.contains("cell-rice-with-tooltip");
+  tooltip.classList.toggle("cell-type-tooltip--wide", useWideTooltip);
+
+  clampTooltipHorizontal(tooltip, centerX);
+  finalizeTooltipViewportPosition(tooltip, rect);
+}
+
+function toggleCompactTableTooltip(wrap, anchorPoint) {
+  if (!wrap || !wrap.querySelector(".cell-type-tooltip")) return;
+  if (activeTooltipWrap === wrap) {
+    hideCellTypeTooltips();
+    return;
+  }
+  positionProfileTooltip(wrap, anchorPoint);
+}
+
+function handleCompactTableTooltipClick(e) {
+  if (!isCompactLayoutViewport() || !isTableCompactLayout()) return;
+
+  if (e.target.closest(".cell-type-tooltip.cell-type-tooltip-visible")) {
+    return;
+  }
+
+  if (isTableCardActionControl(e.target)) return;
+
+  const wrap = findTableViewTooltipTrigger(e.target);
+  if (!wrap || !wrap.closest(".projects-table-card")) {
+    if (activeTooltipWrap) hideCellTypeTooltips();
+    return;
+  }
+
+  const tooltip = wrap.querySelector(".cell-type-tooltip");
+  if (!tooltip) return;
+
+  e.stopPropagation();
+
+  const anchorPoint = wrap.classList.contains("card-title-with-tooltip")
+    ? { x: e.clientX, y: e.clientY }
+    : null;
+  toggleCompactTableTooltip(wrap, anchorPoint);
+}
+
+function handleCompactTooltipDismissPointerDown(e) {
+  if (!isCompactLayoutViewport() || !activeTooltipWrap) return;
+  if (e.target.closest(".cell-type-tooltip.cell-type-tooltip-visible")) return;
+  if (e.target.closest(".compact-tooltip-backdrop")) return;
+  const trigger = findTableViewTooltipTrigger(e.target);
+  if (trigger && trigger === activeTooltipWrap) return;
+  hideCellTypeTooltips();
 }
 
 /** Sync primary project actions (toolbar + mobile FAB). */
@@ -4703,7 +5073,7 @@ function registerAppOverlays() {
 
 /** Expand “New profile” on wide layouts; keep collapsed on phones by default. */
 function isCompactProfilesLayout() {
-  return window.matchMedia("(max-width: 1024px)").matches;
+  return isCompactLayoutViewport();
 }
 
 function updateProfilesShellSummary(activeProfile, profileCount) {
@@ -5093,7 +5463,7 @@ function initProfilePicker() {
     }
   });
 
-  const mqCompact = window.matchMedia("(max-width: 1024px)");
+  const mqCompact = window.matchMedia(getCompactLayoutMediaQueryString());
   const handleBreakpoint = (e) => {
     if (!e.matches) closeProfilePickerDropdown();
     renderProfilePicker();
@@ -5270,7 +5640,7 @@ function initProfilesPanel() {
   });
 
   // On breakpoint change to desktop: ensure sheet is closed
-  const mqCompact = window.matchMedia("(max-width: 1024px)");
+  const mqCompact = window.matchMedia(getCompactLayoutMediaQueryString());
   const handleBreakpoint = (e) => {
     if (!e.matches) {
       closeProfilesSheet();
@@ -5581,6 +5951,9 @@ function renderProjects() {
   const demoReadOnly = isActiveDemoProfile();
   syncDemoReadOnlyChrome();
   elements.projectsTableBody.innerHTML = "";
+  if (elements.projectsTableCardsList) {
+    elements.projectsTableCardsList.innerHTML = "";
+  }
   updateProfileLockedBanner();
 
   if (elements.tableSortByRiceToggle) {
@@ -5588,13 +5961,7 @@ function renderProjects() {
   }
 
   if (!activeProfile) {
-    elements.projectsTableBody.innerHTML = `
-      <tr>
-        <td colspan="12" class="empty-state">
-          Create or select a profile to start adding projects.
-        </td>
-      </tr>
-    `;
+    renderProjectsTableEmptyMessage("Create or select a profile to start adding projects.");
     updateBulkDeleteButton();
     if (state.projectsView === "board" && elements.scrumBoardContainer) {
       renderScrumBoard();
@@ -5609,13 +5976,9 @@ function renderProjects() {
   }
 
   if (!isProfileUnlocked(activeProfile.id)) {
-    elements.projectsTableBody.innerHTML = `
-      <tr>
-        <td colspan="12" class="empty-state">
-          This profile is locked. Enter your password in the banner above to unlock.
-        </td>
-      </tr>
-    `;
+    renderProjectsTableEmptyMessage(
+      "This profile is locked. Enter your password in the banner above to unlock."
+    );
     updateBulkDeleteButton();
     syncPortfolioActionButtons();
     if (elements.selectAllProjects) elements.selectAllProjects.checked = false;
@@ -5646,15 +6009,35 @@ function renderProjects() {
   projects = sortProjects(projects);
 
   if (!projects.length) {
-    elements.projectsTableBody.innerHTML = `
-      <tr>
-        <td colspan="12" class="empty-state">
-          No projects match the current filters. Adjust filters or add a new project.
-        </td>
-      </tr>
-    `;
+    renderProjectsTableEmptyMessage(
+      "No projects match the current filters. Adjust filters or add a new project."
+    );
     updateBulkDeleteButton();
     elements.selectAllProjects.checked = false;
+    if (state.projectsView === "board" && elements.scrumBoardContainer) {
+      renderScrumBoard();
+    }
+    if (state.projectsView === "moscow" && elements.moscowBoardContainer) {
+      renderMoscowBoard();
+    }
+    if (state.projectsView === "map" && elements.projectsMapContainer) {
+      renderProjectsMap();
+    }
+    return;
+  }
+
+  const useCompactTableCards = isTableCompactLayout();
+
+  if (useCompactTableCards) {
+    renderProjectsTableCards(projects, demoReadOnly);
+    syncHeaderCheckbox();
+    updateBulkDeleteButton();
+    updateSortIndicators();
+    if (state.projectsView === "table" && projects.some((p) => p.financialImpactValue != null && p.financialImpactValue !== "")) {
+      if (Object.keys(state.exchangeRatesToEUR || {}).length === 0) {
+        ExchangeRates.ensure().then(() => renderProjects()).catch(() => {});
+      }
+    }
     if (state.projectsView === "board" && elements.scrumBoardContainer) {
       renderScrumBoard();
     }
@@ -5718,43 +6101,40 @@ function renderProjects() {
       titleBlock.appendChild(titleDiv);
     }
     if (countries.length) {
-      const maxToShow = 3;
-      const shown = countries.slice(0, maxToShow);
-      const moreCount = countries.length - shown.length;
-      const shownCodes = shown.map((name) => countryCodeByName[name] || name);
+      const normalizedCountries = normalizeProjectCountriesList(countries);
+      const isEuRegion = projectCountriesRepresentEuRegion(normalizedCountries);
       const countriesWrap = document.createElement("span");
       countriesWrap.className = "cell-countries-with-tooltip";
-      countriesWrap.setAttribute("aria-label", "Target countries; hover for full list");
+      countriesWrap.setAttribute(
+        "aria-label",
+        isEuRegion
+          ? "European Union; hover for member countries"
+          : "Target countries; hover for full list"
+      );
       const badge = document.createElement("div");
-      badge.className = "countries-badge";
+      badge.className = isEuRegion ? "countries-badge countries-badge--eu" : "countries-badge";
       const badgeSpan = document.createElement("span");
-      badgeSpan.textContent = shownCodes.join(", ") + (moreCount > 0 ? " +" + moreCount + " more" : "");
+      if (isEuRegion) {
+        const flagEl = document.createElement("span");
+        flagEl.className = "countries-badge__flag";
+        flagEl.setAttribute("aria-hidden", "true");
+        flagEl.textContent = getEuRegionFlagEmoji();
+        badgeSpan.appendChild(flagEl);
+        const labelEl = document.createElement("span");
+        labelEl.className = "countries-badge__code";
+        labelEl.textContent = "EU";
+        badgeSpan.appendChild(labelEl);
+      } else {
+        const maxToShow = 3;
+        const shown = normalizedCountries.slice(0, maxToShow);
+        const moreCount = normalizedCountries.length - shown.length;
+        const shownCodes = shown.map((name) => countryCodeByName[name] || name);
+        badgeSpan.textContent =
+          shownCodes.join(", ") + (moreCount > 0 ? " +" + moreCount + " more" : "");
+      }
       badge.appendChild(badgeSpan);
       countriesWrap.appendChild(badge);
-      const tooltipEl = document.createElement("div");
-      tooltipEl.className = "cell-type-tooltip";
-      tooltipEl.setAttribute("role", "tooltip");
-      const tooltipTitle = document.createElement("div");
-      tooltipTitle.className = "cell-type-tooltip-title";
-      tooltipTitle.textContent = "Target countries";
-      tooltipEl.appendChild(tooltipTitle);
-      const tooltipBody = document.createElement("div");
-      tooltipBody.className = "cell-type-tooltip-body";
-      countries.forEach((name) => {
-        const code = countryCodeByName[name] || "";
-        const flag = typeof countryCodeToFlag === "function" ? countryCodeToFlag(code) : "";
-        const p = document.createElement("p");
-        if (flag && code) {
-          p.textContent = `${flag} ${code} — ${name}`;
-        } else if (code) {
-          p.textContent = `${code} — ${name}`;
-        } else {
-          p.textContent = name;
-        }
-        tooltipBody.appendChild(p);
-      });
-      tooltipEl.appendChild(tooltipBody);
-      countriesWrap.appendChild(tooltipEl);
+      countriesWrap.appendChild(buildCountriesListTooltip(normalizedCountries));
       titleBlock.appendChild(countriesWrap);
     }
     tdTitle.appendChild(titleBlock);
@@ -6862,6 +7242,7 @@ function buildCardMetaTooltipWrap(text, ariaLabel, title, bodyLines, className) 
   const wrap = document.createElement("span");
   wrap.className = className;
   wrap.setAttribute("aria-label", ariaLabel);
+  wrap.setAttribute("tabindex", "0");
 
   const textSpan = document.createElement("span");
   textSpan.textContent = text;
@@ -6888,15 +7269,220 @@ function buildCardMetaTooltipWrap(text, ariaLabel, title, bodyLines, className) 
   return wrap;
 }
 
+function buildTshirtSizeTooltipWrap(tshirtSize, extraClass) {
+  const wrap = document.createElement("span");
+  wrap.className = ["cell-tshirt-with-tooltip", extraClass].filter(Boolean).join(" ");
+  wrap.setAttribute("tabindex", "0");
+  wrap.setAttribute("aria-label", `T-shirt size: ${tshirtSize}`);
+  const textSpan = document.createElement("span");
+  textSpan.className = "cell-tshirt-size-text";
+  textSpan.textContent = tshirtSize;
+  wrap.appendChild(textSpan);
+  const meta =
+    typeof tshirtSizeTooltips !== "undefined" && tshirtSizeTooltips[tshirtSize]
+      ? tshirtSizeTooltips[tshirtSize]
+      : null;
+  appendIconMetaTooltip(wrap, meta);
+  return wrap;
+}
+
+function buildProjectTableCardTshirtMetric(project) {
+  const metric = document.createElement("div");
+  metric.className = "projects-table-card__metric projects-table-card__metric--size";
+  const sizeLabel = document.createElement("span");
+  sizeLabel.className = "projects-table-card__metric-label";
+  sizeLabel.textContent = "Size";
+  metric.appendChild(sizeLabel);
+  if (project.tshirtSize) {
+    metric.appendChild(
+      buildTshirtSizeTooltipWrap(project.tshirtSize, "projects-table-card__metric-value")
+    );
+  } else {
+    const sizeVal = document.createElement("span");
+    sizeVal.className = "projects-table-card__metric-value";
+    sizeVal.textContent = "—";
+    metric.appendChild(sizeVal);
+  }
+  return metric;
+}
+
+function appendIconMetaTooltip(wrap, meta) {
+  if (!wrap || !meta || (meta.tooltipTitle == null && meta.tooltipBody == null)) return;
+  const tooltipEl = document.createElement("div");
+  tooltipEl.className = "cell-type-tooltip";
+  tooltipEl.setAttribute("role", "tooltip");
+  if (meta.tooltipTitle != null) {
+    const titleEl = document.createElement("div");
+    titleEl.className = "cell-type-tooltip-title";
+    titleEl.textContent = meta.tooltipTitle;
+    tooltipEl.appendChild(titleEl);
+  }
+  if (meta.tooltipBody != null) {
+    const bodyEl = document.createElement("div");
+    bodyEl.className = "cell-type-tooltip-body";
+    String(meta.tooltipBody)
+      .split(/\n+/)
+      .forEach((paragraph) => {
+        const block = document.createElement("p");
+        block.textContent = paragraph.trim();
+        if (block.textContent) bodyEl.appendChild(block);
+      });
+    tooltipEl.appendChild(bodyEl);
+  }
+  wrap.appendChild(tooltipEl);
+}
+
+function buildProjectTableCardRiceMetric(project) {
+  const riceScore = project.riceScore != null ? project.riceScore : calculateRiceScore(project);
+  const reachVal = project.reachValue != null && project.reachValue !== "" ? project.reachValue : "—";
+  const impactVal = project.impactValue != null && project.impactValue !== "" ? project.impactValue : "—";
+  const confidenceVal =
+    project.confidenceValue != null && project.confidenceValue !== "" ? project.confidenceValue : "—";
+  const effortVal = project.effortValue != null && project.effortValue !== "" ? project.effortValue : "—";
+  const reachNum = Number(project.reachValue);
+  const impactNum = Number(project.impactValue);
+  const confidenceNum = Number(project.confidenceValue);
+  const effortNum = Number(project.effortValue);
+  const confidenceDecimal = Number.isFinite(confidenceNum) ? confidenceNum / 100 : null;
+  const formulaLine =
+    Number.isFinite(reachNum) &&
+    Number.isFinite(impactNum) &&
+    Number.isFinite(confidenceDecimal) &&
+    Number.isFinite(effortNum) &&
+    effortNum > 0
+      ? `[${reachNum} × ${impactNum} × ${confidenceDecimal.toFixed(2)}] ÷ ${effortNum} = ${formatRice(riceScore)}`
+      : "Not enough inputs to compute full formula.";
+
+  const metric = document.createElement("div");
+  metric.className = "projects-table-card__metric projects-table-card__metric--rice";
+
+  const riceLabel = document.createElement("span");
+  riceLabel.className = "projects-table-card__metric-label";
+  riceLabel.textContent = "RICE";
+  metric.appendChild(riceLabel);
+
+  const riceWrap = document.createElement("span");
+  riceWrap.className = "cell-rice-with-tooltip projects-table-card__metric-value";
+  riceWrap.setAttribute("tabindex", "0");
+  riceWrap.setAttribute(
+    "aria-label",
+    `RICE details: Reach ${reachVal}, Impact ${impactVal}, Confidence ${confidenceVal !== "—" ? confidenceVal + "%" : "—"}, Effort ${effortVal}.`
+  );
+  const riceText = document.createElement("span");
+  riceText.textContent = formatRice(riceScore);
+  riceWrap.appendChild(riceText);
+
+  const riceTooltip = document.createElement("div");
+  riceTooltip.className = "cell-type-tooltip";
+  riceTooltip.setAttribute("role", "tooltip");
+  const riceTooltipTitle = document.createElement("div");
+  riceTooltipTitle.className = "cell-type-tooltip-title";
+  riceTooltipTitle.textContent = "RICE score details";
+  riceTooltip.appendChild(riceTooltipTitle);
+  const riceTooltipBody = document.createElement("div");
+  riceTooltipBody.className = "cell-type-tooltip-body";
+  const formula = document.createElement("p");
+  formula.textContent = "Formula: [Reach × Impact × Confidence] ÷ Effort";
+  riceTooltipBody.appendChild(formula);
+  [
+    `R (Reach) - ${reachVal}`,
+    `I (Impact) - ${impactVal}`,
+    `C (Confidence) - ${confidenceVal !== "—" ? confidenceVal + "%" : "—"}${Number.isFinite(confidenceDecimal) ? ` (${confidenceDecimal.toFixed(2)})` : ""}`,
+    `E (Effort) - ${effortVal}`,
+    `Calculation - ${formulaLine}`
+  ].forEach((line) => {
+    const p = document.createElement("p");
+    p.textContent = line;
+    riceTooltipBody.appendChild(p);
+  });
+  riceTooltip.appendChild(riceTooltipBody);
+  riceWrap.appendChild(riceTooltip);
+  metric.appendChild(riceWrap);
+  return metric;
+}
+
+function buildProjectTableCardFinancialMetric(project) {
+  const financialShort = getProjectFinancialImpactEurShort(project) || "—";
+  const metric = document.createElement("div");
+  metric.className = "projects-table-card__metric projects-table-card__metric--financial";
+
+  const finLabel = document.createElement("span");
+  finLabel.className = "projects-table-card__metric-label";
+  finLabel.textContent = "Impact";
+  metric.appendChild(finLabel);
+
+  if (project.financialImpactValue == null || project.financialImpactValue === "") {
+    const finVal = document.createElement("span");
+    finVal.className = "projects-table-card__metric-value";
+    finVal.textContent = financialShort;
+    metric.appendChild(finVal);
+    return metric;
+  }
+
+  const raw = project.financialImpactValue;
+  const amount = Number.isFinite(raw) ? raw : Number(raw);
+  const currency = (project.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
+  const amountEur =
+    typeof ExchangeRates !== "undefined" && typeof ExchangeRates.convertToEUR === "function"
+      ? ExchangeRates.convertToEUR(amount, currency)
+      : amount;
+  const hasEurRate =
+    typeof ExchangeRates !== "undefined" && typeof ExchangeRates.hasRate === "function"
+      ? ExchangeRates.hasRate(currency)
+      : true;
+  const shortOriginal =
+    typeof formatFinancialShort === "function"
+      ? formatFinancialShort(amount)
+      : String(Number(amount).toLocaleString(undefined, { maximumFractionDigits: 2 }));
+
+  const finWrap = document.createElement("span");
+  finWrap.className = "cell-financial-with-tooltip projects-table-card__metric-value";
+  finWrap.setAttribute("tabindex", "0");
+  const finText = document.createElement("span");
+  finText.className = "cell-financial-text";
+  finText.textContent = financialShort;
+  finWrap.appendChild(finText);
+
+  const tooltipEl = document.createElement("div");
+  tooltipEl.className = "cell-type-tooltip";
+  tooltipEl.setAttribute("role", "tooltip");
+  const titleEl = document.createElement("div");
+  titleEl.className = "cell-type-tooltip-title";
+  titleEl.textContent = "Original financial impact";
+  tooltipEl.appendChild(titleEl);
+  const bodyEl = document.createElement("div");
+  bodyEl.className = "cell-type-tooltip-body";
+  const p = document.createElement("p");
+  p.textContent =
+    hasEurRate && Number.isFinite(amountEur)
+      ? `${shortOriginal} ${currency}`
+      : `${shortOriginal} ${currency} (EUR rate unavailable)`;
+  bodyEl.appendChild(p);
+  tooltipEl.appendChild(bodyEl);
+  finWrap.appendChild(tooltipEl);
+  finWrap.setAttribute(
+    "aria-label",
+    hasEurRate && Number.isFinite(amountEur)
+      ? `Financial impact: ${financialShort} (original: ${shortOriginal} ${currency})`
+      : `Financial impact: ${shortOriginal} ${currency} (EUR rate unavailable)`
+  );
+  metric.appendChild(finWrap);
+  return metric;
+}
+
 function buildCardTitleTooltipElement(titleClassName, project) {
   const titleText = (project && project.title ? String(project.title) : "Untitled");
   const statusText = (project && project.projectStatus ? String(project.projectStatus) : "Not set");
-  const rawDescription = project && project.projectDescription != null ? String(project.projectDescription) : "";
+  const rawDescription =
+    project && (project.description != null || project.projectDescription != null)
+      ? String(project.description != null ? project.description : project.projectDescription)
+      : "";
   const descriptionText = rawDescription.replace(/\s+/g, " ").trim() || "No description provided.";
 
   const wrap = document.createElement("div");
   wrap.className = `${titleClassName} card-title-with-tooltip`;
   wrap.setAttribute("aria-label", `${titleText}. Status: ${statusText}.`);
+  wrap.setAttribute("tabindex", "0");
 
   const textSpan = document.createElement("span");
   textSpan.textContent = titleText;
@@ -6923,6 +7509,614 @@ function buildCardTitleTooltipElement(titleClassName, project) {
 
   wrap.appendChild(tooltipEl);
   return wrap;
+}
+
+function initTableGroupByControls() {
+  if (!elements.tableGroupBySelect || typeof TABLE_GROUP_BY_OPTIONS === "undefined") return;
+  const validIds = TABLE_GROUP_BY_OPTIONS.map((opt) => opt.id);
+  if (!validIds.includes(state.tableGroupBy)) {
+    state.tableGroupBy = "none";
+  }
+  if (!elements.tableGroupBySelect.dataset.inited) {
+    elements.tableGroupBySelect.dataset.inited = "1";
+    TABLE_GROUP_BY_OPTIONS.forEach((opt) => {
+      const option = document.createElement("option");
+      option.value = opt.id;
+      option.textContent = opt.label;
+      elements.tableGroupBySelect.appendChild(option);
+    });
+    elements.tableGroupBySelect.addEventListener("change", () => {
+      const next = elements.tableGroupBySelect.value;
+      state.tableGroupBy = validIds.includes(next) ? next : "none";
+      saveState();
+      if (state.projectsView === "table") renderProjects();
+    });
+  }
+  elements.tableGroupBySelect.value = state.tableGroupBy;
+}
+
+function getTableGroupByUnsetKey() {
+  return "__unset__";
+}
+
+function getTableGroupByValue(project, groupBy) {
+  if (!project || !groupBy || groupBy === "none") return getTableGroupByUnsetKey();
+  switch (groupBy) {
+    case "projectStatus":
+      return (project.projectStatus || "").toString().trim() || getTableGroupByUnsetKey();
+    case "moscowCategory":
+      return (project.moscowCategory || "").toString().trim() || getTableGroupByUnsetKey();
+    case "tshirtSize":
+      return (project.tshirtSize || "").toString().trim() || getTableGroupByUnsetKey();
+    case "projectType":
+      return (project.projectType || "").toString().trim() || getTableGroupByUnsetKey();
+    case "financialImpactFramework":
+      return normalizeFinancialFramework(project.financialImpactFramework) || getTableGroupByUnsetKey();
+    case "financialImpactCurrency": {
+      const cur = (project.financialImpactCurrency || "").toString().trim().toUpperCase();
+      return cur || getTableGroupByUnsetKey();
+    }
+    default:
+      return getTableGroupByUnsetKey();
+  }
+}
+
+function getTableGroupDisplayLabel(rawKey, groupBy) {
+  if (rawKey === getTableGroupByUnsetKey()) return "Not set";
+  switch (groupBy) {
+    case "financialImpactFramework": {
+      const meta = FINANCIAL_FRAMEWORK_ICONS[rawKey];
+      return (meta && meta.label) || rawKey;
+    }
+    case "financialImpactCurrency":
+      return rawKey;
+    default:
+      return rawKey;
+  }
+}
+
+function sortTableGroupKeys(keys, groupBy) {
+  const unset = getTableGroupByUnsetKey();
+  const list = keys.slice();
+  const moveUnsetLast = (ordered) => {
+    if (!list.includes(unset)) return ordered;
+    const without = ordered.filter((k) => k !== unset);
+    return list.includes(unset) ? without.concat(unset) : without;
+  };
+
+  if (groupBy === "projectStatus" && typeof projectStatusList !== "undefined") {
+    const order = projectStatusList.slice();
+    return moveUnsetLast(
+      list.sort((a, b) => {
+        const ia = order.indexOf(a);
+        const ib = order.indexOf(b);
+        const ra = ia === -1 ? 999 : ia;
+        const rb = ib === -1 ? 999 : ib;
+        return ra - rb;
+      })
+    );
+  }
+
+  if (groupBy === "moscowCategory" && typeof moscowList !== "undefined") {
+    const order = moscowList.slice();
+    return moveUnsetLast(
+      list.sort((a, b) => {
+        const ia = order.indexOf(a);
+        const ib = order.indexOf(b);
+        const ra = ia === -1 ? 999 : ia;
+        const rb = ib === -1 ? 999 : ib;
+        return ra - rb;
+      })
+    );
+  }
+
+  if (groupBy === "tshirtSize" && typeof tshirtSizeList !== "undefined") {
+    const order = tshirtSizeList.slice();
+    return moveUnsetLast(
+      list.sort((a, b) => {
+        const ia = order.indexOf(a);
+        const ib = order.indexOf(b);
+        const ra = ia === -1 ? 999 : ia;
+        const rb = ib === -1 ? 999 : ib;
+        return ra - rb;
+      })
+    );
+  }
+
+  return moveUnsetLast(
+    list.sort((a, b) =>
+      getTableGroupDisplayLabel(a, groupBy).localeCompare(getTableGroupDisplayLabel(b, groupBy), undefined, {
+        sensitivity: "base"
+      })
+    )
+  );
+}
+
+function updateTableGroupBySummary(projectCount, groupBy) {
+  if (!elements.tableGroupBySummary) return;
+  const count = Number(projectCount) || 0;
+  if (!groupBy || groupBy === "none") {
+    elements.tableGroupBySummary.textContent =
+      count === 1 ? "1 project" : `${count} projects`;
+    return;
+  }
+  const groupEls = elements.projectsTableCardsList
+    ? elements.projectsTableCardsList.querySelectorAll(".projects-table-card-group")
+    : [];
+  const groupCount = groupEls.length;
+  const opt = typeof TABLE_GROUP_BY_OPTIONS !== "undefined"
+    ? TABLE_GROUP_BY_OPTIONS.find((o) => o.id === groupBy)
+    : null;
+  const label = opt ? opt.label.toLowerCase() : "category";
+  elements.tableGroupBySummary.textContent =
+    count === 1
+      ? `1 project · ${groupCount} ${label} group`
+      : `${count} projects · ${groupCount} ${label} groups`;
+}
+
+function syncProjectTableCardSelectionStyles() {
+  if (!elements.projectsTableCardsList) return;
+  elements.projectsTableCardsList.querySelectorAll(".projects-table-card").forEach((card) => {
+    const cb = card.querySelector(".project-select-checkbox");
+    card.classList.toggle("projects-table-card--selected", !!(cb && cb.checked));
+  });
+}
+
+function renderProjectsTableEmptyMessage(message) {
+  const text = message || "";
+  if (elements.projectsTableBody) {
+    elements.projectsTableBody.innerHTML = `
+      <tr>
+        <td colspan="12" class="empty-state">${text}</td>
+      </tr>
+    `;
+  }
+  if (elements.projectsTableCardsList) {
+    elements.projectsTableCardsList.innerHTML = `<p class="projects-table-cards-empty empty-state" role="status">${text}</p>`;
+  }
+}
+
+function getProjectSelectCheckboxes() {
+  if (isTableCompactLayout() && elements.projectsTableCardsList) {
+    return elements.projectsTableCardsList.querySelectorAll(".project-select-checkbox");
+  }
+  if (elements.projectsTableBody) {
+    return elements.projectsTableBody.querySelectorAll(".project-select-checkbox");
+  }
+  return [];
+}
+
+function truncateTableCardText(text, maxLen) {
+  const raw = text == null ? "" : String(text).replace(/\s+/g, " ").trim();
+  if (!raw) return "";
+  if (raw.length <= maxLen) return raw;
+  return raw.slice(0, Math.max(0, maxLen - 1)).trimEnd() + "…";
+}
+
+function appendProjectTableCardTitleIcon(iconsWrap, options) {
+  const { svg, ariaLabel, extraClass, iconKind, fallbackText, meta } = options;
+  if (!ariaLabel) return;
+  const wrap = document.createElement("span");
+  wrap.className = `projects-table-card__title-icon cell-type-icon-wrap cell-type-pill${extraClass ? " " + extraClass : ""}`;
+  if (iconKind) wrap.dataset.iconKind = iconKind;
+  wrap.setAttribute("role", "img");
+  wrap.setAttribute("aria-label", ariaLabel);
+  wrap.setAttribute("tabindex", "0");
+  if (svg) {
+    wrap.innerHTML = svg;
+  } else if (fallbackText) {
+    wrap.textContent = fallbackText;
+  } else {
+    return;
+  }
+  appendIconMetaTooltip(wrap, meta);
+  iconsWrap.appendChild(wrap);
+}
+
+const TABLE_CARD_MAX_BADGES = 3;
+
+function buildProjectTableCardBadges(project, groupBy) {
+  const badges = document.createElement("div");
+  badges.className = "projects-table-card__badges";
+  const candidates = [];
+
+  if (project.projectStatus && groupBy !== "projectStatus") {
+    const statusMeta = projectStatusIcons && projectStatusIcons[project.projectStatus];
+    const statusPill = document.createElement("span");
+    statusPill.className = "projects-table-card__status-pill";
+    statusPill.setAttribute("aria-label", project.projectStatus);
+    if (statusMeta && statusMeta.svg) {
+      statusPill.innerHTML =
+        statusMeta.svg +
+        '<span class="projects-table-card__status-label">' +
+        escapeHtml(project.projectStatus) +
+        "</span>";
+    } else {
+      statusPill.textContent = project.projectStatus;
+    }
+    statusPill.setAttribute("tabindex", "0");
+    appendIconMetaTooltip(statusPill, statusMeta);
+    candidates.push({ priority: 1, label: project.projectStatus, el: statusPill });
+  }
+
+  if (project.moscowCategory && groupBy !== "moscowCategory") {
+    const moscowSlug = moscowTablePillSlug(project.moscowCategory);
+    const moscowChip = document.createElement("span");
+    moscowChip.className = `projects-table-card__chip projects-table-card__chip--moscow moscow-pill moscow-pill--${moscowSlug} cell-moscow-with-tooltip`;
+    moscowChip.textContent = moscowTableShortLabel(project.moscowCategory);
+    moscowChip.setAttribute("tabindex", "0");
+    if (typeof moscowTooltips !== "undefined" && moscowTooltips[project.moscowCategory]) {
+      appendIconMetaTooltip(moscowChip, moscowTooltips[project.moscowCategory]);
+    }
+    candidates.push({ priority: 2, label: project.moscowCategory, el: moscowChip });
+  }
+
+  if (project.projectType && groupBy !== "projectType") {
+    const typeChip = document.createElement("span");
+    typeChip.className = "projects-table-card__chip projects-table-card__chip--type";
+    typeChip.textContent = project.projectType;
+    candidates.push({ priority: 3, label: project.projectType, el: typeChip });
+  }
+
+  if (project.financialImpactCurrency && groupBy !== "financialImpactCurrency") {
+    const curChip = document.createElement("span");
+    curChip.className = "projects-table-card__chip projects-table-card__chip--currency";
+    curChip.textContent = String(project.financialImpactCurrency).trim().toUpperCase();
+    candidates.push({ priority: 4, label: curChip.textContent, el: curChip });
+  }
+
+  if (project.projectPeriod) {
+    const periodChip = document.createElement("span");
+    periodChip.className = "projects-table-card__chip projects-table-card__chip--period";
+    periodChip.textContent = project.projectPeriod;
+    candidates.push({ priority: 5, label: project.projectPeriod, el: periodChip });
+  }
+
+  candidates.sort((a, b) => a.priority - b.priority);
+
+  let visible = candidates;
+  let hidden = [];
+  if (candidates.length > TABLE_CARD_MAX_BADGES) {
+    visible = candidates.slice(0, TABLE_CARD_MAX_BADGES - 1);
+    hidden = candidates.slice(TABLE_CARD_MAX_BADGES - 1);
+  }
+
+  visible.forEach(({ el }) => badges.appendChild(el));
+
+  if (hidden.length) {
+    const hiddenLabels = hidden.map((h) => h.label).filter(Boolean);
+    const moreChip = buildCardMetaTooltipWrap(
+      "+" + hidden.length,
+      "More attributes: " + hiddenLabels.join(", "),
+      "More attributes",
+      hiddenLabels,
+      "projects-table-card__chip projects-table-card__chip--more card-meta-with-tooltip"
+    );
+    badges.appendChild(moreChip);
+  }
+
+  return badges;
+}
+
+const COUNTRIES_TOOLTIP_SCROLL_THRESHOLD = 4;
+
+function normalizeProjectCountriesList(countries) {
+  return normalizeCountryNames(Array.isArray(countries) ? countries : []);
+}
+
+/** True when the project targets every EU member state (e.g. after choosing EU in the form). */
+function projectCountriesRepresentEuRegion(countries) {
+  const list = normalizeProjectCountriesList(countries);
+  if (
+    typeof EU_MEMBER_COUNTRIES === "undefined" ||
+    !EU_MEMBER_COUNTRIES.length ||
+    list.length !== EU_MEMBER_COUNTRIES.length
+  ) {
+    return false;
+  }
+  const set = new Set(list);
+  return EU_MEMBER_COUNTRIES.every((name) => set.has(name));
+}
+
+function getEuRegionFlagEmoji() {
+  return typeof countryCodeToFlag === "function" ? countryCodeToFlag("EU") : "🇪🇺";
+}
+
+function getCountriesTooltipTitle(countries) {
+  const list = normalizeProjectCountriesList(countries);
+  if (projectCountriesRepresentEuRegion(list)) {
+    return `European Union (${list.length} countries)`;
+  }
+  return list.length > 1 ? `Target countries (${list.length})` : "Target country";
+}
+
+function buildCountriesListTooltip(countries) {
+  const list = normalizeProjectCountriesList(countries);
+  const tooltipEl = document.createElement("div");
+  tooltipEl.className = "cell-type-tooltip cell-type-tooltip--wide";
+  if (list.length > COUNTRIES_TOOLTIP_SCROLL_THRESHOLD) {
+    tooltipEl.classList.add("cell-type-tooltip--scroll");
+  }
+  tooltipEl.setAttribute("role", "tooltip");
+  const tooltipTitle = document.createElement("div");
+  tooltipTitle.className = "cell-type-tooltip-title";
+  tooltipTitle.textContent = getCountriesTooltipTitle(list);
+  tooltipEl.appendChild(tooltipTitle);
+  const tooltipBody = document.createElement("div");
+  tooltipBody.className = "cell-type-tooltip-body";
+  list.forEach((name) => {
+    const code =
+      typeof countryCodeByName !== "undefined" && countryCodeByName[name]
+        ? countryCodeByName[name]
+        : "";
+    const flag = code && typeof countryCodeToFlag === "function" ? countryCodeToFlag(code) : "";
+    const p = document.createElement("p");
+    if (flag && code) {
+      p.textContent = `${flag} ${code} — ${name}`;
+    } else if (code) {
+      p.textContent = `${code} — ${name}`;
+    } else {
+      p.textContent = name;
+    }
+    tooltipBody.appendChild(p);
+  });
+  tooltipEl.appendChild(tooltipBody);
+  tooltipBody.addEventListener(
+    "wheel",
+    (e) => {
+      e.stopPropagation();
+    },
+    { passive: true }
+  );
+  return tooltipEl;
+}
+
+function buildProjectTableCardCountriesRow(countries) {
+  const normalizedCountries = normalizeProjectCountriesList(countries);
+  const isEuRegion = projectCountriesRepresentEuRegion(normalizedCountries);
+  const row = document.createElement("div");
+  row.className = "projects-table-card__countries-row cell-countries-with-tooltip";
+  row.setAttribute(
+    "aria-label",
+    isEuRegion ? "European Union; tap for member countries" : "Target countries; tap for full list"
+  );
+  row.setAttribute("tabindex", "0");
+  row.dataset.countryCount = String(normalizedCountries.length);
+
+  if (isEuRegion) {
+    const chip = document.createElement("span");
+    chip.className = "projects-table-card__country-chip projects-table-card__country-chip--eu";
+    const flagEl = document.createElement("span");
+    flagEl.className = "projects-table-card__country-flag";
+    flagEl.setAttribute("aria-hidden", "true");
+    flagEl.textContent = getEuRegionFlagEmoji();
+    chip.appendChild(flagEl);
+    const labelEl = document.createElement("span");
+    labelEl.className = "projects-table-card__country-code";
+    labelEl.textContent = "EU";
+    chip.appendChild(labelEl);
+    row.appendChild(chip);
+  } else {
+    const maxToShow = 4;
+    const shown = normalizedCountries.slice(0, maxToShow);
+    const moreCount = normalizedCountries.length - shown.length;
+    shown.forEach((name) => {
+      const code =
+        typeof countryCodeByName !== "undefined" && countryCodeByName[name]
+          ? countryCodeByName[name]
+          : "";
+      const flag = code && typeof countryCodeToFlag === "function" ? countryCodeToFlag(code) : "";
+      const chip = document.createElement("span");
+      chip.className = "projects-table-card__country-chip";
+      chip.title = code ? `${name} (${code})` : String(name);
+      if (flag) {
+        const flagEl = document.createElement("span");
+        flagEl.className = "projects-table-card__country-flag";
+        flagEl.setAttribute("aria-hidden", "true");
+        flagEl.textContent = flag;
+        chip.appendChild(flagEl);
+      }
+      const labelEl = document.createElement("span");
+      labelEl.className = "projects-table-card__country-code";
+      labelEl.textContent = code || String(name);
+      chip.appendChild(labelEl);
+      row.appendChild(chip);
+    });
+    if (moreCount > 0) {
+      const moreChip = document.createElement("span");
+      moreChip.className = "projects-table-card__country-chip projects-table-card__country-chip--more";
+      moreChip.textContent = "+" + moreCount;
+      moreChip.title = normalizedCountries.slice(maxToShow).join(", ");
+      row.appendChild(moreChip);
+    }
+  }
+
+  row.appendChild(buildCountriesListTooltip(normalizedCountries));
+
+  return row;
+}
+
+function buildProjectTableCard(project, demoReadOnly, options = {}) {
+  const groupBy = options.groupBy || "none";
+  const card = document.createElement("article");
+  card.className = "projects-table-card";
+  card.setAttribute("role", "listitem");
+  card.dataset.projectId = project.id;
+  const statusLabel = (project.projectStatus || "Not Started").toString().trim();
+  card.setAttribute("data-status", statusLabel);
+
+  const head = document.createElement("div");
+  head.className = "projects-table-card__head";
+
+  const selectWrap = document.createElement("div");
+  selectWrap.className = "projects-table-card__select";
+  const cb = document.createElement("input");
+  cb.type = "checkbox";
+  cb.className = "checkbox-input project-select-checkbox";
+  cb.setAttribute("data-id", project.id);
+  if (demoReadOnly) {
+    cb.disabled = true;
+    cb.title = DEMO_READ_ONLY_ACTION_TITLE;
+  }
+  selectWrap.appendChild(cb);
+  head.appendChild(selectWrap);
+
+  head.appendChild(buildProjectTableCardBadges(project, groupBy));
+  card.appendChild(head);
+
+  const body = document.createElement("div");
+  body.className = "projects-table-card__body";
+
+  const titleRow = document.createElement("div");
+  titleRow.className = "projects-table-card__title-row";
+  titleRow.appendChild(buildCardTitleTooltipElement("projects-table-card__title", project));
+
+  const frameworkKey = normalizeFinancialFramework(project.financialImpactFramework);
+  const frameworkMeta = FINANCIAL_FRAMEWORK_ICONS[frameworkKey];
+  const showTypeIcon = project.projectType && groupBy !== "projectType";
+  const showFrameworkIcon = groupBy !== "financialImpactFramework" && frameworkMeta && frameworkMeta.svg;
+  if (showTypeIcon || showFrameworkIcon) {
+    const iconsWrap = document.createElement("div");
+    iconsWrap.className = "projects-table-card__icons";
+    if (showTypeIcon) {
+      const typeMeta = projectTypeIcons && projectTypeIcons[project.projectType];
+      appendProjectTableCardTitleIcon(iconsWrap, {
+        svg: typeMeta && typeMeta.svg ? typeMeta.svg : null,
+        fallbackText: project.projectType,
+        ariaLabel: project.projectType,
+        extraClass: "projects-table-card__type-icon",
+        iconKind: "type",
+        meta: typeMeta
+      });
+    }
+    if (showFrameworkIcon) {
+      appendProjectTableCardTitleIcon(iconsWrap, {
+        svg: frameworkMeta.svg,
+        ariaLabel: frameworkMeta.label || frameworkKey,
+        extraClass: "projects-table-card__framework-icon cell-framework-icon-wrap",
+        iconKind: "framework",
+        meta: frameworkMeta
+      });
+    }
+    titleRow.appendChild(iconsWrap);
+  }
+  body.appendChild(titleRow);
+
+  const description = project.description ? String(project.description).trim() : "";
+  if (description) {
+    const descEl = document.createElement("p");
+    descEl.className = "projects-table-card__desc";
+    descEl.textContent = truncateTableCardText(description, 140);
+    body.appendChild(descEl);
+  }
+
+  const metrics = document.createElement("div");
+  metrics.className = "projects-table-card__metrics";
+
+  metrics.appendChild(buildProjectTableCardRiceMetric(project));
+  metrics.appendChild(buildProjectTableCardFinancialMetric(project));
+  metrics.appendChild(buildProjectTableCardTshirtMetric(project));
+
+  body.appendChild(metrics);
+
+  const countries = Array.isArray(project.countries) ? project.countries : [];
+  if (countries.length) {
+    const metaRow = document.createElement("div");
+    metaRow.className = "projects-table-card__meta-row";
+    metaRow.appendChild(buildProjectTableCardCountriesRow(countries));
+    body.appendChild(metaRow);
+  }
+
+  card.appendChild(body);
+
+  const actions = document.createElement("div");
+  actions.className = "projects-table-card__actions";
+
+  const viewBtn = document.createElement("button");
+  viewBtn.type = "button";
+  viewBtn.setAttribute("data-id", project.id);
+  setProjectTableActionButton(viewBtn, "view", "View");
+
+  const editBtn = document.createElement("button");
+  editBtn.type = "button";
+  editBtn.setAttribute("data-id", project.id);
+  setProjectTableActionButton(editBtn, "edit", "Edit", { disabled: demoReadOnly });
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.type = "button";
+  deleteBtn.setAttribute("data-id", project.id);
+  setProjectTableActionButton(deleteBtn, "delete", "Delete", { disabled: demoReadOnly });
+
+  actions.appendChild(viewBtn);
+  actions.appendChild(editBtn);
+  actions.appendChild(deleteBtn);
+  card.appendChild(actions);
+
+  return card;
+}
+
+function renderProjectsTableCards(projects, demoReadOnly) {
+  if (!elements.projectsTableCardsList) return;
+  elements.projectsTableCardsList.innerHTML = "";
+  const groupBy = state.tableGroupBy || "none";
+  const fragment = document.createDocumentFragment();
+
+  if (groupBy === "none") {
+    projects.forEach((project) => {
+      fragment.appendChild(buildProjectTableCard(project, demoReadOnly, { groupBy: "none" }));
+    });
+  } else {
+    const buckets = new Map();
+    projects.forEach((project) => {
+      const key = getTableGroupByValue(project, groupBy);
+      if (!buckets.has(key)) buckets.set(key, []);
+      buckets.get(key).push(project);
+    });
+    const keys = sortTableGroupKeys(Array.from(buckets.keys()), groupBy);
+    keys.forEach((key) => {
+      const section = document.createElement("section");
+      section.className = "projects-table-card-group";
+      section.dataset.groupBy = groupBy;
+      section.dataset.groupKey = key;
+
+      const header = document.createElement("header");
+      header.className = "projects-table-card-group__header";
+
+      const title = document.createElement("h4");
+      title.className = "projects-table-card-group__title";
+      title.textContent = getTableGroupDisplayLabel(key, groupBy);
+
+      const count = document.createElement("span");
+      count.className = "projects-table-card-group__count";
+      const groupProjects = buckets.get(key) || [];
+      count.textContent = String(groupProjects.length);
+      count.setAttribute(
+        "aria-label",
+        groupProjects.length === 1 ? "1 project" : `${groupProjects.length} projects`
+      );
+
+      header.appendChild(title);
+      header.appendChild(count);
+      section.appendChild(header);
+
+      const list = document.createElement("div");
+      list.className = "projects-table-card-group__list";
+      list.setAttribute("role", "group");
+      list.setAttribute("aria-label", getTableGroupDisplayLabel(key, groupBy));
+      groupProjects.forEach((project) => {
+        list.appendChild(buildProjectTableCard(project, demoReadOnly, { groupBy }));
+      });
+      section.appendChild(list);
+      fragment.appendChild(section);
+    });
+  }
+
+  elements.projectsTableCardsList.appendChild(fragment);
+  if (elements.tableGroupBySelect && elements.tableGroupBySelect.value !== groupBy) {
+    elements.tableGroupBySelect.value = groupBy;
+  }
+  updateTableGroupBySummary(projects.length, groupBy);
+  syncProjectTableCardSelectionStyles();
 }
 
 function renderScrumBoard() {
@@ -8553,22 +9747,24 @@ function clearFilters() {
 }
 
 function isTableCompactLayout() {
-  return document.documentElement.classList.contains("is-compact-layout");
+  return (
+    document.documentElement.classList.contains("is-compact-layout") ||
+    isCompactLayoutViewport()
+  );
 }
 
 function getTableSelectionCount() {
-  if (!elements.projectsTableBody) return 0;
-  return elements.projectsTableBody.querySelectorAll(".project-select-checkbox:checked").length;
+  return Array.from(getProjectSelectCheckboxes()).filter((cb) => cb.checked).length;
 }
 
 function syncProjectTableSelection() {
   syncHeaderCheckbox();
   updateBulkDeleteButton();
+  syncProjectTableCardSelectionStyles();
 }
 
 function clearProjectSelection() {
-  if (!elements.projectsTableBody) return;
-  elements.projectsTableBody.querySelectorAll(".project-select-checkbox").forEach((cb) => {
+  getProjectSelectCheckboxes().forEach((cb) => {
     cb.checked = false;
   });
   if (elements.selectAllProjects) elements.selectAllProjects.checked = false;
@@ -8576,7 +9772,6 @@ function clearProjectSelection() {
 }
 
 function updateBulkDeleteButton() {
-  if (!elements.projectsTableBody) return;
   const count = getTableSelectionCount();
   const anyChecked = count > 0;
   const inTableView = state.projectsView === "table";
@@ -8614,8 +9809,8 @@ function updateBulkDeleteButton() {
 }
 
 function syncHeaderCheckbox() {
-  if (!elements.selectAllProjects || !elements.projectsTableBody) return;
-  const checkboxes = elements.projectsTableBody.querySelectorAll(".project-select-checkbox");
+  if (!elements.selectAllProjects) return;
+  const checkboxes = getProjectSelectCheckboxes();
   if (!checkboxes.length) {
     elements.selectAllProjects.checked = false;
     return;
@@ -8629,11 +9824,11 @@ function handleBulkDelete() {
   if (!requireWritableActiveProfile("Bulk delete")) return;
   const activeProfile = getUnlockedActiveProfile();
   if (!activeProfile || !elements.projectDeleteModal) return;
-  const checked = elements.projectsTableBody.querySelectorAll(".project-select-checkbox:checked");
+  const checked = Array.from(getProjectSelectCheckboxes()).filter((cb) => cb.checked);
   if (!checked.length) return;
 
   prepareAppOverlay("projectDeleteModal");
-  const ids = Array.from(checked).map((cb) => cb.getAttribute("data-id"));
+  const ids = checked.map((cb) => cb.getAttribute("data-id"));
 
   elements.projectDeleteModal.setAttribute("data-delete-mode", "bulk");
   elements.projectDeleteModal.setAttribute("data-project-ids", ids.join(","));
@@ -9403,7 +10598,7 @@ function syncProfileViewCurrencyDetails({ resetCollapsed = false } = {}) {
 function syncProjectModalFooterMetaDetails({ resetCollapsed = false } = {}) {
   const details = elements.projectModalFooterMetaDetails;
   if (!details) return;
-  const isCompact = window.matchMedia("(max-width: 1024px)").matches;
+  const isCompact = isCompactLayoutViewport();
   if (!isCompact) {
     details.open = true;
   } else if (resetCollapsed) {

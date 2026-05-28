@@ -10,9 +10,9 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   PHONES & TABLETS (≤1024px) — fully flat workspace flow
+   PHONES & TABLETS (≤1400px) — fully flat workspace flow
    ═══════════════════════════════════════════════════════════ */
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   html.is-compact-layout {
     --flow-radius-control: 8px;
   }
@@ -206,7 +206,7 @@
 /* ═══════════════════════════════════════════════════════════
    DESKTOP — one workspace panel, flat inner sections
    ═══════════════════════════════════════════════════════════ */
-@media (min-width: 1025px) {
+@media (min-width: 1401px) {
   html.is-desktop-layout .app-header--modern {
     border-radius: 4px !important;
     box-shadow: none !important;
@@ -321,7 +321,7 @@
   min-height: 0 !important;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   html.is-compact-layout .app-layout > section.profiles-panel.profiles-panel--v2 {
     height: 0 !important;
     min-height: 0 !important;
@@ -352,7 +352,7 @@
 }
 
 /* Beat main.css theme radii (20px card-plain, etc.) */
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   html.is-compact-layout .card,
   html.is-compact-layout .card-plain,
   html.is-compact-layout .filters-shell,
@@ -365,7 +365,7 @@
   }
 }
 
-@media (min-width: 1025px) {
+@media (min-width: 1401px) {
   html.is-desktop-layout .card-plain.workspace-panel--v2,
   html.is-desktop-layout .workspace-panel.card-plain {
     border-radius: 4px !important;

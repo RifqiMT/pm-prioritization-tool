@@ -1,10 +1,10 @@
 /**
- * Compact layout — phones & tablets (≤1024px).
+ * Compact layout — phones & tablets (≤1400px).
  * Unified responsive revamp: tighter hierarchy, deduplicated chrome, touch-first.
- * Requires html.is-compact-layout / html.is-phone-layout (set in app.js; both on ≤1024px).
+ * Requires html.is-compact-layout / html.is-phone-layout (set in app.js; both on ≤1400px).
  */
 
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   :root {
     --compact-gap: 0.35rem;
     --compact-gap-sm: 0.25rem;
@@ -42,6 +42,29 @@
 
   html.is-compact-layout .profiles-panel--v2 {
     border-radius: 0;
+  }
+
+  /* Profiles live in bottom sheet — do not stack sidebar column above workspace */
+  html.is-compact-layout section.profiles-panel.profiles-panel--v2 {
+    position: fixed !important;
+    inset: auto !important;
+    width: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    overflow: visible !important;
+    pointer-events: none !important;
+    z-index: 900;
+  }
+
+  html.is-compact-layout section.profiles-panel.profiles-panel--v2 .profiles-panel-sheet,
+  html.is-compact-layout section.profiles-panel.profiles-panel--v2 .profiles-panel-sheet--open {
+    pointer-events: auto !important;
   }
 
   /* ── Header — slim, focused ──────────────────────────── */
@@ -290,8 +313,7 @@
     min-height: var(--compact-touch) !important;
   }
 
-  html.is-compact-layout .workspace-panel--v2 .projects-map-container,
-  html.is-compact-layout .workspace-panel--v2 .table-wrapper--modern {
+  html.is-compact-layout .workspace-panel--v2 .projects-map-container {
     border-radius: var(--compact-radius-sm) !important;
     aspect-ratio: 2.05 / 1 !important;
     height: auto !important;

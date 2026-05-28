@@ -172,6 +172,8 @@ Full input field whitelists: `sanitizeFinancialImpactInputs` in `src/app.js`.
 | `currencyList` | Currency List | Selectable currencies. | EUR, USD, IDR, … |
 | `LEGACY_WORKSPACE_FIELDS` | Legacy Workspace Keys | Deprecated workspace JSON keys stripped on load/import/persist. | `["boardHiddenStatuses"]` |
 | `countryList` | Country List | Normalized country names for geo. | `"Germany"` |
+| `COUNTRY_OPTION_EU` | EU Region Option | Pseudo-value `EU` in target-country selects; expands to all EU members on selection. | `"EU"` |
+| `EU_MEMBER_COUNTRIES` | EU Member States | 27 canonical `countryList` names filled when `EU` is chosen. | `["Germany", "France", …]` |
 | `CURRENCY_SYMBOLS` | Currency Symbol Map | Display symbol for each supported currency code. | `{ EUR: "€", GBP: "£", IDR: "Rp", ... }` |
 
 ---
@@ -268,8 +270,8 @@ flowchart TD
 ```mermaid
 flowchart TD
   VW[viewport width] --> INIT[initCompactLayoutClass]
-  INIT -->|≤1024px| COMPACT[html.is-compact-layout + is-phone-layout]
-  INIT -->|>1024px| DESK[html.is-desktop-layout]
+  INIT -->|≤1400px| COMPACT[html.is-compact-layout + is-phone-layout]
+  INIT -->|>1400px| DESK[html.is-desktop-layout]
   COMPACT --> MCSS[moscow-compact.css]
   COMPACT --> BCSS[board-compact.css]
   COMPACT --> TCSS[table-compact.css]
@@ -284,10 +286,11 @@ flowchart TD
 
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
-| `APP_ASSET_VERSION` | Asset Cache Version | Query-string cache buster for CSS/JS in `index.html`. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260528-ui116"` |
-| `is-compact-layout` | Compact Layout Class | Viewport ≤1024px; enables compact CSS. | Set on `<html>` by `initCompactLayoutClass()`. | Global layout | class present |
+| `APP_ASSET_VERSION` | Asset Cache Version | Query-string cache buster for CSS/JS in `index.html`. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260528-ui119"` |
+| `COMPACT_LAYOUT_MAX_WIDTH_PX` | Compact Breakpoint (px) | Max viewport width for phone/tablet UI. | Constant in `constants.js`. | `src/constants.js` | `1400` |
+| `is-compact-layout` | Compact Layout Class | Viewport ≤1400px; enables compact CSS. | Set on `<html>` by `initCompactLayoutClass()`. | Global layout | class present |
 | `is-phone-layout` | Phone Layout Class | Same threshold as compact (unified phone UI). | Set together with compact class. | Global layout | class present |
-| `is-desktop-layout` | Desktop Layout Class | Viewport >1024px. | Mutually exclusive with compact. | Global layout | class present |
+| `is-desktop-layout` | Desktop Layout Class | Viewport >1400px. | Mutually exclusive with compact. | Global layout | class present |
 | `moscowCompactNav` | MoSCoW Compact Navigator | 2×2 pill bar to jump between quadrants on compact. | `syncMoscowCompactNav()` updates active pill. | MoSCoW view (compact) | DOM `#moscowCompactNav` |
 | `portfolioSelectionBar` | Portfolio Selection Bar | Floating bar for bulk delete when rows selected on compact table. | Shown when `selectedProjectIds` non-empty. | Table view (compact) | DOM element |
 | `view-in-fullscreen-host` | Fullscreen Host Class | Body class when a view is fullscreen. | `fullscreen.js` + `fullscreen-compact.css`. | Fullscreen | class on `body` |

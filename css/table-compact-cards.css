@@ -1,0 +1,567 @@
+/**
+ * Projects table view — phone & tablet card list (≤1400px).
+ * Replaces horizontal scroll table with a touch-friendly project card stack.
+ */
+
+@media (max-width: 1400px) {
+  html.is-compact-layout .projects-view--table {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+  }
+
+  html.is-compact-layout .projects-view--table .projects-table-toolbar .view-toolbar__desc {
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  html.is-compact-layout .projects-view--table .projects-table-shell {
+    display: none !important;
+  }
+
+  html.is-compact-layout .projects-view--table .projects-table-cards-shell {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-top: 0.35rem;
+    border-radius: 14px;
+    border: 1px solid rgba(202, 138, 4, 0.2);
+    background: linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(255, 250, 242, 1));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 8px 22px rgba(120, 53, 15, 0.06);
+    overflow: hidden;
+  }
+
+  html.is-compact-layout .projects-table-cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    padding: 0.65rem clamp(0.55rem, 2.5vw, 0.85rem) 0.75rem;
+    scroll-padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  html.is-compact-layout .projects-table-cards-empty {
+    margin: 1.25rem 0.5rem;
+    text-align: center;
+    font-size: 0.86rem;
+    line-height: 1.45;
+    color: #78350f;
+  }
+
+  /* ── Card shell ─────────────────────────────────────────── */
+  html.is-compact-layout .projects-table-card-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  html.is-compact-layout .projects-table-card-group__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.55rem;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 0.42rem 0.55rem;
+    border-radius: 10px;
+    border: 1px solid rgba(202, 138, 4, 0.2);
+    background: linear-gradient(180deg, rgba(255, 251, 242, 0.98), rgba(255, 247, 234, 0.96));
+    box-shadow: 0 2px 8px rgba(120, 53, 15, 0.06);
+  }
+
+  html.is-compact-layout .projects-table-card-group__title {
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #92400e;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html.is-compact-layout .projects-table-card-group__count {
+    flex: 0 0 auto;
+    min-width: 1.65rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-align: center;
+    color: #7f1d1d;
+    background: rgba(254, 226, 226, 0.65);
+    border: 1px solid rgba(248, 113, 113, 0.35);
+  }
+
+  html.is-compact-layout .projects-table-card-group__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  html.is-compact-layout .projects-table-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-radius: 16px;
+    border: 1px solid rgba(226, 232, 240, 0.98);
+    background: linear-gradient(165deg, #ffffff 0%, #fefdfb 58%, #fffaf5 100%);
+    box-shadow:
+      0 1px 2px rgba(15, 23, 42, 0.04),
+      0 8px 22px rgba(127, 29, 29, 0.08);
+    overflow: hidden;
+    transition:
+      border-color 0.18s ease,
+      box-shadow 0.18s ease,
+      transform 0.12s ease;
+  }
+
+  html.is-compact-layout .projects-table-card--selected {
+    border-color: rgba(185, 28, 28, 0.42);
+    box-shadow:
+      0 0 0 2px rgba(254, 202, 202, 0.55),
+      0 10px 26px rgba(127, 29, 29, 0.12);
+  }
+
+  html.is-compact-layout .projects-table-card:active {
+    transform: scale(0.992);
+  }
+
+  html.is-compact-layout .projects-table-card[data-status="Not Started"] {
+    border-left: 4px solid rgba(100, 116, 139, 0.92);
+  }
+
+  html.is-compact-layout .projects-table-card[data-status="In Progress"] {
+    border-left: 4px solid rgba(59, 130, 246, 0.92);
+  }
+
+  html.is-compact-layout .projects-table-card[data-status="On Hold"] {
+    border-left: 4px solid rgba(245, 158, 11, 0.92);
+  }
+
+  html.is-compact-layout .projects-table-card[data-status="Done"] {
+    border-left: 4px solid rgba(16, 185, 129, 0.92);
+  }
+
+  html.is-compact-layout .projects-table-card[data-status="Cancelled"] {
+    border-left: 4px solid rgba(239, 68, 68, 0.9);
+  }
+
+  html.is-compact-layout .projects-table-card__head {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: nowrap;
+    padding: 0.55rem 0.65rem 0.35rem;
+    border-bottom: 1px solid rgba(241, 245, 249, 0.95);
+    background: rgba(248, 250, 252, 0.55);
+    min-width: 0;
+  }
+
+  html.is-compact-layout .projects-table-card__select {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    min-width: 44px;
+    justify-content: center;
+    margin: -0.35rem 0 -0.35rem -0.35rem;
+  }
+
+  html.is-compact-layout .projects-table-card__select .checkbox-input {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
+  html.is-compact-layout .projects-table-card__badges {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  html.is-compact-layout .projects-table-card__status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 42%;
+    padding: 0.2rem 0.45rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #334155;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(203, 213, 225, 0.85);
+  }
+
+  html.is-compact-layout .projects-table-card__status-pill svg {
+    width: 0.95rem;
+    height: 0.95rem;
+    flex-shrink: 0;
+  }
+
+  html.is-compact-layout .projects-table-card__status-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html.is-compact-layout .projects-table-card__chip {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 1 auto;
+    min-width: 0;
+    padding: 0.18rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 650;
+    color: #78350f;
+    background: rgba(255, 247, 237, 0.95);
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  html.is-compact-layout .projects-table-card__chip--more {
+    flex: 0 0 auto;
+    font-weight: 800;
+    color: #78716c;
+    background: rgba(241, 245, 249, 0.95);
+    border-color: rgba(203, 213, 225, 0.85);
+  }
+
+  html.is-compact-layout .projects-table-card .card-title-with-tooltip,
+  html.is-compact-layout .projects-table-card .cell-type-icon-wrap,
+  html.is-compact-layout .projects-table-card .cell-rice-with-tooltip,
+  html.is-compact-layout .projects-table-card .cell-financial-with-tooltip,
+  html.is-compact-layout .projects-table-card .cell-tshirt-with-tooltip,
+  html.is-compact-layout .projects-table-card .cell-countries-with-tooltip,
+  html.is-compact-layout .projects-table-card .cell-moscow-with-tooltip,
+  html.is-compact-layout .projects-table-card .projects-table-card__status-pill,
+  html.is-compact-layout .projects-table-card .card-meta-with-tooltip {
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html.is-compact-layout .cell-type-tooltip.cell-type-tooltip-visible {
+    pointer-events: auto;
+    max-width: min(18rem, calc(100vw - 1.5rem));
+    z-index: 10001;
+  }
+
+  html.is-compact-layout .cell-type-tooltip.cell-type-tooltip--wide {
+    max-width: min(20rem, calc(100vw - 1.5rem));
+  }
+
+  html.is-compact-layout .compact-tooltip-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(15, 23, 42, 0.35);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.15s ease, visibility 0.15s ease;
+  }
+
+  html.is-compact-layout .compact-tooltip-backdrop.compact-tooltip-backdrop--visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  html.is-compact-layout .projects-table-card .cell-rice-with-tooltip,
+  html.is-compact-layout .projects-table-card .cell-financial-with-tooltip,
+  html.is-compact-layout .projects-table-card .cell-tshirt-with-tooltip {
+    display: block;
+    min-width: 0;
+  }
+
+  html.is-compact-layout .projects-table-card__chip--moscow {
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  html.is-compact-layout .projects-table-card__chip.moscow-pill--must {
+    color: #7f1d1d;
+    background: #fef2f2;
+    border-color: rgba(239, 68, 68, 0.35);
+  }
+
+  html.is-compact-layout .projects-table-card__chip.moscow-pill--should {
+    color: #9a3412;
+    background: #fff7ed;
+    border-color: rgba(249, 115, 22, 0.35);
+  }
+
+  html.is-compact-layout .projects-table-card__chip.moscow-pill--could {
+    color: #1e40af;
+    background: #eff6ff;
+    border-color: rgba(59, 130, 246, 0.35);
+  }
+
+  html.is-compact-layout .projects-table-card__chip.moscow-pill--wont {
+    color: #475569;
+    background: #f8fafc;
+    border-color: rgba(148, 163, 184, 0.45);
+  }
+
+  html.is-compact-layout .projects-table-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 0.65rem 0.75rem 0.55rem;
+  }
+
+  html.is-compact-layout .projects-table-card__title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  html.is-compact-layout .projects-table-card__title {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: clamp(0.95rem, 2.8vw, 1.05rem);
+    font-weight: 700;
+    line-height: 1.32;
+    color: #1c1917;
+    letter-spacing: -0.01em;
+  }
+
+  html.is-compact-layout .projects-table-card__title span {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  html.is-compact-layout .projects-table-card__icons {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  html.is-compact-layout .projects-table-card__title-icon {
+    flex: 0 0 auto;
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(226, 232, 240, 0.95);
+  }
+
+  html.is-compact-layout .projects-table-card__title-icon svg {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
+  html.is-compact-layout .projects-table-card__desc {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.42;
+    color: #57534e;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  html.is-compact-layout .projects-table-card__metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+  }
+
+  html.is-compact-layout .projects-table-card__metric {
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+    min-width: 0;
+    padding: 0.45rem 0.5rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+  }
+
+  html.is-compact-layout .projects-table-card__metric--rice {
+    background: linear-gradient(145deg, #fff7ed 0%, #ffffff 100%);
+    border-color: rgba(251, 191, 36, 0.35);
+  }
+
+  html.is-compact-layout .projects-table-card__metric-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #92400e;
+  }
+
+  html.is-compact-layout .projects-table-card__metric-value {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #1c1917;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  html.is-compact-layout .projects-table-card__metric--rice .projects-table-card__metric-value {
+    color: #b91c1c;
+    font-size: 0.95rem;
+  }
+
+  html.is-compact-layout .projects-table-card__meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    color: #78716c;
+  }
+
+  html.is-compact-layout .projects-table-card__countries-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem;
+    max-width: 100%;
+  }
+
+  html.is-compact-layout .projects-table-card__country-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.18rem 0.42rem;
+    border-radius: 6px;
+    background: rgba(254, 243, 199, 0.55);
+    border: 1px solid rgba(251, 191, 36, 0.28);
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #92400e;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  html.is-compact-layout .projects-table-card__country-chip--eu {
+    color: #1e3a8a;
+    background: rgba(239, 246, 255, 0.95);
+    border-color: rgba(59, 130, 246, 0.4);
+  }
+
+  html.is-compact-layout .projects-table-card__country-flag {
+    font-size: 0.95rem;
+    line-height: 1;
+  }
+
+  html.is-compact-layout .projects-table-card__country-code {
+    letter-spacing: 0.02em;
+  }
+
+  html.is-compact-layout .projects-table-card__country-chip--more {
+    font-weight: 800;
+    color: #78716c;
+    background: rgba(241, 245, 249, 0.9);
+    border-color: rgba(226, 232, 240, 0.95);
+  }
+
+  html.is-compact-layout .projects-table-card__actions {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 0.4rem;
+    padding: 0.55rem 0.65rem 0.65rem;
+    border-top: 1px solid rgba(241, 245, 249, 0.95);
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.55), rgba(255, 255, 255, 0.92));
+  }
+
+  html.is-compact-layout .projects-table-card__actions .project-action-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    justify-content: center;
+    gap: 0.28rem;
+    border-radius: 11px;
+    border: 1px solid transparent;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  }
+
+  html.is-compact-layout .projects-table-card__actions .project-action-btn--view {
+    background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+    border-color: rgba(59, 130, 246, 0.28);
+    color: #1d4ed8;
+  }
+
+  html.is-compact-layout .projects-table-card__actions .project-action-btn--edit {
+    background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+    border-color: rgba(245, 158, 11, 0.32);
+    color: #b45309;
+  }
+
+  html.is-compact-layout .projects-table-card__actions .project-action-btn--delete {
+    background: linear-gradient(180deg, #fff1f2 0%, #ffe4e6 100%);
+    border-color: rgba(244, 63, 94, 0.28);
+    color: #be123c;
+  }
+
+  html.is-compact-layout .projects-table-card__actions .project-action-btn__label {
+    display: inline;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+  }
+
+  /* Fullscreen table view: card list fills viewport */
+  html.is-compact-layout .projects-view--table:fullscreen .projects-table-cards-shell,
+  html.is-compact-layout .projects-view--table::-webkit-full-screen .projects-table-cards-shell,
+  html.is-compact-layout .projects-view.view-pseudo-fullscreen.projects-view--table .projects-table-cards-shell {
+    flex: 1 1 auto;
+    max-height: none;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  html.is-compact-layout .projects-view--table:fullscreen .projects-table-cards-list,
+  html.is-compact-layout .projects-view--table::-webkit-full-screen .projects-table-cards-list,
+  html.is-compact-layout .projects-view.view-pseudo-fullscreen.projects-view--table .projects-table-cards-list {
+    max-height: none;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Desktop: card list and group bar hidden (table is primary) */
+@media (min-width: 1401px) {
+  .projects-table-cards-shell,
+  .projects-table-group-bar {
+    display: none !important;
+  }
+}

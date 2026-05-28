@@ -1,10 +1,10 @@
 /**
- * Board view — non-desktop (≤1024px).
+ * Board view — non-desktop (≤1400px).
  * Phone layout: stacked columns, no horizontal scroll.
  * Requires html.is-compact-layout (app.js).
  */
 
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   html.is-compact-layout .projects-view--board {
     max-width: 100%;
     overflow-x: hidden;

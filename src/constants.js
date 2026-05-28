@@ -9,7 +9,14 @@
 const STORAGE_KEY = "rice_prioritizer_v1";
 
 /** Bump when shipping client changes so browsers fetch fresh JS (Vercel caches /src with long TTL). */
-const APP_ASSET_VERSION = "20260528-ui116";
+const APP_ASSET_VERSION = "20260528-ui131";
+
+/**
+ * Viewports at or below this width use the unified phone/tablet UI
+ * (profile picker, bottom-sheet profiles, card table, FAB, flat layout).
+ * Above this width: desktop sidebar + data table.
+ */
+const COMPACT_LAYOUT_MAX_WIDTH_PX = 1400;
 
 /** Workspace trust profile label token (internal persistence key). */
 const WORKSPACE_TRUST_PROFILE_LABEL = "UmlmcWkgVGphaHlvbm8=";
@@ -77,6 +84,17 @@ const moscowList = [
   "Should have",
   "Could have",
   "Won't have"
+];
+
+/** Table view (compact card list): group projects by attribute. */
+const TABLE_GROUP_BY_OPTIONS = [
+  { id: "none", label: "No grouping" },
+  { id: "projectStatus", label: "Status" },
+  { id: "moscowCategory", label: "MoSCoW" },
+  { id: "tshirtSize", label: "T-shirt size" },
+  { id: "financialImpactFramework", label: "Financial framework" },
+  { id: "projectType", label: "Project type" },
+  { id: "financialImpactCurrency", label: "Currency" }
 ];
 
 /**
@@ -243,6 +261,16 @@ const CURRENCY_SYMBOLS = {
 
 /** Currencies that show the symbol after the amount (e.g. 1.2 Mn kr). */
 const CURRENCY_SYMBOL_SUFFIX = ["SEK", "NOK", "DKK", "ISK"];
+
+/** Pseudo-option in target-country selects; expands to all EU member states on selection. */
+const COUNTRY_OPTION_EU = "EU";
+
+/** EU member states (27) — names must match entries in countryList exactly. */
+const EU_MEMBER_COUNTRIES = [
+  "Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czechia", "Denmark", "Estonia", "Finland",
+  "France", "Germany", "Greece", "Hungary", "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg",
+  "Malta", "Netherlands", "Poland", "Portugal", "Romania", "Slovakia", "Slovenia", "Spain", "Sweden"
+];
 
 const countryList = [
   "Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda","Argentina","Armenia","Australia",
@@ -474,6 +502,8 @@ const countryCodeByName = {
  * Ensures one consistent label and code (e.g. Taiwan) everywhere.
  */
 const countryNameAliases = {
+  "European Union": COUNTRY_OPTION_EU,
+  "EU (European Union)": COUNTRY_OPTION_EU,
   "Chinese Taipei": "Taiwan",
   "Taiwan, Province of China": "Taiwan",
   "Taiwan, China": "Taiwan",

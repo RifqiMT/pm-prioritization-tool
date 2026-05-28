@@ -167,8 +167,8 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .pr
   min-height: 0 !important;
 }
 
-/* ── Compact (phones & tablets ≤1024px) — minimal padding ─── */
-@media (max-width: 1024px) {
+/* ── Compact (phones & tablets ≤1400px) — minimal padding ─── */
+@media (max-width: 1400px) {
   html.is-compact-layout .app-layout {
     gap: 0.35rem !important;
   }

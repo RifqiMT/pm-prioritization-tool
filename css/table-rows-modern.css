@@ -134,7 +134,7 @@
 }
 
 /* Compact — still comfortable, not cramped */
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   :root {
     --table-row-gap: 0.42rem;
     --table-row-pad-y: 0.62rem;

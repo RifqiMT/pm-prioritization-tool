@@ -728,8 +728,8 @@
   color: var(--vt-text-soft) !important;
 }
 
-/* ── Non-desktop (≤1024px) — phone UI on tablets & phones ── */
-@media (max-width: 1024px) {
+/* ── Non-desktop (≤1400px) — phone UI on tablets & phones ── */
+@media (max-width: 1400px) {
   .view-toolbar {
     padding: 0.35rem 0.4rem;
     border-radius: 10px;
@@ -843,7 +843,7 @@
   padding: 0.75rem 0.85rem !important;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   html.is-compact-layout .workspace-panel--v2 .view-toolbar,
   html.is-compact-layout .workspace-panel--v2 .projects-table-toolbar.view-toolbar,
   html.is-compact-layout .workspace-panel--v2 .scrum-board-toolbar.view-toolbar,

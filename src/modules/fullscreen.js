@@ -9,7 +9,10 @@
     "projectDeleteModal", "toastContainer"
   ];
 
-  const COMPACT_MQ = "(max-width: 1024px)";
+  const COMPACT_MQ =
+    typeof COMPACT_LAYOUT_MAX_WIDTH_PX !== "undefined" && Number(COMPACT_LAYOUT_MAX_WIDTH_PX) > 0
+      ? `(max-width: ${Number(COMPACT_LAYOUT_MAX_WIDTH_PX)}px)`
+      : "(max-width: 1400px)";
 
   const VIEW_KEYS = ["table", "board", "moscow", "map"];
 

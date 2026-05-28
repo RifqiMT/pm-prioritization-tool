@@ -5,7 +5,7 @@
 [![Deploy on Vercel](https://img.shields.io/badge/deploy-Vercel-black)](docs/DEPLOYMENT.md)
 
 **Production:** [https://pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app)  
-**Asset baseline:** `APP_ASSET_VERSION` = `20260528-ui116`
+**Asset baseline:** `APP_ASSET_VERSION` = `20260528-ui124`
 
 ---
 
@@ -22,7 +22,7 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 | **Views** | Table, Board (Scrum), MoSCoW, World map |
 | **Portability** | JSON full backup + CSV export; merge import |
 | **Security** | PBKDF2 profile passwords; export omits locked profiles without correct password |
-| **Responsive UI** | Desktop (>1024px); **unified phone UI** on tablets and phones (≤1024px) |
+| **Responsive UI** | Desktop (>1400px); **unified phone/tablet UI** (≤1400px) |
 
 ---
 
@@ -53,7 +53,7 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 
 ### Views
 
-| View | Desktop (>1024px) | Compact (≤1024px) |
+| View | Desktop (>1400px) | Compact (≤1400px) |
 |------|-------------------|-------------------|
 | **Table** | Sortable grid, bulk delete in toolbar | FAB for new project; selection bar for bulk delete |
 | **Board** | Horizontal status columns, drag-and-drop | Single-column stack; **Move to** status dropdown |
@@ -97,7 +97,7 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 | `profile-modals-modern.css` | Profile modals |
 | `export-modals-modern.css` | Export/import modals |
 | `view-toolbars-modern.css` | View toolbars |
-| `compact-modern.css` | Compact chrome (≤1024px) |
+| `compact-modern.css` | Compact chrome (≤1400px) |
 | `moscow-compact.css` | MoSCoW compact layout |
 | `board-compact.css` | Board compact layout |
 | `table-compact.css` | Table compact layout |

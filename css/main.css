@@ -231,7 +231,7 @@ body {
   width: 100%;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   .app-layout {
     grid-template-columns: 1fr;
     gap: 0.85rem;
@@ -2932,6 +2932,58 @@ tbody td {
   border-top: 1px solid rgba(148, 163, 184, 0.15);
 }
 
+/* Long country lists: capped height + scroll (desktop table + compact cards) */
+.cell-type-tooltip.cell-type-tooltip--scroll {
+  min-width: 11rem;
+  max-width: min(20rem, calc(100vw - 1.5rem));
+}
+
+.cell-type-tooltip.cell-type-tooltip--scroll.cell-type-tooltip-visible {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.cell-type-tooltip.cell-type-tooltip--scroll.cell-type-tooltip--below.cell-type-tooltip-visible {
+  transform: translate(-50%, 0) !important;
+}
+
+.cell-type-tooltip.cell-type-tooltip--scroll.cell-type-tooltip-visible:not(.cell-type-tooltip--below) {
+  transform: translate(-50%, -100%) !important;
+}
+
+.cell-type-tooltip.cell-type-tooltip--scroll .cell-type-tooltip-title {
+  flex: 0 0 auto;
+}
+
+.cell-type-tooltip.cell-type-tooltip--scroll .cell-type-tooltip-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  pointer-events: auto;
+  cursor: default;
+}
+
+.cell-type-tooltip.cell-type-tooltip--scroll.cell-type-tooltip--below.cell-type-tooltip-visible {
+  margin-top: 0;
+  padding-top: 2px;
+}
+
+.cell-type-tooltip.cell-type-tooltip--scroll .cell-type-tooltip-body p {
+  margin: 0;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.cell-type-tooltip.cell-type-tooltip--scroll .cell-type-tooltip-body p:last-child {
+  border-bottom: none;
+}
+
 .cell-type-tooltip--wide .cell-type-tooltip-title {
   padding: 0.45rem 0.75rem 0.35rem;
 }
@@ -3337,7 +3389,7 @@ th[data-sort-active="true"] .sort-indicator {
 }
 
 /* Phones + tablets: allow the project modal to use the screen height for more context. */
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   #projectModal.modal-backdrop {
     --project-modal-pad-top: max(var(--modal-safe-pad-y), env(safe-area-inset-top));
     --project-modal-pad-right: max(var(--modal-safe-pad-x), env(safe-area-inset-right));
@@ -3658,7 +3710,7 @@ th[data-sort-active="true"] .sort-indicator {
 }
 
 /* Tablets + phones: collapsible meta (collapsed by default), actions always visible. */
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   #projectModal .project-modal-footer-bar {
     /* Use grid instead of flex to prevent "meta left / buttons right" bugs on narrow screens. */
     display: grid;
@@ -3779,7 +3831,7 @@ th[data-sort-active="true"] .sort-indicator {
 }
 
 /* Desktop: meta cards always visible (details forced open via JS). */
-@media (min-width: 1025px) {
+@media (min-width: 1401px) {
   #projectModal .project-modal-footer-meta-details {
     display: block;
     border: none;
@@ -4258,6 +4310,25 @@ th[data-sort-active="true"] .sort-indicator {
   padding: 0.1rem 0.4rem;
   border: 1px solid rgba(148, 163, 184, 0.4);
   background: rgba(15, 23, 42, 0.9);
+}
+
+.countries-badge--eu > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  font-weight: 700;
+  color: #1e3a8a;
+  border-color: rgba(59, 130, 246, 0.45);
+  background: rgba(239, 246, 255, 0.95);
+}
+
+.countries-badge__flag {
+  font-size: 0.95em;
+  line-height: 1;
+}
+
+.countries-badge__code {
+  letter-spacing: 0.04em;
 }
 
 /* --- Toast: deletion confirmation (bottom-right) --- */
@@ -4851,7 +4922,7 @@ button {
   min-height: 34px;
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1400px) {
   .app-header {
     grid-template-columns: 1fr;
   }
@@ -4865,7 +4936,7 @@ button {
   }
 
   .profiles-panel {
-    order: 1;
+    order: 0;
   }
 }
 
@@ -6542,7 +6613,7 @@ tbody .checkbox-input {
   padding: 0.35rem 0.1rem 0.1rem;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   .profiles-panel {
     padding: 1rem !important;
   }
@@ -6792,7 +6863,7 @@ tbody .checkbox-input {
   color: #8a5b16 !important;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   .profiles-panel {
     padding: 1rem !important;
   }

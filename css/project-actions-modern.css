@@ -307,7 +307,7 @@
 }
 
 /* ── Compact / touch layouts ─────────────────────────────── */
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   html.is-compact-layout .cell-actions--project {
     flex-direction: row !important;
     align-items: center !important;

@@ -9,27 +9,28 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="css/main.css?v=20260528-ui116" rel="stylesheet" />
-  <link href="css/workspace-modern.css?v=20260528-ui116" rel="stylesheet" />
-  <link href="css/header-modern.css?v=20260528-ui116" rel="stylesheet" />
-  <link href="css/profiles-modern.css?v=20260528-ui116" rel="stylesheet" />
-  <link href="css/portfolio-modern.css?v=20260528-ui116" rel="stylesheet" />
-  <link href="css/profile-modals-modern.css?v=20260528-ui116" rel="stylesheet" />
-  <link href="css/export-modals-modern.css?v=20260528-ui116" rel="stylesheet" />
-  <link href="css/view-toolbars-modern.css?v=20260528-ui116" rel="stylesheet" />
-  <link href="css/compact-modern.css?v=20260528-ui116" rel="stylesheet" />
-  <link href="css/moscow-compact.css?v=20260528-ui116" rel="stylesheet" />
-  <link href="css/board-compact.css?v=20260528-ui116" rel="stylesheet" />
-  <link href="css/table-compact.css?v=20260528-ui116" rel="stylesheet" />
-  <link href="css/project-actions-modern.css?v=20260528-ui116" rel="stylesheet" />
-  <link href="css/fullscreen-modern.css?v=20260528-ui116" rel="stylesheet" />
-  <link href="css/fullscreen-compact.css?v=20260528-ui116" rel="stylesheet" />
-  <link href="css/app-footer.css?v=20260528-ui116" rel="stylesheet" />
-  <link href="css/views-density.css?v=20260528-ui116" rel="stylesheet" />
-  <link href="css/layout-flow.css?v=20260528-ui116" rel="stylesheet" />
-  <link href="css/portfolio-cards-compact.css?v=20260528-ui116" rel="stylesheet" />
-  <link href="css/table-rows-modern.css?v=20260528-ui116" rel="stylesheet" />
-  <link href="css/table-revamp-modern.css?v=20260528-ui116" rel="stylesheet" />
+  <link href="css/main.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/workspace-modern.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/header-modern.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/profiles-modern.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/portfolio-modern.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/profile-modals-modern.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/export-modals-modern.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/view-toolbars-modern.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/compact-modern.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/moscow-compact.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/board-compact.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/table-compact.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/project-actions-modern.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/fullscreen-modern.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/fullscreen-compact.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/app-footer.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/views-density.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/layout-flow.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/portfolio-cards-compact.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/table-rows-modern.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/table-revamp-modern.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/table-compact-cards.css?v=20260528-ui131" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 <body>
@@ -536,7 +537,7 @@
               </span>
               <div class="view-toolbar__copy">
                 <h3 class="view-toolbar__title">Projects table</h3>
-                <p class="view-toolbar__desc">Sort columns, select rows, and open actions per project.</p>
+                <p class="view-toolbar__desc">Sort by RICE, select projects, and open view, edit, or delete.</p>
               </div>
             </div>
             <div class="view-toolbar__cluster">
@@ -556,6 +557,21 @@
               </button>
             </div>
           </div>
+          <div class="view-toolbar__row view-toolbar__row--table-group projects-table-group-bar" id="projectsTableGroupBar">
+            <label class="projects-table-group-label" for="tableGroupBySelect">
+              <span class="projects-table-group-label__icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></svg>
+              </span>
+              <span class="projects-table-group-label__text">Group by</span>
+            </label>
+            <div class="projects-table-group-control-wrap">
+              <select id="tableGroupBySelect" class="projects-table-group-select" aria-describedby="tableGroupBySummary"></select>
+            </div>
+            <p class="projects-table-group-summary" id="tableGroupBySummary" aria-live="polite"></p>
+          </div>
+        </div>
+        <div class="projects-table-cards-shell" id="projectsTableCardsShell" aria-label="Projects list">
+          <div class="projects-table-cards-list" id="projectsTableCardsList" role="list"></div>
         </div>
         <div class="table-wrapper table-wrapper--modern projects-table-shell" aria-label="Projects table">
           <table class="projects-data-table">
@@ -1802,15 +1818,15 @@
 
   <!-- Classic scripts (no ES modules) so you can just open index.html directly -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="src/constants.js?v=20260528-ui116"></script>
-  <script src="src/utils.js?v=20260528-ui116"></script>
-  <script src="src/modules/profile-security.js?v=20260528-ui116"></script>
-  <script src="src/rice.js?v=20260528-ui116"></script>
-  <script src="src/modules/exchange-rates.js?v=20260528-ui116"></script>
-  <script src="src/modules/fullscreen.js?v=20260528-ui116"></script>
-  <script src="src/modules/overlay-manager.js?v=20260528-ui116"></script>
-  <script src="src/modules/storage.js?v=20260528-ui116"></script>
-  <script src="src/app.js?v=20260528-ui116"></script>
+  <script src="src/constants.js?v=20260528-ui131"></script>
+  <script src="src/utils.js?v=20260528-ui131"></script>
+  <script src="src/modules/profile-security.js?v=20260528-ui131"></script>
+  <script src="src/rice.js?v=20260528-ui131"></script>
+  <script src="src/modules/exchange-rates.js?v=20260528-ui131"></script>
+  <script src="src/modules/fullscreen.js?v=20260528-ui131"></script>
+  <script src="src/modules/overlay-manager.js?v=20260528-ui131"></script>
+  <script src="src/modules/storage.js?v=20260528-ui131"></script>
+  <script src="src/app.js?v=20260528-ui131"></script>
 </body>
 </html>
 
