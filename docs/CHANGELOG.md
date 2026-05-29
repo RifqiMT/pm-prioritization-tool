@@ -27,6 +27,103 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Docs — Full documentation audit (product standard) — 2026-05-28 — Product Team — Impact: documentation
+
+- Comprehensive refresh of README, product documentation, PRD, personas, user stories, variables (with Mermaid relationship charts), metrics/OKRs, design guidelines, traceability matrix, guardrails, changelog, and docs hub.
+- Aligned layout breakpoint documentation to **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) across PRD, architecture, tech guidelines, variables, and design guidelines.
+- Traceability matrix expanded for FR-5.2 group-by, FR-5.4 MoSCoW display names, FR-6 labels/links filters, FR-9.6–9.7, and FR-10 (cross-references GUARDRAILS §7).
+- Variables dictionary: `tableGroupBy`, filter extensions, layout constants, filter pipeline and privileged-mode charts (neutral naming; policy in GUARDRAILS §7 only).
+- Asset baseline documented: `APP_ASSET_VERSION` = `20260528-ui152`.
+
+### UI — Site footer GitHub & article links — 2026-05-28 — Product Team — Impact: user-visible
+
+- Footer icon row: GitHub repo and prioritization article links alongside LinkedIn and website.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui152`.
+
+### UI — Compact profile bar controls on one row — 2026-05-28 — Product Team — Impact: user-visible
+
+- Phones & tablets: profile picker and privileged workspace toggle share one horizontal row in the profile bar.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui151`.
+
+### UI — MoSCoW quadrant full category names — 2026-05-28 — Product Team — Impact: user-visible
+
+- Quadrant headers and compact “Jump to quadrant” pills use **Must Have**, **Should Have**, **Could Have**, and **Won't Have** via shared `moscowDisplayNames` / `getMoscowDisplayName()`.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui150`.
+
+### UI — MoSCoW quadrant title and description on one row — 2026-05-28 — Product Team — Impact: user-visible
+
+- MoSCoW column headers: category badge (MUST / SHOULD / etc.) and description text share one horizontal row on desktop and compact layouts.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui148`.
+
+### UI — Desktop board cards match compact curvature — 2026-05-28 — Product Team — Impact: user-visible
+
+- Scrum & MoSCoW desktop project cards use the same 12px radius, border, surface gradient, and shadow as tablet/phone cards.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui147`.
+
+### UI — Desktop board card actions single row — 2026-05-28 — Product Team — Impact: user-visible
+
+- Scrum & MoSCoW desktop cards: View, Edit, Delete, and up/down reorder controls stay on one horizontal row.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui146`.
+
+### UI — Board cards owner stripe (all layouts) — 2026-05-28 — Product Team — Impact: user-visible
+
+- Scrum & MoSCoW cards: owner attribution stripe on top of title on desktop, tablet, and phone when workspace-wide mode is active (matches projects table card).
+- Removed desktop-only owner pill below title on board cards.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui145`.
+
+### UI — Cross-profile portfolio visuals (table & cards) — 2026-05-28 — Product Team — Impact: user-visible
+
+- Workspace-wide mode: banner, avatar-based owner chips, card owner strips, refined table Profile column, and clearer cross-profile row highlights.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui142`.
+
+### Fix — Desktop table layout stable across filters — 2026-05-28 — Product Team — Impact: user-visible
+
+- Projects table column widths use semantic column classes (fixes misalignment when Profile column is in the DOM but hidden).
+- Empty filter results keep the same header grid and empty-state styling on desktop.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui141`.
+
+### Feature — Advanced filter: Labels (with / without) — 2026-05-28 — Product Team — Impact: user-visible
+
+- **Labels** select in advanced filters: Any, With label(s), Without labels (same pattern as **Links**).
+- Complements the **Label** search field for substring matching on label text.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui140`.
+
+### UI — Owner identifiers and filters layout — 2026-05-28 — Product Team — Impact: user-visible
+
+- Privileged workspace toggle on trust-holder profile only; on tablet/phone it moves into the profile picker bar so it stays visible.
+- With workspace-wide mode on: owner pills on table, compact cards, board, MoSCoW, map tooltips; **Profile** table column/sort; owner advanced filter; group-by owner profile.
+- Filters reorganized: **Search** row (title + label), **Quick filters** (type, countries, period), **Advanced** (impact, effort, currency, framework, status, T-shirt, MOSCOW, links).
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui137`.
+
+### Feature — Workspace-wide project management (trust-holder profile) — 2026-05-28 — Product Team — Impact: user-visible
+
+- Trust-holder profile can enable workspace-wide mode: view/add/edit/delete projects across all profiles (see [GUARDRAILS.md](GUARDRAILS.md) §7).
+- Projects remain owned by their home profile; table shows a **Profile** column; create flow includes owner profile selector.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui136`.
+
+### UI — Filter autocomplete (title & label) — 2026-05-28 — Product Team — Impact: user-visible
+
+- Project **title** and **label** filters use responsive combobox suggestions from the active profile (keyboard navigation, match highlighting).
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui135`.
+
+### Feature — Advanced filters: label & links — 2026-05-28 — Product Team — Impact: user-visible
+
+- **Label:** text filter in advanced filters; matches any project label (substring, case-insensitive).
+- **Links:** filter projects with link(s), without links, or any.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui134`.
+
+### UI — Project labels & links readability — 2026-05-28 — Product Team — Impact: user-visible
+
+- Restyle labels/links for the project modal light theme: high-contrast chips, link cards with title + URL preview, field hints, and bordered input panel.
+- Edit mode: column headers for link rows; warm-themed remove/add controls matching other modal fields.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui133`.
+
+### Feature — Project labels and links — 2026-05-28 — Product Team — Impact: user-visible
+
+- **Labels:** optional multi-value tags in create/edit/view (each label may contain multiple words).
+- **Links:** optional named hyperlinks (display text + URL); view mode shows clickable anchors; CSV/JSON import-export supported.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui132`.
+
 ### Fix — Desktop countries tooltip: hover bridge + scroll — 2026-05-28 — Product Team — Impact: user-visible
 
 - Desktop EU/countries tooltip stays open while moving the pointer onto the panel (delayed hide + hover zone includes floating tooltip).

@@ -1,116 +1,168 @@
 # Product Management Prioritization Tool
 
-**Version 2.0.0** · Portfolio prioritization with RICE, MoSCoW, financial frameworks, multi-view planning, and optional MongoDB cloud sync.
+**Version 2.0.0** · Browser-based portfolio prioritization with **RICE**, **MoSCoW**, financial frameworks, multi-view planning, and optional **MongoDB** cloud sync.
 
 [![Deploy on Vercel](https://img.shields.io/badge/deploy-Vercel-black)](docs/DEPLOYMENT.md)
 
-**Production:** [https://pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app)  
-**Asset baseline:** `APP_ASSET_VERSION` = `20260528-ui124`
+| | |
+|---|---|
+| **Production** | [pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app) |
+| **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui152` |
+| **Docs hub** | [docs/README.md](docs/README.md) |
+
+> Do not use `pm-prioritization-tool.vercel.app` — that hostname serves a legacy React app. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ---
 
 ## Product overview
 
-The Product Management Prioritization Tool helps product teams **capture initiatives**, **score priority**, **estimate value**, and **communicate roadmaps** in the browser. Data can stay **local** (cache + export) or sync to **MongoDB** on Vercel when configured.
+The Product Management Prioritization Tool helps product teams **capture initiatives**, **score priority**, **estimate value**, and **communicate roadmaps** in the browser. Each **profile** is an isolated portfolio (team, product, or owner). Projects are scored with **RICE**, classified with **MoSCoW**, and optionally valued with **six financial frameworks**. Data can remain **local** (browser cache + export) or sync to **MongoDB** on Vercel when configured.
+
+### Core capabilities
 
 | Capability | Description |
 |------------|-------------|
-| **Profiles** | Separate portfolios (teams, products, owners) with optional password protection |
+| **Profiles** | Multiple portfolios with optional PBKDF2 password protection |
 | **RICE** | `(Reach × Impact × Confidence) ÷ Effort` with explainable tooltips |
-| **MoSCoW** | Must / Should / Could / Won't delivery classification |
+| **MoSCoW** | Must Have / Should Have / Could Have / Won't Have quadrants |
 | **Financial frameworks** | Custom, CLV, NPS, Risk, Headcount, Operational |
-| **Views** | Table, Board (Scrum), MoSCoW, World map |
+| **Views** | Table, Scrum board, MoSCoW board, world map (Leaflet) |
+| **Filters** | Search, quick filters, advanced filters (including labels and links) |
 | **Portability** | JSON full backup + CSV export; merge import |
-| **Security** | PBKDF2 profile passwords; export omits locked profiles without correct password |
-| **Responsive UI** | Desktop (>1400px); **unified phone/tablet UI** (≤1400px) |
+| **Responsive UI** | Desktop (>1400px); unified phone/tablet UI (≤1400px) |
+| **Cloud (optional)** | MongoDB workspace via `/api/state` |
 
----
+### Product benefits
 
-## Benefits
-
-- **Explainable prioritization** — stakeholders see inputs, formula, and computed RICE in one tooltip  
-- **Flexible hosting** — static files locally; Vercel + MongoDB for cloud workspaces  
+- **Explainable prioritization** — stakeholders see RICE inputs, formula, and computed score together  
+- **Flexible hosting** — static files locally; Vercel + MongoDB for shared workspaces  
 - **Data ownership** — export anytime; merge import; per-browser cache with optional cloud sync  
-- **Planning flexibility** — filter by country, quarter, framework, status; map by count, RICE, or EUR  
-- **Meeting-ready on any device** — compact layout uses vertical stacks (no sideways board/MoSCoW scroll), FAB, and touch-friendly controls  
+- **Planning flexibility** — filter by country, quarter, framework, status, labels, links; map by count, RICE, or EUR  
+- **Meeting-ready on any device** — compact layout uses vertical stacks, FAB, touch-friendly controls, and quadrant nav pills  
 
 ---
 
-## Features (current)
+## Features (current implementation)
 
-### Profiles & security
-- Create, edit, view, delete profiles  
-- Search profiles by name/team; **profile picker** on compact header  
-- Optional password (hash only in storage)  
-- Inline unlock banner + modal unlock  
-- Session unlock resets on tab close/refresh  
+### Profiles and security
+
+- Create, edit, view, and delete profiles (name, optional team)  
+- Search profiles in the panel; **profile picker** on compact layouts  
+- Optional profile password (hash only in storage; never plaintext)  
+- Inline unlock banner and modal unlock flows  
+- Session unlock in `sessionStorage` (cleared on tab close / refresh)  
+- **Demo profile** (`Test`) is read-only when active  
 
 ### Projects
-- Full CRUD with validation  
-- RICE, MoSCoW, type, status, period, countries, t-shirt size  
+
+- Full CRUD via modal (create, edit, read-only view)  
+- RICE validation and live score calculation  
+- Metadata: type, status, MoSCoW, quarter (`YYYY-Qn`), countries, t-shirt size, labels, links  
 - Six financial frameworks with computed impact  
 - Bulk delete in table (toolbar on desktop; **floating selection bar** on compact)  
+- Stable **project ID** in modal footer metadata  
 
-### Views
+### Filters
+
+| Tier | Controls |
+|------|----------|
+| **Search** | Title (with autocomplete), label (with autocomplete) |
+| **Quick** | Project type, countries (multi + EU shortcut), project period |
+| **Advanced** | Impact, effort, currency, framework, status, t-shirt, MoSCoW, links (any / with / without), labels (any / with / without) |
+
+Active filter count appears in the portfolio filters badge. Reset restores defaults.
+
+### Planning views
 
 | View | Desktop (>1400px) | Compact (≤1400px) |
-|------|-------------------|-------------------|
-| **Table** | Sortable grid, bulk delete in toolbar | FAB for new project; selection bar for bulk delete |
-| **Board** | Horizontal status columns, drag-and-drop | Single-column stack; **Move to** status dropdown |
-| **MoSCoW** | 2×2 quadrant grid | 2×2 **nav pills** + single-column quadrants; scroll-synced nav |
-| **Map** | Leaflet choropleth | Count / RICE / EUR metric pills |
-| **Fullscreen** | Per-view expand | Body host; same compact layouts inside fullscreen |
+|------|-------------------|---------------------|
+| **Table** | Sortable grid; semantic column layout; bulk delete in toolbar | Card list with grouping; FAB for new project; selection bar for bulk delete |
+| **Board** | Horizontal status columns; drag-and-drop | Single-column stack per status; **Move to** dropdown; owner stripe when workspace-wide mode active (see [GUARDRAILS.md](docs/GUARDRAILS.md) §7) |
+| **MoSCoW** | 2×2 quadrant grid; full category names in headers | 2×2 **Jump to quadrant** nav + single-column quadrants |
+| **Map** | Leaflet choropleth | Metric pills: count, RICE sum/avg, financial EUR sum/avg |
+| **Fullscreen** | Per-view expand | Same compact layouts inside fullscreen host |
 
 ### Data transfer
-- **Export** — JSON or CSV; per-profile unlock for protected profiles  
+
+- **Export** — JSON or CSV; per-profile password verification for protected profiles  
 - **Import** — merge JSON/CSV; shared modal design with export  
 
-### Exchange rates & cloud
-- Refresh FX to EUR for table and map  
-- Optional **MongoDB** sync via `/api/state` (header status, Cloud modal, pull/save)  
+### Exchange rates and cloud
+
+- Refresh FX to EUR for table, map, and profile currency breakdowns  
+- Optional **MongoDB** sync: header status, Cloud modal, pull/save (`src/modules/storage.js`)  
 
 ### Site chrome
-- App header with storage status, export/import, FX, cloud  
-- **Footer** with maintainer attribution and links  
+
+- App header: storage status, export/import, FX refresh, cloud, actions menu (compact)  
+- **Footer**: year, maintainer, LinkedIn, website, GitHub, article links  
 
 ---
 
 ## Tech stack
 
-| Layer | Choice |
-|-------|--------|
-| Frontend | HTML5, CSS3, vanilla JavaScript (classic scripts) |
+| Layer | Technology |
+|-------|------------|
+| Frontend | HTML5, CSS3, vanilla JavaScript (classic scripts, no bundler) |
+| Scoring | `src/rice.js` |
+| Crypto | Web Crypto PBKDF2 (`src/modules/profile-security.js`) |
+| Storage | `localStorage` cache + optional MongoDB via Vercel `/api` |
 | Map | Leaflet 1.9.4 (CDN) |
-| Crypto | Web Crypto PBKDF2 (`profile-security.js`) |
-| Storage | MongoDB (Vercel `/api`) + `localStorage` cache + `sessionStorage` unlock |
 | Hosting | Static assets on Vercel; serverless API routes |
 
-**CSS layers (load order matters):**
+### Source layout
+
+```
+pm-prioritization-tool/
+├── index.html              # App shell, modals, views, footer
+├── css/                    # Layered stylesheets (load order matters)
+├── src/
+│   ├── app.js              # State, render, CRUD, filters, boards
+│   ├── constants.js        # Enums, tooltips, APP_ASSET_VERSION
+│   ├── rice.js             # RICE formula + validation
+│   ├── utils.js            # Formatting, CSV, IDs, flags
+│   └── modules/            # storage, profile-security, exchange-rates, fullscreen, overlay-manager
+├── api/                    # health.js, config.js, state.js (Vercel)
+├── scripts/                # verify-deployment, storage tests
+├── docs/                   # Product documentation suite
+├── vercel.json
+└── package.json
+```
+
+### CSS layers (load order in `index.html`)
 
 | File | Role |
 |------|------|
-| `main.css` | Base design system |
-| `workspace-modern.css` | Table, board, filters |
+| `main.css` | Base design system, legacy modals |
+| `workspace-modern.css` | Workspace panel, table, board columns |
 | `header-modern.css` | App header |
-| `profiles-modern.css` | Profile panel |
-| `portfolio-modern.css` | Portfolio workspace, FAB |
+| `profiles-modern.css` | Profile panel v2 |
+| `portfolio-modern.css` | Command bar, filters, FAB |
 | `profile-modals-modern.css` | Profile modals |
-| `export-modals-modern.css` | Export/import modals |
+| `export-modals-modern.css` | Export / import modals |
 | `view-toolbars-modern.css` | View toolbars |
 | `compact-modern.css` | Compact chrome (≤1400px) |
 | `moscow-compact.css` | MoSCoW compact layout |
 | `board-compact.css` | Board compact layout |
-| `table-compact.css` | Table compact layout |
-| `fullscreen-compact.css` | Fullscreen compact host |
+| `table-compact.css` | Table compact toolbar |
+| `project-actions-modern.css` | Card/table action buttons |
+| `fullscreen-modern.css` | Fullscreen host |
+| `fullscreen-compact.css` | Fullscreen + compact |
+| `views-density.css` | Density helpers |
+| `layout-flow.css` | Flat section dividers (compact) |
+| `portfolio-cards-compact.css` | Compact board/MoSCoW card shells |
+| `table-rows-modern.css` | Table row styling |
+| `table-revamp-modern.css` | Modern table structure |
+| `table-compact-cards.css` | Compact table card list |
+| `super-admin-modern.css` | Workspace-wide mode UI (see GUARDRAILS §7) |
 | `app-footer.css` | Site footer |
 
-**Source layout:**
+### Layout breakpoint
 
-```
-index.html, css/, src/     → static UI at repo root
-api/                       → Vercel serverless (health, state, config)
-docs/                      → product documentation suite
-```
+- **`COMPACT_LAYOUT_MAX_WIDTH_PX`** = **1400** (`src/constants.js`)  
+- ≤1400px: `html.is-compact-layout` + `html.is-phone-layout` (unified phone/tablet UI)  
+- >1400px: `html.is-desktop-layout` (sidebar profiles + data table)  
 
 ---
 
@@ -120,21 +172,18 @@ docs/                      → product documentation suite
 
 ```bash
 cd pm-prioritization-tool
+npm install
 npm run dev
 # Open http://localhost:5173
 ```
 
-Or: `cd public && python3 -m http.server 5173` (UI only). Use `npx vercel dev` for `/api` + MongoDB.
+For `/api` + MongoDB locally: `npx vercel dev` with env vars (see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 
-### Production (Vercel)
-
-Connect the GitHub repo → deploy `main` with `MONGODB_URI`. See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**.
+### Production verification
 
 ```bash
 npm run verify:production
 ```
-
-Do not use `pm-prioritization-tool.vercel.app` (legacy React app on another Vercel project).
 
 ### First-use checklist
 
@@ -145,14 +194,14 @@ Do not use `pm-prioritization-tool.vercel.app` (legacy React app on another Verc
 
 ---
 
-## Business & technical guidelines
+## Business and technical guidelines
 
-- Use a **consistent RICE rubric** across the team ([docs/BUSINESS_GUIDELINES.md](docs/BUSINESS_GUIDELINES.md)).  
-- Treat financial outputs as **planning estimates**, not accounting.  
-- **Export before** major imports or browser data clears.  
-- Protected profiles: unlock before export or enter passwords in the export dialog.  
-
-Technical conventions: [docs/TECH_GUIDELINES.md](docs/TECH_GUIDELINES.md).
+- Use a **consistent RICE rubric** — [docs/BUSINESS_GUIDELINES.md](docs/BUSINESS_GUIDELINES.md)  
+- Treat financial outputs as **planning estimates**, not accounting truth  
+- **Export before** major imports or clearing browser data  
+- Protected profiles: unlock before export or verify passwords in the export dialog  
+- Technical conventions: [docs/TECH_GUIDELINES.md](docs/TECH_GUIDELINES.md)  
+- Limitations and privileged workspace mode: [docs/GUARDRAILS.md](docs/GUARDRAILS.md)  
 
 ---
 
@@ -160,18 +209,20 @@ Technical conventions: [docs/TECH_GUIDELINES.md](docs/TECH_GUIDELINES.md).
 
 | Document | Description |
 |----------|-------------|
-| [docs/README.md](docs/README.md) | Documentation hub |
+| [docs/README.md](docs/README.md) | Documentation hub and source map |
 | [docs/PRODUCT_DOCUMENTATION.md](docs/PRODUCT_DOCUMENTATION.md) | Comprehensive product reference |
 | [docs/PRODUCT_DOCUMENTATION_STANDARD.md](docs/PRODUCT_DOCUMENTATION_STANDARD.md) | How to maintain documentation |
 | [docs/PRD.md](docs/PRD.md) | Product requirements |
 | [docs/USER_PERSONAS.md](docs/USER_PERSONAS.md) | Personas |
-| [docs/USER_STORIES.md](docs/USER_STORIES.md) | Epics & stories |
-| [docs/VARIABLES.md](docs/VARIABLES.md) | Variables, formulas, diagrams |
-| [docs/METRICS_AND_OKRS.md](docs/METRICS_AND_OKRS.md) | Product metrics & OKRs |
-| [docs/DESIGN_GUIDELINES.md](docs/DESIGN_GUIDELINES.md) | Design system |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architecture |
-| [docs/TRACEABILITY_MATRIX.md](docs/TRACEABILITY_MATRIX.md) | Req → code traceability |
-| [docs/GUARDRAILS.md](docs/GUARDRAILS.md) | Limitations |
+| [docs/USER_STORIES.md](docs/USER_STORIES.md) | Epics and acceptance criteria |
+| [docs/VARIABLES.md](docs/VARIABLES.md) | Variables, formulas, relationship charts |
+| [docs/METRICS_AND_OKRS.md](docs/METRICS_AND_OKRS.md) | Product metrics and OKRs |
+| [docs/DESIGN_GUIDELINES.md](docs/DESIGN_GUIDELINES.md) | Design system and tokens |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architecture and data flow |
+| [docs/TECH_GUIDELINES.md](docs/TECH_GUIDELINES.md) | Engineering conventions |
+| [docs/BUSINESS_GUIDELINES.md](docs/BUSINESS_GUIDELINES.md) | Prioritization rubrics |
+| [docs/TRACEABILITY_MATRIX.md](docs/TRACEABILITY_MATRIX.md) | Requirements → code |
+| [docs/GUARDRAILS.md](docs/GUARDRAILS.md) | Business and technical limitations |
 | [docs/CHANGELOG.md](docs/CHANGELOG.md) | Change history |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Vercel + MongoDB |
 
@@ -185,8 +236,11 @@ UNLICENSED (private). See `package.json`.
 
 ## Maintainer
 
-**Developed, managed, and maintained by Rifqi Tjahyono**  
-- LinkedIn: [rifqi-tjahjono](https://www.linkedin.com/in/rifqi-tjahjono/)  
-- Website: [rifqi-tjahyono.com](https://rifqi-tjahyono.com/)
+**Developed, managed, and maintained by Rifqi Tjahyono**
 
-Product documentation last comprehensively audited: **2026-05-27**.
+- LinkedIn: [rifqi-tjahjono](https://www.linkedin.com/in/rifqi-tjahjono/)  
+- Website: [rifqi-tjahyono.com](https://rifqi-tjahyono.com/)  
+- GitHub: [RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool)  
+- Article: [Effort–impact confusion to clear-cut priorities](https://rifqi-tjahyono.com/%f0%9f%93%8a-effort-impact-confusion-to-clear-cut-priorities-replace-tab-hopping-with-visual-roadmap-sanity-%f0%9f%a7%ad%e2%9c%a8/)
+
+**Documentation last comprehensively audited:** 2026-05-28.

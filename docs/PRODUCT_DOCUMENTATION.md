@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Document owner** | Product Team |
-| **Last audited** | 2026-05-27 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui119` |
+| **Last audited** | 2026-05-28 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui152` |
 
 ---
 
@@ -14,9 +14,12 @@
 
 The **Product Management Prioritization Tool** is a browser-based workspace for product teams to capture initiatives, score priority with **RICE**, classify delivery intent with **MoSCoW**, estimate value through **financial frameworks**, and communicate plans through **Table**, **Board**, **MoSCoW**, and **Map** views.
 
-The application runs as a **static single-page app** (HTML, CSS, vanilla JavaScript) deployable to **Vercel**. When configured, workspace data syncs to **MongoDB Atlas** via serverless `/api` routes; the browser keeps a **local cache** and supports **JSON/CSV export** for backup and portability.
+The application is a **static single-page app** (HTML, layered CSS, vanilla JavaScript) deployable to **Vercel**. When configured, workspace data syncs to **MongoDB Atlas** via serverless `/api` routes; the browser keeps a **local cache** and supports **JSON/CSV export** for backup and portability.
 
-**Canonical production URL:** [https://pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app)
+| | |
+|---|---|
+| **Production URL** | [pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app) |
+| **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
 
 ---
 
@@ -26,10 +29,10 @@ The application runs as a **static single-page app** (HTML, CSS, vanilla JavaScr
 |---------|------------------------------|
 | **Explainable prioritization** | RICE inputs, formula, and computed score appear together in tooltips and sortable columns. |
 | **Portfolio separation** | Multiple **profiles** (teams, products, owners) with optional password protection. |
-| **Financial planning lenses** | Six frameworks (Custom, CLV, NPS, Risk, Headcount, Operational) without accounting complexity. |
+| **Financial planning lenses** | Six frameworks without accounting-grade complexity. |
 | **Meeting-ready views** | Table for analysis, Board for workflow, MoSCoW for scope negotiation, Map for geography. |
 | **Data ownership** | Cloud sync when enabled; export anytime; merge import for spreadsheets. |
-| **Works everywhere** | Responsive layout: **desktop** (>1024px) and **unified compact phone UI** (≤1024px) on tablets and phones. |
+| **Works on any device** | Desktop above **1400px**; unified compact UI at **≤1400px** on tablets and phones. |
 | **Low operational cost** | No mandatory backend for local use; optional MongoDB on Vercel. |
 
 ---
@@ -39,18 +42,19 @@ The application runs as a **static single-page app** (HTML, CSS, vanilla JavaScr
 ### 3.1 Profiles and security
 
 - Create, edit, view, delete profiles (name, optional team).
-- Search profiles in the panel and via the **profile picker** on compact layouts.
+- Search in profiles panel; **profile picker** on compact layouts (same row as privileged workspace toggle when applicable — see [GUARDRAILS.md](GUARDRAILS.md) §7).
 - Optional **PBKDF2 password** per profile (`src/modules/profile-security.js`).
-- **Session unlock** (`sessionStorage`); re-lock on tab close/refresh.
-- Locked profiles show a banner; project views stay empty until unlock.
+- **Session unlock** (`sessionStorage`); cleared on tab close or refresh.
+- Locked profiles show unlock banner; portfolio views empty until unlock.
+- **Demo profile** (`Test`) is read-only when active.
 
 ### 3.2 Projects
 
 - Full CRUD via modal (create, edit, read-only view).
 - **RICE** with validation (`src/rice.js`).
-- Metadata: type, status, MoSCoW, quarter, countries, t-shirt size.
-- **Bulk delete** in table view (toolbar on desktop; **floating selection bar** on compact).
-- Stable **project ID** visible in the modal footer.
+- Metadata: type, status, MoSCoW, quarter (`YYYY-Qn`), countries, t-shirt size, **labels**, **links**.
+- **Bulk delete** in table (toolbar on desktop; floating **selection bar** on compact).
+- Stable **project ID** and metadata in modal footer (collapsible on compact).
 
 ### 3.3 Financial frameworks
 
@@ -63,40 +67,58 @@ The application runs as a **static single-page app** (HTML, CSS, vanilla JavaScr
 | **headcount** | FTE time saved × loaded cost |
 | **operational** | Unit cost and cycle-time savings |
 
-Computed in `computeFrameworkFinancialImpact()` (`src/app.js`). Table shows a **Framework** icon column; advanced filters support framework.
+Computed in `computeFrameworkFinancialImpact()` (`src/app.js`). Table shows a **Framework** icon column; filters support framework.
 
-### 3.4 Planning views
+### 3.4 Filters
 
-| View | Desktop (>1024px) | Compact (≤1024px, phone UI) |
-|------|-------------------|-----------------------------|
-| **Table** | Sortable grid, bulk delete in toolbar | Horizontal scroll hint; FAB for new project; selection bar for bulk delete |
-| **Board** | Horizontal status columns | **Single-column stack**; move via dropdown; RICE sort toggle |
-| **MoSCoW** | 2×2 quadrant grid | **2×2 nav pills** + **single-column** quadrants; jump nav |
-| **Map** | Leaflet choropleth | Same metrics; compact metric picker |
-| **Fullscreen** | Per-view expand | Body-level host + tab bar; same compact layouts |
+Organized in the portfolio filters drawer:
 
-### 3.5 Data transfer
+| Tier | Fields |
+|------|--------|
+| **Search** | Title (autocomplete), Label (autocomplete) |
+| **Quick** | Project type, Countries (multi-select + EU), Project period |
+| **Advanced** | Impact, Effort, Currency, Framework, Status, T-shirt, MoSCoW, Links (any / with / without), Labels (any / with / without) |
+
+`applyFilters()` in `src/app.js` intersects all active criteria. Active count shown in filters badge; **Reset** clears filters.
+
+### 3.5 Planning views
+
+| View | Desktop (>1400px) | Compact (≤1400px) |
+|------|-------------------|---------------------|
+| **Table** | Sortable grid; semantic column classes; bulk delete in toolbar | Card list with optional **group by**; FAB; selection bar |
+| **Board** | Horizontal status columns; drag-and-drop | Single-column stack; **Move to** status; curved cards |
+| **MoSCoW** | 2×2 grid; headers show **Must Have**, **Should Have**, **Could Have**, **Won't Have** with descriptions on one row | **Jump to quadrant** nav (2×2 pills); single-column quadrants |
+| **Map** | Leaflet choropleth | Metric pills (count, RICE, avg RICE, EUR, avg EUR) |
+| **Fullscreen** | Per-view expand | Body host; compact layouts preserved |
+
+### 3.6 Table compact cards (≤1400px)
+
+When `html.is-compact-layout` and table view:
+
+- Projects render as **cards** instead of a horizontal grid (`table-compact-cards.css`).
+- **Group by**: none, status, MoSCoW, t-shirt, framework, type, currency, owner profile name (when workspace-wide mode active — see [GUARDRAILS.md](GUARDRAILS.md) §7).
+- Owner attribution stripe on cards when workspace-wide mode is on.
+
+### 3.7 Data transfer
 
 - **Export** JSON or CSV; password verification for protected profiles.
 - **Import** merge JSON/CSV into existing workspace.
 - Shared modal design (`export-modals-modern.css`).
 
-### 3.6 Exchange rates
+### 3.8 Exchange rates
 
-- Refresh FX rates to EUR (`src/modules/exchange-rates.js`).
-- EUR column in table; **Financial (EUR)** map metric.
-- Profile view: original-currency breakdown shows **EUR equivalents** per currency card using the latest in-app exchange rates (graceful fallback when unavailable).
+- Refresh FX to EUR (`src/modules/exchange-rates.js`).
+- EUR in table; financial map metrics; profile currency breakdown with EUR equivalents.
 
-### 3.7 Cloud storage (optional)
+### 3.9 Cloud storage (optional)
 
 - `AppStorage` (`src/modules/storage.js`): load/save workspace to MongoDB.
-- Header status, Cloud modal, pull/save actions.
-- Debounced sync, focus/visibility refresh, merge by `updatedAt`.
+- Header status, Cloud modal, pull/save; debounced sync; merge by `updatedAt`.
 
-### 3.8 Site chrome
+### 3.10 Site chrome
 
-- App header: title, storage status, export/import, FX refresh, cloud.
-- **Footer**: attribution and author links (`app-footer.css`).
+- **Header**: title, storage status, export/import, FX, cloud, compact actions menu.
+- **Footer**: year, maintainer, LinkedIn, website, **GitHub repo**, **prioritization article** (`app-footer.css`).
 
 ---
 
@@ -109,53 +131,71 @@ confidenceDecimal = confidenceValue > 1 ? confidenceValue / 100 : confidenceValu
 riceScore = (reachValue × impactValue × confidenceDecimal) ÷ effortValue
 ```
 
-- Reach: non-negative **integer**.
-- Impact, Effort: **1–5**.
-- Confidence: **0–100** (percent) or 0–1 decimal.
-- Effort ≤ 0 → score **0**.
+| Input | Rule |
+|-------|------|
+| Reach | Non-negative integer |
+| Impact, Effort | 1–5 |
+| Confidence | 0–100 (percent) or 0–1 decimal |
+| Effort ≤ 0 | Score = 0 |
 
-### 4.2 Filtering
+Implementation: `src/rice.js` → `calculateRiceScore`, `validateProjectInput`.
 
-`applyFilters()` in `src/app.js` intersects quick filters (title, type, countries, period) with advanced filters (framework, status, MoSCoW).
+### 4.2 Filtering pipeline
+
+```mermaid
+flowchart LR
+  ALL[Active profile projects] --> F1[Search: title + label]
+  F1 --> F2[Quick: type, countries, period]
+  F2 --> F3[Advanced: impact, effort, currency, framework, status, tshirt, moscow, links, labels]
+  F3 --> OUT[Filtered list for active view]
+```
 
 ### 4.3 Board ordering
 
 - **RICE sort on**: cards sorted by score within each status column.
-- **RICE sort off**: manual order persisted in `profile.boardOrder[status]`.
+- **RICE sort off**: manual order in `profile.boardOrder[status]`.
 - Compact: change status via **Move to** dropdown on cards.
 
 ### 4.4 MoSCoW
 
-- Categories: Must / Should / Could / Won't (`moscowList`).
-- Compact: quadrant **navigator** syncs with scroll (`syncMoscowCompactNav`, `IntersectionObserver`).
-- Drag-and-drop between quadrants when unlocked.
+- Stored values: `Must have`, `Should have`, `Could have`, `Won't have` (`moscowList`).
+- Display headers: **Must Have**, **Should Have**, **Could Have**, **Won't Have** (`moscowDisplayNames`).
+- Compact: quadrant navigator + scroll sync (`syncMoscowCompactNav`, `IntersectionObserver`).
+- Drag-and-drop between quadrants when portfolio is unlocked.
 
 ### 4.5 Map aggregation
 
-`mapMetric`: `projects` (count) | `rice` (sum) | `financial` (EUR total per country).
+| `mapMetric` | Meaning |
+|-----------|---------|
+| `projects` | Project count per country |
+| `rice` | Sum of RICE per country |
+| `riceAvg` | Average RICE per country |
+| `financial` | Sum of financial impact (EUR) per country |
+| `financialAvg` | Average financial impact (EUR) per country |
 
 ---
 
 ## 5. Technical architecture (summary)
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for diagrams.
+See [ARCHITECTURE.md](ARCHITECTURE.md).
 
 | Layer | Technology |
 |-------|------------|
-| UI | `index.html`, layered `css/*` |
+| UI | `index.html`, 23 layered CSS files |
 | Logic | `src/app.js`, `src/rice.js`, `src/constants.js`, `src/utils.js` |
 | Modules | `profile-security`, `storage`, `exchange-rates`, `fullscreen`, `overlay-manager` |
-| API | `api/health.js`, `api/state.js` (Vercel serverless) |
+| API | `api/health.js`, `api/config.js`, `api/state.js` |
 | Database | MongoDB Atlas (optional) |
 | Map | Leaflet 1.9.4 (CDN) |
 
-**Layout classes** (set in `initCompactLayoutClass()`):
+### Layout classes (`initCompactLayoutClass()` in `src/app.js`)
 
 | Class | When |
 |-------|------|
-| `html.is-compact-layout` | Viewport width ≤ 1024px |
-| `html.is-phone-layout` | Same as compact (unified phone UI on all non-desktop widths) |
-| `html.is-desktop-layout` | Width > 1024px |
+| `html.is-compact-layout` | Viewport width ≤ **1400px** |
+| `html.is-phone-layout` | Same threshold (unified phone/tablet UI) |
+| `html.is-desktop-layout` | Width > **1400px** |
+| `html.is-super-admin-mode` | Privileged workspace mode active — see [GUARDRAILS.md](GUARDRAILS.md) §7 |
 
 ---
 
@@ -163,11 +203,11 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for diagrams.
 
 See [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md).
 
-- Use a **consistent RICE rubric** across the team before comparing scores.
+- Use a **consistent RICE rubric** before comparing scores across teams.
 - Treat financial outputs as **planning estimates**, not audited financial statements.
-- MoSCoW is for **scope negotiation**, not a substitute for RICE.
+- MoSCoW is for **scope negotiation**; RICE for **relative priority**.
 - **Export JSON** before major imports or browser data clears.
-- Unlock protected profiles before export or supply passwords in the export dialog.
+- Unlock protected profiles before export or use the export verification dialog.
 
 ---
 
@@ -175,11 +215,11 @@ See [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md).
 
 See [TECH_GUIDELINES.md](TECH_GUIDELINES.md).
 
-- Classic scripts (no bundler); globals from `constants.js`, `rice.js`, `utils.js`.
+- Classic scripts (no bundler); globals from loaded script order in `index.html`.
 - State persisted under `STORAGE_KEY` (`rice_prioritizer_v1`) plus optional cloud document.
-- Bump `APP_ASSET_VERSION` when shipping UI changes (cache bust).
-- Modals coordinated via `OverlayManager`.
-- Do not log passwords or export file contents.
+- Bump `APP_ASSET_VERSION` when shipping UI changes.
+- `OverlayManager` coordinates stacked modals and filter dropdowns.
+- Do not log passwords or export payloads.
 
 ---
 
@@ -189,8 +229,9 @@ See [DESIGN_GUIDELINES.md](DESIGN_GUIDELINES.md).
 
 - **Warm professional** palette: cream surfaces (`#fffdf8`), maroon text (`#3f0f19`), red accent (`#b91c1c`).
 - **Icon-first** navigation on compact widths.
-- **Touch targets** ≥ 44px on primary actions.
-- Status and framework colors consistent across table, board, and pills.
+- **Touch targets** ≥ 44px on primary compact controls.
+- Status, MoSCoW, and framework colors consistent across table, board, and pills.
+- Board/MoSCoW cards: **12px** radius on compact and desktop (aligned shells).
 
 ---
 
@@ -199,9 +240,10 @@ See [DESIGN_GUIDELINES.md](DESIGN_GUIDELINES.md).
 See [GUARDRAILS.md](GUARDRAILS.md).
 
 - No multi-user real-time collaboration.
-- No role-based access control beyond profile passwords.
+- No server-side RBAC beyond profile passwords.
 - FX rates may be stale if not refreshed.
-- Very large portfolios may slow table render (client-side only).
+- Very large portfolios may slow client-side table render.
+- Privileged cross-profile workspace mode: **§7 only** in guardrails.
 
 ---
 
@@ -216,13 +258,16 @@ See [GUARDRAILS.md](GUARDRAILS.md).
 | [METRICS_AND_OKRS.md](METRICS_AND_OKRS.md) | Metrics and OKRs |
 | [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md) | Requirements → code |
 | [CHANGELOG.md](CHANGELOG.md) | Release history |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | Vercel + MongoDB setup |
-| [PRODUCT_DOCUMENTATION_STANDARD.md](PRODUCT_DOCUMENTATION_STANDARD.md) | How to maintain this suite |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Vercel + MongoDB |
+| [PRODUCT_DOCUMENTATION_STANDARD.md](PRODUCT_DOCUMENTATION_STANDARD.md) | Documentation maintenance standard |
 
 ---
 
 ## 11. Maintainer
 
-**Developed, managed, and maintained by Rifqi Tjahyono**  
+**Developed, managed, and maintained by Rifqi Tjahyono**
+
 - LinkedIn: [rifqi-tjahjono](https://www.linkedin.com/in/rifqi-tjahjono/)  
-- Website: [rifqi-tjahyono.com](https://rifqi-tjahyono.com/)
+- Website: [rifqi-tjahyono.com](https://rifqi-tjahyono.com/)  
+- GitHub: [RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool)  
+- Article: [Prioritization article](https://rifqi-tjahyono.com/%f0%9f%93%8a-effort-impact-confusion-to-clear-cut-priorities-replace-tab-hopping-with-visual-roadmap-sanity-%f0%9f%a7%ad%e2%9c%a8/)

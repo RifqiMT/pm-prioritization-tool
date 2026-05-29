@@ -1,0 +1,371 @@
+/**
+ * Super admin mode — workspace-wide portfolio UI (table, cards, boards).
+ * Loaded after table-revamp / compact-cards.
+ */
+
+html.is-super-admin-mode {
+  --sa-accent: #4f46e5;
+  --sa-accent-strong: #4338ca;
+  --sa-accent-soft: #eef2ff;
+  --sa-accent-muted: #c7d2fe;
+  --sa-surface: #f8faff;
+  --sa-surface-elevated: #ffffff;
+  --sa-text: #312e81;
+  --sa-text-soft: #6366f1;
+  --sa-shadow: 0 10px 28px rgba(79, 70, 229, 0.1);
+  --sa-radius: 12px;
+}
+
+/* ── Mode banner ─────────────────────────────────────────── */
+.super-admin-mode-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 0 0 0.65rem;
+  padding: 0.72rem 0.95rem;
+  border-radius: var(--sa-radius);
+  border: 1px solid var(--sa-accent-muted);
+  background: linear-gradient(135deg, #ffffff 0%, var(--sa-accent-soft) 58%, #f5f3ff 100%);
+  box-shadow: var(--sa-shadow);
+}
+
+.super-admin-mode-banner__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 10px;
+  color: var(--sa-accent-strong);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(199, 210, 254, 0.9);
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.12);
+}
+
+.super-admin-mode-banner__copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.super-admin-mode-banner__title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  color: var(--sa-text);
+}
+
+.super-admin-mode-banner__detail {
+  margin: 0.12rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: #475569;
+}
+
+.super-admin-mode-banner__stat {
+  flex: 0 0 auto;
+  padding: 0.28rem 0.62rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--sa-accent-strong);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--sa-accent-muted);
+}
+
+@media (max-width: 720px) {
+  .super-admin-mode-banner {
+    flex-wrap: wrap;
+    gap: 0.55rem;
+  }
+
+  .super-admin-mode-banner__stat {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* ── Header badge & toggle refresh ─────────────────────── */
+html.is-super-admin-mode .portfolio-super-admin-badge {
+  color: var(--sa-accent-strong);
+  background: var(--sa-accent-soft);
+  border-color: var(--sa-accent-muted);
+  box-shadow: 0 1px 4px rgba(79, 70, 229, 0.08);
+}
+
+html.is-super-admin-mode .super-admin-toggle {
+  border-color: var(--sa-accent-muted);
+  background: linear-gradient(180deg, #ffffff, var(--sa-accent-soft));
+}
+
+html.is-super-admin-mode .super-admin-toggle input:checked + .super-admin-toggle__track {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  border-color: #4338ca;
+}
+
+html.is-super-admin-mode .super-admin-toggle__label {
+  color: var(--sa-accent-strong);
+}
+
+/* ── Owner identity chip (shared) ────────────────────────── */
+.project-owner-identity {
+  --owner-avatar-size: 1.65rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.project-owner-identity__avatar {
+  flex: 0 0 auto;
+  width: var(--owner-avatar-size);
+  height: var(--owner-avatar-size);
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(30, 41, 59, 0.18);
+}
+
+.project-owner-identity__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+}
+
+.project-owner-identity__name {
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.project-owner-identity__team {
+  font-size: 0.64rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.project-owner-identity__scope {
+  flex: 0 0 auto;
+  margin-left: 0.15rem;
+  padding: 0.1rem 0.38rem;
+  border-radius: 999px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #7c3aed;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+}
+
+.project-owner-identity__empty {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+/* Table cell variant */
+.project-owner-identity--table {
+  width: 100%;
+  padding: 0.2rem 0.15rem;
+  justify-content: flex-start;
+}
+
+html.is-super-admin-mode .table-wrapper.projects-table-shell .projects-table-col--owner {
+  width: 132px !important;
+  min-width: 132px !important;
+  max-width: 132px !important;
+}
+
+html.is-super-admin-mode .table-wrapper--modern.projects-table-shell thead .projects-table-col--owner {
+  background: linear-gradient(180deg, #4338ca 0%, #4f46e5 100%) !important;
+}
+
+html.is-super-admin-mode .table-wrapper--modern.projects-table-shell tbody .projects-table-col--owner {
+  background: rgba(238, 242, 255, 0.35) !important;
+  border-left: 1px solid rgba(199, 210, 254, 0.55) !important;
+  border-right: 1px solid rgba(199, 210, 254, 0.35) !important;
+}
+
+html.is-super-admin-mode .table-wrapper--modern.projects-table-shell tbody tr:hover .projects-table-col--owner {
+  background: rgba(224, 231, 255, 0.55) !important;
+}
+
+html.is-super-admin-mode .table-wrapper--modern.projects-table-shell tbody tr.projects-table-row--external-profile td {
+  box-shadow: inset 3px 0 0 rgba(99, 102, 241, 0.55);
+}
+
+html.is-super-admin-mode .table-wrapper--modern.projects-table-shell table.projects-data-table.projects-data-table--owner-col {
+  min-width: 1448px !important;
+}
+
+html.is-super-admin-mode .scrum-board-card-title-row {
+  flex-direction: row;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+}
+
+html.is-super-admin-mode .scrum-board-card-meta {
+  margin-top: 0.18rem;
+}
+
+html.is-super-admin-mode .moscow-board-card-title-row {
+  flex-direction: row;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+}
+
+/* Owner stripe (table cards + scrum / MoSCoW board cards) */
+.project-owner-identity--card-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.48rem 0.72rem;
+  border-bottom: 1px solid rgba(199, 210, 254, 0.45);
+  background: linear-gradient(90deg, rgba(238, 242, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 72%);
+  box-shadow: inset 4px 0 0 #6366f1;
+}
+
+.project-owner-identity--card-strip.project-owner-identity--current {
+  background: linear-gradient(90deg, rgba(236, 253, 245, 0.98) 0%, rgba(255, 255, 255, 0.98) 72%);
+  border-bottom-color: rgba(167, 243, 208, 0.55);
+  box-shadow: inset 4px 0 0 #10b981;
+}
+
+.project-owner-identity--card-strip .project-owner-identity__avatar {
+  --owner-avatar-size: 1.85rem;
+  border-radius: 11px;
+}
+
+.project-owner-identity--card-strip .project-owner-identity__name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.project-owner-identity--card-strip .project-owner-identity__team {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.project-owner-identity--card-strip .project-owner-identity__scope {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Scrum / MoSCoW — stripe flush on top of card (matches projects table card) */
+html.is-super-admin-mode .scrum-board-card.portfolio-board-card--has-owner-strip,
+html.is-super-admin-mode .moscow-board-card.portfolio-board-card--has-owner-strip {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  gap: 0;
+}
+
+html.is-super-admin-mode .scrum-board-card.portfolio-board-card--has-owner-strip > .project-owner-identity--card-strip,
+html.is-super-admin-mode .moscow-board-card.portfolio-board-card--has-owner-strip > .project-owner-identity--card-strip {
+  flex-shrink: 0;
+  border-radius: 0;
+  margin: 0;
+}
+
+html.is-desktop-layout html.is-super-admin-mode .scrum-board-card.portfolio-board-card--has-owner-strip .portfolio-card-body,
+html.is-desktop-layout html.is-super-admin-mode .moscow-board-card.portfolio-board-card--has-owner-strip .portfolio-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.65rem 0.95rem 0.45rem;
+}
+
+html.is-desktop-layout html.is-super-admin-mode .scrum-board-card.portfolio-board-card--has-owner-strip > .scrum-board-card-actions,
+html.is-desktop-layout html.is-super-admin-mode .moscow-board-card.portfolio-board-card--has-owner-strip > .moscow-board-card-actions {
+  padding: 0 0.95rem 0.8rem;
+}
+
+html.is-super-admin-mode .portfolio-board-card--external-profile {
+  box-shadow:
+    0 0 0 1px rgba(99, 102, 241, 0.2),
+    0 8px 22px rgba(79, 70, 229, 0.1);
+}
+
+html.is-compact-layout html.is-super-admin-mode .projects-table-card--external-profile {
+  box-shadow:
+    0 0 0 1px rgba(99, 102, 241, 0.22),
+    0 10px 24px rgba(79, 70, 229, 0.1);
+}
+
+html.is-compact-layout html.is-super-admin-mode .projects-table-card__chip--owner {
+  display: none;
+}
+
+/* Legacy pill fallback (hidden when identity is used) */
+html.is-super-admin-mode .project-owner-profile-pill:not(.project-owner-identity) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 650;
+  color: var(--sa-accent-strong);
+  background: var(--sa-accent-soft);
+  border: 1px solid var(--sa-accent-muted);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html.is-super-admin-mode .super-admin-mode-banner {
+    animation: super-admin-banner-in 0.28s ease-out;
+  }
+
+  html.is-super-admin-mode .project-owner-identity--card-strip {
+    animation: super-admin-strip-in 0.22s ease-out;
+  }
+}
+
+@keyframes super-admin-banner-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes super-admin-strip-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.is-super-admin-mode .super-admin-mode-banner,
+  html.is-super-admin-mode .project-owner-identity--card-strip {
+    animation: none;
+  }
+}

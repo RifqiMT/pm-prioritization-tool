@@ -195,7 +195,7 @@
   }
 
   html.is-compact-layout .moscow-compact-nav__label {
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 700;
     letter-spacing: 0;
     text-transform: none;
@@ -352,21 +352,26 @@
     justify-content: space-between;
     gap: 0.45rem;
     width: 100%;
+    padding-right: 0 !important;
+  }
+
+  html.is-compact-layout .moscow-quadrant-header__title-line {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   html.is-compact-layout .moscow-quadrant-fullname {
-    display: block;
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: var(--compact-text, #3f0f19);
-    line-height: 1.25;
-    margin: 0;
+    display: none !important;
   }
 
   html.is-compact-layout .moscow-quadrant-label {
     font-size: 0.68rem !important;
     padding: 0.28rem 0.55rem !important;
-    letter-spacing: 0.06em !important;
+    letter-spacing: 0.02em !important;
+    text-transform: none !important;
     box-shadow: none !important;
   }
 
@@ -404,13 +409,6 @@
     overflow-x: hidden !important;
     overflow-y: visible !important;
     -webkit-overflow-scrolling: touch;
-  }
-
-  html.is-compact-layout .moscow-quadrant-description {
-    display: -webkit-box !important;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
   }
 
   html.is-compact-layout .moscow-compact-nav__hint {
@@ -623,11 +621,14 @@ html.is-desktop-layout .projects-view--board .scrum-board-card .scrum-board-card
   text-transform: none !important;
 }
 
-html.is-desktop-layout .projects-view--board .scrum-board-card-actions {
+html.is-desktop-layout .projects-view--board .scrum-board-card-actions,
+html.is-desktop-layout .projects-view--moscow .moscow-board-card-actions {
   min-height: 2.15rem;
   align-items: center;
+  flex-wrap: nowrap;
 }
 
-html.is-desktop-layout .projects-view--board .scrum-board-card-actions-order {
+html.is-desktop-layout .projects-view--board .scrum-board-card-actions-order,
+html.is-desktop-layout .projects-view--moscow .moscow-board-card-actions-order {
   flex-shrink: 0;
 }

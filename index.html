@@ -9,28 +9,29 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="css/main.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/workspace-modern.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/header-modern.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/profiles-modern.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/portfolio-modern.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/profile-modals-modern.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/export-modals-modern.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/view-toolbars-modern.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/compact-modern.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/moscow-compact.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/board-compact.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/table-compact.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/project-actions-modern.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/fullscreen-modern.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/fullscreen-compact.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/app-footer.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/views-density.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/layout-flow.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/portfolio-cards-compact.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/table-rows-modern.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/table-revamp-modern.css?v=20260528-ui131" rel="stylesheet" />
-  <link href="css/table-compact-cards.css?v=20260528-ui131" rel="stylesheet" />
+  <link href="css/main.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/workspace-modern.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/header-modern.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/profiles-modern.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/portfolio-modern.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/profile-modals-modern.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/export-modals-modern.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/view-toolbars-modern.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/compact-modern.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/moscow-compact.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/board-compact.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/table-compact.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/project-actions-modern.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/fullscreen-modern.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/fullscreen-compact.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/app-footer.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/views-density.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/layout-flow.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/portfolio-cards-compact.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/table-rows-modern.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/table-revamp-modern.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/table-compact-cards.css?v=20260528-ui152" rel="stylesheet" />
+  <link href="css/super-admin-modern.css?v=20260528-ui152" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 <body>
@@ -304,6 +305,7 @@
               <span class="profile-picker__manage-label">Manage</span>
             </button>
           </div>
+          <div id="superAdminToggleMobileSlot" class="super-admin-toggle-slot super-admin-toggle-slot--mobile" hidden></div>
         </div>
 
         <div id="profileLockedBanner" class="profile-unlock-panel" role="region" aria-labelledby="profileLockedBannerTitle" aria-hidden="true">
@@ -370,6 +372,13 @@
               </button>
             </nav>
             <div class="portfolio-action-group">
+              <div id="superAdminToggleDesktopSlot" class="super-admin-toggle-slot super-admin-toggle-slot--desktop">
+                <label id="superAdminToggleWrap" class="super-admin-toggle portfolio-super-admin-toggle" hidden>
+                  <input type="checkbox" id="superAdminModeToggle" />
+                  <span class="super-admin-toggle__track" aria-hidden="true"></span>
+                  <span class="super-admin-toggle__label">Super admin</span>
+                </label>
+              </div>
               <button type="button" id="addProjectBtn" class="portfolio-btn portfolio-btn--primary" disabled>
                 New project
               </button>
@@ -399,129 +408,201 @@
             </div>
           </div>
 
-          <div class="filters-row">
-            <div class="filter-group filter-group--stretch">
-              <label for="filterTitle">Project title</label>
-              <input id="filterTitle" type="text" placeholder="Search by title..." />
-            </div>
-            <div class="filter-group filter-group--compact">
-              <label for="filterProjectType">Project type</label>
-              <select id="filterProjectType">
-                <option value="">Any</option>
-                <option value="__none__">Not set</option>
-                <option value="New Product">New Product</option>
-                <option value="Improvement">Improvement</option>
-                <option value="Tech Debt">Tech Debt</option>
-                <option value="Market Expansion">Market Expansion</option>
-              </select>
-            </div>
-            <div class="filter-group filter-group--compact">
-              <label for="filterCountriesSearch">Countries</label>
-              <div class="filter-countries">
-                <button type="button" id="filterCountriesToggle" class="filter-countries-toggle">
-                  <div id="filterCountriesSummary" class="filter-countries-summary"></div>
-                  <span class="filter-countries-toggle-icon">▾</span>
-                </button>
-                <div id="filterCountriesPopup" class="filter-countries-popup">
-                  <input id="filterCountriesSearch" type="text" placeholder="Search countries..." />
-                  <div id="filterCountriesList" class="filter-countries-list"></div>
+          <div class="filters-layout">
+            <section class="filters-block filters-block--search" aria-labelledby="filtersSearchHeading">
+              <h4 id="filtersSearchHeading" class="filters-block__title">Search</h4>
+              <div class="filters-row filters-row--search">
+                <div class="filter-group filter-group--search">
+                  <label for="filterTitle">Project title</label>
+                  <div class="filter-autocomplete" id="filterTitleAutocomplete">
+                    <input
+                      id="filterTitle"
+                      type="search"
+                      role="combobox"
+                      aria-expanded="false"
+                      aria-controls="filterTitleListbox"
+                      aria-autocomplete="list"
+                      autocomplete="off"
+                      spellcheck="false"
+                      placeholder="Search or pick a title…"
+                    />
+                    <div id="filterTitleDropdown" class="filter-autocomplete__dropdown" hidden>
+                      <ul id="filterTitleListbox" class="filter-autocomplete__list" role="listbox" aria-label="Project title suggestions"></ul>
+                      <p id="filterTitleAutocompleteEmpty" class="filter-autocomplete__empty" hidden>No matching titles</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="filter-group filter-group--search">
+                  <label for="filterLabel">Label</label>
+                  <div class="filter-autocomplete" id="filterLabelAutocomplete">
+                    <input
+                      id="filterLabel"
+                      type="search"
+                      role="combobox"
+                      aria-expanded="false"
+                      aria-controls="filterLabelListbox"
+                      aria-autocomplete="list"
+                      autocomplete="off"
+                      spellcheck="false"
+                      placeholder="Search or pick a label…"
+                    />
+                    <div id="filterLabelDropdown" class="filter-autocomplete__dropdown" hidden>
+                      <ul id="filterLabelListbox" class="filter-autocomplete__list" role="listbox" aria-label="Label suggestions"></ul>
+                      <p id="filterLabelAutocompleteEmpty" class="filter-autocomplete__empty" hidden>No matching labels</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="filter-group filter-group--compact">
-              <label for="filterProjectPeriodSearch">Project period</label>
-              <div class="filter-countries filter-periods">
-                <button type="button" id="filterProjectPeriodToggle" class="filter-countries-toggle">
-                  <div id="filterProjectPeriodSummary" class="filter-countries-summary"></div>
-                  <span class="filter-countries-toggle-icon">▾</span>
-                </button>
-                <div id="filterProjectPeriodPopup" class="filter-countries-popup">
-                  <input
-                    id="filterProjectPeriodSearch"
-                    type="text"
-                    placeholder="Search periods..."
-                  />
-                  <div id="filterProjectPeriodList" class="filter-countries-list"></div>
-                </div>
-              </div>
-            </div>
-          </div>
+            </section>
 
-          <div id="filtersAdvanced" class="filters-advanced">
-            <div class="filters-row">
-              <div class="filter-group filter-group--compact">
-                <label for="filterImpact">Impact</label>
-                <select id="filterImpact">
-                  <option value="">Any</option>
-                  <option value="1">1 – Minimal</option>
-                  <option value="2">2 – Low</option>
-                  <option value="3">3 – Medium</option>
-                  <option value="4">4 – High</option>
-                  <option value="5">5 – Massive</option>
-                </select>
+            <section class="filters-block filters-block--quick" aria-labelledby="filtersQuickHeading">
+              <h4 id="filtersQuickHeading" class="filters-block__title">Quick filters</h4>
+              <div class="filters-row filters-row--quick">
+                <div class="filter-group filter-group--compact">
+                  <label for="filterProjectType">Project type</label>
+                  <select id="filterProjectType">
+                    <option value="">Any</option>
+                    <option value="__none__">Not set</option>
+                    <option value="New Product">New Product</option>
+                    <option value="Improvement">Improvement</option>
+                    <option value="Tech Debt">Tech Debt</option>
+                    <option value="Market Expansion">Market Expansion</option>
+                  </select>
+                </div>
+                <div class="filter-group filter-group--compact">
+                  <label for="filterCountriesSearch">Countries</label>
+                  <div class="filter-countries">
+                    <button type="button" id="filterCountriesToggle" class="filter-countries-toggle">
+                      <div id="filterCountriesSummary" class="filter-countries-summary"></div>
+                      <span class="filter-countries-toggle-icon">▾</span>
+                    </button>
+                    <div id="filterCountriesPopup" class="filter-countries-popup">
+                      <input id="filterCountriesSearch" type="text" placeholder="Search countries..." />
+                      <div id="filterCountriesList" class="filter-countries-list"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="filter-group filter-group--compact">
+                  <label for="filterProjectPeriodSearch">Project period</label>
+                  <div class="filter-countries filter-periods">
+                    <button type="button" id="filterProjectPeriodToggle" class="filter-countries-toggle">
+                      <div id="filterProjectPeriodSummary" class="filter-countries-summary"></div>
+                      <span class="filter-countries-toggle-icon">▾</span>
+                    </button>
+                    <div id="filterProjectPeriodPopup" class="filter-countries-popup">
+                      <input
+                        id="filterProjectPeriodSearch"
+                        type="text"
+                        placeholder="Search periods..."
+                      />
+                      <div id="filterProjectPeriodList" class="filter-countries-list"></div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="filter-group filter-group--compact">
-                <label for="filterEffort">Effort</label>
-                <select id="filterEffort">
-                  <option value="">Any</option>
-                  <option value="1">1 – Tiny</option>
-                  <option value="2">2 – Small</option>
-                  <option value="3">3 – Medium</option>
-                  <option value="4">4 – Large</option>
-                  <option value="5">5 – Huge</option>
-                </select>
-              </div>
-              <div class="filter-group filter-group--compact">
-                <label for="filterCurrency">Currency</label>
-                <select id="filterCurrency">
-                  <option value="">Any</option>
-                </select>
-              </div>
-              <div class="filter-group filter-group--compact">
-                <label for="filterFinancialFramework">Framework</label>
-                <select id="filterFinancialFramework">
-                  <option value="">Any</option>
-                  <option value="custom">Custom</option>
-                  <option value="clv">CLV uplift</option>
-                  <option value="headcount">Headcount savings</option>
-                  <option value="operational">Operational efficiency</option>
-                  <option value="nps">NPS retention</option>
-                  <option value="risk">Risk avoidance</option>
-                </select>
-              </div>
-              <div class="filter-group filter-group--compact">
-                <label for="filterStatus">Status</label>
-                <select id="filterStatus">
-                  <option value="">Any</option>
-                  <option value="Not Started">Not Started</option>
-                  <option value="In Progress">In Progress</option>
-                  <option value="On Hold">On Hold</option>
-                  <option value="Done">Done</option>
-                  <option value="Cancelled">Cancelled</option>
-                </select>
-              </div>
-              <div class="filter-group filter-group--compact">
-                <label for="filterTshirtSize">T-shirt size</label>
-                <select id="filterTshirtSize">
-                  <option value="">Any</option>
-                  <option value="__none__">Not set</option>
-                  <option value="XS">XS</option>
-                  <option value="S">S</option>
-                  <option value="M">M</option>
-                  <option value="L">L</option>
-                  <option value="XL">XL</option>
-                </select>
-              </div>
-              <div class="filter-group filter-group--compact">
-                <label for="filterMoscow">MOSCOW</label>
-                <select id="filterMoscow">
-                  <option value="">Any</option>
-                  <option value="Must have">Must have</option>
-                  <option value="Should have">Should have</option>
-                  <option value="Could have">Could have</option>
-                  <option value="Won't have">Won't have</option>
-                </select>
-              </div>
+            </section>
+
+            <div id="filtersAdvanced" class="filters-advanced">
+              <section class="filters-block filters-block--advanced" aria-labelledby="filtersAdvancedHeading">
+                <h4 id="filtersAdvancedHeading" class="filters-block__title filters-block__title--advanced">Advanced</h4>
+                <div class="filters-row filters-row--advanced">
+                  <div id="filterOwnerProfileGroup" class="filter-group filter-group--compact super-admin-filter-group" hidden>
+                    <label for="filterOwnerProfile">Owner profile</label>
+                    <select id="filterOwnerProfile" aria-label="Filter by owner profile">
+                      <option value="">Any profile</option>
+                    </select>
+                  </div>
+                  <div class="filter-group filter-group--compact">
+                    <label for="filterImpact">Impact</label>
+                    <select id="filterImpact">
+                      <option value="">Any</option>
+                      <option value="1">1 – Minimal</option>
+                      <option value="2">2 – Low</option>
+                      <option value="3">3 – Medium</option>
+                      <option value="4">4 – High</option>
+                      <option value="5">5 – Massive</option>
+                    </select>
+                  </div>
+                  <div class="filter-group filter-group--compact">
+                    <label for="filterEffort">Effort</label>
+                    <select id="filterEffort">
+                      <option value="">Any</option>
+                      <option value="1">1 – Tiny</option>
+                      <option value="2">2 – Small</option>
+                      <option value="3">3 – Medium</option>
+                      <option value="4">4 – Large</option>
+                      <option value="5">5 – Huge</option>
+                    </select>
+                  </div>
+                  <div class="filter-group filter-group--compact">
+                    <label for="filterCurrency">Currency</label>
+                    <select id="filterCurrency">
+                      <option value="">Any</option>
+                    </select>
+                  </div>
+                  <div class="filter-group filter-group--compact">
+                    <label for="filterFinancialFramework">Framework</label>
+                    <select id="filterFinancialFramework">
+                      <option value="">Any</option>
+                      <option value="custom">Custom</option>
+                      <option value="clv">CLV uplift</option>
+                      <option value="headcount">Headcount savings</option>
+                      <option value="operational">Operational efficiency</option>
+                      <option value="nps">NPS retention</option>
+                      <option value="risk">Risk avoidance</option>
+                    </select>
+                  </div>
+                  <div class="filter-group filter-group--compact">
+                    <label for="filterStatus">Status</label>
+                    <select id="filterStatus">
+                      <option value="">Any</option>
+                      <option value="Not Started">Not Started</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="On Hold">On Hold</option>
+                      <option value="Done">Done</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                  <div class="filter-group filter-group--compact">
+                    <label for="filterTshirtSize">T-shirt size</label>
+                    <select id="filterTshirtSize">
+                      <option value="">Any</option>
+                      <option value="__none__">Not set</option>
+                      <option value="XS">XS</option>
+                      <option value="S">S</option>
+                      <option value="M">M</option>
+                      <option value="L">L</option>
+                      <option value="XL">XL</option>
+                    </select>
+                  </div>
+                  <div class="filter-group filter-group--compact">
+                    <label for="filterMoscow">MOSCOW</label>
+                    <select id="filterMoscow">
+                      <option value="">Any</option>
+                      <option value="Must have">Must have</option>
+                      <option value="Should have">Should have</option>
+                      <option value="Could have">Could have</option>
+                      <option value="Won't have">Won't have</option>
+                    </select>
+                  </div>
+                  <div class="filter-group filter-group--compact">
+                    <label for="filterLabels">Labels</label>
+                    <select id="filterLabels" aria-label="Filter projects by labels">
+                      <option value="">Any</option>
+                      <option value="with">With label(s)</option>
+                      <option value="without">Without labels</option>
+                    </select>
+                  </div>
+                  <div class="filter-group filter-group--compact">
+                    <label for="filterLinks">Links</label>
+                    <select id="filterLinks">
+                      <option value="">Any</option>
+                      <option value="with">With link(s)</option>
+                      <option value="without">Without links</option>
+                    </select>
+                  </div>
+                </div>
+              </section>
             </div>
           </div>
           </div>
@@ -576,87 +657,94 @@
         <div class="table-wrapper table-wrapper--modern projects-table-shell" aria-label="Projects table">
           <table class="projects-data-table">
             <colgroup>
-              <col style="width: 44px;" />
-              <col style="width: 208px;" />
-              <col style="width: 72px;" />
-              <col style="width: 72px;" />
-              <col style="width: 108px;" />
-              <col style="width: 88px;" />
-              <col style="width: 68px;" />
-              <col style="width: 88px;" />
-              <col style="width: 84px;" />
-              <col style="width: 124px;" />
-              <col style="width: 168px;" />
-              <col style="width: 108px;" />
+              <col class="projects-table-col--select" style="width: 44px;" />
+              <col class="projects-table-col--title" style="width: 208px;" />
+              <col class="projects-table-col--owner super-admin-only-column" style="width: 132px;" hidden />
+              <col class="projects-table-col--type" style="width: 72px;" />
+              <col class="projects-table-col--status" style="width: 72px;" />
+              <col class="projects-table-col--framework" style="width: 108px;" />
+              <col class="projects-table-col--period" style="width: 88px;" />
+              <col class="projects-table-col--size" style="width: 68px;" />
+              <col class="projects-table-col--moscow" style="width: 88px;" />
+              <col class="projects-table-col--rice" style="width: 84px;" />
+              <col class="projects-table-col--financial" style="width: 124px;" />
+              <col class="projects-table-col--created" style="width: 168px;" />
+              <col class="projects-table-col--actions" style="width: 108px;" />
             </colgroup>
             <thead>
               <tr>
-                <th>
+                <th class="projects-table-col--select">
                   <input id="selectAllProjects" type="checkbox" class="checkbox-input" />
                 </th>
-                <th data-sort-field="title">
+                <th class="projects-table-col--title" data-sort-field="title">
                   <button class="sort-button" type="button">
                     <span>Project</span>
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
-                <th data-sort-field="projectType">
+                <th class="projects-table-col--owner super-admin-only-column" data-sort-field="ownerProfileName" hidden>
+                  <button class="sort-button" type="button">
+                    <span>Profile</span>
+                    <span class="sort-indicator">↕</span>
+                  </button>
+                </th>
+                <th class="projects-table-col--type" data-sort-field="projectType">
                   <button class="sort-button" type="button">
                     <span>Type</span>
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
-                <th data-sort-field="projectStatus">
+                <th class="projects-table-col--status" data-sort-field="projectStatus">
                   <button class="sort-button" type="button">
                     <span>State</span>
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
-                <th data-sort-field="financialImpactFramework">
+                <th class="projects-table-col--framework" data-sort-field="financialImpactFramework">
                   <button class="sort-button" type="button">
                     <span>Framework</span>
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
-                <th>
+                <th class="projects-table-col--period">
                   Period
                 </th>
-                <th data-sort-field="tshirtSize">
+                <th class="projects-table-col--size" data-sort-field="tshirtSize">
                   <button class="sort-button" type="button">
                     <span>Size</span>
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
-                <th data-sort-field="moscowCategory">
+                <th class="projects-table-col--moscow" data-sort-field="moscowCategory">
                   <button class="sort-button" type="button">
                     <span>MOSCOW</span>
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
-                <th data-sort-field="riceScore">
+                <th class="projects-table-col--rice" data-sort-field="riceScore">
                   <button class="sort-button" type="button">
                     <span>RICE score</span>
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
-                <th data-sort-field="financialImpactValue">
+                <th class="projects-table-col--financial" data-sort-field="financialImpactValue">
                   <button class="sort-button" type="button">
                     <span>Impact (EUR)</span>
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
-                <th data-sort-field="createdAt">
+                <th class="projects-table-col--created" data-sort-field="createdAt">
                   <button class="sort-button" type="button">
                     <span>Created At</span>
                     <span class="sort-indicator">↕</span>
                   </button>
                 </th>
-                <th>Actions</th>
+                <th class="projects-table-col--actions">Actions</th>
               </tr>
             </thead>
             <tbody id="projectsTableBody">
-              <tr>
-                <td colspan="12" class="empty-state">
+              <tr class="projects-table-empty-row">
+                <td colspan="12" class="empty-state projects-table-col--empty">
                   Select a profile and add your first project to see it here.
                 </td>
               </tr>
@@ -843,6 +931,34 @@
               <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
             </svg>
           </a>
+          <a
+            href="https://github.com/RifqiMT/pm-prioritization-tool"
+            class="app-site-footer__action"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="GitHub repository"
+            title="GitHub"
+          >
+            <svg class="app-site-footer__icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+            </svg>
+          </a>
+          <a
+            href="https://rifqi-tjahyono.com/%f0%9f%93%8a-effort-impact-confusion-to-clear-cut-priorities-replace-tab-hopping-with-visual-roadmap-sanity-%f0%9f%a7%ad%e2%9c%a8/"
+            class="app-site-footer__action"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Article: effort–impact confusion to clear-cut priorities"
+            title="Article"
+          >
+            <svg class="app-site-footer__icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <line x1="10" y1="9" x2="8" y2="9"/>
+            </svg>
+          </a>
         </div>
       </div>
     </footer>
@@ -985,6 +1101,11 @@
                 <span class="form-section-hint">Title and description (summary)</span>
               </div>
               <div class="form-grid form-grid-full">
+                <div id="projectOwnerProfileWrap" class="project-field-tooltip-wrap project-owner-profile-wrap" hidden>
+                  <label for="projectOwnerProfile">Owner profile</label>
+                  <select id="projectOwnerProfile" name="projectOwnerProfile" aria-label="Profile that owns this project"></select>
+                  <p class="project-dynamic-field-hint">Projects stay in the selected profile, including edits and deletes from super admin.</p>
+                </div>
                 <div class="project-field-tooltip-wrap">
                   <label for="projectTitle">Title</label>
                   <input id="projectTitle" name="projectTitle" type="text" placeholder="e.g. Onboarding email sequence revamp" required />
@@ -999,6 +1120,34 @@
                   <div class="cell-type-tooltip">
                     <div class="cell-type-tooltip-title">Description</div>
                     <div class="cell-type-tooltip-body">Long-form context, goals, and scope. Shown in table tooltip.</div>
+                  </div>
+                </div>
+                <div class="project-field-tooltip-wrap project-meta-dynamic-field">
+                  <label for="projectLabelsContainer">Labels <span class="field-optional-tag">optional</span></label>
+                  <p class="project-dynamic-field-hint">Tags for grouping or discovery. Each label can use multiple words.</p>
+                  <div class="project-dynamic-field-panel">
+                    <div id="projectLabelsContainer" class="project-labels-list" aria-live="polite"></div>
+                  </div>
+                  <button type="button" id="addProjectLabelBtn" class="btn-secondary project-dynamic-add-btn">
+                    + Add label
+                  </button>
+                  <div class="cell-type-tooltip">
+                    <div class="cell-type-tooltip-title">Labels</div>
+                    <div class="cell-type-tooltip-body">Free-form tags for this project. Each label can be multiple words (e.g. Growth experiment).</div>
+                  </div>
+                </div>
+                <div class="project-field-tooltip-wrap project-meta-dynamic-field">
+                  <label for="projectLinksContainer">Links <span class="field-optional-tag">optional</span></label>
+                  <p class="project-dynamic-field-hint">Named hyperlinks (PRD, Jira, Figma). Provide display text and a URL for each row.</p>
+                  <div class="project-dynamic-field-panel">
+                    <div id="projectLinksContainer" class="project-links-list" aria-live="polite"></div>
+                  </div>
+                  <button type="button" id="addProjectLinkBtn" class="btn-secondary project-dynamic-add-btn">
+                    + Add link
+                  </button>
+                  <div class="cell-type-tooltip">
+                    <div class="cell-type-tooltip-title">Links</div>
+                    <div class="cell-type-tooltip-body">Named hyperlinks (PRD, Jira, Figma, etc.). Display text and URL per row.</div>
                   </div>
                 </div>
               </div>
@@ -1818,15 +1967,15 @@
 
   <!-- Classic scripts (no ES modules) so you can just open index.html directly -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="src/constants.js?v=20260528-ui131"></script>
-  <script src="src/utils.js?v=20260528-ui131"></script>
-  <script src="src/modules/profile-security.js?v=20260528-ui131"></script>
-  <script src="src/rice.js?v=20260528-ui131"></script>
-  <script src="src/modules/exchange-rates.js?v=20260528-ui131"></script>
-  <script src="src/modules/fullscreen.js?v=20260528-ui131"></script>
-  <script src="src/modules/overlay-manager.js?v=20260528-ui131"></script>
-  <script src="src/modules/storage.js?v=20260528-ui131"></script>
-  <script src="src/app.js?v=20260528-ui131"></script>
+  <script src="src/constants.js?v=20260528-ui152"></script>
+  <script src="src/utils.js?v=20260528-ui152"></script>
+  <script src="src/modules/profile-security.js?v=20260528-ui152"></script>
+  <script src="src/rice.js?v=20260528-ui152"></script>
+  <script src="src/modules/exchange-rates.js?v=20260528-ui152"></script>
+  <script src="src/modules/fullscreen.js?v=20260528-ui152"></script>
+  <script src="src/modules/overlay-manager.js?v=20260528-ui152"></script>
+  <script src="src/modules/storage.js?v=20260528-ui152"></script>
+  <script src="src/app.js?v=20260528-ui152"></script>
 </body>
 </html>
 

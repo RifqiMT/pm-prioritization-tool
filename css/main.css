@@ -1824,7 +1824,21 @@ button:disabled {
 }
 
 .moscow-quadrant-header__top {
-  display: contents;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding-right: 2.75rem;
+  box-sizing: border-box;
+}
+
+.moscow-quadrant-header__title-line {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .moscow-quadrant-fullname {
@@ -1834,9 +1848,11 @@ button:disabled {
 .moscow-quadrant-label {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
   font-size: 0.8125rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.02em;
+  text-transform: none;
   color: #fff;
   padding: 0.4rem 0.9rem;
   border-radius: var(--radius-sm);
@@ -1871,11 +1887,13 @@ button:disabled {
 }
 
 .moscow-quadrant-description {
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: 0.71875rem;
   color: var(--muted);
   margin: 0;
-  line-height: 1.4;
-  max-width: 26ch;
+  line-height: 1.35;
+  max-width: none;
 }
 
 .moscow-board-column.moscow-grid-cell .moscow-board-column-count {
@@ -2431,6 +2449,89 @@ button:disabled {
 .filters-row input,
 .filters-row select {
   min-width: 0;
+}
+
+.filter-autocomplete {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.filter-autocomplete__dropdown {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  z-index: 55;
+  max-height: min(280px, 42dvh);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  background: rgba(15, 23, 42, 0.98);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.filter-autocomplete__dropdown[hidden] {
+  display: none !important;
+}
+
+.filter-autocomplete__list {
+  list-style: none;
+  margin: 0;
+  padding: 0.3rem;
+  overflow-y: auto;
+}
+
+.filter-autocomplete__option {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.48rem 0.55rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #e5e7eb;
+  font-size: 0.8rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.filter-autocomplete__option:hover,
+.filter-autocomplete__option--highlight {
+  background: rgba(59, 130, 246, 0.22);
+}
+
+.filter-autocomplete__option mark {
+  padding: 0 0.05em;
+  border-radius: 2px;
+  background: rgba(251, 191, 36, 0.35);
+  color: #fef3c7;
+  font-weight: 700;
+}
+
+.filter-autocomplete__option-icon {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  opacity: 0.85;
+}
+
+.filter-autocomplete__option-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-autocomplete__empty {
+  margin: 0;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-style: italic;
 }
 
 .filter-countries {
@@ -4289,6 +4390,211 @@ th[data-sort-active="true"] .sort-indicator {
   border-color: rgba(248, 113, 113, 0.9);
   color: #fee2e2;
   box-shadow: 0 8px 20px rgba(127, 29, 29, 0.9);
+}
+
+/* Labels & links — scoped to project modal light theme */
+#projectModal .field-optional-tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #a16207;
+  opacity: 0.85;
+}
+
+#projectModal .project-dynamic-field-hint {
+  margin: 0 0 0.4rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: #78716c;
+}
+
+#projectModal .project-dynamic-field-panel {
+  background: #fffdf8;
+  border: 1px solid #e8d2a4;
+  border-radius: 9px;
+  padding: 0.5rem 0.55rem;
+  min-height: 2.75rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+#projectModal .project-dynamic-add-btn {
+  align-self: flex-start;
+  min-height: 34px;
+  font-size: 0.74rem;
+  font-weight: 650;
+  padding-inline: 0.72rem;
+  margin-top: 0.45rem;
+  color: #7f1d1d;
+  border-color: #e8d2a4;
+  background: #fff7e6;
+}
+
+#projectModal .project-dynamic-add-btn:hover {
+  background: #ffedd5;
+  border-color: #ca8a04;
+  color: #431407;
+}
+
+#projectModal .project-labels-list,
+#projectModal .project-links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+#projectModal .project-link-row-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) 34px;
+  gap: 0.4rem;
+  padding: 0 0.05rem 0.15rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #a16207;
+}
+
+#projectModal .project-label-row,
+#projectModal .project-link-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+#projectModal .project-link-row__fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 0.4rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+#projectModal .project-label-row input,
+#projectModal .project-link-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+#projectModal .project-label-remove-btn,
+#projectModal .project-link-remove-btn {
+  flex-shrink: 0;
+  padding: 0;
+  min-width: 34px;
+  min-height: 42px;
+  font-size: 1.05rem;
+  line-height: 1;
+  font-weight: 700;
+  border-radius: 8px;
+  box-shadow: none;
+  background: #fff7e6;
+  border: 1px solid #e8d2a4;
+  color: #b91c1c;
+}
+
+#projectModal .project-label-remove-btn:hover,
+#projectModal .project-link-remove-btn:hover {
+  background: #fee2e2;
+  border-color: #dc2626;
+  color: #7f1d1d;
+  box-shadow: none;
+}
+
+#projectModal .project-labels-readonly {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+#projectModal .project-label-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.28rem 0.62rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.25;
+  background: #ffedd5;
+  border: 1px solid #fdba74;
+  color: #7c2d12;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+#projectModal .project-label-chip::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ea580c;
+  flex-shrink: 0;
+}
+
+#projectModal .project-links-readonly {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+#projectModal .project-link-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.55rem 0.62rem;
+  border-radius: 8px;
+  background: #fffdfb;
+  border: 1px solid #e8d2a4;
+}
+
+#projectModal .project-link-card__icon {
+  flex-shrink: 0;
+  width: 1.65rem;
+  height: 1.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  font-size: 0.85rem;
+  background: #ffedd5;
+  border: 1px solid #fdba74;
+}
+
+#projectModal .project-link-card__body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+#projectModal .project-link-card__title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #b45309;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-word;
+}
+
+#projectModal .project-link-card__title:hover {
+  color: #c2410c;
+}
+
+#projectModal .project-link-card__url {
+  font-size: 0.7rem;
+  line-height: 1.35;
+  color: #78716c;
+  word-break: break-all;
+}
+
+#projectModal .project-field-empty-hint {
+  margin: 0;
+  padding: 0.35rem 0.15rem;
+  font-size: 0.74rem;
+  font-style: italic;
+  color: #a8a29e;
 }
 
 .countries-hint {

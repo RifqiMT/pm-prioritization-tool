@@ -2,7 +2,13 @@
 
 **Purpose:** Define how product, design, and engineering maintain documentation for the Product Management Prioritization Tool.  
 **Audience:** Contributors, reviewers, release owners.  
-**Last updated:** 2026-05-27
+**Last updated:** 2026-05-28  
+**Last audited:** 2026-05-28
+
+| Baseline | Value |
+|----------|-------|
+| **APP_ASSET_VERSION** | `20260528-ui152` |
+| **Compact breakpoint** | **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) |
 
 ---
 
@@ -13,6 +19,7 @@
 3. **Traceable** — Requirements link to code via [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md).
 4. **Readable** — Professional wording, tables, and diagrams; avoid identifier soup without definitions.
 5. **Maintained in the same change** — User-visible behavior changes include doc updates in the same delivery.
+6. **Policy by reference** — Cross-profile workspace rules live in [GUARDRAILS.md §7](GUARDRAILS.md); other docs reference §7 without restating eligibility or toggle mechanics.
 
 ---
 
@@ -33,7 +40,7 @@
 | Tech guidelines | `/docs/TECH_GUIDELINES.md` | Engineering | Conventions, modules, persistence |
 | Business guidelines | `/docs/BUSINESS_GUIDELINES.md` | Product Team | Rubrics and planning norms |
 | Traceability matrix | `/docs/TRACEABILITY_MATRIX.md` | Product + QA | New FR/US IDs |
-| Guardrails | `/docs/GUARDRAILS.md` | Product + Engineering | New limitations |
+| Guardrails | `/docs/GUARDRAILS.md` | Product + Engineering | New limitations; §7 cross-profile policy |
 | Changelog | `/docs/CHANGELOG.md` | Engineering | Every shipped change |
 | Deployment | `/docs/DEPLOYMENT.md` | Engineering | Infra or env changes |
 | This standard | `/docs/PRODUCT_DOCUMENTATION_STANDARD.md` | Product Team | Process changes |
@@ -44,7 +51,7 @@
 
 ### 3.1 Structure
 
-- Start with metadata table (product, version, last audited).
+- Start with metadata table (product, version, last audited, implementation baseline when UI-related).
 - Use `##` sections with logical order: overview → detail → reference.
 - Prefer **tables** for enumerations and **Mermaid** for flows (supported in GitHub and many viewers).
 
@@ -75,7 +82,19 @@ Use the template in [USER_STORIES.md](USER_STORIES.md):
 
 Under `[Unreleased]` during development; on release, move to a dated version.
 
-Each entry should note: **area** (UI, Data, Security, Docs), **impact** (user-visible / internal), and **summary**.
+Each entry should note: **area** (UI, Data, Security, Docs), **date**, **author/team**, **impact** (user-visible / internal), and **summary**.
+
+### 3.5 Responsive documentation
+
+When documenting layout:
+
+- State breakpoint as **`COMPACT_LAYOUT_MAX_WIDTH_PX` = 1400** (not 1024).
+- Describe compact as **unified phone/tablet UI** for all widths ≤1400px.
+- List both desktop table grid and compact **card list** behaviors where they differ.
+
+### 3.6 Forbidden terminology in product docs
+
+Except inside [GUARDRAILS.md](GUARDRAILS.md), do **not** use the phrases **Super Admin**, **super admin**, or **superAdmin**. Refer to cross-profile behavior as **privileged workspace mode** or **GUARDRAILS.md §7**.
 
 ---
 
@@ -84,12 +103,13 @@ Each entry should note: **area** (UI, Data, Security, Docs), **impact** (user-vi
 When performing a comprehensive audit:
 
 1. List `index.html`, all `css/*.css`, `src/**/*.js`, `api/**/*.js`.
-2. Compare against PRD functional requirements and traceability matrix.
-3. Verify `constants.js` enums match UI labels and filters.
-4. Confirm README deploy URL and storage story match `storage.js` + `DEPLOYMENT.md`.
+2. Compare against [PRD.md](PRD.md) functional requirements and [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md).
+3. Verify `constants.js` enums match UI labels, filters (`filterLabels`, `filterLinks`), and `moscowDisplayNames`.
+4. Confirm README deploy URL and storage story match `storage.js` + [DEPLOYMENT.md](DEPLOYMENT.md).
 5. Update `APP_ASSET_VERSION` reference in docs when bumping cache version.
-6. Refresh Mermaid diagrams if data model or flows changed.
-7. Set **Last audited** dates to audit date (YYYY-MM-DD).
+6. Confirm all `@media (max-width: …)` compact rules use **1400px** unless documented otherwise.
+7. Refresh Mermaid diagrams if data model or flows changed.
+8. Set **Last audited** / **Last updated** dates to audit date (YYYY-MM-DD).
 
 ---
 
@@ -99,14 +119,15 @@ When performing a comprehensive audit:
 |------|-----------|
 | **Feature PR** | PRD or user story updated; variables if new fields; design if UI; changelog unreleased |
 | **Release** | README; PRODUCT_DOCUMENTATION; traceability; version section in CHANGELOG |
-| **Design change** | DESIGN_GUIDELINES tokens/components; compact vs desktop breakpoints |
+| **Design change** | DESIGN_GUIDELINES tokens/components; compact (≤1400px) vs desktop (>1400px) |
+| **Filter / table change** | FR-6 / FR-5 sections; VARIABLES filter keys; compact card QA widths (375, 768, 1400) |
 
 ---
 
 ## 6. Versioning
 
 - **package.json** `version` — marketing/release semver.
-- **APP_ASSET_VERSION** — browser cache bust for static assets (document in VARIABLES.md).
+- **APP_ASSET_VERSION** — browser cache bust for static assets (document in [VARIABLES.md](VARIABLES.md)).
 - Documentation **Last audited** — date of last full consistency review.
 
 ---

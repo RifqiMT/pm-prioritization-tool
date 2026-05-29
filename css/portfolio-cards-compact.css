@@ -411,3 +411,71 @@
     box-shadow: var(--pcard-shadow) !important;
   }
 }
+
+/**
+ * Desktop — same curved portfolio card shell as tablet/phone (12px radius, soft surface).
+ */
+html.is-desktop-layout {
+  --pcard-radius: 12px;
+  --pcard-radius-sm: 8px;
+  --pcard-border: rgba(226, 232, 240, 0.98);
+  --pcard-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 6px 18px rgba(127, 29, 29, 0.07);
+  --pcard-surface: linear-gradient(165deg, #ffffff 0%, #fefdfb 55%, #fffaf5 100%);
+}
+
+html.is-desktop-layout .moscow-board-card,
+html.is-desktop-layout .scrum-board-card,
+html.is-desktop-layout .projects-view--board .scrum-board-card,
+html.is-desktop-layout .projects-view--moscow .moscow-board-card,
+html.is-desktop-layout .workspace-panel--v2 .projects-view--board .scrum-board-card {
+  overflow: hidden !important;
+  border-radius: var(--pcard-radius) !important;
+  border: 1px solid var(--pcard-border) !important;
+  background: var(--pcard-surface) !important;
+  box-shadow: var(--pcard-shadow) !important;
+}
+
+html.is-desktop-layout .moscow-board-card:hover,
+html.is-desktop-layout .scrum-board-card:hover,
+html.is-desktop-layout .projects-view--board .scrum-board-card:hover,
+html.is-desktop-layout .projects-view--moscow .moscow-board-card:hover,
+html.is-desktop-layout .workspace-panel--v2 .projects-view--board .scrum-board-card:hover {
+  border-color: rgba(203, 213, 225, 0.98) !important;
+  box-shadow:
+    0 2px 4px rgba(15, 23, 42, 0.05),
+    0 10px 24px rgba(127, 29, 29, 0.09) !important;
+  transform: translateY(-1px) !important;
+}
+
+html.is-desktop-layout .moscow-board-card.moscow-board-card--dragging,
+html.is-desktop-layout .scrum-board-card.scrum-board-card--dragging,
+html.is-desktop-layout .projects-view--board .scrum-board-card.scrum-board-card--dragging {
+  opacity: 0.97 !important;
+  box-shadow: 0 12px 28px rgba(127, 29, 29, 0.16) !important;
+  border-color: rgba(185, 28, 28, 0.35) !important;
+  transform: none !important;
+}
+
+html.is-desktop-layout .scrum-board-card-type-wrap.cell-type-pill,
+html.is-desktop-layout .moscow-board-card .scrum-board-card-type-wrap.cell-type-pill {
+  border-radius: var(--pcard-radius-sm) !important;
+}
+
+html.is-desktop-layout .scrum-board-card-actions .portfolio-card-action-btn,
+html.is-desktop-layout .moscow-board-card-actions .portfolio-card-action-btn,
+html.is-desktop-layout .scrum-board-card-btn--order,
+html.is-desktop-layout .moscow-board-card-btn--order {
+  border-radius: var(--pcard-radius-sm) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.is-desktop-layout .moscow-board-card:hover,
+  html.is-desktop-layout .scrum-board-card:hover,
+  html.is-desktop-layout .projects-view--board .scrum-board-card:hover,
+  html.is-desktop-layout .projects-view--moscow .moscow-board-card:hover,
+  html.is-desktop-layout .workspace-panel--v2 .projects-view--board .scrum-board-card:hover {
+    transform: none !important;
+  }
+}

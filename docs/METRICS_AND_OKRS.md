@@ -1,110 +1,182 @@
 # Product Metrics and OKRs
 
-## 1. Product Metrics
+| Field | Value |
+|-------|-------|
+| **Last updated** | 2026-05-28 |
+| **Measurement** | Local-first — no default telemetry; manual QA + optional instrumentation |
+
+---
+
+## 1. Product metrics (outcomes)
 
 | Metric ID | Metric | Definition | Formula | Target |
-|---|---|---|---|---|
-| PM-01 | Prioritization Completeness | Projects with valid RICE and category metadata. | `valid_prioritized_projects / total_projects` | >= 90% |
-| PM-02 | Framework Adoption | Projects using non-custom financial frameworks. | `non_custom_framework_projects / total_projects` | >= 50% |
-| PM-03 | Workflow Throughput | Net projects processed per planning cycle. | `created + updated + status_moved` | +20% QoQ |
-| PM-04 | Map Utility | Usage of map for review sessions. | `map_view_sessions / total_sessions` | >= 25% |
-| PM-05 | Export Reliability | Successful exports over attempts. | `successful_exports / export_attempts` | >= 99% |
+|-----------|--------|------------|---------|--------|
+| PM-01 | Prioritization completeness | Share of projects with valid RICE + status + MoSCoW | `valid_prioritized_projects / total_projects` | ≥ 90% |
+| PM-02 | Framework adoption | Projects using structured (non-custom) frameworks | `non_custom_framework_projects / total_projects` | ≥ 50% |
+| PM-03 | Workflow throughput | Net project activity per planning cycle | `created + updated + status_moved` | +20% QoQ |
+| PM-04 | Map utility | Sessions using map for review | `map_view_sessions / total_sessions` | ≥ 25% |
+| PM-05 | Export reliability | Successful exports | `successful_exports / export_attempts` | ≥ 99% |
+| PM-06 | **Activation** | New workspaces that reach “first valuable state” within 7 days | `activated_workspaces_7d / new_workspaces` | ≥ 60% |
+| PM-07 | **Engagement** | Active workspaces with ≥1 meaningful edit in 14 days | `active_workspaces_14d / total_workspaces` | ≥ 40% |
+| PM-08 | **Retention proxy** | Workspaces returning after 30 days with ≥1 session | `returning_workspaces_30d / workspaces_30d_ago` | ≥ 35% |
 
-## 2. UX and Quality Metrics
+### PM-06 Activation — operational definition
+
+A workspace is **activated** when **all** are true within 7 days of first open:
+
+1. ≥1 profile created or selected  
+2. ≥3 projects with valid RICE (finite score)  
+3. User opened ≥2 distinct views (e.g. Table + Board or MoSCoW)
+
+`activated_workspaces_7d / new_workspaces`
+
+### PM-07 Engagement — operational definition
+
+An **active workspace** in a 14-day window has:
+
+- ≥1 project create or update, **or**
+- ≥5 filter applications (any filter change that triggers `applyFilters`), **or**
+- ≥1 export attempt
+
+`active_workspaces_14d / total_workspaces` (denominator: workspaces with ≥1 project)
+
+### PM-08 Retention proxy — operational definition
+
+Among workspaces that had ≥3 projects 30 days ago, count those with ≥1 session (any view navigation + save) in the last 7 days.
+
+`returning_workspaces_30d / workspaces_30d_ago`
+
+---
+
+## 2. UX and quality metrics
 
 | Metric ID | Metric | Definition | Formula | Target |
-|---|---|---|---|---|
-| UX-01 | RICE Explainability Usage | Use of RICE tooltip interactions. | `rice_tooltip_interactions / table_sessions` | Upward trend |
-| UX-02 | Validation Friction | Validation errors per submit. | `validation_errors / submit_attempts` | <= 0.3 |
-| UX-03 | Table Scanability | Header-overflow defects in key columns. | QA defect count | 0 critical |
-| UX-04 | Time-to-Decision | Time from project open to saved prioritization. | median interaction time | Downward trend |
-| UX-05 | Tooltip Exclusivity Reliability | Cases where multiple tooltips overlap simultaneously. | `multi_tooltip_incidents / tooltip_sessions` | 0 |
-| UX-06 | Modal Guidance Coverage | Share of modal input/select/textarea fields with standardized tooltip. | `fields_with_standard_tooltip / total_modal_fields` | 100% |
-| UX-07 | Compact Layout Usability | QA sessions on ≤1024px with zero critical horizontal-overflow defects on board/MoSCoW. | `overflow_defects / compact_qa_sessions` | 0 critical |
-| UX-08 | Compact Task Completion | Users complete move-status (board) or jump-quadrant (MoSCoW) on compact without desktop-only controls. | `successful_compact_tasks / compact_task_attempts` | >= 95% |
+|-----------|--------|------------|---------|--------|
+| UX-01 | RICE explainability | Tooltip opens on RICE surfaces | `rice_tooltip_opens / table_or_board_sessions` | Upward trend |
+| UX-02 | Validation friction | Validation errors per save | `validation_errors / submit_attempts` | ≤ 0.3 |
+| UX-03 | Table scanability | Critical header/column overflow defects | QA defect count | 0 critical |
+| UX-04 | Time-to-decision | Median time open modal → saved project | median seconds (sampled) | Downward trend |
+| UX-05 | Tooltip exclusivity | Overlapping tooltips | `multi_tooltip_incidents / tooltip_sessions` | 0 |
+| UX-06 | Modal guidance coverage | Fields with standardized tooltip | `fields_with_tooltip / total_modal_fields` | 100% |
+| UX-07 | Compact layout usability | Critical horizontal overflow on board/MoSCoW at compact widths | `overflow_defects / compact_qa_sessions` | 0 critical |
+| UX-08 | Compact task completion | Move status / jump MoSCoW quadrant without desktop controls | `successful_compact_tasks / compact_task_attempts` | ≥ 95% |
+| UX-09 | Filter discoverability | Sessions using labels/links filter or autocomplete | `filter_feature_sessions / portfolio_sessions` | ≥ 30% |
+| UX-10 | Compact table grouping | Compact sessions using non-`none` group-by | `group_by_sessions / compact_table_sessions` | ≥ 20% |
 
-## 3. Engineering Metrics
+**UX-07 widths:** 375px, 768px, **1400px** (breakpoint), plus 1280px split-screen sample.
+
+---
+
+## 3. Engineering metrics
 
 | Metric ID | Metric | Definition | Formula | Target |
-|---|---|---|---|---|
-| ENG-01 | Runtime Error Rate | Sessions with uncaught runtime errors. | `error_sessions / total_sessions` | <= 0.5% |
-| ENG-02 | Persistence Reliability | Save/load failures. | `storage_failures / storage_ops` | <= 0.1% |
-| ENG-03 | Import Integrity | Import runs without duplicate corruption. | `clean_imports / import_attempts` | >= 99% |
-| ENG-04 | Render Responsiveness | Time to table rerender after filter/sort. | p95 interaction latency | <= 300ms |
+|-----------|--------|------------|---------|--------|
+| ENG-01 | Runtime error rate | Sessions with uncaught errors | `error_sessions / total_sessions` | ≤ 0.5% |
+| ENG-02 | Persistence reliability | Save/load failures after refresh | `storage_failures / storage_ops` | ≤ 0.1% |
+| ENG-03 | Import integrity | Clean merges | `clean_imports / import_attempts` | ≥ 99% |
+| ENG-04 | Render responsiveness | Table rerender after filter/sort | p95 latency (ms) | ≤ 300 |
+| ENG-05 | Cloud sync success | Debounced PUT without user-visible failure | `successful_cloud_saves / cloud_save_attempts` | ≥ 99% |
 
-## 4. OKR Framework
+---
+
+## 4. OKRs (product team)
 
 ### Objective 1 — Improve prioritization trust
-- KR1.1: Raise PM-01 to >= 95%
-- KR1.2: Reduce UX-02 to <= 0.2
-- KR1.3: Increase UX-01 interaction rate by 30%
-- KR1.4: Keep UX-05 at 0 across regression test cycles
+
+| Key result | Metric | Target |
+|------------|--------|--------|
+| KR1.1 | PM-01 completeness | ≥ 95% |
+| KR1.2 | UX-02 validation friction | ≤ 0.2 |
+| KR1.3 | UX-01 RICE tooltip usage | +30% vs prior quarter |
+| KR1.4 | UX-05 tooltip exclusivity | 0 incidents per release |
 
 ### Objective 2 — Strengthen financial planning discipline
-- KR2.1: Raise PM-02 to >= 65%
-- KR2.2: Maintain EUR display accuracy defect count at 0 high severity
 
-### Objective 4 — Excellent experience on tablets and phones
-- KR4.1: Keep UX-07 at 0 critical overflow defects per release
-- KR4.2: Raise UX-08 to >= 95% on sampled compact QA scripts
-- KR4.3: Validate footer and FAB discoverability in compact usability review
+| Key result | Metric | Target |
+|------------|--------|--------|
+| KR2.1 | PM-02 framework adoption | ≥ 65% |
+| KR2.2 | EUR display accuracy | 0 high-severity defects |
 
 ### Objective 3 — Maintain reliability at scale
-- KR3.1: Keep ENG-01 <= 0.5%
-- KR3.2: Keep ENG-03 >= 99%
-- KR3.3: Keep ENG-04 p95 <= 300ms
-- KR3.4: Keep modal guidance coverage (UX-06) at 100%
 
-## 5. Review Cadence
+| Key result | Metric | Target |
+|------------|--------|--------|
+| KR3.1 | ENG-01 runtime errors | ≤ 0.5% |
+| KR3.2 | ENG-03 import integrity | ≥ 99% |
+| KR3.3 | ENG-04 render p95 | ≤ 300ms |
+| KR3.4 | UX-06 modal tooltips | 100% |
 
-- Weekly: ENG metrics
-- Bi-weekly: UX metrics
-- Monthly: product metrics and OKR health
-- Quarterly: target recalibration
+### Objective 4 — Excellent experience on tablets and phones (≤1400px)
 
----
+| Key result | Metric | Target |
+|------------|--------|--------|
+| KR4.1 | UX-07 compact overflow | 0 critical per release |
+| KR4.2 | UX-08 compact tasks | ≥ 95% |
+| KR4.3 | UX-09 filter features | ≥ 30% sessions |
+| KR4.4 | Footer + FAB discoverability | Pass compact usability checklist |
 
-## 6. Measurement Methodology (how to compute & validate)
+### Objective 5 — Grow meaningful product usage (activation & return)
 
-This app is local-first and does not stream telemetry by default. Metrics must therefore be collected using one of the following approaches:
-
-1. **Instrumented QA runs (preferred):** QA/testers run repeatable scenarios and record results using a lightweight checklist and exported console summaries.
-2. **Manual sampling:** PM/QA samples a defined number of sessions and classifies outcomes against rubric definitions below.
-3. **Developer debug signals:** during development, engineers can temporarily enable console logging to validate formulas. No passwords or sensitive content must be logged.
-
-### Metric operational definitions
-
-- **Prioritization Completeness (PM-01):** A project counts as “valid” when it has valid RICE boundaries, a valid category/status/MoSCoW selection, and the computed score is finite (not NaN/Infinity).
-- **Framework Adoption (PM-02):** A project counts as “non-custom” when `financialImpactFramework` is one of `clv`, `nps`, `risk`, `headcount`, or `operational`.
-- **Workflow Throughput (PM-03):** Count `created`, `updated`, and `status_moved` within the selected planning cycle window. Define “status moved” as a change to `projectStatus` that results in a visible board column change.
-- **Map Utility (PM-04):** A “map view session” counts when the user navigates to Map view and successfully renders at least one geography layer (or shows the defined empty/error state).
-- **Export Reliability (PM-05):** An “export attempt” is a click on Export JSON/CSV. A “successful export” is a completed download start event (anchor click) without errors.
-
-### UX / Quality metric collection
-
-- **RICE Explainability Usage (UX-01):** Count tooltip open interactions on RICE score surfaces (table tooltip or board tooltip contexts) divided by number of table sessions sampled.
-- **Validation Friction (UX-02):** Count distinct validation errors shown to the user during a single submit flow (project save actions), divided by total submit attempts sampled.
-- **Tooltip Exclusivity Reliability (UX-05):** A “multi-tooltip incident” is any moment where more than one tooltip is visible concurrently. For manual QA, record a failure when two tooltips overlap in the viewport at the same time.
-- **Modal Guidance Coverage (UX-06):** “Field with standardized tooltip” means the field has tooltip markup or receives fallback injection through standardized tooltip logic.
-- **Compact Layout Usability (UX-07):** Run QA at 375px, 768px, and 1024px widths on Board and MoSCoW. A critical defect is any required horizontal scroll to reach primary content or actions.
-- **Compact Task Completion (UX-08):** Sample tasks: (1) change board card status via Move to on compact; (2) jump MoSCoW quadrant via nav pill. Success = task completed without switching to desktop layout.
-
-### Engineering metric collection
-
-- **Runtime Error Rate (ENG-01):** Count sessions with uncaught runtime errors observed in console during a test script.
-- **Persistence Reliability (ENG-02):** Count failures where save/load does not persist expected fields after refresh.
-- **Import Integrity (ENG-03):** “Clean import” means import completes without duplicated corruption. A corruption case includes duplicated project IDs when merge logic should match by ID.
-- **Render Responsiveness (ENG-04):** Measure rerender latency from filter/sort action trigger to final visible table render. Target p95 ≤ 300ms on a typical development laptop.
+| Key result | Metric | Target |
+|------------|--------|--------|
+| KR5.1 | PM-06 activation (7d) | ≥ 60% |
+| KR5.2 | PM-07 engagement (14d) | ≥ 40% |
+| KR5.3 | PM-08 retention proxy (30d) | ≥ 35% |
+| KR5.4 | PM-05 export reliability | ≥ 99% |
 
 ---
 
-## 7. OKR Review Template (weekly/monthly)
+## 5. Review cadence
 
-When reviewing metrics:
-1. Identify the **top 1–2 regressions** by target distance (current vs target).
-2. Link the regression to a **likely code surface** (render pipeline, validation, export/import, or tooltip orchestration).
-3. Record an actionable follow-up:
-   - “add guardrail”
-   - “add UI fallback”
-   - “improve sanitization”
-4. Update `docs/CHANGELOG.md` once a fix is user-visible or affects delivery readiness.
+| Cadence | Metrics |
+|---------|---------|
+| Weekly | ENG-01, ENG-02, ENG-05 |
+| Bi-weekly | UX-01–UX-10 |
+| Monthly | PM-01–PM-08, OKR health |
+| Quarterly | Target recalibration, persona validation |
+
+---
+
+## 6. Measurement methodology
+
+The app does not stream telemetry by default. Collect metrics via:
+
+1. **Instrumented QA runs** — repeatable scripts + checklist export  
+2. **Manual sampling** — PM/QA classifies sessions against definitions below  
+3. **Temporary debug logging** — development only; no passwords or PII  
+
+### Core definitions (summary)
+
+- **Valid prioritized project (PM-01):** Valid RICE bounds, finite score, valid `projectStatus` and `moscowCategory` from enums.  
+- **Non-custom framework (PM-02):** `financialImpactFramework` ∈ `clv`, `nps`, `risk`, `headcount`, `operational`.  
+- **Status moved (PM-03):** `projectStatus` change that moves card between board columns.  
+- **Map session (PM-04):** Navigate to Map + layer renders or defined empty state.  
+- **Successful export (PM-05):** Download starts without error after Export click.  
+
+### UX collection notes
+
+- **UX-09:** Count session if user applies `filterLabels`, `filterLinks`, or selects an autocomplete suggestion.  
+- **UX-10:** Count when `tableGroupBy !== "none"` on compact table.  
+- **UX-07:** Critical defect = required horizontal scroll for primary board/MoSCoW content or primary actions.  
+
+### Engineering collection notes
+
+- **ENG-04:** Time from filter/sort event to stable table/card paint.  
+- **ENG-05:** Cloud optional; skip when `MONGODB_URI` unset.  
+
+---
+
+## 7. OKR review template
+
+1. List **top 1–2 regressions** by distance to target.  
+2. Link each to a **code surface** (filters, render, storage, tooltips).  
+3. Record follow-up: guardrail, UI fallback, or sanitization fix.  
+4. Update [CHANGELOG.md](CHANGELOG.md) when user-visible.  
+
+---
+
+## 8. References
+
+- [PRD.md](PRD.md) — functional requirements  
+- [USER_STORIES.md](USER_STORIES.md) — acceptance scenarios for QA scripts  
+- [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md) — RICE/MoSCoW rubrics  

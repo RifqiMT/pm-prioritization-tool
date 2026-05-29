@@ -5,13 +5,17 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Status** | Implemented (local-first static app) |
-| **Last updated** | 2026-05-27 |
+| **Last updated** | 2026-05-28 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui152` |
+| **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
 
 ## 1. Executive summary
 
-A browser-based portfolio workspace for product teams to capture initiatives, score priority with **RICE**, classify delivery intent with **MoSCoW**, estimate value through **financial frameworks**, and communicate via **Table**, **Board**, **MoSCoW**, and **Map** views. Data persists in the browser (`localStorage` cache) with optional **MongoDB cloud sync** on Vercel, plus JSON/CSV export/import. Optional **profile passwords** protect sensitive portfolios. **Responsive UI:** desktop layout above 1024px; tablets and phones share a unified compact phone layout at ≤1024px.
+A browser-based portfolio workspace for product teams to capture initiatives, score priority with **RICE**, classify delivery intent with **MoSCoW**, estimate value through **financial frameworks**, and communicate via **Table**, **Board**, **MoSCoW**, and **Map** views. Data persists in the browser (`localStorage` cache) with optional **MongoDB cloud sync** on Vercel, plus JSON/CSV export/import. Optional **profile passwords** protect sensitive portfolios.
+
+**Responsive UI:** Desktop layout when viewport width is **> 1400px**; tablets, phones, iPad landscape, split-screen, and narrow laptop windows use a **unified compact phone UI** at **≤ 1400px** (`html.is-compact-layout` + `html.is-phone-layout`).
 
 ---
 
@@ -25,11 +29,12 @@ A browser-based portfolio workspace for product teams to capture initiatives, sc
 | G-4 | Provide meeting-ready views (table, board, quadrant, geo map) |
 | G-5 | Allow backup and merge via export/import |
 | G-6 | Protect sensitive portfolios with optional passwords |
+| G-7 | Support touch-first planning on tablets and phones without horizontal scroll |
 
 ## 3. Non-goals
 
 - Multi-user collaboration, roles, or audit server
-- Server-side persistence or authentication service
+- Server-side persistence or authentication service (beyond optional workspace blob API)
 - Sprint/dependency/workflow management (Jira replacement)
 - Accounting-grade financial reporting
 
@@ -53,6 +58,7 @@ See [USER_PERSONAS.md](USER_PERSONAS.md).
 | FR-1.4 | Activate profile | Portfolio workspace shows selection |
 | FR-1.5 | Search profiles | Filters by name/team |
 | FR-1.6 | Optional password on create | Hash stored; profile locked until unlock |
+| FR-1.7 | Compact profile picker | At ≤1400px: picker + bottom-sheet profile list |
 
 ### FR-2 Projects
 
@@ -60,9 +66,10 @@ See [USER_PERSONAS.md](USER_PERSONAS.md).
 |----|-------------|------------|
 | FR-2.1 | CRUD projects | Modal create/edit; view read-only |
 | FR-2.2 | RICE inputs with validation | See FR-3 |
-| FR-2.3 | Metadata: type, status, MoSCoW, period, countries, t-shirt | Saved on project |
-| FR-2.4 | Bulk delete (table) | Confirmation; selection respected |
-| FR-2.5 | Project ID in modal footer | Stable id visible |
+| FR-2.3 | Metadata: type, status, MoSCoW, period, countries, t-shirt, labels, links | Saved on project |
+| FR-2.4 | Bulk delete (table) | Confirmation; selection respected (toolbar desktop; selection bar compact) |
+| FR-2.5 | Project ID in modal footer | Stable id visible in footer metadata |
+| FR-2.6 | Modal footer disclosure (compact) | At ≤1400px: metadata in `<details>` collapsed by default; desktop forces open |
 
 ### FR-3 RICE
 
@@ -91,27 +98,104 @@ See [USER_PERSONAS.md](USER_PERSONAS.md).
 
 | ID | View | Requirement |
 |----|------|-------------|
-| FR-5.1 | Table | Sort, filter, icon columns, actions |
-| FR-5.2 | Board | Columns by status; DnD order; RICE sort toggle |
-| FR-5.3 | MoSCoW | Desktop: 2×2 grid; compact: nav pills + single-column quadrants; optional RICE sort |
-| FR-5.4 | Map | Leaflet choropleth; metric: count / RICE / EUR |
-| FR-5.5 | All | Fullscreen mode (compact layouts preserved in fullscreen host) |
-| FR-5.6 | Locked profile | No project data in any view |
-| FR-5.7 | Compact layout | ≤1024px: unified phone UI; no horizontal scroll on board/MoSCoW; table bulk delete via selection bar |
+| FR-5.1 | Table (desktop) | Sortable grid; semantic column classes; bulk select in toolbar |
+| FR-5.2 | Table (compact) | Card list (`table-compact-cards.css`); FAB for new project; selection bar for bulk delete; optional **Group by** |
+| FR-5.3 | Board | Columns by status; DnD order (desktop); **Move to** on compact; RICE sort toggle; unified card chrome across breakpoints |
+| FR-5.4 | MoSCoW | Desktop: 2×2 grid with display names **Must Have**, **Should Have**, **Could Have**, **Won't Have**; compact: 2×2 nav pills + single-column quadrants; optional RICE sort |
+| FR-5.5 | Map | Leaflet choropleth; metric: count / RICE / EUR |
+| FR-5.6 | All | Fullscreen mode (compact layouts preserved in fullscreen host) |
+| FR-5.7 | Locked profile | No project data in any view |
+| FR-5.8 | Compact layout | ≤1400px: unified phone UI; no horizontal scroll on board/MoSCoW; table uses card list |
+
+#### FR-5.1 Semantic table columns (desktop)
+
+Desktop table uses `<col>` and cell classes `projects-table-col--*` so column widths stay aligned when optional columns enter the DOM:
+
+| Class suffix | Column |
+|--------------|--------|
+| `select` | Bulk checkbox |
+| `title` | Project title |
+| `owner` | Owner profile (privileged workspace mode only; see FR-10) |
+| `type` | Project type icon |
+| `status` | Status icon |
+| `framework` | Financial framework |
+| `period` | Planning period |
+| `size` | T-shirt size |
+| `moscow` | MoSCoW category |
+| `rice` | RICE score |
+| `financial` | Financial impact |
+| `created` | Created timestamp |
+| `actions` | Row actions |
+
+Widths are enforced in `table-revamp-modern.css` via matching `colgroup` / header / cell classes.
+
+#### FR-5.2 Table group-by (compact card list)
+
+| ID | Requirement | Acceptance |
+|----|-------------|------------|
+| FR-5.2.1 | Group-by control | `#tableGroupBySelect` lists options from `TABLE_GROUP_BY_OPTIONS` |
+| FR-5.2.2 | Persist preference | `state.tableGroupBy` saved in workspace payload |
+| FR-5.2.3 | Summary | `#tableGroupBySummary` announces group name and project count (live region) |
+| FR-5.2.4 | Options | No grouping; Owner profile; Status; MoSCoW; T-shirt size; Financial framework; Project type; Currency |
+
+Owner profile grouping is available when privileged workspace mode is active (see FR-10).
+
+#### FR-5.4 MoSCoW display names
+
+- Stored values remain `moscowList` entries (e.g. `"Must have"`).
+- UI headers, compact nav pills, and quadrant labels use `moscowDisplayNames` / `getMoscowDisplayName()`: **Must Have**, **Should Have**, **Could Have**, **Won't Have**.
+- Quadrant header row: category badge + description on one horizontal line (desktop and compact).
 
 ### FR-6 Filters
 
-Quick: title, type, countries, period.  
-Advanced: impact, effort, currency, framework, status, t-shirt, MoSCoW, financial range.  
-Active filter pill summarizes state.
+Filters apply to **table, board, MoSCoW, and map** (portfolio-wide slice).
+
+#### FR-6.1 Search row
+
+| ID | Requirement | Acceptance |
+|----|-------------|------------|
+| FR-6.1.1 | Title search | Substring match on project title |
+| FR-6.1.2 | Title autocomplete | Suggestions from active scope titles; keyboard navigable listbox; max 12 matches |
+| FR-6.1.3 | Label search | Substring match on any project label |
+| FR-6.1.4 | Label autocomplete | Suggestions from distinct labels in scope; same UX as title |
+
+#### FR-6.2 Quick filters
+
+Type, countries, project period (`YYYY-Qn`).
+
+#### FR-6.3 Advanced filters
+
+Impact, effort, currency, framework, status, t-shirt, MoSCoW, financial range, **labels presence**, **links presence**, and (when FR-10 active) owner profile.
+
+#### FR-6.4 Labels filter
+
+| Value | Behavior |
+|-------|----------|
+| *(empty)* | **Any** — no label-count constraint |
+| `with` | At least one label on the project |
+| `without` | Zero labels |
+
+Works together with label search (both must pass).
+
+#### FR-6.5 Links filter
+
+| Value | Behavior |
+|-------|----------|
+| *(empty)* | **Any** |
+| `with` | Project has one or more links |
+| `without` | No links |
+
+#### FR-6.6 Active filter summary
+
+Pill summarizes active filters including “With labels”, “Without labels”, “With links”, “Without links”.
 
 ### FR-7 Exchange rates
 
 Manual refresh; rates cached in state; EUR conversion for table/map financial displays.
 
-**Acceptance notes (current implementation):**
-- Profile view includes an original-currency breakdown; for each currency total card (non-EUR), the app displays an **EUR equivalent** using the latest in-app exchange rates.
-- If a currency rate is unavailable, the UI shows an explicit “EUR conversion unavailable” fallback (no misleading numbers).
+**Acceptance notes:**
+- Profile view shows original-currency breakdown with EUR equivalents when rates exist.
+- Missing rate: explicit “EUR conversion unavailable” — no fabricated numbers.
 
 ### FR-8 Export / import
 
@@ -119,20 +203,10 @@ Manual refresh; rates cached in state; EUR conversion for table/map financial di
 |----|-------------|------------|
 | FR-8.1 | Export JSON | Download file with exportable profiles only |
 | FR-8.2 | Export CSV | One row per project |
-| FR-8.3 | Export password gate | Locked profiles omitted unless verified |
+| FR-8.3 | Export password gate | Locked profiles omitted unless verified per profile |
 | FR-8.4 | Import JSON | Merge profiles/projects by id |
 | FR-8.5 | Import CSV | Merge project rows |
 | FR-8.6 | UI parity | Import/export modals share design system |
-
-#### FR-8.3 Export password gate (expanded acceptance)
-- **Verification is per-profile:** the export unlock dialog verifies each locked profile independently.
-- **Incorrect/missing passwords exclude:** profiles with incorrect or empty passwords are omitted from the export payload.
-- **User feedback:** export completion messaging reflects skipped protected profiles (count and, when possible, names).
-
-#### FR-8.6 UI parity (expanded acceptance)
-- Import/export modals use the same component language: consistent header, scrollable body, and footer action layout.
-- Format selection uses consistent card-style controls (JSON/CSV).
-- Password reveal controls use the same show/hide eye toggle pattern across flows.
 
 ### FR-9 UX / accessibility
 
@@ -140,10 +214,26 @@ Manual refresh; rates cached in state; EUR conversion for table/map financial di
 |----|-------------|
 | FR-9.1 | Single visible tooltip app-wide |
 | FR-9.2 | Modal field tooltips for all variables |
-| FR-9.3 | Responsive header, profiles, portfolio (compact ≤1024px = phone UI; desktop >1024px) |
-| FR-9.6 | Site footer | Attribution and external links visible on all breakpoints |
+| FR-9.3 | Responsive layout: compact ≤1400px = phone UI; desktop >1400px |
 | FR-9.4 | Password show/hide on all password fields |
 | FR-9.5 | Delete confirmations |
+| FR-9.6 | Site footer | Year, maintainer, LinkedIn, website, **GitHub repository**, **article** link; readable on all breakpoints |
+| FR-9.7 | Board/MoSCoW cards | Consistent radius, border, shadow; action row on one line; structured tooltips on meta fields |
+
+### FR-10 Privileged workspace mode (cross-profile)
+
+Cross-profile read/write behavior, eligibility, UI placement, and safety rules are defined in **[GUARDRAILS.md §7](GUARDRAILS.md)**. Product requirements at a glance:
+
+| ID | Requirement | Acceptance |
+|----|-------------|------------|
+| FR-10.1 | Activation | Only when trust profile is active, unlocked, and mode toggle is on |
+| FR-10.2 | Read scope | All projects in workspace with owner metadata |
+| FR-10.3 | Write scope | Changes persist to each project’s owner profile |
+| FR-10.4 | Table | Profile column + sort; owner advanced filter; group-by owner profile |
+| FR-10.5 | Cards | Owner attribution on table compact cards, board cards, MoSCoW cards, map tooltips |
+| FR-10.6 | Deactivation | Turning mode off restores single-profile scope immediately |
+
+Do not duplicate §7 policy detail here; update GUARDRAILS when behavior changes.
 
 ---
 
@@ -157,6 +247,7 @@ Manual refresh; rates cached in state; EUR conversion for table/map financial di
 | NFR-4 | Deploy | Static hosting; CSP in `vercel.json` |
 | NFR-5 | Offline | Core features work without network except map tiles and FX |
 | NFR-6 | Portability | Chrome, Firefox, Safari, Edge (current versions) |
+| NFR-7 | Cache bust | Ship UI changes with bumped `APP_ASSET_VERSION` on all static assets |
 
 ---
 
@@ -171,9 +262,9 @@ Manual refresh; rates cached in state; EUR conversion for table/map financial di
 
 ## 8. Out of scope / future considerations
 
-- Team sync and shared workspaces
+- Team sync and shared workspaces (beyond GUARDRAILS §7 trust profile)
 - Role-based access control
-- Automated OKR dashboards (metrics defined in [METRICS_AND_OKRS.md](METRICS_AND_OKRS.md) for manual tracking)
+- Automated OKR dashboards (metrics in [METRICS_AND_OKRS.md](METRICS_AND_OKRS.md))
 - Native mobile apps
 
 ---
@@ -183,4 +274,5 @@ Manual refresh; rates cached in state; EUR conversion for table/map financial di
 - [PRODUCT_DOCUMENTATION.md](PRODUCT_DOCUMENTATION.md) — comprehensive product reference  
 - [VARIABLES.md](VARIABLES.md) — formulas and field dictionary  
 - [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md) — requirement mapping  
+- [GUARDRAILS.md](GUARDRAILS.md) — limitations and §7 cross-profile mode  
 - [CHANGELOG.md](CHANGELOG.md) — release history  

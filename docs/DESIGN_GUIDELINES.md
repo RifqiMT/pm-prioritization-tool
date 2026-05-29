@@ -1,7 +1,9 @@
 # Design Guidelines
 
 **Product:** Product Management Prioritization Tool  
-**Last updated:** 2026-05-27
+**Last updated:** 2026-05-28  
+**Implementation baseline:** `APP_ASSET_VERSION` = `20260528-ui152`  
+**Layout breakpoint:** `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** (`html.is-compact-layout` + `html.is-phone-layout`)
 
 Visual and interaction standards for the local-first prioritization workspace.
 
@@ -96,18 +98,20 @@ Defined in `main.css` `.cell-type-pill[data-status=...]` and `view-toolbars-mode
 | `export-modals-modern.css` | Export, import, export-unlock |
 | `view-toolbars-modern.css` | Table/board/MoSCoW/map toolbars |
 | `compact-modern.css` | Compact chrome: icon tabs, short title, FAB, hidden toolbar labels |
-| `moscow-compact.css` | MoSCoW nav pills, single-column quadrants (≤1024px) |
+| `moscow-compact.css` | MoSCoW nav pills, single-column quadrants (≤1400px); header title line |
 | `board-compact.css` | Board single-column stack, card move dropdown |
 | `table-compact.css` | Table compact toolbar, selection bar, stacked actions |
-| `project-actions-modern.css` | Table row action toolbar (icon-only), alignment + spacing |
 | `table-rows-modern.css` | Modern row alignment, spacing, and typography for table rows |
 | `table-revamp-modern.css` | Modern table shell/layout rules (overlap prevention, action cell constraints) |
 | `fullscreen-modern.css` | Fullscreen host layout (desktop + compact parity) |
 | `fullscreen-compact.css` | Fullscreen body host + compact view parity |
 | `views-density.css` | Density scaling helpers (compact/desktop readability tuning) |
 | `layout-flow.css` | Shared flow/layout helpers across surfaces |
-| `portfolio-cards-compact.css` | Compact card stacks for portfolio surfaces |
-| `app-footer.css` | Centered one-row site footer |
+| `portfolio-cards-compact.css` | Compact + desktop card stacks (12px radius, shared shadow) |
+| `table-compact-cards.css` | Compact table **card list** (replaces wide grid ≤1400px) |
+| `project-actions-modern.css` | Row/card action rails; desktop board actions `nowrap` |
+| `super-admin-modern.css` | Owner stripe, profile column, workspace-wide chrome — see GUARDRAILS §7 |
+| `app-footer.css` | Centered one-row site footer (LinkedIn, website, GitHub, article) |
 
 **Load order:** see [TECH_GUIDELINES.md](TECH_GUIDELINES.md).
 
@@ -167,9 +171,31 @@ Defined in `main.css` `.cell-type-pill[data-status=...]` and `view-toolbars-mode
 
 ### 5.7 Tables
 
-- Sticky gradient header (where enabled), zebra rows, horizontal scroll hint on mobile.  
+- **Desktop (>1400px):** sticky gradient header, semantic `<col>` classes, zebra rows.  
+- **Compact (≤1400px):** card list (`table-compact-cards.css`); FAB; floating selection bar; optional **Group by** bar.  
 - Icon columns: Type, Status, Framework.  
-- Actions: compact **icon-only** action rail aligned inside the Actions cell to prevent overlap on narrow widths.
+- Actions: compact **icon-only** action rail; desktop actions stay inside the Actions cell without overlap.
+
+### 5.8 Portfolio cards (board, MoSCoW, compact table)
+
+- **Radius:** `--pcard-radius: 12px` on desktop and compact.  
+- **Surface:** warm white gradient, subtle border, soft shadow (`portfolio-cards-compact.css`).  
+- **Actions:** View / Edit / Delete + reorder on **one horizontal row** on desktop.  
+- **Owner attribution:** top **card-strip** when privileged workspace mode is active (GUARDRAILS §7).
+
+### 5.9 MoSCoW quadrants
+
+- **Display names:** **Must Have**, **Should Have**, **Could Have**, **Won't Have**.  
+- **Header row:** category badge + quadrant description on one line.  
+- **Compact nav:** 2×2 pill bar uses `getMoscowDisplayName()` for full names.
+
+### 5.10 Profile command bar (compact)
+
+- Profile picker and privileged workspace toggle share **one row** (`compact-modern.css`, `portfolio-modern.css`).
+
+### 5.11 Site footer
+
+- Single centered row: copyright, maintainer, icon links (LinkedIn, website, GitHub, article).
 
 ---
 
@@ -186,13 +212,13 @@ Defined in `main.css` `.cell-type-pill[data-status=...]` and `view-toolbars-mode
 
 | Breakpoint | HTML classes | Behavior |
 |------------|--------------|----------|
-| **>1024px** | `is-desktop-layout` | Full desktop: horizontal board, 2×2 MoSCoW, table toolbar bulk delete |
-| **≤1024px** | `is-compact-layout`, `is-phone-layout` | **Unified phone UI** on tablets and phones: vertical board/MoSCoW, MoSCoW nav pills, FAB, selection bar, icon-only tabs |
+| **>1400px** | `is-desktop-layout` | Full desktop: data table grid, horizontal board, 2×2 MoSCoW, toolbar bulk delete |
+| **≤1400px** | `is-compact-layout`, `is-phone-layout` | **Unified phone UI** on tablets and phones: table **card list**, vertical board/MoSCoW, MoSCoW nav pills, FAB, selection bar, icon-only portfolio tabs |
 | ≤639px | (same compact classes) | Narrowest phones; footer link labels may hide (icons only) |
 
-**Implementation:** `initCompactLayoutClass()` in `src/app.js` listens to `resize` and sets classes on `document.documentElement`.
+**Implementation:** `initCompactLayoutClass()` in `src/app.js` compares `window.innerWidth` to `COMPACT_LAYOUT_MAX_WIDTH_PX` (1400) on load and `resize`.
 
-**Do not** ship tablet-only hybrid layouts between 641px and 1024px — compact rules apply to the full ≤1024px range.
+**Do not** ship a separate “tablet-only” layout between 641px and 1400px — compact CSS applies to the entire ≤1400px range.
 
 ---
 

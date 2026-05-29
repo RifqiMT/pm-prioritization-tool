@@ -1,585 +1,665 @@
 # User Stories
 
-**Product:** Product Management Prioritization Tool  
-**Version:** 2.0.0  
-**Last updated:** 2026-05-27  
-**Purpose:** This document turns epics into user-story contracts with clear **Given / When / Then** acceptance criteria, including edge cases and error handling.
+| Field | Value |
+|-------|-------|
+| **Product** | Product Management Prioritization Tool |
+| **Version** | 2.0.0 |
+| **Last updated** | 2026-05-28 |
+| **Compact breakpoint** | ≤ **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) |
+
+**Purpose:** Epics and user-story contracts with **Given / When / Then** acceptance criteria, including edge cases and error handling.
 
 ---
 
-## Story Template
+## Story template
 
 Each story includes:
-- **Persona**: who needs it
-- **Goal**: what outcome they want
-- **Preconditions**: what must be true before the story starts
-- **Acceptance Criteria**: expected behavior in normal and edge cases
-- **Error / Edge Handling**: what happens when inputs are invalid or security constraints apply
+
+- **Persona**, **Goal**, **Preconditions**
+- **Acceptance criteria** (Given / When / Then)
+- **Error / edge handling**
 
 ---
 
-## Epic A — Portfolio Setup
+## Epic A — Portfolio setup
 
 ### US-A1 — Create profile-based portfolios
-- **Persona:** Product Manager
-- **Goal:** Separate portfolio contexts by team/product.
-- **Preconditions:** User opens the app and can create profiles.
 
-**Acceptance Criteria**
-1. **Create profile successfully**
-   - **Given** the user enters a valid profile name
-   - **When** the user clicks create
-   - **Then** the new profile appears in the profile list
-   - **And** the profile is available for project creation.
-2. **Optional team handling**
-   - **Given** the user leaves team empty (optional)
-   - **When** the profile is created
-   - **Then** the profile is created without a team value
-   - **And** UI labels remain stable (no broken layout).
+- **Persona:** Product Manager  
+- **Goal:** Separate portfolio contexts by team/product.  
+- **Preconditions:** User can access profile creation.
 
-**Error / Edge Handling**
-- **Given** the user enters an empty profile name
-- **When** the user submits
-- **Then** the app prevents creation and shows an appropriate validation message.
+**Acceptance criteria**
+
+1. **Create profile successfully**  
+   - **Given** the user enters a valid profile name  
+   - **When** the user creates the profile  
+   - **Then** the profile appears in the list  
+   - **And** the user can add projects to it.
+
+2. **Optional team**  
+   - **Given** team is left empty  
+   - **When** the profile is created  
+   - **Then** the profile saves without a team value  
+   - **And** layout remains stable.
+
+**Error / edge handling**
+
+- **Given** an empty profile name  
+- **When** the user submits  
+- **Then** creation is blocked with validation feedback.
 
 ---
 
 ### US-A2 — Switch active profile quickly
-- **Persona:** Product Manager
-- **Goal:** Ensure all views reflect the selected context.
-- **Preconditions:** At least one profile exists.
 
-**Acceptance Criteria**
-1. **Activate profile**
-   - **Given** the user selects a profile in the profiles panel
-   - **When** the user activates it
-   - **Then** `activeProfileId` is updated
-   - **And** the portfolio header and all project views refresh to show that profile’s data.
-2. **Locked profile behavior**
-   - **Given** the selected profile is password-protected
-   - **When** the profile is locked
-   - **Then** the app shows the locked banner and prevents project rendering across views.
+- **Persona:** Product Manager  
+- **Goal:** All views reflect the selected portfolio.  
+- **Preconditions:** ≥1 profile exists.
 
-**Error / Edge Handling**
-- **Given** a profile is deleted while selected
-- **When** the UI rerenders
-- **Then** active selection falls back to the next available profile (or shows “No profile selected”).
+**Acceptance criteria**
+
+1. **Activate profile**  
+   - **Given** the user selects a profile  
+   - **When** it becomes active  
+   - **Then** `activeProfileId` updates  
+   - **And** table, board, MoSCoW, and map refresh.
+
+2. **Locked profile**  
+   - **Given** the profile is password-protected and locked  
+   - **When** it is active  
+   - **Then** the locked banner shows  
+   - **And** project data does not render in any view.
+
+**Error / edge handling**
+
+- **Given** the active profile is deleted  
+- **When** the UI re-renders  
+- **Then** selection falls back to another profile or empty state.
 
 ---
 
-## Epic B — Project Prioritization
+## Epic B — Project prioritization
 
 ### US-B1 — Enter RICE fields and see computed score
-- **Persona:** Product Manager
-- **Goal:** Rank work objectively using RICE.
-- **Preconditions:** Active profile is unlocked (or at least project surfaces are accessible).
 
-**Acceptance Criteria**
-1. **Compute score from inputs**
-   - **Given** valid values for Reach, Impact, Confidence, and Effort are entered
-   - **When** the user saves the project
-   - **Then** the RICE score is computed with the formula used by the app
-   - **And** the score is displayed in relevant views (table and board sort).
-2. **Normalize confidence**
-   - **Given** Confidence is greater than 1 (stored as percent-style)
-   - **When** the score is computed
-   - **Then** Confidence is normalized to a decimal before calculation.
+- **Persona:** Product Manager  
+- **Goal:** Rank work with RICE.  
+- **Preconditions:** Active profile unlocked.
 
-**Error / Edge Handling**
-- **Given** Reach is negative
-- **When** user submits
-- **Then** validation blocks save.
-- **Given** Effort is invalid (<= 0 or not in allowed scale)
-- **When** user submits
-- **Then** validation blocks save or produces a safe score per app logic (no NaN/Infinity).
+**Acceptance criteria**
 
----
+1. **Compute score**  
+   - **Given** valid Reach, Impact, Confidence, Effort  
+   - **When** the user saves the project  
+   - **Then** RICE = `(R × I × C) ÷ E`  
+   - **And** the score appears in table and sortable views.
 
-### US-B2 — Explain RICE using tooltip details
-- **Persona:** Product Manager
-- **Goal:** Make scoring transparent and defensible.
+2. **Normalize confidence**  
+   - **Given** Confidence &gt; 1 (percent style)  
+   - **When** the score is computed  
+   - **Then** confidence is normalized before calculation.
 
-**Acceptance Criteria**
-1. **Tooltip contains full explanation**
-   - **Given** a user hovers/focuses the RICE tooltip target
-   - **When** the tooltip appears
-   - **Then** it includes:
-     - Abbreviation expansion for R / I / C / E
-     - The RICE formula
-     - The numeric calculation line when inputs are valid.
-2. **Single tooltip visibility**
-   - **Given** multiple tooltip triggers exist
-   - **When** the user opens one tooltip
-   - **Then** any previously visible tooltip is hidden.
+**Error / edge handling**
 
-**Error / Edge Handling**
-- **Given** the user moves quickly between tooltip triggers
-- **When** tooltips are rerendered
-- **Then** the app avoids overlapping tooltips and remains keyboard-accessible.
+- **Given** invalid Reach or Effort  
+- **When** the user saves  
+- **Then** validation blocks save (no NaN/Infinity).
 
 ---
 
-### US-B3 — MOSCOW categorization
-- **Persona:** Product Manager
-- **Goal:** Express delivery intent clearly.
+### US-B2 — Explain RICE using tooltips
 
-**Acceptance Criteria**
-1. **Select MoSCoW category**
-   - **Given** the user edits a project
-   - **When** they select a valid MoSCoW category
-   - **Then** the project record stores `moscowCategory` (or null-safe equivalent)
-   - **And** the MoSCoW view places the project into the matching quadrant.
-2. **RICE sort toggle (optional)**
-   - **Given** the MoSCoW RICE sort toggle is enabled
-   - **When** the MoSCoW view renders
-   - **Then** projects in each quadrant are ordered by computed RICE.
+- **Persona:** Product Manager  
+- **Goal:** Make scoring transparent.
 
-**Error / Edge Handling**
-- **Given** invalid MoSCoW category value is selected
-- **When** user saves
-- **Then** app prevents invalid persistence (no broken quadrant mapping).
+**Acceptance criteria**
+
+1. **Tooltip content**  
+   - **Given** the user opens the RICE tooltip  
+   - **When** it displays  
+   - **Then** it shows R/I/C/E expansions, formula, and calculation line when valid.
+
+2. **Single tooltip**  
+   - **Given** a tooltip is already open  
+   - **When** another opens  
+   - **Then** only one tooltip is visible.
 
 ---
 
-## Epic C — Financial Evaluation
+## Epic C — Financial frameworks
 
-### US-C1 — Choose a financial framework per project
-- **Persona:** Product Manager
-- **Goal:** Use value logic aligned with the planning model.
+### US-C1 — Select framework and see planning value
 
-**Acceptance Criteria**
-1. **Switch framework**
-   - **Given** a project is edited
-   - **When** the user selects a framework (custom/clv/nps/risk/headcount/operational)
-   - **Then** framework-specific inputs render
-   - **And** irrelevant framework inputs are cleared to avoid leakage.
+- **Persona:** Geo / Finance PM  
+- **Goal:** Use the right value model per initiative.
 
-**Error / Edge Handling**
-- **Given** the user switches frameworks multiple times
-- **When** the project is saved
-- **Then** only the correct inputs for the active framework are sanitized and persisted.
+**Acceptance criteria**
 
----
+1. **Framework compute**  
+   - **Given** the user selects a non-custom framework and valid inputs  
+   - **When** the project saves  
+   - **Then** `financialImpactValue` is computed per framework rules.
 
-### US-C2 — Framework-specific inputs compute impact consistently
-- **Persona:** Product Manager
-- **Goal:** Consistent calculation across frameworks.
-
-**Acceptance Criteria**
-1. **Compute impact on save**
-   - **Given** valid framework inputs are entered
-   - **When** the user saves
-   - **Then** `financialImpactValue` is computed or normalized by the framework rules
-   - **And** `financialImpactCurrency` is set when needed.
-2. **Switching sanitizes**
-   - **Given** the user changes frameworks
-   - **When** computation runs
-   - **Then** the prior framework’s impact logic is not reused.
-
-**Error / Edge Handling**
-- **Given** missing required inputs for the selected framework
-- **When** user saves
-- **Then** validation blocks or sets safe null/zero values consistent with app rules (no NaN).
+2. **Framework switch**  
+   - **Given** the user changes framework in the modal  
+   - **When** the change applies  
+   - **Then** prior framework inputs do not leak into the new framework.
 
 ---
 
-### US-C3 — Identify framework using icon + tooltip
-- **Persona:** Stakeholder
-- **Goal:** Identify model type quickly.
+## Epic D — Multi-view planning
 
-**Acceptance Criteria**
-1. **Table shows framework icon**
-   - **Given** table view is open
-   - **When** projects render
-   - **Then** each project row includes the Framework icon.
-2. **Tooltip describes framework**
-   - **Given** the user hovers/focuses the framework icon
-   - **When** tooltip appears
-   - **Then** it includes framework name and explanatory content.
+### US-D1 — Switch among table, board, MoSCoW, and map
 
-**Error / Edge Handling**
-- **Given** a project uses custom framework without expected fields
-- **When** tooltip is rendered
-- **Then** tooltip remains readable and does not crash.
+- **Persona:** Delivery Lead  
+- **Goal:** Use the right visualization for the meeting.
 
----
+**Acceptance criteria**
 
-## Epic D — Execution Views
+1. **View toggle**  
+   - **Given** an unlocked profile with projects  
+   - **When** the user selects a view tab  
+   - **Then** only that view is visible  
+   - **And** filters continue to apply.
 
-### US-D1 — Table sorting and filtering
-- **Persona:** Team Lead
-- **Goal:** Quickly find critical slices.
-
-**Acceptance Criteria**
-1. **Sort**
-   - **Given** the table is visible
-   - **When** the user selects a sort order
-   - **Then** rows reorder according to app sort logic.
-2. **Filter**
-   - **Given** the user sets quick/advanced filters
-   - **When** filters apply
-   - **Then** only projects matching filter criteria appear.
-3. **Framework naming consistency**
-   - **Given** the user uses advanced filters
-   - **When** they select the framework filter
-   - **Then** the UI consistently labels it as `Framework` across table and filters.
-
-**Error / Edge Handling**
-- **Given** filters conflict (e.g., impossible ranges)
-- **When** filtering runs
-- **Then** the app shows a safe empty state without errors.
+2. **Fullscreen**  
+   - **Given** the user enables fullscreen on a view  
+   - **When** fullscreen is active  
+   - **Then** compact layout rules still apply at ≤1400px.
 
 ---
 
-### US-D2 — Board status drag/drop and RICE sort
-- **Persona:** Team Lead
-- **Goal:** Efficient execution changes via board.
-- **Preconditions:** Active profile unlocked; board view visible.
+## Epic E — Data portability
 
-**Acceptance Criteria**
-1. **Drag/drop status transition**
-   - **Given** RICE sort is off (board allows manual ordering)
-   - **When** the user drags a card to a different status column
-   - **Then** the project’s status updates
-   - **And** the card moves to the correct column.
-2. **All status columns visible**
-   - **Given** the board renders on desktop or compact
-   - **When** the user views the board
-   - **Then** every configured status column is shown (no hide/show column pills).
-3. **RICE sort toggle**
-   - **Given** the board RICE sort toggle is enabled
-   - **When** the board re-renders
-   - **Then** cards within each column are ordered by RICE score descending.
+### US-E1 — Export and import workspace data
 
-**Error / Edge Handling**
-- **Given** a project has an unexpected/missing status value
-- **When** the board renders
-- **Then** the app safely falls back to a defined default status.
+- **Persona:** Product Manager  
+- **Goal:** Backup and merge portfolios.
 
----
+**Acceptance criteria**
 
-### US-D3 — MoSCoW grid movement
-- **Persona:** Product Manager
-- **Goal:** Reflect priority intent shifts.
+1. **Export JSON**  
+   - **Given** exportable profiles (unlocked or unprotected)  
+   - **When** the user exports JSON  
+   - **Then** a file downloads with profiles, projects, and preferences.
 
-**Acceptance Criteria**
-1. **Move between quadrants**
-   - **Given** a project exists
-   - **When** the user updates its MoSCoW category (via grid interactions or edit modal)
-   - **Then** the project appears in the corresponding MoSCoW quadrant.
-2. **Optional RICE sort**
-   - **Given** MoSCoW RICE sort toggle is enabled
-   - **When** quadrant renders
-   - **Then** projects are ordered by computed RICE.
+2. **Import merge**  
+   - **Given** a valid JSON export  
+   - **When** the user imports  
+   - **Then** profiles/projects merge by id without wiping unrelated data.
 
-**Error / Edge Handling**
-- **Given** invalid MoSCoW input
-- **When** user saves
-- **Then** save is blocked or data normalized to valid enum.
+**Error / edge handling**
+
+- **Given** a locked protected profile not verified  
+- **When** export runs  
+- **Then** that profile is omitted and the user is informed.
 
 ---
 
-### US-D4 — Map aggregation by projects / RICE / financial
-- **Persona:** PM (Geo/Finance)
-- **Goal:** Understand regional trade-offs.
-
-**Acceptance Criteria**
-1. **Segmented metric selector**
-   - **Given** the Map view is open
-   - **When** the user selects Count / RICE / EUR
-   - **Then** the map aggregation uses the selected metric
-   - **And** the legend updates accordingly.
-2. **FX normalization readiness**
-   - **Given** FX exchange rates are unavailable
-   - **When** financial metric is selected
-   - **Then** the app fails gracefully (fallback messaging; no crashes).
-
-**Error / Edge Handling**
-- **Given** map tiles or data loading fails
-- **When** user remains on Map view
-- **Then** the map shows an empty/error state with guidance.
-
----
-
-### US-D5 — Card tooltips provide quick context
-- **Persona:** Product Manager
-- **Goal:** See status and description without editing.
-
-**Acceptance Criteria**
-1. **Tooltip content on hover/focus**
-   - **Given** a board/MoSCoW card tooltip trigger exists
-   - **When** user hovers/focuses the card title
-   - **Then** tooltip includes status and description content.
-2. **Tooltip exclusivity**
-   - **Given** another tooltip is visible
-   - **When** a new card tooltip is opened
-   - **Then** the previous tooltip is hidden.
-
-**Error / Edge Handling**
-- **Given** missing description fields
-- **When** tooltip renders
-- **Then** it remains readable and omits empty lines safely.
-
----
-
-## Epic E — Data Governance
-
-### US-E1 — Export JSON/CSV and enforce password-gated profiles
-- **Persona:** Product Manager
-- **Goal:** Backup/share safely without leaking locked portfolios.
-
-**Acceptance Criteria**
-1. **Protected profiles are not silently exported**
-   - **Given** at least one password-protected profile exists
-   - **When** the user initiates Export (JSON or CSV)
-   - **Then** export includes only:
-     - profiles without a password, and
-     - profiles that are unlocked with the correct password (this session) OR are verified in the export unlock dialog.
-2. **Incorrect password excludes that profile**
-   - **Given** a user enters an incorrect password for a protected profile in the export unlock dialog
-   - **When** they confirm export verification
-   - **Then** that profile is omitted from the exported file.
-3. **Missing password excludes that profile**
-   - **Given** a protected profile’s password field is empty
-   - **When** verification runs
-   - **Then** that profile is omitted from the exported file.
-4. **User feedback**
-   - **Given** one or more profiles were omitted
-   - **When** export completes
-   - **Then** the app shows a success toast explaining skipped protected profiles.
-
-**Error / Edge Handling**
-- **Given** the security module fails to load
-- **When** export verification is attempted
-- **Then** the app shows an error message and avoids generating an export file that could violate security expectations.
-
----
-
-### US-E2 — Import merge behavior avoids corruption
-- **Persona:** Product Manager
-- **Goal:** Safely merge exported data into the workspace.
-
-**Acceptance Criteria**
-1. **Merge by IDs**
-   - **Given** an import file contains profiles and projects with IDs
-   - **When** import runs
-   - **Then** profiles/projects with matching IDs are merged/updated
-   - **And** entities with new IDs are added.
-2. **No duplicate corruption**
-   - **Given** an import is repeated with the same file
-   - **When** import runs again
-   - **Then** duplicates are not created for the same IDs.
-3. **UI parity**
-   - **Given** the export and import dialogs are opened
-   - **When** user compares them
-   - **Then** both use the same modern modal design system:
-     - consistent header/palette
-     - consistent format cards
-     - consistent responsive behavior.
-
-**Error / Edge Handling**
-- **Given** an invalid JSON/CSV file is selected
-- **When** the import runs
-- **Then** import fails with a user-facing error message and does not partially corrupt state.
-
----
-
-### US-E3 — Local-first persistence without backend
-- **Persona:** Solo PM
-- **Goal:** Work without server setup.
-
-**Acceptance Criteria**
-1. **Persist data locally**
-   - **Given** the user saves profiles and projects
-   - **When** they refresh the page
-   - **Then** the data remains in localStorage.
-2. **Session-only unlock behavior**
-   - **Given** a profile is unlocked
-   - **When** the user refreshes or closes/reopens the tab
-   - **Then** the unlock state resets by design (user must unlock again).
-
-**Error / Edge Handling**
-- **Given** localStorage fails (privacy mode or quota)
-- **When** saving occurs
-- **Then** the app logs errors and shows a failure toast/message where possible.
-
----
-
-## Epic F — UX Standardization and Explainability
+## Epic F — UX standardization
 
 ### US-F1 — Exactly one tooltip visible at a time
-- **Persona:** PM
-- **Goal:** Prevent clutter and confusion.
 
-**Acceptance Criteria**
-1. **Single tooltip lifecycle**
-   - **Given** the user opens a tooltip
-   - **When** the user opens another tooltip before closing the first
-   - **Then** only one tooltip remains visible at any time.
-2. **Cross-surface behavior**
-   - **Given** a tooltip is open in table/cards/modal
-   - **When** another surface triggers a tooltip
-   - **Then** the app hides the prior tooltip and shows only the new one.
+(See US-B2 — same acceptance.)
 
-**Error / Edge Handling**
-- **Given** rapid hover events
-- **When** tooltip state changes quickly
-- **Then** tooltip positions remain stable enough to avoid UI jitter.
+### US-F2 — Standardized modal field tooltips
 
----
+- **Persona:** Product Manager  
+- **Goal:** Self-explanatory project form.
 
-### US-F2 — Standardized tooltip guidance for every variable field
-- **Persona:** PM
-- **Goal:** Make form completion self-explanatory.
+**Acceptance criteria**
 
-**Acceptance Criteria**
-1. **Standardized tooltip presence**
-   - **Given** the user opens a project create/edit modal
-   - **When** they focus each variable input
-   - **Then** standardized tooltip guidance is present for supported variables.
-2. **Fallback guidance**
-   - **Given** a field lacks explicit tooltip markup
-   - **When** modal initializes
-   - **Then** the app injects fallback standardized tooltip copy where required.
+- **Given** the project modal is open  
+- **When** the user focuses supported fields  
+- **Then** standardized tooltip guidance is available (native or injected fallback).
 
-**Error / Edge Handling**
-- **Given** tooltip injection fails
-- **When** user opens the modal
-- **Then** the app still renders inputs and does not break modal layout.
+### US-F3 — Project footer metadata
+
+- **Persona:** Product Manager  
+- **Goal:** Audit ID, dates, RICE, and financial context.
+
+**Acceptance criteria**
+
+1. **Desktop footer**  
+   - **Given** viewport &gt; 1400px  
+   - **When** the project modal is open  
+   - **Then** footer metadata (`Project details`) is expanded and shows ID, timestamps, RICE, financial/EUR context.
+
+2. **Compact footer**  
+   - **Given** viewport ≤ 1400px  
+   - **When** the modal opens  
+   - **Then** metadata is in a `<details>` block collapsed by default  
+   - **And** the user can expand **Project details**.
 
 ---
 
-### US-F3 — Advanced filter naming standardization (`Framework`)
-- **Persona:** PM
-- **Goal:** Keep terminology consistent across UI surfaces.
+## Epic G — Compact layout (≤1400px)
 
-**Acceptance Criteria**
-1. **Label consistency**
-   - **Given** the user opens advanced filters
-   - **When** they view the framework filter label
-   - **Then** the label is exactly `Framework` (not “Value model”, “Finance”, etc.).
-2. **Filter matches data**
-   - **Given** the user selects a framework in filters
-   - **When** filtering applies
-   - **Then** filtered results reflect the stored framework keys for each project.
+### US-G1 — Unified phone/tablet UI
 
-**Error / Edge Handling**
-- **Given** a project has no framework selected
-- **When** filters run
-- **Then** the project is handled consistently (excluded or treated as custom/null per app rules).
+- **Persona:** Mobile / field PM  
+- **Goal:** Same touch-first layout on all non-desktop widths.  
+- **Preconditions:** Viewport ≤ 1400px.
 
----
+**Acceptance criteria**
 
-### US-F4 — Project footer metadata includes Project ID + grouped context
-- **Persona:** PM
-- **Goal:** Faster audit and review.
+1. **Layout classes**  
+   - **Given** viewport is 768px, 1024px, or 1400px  
+   - **When** the page loads or resizes  
+   - **Then** `html` has `is-compact-layout` and `is-phone-layout`  
+   - **And** desktop sidebar table layout is not used.
 
-**Acceptance Criteria**
-1. **Footer layout correctness**
-   - **Given** the project edit/view modal is open
-   - **When** the metadata footer is visible
-   - **Then** left-side metadata includes Project ID and timestamps
-   - **And** right-side metadata includes RICE score and financial/EUR context.
-2. **No misleading precision**
-   - **Given** EUR conversion uses exchange rates
-   - **When** the footer shows financial context
-   - **Then** it remains clear that values are estimates and may depend on FX availability.
+2. **No horizontal board/MoSCoW scroll**  
+   - **Given** Board or MoSCoW on compact  
+   - **When** the view renders  
+   - **Then** content stacks vertically with vertical scroll only.
 
-**Error / Edge Handling**
-- **Given** exchange rates are unavailable
-- **When** footer renders financial context
-- **Then** it shows consistent messaging without corrupt numbers.
+**Error / edge handling**
 
----
-
-## Epic G — Compact / mobile layout (≤1024px)
-
-### US-G1 — Unified phone UI on tablets and phones
-- **Persona:** Mobile / field PM
-- **Goal:** Use the same touch-first layout on any non-desktop width.
-- **Preconditions:** Viewport width ≤1024px.
-
-**Acceptance Criteria**
-1. **Layout classes**
-   - **Given** the viewport is 768px or 1024px wide
-   - **When** the page loads or resizes
-   - **Then** `html` has `is-compact-layout` and `is-phone-layout`
-   - **And** desktop-only horizontal board/MoSCoW layouts are not used.
-2. **No horizontal board/MoSCoW scroll**
-   - **Given** the user opens Board or MoSCoW on compact
-   - **When** the view renders
-   - **Then** columns/quadrants stack vertically
-   - **And** the user can scroll vertically only to see all content.
-
-**Error / Edge Handling**
-- **Given** the user rotates the device or resizes the window across 1024px
-- **When** layout refreshes
-- **Then** classes update without requiring a full page reload.
+- **Given** resize across 1400px  
+- **When** layout refreshes  
+- **Then** classes and modal footer disclosure update without full reload.
 
 ---
 
 ### US-G2 — MoSCoW compact navigator
-- **Persona:** Product Manager
-- **Goal:** Jump between MoSCoW quadrants quickly on compact.
-- **Preconditions:** MoSCoW view active; compact layout.
 
-**Acceptance Criteria**
-1. **Nav pills**
-   - **Given** four MoSCoW categories exist
-   - **When** the compact nav renders
-   - **Then** a 2×2 pill grid shows Must / Should / Could / Won't with counts.
-2. **Scroll sync**
-   - **Given** the user scrolls the quadrant list
-   - **When** a quadrant enters the observer threshold
-   - **Then** the matching nav pill receives active state (`syncMoscowCompactNav`).
+- **Persona:** Product Manager  
+- **Goal:** Jump between quadrants on compact.  
+- **Preconditions:** MoSCoW view; compact layout.
+
+**Acceptance criteria**
+
+1. **Nav pills with display names**  
+   - **Given** four MoSCoW categories  
+   - **When** compact nav renders  
+   - **Then** pills show **Must Have**, **Should Have**, **Could Have**, **Won't Have** (via `getMoscowDisplayName`) with counts.
+
+2. **Scroll sync**  
+   - **Given** the user scrolls the quadrant list  
+   - **When** a quadrant crosses the observer threshold  
+   - **Then** the matching pill is active (`syncMoscowCompactNav`).
+
+3. **Jump on tap**  
+   - **Given** a nav pill  
+   - **When** the user activates it  
+   - **Then** the view scrolls to that quadrant.
 
 ---
 
 ### US-G3 — Table bulk actions on compact
-- **Persona:** Delivery Lead
-- **Goal:** Delete or manage multiple projects without desktop toolbar.
-- **Preconditions:** Table view; compact layout.
 
-**Acceptance Criteria**
-1. **Selection bar**
-   - **Given** one or more projects are selected
-   - **When** selection changes on compact
-   - **Then** the floating selection bar appears with bulk delete
-   - **And** the desktop toolbar bulk delete control is not the primary path.
-2. **FAB**
-   - **Given** compact layout
-   - **When** the portfolio workspace is visible
-   - **Then** a FAB is available to create a new project.
+- **Persona:** Delivery Lead  
+- **Goal:** Bulk delete without desktop toolbar.
+
+**Acceptance criteria**
+
+1. **Selection bar**  
+   - **Given** ≥1 project selected on compact table cards  
+   - **When** selection changes  
+   - **Then** the floating selection bar shows bulk delete.
+
+2. **FAB**  
+   - **Given** compact layout  
+   - **When** the portfolio workspace is visible  
+   - **Then** FAB creates a new project.
 
 ---
 
 ### US-G4 — Fullscreen preserves compact layouts
-- **Persona:** Stakeholder
-- **Goal:** Present MoSCoW or board on a projector or tablet in fullscreen.
-- **Preconditions:** Compact or desktop layout.
 
-**Acceptance Criteria**
-1. **Fullscreen host**
-   - **Given** the user toggles fullscreen on board, MoSCoW, table, or map
-   - **When** fullscreen activates
-   - **Then** `body` uses the fullscreen host class
-   - **And** compact CSS rules still apply when viewport ≤1024px.
-2. **Layout refresh**
-   - **Given** fullscreen was entered on compact
-   - **When** fullscreen opens
-   - **Then** `refreshCompactFullscreenEnter()` runs so grids/columns measure correctly.
+- **Persona:** Stakeholder  
+- **Goal:** Present on projector or tablet.
+
+**Acceptance criteria**
+
+- **Given** fullscreen on board, MoSCoW, table, or map at ≤1400px  
+- **When** fullscreen opens  
+- **Then** compact CSS applies  
+- **And** `refreshCompactFullscreenEnter()` runs for correct measurements.
 
 ---
 
-### US-G5 — Site footer readability
-- **Persona:** All users
-- **Goal:** See maintainer attribution and links on all devices.
+## Epic H — Search and advanced filters
+
+### US-H1 — Title autocomplete
+
+- **Persona:** Product Manager  
+- **Goal:** Find projects quickly by title.  
+- **Preconditions:** Active scope has projects with titles.
+
+**Acceptance criteria**
+
+1. **Suggestions**  
+   - **Given** the user types in **Title** search  
+   - **When** matching titles exist  
+   - **Then** up to 12 suggestions appear in a listbox  
+   - **And** keyboard navigation highlights options.
+
+2. **Apply filter**  
+   - **Given** a title query (typed or selected)  
+   - **When** filters run  
+   - **Then** only projects whose title contains the query (case-insensitive) remain in table, board, MoSCoW, and map.
+
+**Error / edge handling**
+
+- **Given** no matches  
+- **When** the dropdown opens  
+- **Then** empty state “No matching titles” shows.
+
+---
+
+### US-H2 — Label autocomplete
+
+- **Persona:** Product Manager  
+- **Goal:** Slice portfolio by theme labels.
+
+**Acceptance criteria**
+
+1. **Suggestions**  
+   - **Given** the user types in **Label** search  
+   - **When** matching labels exist in scope  
+   - **Then** suggestions list distinct labels (max 12).
+
+2. **Apply filter**  
+   - **Given** a label query  
+   - **When** filters run  
+   - **Then** projects with at least one label containing the query remain.
+
+---
+
+### US-H3 — Labels presence filter (any / with / without)
+
+- **Persona:** Product Manager  
+- **Goal:** Audit tagging hygiene.
+
+**Acceptance criteria**
+
+| Selection | **Given** projects A (no labels), B (has labels) | **When** filter applies | **Then** |
+|-----------|--------------------------------------------------|-------------------------|----------|
+| Any (empty) | — | filters run | A and B both eligible (subject to other filters) |
+| With labels | — | `filterLabels` = with | Only B |
+| Without labels | — | `filterLabels` = without | Only A |
+
+- **Given** both label search text and labels presence filter  
+- **When** filters run  
+- **Then** both constraints apply (AND).
+
+**Error / edge handling**
+
+- **Given** labels filter active  
+- **When** active filter pill renders  
+- **Then** pill text reads “With labels” or “Without labels”.
+
+---
+
+### US-H4 — Links presence filter (any / with / without)
+
+- **Persona:** Product Manager  
+- **Goal:** Ensure initiatives have supporting links before review.
+
+**Acceptance criteria**
+
+| Selection | **When** filter applies | **Then** |
+|-----------|-------------------------|----------|
+| Any | — | No link-count constraint |
+| With links | `filterLinks` = with | Projects with ≥1 link |
+| Without links | `filterLinks` = without | Projects with zero links |
+
+- **Given** links filter active  
+- **When** filters apply to all views  
+- **Then** board, MoSCoW, and map respect the same filtered set as table.
+
+---
+
+## Epic I — Table view (desktop grid + compact cards)
+
+### US-I1 — Semantic desktop columns
+
+- **Persona:** Product Manager  
+- **Goal:** Scannable table without column misalignment.
+
+**Acceptance criteria**
+
+1. **Column classes**  
+   - **Given** desktop table view  
+   - **When** the table renders  
+   - **Then** each column uses `projects-table-col--*` on `<col>`, `<th>`, and `<td>`  
+   - **And** widths match `table-revamp-modern.css`.
+
+2. **Optional owner column**  
+   - **Given** privileged workspace mode per [GUARDRAILS.md §7](GUARDRAILS.md)  
+   - **When** mode is active  
+   - **Then** Profile/owner column is visible and sortable  
+   - **Given** mode is inactive  
+   - **Then** owner column is hidden without breaking other column widths.
+
+---
+
+### US-I2 — Compact table card list
+
+- **Persona:** Mobile / field PM  
+- **Goal:** Read and act on projects without horizontal scroll.  
+- **Preconditions:** ≤1400px; table view.
+
+**Acceptance criteria**
+
+1. **Card layout**  
+   - **Given** compact layout and table view  
+   - **When** projects render  
+   - **Then** each project is a card (not a 12-column grid row)  
+   - **And** card shows status, MoSCoW, period, title, description excerpt, RICE, financial impact, size, framework, countries, and actions.
+
+2. **Badge strip**  
+   - **Given** a compact card  
+   - **When** metadata badges render  
+   - **Then** at most three pills show on one row with +N overflow tooltip when needed.
+
+3. **Owner stripe**  
+   - **Given** privileged workspace mode ([GUARDRAILS.md §7](GUARDRAILS.md))  
+   - **When** a card belongs to another profile  
+   - **Then** an owner attribution stripe appears on the card.
+
+---
+
+### US-I3 — Table group-by on compact cards
+
+- **Persona:** Product Manager  
+- **Goal:** Review projects in logical sections on tablet.
+
+**Acceptance criteria**
+
+1. **Control**  
+   - **Given** compact table view  
+   - **When** the user opens **Group by**  
+   - **Then** options include: No grouping; Owner profile (§7 only); Status; MoSCoW; T-shirt size; Financial framework; Project type; Currency.
+
+2. **Persist**  
+   - **Given** the user selects a group-by option  
+   - **When** the workspace saves  
+   - **Then** `state.tableGroupBy` restores on reload.
+
+3. **Summary**  
+   - **Given** a group is rendered  
+   - **When** the section header displays  
+   - **Then** `#tableGroupBySummary` announces group label and project count.
+
+**Error / edge handling**
+
+- **Given** group-by value with zero projects  
+- **When** rendering  
+- **Then** empty group is omitted or shows zero-count without errors.
+
+---
+
+## Epic J — MoSCoW presentation
+
+### US-J1 — Display names in quadrant headers
+
+- **Persona:** Stakeholder  
+- **Goal:** Read categories in workshop language.
+
+**Acceptance criteria**
+
+- **Given** MoSCoW view on desktop or compact  
+- **When** quadrant headers render  
+- **Then** labels read **Must Have**, **Should Have**, **Could Have**, **Won't Have**  
+- **And** stored values remain `moscowList` entries for filters/export.
+
+- **Given** a quadrant header  
+- **When** it displays  
+- **Then** category badge and description share one horizontal row.
+
+---
+
+### US-J2 — RICE sort within quadrants
+
+- **Persona:** Product Manager  
+- **Goal:** Order work inside a MoSCoW bucket.
+
+**Acceptance criteria**
+
+- **Given** RICE sort toggle enabled  
+- **When** MoSCoW board renders  
+- **Then** cards within each quadrant sort by RICE descending.
+
+---
+
+## Epic K — Site footer
+
+### US-K1 — Maintainer attribution and external links
+
+- **Persona:** All users  
+- **Goal:** Credit maintainer and open resources.  
 - **Preconditions:** Page loaded.
 
-**Acceptance Criteria**
-1. **Footer layout**
-   - **Given** any viewport width
-   - **When** the user scrolls to the page footer
-   - **Then** credit, LinkedIn, and website appear in a centered one-row grid
-   - **And** text contrast meets readable maroon-on-cream styling (`app-footer.css`).
+**Acceptance criteria**
 
+1. **Content**  
+   - **Given** any viewport  
+   - **When** the user views the site footer  
+   - **Then** it shows copyright year, maintainer name, LinkedIn, website, **GitHub repository**, and **article** links.
+
+2. **Accessibility**  
+   - **Given** footer icon buttons  
+   - **When** inspected  
+   - **Then** each has `aria-label` and opens in a new tab with `rel="noopener noreferrer"`.
+
+3. **Compact layout**  
+   - **Given** viewport ≤ 1400px  
+   - **When** the footer renders  
+   - **Then** links remain readable (contrast and touch targets per `app-footer.css`).
+
+**Error / edge handling**
+
+- **Given** external link unreachable  
+- **When** the user follows the link  
+- **Then** the browser handles the error (no app crash).
+
+---
+
+## Epic L — Board card UI
+
+### US-L1 — Consistent card chrome across breakpoints
+
+- **Persona:** Delivery Lead  
+- **Goal:** Recognizable cards on desktop and compact.
+
+**Acceptance criteria**
+
+- **Given** board view  
+- **When** cards render on desktop or ≤1400px  
+- **Then** cards share radius, border, surface gradient, and shadow with MoSCoW/table compact cards.
+
+---
+
+### US-L2 — Single-row card actions
+
+- **Persona:** Delivery Lead  
+- **Goal:** Tap targets without wrapped action rows.
+
+**Acceptance criteria**
+
+- **Given** a board card  
+- **When** actions render  
+- **Then** View, Edit, Delete, and reorder controls stay on one horizontal row on desktop, tablet, and phone.
+
+---
+
+### US-L3 — Card field tooltips
+
+- **Persona:** Product Manager  
+- **Goal:** Understand status, MoSCoW, type, RICE, and financial fields on cards.
+
+**Acceptance criteria**
+
+- **Given** a board card with tooltip-enabled meta  
+- **When** the user opens a tooltip  
+- **Then** copy matches standardized field definitions  
+- **And** only one tooltip is visible app-wide.
+
+---
+
+### US-L4 — Move status on compact board
+
+- **Persona:** Mobile / field PM  
+- **Goal:** Change status without drag-and-drop.
+
+**Acceptance criteria**
+
+- **Given** compact layout and board view  
+- **When** the user uses **Move to** on a card  
+- **Then** project status updates and the card moves to the correct column/stack.
+
+---
+
+## Epic M — Privileged workspace mode
+
+Policy and eligibility: **[GUARDRAILS.md §7](GUARDRAILS.md)** only.
+
+### US-M1 — Cross-profile read with owner context
+
+- **Persona:** Trust profile operator  
+- **Goal:** See all workspace projects with clear ownership.
+
+**Acceptance criteria**
+
+- **Given** mode active per §7  
+- **When** portfolio views render  
+- **Then** projects from all profiles appear with owner metadata  
+- **And** owner chips/stripes show on table cards, board cards, MoSCoW cards, and map tooltips.
+
+---
+
+### US-M2 — Writes persist to owner profile
+
+- **Persona:** Trust profile operator  
+- **Goal:** Edit without re-homing projects.
+
+**Acceptance criteria**
+
+- **Given** mode active and user edits another profile’s project  
+- **When** save completes  
+- **Then** changes persist on that project’s owner profile  
+- **And** user messaging states owner profile context.
+
+---
+
+### US-M3 — Deactivate restores single-profile scope
+
+- **Persona:** Trust profile operator  
+- **Goal:** Return to normal portfolio isolation.
+
+**Acceptance criteria**
+
+- **Given** mode was active  
+- **When** the user turns mode off  
+- **Then** views immediately show only the active profile’s projects  
+- **And** owner-only filters and columns hide.
+
+---
+
+## Traceability
+
+Map story IDs to [PRD.md](PRD.md) FR IDs and [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md) during release review.

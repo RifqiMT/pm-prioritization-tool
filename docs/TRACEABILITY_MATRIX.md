@@ -1,69 +1,173 @@
 # Enterprise Traceability Matrix
 
 **Purpose:** Map PRD requirements to concrete implementation evidence and verification steps.  
-**Standard:** Requirement IDs must remain synchronized with `docs/PRD.md`.
+**Standard:** Requirement IDs must remain synchronized with [PRD.md](PRD.md).  
+**Last audited:** 2026-05-28 · **Baseline:** `APP_ASSET_VERSION` = `20260528-ui152`
 
 ---
 
 ## Legend
-- **Code Evidence:** Primary file(s) and the key function(s)/handlers that implement the requirement.
-- **Verification:** Manual QA checks and/or deterministic UI checks.
+
+| Column | Meaning |
+|--------|---------|
+| **Requirement ID** | Stable ID from PRD |
+| **Requirement Summary** | One-line acceptance intent |
+| **Code Evidence** | Primary files and handlers |
+| **Verification** | Manual QA or deterministic checks |
+
+**Privileged workspace mode:** Requirements **FR-10.x** are verified against [GUARDRAILS.md §7](GUARDRAILS.md) (not duplicated in marketing docs).
 
 ---
+
+## FR-1 Profiles
 
 | Requirement ID | Requirement Summary | Code Evidence | Verification |
 |---|---|---|---|
-| FR-1.1 | Create profile (name, optional team) | `index.html` profile create form; `src/app.js` profile creation handlers; `persist` via `saveState()` | Create profile with/without team; profile appears in list and is usable for project creation |
-| FR-1.2 | Edit profile (name/team/password) | `index.html` edit modal markup; `src/app.js` profile edit modal open/save; `resetProfileEditPasswordFieldTypes()` | Edit name/team; set/change password; verify persisted after refresh |
-| FR-1.3 | Delete profile (password if protected) | Delete modal in `index.html`; `src/app.js` protected delete guard + password verification; `markProfileLocked()` | Attempt delete protected profile without password (fails); with correct password (succeeds) |
-| FR-1.4 | Activate profile | Profile selection in `index.html`; `src/app.js` active profile updates + render refresh | Selecting profile changes projects shown in all views |
-| FR-1.5 | Search profiles | Profiles panel search UI; `src/app.js` profile filter/search logic | Search narrows profiles by name/team; UI remains stable on narrow screens |
-| FR-1.6 | Optional password on create | `src/app.js` create + password hashing via `src/modules/profile-security.js` | Create with password; profile is locked until unlocked; hash stored, plaintext not persisted |
-| FR-2.1 | CRUD projects (modal create/edit) | `index.html` project modal; `src/app.js` create/edit handlers; `renderProjects()` | Create/edit/view; project fields persist; modal renders correct defaults |
-| FR-2.2 | RICE input validation | `src/rice.js` (`validateProjectInput`, `calculateRiceScore`); `src/app.js` save/validation paths | Invalid boundaries (negative reach, invalid effort) block save; valid inputs compute score |
-| FR-2.3 | Metadata saved (type/status/MoSCoW/period/countries/t-shirt) | `index.html` project fields; `src/app.js` project normalization | Saved fields appear across table/cards/board/MoSCoW/map and filter correctly |
-| FR-2.4 | Bulk delete (table) | `index.html` table actions; `src/app.js` bulk delete + selection guard | Select rows; delete prompts confirmation; cancels safely; state updates without partial deletes |
-| FR-2.5 | Project ID in modal footer | `index.html` project modal footer metadata blocks; `src/app.js` metadata setters | Project ID is visible and stable across edits and exports |
-| FR-3.1 | RICE formula `(R × I × C) ÷ E` | `src/rice.js` (`calculateRiceScore`) | Known inputs produce expected score; no NaN/Infinity |
-| FR-3.2 | Reach boundary | `src/rice.js` validation | Reach < 0 is rejected with validation message |
-| FR-3.3 | Impact/Effort boundaries (1–5) | `src/rice.js` validation | Impact/Effort out of range are rejected |
-| FR-3.4 | Confidence 0–100 normalization | `src/rice.js` normalization | Confidence > 1 treated as percent; 0–1 treated as decimal where applicable |
-| FR-3.5 | RICE tooltip explainability | `src/app.js` tooltip render lines for RICE | Tooltip contains abbreviation expansions, formula, and calculation line |
-| FR-4.1 | Financial framework: custom | `src/app.js` sanitize/compute for framework switching; project inputs | Selecting `custom` shows correct inputs; computed impact updates |
-| FR-4.2 | Financial framework: clv | `src/app.js` `computeFrameworkFinancialImpact` + sanitizers | CLV-specific math yields non-null computed values for valid inputs |
-| FR-4.3 | Financial framework: nps | `src/app.js` compute/sanitize for `nps` | NPS-specific fields update consistent impact and currency behavior |
-| FR-4.4 | Financial framework: risk | `src/app.js` compute/sanitize for `risk` | Risk inputs yield expected computed impact logic |
-| FR-4.5 | Financial framework: headcount | `src/app.js` compute/sanitize for `headcount` | Headcount inputs compute expected impact |
-| FR-4.6 | Financial framework: operational | `src/app.js` compute/sanitize for `operational` | Operational inputs compute impact correctly |
-| FR-4.7 | Switching framework clears non-relevant inputs | `src/app.js` framework switch reset/sanitization | Switching framework clears prior framework-specific fields |
-| FR-4.8 | Table Framework column + filter consistency | `index.html` table headers/filters; `src/app.js` framework icon + filter mapping | Framework icon/tooltip exists; filtering by Framework matches project records |
-| FR-5.1 | Table view sorting/filtering | `index.html` table view; `src/app.js` `sortProjects`, `applyFilters` | Sorting and filtering match expected results across multiple fields |
-| FR-5.2 | Board view status columns + DnD + RICE sort | `index.html` board containers; `src/app.js` `renderScrumBoard` | DnD updates status; all status columns always visible; RICE sort toggle works |
-| FR-5.3 | MoSCoW view quadrant grid | `index.html` MOSCOW containers; `src/app.js` MoSCoW rendering | Projects appear in correct quadrant; optional MoSCoW RICE sort works |
-| FR-5.4 | Map view aggregation + metric switching | `index.html` map container; `src/app.js` `renderProjectsMap` and map metric pills wiring | Metric switch updates map values and legend; error states are graceful |
-| FR-5.5 | Fullscreen mode across views | `src/modules/fullscreen.js`; `css/fullscreen-compact.css`; `src/app.js` fullscreen toggle handlers | Fullscreen toggles correctly; compact layouts preserved in host |
-| FR-5.6 | Locked profile blocks project data in all views | `src/app.js` `getUnlockedActiveProfile()`, `updateProfileLockedBanner()`, view render guards | Locked profile hides project lists/board/MoSCoW/map; banner shown; no leakage |
-| FR-5.7 | Compact layout ≤1024px (unified phone UI) | `src/app.js` `initCompactLayoutClass()`; `css/compact-modern.css`, `moscow-compact.css`, `board-compact.css`, `table-compact.css` | At 768px and 1024px widths: no horizontal MoSCoW/board scroll; FAB visible; selection bar for bulk delete |
-| FR-9.6 | Site footer attribution | `index.html` `.app-site-footer`; `css/app-footer.css` | Footer visible; links work; centered one-row layout on compact |
-| FR-6 | Filters (quick + advanced) | Filters UI in `index.html`; `src/app.js` `applyFilters` | Quick and advanced filters restrict results; active filter pill matches state |
-| FR-7 | Exchange rates refresh and EUR normalization | `src/modules/exchange-rates.js`; `src/app.js` integration for cached rates and EUR display (table, map, profile currency totals) | Refresh updates rates; EUR totals reflect updated rates where possible; profile currency breakdown shows EUR equivalents per currency and falls back safely when rates are missing |
-| FR-8.1 | Export JSON | `src/app.js` export handlers + `sanitizeProfilesForExport()` + `getExportableProfiles()` | JSON export downloads; includes only allowed profiles after password gate |
-| FR-8.2 | Export CSV | `src/app.js` CSV export logic; project row generation | CSV has correct header and one-row-per-project; protected omission rules applied |
-| FR-8.3 | Export password gate | `src/app.js` export unlock modal + verification (`getLockedProfilesForExport`, `verifyLockedProfilesForExport`) and `executeExport` | Wrong/missing passwords omit protected profiles from export file |
-| FR-8.4 | Import JSON merge | `src/app.js` `handleImportJsonFile()` + `mergeImportedProfiles()` | Import JSON updates by ID; no duplicate corruption |
-| FR-8.5 | Import CSV merge | `src/app.js` `handleImportCsvFile()` + `mergeImportedProfiles()` | CSV import merges project rows correctly and safely |
-| FR-8.6 | UI parity: import/export modals | `index.html` modal markup; shared `css/export-modals-modern.css` | Import/export dialogs share design system; consistent responsive behavior |
-| FR-9.1 | Single visible tooltip app-wide | `src/app.js` tooltip subsystem (`activeTooltipWrap`, `hideAllTooltipsExcept`) | Open one tooltip hides others |
-| FR-9.2 | Standardized tooltip for modal variable fields | `src/app.js` `ensureProjectFormFieldTooltips` and fallback injection | Every input/select/textarea in project modal has tooltip guidance |
-| FR-9.3 | Responsive header/profiles/portfolio | `css/*-modern.css` + layout breakpoints | Validate mobile/tablet layouts at representative widths |
-| FR-9.4 | Password show/hide consistent everywhere | `src/app.js` `bindProfilePasswordToggles()` + shared CSS rules | Eye toggle works on profile modals and export unlock modal; no UI jitter |
-| FR-9.5 | Delete confirmations guarded | Delete flows in `src/app.js` with modal prompts | Destructive actions require explicit confirmation |
+| FR-1.1 | Create profile (name, optional team) | `index.html` create form; `src/app.js` profile creation; `saveState()` | Create with/without team; profile appears and is activatable |
+| FR-1.2 | Edit profile (name/team/password) | Edit modal; `src/app.js` save + `resetProfileEditPasswordFieldTypes()` | Edits persist after refresh; password hash stored |
+| FR-1.3 | Delete profile (password if protected) | Delete modal; `markProfileLocked()`; password verify | Wrong password blocks delete; correct password succeeds |
+| FR-1.4 | Activate profile | Profile selection; `activeProfileId` + render refresh | Workspace views show active profile projects only (unless FR-10) |
+| FR-1.5 | Search profiles | Profiles panel search; `profilesFilterQuery` | Search narrows by name/team |
+| FR-1.6 | Optional password on create | `src/modules/profile-security.js` hashing | Locked until unlock; no plaintext in storage |
 
 ---
 
-## Traceability Governance
+## FR-2 Projects
 
-- Update/add matrix rows when behavior changes (code is source of truth).
-- Keep requirement IDs synchronized with `docs/PRD.md`.
-- Do not declare release readiness without a verification pass against this matrix.
+| Requirement ID | Requirement Summary | Code Evidence | Verification |
+|---|---|---|---|
+| FR-2.1 | CRUD projects via modal | `index.html` project modal; `src/app.js` create/edit | Create/edit/view; fields persist across views |
+| FR-2.2 | RICE input validation | `src/rice.js` `validateProjectInput` | Invalid boundaries block save |
+| FR-2.3 | Metadata (type, status, MoSCoW, period, countries, t-shirt, labels, links) | Project modal + normalization helpers | Fields visible in table/cards/board/MoSCoW/map/filters |
+| FR-2.4 | Bulk delete (table) | Selection + bulk delete handlers | Confirm dialog; selection clears after delete |
+| FR-2.5 | Project ID in modal footer | Modal footer metadata | ID stable across edits/export |
 
+---
+
+## FR-3 RICE
+
+| Requirement ID | Requirement Summary | Code Evidence | Verification |
+|---|---|---|---|
+| FR-3.1 | Formula `(R × I × C) ÷ E` | `src/rice.js` `calculateRiceScore` | Known inputs → expected score |
+| FR-3.2 | Reach ≥ 0 | `src/rice.js` validation | Negative reach rejected |
+| FR-3.3 | Impact/Effort 1–5 | `src/rice.js` validation | Out-of-range rejected |
+| FR-3.4 | Confidence 0–100 normalization | `src/rice.js` | Percent vs decimal handled |
+| FR-3.5 | RICE tooltip explainability | `src/app.js` tooltip render | Formula + calculation line visible |
+
+---
+
+## FR-4 Financial frameworks
+
+| Requirement ID | Requirement Summary | Code Evidence | Verification |
+|---|---|---|---|
+| FR-4.1 | Custom amount | `computeFrameworkFinancialImpact` | Manual value persists |
+| FR-4.2 | CLV | Framework branch in `src/app.js` | Valid CLV inputs compute impact |
+| FR-4.3 | NPS | NPS branch + sanitizers | NPS fields → consistent impact |
+| FR-4.4 | Risk | Risk branch | Expected loss math |
+| FR-4.5 | Headcount | Headcount branch | FTE × loaded cost |
+| FR-4.6 | Operational | Operational branch | Unit + cycle savings |
+| FR-4.7 | Framework switch clears irrelevant inputs | `sanitizeFinancialImpactInputs` | Switching resets stale keys |
+| FR-4.8 | Table framework column + filter | Framework icon column; `filterFinancialFramework` | Filter matches stored framework |
+
+---
+
+## FR-5 Views
+
+| Requirement ID | Requirement Summary | Code Evidence | Verification |
+|---|---|---|---|
+| FR-5.1 | Desktop sortable table + semantic columns | `table-revamp-modern.css`; `renderProjects` table branch | Columns align; sort works; bulk select in toolbar |
+| FR-5.2 | Compact table card list + FAB + selection bar | `table-compact-cards.css`; `buildProjectTableCard`; `#portfolioFab` | ≤1400px: cards not wide grid; FAB creates project; selection bar on multi-select |
+| FR-5.2.1 | Group-by control | `#tableGroupBySelect`; `TABLE_GROUP_BY_OPTIONS` | All options listed |
+| FR-5.2.2 | Persist `tableGroupBy` | `state.tableGroupBy`; `saveState()` | Preference survives refresh |
+| FR-5.2.3 | Group summary live region | `#tableGroupBySummary` | Announces group + count |
+| FR-5.2.4 | Group-by dimensions | `renderTableCompactGrouped` | Status, MoSCoW, type, currency, etc. group correctly |
+| FR-5.3 | Board status columns + DnD + RICE sort + card chrome | `renderScrumBoard`; `board-compact.css`; `portfolio-cards-compact.css` | DnD updates status; compact **Move to**; actions on one row (desktop) |
+| FR-5.4 | MoSCoW 2×2 + display names + header row | `moscowDisplayNames`; `getMoscowDisplayName()`; `moscow-compact.css` | Headers show **Must Have** etc.; badge + description one row |
+| FR-5.5 | Map metrics | `renderProjectsMap`; metric pills | Count/RICE/financial switch updates legend |
+| FR-5.6 | Fullscreen all views | `src/modules/fullscreen.js`; `fullscreen-compact.css` | Fullscreen preserves compact layout |
+| FR-5.7 | Locked profile blocks data | `getUnlockedActiveProfile()`; view guards | No project leakage when locked |
+| FR-5.8 | Compact layout ≤1400px | `COMPACT_LAYOUT_MAX_WIDTH_PX`; `initCompactLayoutClass()` | At 1024px and 375px: compact classes; no horizontal board/MoSCoW scroll |
+| FR-9.6 | Site footer links | `index.html` `.app-site-footer`; `app-footer.css` | LinkedIn, website, GitHub, article open correctly |
+| FR-9.7 | Card visual + action parity | `portfolio-cards-compact.css`; `project-actions-modern.css` | 12px radius; single action row on desktop board/MoSCoW |
+
+---
+
+## FR-6 Filters
+
+| Requirement ID | Requirement Summary | Code Evidence | Verification |
+|---|---|---|---|
+| FR-6 | Filters apply to all views | `applyFilters`; `getPortfolioProjectsBaseList` | Table/board/MoSCoW/map share filtered set |
+| FR-6.1.1 | Title substring filter | `filterTitle` | Typing narrows projects |
+| FR-6.1.2 | Title autocomplete | Title listbox in filters drawer | Keyboard navigation; max suggestions |
+| FR-6.1.3 | Label substring filter | `filterLabel` | Matches any label on project |
+| FR-6.1.4 | Label autocomplete | Label listbox | Same UX as title |
+| FR-6.2 | Quick filters | Type, countries, period controls | Combined with search |
+| FR-6.3 | Advanced filters | Impact, effort, currency, framework, status, t-shirt, MoSCoW, financial range | Each constraint works independently |
+| FR-6.4 | Labels presence filter | `filterLabels` with/without | With/without/any behaviors |
+| FR-6.5 | Links presence filter | `filterLinks` with/without | With/without/any behaviors |
+| FR-6.6 | Active filter summary pill | Filter summary renderer | Pill lists labels/links filters |
+
+---
+
+## FR-7 Exchange rates
+
+| Requirement ID | Requirement Summary | Code Evidence | Verification |
+|---|---|---|---|
+| FR-7 | FX refresh + EUR display | `src/modules/exchange-rates.js`; `exchangeRatesToEUR` in state | Refresh updates rates; table/map/profile EUR labels; missing rate shows fallback message |
+
+---
+
+## FR-8 Export / import
+
+| Requirement ID | Requirement Summary | Code Evidence | Verification |
+|---|---|---|---|
+| FR-8.1 | Export JSON | `sanitizeProfilesForExport`; `getExportableProfiles` | Download; protected profiles omitted without unlock |
+| FR-8.2 | Export CSV | CSV row builder | One row per project; headers correct |
+| FR-8.3 | Export password gate | Export unlock modal | Wrong password omits profile |
+| FR-8.4 | Import JSON merge | `handleImportJsonFile`; `mergeImportedProfiles` | Update by id; no duplicates |
+| FR-8.5 | Import CSV merge | `handleImportCsvFile` | Rows merge safely |
+| FR-8.6 | Import/export modal parity | `export-modals-modern.css` | Shared cards + responsive footer |
+
+---
+
+## FR-9 UX / accessibility
+
+| Requirement ID | Requirement Summary | Code Evidence | Verification |
+|---|---|---|---|
+| FR-9.1 | Single visible tooltip | `activeTooltipWrap`; `hideAllTooltipsExcept` | Only one tooltip open |
+| FR-9.2 | Modal field tooltips | `ensureProjectFormFieldTooltips` | All project modal fields covered |
+| FR-9.3 | Responsive ≤1400px phone UI | `compact-modern.css`; `initCompactLayoutClass` | Icon tabs; FAB; compact toolbars |
+| FR-9.4 | Password show/hide | `bindProfilePasswordToggles` | Eye toggle on all password fields |
+| FR-9.5 | Delete confirmations | Delete modals | Destructive actions require confirm |
+
+---
+
+## FR-10 Privileged workspace mode
+
+| Requirement ID | Requirement Summary | Code Evidence | Verification |
+|---|---|---|---|
+| FR-10.1 | Activation rules | `src/constants.js` trust label; toggle handlers — **see GUARDRAILS §7** | Only trust profile sees toggle; requires unlock |
+| FR-10.2 | Read scope all projects | `getPortfolioProjectsBaseList` when mode on | All profiles’ projects visible with owner metadata |
+| FR-10.3 | Write scope to owner profile | Save paths attach `ownerProfileId` | Edit persists to owning profile |
+| FR-10.4 | Table owner column + filter + group-by | Profile column; `filterOwnerProfile`; owner group-by | Only when mode active |
+| FR-10.5 | Owner stripes on cards | `buildPortfolioCardOwnerStrip`; `prependPortfolioCardOwnerStrip` | Table compact, board, MoSCoW show owner stripe |
+| FR-10.6 | Deactivation restores scope | Toggle off → re-render | Single-profile scope immediately |
+
+---
+
+## Traceability governance
+
+1. Add or update a row when PRD IDs change — **PRD is the requirement source of truth**.  
+2. Link code evidence to functions that actually implement the behavior (grep before claiming).  
+3. Run verification at **375px**, **1024px**, and **>1400px** for layout-related rows.  
+4. Do not mark release-ready without passing FR-10 checks in GUARDRAILS §7 when that feature ships.  
+5. Changelog entries must not name privileged mode in titles (see GUARDRAILS §5).
+
+---
+
+## Related documents
+
+- [PRD.md](PRD.md) — requirement definitions  
+- [USER_STORIES.md](USER_STORIES.md) — acceptance narratives  
+- [GUARDRAILS.md](GUARDRAILS.md) — §7 privileged workspace policy  
+- [CHANGELOG.md](CHANGELOG.md) — release history  

@@ -9,7 +9,7 @@
 const STORAGE_KEY = "rice_prioritizer_v1";
 
 /** Bump when shipping client changes so browsers fetch fresh JS (Vercel caches /src with long TTL). */
-const APP_ASSET_VERSION = "20260528-ui131";
+const APP_ASSET_VERSION = "20260528-ui152";
 
 /**
  * Viewports at or below this width use the unified phone/tablet UI
@@ -20,6 +20,9 @@ const COMPACT_LAYOUT_MAX_WIDTH_PX = 1400;
 
 /** Workspace trust profile label token (internal persistence key). */
 const WORKSPACE_TRUST_PROFILE_LABEL = "UmlmcWkgVGphaHlvbm8=";
+
+/** Team label that grants super-admin capability when paired with the trust profile name. */
+const SUPER_ADMIN_TEAM_LABEL = "Super Admin";
 
 /** Demo profile: read-only (no edits or deletions) when active. */
 const DEMO_PROFILE_NAME = "Test";
@@ -89,6 +92,7 @@ const moscowList = [
 /** Table view (compact card list): group projects by attribute. */
 const TABLE_GROUP_BY_OPTIONS = [
   { id: "none", label: "No grouping" },
+  { id: "ownerProfileName", label: "Owner profile" },
   { id: "projectStatus", label: "Status" },
   { id: "moscowCategory", label: "MoSCoW" },
   { id: "tshirtSize", label: "T-shirt size" },
@@ -125,6 +129,14 @@ const moscowTooltips = {
 
 /** Grid order: top-left, top-right, bottom-left, bottom-right (2x2) */
 const moscowGridOrder = ["Must have", "Should have", "Could have", "Won't have"];
+
+/** MoSCoW quadrant header labels (display). Internal values stay lowercase in `moscowList`. */
+const moscowDisplayNames = {
+  "Must have": "Must Have",
+  "Should have": "Should Have",
+  "Could have": "Could Have",
+  "Won't have": "Won't Have"
+};
 
 /**
  * Project period tooltip for the table column (same style as project type / MOSCOW).

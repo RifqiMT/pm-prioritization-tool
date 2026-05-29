@@ -2,6 +2,11 @@
 
 Guidelines for teams using the Product Management Prioritization Tool in planning, prioritization, and stakeholder communication.
 
+| Field | Value |
+|-------|-------|
+| **Last updated** | 2026-05-28 |
+| **Audience** | Product managers, delivery leads, portfolio stakeholders |
+
 ---
 
 ## 1. Purpose of the tool
@@ -10,9 +15,12 @@ The application supports **portfolio-level prioritization** in the browser, with
 
 - Capturing initiatives as **projects** within **profiles** (portfolios)
 - Ranking with **RICE**
-- Expressing delivery intent with **MoSCoW**
+- Expressing delivery intent with **MoSCoW** (presented as **Must Have**, **Should Have**, **Could Have**, **Won't Have** in the UI)
 - Estimating value with **financial frameworks** (planning-grade, not accounting)
 - Communicating through **Table**, **Board**, **MoSCoW**, and **Map** views
+- Filtering and grouping work by metadata including **labels** and **links**
+
+Cross-profile workspace behavior for the designated trust profile is defined in **[GUARDRAILS.md §7](GUARDRAILS.md)**.
 
 ---
 
@@ -24,26 +32,58 @@ The application supports **portfolio-level prioritization** in the browser, with
 
 | Input | Scale | Guidance |
 |-------|-------|----------|
-| **Reach** | Non-negative integer | Users, customers, or events affected in the planning window |
-| **Impact** | 1–5 | Per-unit impact if Reach occurs (team rubric should define anchors) |
+| **Reach** | Non-negative integer | Users, customers, or events affected in the planning window (e.g. per quarter) |
+| **Impact** | 1–5 | Per-unit impact if Reach occurs — define anchors as a team |
 | **Confidence** | 0–100% | Evidence strength; stored as % and normalized in formula |
-| **Effort** | 1–5 | Relative cost; higher effort lowers score |
+| **Effort** | 1–5 | Relative person-weeks or sprint cost; higher effort lowers score |
+
+### Suggested Impact rubric (example)
+
+| Score | Anchor |
+|-------|--------|
+| 1 | Minimal — cosmetic or negligible user value |
+| 2 | Low — small subset benefits |
+| 3 | Medium — clear value for a segment |
+| 4 | High — major segment or revenue lever |
+| 5 | Massive — strategic or company-critical outcome |
+
+### Suggested Effort rubric (example)
+
+| Score | Anchor |
+|-------|--------|
+| 1 | Days — trivial change |
+| 2 | ~1 sprint |
+| 3 | 2–3 sprints |
+| 4 | Quarter-scale initiative |
+| 5 | Multi-quarter program |
 
 ### Practices
 
-- Document your team’s **Impact** and **Effort** anchors in a shared rubric.
+- Document your team’s **Impact** and **Effort** anchors in a shared rubric (Confluence/Notion); link from project descriptions.
 - Revisit **Confidence** when new data arrives; do not treat scores as permanent.
 - Use the in-app **RICE tooltip** in meetings to explain inputs and the computed line.
+- When two projects tie on RICE, break ties with MoSCoW category and delivery risk — not politics.
 
 ---
 
 ## 3. MoSCoW usage
 
-Categories: **Must have**, **Should have**, **Could have**, **Won't have**.
+**Stored values** (filters, export): `Must have`, `Should have`, `Could have`, `Won't have`.  
+**Display labels** (quadrants, compact nav): **Must Have**, **Should Have**, **Could Have**, **Won't Have**.
+
+| Category | Business meaning |
+|----------|------------------|
+| **Must Have** | Critical for launch; non-negotiable for the committed scope |
+| **Should Have** | Important; include if capacity allows |
+| **Could Have** | Desirable; time-boxed nice-to-haves |
+| **Won't Have** | Explicitly out of scope for this horizon |
+
+### Practices
 
 - Assign every in-scope project a MoSCoW category before roadmap sign-off.
 - MoSCoW answers *delivery intent*; RICE answers *relative priority* — use both.
-- The MoSCoW view supports optional **RICE sort** within each quadrant.
+- Enable **RICE sort** within MoSCoW quadrants when discussing order inside a category.
+- On compact layouts, use **Jump to quadrant** pills instead of horizontal scrolling.
 
 ---
 
@@ -64,40 +104,54 @@ Frameworks produce a **planning estimate** in project currency, with optional **
 
 ---
 
-## 5. Profiles and security
+## 5. Labels, links, and search hygiene
 
-- One **profile** per portfolio context (product line, squad, business unit).
-- Optional **profile password** protects sensitive portfolios on shared machines.
-- Unlock is **per browser tab session**; users must re-enter password after closing the tab or refreshing (by design).
-- **Export** includes password-protected profiles only when the correct password was entered (inline unlock, session unlock, or export verification dialog).
+| Control | Business use |
+|---------|----------------|
+| **Title search + autocomplete** | Find initiatives quickly in large portfolios |
+| **Label search + autocomplete** | Theme slicing (e.g. `growth`, `compliance`) |
+| **Labels filter (any / with / without)** | Audits for undocumented themes or mandatory tagging policies |
+| **Links filter (any / with / without)** | Ensure PRDs, designs, or tickets are attached before review |
+
+**Recommendation:** Define a small allowed label vocabulary in team guidelines; avoid one-off labels that break filters.
 
 ---
 
-## 6. Planning workflows
+## 6. Profiles and security
+
+- One **profile** per portfolio context (product line, squad, business unit).
+- Optional **profile password** protects sensitive portfolios on shared machines.
+- Unlock is **per browser tab session**; users re-enter password after closing the tab or refreshing (by design).
+- **Export** includes password-protected profiles only when the correct password was entered (inline unlock, session unlock, or export verification dialog).
+- Workspace-wide cross-profile operations: see **[GUARDRAILS.md §7](GUARDRAILS.md)**.
+
+---
+
+## 7. Planning workflows
 
 ### Quarterly planning
 
 1. Create or select profile.
 2. Import prior quarter export (merge) or start fresh.
 3. Enter/update projects with RICE + MoSCoW + framework as needed.
-4. Filter by **Project period** (YYYY-Qn) and **Countries** for roadmap slices.
+4. Filter by **Project period** (YYYY-Qn), **Countries**, **Labels**, and **Links**.
 5. Export JSON backup before major edits.
 
 ### Weekly execution
 
-1. **Board** view by **project status**; use RICE sort or drag-and-drop to reorder within columns.
-2. Drag-and-drop order when RICE sort is off (per-status order persisted per profile).
-3. Update status as work progresses.
+1. **Board** view by **project status**; RICE sort or drag-and-drop within columns.
+2. Update status as work progresses; use compact **Move to** on tablets.
+3. Bulk-delete cancelled rows via table selection (desktop toolbar or compact selection bar).
 
 ### Stakeholder reviews
 
-- **Table:** sortable register with Framework, Type, Status icons.
+- **Table:** sortable register with Framework, Type, Status icons; group compact cards by MoSCoW or status.
 - **Map:** Count, RICE, or EUR by country.
-- **MoSCoW:** four-quadrant narrative.
+- **MoSCoW:** four-quadrant narrative with full category names.
 
 ---
 
-## 7. Data portability
+## 8. Data portability and export practices
 
 | Action | Behavior |
 |--------|----------|
@@ -105,11 +159,22 @@ Frameworks produce a **planning estimate** in project currency, with optional **
 | **Export CSV** | Flat project rows for spreadsheets |
 | **Import** | **Merge** by ID — updates existing, adds new; does not wipe workspace |
 
-Recommend: export after each planning milestone.
+### Export practices (recommended)
+
+| Practice | Why |
+|----------|-----|
+| Export JSON after each planning milestone | Recoverable point-in-time |
+| Export before bulk delete or import | Rollback path |
+| Name files with date + profile (`portfolio-2026-Q2.json`) | Audit trail |
+| Verify locked profiles in export dialog | Avoid silent omission of sensitive data |
+| Store exports outside the browser | `localStorage` is not backup storage |
+| Do not email exports with password hashes to wide distribution | Treat exports as confidential |
+
+CSV export is best for **stakeholder spreadsheets**; JSON export is best for **full restore and migration**.
 
 ---
 
-## 8. What this tool is not
+## 9. What this tool is not
 
 - Not a project management system (no sprints, assignments, or dependencies).
 - Not multi-user real-time collaboration.

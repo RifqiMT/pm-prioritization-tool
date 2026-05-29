@@ -29,7 +29,9 @@ let state = {
   mapMetric: "projects",
   exchangeRatesToEUR: {},
   exchangeRatesDate: null,
-  exchangeRatesLastSource: null
+  exchangeRatesLastSource: null,
+  /** When true and active profile is super-admin capable, portfolio shows all profiles' projects. */
+  superAdminMode: false
 };
 
 let editingProjectId = null;
@@ -1623,6 +1625,8 @@ async function init() {
   initAppHeaderMenu();
   initProfilesPanel();
   initProfilePicker();
+  initFilterAutocompletes();
+  initSuperAdminToggle();
   initProfileModals();
   initPortfolioWorkspace();
   initCloudStorageModal();
@@ -1756,6 +1760,23 @@ function cacheElements() {
   elements.filterStatus = $("filterStatus");
   elements.filterTshirtSize = $("filterTshirtSize");
   elements.filterMoscow = $("filterMoscow");
+  elements.filterLabel = $("filterLabel");
+  elements.filterTitleDropdown = $("filterTitleDropdown");
+  elements.filterTitleListbox = $("filterTitleListbox");
+  elements.filterTitleAutocompleteEmpty = $("filterTitleAutocompleteEmpty");
+  elements.filterLabelDropdown = $("filterLabelDropdown");
+  elements.filterLabelListbox = $("filterLabelListbox");
+  elements.filterLabelAutocompleteEmpty = $("filterLabelAutocompleteEmpty");
+  elements.filterLinks = $("filterLinks");
+  elements.filterLabels = $("filterLabels");
+  elements.superAdminToggleWrap = $("superAdminToggleWrap");
+  elements.superAdminModeToggle = $("superAdminModeToggle");
+  elements.superAdminToggleDesktopSlot = $("superAdminToggleDesktopSlot");
+  elements.superAdminToggleMobileSlot = $("superAdminToggleMobileSlot");
+  elements.filterOwnerProfile = $("filterOwnerProfile");
+  elements.filterOwnerProfileGroup = $("filterOwnerProfileGroup");
+  elements.projectOwnerProfileWrap = $("projectOwnerProfileWrap");
+  elements.projectOwnerProfile = $("projectOwnerProfile");
   elements.filterProjectType = $("filterProjectType");
 
   elements.projectsTableBody = $("projectsTableBody");
@@ -1923,6 +1944,10 @@ function cacheElements() {
 
   elements.countriesContainer = $("countriesContainer");
   elements.addCountryBtn = $("addCountryBtn");
+  elements.projectLabelsContainer = $("projectLabelsContainer");
+  elements.addProjectLabelBtn = $("addProjectLabelBtn");
+  elements.projectLinksContainer = $("projectLinksContainer");
+  elements.addProjectLinkBtn = $("addProjectLinkBtn");
 
   elements.filterCountriesSearch = $("filterCountriesSearch");
   elements.filterCountriesList = $("filterCountriesList");
@@ -2147,9 +2172,11 @@ function initCompactLayoutClass() {
       syncMoscowCompactNav();
     } else if (state.projectsView === "board") {
       renderScrumBoard();
-    } else if (state.projectsView === "table") {
+    } else     if (state.projectsView === "table") {
       renderProjects();
     }
+    mountSuperAdminToggleForLayout();
+    syncSuperAdminChrome();
     if (elements.projectModal?.classList.contains("active")) {
       syncProjectModalFooterMetaDetails({ resetCollapsed: compact });
     }
@@ -2664,15 +2691,54 @@ function attachEventListeners() {
     });
   }
 
+  if (elements.addProjectLabelBtn && elements.projectLabelsContainer) {
+    elements.addProjectLabelBtn.addEventListener("click", () => {
+      if (projectModalMode === "view") return;
+      addProjectLabelRow();
+    });
+    elements.projectLabelsContainer.addEventListener("click", (event) => {
+      if (projectModalMode === "view") return;
+      const btn = event.target.closest(".project-label-remove-btn");
+      if (!btn) return;
+      const row = btn.closest(".project-label-row");
+      if (!row) return;
+      elements.projectLabelsContainer.removeChild(row);
+      if (!elements.projectLabelsContainer.querySelector(".project-label-row")) {
+        addProjectLabelRow();
+      }
+    });
+  }
+
+  if (elements.addProjectLinkBtn && elements.projectLinksContainer) {
+    elements.addProjectLinkBtn.addEventListener("click", () => {
+      if (projectModalMode === "view") return;
+      addProjectLinkRow();
+    });
+    elements.projectLinksContainer.addEventListener("click", (event) => {
+      if (projectModalMode === "view") return;
+      const btn = event.target.closest(".project-link-remove-btn");
+      if (!btn) return;
+      const row = btn.closest(".project-link-row");
+      if (!row) return;
+      elements.projectLinksContainer.removeChild(row);
+      if (!elements.projectLinksContainer.querySelector(".project-link-row")) {
+        addProjectLinkRow();
+      }
+    });
+  }
+
   const filterInputs = [
-    elements.filterTitle,
     elements.filterImpact,
     elements.filterEffort,
     elements.filterCurrency,
     elements.filterFinancialFramework,
     elements.filterStatus,
     elements.filterTshirtSize,
-    elements.filterProjectType
+    elements.filterMoscow,
+    elements.filterLinks,
+    elements.filterLabels,
+    elements.filterProjectType,
+    elements.filterOwnerProfile
   ].filter(Boolean); // guard against missing DOM nodes so we never throw while wiring listeners
 
   const applyFiltersAndUpdateUI = () => {
@@ -2683,10 +2749,8 @@ function attachEventListeners() {
 
   filterInputs.forEach((input) => {
     if (!input) return;
-    const isTitle = input === elements.filterTitle;
-    const handler = isTitle ? debouncedApplyFilters : applyFiltersAndUpdateUI;
-    input.addEventListener("input", handler);
-    input.addEventListener("change", handler);
+    input.addEventListener("input", applyFiltersAndUpdateUI);
+    input.addEventListener("change", applyFiltersAndUpdateUI);
   });
 
   if (elements.selectAllProjects) {
@@ -2989,6 +3053,17 @@ function updateFiltersActivePill() {
   if (elements.filterStatus.value) activeFilters.push("Status");
   if (elements.filterTshirtSize.value) activeFilters.push("T-shirt size");
   if (elements.filterMoscow && elements.filterMoscow.value) activeFilters.push("MOSCOW");
+  if (elements.filterLabel && (elements.filterLabel.value || "").trim()) activeFilters.push("Label");
+  if (elements.filterLabels && elements.filterLabels.value) {
+    activeFilters.push(elements.filterLabels.value === "with" ? "With labels" : "Without labels");
+  }
+  if (elements.filterLinks && elements.filterLinks.value) {
+    activeFilters.push(elements.filterLinks.value === "with" ? "With links" : "Without links");
+  }
+  if (elements.filterOwnerProfile && elements.filterOwnerProfile.value) {
+    const opt = elements.filterOwnerProfile.selectedOptions[0];
+    activeFilters.push(opt ? `Profile: ${opt.textContent}` : "Owner profile");
+  }
 
   if (!activeFilters.length) {
     elements.filtersActivePill.style.display = "none";
@@ -3002,6 +3077,299 @@ function updateFiltersActivePill() {
     ? `1 active filter (${activeFilters[0]})`
     : `${activeFilters.length} active filters`;
   elements.filtersActivePill.textContent = label;
+}
+
+// --- Filter autocomplete (project title, label) ---
+const FILTER_AUTOCOMPLETE_MAX_SUGGESTIONS = 12;
+
+const filterAutocompleteState = {
+  title: { open: false, highlightIndex: -1 },
+  label: { open: false, highlightIndex: -1 }
+};
+
+const debouncedFilterTextApply =
+  typeof debounce === "function"
+    ? debounce(() => {
+        renderProjects();
+        updateFiltersActivePill();
+      }, 200)
+    : () => {
+        renderProjects();
+        updateFiltersActivePill();
+      };
+
+function getFilterAutocompleteField(kind) {
+  if (kind === "title") {
+    return {
+      input: elements.filterTitle,
+      dropdown: elements.filterTitleDropdown,
+      listbox: elements.filterTitleListbox,
+      empty: elements.filterTitleAutocompleteEmpty,
+      wrapper: $("filterTitleAutocomplete"),
+      emptyMessage: "No matching titles in this profile",
+      icon: "T"
+    };
+  }
+  if (kind === "label") {
+    return {
+      input: elements.filterLabel,
+      dropdown: elements.filterLabelDropdown,
+      listbox: elements.filterLabelListbox,
+      empty: elements.filterLabelAutocompleteEmpty,
+      wrapper: $("filterLabelAutocomplete"),
+      emptyMessage: "No matching labels in this profile",
+      icon: "#"
+    };
+  }
+  return null;
+}
+
+function getActiveProfileProjectsForFilters() {
+  if (isSuperAdminModeActive()) {
+    return getPortfolioProjectsBaseList();
+  }
+  const profile = getActiveProfile();
+  if (!profile || !Array.isArray(profile.projects)) return [];
+  return profile.projects;
+}
+
+function collectFilterTitleSuggestions() {
+  const seen = new Set();
+  const out = [];
+  getActiveProfileProjectsForFilters().forEach((project) => {
+    const title = (project.title || "").trim();
+    if (!title || seen.has(title)) return;
+    seen.add(title);
+    out.push(title);
+  });
+  return out.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+}
+
+function collectFilterLabelSuggestions() {
+  const seen = new Set();
+  const out = [];
+  getActiveProfileProjectsForFilters().forEach((project) => {
+    normalizeProjectLabels(project.labels).forEach((label) => {
+      if (seen.has(label)) return;
+      seen.add(label);
+      out.push(label);
+    });
+  });
+  return out.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+}
+
+function getFilterAutocompleteMatches(kind, query) {
+  const q = (query || "").trim().toLowerCase();
+  const source = kind === "title" ? collectFilterTitleSuggestions() : collectFilterLabelSuggestions();
+  const filtered = q ? source.filter((item) => item.toLowerCase().includes(q)) : source;
+  return filtered.slice(0, FILTER_AUTOCOMPLETE_MAX_SUGGESTIONS);
+}
+
+function highlightFilterAutocompleteMatch(text, query) {
+  const safeText = escapeHtml(text);
+  const q = (query || "").trim();
+  if (!q) return safeText;
+  const lower = text.toLowerCase();
+  const qLower = q.toLowerCase();
+  const idx = lower.indexOf(qLower);
+  if (idx < 0) return safeText;
+  return (
+    escapeHtml(text.slice(0, idx)) +
+    "<mark>" +
+    escapeHtml(text.slice(idx, idx + q.length)) +
+    "</mark>" +
+    escapeHtml(text.slice(idx + q.length))
+  );
+}
+
+function setFilterAutocompleteOpen(kind, open) {
+  const field = getFilterAutocompleteField(kind);
+  if (!field || !field.input) return;
+  const state = filterAutocompleteState[kind];
+  if (!state) return;
+
+  if (open) {
+    const otherKind = kind === "title" ? "label" : "title";
+    setFilterAutocompleteOpen(otherKind, false);
+    prepareAppOverlay("filterAutocomplete");
+  }
+
+  state.open = !!open;
+  if (!state.open) {
+    state.highlightIndex = -1;
+  }
+
+  if (field.wrapper) {
+    field.wrapper.classList.toggle("filter-autocomplete__field--open", state.open);
+  }
+  if (field.dropdown) {
+    field.dropdown.hidden = !state.open;
+  }
+  field.input.setAttribute("aria-expanded", state.open ? "true" : "false");
+}
+
+function closeAllFilterAutocompleteDropdowns() {
+  setFilterAutocompleteOpen("title", false);
+  setFilterAutocompleteOpen("label", false);
+}
+
+function refreshFilterAutocompleteDropdowns() {
+  ["title", "label"].forEach((kind) => {
+    if (filterAutocompleteState[kind].open) {
+      renderFilterAutocompleteOptions(kind);
+    }
+  });
+}
+
+function selectFilterAutocompleteSuggestion(kind, value) {
+  const field = getFilterAutocompleteField(kind);
+  if (!field || !field.input) return;
+  field.input.value = value;
+  setFilterAutocompleteOpen(kind, false);
+  debouncedFilterTextApply();
+  field.input.focus();
+}
+
+function renderFilterAutocompleteOptions(kind) {
+  const field = getFilterAutocompleteField(kind);
+  const state = filterAutocompleteState[kind];
+  if (!field || !field.listbox || !field.input || !state) return;
+
+  const query = (field.input.value || "").trim();
+  const matches = getFilterAutocompleteMatches(kind, query);
+  field.listbox.innerHTML = "";
+
+  if (!matches.length) {
+    if (field.empty) {
+      field.empty.textContent = field.emptyMessage;
+      field.empty.hidden = false;
+    }
+    state.highlightIndex = -1;
+    return;
+  }
+
+  if (field.empty) field.empty.hidden = true;
+  if (state.highlightIndex >= matches.length) {
+    state.highlightIndex = matches.length - 1;
+  }
+
+  matches.forEach((value, index) => {
+    const option = document.createElement("button");
+    option.type = "button";
+    option.className =
+      "filter-autocomplete__option" +
+      (index === state.highlightIndex ? " filter-autocomplete__option--highlight" : "");
+    option.setAttribute("role", "option");
+    option.setAttribute("aria-selected", index === state.highlightIndex ? "true" : "false");
+    option.dataset.value = value;
+
+    const icon = document.createElement("span");
+    icon.className = "filter-autocomplete__option-icon";
+    icon.setAttribute("aria-hidden", "true");
+    icon.textContent = field.icon;
+
+    const text = document.createElement("span");
+    text.className = "filter-autocomplete__option-text";
+    text.innerHTML = highlightFilterAutocompleteMatch(value, query);
+
+    option.appendChild(icon);
+    option.appendChild(text);
+
+    option.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      e.preventDefault();
+      selectFilterAutocompleteSuggestion(kind, value);
+    });
+
+    listboxAppend(field.listbox, option);
+  });
+}
+
+function listboxAppend(listbox, option) {
+  const li = document.createElement("li");
+  li.setAttribute("role", "presentation");
+  li.appendChild(option);
+  listbox.appendChild(li);
+}
+
+function initFilterAutocompleteField(kind) {
+  const field = getFilterAutocompleteField(kind);
+  if (!field || !field.input) return;
+
+  field.input.addEventListener("focus", () => {
+    setFilterAutocompleteOpen(kind, true);
+    renderFilterAutocompleteOptions(kind);
+  });
+
+  field.input.addEventListener("input", () => {
+    if (!filterAutocompleteState[kind].open) {
+      setFilterAutocompleteOpen(kind, true);
+    }
+    filterAutocompleteState[kind].highlightIndex = -1;
+    renderFilterAutocompleteOptions(kind);
+    debouncedFilterTextApply();
+  });
+
+  field.input.addEventListener("keydown", (e) => {
+    const state = filterAutocompleteState[kind];
+    const options = field.listbox
+      ? Array.from(field.listbox.querySelectorAll(".filter-autocomplete__option"))
+      : [];
+
+    if (!state.open) {
+      if (e.key === "ArrowDown" || e.key === "Enter") {
+        e.preventDefault();
+        setFilterAutocompleteOpen(kind, true);
+        renderFilterAutocompleteOptions(kind);
+      }
+      return;
+    }
+
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setFilterAutocompleteOpen(kind, false);
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (!options.length) return;
+      state.highlightIndex = Math.min(state.highlightIndex + 1, options.length - 1);
+      renderFilterAutocompleteOptions(kind);
+      options[state.highlightIndex]?.scrollIntoView({ block: "nearest" });
+      return;
+    }
+
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (!options.length) return;
+      state.highlightIndex = Math.max(state.highlightIndex - 1, 0);
+      renderFilterAutocompleteOptions(kind);
+      options[state.highlightIndex]?.scrollIntoView({ block: "nearest" });
+      return;
+    }
+
+    if (e.key === "Enter") {
+      if (state.highlightIndex >= 0 && options[state.highlightIndex]) {
+        e.preventDefault();
+        const selected = options[state.highlightIndex].dataset.value || "";
+        if (selected) selectFilterAutocompleteSuggestion(kind, selected);
+      }
+    }
+  });
+
+  field.input.addEventListener("blur", () => {
+    window.setTimeout(() => {
+      if (!field.wrapper || !field.wrapper.matches(":focus-within")) {
+        setFilterAutocompleteOpen(kind, false);
+      }
+    }, 120);
+  });
+}
+
+function initFilterAutocompletes() {
+  initFilterAutocompleteField("title");
+  initFilterAutocompleteField("label");
 }
 
 // --- Export / import (JSON & CSV, merge logic) ---
@@ -3026,6 +3394,462 @@ function isActiveProfileWorkspaceTrustHolder() {
   const active = state.profiles.find((p) => p.id === state.activeProfileId);
   if (!active) return false;
   return normalizeProfileLabelForTrust(active.name) === normalizeProfileLabelForTrust(trustLabel);
+}
+
+function getSuperAdminTeamLabel() {
+  return typeof SUPER_ADMIN_TEAM_LABEL !== "undefined" && SUPER_ADMIN_TEAM_LABEL
+    ? String(SUPER_ADMIN_TEAM_LABEL).trim()
+    : "Super Admin";
+}
+
+/** Only the workspace trust profile (e.g. Rifqi Tjahyono) may use super admin mode. */
+function isSuperAdminProfile(profile) {
+  if (!profile) return false;
+  const trustLabel = decodeWorkspaceTrustProfileLabel();
+  if (!trustLabel) return false;
+  return normalizeProfileLabelForTrust(profile.name) === normalizeProfileLabelForTrust(trustLabel);
+}
+
+/** @deprecated Use isSuperAdminProfile — kept for call-site compatibility. */
+function isSuperAdminCapableProfile(profile) {
+  return isSuperAdminProfile(profile);
+}
+
+function isActiveSuperAdminProfile() {
+  return isSuperAdminProfile(getActiveProfile());
+}
+
+function isActiveSuperAdminCapableProfile() {
+  return isActiveSuperAdminProfile();
+}
+
+function isSuperAdminModeActive() {
+  const active = getActiveProfile();
+  if (!active || !state.superAdminMode) return false;
+  if (!isSuperAdminProfile(active)) return false;
+  if (!isProfileUnlocked(active.id)) return false;
+  return true;
+}
+
+function getProfileAvatarHue(seed) {
+  const s = String(seed || "").trim();
+  let hash = 0;
+  for (let i = 0; i < s.length; i += 1) {
+    hash = (hash * 31 + s.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash) % 360;
+}
+
+function findProfileById(profileId) {
+  if (!profileId) return null;
+  return state.profiles.find((p) => p.id === profileId) || null;
+}
+
+/** Rich owner profile chip for super admin mode (table, cards, boards). */
+function buildProjectOwnerIdentityElement(project, options = {}) {
+  if (!isSuperAdminModeActive() || !project) return null;
+  const name = (project.ownerProfileName || "").trim();
+  if (!name) return null;
+
+  const variant = options.variant || "inline";
+  const profileId = project.ownerProfileId || "";
+  const ownerProfile = findProfileById(profileId);
+  const team = ownerProfile && ownerProfile.team ? String(ownerProfile.team).trim() : "";
+  const isCurrentProfile = profileId && profileId === state.activeProfileId;
+
+  const root = document.createElement(variant === "card-strip" ? "div" : "span");
+  root.className = `project-owner-identity project-owner-identity--${variant}`;
+  if (isCurrentProfile) root.classList.add("project-owner-identity--current");
+  root.setAttribute(
+    "aria-label",
+    `Owner profile: ${name}${team ? `, team ${team}` : ""}${isCurrentProfile ? " (active profile)" : ""}`
+  );
+  root.title = root.getAttribute("aria-label");
+
+  const avatar = document.createElement("span");
+  avatar.className = "project-owner-identity__avatar";
+  avatar.setAttribute("aria-hidden", "true");
+  avatar.textContent = getProfileInitials(name);
+  const hue = getProfileAvatarHue(profileId || name);
+  avatar.style.background = `linear-gradient(145deg, hsl(${hue} 62% 48%), hsl(${(hue + 24) % 360} 58% 38%))`;
+
+  const copy = document.createElement("span");
+  copy.className = "project-owner-identity__copy";
+  const nameEl = document.createElement("span");
+  nameEl.className = "project-owner-identity__name";
+  nameEl.textContent = name;
+  copy.appendChild(nameEl);
+
+  if (team && options.showTeam !== false) {
+    const teamEl = document.createElement("span");
+    teamEl.className = "project-owner-identity__team";
+    teamEl.textContent = team;
+    copy.appendChild(teamEl);
+  }
+
+  root.appendChild(avatar);
+  root.appendChild(copy);
+
+  if (!isCurrentProfile && options.showScopeHint) {
+    const scope = document.createElement("span");
+    scope.className = "project-owner-identity__scope";
+    scope.textContent = "Other profile";
+    root.appendChild(scope);
+  }
+
+  return root;
+}
+
+function appendProjectOwnerBadge(container, project, options = {}) {
+  const el = buildProjectOwnerIdentityElement(project, options);
+  if (!el || !container) return null;
+  if (options.className) {
+    String(options.className)
+      .split(/\s+/)
+      .filter(Boolean)
+      .forEach((cls) => el.classList.add(cls));
+  }
+  container.appendChild(el);
+  return el;
+}
+
+function syncSuperAdminModeBanner() {
+  const host = elements.workspacePortfolioBody || $("workspacePortfolioBody");
+  if (!host) return;
+
+  let banner = document.getElementById("superAdminModeBanner");
+  if (!isSuperAdminModeActive()) {
+    if (banner) banner.remove();
+    return;
+  }
+
+  if (!banner) {
+    banner = document.createElement("aside");
+    banner.id = "superAdminModeBanner";
+    banner.className = "super-admin-mode-banner";
+    banner.setAttribute("role", "status");
+    const filters = host.querySelector(".portfolio-filters-drawer");
+    if (filters) host.insertBefore(banner, filters);
+    else host.insertBefore(banner, host.firstChild);
+  }
+
+  const profileCount = state.profiles.length;
+  const projectCount = getPortfolioProjectsBaseList().length;
+  banner.replaceChildren();
+
+  const icon = document.createElement("span");
+  icon.className = "super-admin-mode-banner__icon";
+  icon.setAttribute("aria-hidden", "true");
+  icon.innerHTML =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v5c0 4.2-2.6 7.8-7 9-4.4-1.2-7-4.8-7-9V7l7-4z"/><path d="m9 12 2 2 4-4"/></svg>';
+
+  const copy = document.createElement("div");
+  copy.className = "super-admin-mode-banner__copy";
+  const title = document.createElement("p");
+  title.className = "super-admin-mode-banner__title";
+  title.textContent = "Workspace-wide view";
+  const detail = document.createElement("p");
+  detail.className = "super-admin-mode-banner__detail";
+  detail.textContent = `${projectCount} project${projectCount !== 1 ? "s" : ""} across ${profileCount} profile${profileCount !== 1 ? "s" : ""}. Edits stay in each project’s owner profile.`;
+  copy.appendChild(title);
+  copy.appendChild(detail);
+
+  const stat = document.createElement("span");
+  stat.className = "super-admin-mode-banner__stat";
+  stat.textContent = `${profileCount} profiles`;
+
+  banner.appendChild(icon);
+  banner.appendChild(copy);
+  banner.appendChild(stat);
+}
+
+function hideSuperAdminToggleChrome() {
+  const wrap = elements.superAdminToggleWrap;
+  const mobileSlot = elements.superAdminToggleMobileSlot;
+  const desktopSlot = elements.superAdminToggleDesktopSlot;
+  if (wrap) wrap.hidden = true;
+  if (mobileSlot) mobileSlot.hidden = true;
+  if (desktopSlot) {
+    if (wrap && wrap.parentElement !== desktopSlot) {
+      desktopSlot.appendChild(wrap);
+    }
+    desktopSlot.hidden = true;
+  }
+}
+
+function mountSuperAdminToggleForLayout() {
+  const wrap = elements.superAdminToggleWrap;
+  const mobileSlot = elements.superAdminToggleMobileSlot;
+  const desktopSlot = elements.superAdminToggleDesktopSlot;
+  if (!wrap || !mobileSlot || !desktopSlot) return;
+
+  if (!isActiveSuperAdminProfile()) {
+    hideSuperAdminToggleChrome();
+    return;
+  }
+
+  wrap.hidden = false;
+
+  const profileBar = elements.profilePickerBar || $("profilePickerBar");
+  const useMobile =
+    isCompactProfilesLayout() && profileBar && !profileBar.hidden;
+
+  const target = useMobile ? mobileSlot : desktopSlot;
+  if (wrap.parentElement !== target) {
+    target.appendChild(wrap);
+  }
+  mobileSlot.hidden = !useMobile;
+  desktopSlot.hidden = useMobile;
+}
+
+function populateFilterOwnerProfileOptions() {
+  if (!elements.filterOwnerProfile) return;
+  const previous = elements.filterOwnerProfile.value || "";
+  elements.filterOwnerProfile.innerHTML = "";
+  const anyOpt = document.createElement("option");
+  anyOpt.value = "";
+  anyOpt.textContent = "Any profile";
+  elements.filterOwnerProfile.appendChild(anyOpt);
+  getSortedProfiles().forEach((profile) => {
+    const opt = document.createElement("option");
+    opt.value = profile.id;
+    const team = (profile.team || "").trim();
+    opt.textContent = team ? `${profile.name} (${team})` : profile.name || "Unnamed profile";
+    elements.filterOwnerProfile.appendChild(opt);
+  });
+  if (previous && Array.from(elements.filterOwnerProfile.options).some((o) => o.value === previous)) {
+    elements.filterOwnerProfile.value = previous;
+  }
+}
+
+function attachProjectOwnerMeta(project, ownerProfile) {
+  if (!project || !ownerProfile) return project;
+  return Object.assign({}, project, {
+    ownerProfileId: ownerProfile.id,
+    ownerProfileName: ownerProfile.name || "Unnamed profile"
+  });
+}
+
+function findProjectOwnerProfile(projectId) {
+  if (!projectId) return null;
+  for (let i = 0; i < state.profiles.length; i += 1) {
+    const profile = state.profiles[i];
+    if (!Array.isArray(profile.projects)) continue;
+    if (profile.projects.some((p) => p.id === projectId)) return profile;
+  }
+  return null;
+}
+
+function findProjectWithOwner(projectId) {
+  const profile = findProjectOwnerProfile(projectId);
+  if (!profile) return { profile: null, project: null };
+  const project = profile.projects.find((p) => p.id === projectId) || null;
+  return { profile, project };
+}
+
+function getPortfolioProjectsBaseList() {
+  if (!isSuperAdminModeActive()) {
+    const active = getUnlockedActiveProfile();
+    if (!active || !Array.isArray(active.projects)) return [];
+    return active.projects.map((p) => attachProjectOwnerMeta(p, active));
+  }
+  const combined = [];
+  state.profiles.forEach((profile) => {
+    if (!Array.isArray(profile.projects)) return;
+    profile.projects.forEach((p) => {
+      combined.push(attachProjectOwnerMeta(p, profile));
+    });
+  });
+  return combined;
+}
+
+function getTargetProfileForProjectCreate() {
+  if (isSuperAdminModeActive() && elements.projectOwnerProfile) {
+    const selectedId = (elements.projectOwnerProfile.value || "").trim();
+    if (selectedId) {
+      const selected = state.profiles.find((p) => p.id === selectedId);
+      if (selected) return selected;
+    }
+  }
+  return getUnlockedActiveProfile();
+}
+
+function populateProjectOwnerProfileSelect(selectedProfileId) {
+  if (!elements.projectOwnerProfile) return;
+  const previous = selectedProfileId || elements.projectOwnerProfile.value || state.activeProfileId || "";
+  elements.projectOwnerProfile.innerHTML = "";
+  getSortedProfiles().forEach((profile) => {
+    const opt = document.createElement("option");
+    opt.value = profile.id;
+    const team = (profile.team || "").trim();
+    opt.textContent = team ? `${profile.name} (${team})` : profile.name || "Unnamed profile";
+    elements.projectOwnerProfile.appendChild(opt);
+  });
+  if (previous && Array.from(elements.projectOwnerProfile.options).some((o) => o.value === previous)) {
+    elements.projectOwnerProfile.value = previous;
+  } else if (state.activeProfileId) {
+    elements.projectOwnerProfile.value = state.activeProfileId;
+  }
+}
+
+function syncSuperAdminChrome() {
+  const capable = isActiveSuperAdminProfile();
+  const active = isSuperAdminModeActive();
+  document.documentElement.classList.toggle("is-super-admin-mode", active);
+  document.documentElement.classList.toggle("is-workspace-trust-profile", capable);
+
+  if (!capable) {
+    if (state.superAdminMode) {
+      state.superAdminMode = false;
+    }
+    hideSuperAdminToggleChrome();
+  } else {
+    mountSuperAdminToggleForLayout();
+  }
+
+  if (elements.superAdminModeToggle) {
+    elements.superAdminModeToggle.checked = capable && !!state.superAdminMode;
+    elements.superAdminModeToggle.disabled = !capable || !getActiveProfile() || !isProfileUnlocked(state.activeProfileId);
+  }
+
+  const ownerCols = document.querySelectorAll(".super-admin-only-column");
+  ownerCols.forEach((el) => {
+    el.hidden = !active;
+  });
+
+  if (elements.filterOwnerProfileGroup) {
+    elements.filterOwnerProfileGroup.hidden = !active;
+    elements.filterOwnerProfileGroup.setAttribute("aria-hidden", active ? "false" : "true");
+  }
+  if (active) {
+    populateFilterOwnerProfileOptions();
+  } else if (elements.filterOwnerProfile) {
+    const hadOwnerFilter = !!(elements.filterOwnerProfile.value || "").trim();
+    elements.filterOwnerProfile.value = "";
+    if (hadOwnerFilter) {
+      renderProjects();
+      updateFiltersActivePill();
+    }
+  }
+
+  if (elements.projectsHeaderBadges && capable) {
+    const existing = elements.projectsHeaderBadges.querySelector(".portfolio-super-admin-badge");
+    if (active && !existing) {
+      const badge = document.createElement("span");
+      badge.className = "portfolio-super-admin-badge";
+      badge.title = "Viewing and editing projects across all profiles. Ownership stays with each profile.";
+      badge.textContent = "Super admin · all profiles";
+      elements.projectsHeaderBadges.appendChild(badge);
+    } else if (!active && existing) {
+      existing.remove();
+    }
+  }
+
+  refreshFilterAutocompleteDropdowns();
+  syncProjectsTableColumnLayout();
+  syncSuperAdminModeBanner();
+}
+
+function setSuperAdminMode(enabled) {
+  if (!isActiveSuperAdminProfile()) {
+    state.superAdminMode = false;
+    syncSuperAdminChrome();
+    return;
+  }
+  const active = getActiveProfile();
+  if (!active || !isProfileUnlocked(active.id)) {
+    showToast("Unlock this profile to use super admin mode.");
+    state.superAdminMode = false;
+    syncSuperAdminChrome();
+    return;
+  }
+  state.superAdminMode = !!enabled;
+  saveState();
+  syncSuperAdminChrome();
+  renderProjects();
+  if (state.superAdminMode) {
+    showToast("Super admin mode on — all workspace projects are visible. Changes stay in each project’s owner profile.");
+  } else {
+    showToast("Super admin mode off — showing this profile’s projects only.");
+  }
+}
+
+function initSuperAdminToggle() {
+  if (!elements.superAdminModeToggle) return;
+  elements.superAdminModeToggle.addEventListener("change", () => {
+    setSuperAdminMode(elements.superAdminModeToggle.checked);
+  });
+}
+
+function removeProjectById(projectId) {
+  const owner = findProjectOwnerProfile(projectId);
+  if (!owner || !Array.isArray(owner.projects)) return false;
+  const before = owner.projects.length;
+  owner.projects = owner.projects.filter((p) => p.id !== projectId);
+  return owner.projects.length < before;
+}
+
+function removeProjectsByIds(projectIds) {
+  const ids = Array.isArray(projectIds) ? projectIds : [];
+  let removed = 0;
+  ids.forEach((id) => {
+    if (removeProjectById(id)) removed += 1;
+  });
+  return removed;
+}
+
+const PROJECTS_TABLE_COL_CLASS = {
+  select: "projects-table-col--select",
+  title: "projects-table-col--title",
+  owner: "projects-table-col--owner",
+  type: "projects-table-col--type",
+  status: "projects-table-col--status",
+  framework: "projects-table-col--framework",
+  period: "projects-table-col--period",
+  size: "projects-table-col--size",
+  moscow: "projects-table-col--moscow",
+  rice: "projects-table-col--rice",
+  financial: "projects-table-col--financial",
+  created: "projects-table-col--created",
+  actions: "projects-table-col--actions"
+};
+
+function stampProjectsTableCol(cell, colKey) {
+  if (!cell || !colKey) return cell;
+  const cls = PROJECTS_TABLE_COL_CLASS[colKey];
+  if (cls) cell.classList.add(cls);
+  return cell;
+}
+
+function getProjectsTableColSpan() {
+  return isSuperAdminModeActive() ? 13 : 12;
+}
+
+function syncProjectsTableColumnLayout() {
+  const table = document.querySelector(".projects-data-table");
+  if (!table) return;
+  table.classList.toggle("projects-data-table--owner-col", isSuperAdminModeActive());
+}
+
+function buildProjectOwnerTableCell(project) {
+  const td = document.createElement("td");
+  td.className = "super-admin-only-column projects-table-col--owner";
+  stampProjectsTableCol(td, "owner");
+  if (!isSuperAdminModeActive()) {
+    td.hidden = true;
+    return td;
+  }
+  const identity = buildProjectOwnerIdentityElement(project, {
+    variant: "table",
+    showTeam: false,
+    showScopeHint: false
+  });
+  if (identity) {
+    td.appendChild(identity);
+    return td;
+  }
+  td.innerHTML = '<span class="project-owner-identity__empty">—</span>';
+  return td;
 }
 
 function getDemoProfileName() {
@@ -3457,6 +4281,8 @@ function handleExportCsv(profilesForExport, exportMeta) {
       "projectPeriod",
       "moscowCategory",
       "countries",
+      "projectLabels",
+      "projectLinks",
       "riceScore"
     ];
 
@@ -3496,6 +4322,8 @@ function handleExportCsv(profilesForExport, exportMeta) {
           "",
           "",
           "",
+          "",
+          "",
           ""
         ];
         rows.push(emptyRow.join(","));
@@ -3504,6 +4332,8 @@ function handleExportCsv(profilesForExport, exportMeta) {
       projectsArray.forEach((project) => {
         const rice = calculateRiceScore(project);
         const countries = Array.isArray(project.countries) ? project.countries.join("|") : "";
+        const projectLabels = Array.isArray(project.labels) ? project.labels.join("|") : "";
+        const projectLinks = JSON.stringify(normalizeProjectLinks(project.links || []));
         const row = [
           escapeCsvCell(profileId),
           escapeCsvCell(profileName),
@@ -3537,6 +4367,8 @@ function handleExportCsv(profilesForExport, exportMeta) {
           escapeCsvCell(project.projectPeriod || ""),
           escapeCsvCell(project.moscowCategory || ""),
           escapeCsvCell(countries),
+          escapeCsvCell(projectLabels),
+          escapeCsvCell(projectLinks),
           escapeCsvCell(String(rice))
         ];
         rows.push(row.join(","));
@@ -3796,7 +4628,24 @@ function buildProfilesFromCsvRows(header, rows) {
       tshirtSize: (cells[colIndex.tshirtSize] ?? "").toString().trim() || null,
       projectPeriod: (cells[colIndex.projectPeriod] ?? "").toString().trim().toUpperCase() || null,
       moscowCategory: (cells[colIndex.moscowCategory] ?? "").toString().trim() || null,
-      countries: normalizeCountryNames((cells[colIndex.countries] ?? "").toString().split("|").map((c) => c.trim()).filter((c) => c !== ""))
+      countries: normalizeCountryNames((cells[colIndex.countries] ?? "").toString().split("|").map((c) => c.trim()).filter((c) => c !== "")),
+      labels: normalizeProjectLabels(
+        (cells[colIndex.projectLabels] ?? "")
+          .toString()
+          .split("|")
+          .map((label) => label.trim())
+          .filter((label) => label !== "")
+      ),
+      links: (() => {
+        const raw = (cells[colIndex.projectLinks] ?? "").toString().trim();
+        if (!raw) return [];
+        try {
+          const parsed = JSON.parse(raw);
+          return normalizeProjectLinks(Array.isArray(parsed) ? parsed : []);
+        } catch (_) {
+          return [];
+        }
+      })()
     };
     project.riceScore = calculateRiceScore(project);
     profile.projects.push(project);
@@ -3866,7 +4715,9 @@ function normalizeImportedProject(project) {
     tshirtSize: (project.tshirtSize != null && String(project.tshirtSize).trim() !== "") ? String(project.tshirtSize).trim() : null,
     projectPeriod,
     moscowCategory: (project.moscowCategory != null && String(project.moscowCategory).trim() !== "" && typeof moscowList !== "undefined" && moscowList.includes(project.moscowCategory)) ? String(project.moscowCategory).trim() : null,
-    countries: normalizeCountryNames(Array.isArray(project.countries) ? project.countries : [])
+    countries: normalizeCountryNames(Array.isArray(project.countries) ? project.countries : []),
+    labels: normalizeProjectLabels(project.labels),
+    links: normalizeProjectLinks(project.links)
   };
   normalized.riceScore = calculateRiceScore(normalized);
   return normalized;
@@ -4084,6 +4935,267 @@ function getCountriesFromControls() {
   return normalizeCountryNames(getCountriesFromControlsRaw());
 }
 
+/** True when the project has at least one saved hyperlink. */
+function projectHasLinks(project) {
+  return normalizeProjectLinks(project && project.links).length > 0;
+}
+
+/** True when the project has at least one saved label. */
+function projectHasLabels(project) {
+  return normalizeProjectLabels(project && project.labels).length > 0;
+}
+
+/** Substring match against any project label (case-insensitive). */
+function projectMatchesLabelFilter(project, labelQuery) {
+  const query = (labelQuery || "").trim().toLowerCase();
+  if (!query) return true;
+  const labels = normalizeProjectLabels(project && project.labels);
+  return labels.some((label) => label.toLowerCase().includes(query));
+}
+
+/** Deduplicated, trimmed project labels (each may contain spaces). */
+function normalizeProjectLabels(raw) {
+  if (!Array.isArray(raw)) {
+    if (typeof raw === "string" && raw.trim()) return [raw.trim()];
+    return [];
+  }
+  const seen = new Set();
+  const out = [];
+  raw.forEach((item) => {
+    const label = String(item || "").trim();
+    if (!label || seen.has(label)) return;
+    seen.add(label);
+    out.push(label);
+  });
+  return out;
+}
+
+/** Normalizes a user-entered URL for project links (http/https only). */
+function normalizeProjectLinkUrl(url) {
+  const trimmed = String(url || "").trim();
+  if (!trimmed) return null;
+  let candidate = trimmed;
+  if (!/^[a-z][a-z0-9+.-]*:/i.test(candidate)) {
+    candidate = "https://" + candidate;
+  }
+  try {
+    const parsed = new URL(candidate);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+    return parsed.href;
+  } catch (_) {
+    return null;
+  }
+}
+
+/** Short hostname (+ path) for link preview in view mode. */
+function formatProjectLinkPreviewUrl(url) {
+  try {
+    const parsed = new URL(url);
+    const path = parsed.pathname && parsed.pathname !== "/" ? parsed.pathname : "";
+    return parsed.hostname + path;
+  } catch (_) {
+    return String(url || "");
+  }
+}
+
+/** Deduplicated named hyperlinks on a project. */
+function normalizeProjectLinks(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  const seen = new Set();
+  raw.forEach((item) => {
+    if (!item || typeof item !== "object") return;
+    const label = String(item.label != null ? item.label : item.text || "").trim();
+    const url = normalizeProjectLinkUrl(item.url || item.href || "");
+    if (!label || !url) return;
+    const key = label + "\0" + url;
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({ label, url });
+  });
+  return out;
+}
+
+function renderProjectLabelsControls(labels, { readonly = false } = {}) {
+  if (!elements.projectLabelsContainer) return;
+  elements.projectLabelsContainer.innerHTML = "";
+  const normalized = normalizeProjectLabels(labels);
+  if (readonly) {
+    const wrap = document.createElement("div");
+    wrap.className = "project-labels-readonly";
+    if (!normalized.length) {
+      const hint = document.createElement("p");
+      hint.className = "project-field-empty-hint";
+      hint.textContent = "No labels added";
+      elements.projectLabelsContainer.appendChild(hint);
+      return;
+    }
+    normalized.forEach((label) => {
+      const chip = document.createElement("span");
+      chip.className = "project-label-chip";
+      chip.textContent = label;
+      wrap.appendChild(chip);
+    });
+    elements.projectLabelsContainer.appendChild(wrap);
+    return;
+  }
+  const list = normalized.length ? normalized : [""];
+  list.forEach((label) => addProjectLabelRow(label));
+}
+
+function addProjectLabelRow(value) {
+  if (!elements.projectLabelsContainer) return;
+  const row = document.createElement("div");
+  row.className = "project-label-row";
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "project-label-input";
+  input.placeholder = "e.g. Q3 growth bet, Platform";
+  input.setAttribute("aria-label", "Label text");
+  input.value = value || "";
+  const removeBtn = document.createElement("button");
+  removeBtn.type = "button";
+  removeBtn.className = "project-label-remove-btn";
+  removeBtn.textContent = "×";
+  removeBtn.setAttribute("aria-label", "Remove label");
+  row.appendChild(input);
+  row.appendChild(removeBtn);
+  elements.projectLabelsContainer.appendChild(row);
+}
+
+function getProjectLabelsFromControls() {
+  if (!elements.projectLabelsContainer) return [];
+  const inputs = elements.projectLabelsContainer.querySelectorAll(".project-label-row input");
+  const values = Array.from(inputs)
+    .map((input) => (input.value || "").trim())
+    .filter((value) => value);
+  return normalizeProjectLabels(values);
+}
+
+function ensureProjectLinkRowHeader() {
+  if (!elements.projectLinksContainer) return;
+  if (elements.projectLinksContainer.querySelector(".project-link-row-header")) return;
+  const header = document.createElement("div");
+  header.className = "project-link-row-header";
+  header.setAttribute("aria-hidden", "true");
+  const colLabel = document.createElement("span");
+  colLabel.textContent = "Display text";
+  const colUrl = document.createElement("span");
+  colUrl.textContent = "URL";
+  const colAction = document.createElement("span");
+  header.appendChild(colLabel);
+  header.appendChild(colUrl);
+  header.appendChild(colAction);
+  elements.projectLinksContainer.appendChild(header);
+}
+
+function renderProjectLinksControls(links, { readonly = false } = {}) {
+  if (!elements.projectLinksContainer) return;
+  elements.projectLinksContainer.innerHTML = "";
+  const normalized = normalizeProjectLinks(links);
+  if (readonly) {
+    if (!normalized.length) {
+      const hint = document.createElement("p");
+      hint.className = "project-field-empty-hint";
+      hint.textContent = "No links added";
+      elements.projectLinksContainer.appendChild(hint);
+      return;
+    }
+    const wrap = document.createElement("div");
+    wrap.className = "project-links-readonly";
+    normalized.forEach((link) => {
+      const card = document.createElement("div");
+      card.className = "project-link-card";
+
+      const icon = document.createElement("span");
+      icon.className = "project-link-card__icon";
+      icon.setAttribute("aria-hidden", "true");
+      icon.textContent = "↗";
+
+      const body = document.createElement("div");
+      body.className = "project-link-card__body";
+
+      const anchor = document.createElement("a");
+      anchor.className = "project-link-card__title";
+      anchor.href = link.url;
+      anchor.textContent = link.label;
+      anchor.target = "_blank";
+      anchor.rel = "noopener noreferrer";
+
+      const urlPreview = document.createElement("span");
+      urlPreview.className = "project-link-card__url";
+      urlPreview.textContent = formatProjectLinkPreviewUrl(link.url);
+
+      body.appendChild(anchor);
+      body.appendChild(urlPreview);
+      card.appendChild(icon);
+      card.appendChild(body);
+      wrap.appendChild(card);
+    });
+    elements.projectLinksContainer.appendChild(wrap);
+    return;
+  }
+  ensureProjectLinkRowHeader();
+  const list = normalized.length ? normalized : [{ label: "", url: "" }];
+  list.forEach((link) => addProjectLinkRow(link));
+}
+
+function addProjectLinkRow(link) {
+  if (!elements.projectLinksContainer) return;
+  ensureProjectLinkRowHeader();
+  const row = document.createElement("div");
+  row.className = "project-link-row";
+
+  const fields = document.createElement("div");
+  fields.className = "project-link-row__fields";
+
+  const labelInput = document.createElement("input");
+  labelInput.type = "text";
+  labelInput.className = "project-link-label-input";
+  labelInput.placeholder = "e.g. Product spec";
+  labelInput.setAttribute("aria-label", "Link display text");
+  labelInput.value = (link && link.label) || "";
+
+  const urlInput = document.createElement("input");
+  urlInput.type = "url";
+  urlInput.className = "project-link-url-input";
+  urlInput.placeholder = "https://example.com/doc";
+  urlInput.setAttribute("aria-label", "Link URL");
+  urlInput.value = (link && link.url) || "";
+
+  const removeBtn = document.createElement("button");
+  removeBtn.type = "button";
+  removeBtn.className = "project-link-remove-btn";
+  removeBtn.textContent = "×";
+  removeBtn.setAttribute("aria-label", "Remove link");
+
+  fields.appendChild(labelInput);
+  fields.appendChild(urlInput);
+  row.appendChild(fields);
+  row.appendChild(removeBtn);
+  elements.projectLinksContainer.appendChild(row);
+}
+
+function getProjectLinksFromControls() {
+  if (!elements.projectLinksContainer) return { links: [], error: null };
+  const rows = elements.projectLinksContainer.querySelectorAll(".project-link-row");
+  const links = [];
+  for (const row of rows) {
+    const label = (row.querySelector(".project-link-label-input")?.value || "").trim();
+    const urlRaw = (row.querySelector(".project-link-url-input")?.value || "").trim();
+    if (!label && !urlRaw) continue;
+    if (!label || !urlRaw) {
+      return { links: [], error: "Each link needs both display text and a URL." };
+    }
+    const url = normalizeProjectLinkUrl(urlRaw);
+    if (!url) {
+      return { links: [], error: `Invalid link URL: ${urlRaw}` };
+    }
+    links.push({ label, url });
+  }
+  return { links: normalizeProjectLinks(links), error: null };
+}
+
 /** Preserves password hashes and board order when loading from storage or import. */
 function normalizeLoadedProfile(raw) {
   if (!raw || typeof raw !== "object") return null;
@@ -4122,7 +5234,8 @@ function serializeStatePayload() {
     mapMetric: state.mapMetric,
     exchangeRatesToEUR: state.exchangeRatesToEUR,
     exchangeRatesDate: state.exchangeRatesDate,
-    exchangeRatesLastSource: state.exchangeRatesLastSource
+    exchangeRatesLastSource: state.exchangeRatesLastSource,
+    superAdminMode: !!state.superAdminMode
   };
 }
 
@@ -4206,6 +5319,13 @@ function applyStatePayload(parsed) {
     if (!Array.isArray(parsed) && (parsed.exchangeRatesLastSource === "manual" || parsed.exchangeRatesLastSource === "auto")) {
       state.exchangeRatesLastSource = parsed.exchangeRatesLastSource;
     }
+    if (!Array.isArray(parsed) && typeof parsed.superAdminMode === "boolean") {
+      state.superAdminMode = parsed.superAdminMode;
+    }
+    const activeAfterLoad = state.profiles.find((p) => p.id === state.activeProfileId);
+    if (!isSuperAdminProfile(activeAfterLoad)) {
+      state.superAdminMode = false;
+    }
   } catch (err) {
     console.error("Failed to apply stored state", err);
   }
@@ -4259,7 +5379,9 @@ function normalizeLoadedProject(project) {
     tshirtSize: (project.tshirtSize != null && String(project.tshirtSize).trim() !== "") ? String(project.tshirtSize).trim() : null,
     projectPeriod,
     moscowCategory: (project.moscowCategory != null && String(project.moscowCategory).trim() !== "" && typeof moscowList !== "undefined" && moscowList.includes(project.moscowCategory)) ? String(project.moscowCategory).trim() : null,
-    countries: normalizeCountryNames(Array.isArray(project.countries) ? project.countries : [])
+    countries: normalizeCountryNames(Array.isArray(project.countries) ? project.countries : []),
+    labels: normalizeProjectLabels(project.labels),
+    links: normalizeProjectLinks(project.links)
   };
 }
 
@@ -4427,9 +5549,13 @@ function setActiveProfile(profileId) {
   const profile = state.profiles.find((p) => p.id === profileId);
   if (!profile) return;
   state.activeProfileId = profileId;
+  if (!isSuperAdminProfile(profile)) {
+    state.superAdminMode = false;
+  }
   saveState();
   renderProfiles();
   clearFilters();
+  syncSuperAdminChrome();
   renderProjects();
   if (!isProfileUnlocked(profileId)) {
     pendingUnlockAction = { type: "activate", profileId };
@@ -5348,6 +6474,8 @@ function renderProfilePicker() {
   if (!compact || profiles.length === 0) {
     bar.hidden = true;
     closeProfilePickerDropdown();
+    mountSuperAdminToggleForLayout();
+    syncSuperAdminChrome();
     return;
   }
 
@@ -5359,6 +6487,8 @@ function renderProfilePicker() {
   if (profilePickerOpen) {
     renderProfilePickerOptions();
   }
+  mountSuperAdminToggleForLayout();
+  syncSuperAdminChrome();
 }
 
 function initProfilePicker() {
@@ -5943,6 +7073,7 @@ function renderProfiles() {
   }
   syncPortfolioActionButtons();
   syncDemoReadOnlyChrome();
+  syncSuperAdminChrome();
   updateProfileLockedBanner();
 }
 
@@ -5950,6 +7081,7 @@ function renderProjects() {
   const activeProfile = getActiveProfile();
   const demoReadOnly = isActiveDemoProfile();
   syncDemoReadOnlyChrome();
+  syncSuperAdminChrome();
   elements.projectsTableBody.innerHTML = "";
   if (elements.projectsTableCardsList) {
     elements.projectsTableCardsList.innerHTML = "";
@@ -5997,7 +7129,7 @@ function renderProjects() {
     return;
   }
 
-  const baseProjects = activeProfile.projects.slice();
+  const baseProjects = getPortfolioProjectsBaseList();
 
   baseProjects.forEach((p) => {
     p.riceScore = calculateRiceScore(p);
@@ -6010,7 +7142,9 @@ function renderProjects() {
 
   if (!projects.length) {
     renderProjectsTableEmptyMessage(
-      "No projects match the current filters. Adjust filters or add a new project."
+      isSuperAdminModeActive()
+        ? "No projects match the current filters across all profiles. Adjust filters or add a new project."
+        : "No projects match the current filters. Adjust filters or add a new project."
     );
     updateBulkDeleteButton();
     elements.selectAllProjects.checked = false;
@@ -6053,6 +7187,13 @@ function renderProjects() {
   const rows = document.createDocumentFragment();
   projects.forEach((project) => {
     const tr = document.createElement("tr");
+    if (
+      isSuperAdminModeActive() &&
+      project.ownerProfileId &&
+      project.ownerProfileId !== state.activeProfileId
+    ) {
+      tr.classList.add("projects-table-row--external-profile");
+    }
 
     const tdSelect = document.createElement("td");
     const cb = document.createElement("input");
@@ -6064,9 +7205,11 @@ function renderProjects() {
       cb.title = DEMO_READ_ONLY_ACTION_TITLE;
     }
     tdSelect.appendChild(cb);
+    stampProjectsTableCol(tdSelect, "select");
     tr.appendChild(tdSelect);
 
     const tdTitle = document.createElement("td");
+    stampProjectsTableCol(tdTitle, "title");
     const countries = Array.isArray(project.countries) ? project.countries : [];
     const titleBlock = document.createElement("div");
     titleBlock.className = "cell-title-block";
@@ -6139,8 +7282,10 @@ function renderProjects() {
     }
     tdTitle.appendChild(titleBlock);
     tr.appendChild(tdTitle);
+    tr.appendChild(buildProjectOwnerTableCell(project));
 
     const tdType = document.createElement("td");
+    stampProjectsTableCol(tdType, "type");
     if (project.projectType) {
       const meta = projectTypeIcons && projectTypeIcons[project.projectType];
       const wrapper = document.createElement("span");
@@ -6184,6 +7329,7 @@ function renderProjects() {
     tr.appendChild(tdType);
 
     const tdStatus = document.createElement("td");
+    stampProjectsTableCol(tdStatus, "status");
     if (project.projectStatus) {
       const meta = projectStatusIcons && projectStatusIcons[project.projectStatus];
       const wrapper = document.createElement("span");
@@ -6227,6 +7373,7 @@ function renderProjects() {
     tr.appendChild(tdStatus);
 
     const tdFramework = document.createElement("td");
+    stampProjectsTableCol(tdFramework, "framework");
     const frameworkKey = normalizeFinancialFramework(project.financialImpactFramework);
     const frameworkMeta = FINANCIAL_FRAMEWORK_ICONS[frameworkKey];
     if (frameworkMeta && frameworkMeta.svg) {
@@ -6261,6 +7408,7 @@ function renderProjects() {
     tr.appendChild(tdFramework);
 
     const tdPeriod = document.createElement("td");
+    stampProjectsTableCol(tdPeriod, "period");
     const periodValue = project.projectPeriod || "";
     if (periodValue && typeof projectPeriodTooltip !== "undefined") {
       const meta = projectPeriodTooltip;
@@ -6311,6 +7459,7 @@ function renderProjects() {
     tr.appendChild(tdPeriod);
 
     const tdTshirtSize = document.createElement("td");
+    stampProjectsTableCol(tdTshirtSize, "size");
     if (project.tshirtSize) {
       const meta = tshirtSizeTooltips && tshirtSizeTooltips[project.tshirtSize];
       const wrap = document.createElement("span");
@@ -6351,6 +7500,7 @@ function renderProjects() {
 
     const tdMoscow = document.createElement("td");
     tdMoscow.className = "cell-moscow";
+    stampProjectsTableCol(tdMoscow, "moscow");
     const moscowSlug = moscowTablePillSlug(project.moscowCategory);
     if (project.moscowCategory && typeof moscowTooltips !== "undefined" && moscowTooltips[project.moscowCategory]) {
       const meta = moscowTooltips[project.moscowCategory];
@@ -6401,6 +7551,7 @@ function renderProjects() {
     const tdRice = document.createElement("td");
     const riceScore = calculateRiceScore(project);
     tdRice.className = "cell-rice";
+    stampProjectsTableCol(tdRice, "rice");
 
     const reachVal = project.reachValue != null ? String(project.reachValue) : "—";
     const impactVal = project.impactValue != null ? String(project.impactValue) : "—";
@@ -6464,6 +7615,7 @@ function renderProjects() {
     tr.appendChild(tdRice);
 
     const tdFinancial = document.createElement("td");
+    stampProjectsTableCol(tdFinancial, "financial");
     if (project.financialImpactValue != null && project.financialImpactValue !== "") {
       const raw = project.financialImpactValue;
       const amount = Number.isFinite(raw) ? raw : (typeof raw === "string" ? parseFloat(raw) : 0);
@@ -6514,6 +7666,7 @@ function renderProjects() {
     tr.appendChild(tdFinancial);
 
     const tdCreated = document.createElement("td");
+    stampProjectsTableCol(tdCreated, "created");
     const createdWrap = document.createElement("span");
     createdWrap.className = "cell-date-with-tooltip";
     createdWrap.setAttribute("aria-label", "Created date; hover for last modified");
@@ -6540,6 +7693,7 @@ function renderProjects() {
 
     const tdActions = document.createElement("td");
     tdActions.className = "cell-actions-cell";
+    stampProjectsTableCol(tdActions, "actions");
 
     const actionsWrap = document.createElement("div");
     actionsWrap.className = "cell-actions cell-actions--project project-row-actions";
@@ -6636,9 +7790,8 @@ function switchProjectsView(view) {
 
 /** Returns a map of ISO 2-letter country code -> number of projects that target that country (active profile, filtered). */
 function getProjectCountByCountryCode() {
-  const activeProfile = getUnlockedActiveProfile();
-  if (!activeProfile || !Array.isArray(activeProfile.projects)) return {};
-  const baseProjects = activeProfile.projects.slice();
+  const baseProjects = getPortfolioProjectsBaseList();
+  if (!baseProjects.length) return {};
   initFilterProjectPeriodOptions(baseProjects);
   const projects = applyFilters(baseProjects);
   const countByCode = {};
@@ -6654,11 +7807,29 @@ function getProjectCountByCountryCode() {
   return countByCode;
 }
 
+/** ISO 2-letter country code -> filtered projects (super admin map tooltips). */
+function getFilteredProjectsGroupedByCountryCode() {
+  const baseProjects = getPortfolioProjectsBaseList();
+  if (!baseProjects.length) return {};
+  initFilterProjectPeriodOptions(baseProjects);
+  const projects = applyFilters(baseProjects);
+  const byCode = {};
+  projects.forEach((p) => {
+    const countries = Array.isArray(p.countries) ? p.countries : [];
+    countries.forEach((name) => {
+      const code = typeof countryCodeByName !== "undefined" ? countryCodeByName[name] : null;
+      if (!code) return;
+      if (!byCode[code]) byCode[code] = [];
+      byCode[code].push(p);
+    });
+  });
+  return byCode;
+}
+
 /** Returns a map of ISO 2-letter country code -> sum of RICE scores for projects that target that country (active profile, filtered). */
 function getCountryRiceByCode() {
-  const activeProfile = getUnlockedActiveProfile();
-  if (!activeProfile || !Array.isArray(activeProfile.projects)) return {};
-  const baseProjects = activeProfile.projects.slice();
+  const baseProjects = getPortfolioProjectsBaseList();
+  if (!baseProjects.length) return {};
   baseProjects.forEach((p) => {
     p.riceScore = typeof calculateRiceScore === "function" ? calculateRiceScore(p) : 0;
   });
@@ -6680,9 +7851,8 @@ function getCountryRiceByCode() {
 
 /** Returns a map of ISO 2-letter country code -> total financial impact in EUR (active profile, filtered). All amounts are converted to EUR using the latest exchange rates from the API; amounts in currencies without a rate are excluded. */
 function getCountryFinancialImpactByCode() {
-  const activeProfile = getUnlockedActiveProfile();
-  if (!activeProfile || !Array.isArray(activeProfile.projects)) return {};
-  const baseProjects = activeProfile.projects.slice();
+  const baseProjects = getPortfolioProjectsBaseList();
+  if (!baseProjects.length) return {};
   initFilterProjectPeriodOptions(baseProjects);
   const projects = applyFilters(baseProjects);
   const impactByCode = {};
@@ -7066,6 +8236,9 @@ function renderProjectsMap() {
   syncMapMetricPickerUI();
 
   const countByCode = getProjectCountByCountryCode();
+  const projectsByCountryCode = isSuperAdminModeActive()
+    ? getFilteredProjectsGroupedByCountryCode()
+    : null;
 
   function formatEur(num) {
     const short = typeof formatFinancialShort === "function" ? formatFinancialShort(Number(num)) : String(Number(num).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }));
@@ -7173,6 +8346,17 @@ function renderProjectsMap() {
           : `${label}: —`;
       } else {
         text = `${label}: ${count} project${count !== 1 ? "s" : ""}`;
+      }
+      if (projectsByCountryCode && code && projectsByCountryCode[code] && projectsByCountryCode[code].length) {
+        const ownerLines = projectsByCountryCode[code]
+          .slice(0, 8)
+          .map((p) => {
+            const title = (p.title || "Untitled").trim();
+            const owner = (p.ownerProfileName || "—").trim();
+            return `${title} · ${owner}`;
+          });
+        const more = projectsByCountryCode[code].length - ownerLines.length;
+        text += ` — ${ownerLines.join("; ")}${more > 0 ? ` (+${more} more)` : ""}`;
       }
       layer.bindTooltip(text, { permanent: false, direction: "top" });
     }
@@ -7556,6 +8740,8 @@ function getTableGroupByValue(project, groupBy) {
       const cur = (project.financialImpactCurrency || "").toString().trim().toUpperCase();
       return cur || getTableGroupByUnsetKey();
     }
+    case "ownerProfileName":
+      return (project.ownerProfileName || "").toString().trim() || getTableGroupByUnsetKey();
     default:
       return getTableGroupByUnsetKey();
   }
@@ -7664,12 +8850,19 @@ function syncProjectTableCardSelectionStyles() {
 
 function renderProjectsTableEmptyMessage(message) {
   const text = message || "";
+  const colspan = getProjectsTableColSpan();
   if (elements.projectsTableBody) {
-    elements.projectsTableBody.innerHTML = `
-      <tr>
-        <td colspan="12" class="empty-state">${text}</td>
+    if (isTableCompactLayout()) {
+      elements.projectsTableBody.innerHTML = "";
+    } else {
+      elements.projectsTableBody.innerHTML = `
+      <tr class="projects-table-empty-row">
+        <td colspan="${colspan}" class="empty-state projects-table-col--empty">
+          <div class="projects-table-empty-state__content" role="status">${escapeHtml(text)}</div>
+        </td>
       </tr>
     `;
+    }
   }
   if (elements.projectsTableCardsList) {
     elements.projectsTableCardsList.innerHTML = `<p class="projects-table-cards-empty empty-state" role="status">${text}</p>`;
@@ -7944,6 +9137,22 @@ function buildProjectTableCard(project, demoReadOnly, options = {}) {
   card.dataset.projectId = project.id;
   const statusLabel = (project.projectStatus || "Not Started").toString().trim();
   card.setAttribute("data-status", statusLabel);
+  if (
+    isSuperAdminModeActive() &&
+    project.ownerProfileId &&
+    project.ownerProfileId !== state.activeProfileId
+  ) {
+    card.classList.add("projects-table-card--external-profile");
+  }
+
+  if (isSuperAdminModeActive() && project.ownerProfileName) {
+    const ownerStrip = buildProjectOwnerIdentityElement(project, {
+      variant: "card-strip",
+      showTeam: true,
+      showScopeHint: true
+    });
+    if (ownerStrip) card.appendChild(ownerStrip);
+  }
 
   const head = document.createElement("div");
   head.className = "projects-table-card__head";
@@ -8141,7 +9350,7 @@ function renderScrumBoard() {
     return;
   }
 
-  const baseProjects = unlockedProfile.projects.slice();
+  const baseProjects = getPortfolioProjectsBaseList();
   baseProjects.forEach((p) => {
     p.riceScore = calculateRiceScore(p);
   });
@@ -8223,6 +9432,14 @@ function renderScrumBoard() {
           ? "Project: " + (project.title || "Untitled") + ". View only."
           : "Project: " + (project.title || "Untitled") + ". Drag to change status. View, Edit, Delete."
       );
+      if (
+        isSuperAdminModeActive() &&
+        project.ownerProfileId &&
+        project.ownerProfileId !== state.activeProfileId
+      ) {
+        card.classList.add("portfolio-board-card--external-profile");
+      }
+      prependPortfolioCardOwnerStrip(card, project);
 
       const titleRow = document.createElement("div");
       titleRow.className = "scrum-board-card-title-row";
@@ -8566,10 +9783,11 @@ function bindScrumBoardDragAndDrop() {
       if (!draggedProjectId) return;
       if (!requireWritableActiveProfile("Move project")) return;
       const newStatus = column.getAttribute("data-status");
-      const activeProfile = getUnlockedActiveProfile();
-      if (!activeProfile) return;
-      const project = activeProfile.projects.find((p) => p.id === draggedProjectId);
-      if (!project) return;
+      if (!getUnlockedActiveProfile()) return;
+      const located = findProjectWithOwner(draggedProjectId);
+      const ownerProfile = located.profile;
+      const project = located.project;
+      if (!ownerProfile || !project) return;
       const currentStatus = (project.projectStatus || "Not Started").toString().trim();
 
       if (currentStatus === newStatus) {
@@ -8582,8 +9800,8 @@ function bindScrumBoardDragAndDrop() {
           const idx = Math.min(dropIndex, orderWithoutDragged.length);
           const newOrder = orderWithoutDragged.slice();
           newOrder.splice(idx, 0, draggedProjectId);
-          activeProfile.boardOrder = activeProfile.boardOrder || {};
-          activeProfile.boardOrder[newStatus] = newOrder;
+          ownerProfile.boardOrder = ownerProfile.boardOrder || {};
+          ownerProfile.boardOrder[newStatus] = newOrder;
           saveState();
           renderScrumBoard();
           renderProjects();
@@ -8601,8 +9819,13 @@ function bindScrumBoardDragAndDrop() {
         const idx = Math.min(dropIndex, currentIds.length);
         const newOrder = currentIds.slice();
         newOrder.splice(idx, 0, draggedProjectId);
-        activeProfile.boardOrder = activeProfile.boardOrder || {};
-        activeProfile.boardOrder[newStatus] = newOrder;
+        ownerProfile.boardOrder = ownerProfile.boardOrder || {};
+        if (Array.isArray(ownerProfile.boardOrder[currentStatus])) {
+          ownerProfile.boardOrder[currentStatus] = ownerProfile.boardOrder[currentStatus].filter(
+            (id) => id !== draggedProjectId
+          );
+        }
+        ownerProfile.boardOrder[newStatus] = newOrder;
       }
 
       saveState();
@@ -8613,7 +9836,9 @@ function bindScrumBoardDragAndDrop() {
 }
 
 function getBoardOrderedList(profile, status) {
-  const base = profile.projects.slice();
+  const base = isSuperAdminModeActive()
+    ? getPortfolioProjectsBaseList()
+    : profile.projects.map((p) => attachProjectOwnerMeta(p, profile));
   base.forEach((p) => { p.riceScore = p.riceScore != null ? p.riceScore : calculateRiceScore(p); });
   initFilterProjectPeriodOptions(base);
   const filtered = applyFilters(base);
@@ -8624,6 +9849,10 @@ function getBoardOrderedList(profile, status) {
       const scoreB = b.riceScore != null ? b.riceScore : calculateRiceScore(b);
       return scoreB - scoreA;
     });
+    return list;
+  }
+  if (isSuperAdminModeActive()) {
+    list.sort((a, b) => compareDatesDesc(a.createdAt, b.createdAt));
     return list;
   }
   const orderIds = profile.boardOrder && profile.boardOrder[status];
@@ -8641,16 +9870,17 @@ function getBoardOrderedList(profile, status) {
 
 function moveBoardProjectUp(projectId, status) {
   if (!requireWritableActiveProfile("Reorder project")) return;
-  const activeProfile = getUnlockedActiveProfile();
-  if (!activeProfile) return;
-  const list = getBoardOrderedList(activeProfile, status);
+  const sessionProfile = getUnlockedActiveProfile();
+  if (!sessionProfile) return;
+  const ownerProfile = findProjectOwnerProfile(projectId) || sessionProfile;
+  const list = getBoardOrderedList(sessionProfile, status);
   const idx = list.findIndex((p) => p.id === projectId);
   if (idx <= 0) return;
-  activeProfile.boardOrder = activeProfile.boardOrder || {};
-  if (!Array.isArray(activeProfile.boardOrder[status]) || activeProfile.boardOrder[status].length !== list.length) {
-    activeProfile.boardOrder[status] = list.map((p) => p.id);
+  ownerProfile.boardOrder = ownerProfile.boardOrder || {};
+  if (!Array.isArray(ownerProfile.boardOrder[status]) || ownerProfile.boardOrder[status].length !== list.length) {
+    ownerProfile.boardOrder[status] = list.filter((p) => p.ownerProfileId === ownerProfile.id).map((p) => p.id);
   }
-  const orderIds = activeProfile.boardOrder[status];
+  const orderIds = ownerProfile.boardOrder[status];
   const i = orderIds.indexOf(projectId);
   if (i <= 0) return;
   [orderIds[i - 1], orderIds[i]] = [orderIds[i], orderIds[i - 1]];
@@ -8663,16 +9893,17 @@ function moveBoardProjectUp(projectId, status) {
 
 function moveBoardProjectDown(projectId, status) {
   if (!requireWritableActiveProfile("Reorder project")) return;
-  const activeProfile = getUnlockedActiveProfile();
-  if (!activeProfile) return;
-  const list = getBoardOrderedList(activeProfile, status);
+  const sessionProfile = getUnlockedActiveProfile();
+  if (!sessionProfile) return;
+  const ownerProfile = findProjectOwnerProfile(projectId) || sessionProfile;
+  const list = getBoardOrderedList(sessionProfile, status);
   const idx = list.findIndex((p) => p.id === projectId);
   if (idx < 0 || idx >= list.length - 1) return;
-  activeProfile.boardOrder = activeProfile.boardOrder || {};
-  if (!Array.isArray(activeProfile.boardOrder[status]) || activeProfile.boardOrder[status].length !== list.length) {
-    activeProfile.boardOrder[status] = list.map((p) => p.id);
+  ownerProfile.boardOrder = ownerProfile.boardOrder || {};
+  if (!Array.isArray(ownerProfile.boardOrder[status]) || ownerProfile.boardOrder[status].length !== list.length) {
+    ownerProfile.boardOrder[status] = list.filter((p) => p.ownerProfileId === ownerProfile.id).map((p) => p.id);
   }
-  const orderIds = activeProfile.boardOrder[status];
+  const orderIds = ownerProfile.boardOrder[status];
   const i = orderIds.indexOf(projectId);
   if (i < 0 || i >= orderIds.length - 1) return;
   [orderIds[i], orderIds[i + 1]] = [orderIds[i + 1], orderIds[i]];
@@ -8684,7 +9915,9 @@ function moveBoardProjectDown(projectId, status) {
 }
 
 function getMoscowOrderedList(profile, quadrant) {
-  const base = profile.projects.slice();
+  const base = isSuperAdminModeActive()
+    ? getPortfolioProjectsBaseList()
+    : profile.projects.map((p) => attachProjectOwnerMeta(p, profile));
   base.forEach((p) => { p.riceScore = p.riceScore != null ? p.riceScore : calculateRiceScore(p); });
   initFilterProjectPeriodOptions(base);
   const filtered = applyFilters(base);
@@ -8700,6 +9933,10 @@ function getMoscowOrderedList(profile, quadrant) {
       const scoreB = b.riceScore != null ? b.riceScore : calculateRiceScore(b);
       return scoreB - scoreA;
     });
+    return list;
+  }
+  if (isSuperAdminModeActive()) {
+    list.sort((a, b) => compareDatesDesc(a.createdAt, b.createdAt));
     return list;
   }
   if (profile.moscowOrder && Array.isArray(profile.moscowOrder[quadrant]) && profile.moscowOrder[quadrant].length) {
@@ -8719,10 +9956,11 @@ let moscowCompactNavObserver = null;
 
 function setProjectMoscowCategory(projectId, newMoscow) {
   if (!requireWritableActiveProfile("Move project")) return false;
-  const activeProfile = getUnlockedActiveProfile();
-  if (!activeProfile || !newMoscow) return false;
-  const project = activeProfile.projects.find((p) => p.id === projectId);
-  if (!project || project.moscowCategory === newMoscow) return false;
+  if (!getUnlockedActiveProfile() || !newMoscow) return false;
+  const located = findProjectWithOwner(projectId);
+  const ownerProfile = located.profile;
+  const project = located.project;
+  if (!ownerProfile || !project || project.moscowCategory === newMoscow) return false;
   project.moscowCategory = newMoscow;
   project.modifiedAt = new Date().toISOString();
   saveState();
@@ -8733,11 +9971,12 @@ function setProjectMoscowCategory(projectId, newMoscow) {
 
 function setProjectBoardStatus(projectId, newStatus) {
   if (!requireWritableActiveProfile("Move project")) return false;
-  const activeProfile = getUnlockedActiveProfile();
-  if (!activeProfile || !newStatus) return false;
+  if (!getUnlockedActiveProfile() || !newStatus) return false;
   if (typeof projectStatusList === "undefined" || !projectStatusList.includes(newStatus)) return false;
-  const project = activeProfile.projects.find((p) => p.id === projectId);
-  if (!project) return false;
+  const located = findProjectWithOwner(projectId);
+  const ownerProfile = located.profile;
+  const project = located.project;
+  if (!ownerProfile || !project) return false;
   const currentStatus = (project.projectStatus || "Not Started").toString().trim();
   if (currentStatus === newStatus) return false;
 
@@ -8745,15 +9984,15 @@ function setProjectBoardStatus(projectId, newStatus) {
   project.modifiedAt = new Date().toISOString();
 
   if (!state.scrumBoardSortByRice) {
-    activeProfile.boardOrder = activeProfile.boardOrder || {};
-    if (Array.isArray(activeProfile.boardOrder[currentStatus])) {
-      activeProfile.boardOrder[currentStatus] = activeProfile.boardOrder[currentStatus].filter((id) => id !== projectId);
+    ownerProfile.boardOrder = ownerProfile.boardOrder || {};
+    if (Array.isArray(ownerProfile.boardOrder[currentStatus])) {
+      ownerProfile.boardOrder[currentStatus] = ownerProfile.boardOrder[currentStatus].filter((id) => id !== projectId);
     }
-    const nextOrder = Array.isArray(activeProfile.boardOrder[newStatus])
-      ? activeProfile.boardOrder[newStatus].filter((id) => id !== projectId)
+    const nextOrder = Array.isArray(ownerProfile.boardOrder[newStatus])
+      ? ownerProfile.boardOrder[newStatus].filter((id) => id !== projectId)
       : [];
     nextOrder.push(projectId);
-    activeProfile.boardOrder[newStatus] = nextOrder;
+    ownerProfile.boardOrder[newStatus] = nextOrder;
   }
 
   saveState();
@@ -8766,8 +10005,32 @@ function isCompactPortfolioLayout() {
   return document.documentElement.classList.contains("is-compact-layout");
 }
 
+/** Table-style owner stripe (scrum / MoSCoW board cards, all layouts). */
+function buildPortfolioCardOwnerStrip(project) {
+  if (!isSuperAdminModeActive()) return null;
+  const name = (project.ownerProfileName || "").trim();
+  if (!name) return null;
+  return buildProjectOwnerIdentityElement(project, {
+    variant: "card-strip",
+    showTeam: true,
+    showScopeHint: true
+  });
+}
+
+function prependPortfolioCardOwnerStrip(card, project) {
+  if (!isSuperAdminModeActive()) return;
+  const strip = buildPortfolioCardOwnerStrip(project);
+  if (strip) {
+    card.classList.add("portfolio-board-card--has-owner-strip");
+    card.insertBefore(strip, card.firstChild);
+  }
+}
+
 function appendPortfolioCardBody(card, titleRow, metaEl) {
-  if (!isCompactPortfolioLayout()) {
+  const useBodyWrap =
+    isCompactPortfolioLayout() ||
+    card.classList.contains("portfolio-board-card--has-owner-strip");
+  if (!useBodyWrap) {
     card.appendChild(titleRow);
     card.appendChild(metaEl);
     return;
@@ -8920,6 +10183,14 @@ function setPortfolioCardActionButton(btn, kind, label) {
     "</span>";
 }
 
+/** User-facing MoSCoW category label (e.g. "Must Have"). */
+function getMoscowDisplayName(moscowKey) {
+  if (typeof moscowDisplayNames !== "undefined" && moscowDisplayNames[moscowKey]) {
+    return moscowDisplayNames[moscowKey];
+  }
+  return moscowKey || "";
+}
+
 function syncMoscowCompactNav() {
   const nav = elements.moscowCompactNav;
   if (!nav || !elements.moscowBoardContainer) return;
@@ -8938,12 +10209,6 @@ function syncMoscowCompactNav() {
     return;
   }
 
-  const shortLabels = {
-    "Must have": "Must",
-    "Should have": "Should",
-    "Could have": "Could",
-    "Won't have": "Won't"
-  };
   const abbrLabels = {
     "Must have": "M",
     "Should have": "S",
@@ -8978,6 +10243,7 @@ function syncMoscowCompactNav() {
     pill.setAttribute("aria-selected", index === 0 ? "true" : "false");
     pill.setAttribute("data-moscow", moscow);
     pill.setAttribute("aria-controls", "moscow-col-" + index);
+    pill.setAttribute("aria-label", getMoscowDisplayName(moscow) + ", " + count + " projects");
 
     const main = document.createElement("span");
     main.className = "moscow-compact-nav__pill-main";
@@ -8988,7 +10254,7 @@ function syncMoscowCompactNav() {
 
     const label = document.createElement("span");
     label.className = "moscow-compact-nav__label";
-    label.textContent = shortLabels[moscow] || moscow;
+    label.textContent = getMoscowDisplayName(moscow);
 
     const countBadge = document.createElement("span");
     countBadge.className = "moscow-compact-nav__count";
@@ -9071,16 +10337,17 @@ function bindMoscowCompactNavScrollSync(track, columns) {
 
 function moveMoscowProjectUp(projectId, quadrant) {
   if (!requireWritableActiveProfile("Reorder project")) return;
-  const activeProfile = getUnlockedActiveProfile();
-  if (!activeProfile) return;
-  const list = getMoscowOrderedList(activeProfile, quadrant);
+  const sessionProfile = getUnlockedActiveProfile();
+  if (!sessionProfile) return;
+  const ownerProfile = findProjectOwnerProfile(projectId) || sessionProfile;
+  const list = getMoscowOrderedList(sessionProfile, quadrant);
   const idx = list.findIndex((p) => p.id === projectId);
   if (idx <= 0) return;
-  activeProfile.moscowOrder = activeProfile.moscowOrder || {};
-  if (!Array.isArray(activeProfile.moscowOrder[quadrant]) || activeProfile.moscowOrder[quadrant].length !== list.length) {
-    activeProfile.moscowOrder[quadrant] = list.map((p) => p.id);
+  ownerProfile.moscowOrder = ownerProfile.moscowOrder || {};
+  if (!Array.isArray(ownerProfile.moscowOrder[quadrant]) || ownerProfile.moscowOrder[quadrant].length !== list.length) {
+    ownerProfile.moscowOrder[quadrant] = list.filter((p) => p.ownerProfileId === ownerProfile.id).map((p) => p.id);
   }
-  const orderIds = activeProfile.moscowOrder[quadrant];
+  const orderIds = ownerProfile.moscowOrder[quadrant];
   const i = orderIds.indexOf(projectId);
   if (i <= 0) return;
   [orderIds[i - 1], orderIds[i]] = [orderIds[i], orderIds[i - 1]];
@@ -9093,16 +10360,17 @@ function moveMoscowProjectUp(projectId, quadrant) {
 
 function moveMoscowProjectDown(projectId, quadrant) {
   if (!requireWritableActiveProfile("Reorder project")) return;
-  const activeProfile = getUnlockedActiveProfile();
-  if (!activeProfile) return;
-  const list = getMoscowOrderedList(activeProfile, quadrant);
+  const sessionProfile = getUnlockedActiveProfile();
+  if (!sessionProfile) return;
+  const ownerProfile = findProjectOwnerProfile(projectId) || sessionProfile;
+  const list = getMoscowOrderedList(sessionProfile, quadrant);
   const idx = list.findIndex((p) => p.id === projectId);
   if (idx < 0 || idx >= list.length - 1) return;
-  activeProfile.moscowOrder = activeProfile.moscowOrder || {};
-  if (!Array.isArray(activeProfile.moscowOrder[quadrant]) || activeProfile.moscowOrder[quadrant].length !== list.length) {
-    activeProfile.moscowOrder[quadrant] = list.map((p) => p.id);
+  ownerProfile.moscowOrder = ownerProfile.moscowOrder || {};
+  if (!Array.isArray(ownerProfile.moscowOrder[quadrant]) || ownerProfile.moscowOrder[quadrant].length !== list.length) {
+    ownerProfile.moscowOrder[quadrant] = list.filter((p) => p.ownerProfileId === ownerProfile.id).map((p) => p.id);
   }
-  const orderIds = activeProfile.moscowOrder[quadrant];
+  const orderIds = ownerProfile.moscowOrder[quadrant];
   const i = orderIds.indexOf(projectId);
   if (i < 0 || i >= orderIds.length - 1) return;
   [orderIds[i], orderIds[i + 1]] = [orderIds[i + 1], orderIds[i]];
@@ -9138,7 +10406,7 @@ function renderMoscowBoard() {
     return;
   }
 
-  const baseProjects = unlockedProfile.projects.slice();
+  const baseProjects = getPortfolioProjectsBaseList();
   baseProjects.forEach((p) => {
     p.riceScore = calculateRiceScore(p);
   });
@@ -9194,14 +10462,22 @@ function renderMoscowBoard() {
     const gridDesc = tip && tip.gridDescription ? tip.gridDescription : "";
     const headerTop = document.createElement("div");
     headerTop.className = "moscow-quadrant-header__top";
+    const titleLine = document.createElement("div");
+    titleLine.className = "moscow-quadrant-header__title-line";
     const labelBox = document.createElement("div");
     labelBox.className = "moscow-quadrant-label";
-    const shortLabels = { "Must have": "MUST", "Should have": "SHOULD", "Could have": "COULD", "Won't have": "WON'T" };
-    const shortSpan = document.createElement("span");
-    shortSpan.className = "moscow-quadrant-short";
-    shortSpan.textContent = shortLabels[moscow] || moscow.toUpperCase().replace("'", "'");
-    labelBox.appendChild(shortSpan);
-    headerTop.appendChild(labelBox);
+    const titleSpan = document.createElement("span");
+    titleSpan.className = "moscow-quadrant-short";
+    titleSpan.textContent = getMoscowDisplayName(moscow);
+    labelBox.appendChild(titleSpan);
+    titleLine.appendChild(labelBox);
+    if (gridDesc) {
+      const descEl = document.createElement("p");
+      descEl.className = "moscow-quadrant-description";
+      descEl.textContent = gridDesc;
+      titleLine.appendChild(descEl);
+    }
+    headerTop.appendChild(titleLine);
     const count = document.createElement("span");
     count.className = "moscow-board-column-count";
     count.textContent = String((byMoscow[moscow] || []).length);
@@ -9211,12 +10487,6 @@ function renderMoscowBoard() {
     fullName.className = "moscow-quadrant-fullname";
     fullName.textContent = moscow;
     header.appendChild(fullName);
-    if (gridDesc) {
-      const descEl = document.createElement("p");
-      descEl.className = "moscow-quadrant-description";
-      descEl.textContent = gridDesc;
-      header.appendChild(descEl);
-    }
     cell.appendChild(header);
 
     const cardsContainer = document.createElement("div");
@@ -9234,6 +10504,14 @@ function renderMoscowBoard() {
           ? "Project: " + (project.title || "Untitled") + ". View only."
           : "Project: " + (project.title || "Untitled") + ". Drag to change MOSCOW category. View, Edit, Delete."
       );
+      if (
+        isSuperAdminModeActive() &&
+        project.ownerProfileId &&
+        project.ownerProfileId !== state.activeProfileId
+      ) {
+        card.classList.add("portfolio-board-card--external-profile");
+      }
+      prependPortfolioCardOwnerStrip(card, project);
 
       const titleRow = document.createElement("div");
       titleRow.className = "moscow-board-card-title-row";
@@ -9567,6 +10845,13 @@ function applyFilters(projects) {
   const moscowFilter = elements.filterMoscow ? elements.filterMoscow.value : "";
   const projectTypeFilter = elements.filterProjectType.value;
   const selectedCountriesFilter = getSelectedFilterCountries();
+  const labelQuery = elements.filterLabel ? (elements.filterLabel.value || "").trim().toLowerCase() : "";
+  const labelsFilter = elements.filterLabels ? elements.filterLabels.value : "";
+  const linksFilter = elements.filterLinks ? elements.filterLinks.value : "";
+  const ownerProfileFilter =
+    elements.filterOwnerProfile && isSuperAdminModeActive()
+      ? (elements.filterOwnerProfile.value || "").trim()
+      : "";
 
   return projects.filter((p) => {
     if (titleQuery) {
@@ -9628,6 +10913,28 @@ function applyFilters(projects) {
       if (!hasMatch) return false;
     }
 
+    if (labelQuery && !projectMatchesLabelFilter(p, labelQuery)) {
+      return false;
+    }
+
+    if (labelsFilter === "with" && !projectHasLabels(p)) {
+      return false;
+    }
+    if (labelsFilter === "without" && projectHasLabels(p)) {
+      return false;
+    }
+
+    if (linksFilter === "with" && !projectHasLinks(p)) {
+      return false;
+    }
+    if (linksFilter === "without" && projectHasLinks(p)) {
+      return false;
+    }
+
+    if (ownerProfileFilter && (p.ownerProfileId || "") !== ownerProfileFilter) {
+      return false;
+    }
+
     return true;
   });
 }
@@ -9648,9 +10955,26 @@ function sortProjects(projects) {
   const direction = state.sortDirection === "asc" ? 1 : -1;
 
   return projects.slice().sort((a, b) => {
-    if (field === "title" || field === "projectType" || field === "projectStatus" || field === "financialImpactFramework" || field === "tshirtSize" || field === "financialImpactCurrency" || field === "moscowCategory") {
-      const va = (a[field] || "").toString().toLowerCase();
-      const vb = (b[field] || "").toString().toLowerCase();
+    if (
+      field === "title" ||
+      field === "ownerProfileName" ||
+      field === "projectType" ||
+      field === "projectStatus" ||
+      field === "financialImpactFramework" ||
+      field === "tshirtSize" ||
+      field === "financialImpactCurrency" ||
+      field === "moscowCategory"
+    ) {
+      const va = (
+        field === "ownerProfileName" ? a.ownerProfileName || "" : a[field] || ""
+      )
+        .toString()
+        .toLowerCase();
+      const vb = (
+        field === "ownerProfileName" ? b.ownerProfileName || "" : b[field] || ""
+      )
+        .toString()
+        .toLowerCase();
       if (va === vb) {
         return compareDatesDesc(a.createdAt, b.createdAt);
       }
@@ -9713,6 +11037,7 @@ function updateSortIndicators() {
 }
 
 function clearFilters() {
+  closeAllFilterAutocompleteDropdowns();
   elements.filterTitle.value = "";
   elements.filterImpact.value = "";
   elements.filterEffort.value = "";
@@ -9722,6 +11047,10 @@ function clearFilters() {
   if (elements.filterStatus) elements.filterStatus.value = "";
   if (elements.filterTshirtSize) elements.filterTshirtSize.value = "";
   if (elements.filterMoscow) elements.filterMoscow.value = "";
+  if (elements.filterLabel) elements.filterLabel.value = "";
+  if (elements.filterLabels) elements.filterLabels.value = "";
+  if (elements.filterLinks) elements.filterLinks.value = "";
+  if (elements.filterOwnerProfile) elements.filterOwnerProfile.value = "";
   if (elements.filterProjectPeriodSearch) {
     elements.filterProjectPeriodSearch.value = "";
   }
@@ -9822,8 +11151,7 @@ function syncHeaderCheckbox() {
 function handleBulkDelete() {
   if (state.projectsView !== "table") return;
   if (!requireWritableActiveProfile("Bulk delete")) return;
-  const activeProfile = getUnlockedActiveProfile();
-  if (!activeProfile || !elements.projectDeleteModal) return;
+  if (!getUnlockedActiveProfile() || !elements.projectDeleteModal) return;
   const checked = Array.from(getProjectSelectCheckboxes()).filter((cb) => cb.checked);
   if (!checked.length) return;
 
@@ -9837,8 +11165,9 @@ function handleBulkDelete() {
     elements.projectDeleteNameLabel.textContent = `${ids.length} project${ids.length === 1 ? "" : "s"} selected`;
   }
   if (elements.projectDeleteWarningText) {
-    elements.projectDeleteWarningText.textContent =
-      "This will permanently remove the selected projects from this profile. This action cannot be undone.";
+    elements.projectDeleteWarningText.textContent = isSuperAdminModeActive()
+      ? "This will permanently remove the selected projects from their owner profiles. This action cannot be undone."
+      : "This will permanently remove the selected projects from this profile. This action cannot be undone.";
   }
 
   elements.projectDeleteModal.setAttribute("aria-hidden", "false");
@@ -9854,8 +11183,7 @@ function handleBulkDelete() {
           closeProjectDeleteModal();
           return;
         }
-        const count = idList.length;
-        activeProfile.projects = activeProfile.projects.filter((p) => !idList.includes(p.id));
+        const count = removeProjectsByIds(idList);
         saveState();
         renderProjects();
         closeProjectDeleteModal();
@@ -10959,11 +12287,12 @@ function deleteProfile(profileId) {
 
 function handleSingleDelete(projectId) {
   if (!requireWritableActiveProfile("Delete")) return;
-  const activeProfile = getActiveProfile();
-  if (!activeProfile || !elements.projectDeleteModal) return;
+  if (!getActiveProfile() || !elements.projectDeleteModal) return;
 
-  const project = activeProfile.projects.find((p) => p.id === projectId);
-  if (!project) return;
+  const located = findProjectWithOwner(projectId);
+  const ownerProfile = located.profile;
+  const project = located.project;
+  if (!ownerProfile || !project) return;
 
   prepareAppOverlay("projectDeleteModal");
   elements.projectDeleteModal.setAttribute("data-delete-mode", "single");
@@ -10973,8 +12302,11 @@ function handleSingleDelete(projectId) {
     elements.projectDeleteNameLabel.textContent = project.title || "Untitled project";
   }
   if (elements.projectDeleteWarningText) {
+    const ownerNote = isSuperAdminModeActive()
+      ? ` from profile “${ownerProfile.name || "Unnamed"}”`
+      : " from this profile";
     elements.projectDeleteWarningText.textContent =
-      "This will permanently remove this project from this profile. This action cannot be undone.";
+      `This will permanently remove this project${ownerNote}. This action cannot be undone.`;
   }
 
   elements.projectDeleteModal.setAttribute("aria-hidden", "false");
@@ -10985,12 +12317,10 @@ function handleSingleDelete(projectId) {
       const mode = elements.projectDeleteModal.getAttribute("data-delete-mode") || "single";
       if (mode === "single") {
         const id = elements.projectDeleteModal.getAttribute("data-project-id");
-        const target = activeProfile.projects.find((p) => p.id === id);
-        if (!target) {
+        if (!id || !removeProjectById(id)) {
           closeProjectDeleteModal();
           return;
         }
-        activeProfile.projects = activeProfile.projects.filter((p) => p.id !== id);
         saveState();
         renderProjects();
         closeProjectDeleteModal();
@@ -11025,12 +12355,27 @@ function openProjectModal(mode, projectId) {
   }
 
   let project = null;
+  let ownerProfile = activeProfile;
   if (isEdit || isView) {
-    project = activeProfile.projects.find((p) => p.id === projectId);
+    const located = findProjectWithOwner(projectId);
+    ownerProfile = located.profile || activeProfile;
+    project = located.project;
+  }
+
+  const showOwnerPicker = !isView && isSuperAdminModeActive() && elements.projectOwnerProfileWrap;
+  if (elements.projectOwnerProfileWrap) {
+    elements.projectOwnerProfileWrap.hidden = !showOwnerPicker;
+  }
+  if (showOwnerPicker) {
+    populateProjectOwnerProfileSelect(ownerProfile ? ownerProfile.id : state.activeProfileId);
   }
 
   if (project) {
-    elements.projectModalTitle.textContent = isView ? "View project" : "Edit project";
+    const ownerSuffix =
+      isSuperAdminModeActive() && ownerProfile && ownerProfile.id !== activeProfile.id
+        ? ` · ${ownerProfile.name}`
+        : "";
+    elements.projectModalTitle.textContent = (isView ? "View project" : "Edit project") + ownerSuffix;
     elements.projectTitle.value = project.title || "";
     elements.projectDescription.value = project.description || "";
     elements.reachDescription.value = project.reachDescription || "";
@@ -11063,6 +12408,8 @@ function openProjectModal(mode, projectId) {
     elements.projectPeriod.value = project.projectPeriod || "";
     elements.projectMoscow.value = project.moscowCategory || "";
     renderCountriesControls(Array.isArray(project.countries) ? project.countries : []);
+    renderProjectLabelsControls(project.labels, { readonly: isView });
+    renderProjectLinksControls(project.links, { readonly: isView });
 
     if (elements.projectMetaId) {
       elements.projectMetaId.textContent = project.id || "—";
@@ -11072,7 +12419,12 @@ function openProjectModal(mode, projectId) {
     elements.projectMetaRice.textContent = formatRice(calculateRiceScore(project));
     elements.projectFormSubmitBtn.textContent = isView ? "Close" : "Update project";
   } else {
-    elements.projectModalTitle.textContent = "New project";
+    elements.projectModalTitle.textContent = isSuperAdminModeActive()
+      ? "New project (choose owner profile)"
+      : "New project";
+    if (showOwnerPicker) {
+      populateProjectOwnerProfileSelect(state.activeProfileId);
+    }
     elements.projectTitle.value = "";
     elements.projectDescription.value = "";
     elements.reachDescription.value = "";
@@ -11095,6 +12447,8 @@ function openProjectModal(mode, projectId) {
     elements.projectPeriod.value = "";
     elements.projectMoscow.value = "Could have";
     renderCountriesControls([]);
+    renderProjectLabelsControls([]);
+    renderProjectLinksControls([]);
 
     const now = new Date();
     const nowIso = now.toISOString();
@@ -11130,6 +12484,15 @@ function openProjectModal(mode, projectId) {
   if (elements.addCountryBtn) {
     elements.addCountryBtn.style.display = isView ? "none" : "";
   }
+  if (elements.addProjectLabelBtn) {
+    elements.addProjectLabelBtn.style.display = isView ? "none" : "";
+  }
+  if (elements.addProjectLinkBtn) {
+    elements.addProjectLinkBtn.style.display = isView ? "none" : "";
+  }
+  elements.projectForm.querySelectorAll(".project-dynamic-field-hint").forEach((hint) => {
+    hint.style.display = isView ? "none" : "";
+  });
   if (elements.countriesContainer) {
     const removeButtons = elements.countriesContainer.querySelectorAll(".country-remove-btn");
     removeButtons.forEach((btn) => {
@@ -11139,6 +12502,9 @@ function openProjectModal(mode, projectId) {
 
   if (elements.projectFormCancelBtn) {
     elements.projectFormCancelBtn.style.display = isView ? "none" : "";
+  }
+  if (elements.projectOwnerProfile) {
+    elements.projectOwnerProfile.disabled = isView;
   }
 }
 
@@ -11160,8 +12526,7 @@ function handleProjectFormSubmit(e) {
 
   if (!requireWritableActiveProfile("Save project")) return;
 
-  const activeProfile = getUnlockedActiveProfile();
-  if (!activeProfile) {
+  if (!getUnlockedActiveProfile()) {
     showToast("Unlock this profile to save projects.");
     return;
   }
@@ -11194,8 +12559,17 @@ function handleProjectFormSubmit(e) {
     tshirtSize: (elements.projectTshirtSize.value || "").trim() || null,
     projectPeriod: period,
     moscowCategory: (elements.projectMoscow && elements.projectMoscow.value) ? (elements.projectMoscow.value || "").trim() || "Could have" : "Could have",
-    countries: getCountriesFromControls()
+    countries: getCountriesFromControls(),
+    labels: getProjectLabelsFromControls()
   };
+
+  const linkResult = getProjectLinksFromControls();
+  if (linkResult.error) {
+    elements.projectFormError.textContent = linkResult.error;
+    elements.projectFormError.style.display = "block";
+    return;
+  }
+  raw.links = linkResult.links;
 
   raw.financialImpactValue = computeFrameworkFinancialImpact(
     raw.financialImpactFramework,
@@ -11220,8 +12594,10 @@ function handleProjectFormSubmit(e) {
   }
 
   if (editingProjectId) {
-    const project = activeProfile.projects.find((p) => p.id === editingProjectId);
-    if (!project) return;
+    const located = findProjectWithOwner(editingProjectId);
+    const ownerProfile = located.profile;
+    const project = located.project;
+    if (!ownerProfile || !project) return;
     project.title = raw.title;
     project.description = raw.description;
     project.reachDescription = raw.reachDescription;
@@ -11242,9 +12618,25 @@ function handleProjectFormSubmit(e) {
     project.projectPeriod = raw.projectPeriod || null;
     project.moscowCategory = raw.moscowCategory || null;
     project.countries = Array.isArray(raw.countries) ? raw.countries : [];
+    project.labels = Array.isArray(raw.labels) ? raw.labels : [];
+    project.links = Array.isArray(raw.links) ? raw.links : [];
     project.modifiedAt = new Date().toISOString();
     project.riceScore = calculateRiceScore(project);
+    saveState();
+    closeProjectModal();
+    renderProjects();
+    showToast(
+      isSuperAdminModeActive() && ownerProfile.id !== state.activeProfileId
+        ? `Project updated in profile “${ownerProfile.name || "Unnamed"}”.`
+        : "Project updated successfully."
+    );
+    return;
   } else {
+    const targetProfile = getTargetProfileForProjectCreate();
+    if (!targetProfile || !Array.isArray(targetProfile.projects)) {
+      showToast("Choose a valid owner profile for this project.");
+      return;
+    }
     const now = new Date().toISOString();
     const project = {
       id: generateId("project"),
@@ -11269,18 +12661,21 @@ function handleProjectFormSubmit(e) {
       tshirtSize: raw.tshirtSize || null,
       projectPeriod: raw.projectPeriod || null,
       moscowCategory: raw.moscowCategory || "Could have",
-      countries: Array.isArray(raw.countries) ? raw.countries : []
+      countries: Array.isArray(raw.countries) ? raw.countries : [],
+      labels: Array.isArray(raw.labels) ? raw.labels : [],
+      links: Array.isArray(raw.links) ? raw.links : []
     };
     project.riceScore = calculateRiceScore(project);
-    activeProfile.projects.unshift(project);
+    targetProfile.projects.unshift(project);
+    saveState();
+    closeProjectModal();
+    renderProjects();
+    showToast(
+      isSuperAdminModeActive() && targetProfile.id !== state.activeProfileId
+        ? `Project created in profile “${targetProfile.name || "Unnamed"}”.`
+        : "Project created successfully."
+    );
   }
-
-  const wasCreate = !editingProjectId;
-  saveState();
-  closeProjectModal();
-  renderProjects();
-  if (wasCreate) showToast("Project created successfully.");
-  else showToast("Project updated successfully.");
 }
 
 function updateModalRicePreview() {
