@@ -1591,6 +1591,9 @@ async function init() {
       "ProfileSecurity module not loaded. Profile passwords and lock will not work until src/modules/profile-security.js is available."
     );
   }
+  if (typeof RichTextEditor !== "undefined" && RichTextEditor.mountAllFromDom) {
+    RichTextEditor.mountAllFromDom();
+  }
   cacheElements();
   syncSiteFooterYear();
   ensureProjectFormFieldTooltips();
@@ -4424,17 +4427,17 @@ function handleExportCsv(profilesForExport, exportMeta) {
           escapeCsvCell(profileCreatedAt),
           escapeCsvCell(project.id || ""),
           escapeCsvCell(project.title || ""),
-          escapeCsvCell(project.description || ""),
+          escapeCsvCell(richDescriptionToPlainText(project.description || "")),
           escapeCsvCell(project.createdAt || ""),
           escapeCsvCell(project.modifiedAt || ""),
           escapeCsvCell(project.reachValue != null ? String(project.reachValue) : ""),
-          escapeCsvCell(project.reachDescription || ""),
+          escapeCsvCell(richDescriptionToPlainText(project.reachDescription || "")),
           escapeCsvCell(project.impactValue != null ? String(project.impactValue) : ""),
-          escapeCsvCell(project.impactDescription || ""),
+          escapeCsvCell(richDescriptionToPlainText(project.impactDescription || "")),
           escapeCsvCell(project.confidenceValue != null ? String(project.confidenceValue) : ""),
-          escapeCsvCell(project.confidenceDescription || ""),
+          escapeCsvCell(richDescriptionToPlainText(project.confidenceDescription || "")),
           escapeCsvCell(project.effortValue != null ? String(project.effortValue) : ""),
-          escapeCsvCell(project.effortDescription || ""),
+          escapeCsvCell(richDescriptionToPlainText(project.effortDescription || "")),
           escapeCsvCell(project.financialImpactValue != null ? String(project.financialImpactValue) : ""),
           escapeCsvCell(project.financialImpactCurrency || ""),
           escapeCsvCell(normalizeFinancialFramework(project.financialImpactFramework)),
@@ -5991,7 +5994,9 @@ function finalizeTooltipViewportPosition(tooltip, anchorRect) {
     tooltip.classList.add("cell-type-tooltip--below");
     const gap = 2;
     let top = anchorRect.bottom + gap;
-    const maxHeightCap = Math.min(Math.floor(vh * 0.55), 320);
+    const maxHeightCap = tooltip.classList.contains("cell-type-tooltip--project-details")
+      ? Math.min(Math.floor(vh * 0.62), 420)
+      : Math.min(Math.floor(vh * 0.55), 320);
     let maxHeight = Math.max(120, Math.min(maxHeightCap, vh - margin - top));
     if (maxHeight < 120) {
       top = margin;
@@ -6084,6 +6089,7 @@ function positionProfileTooltip(wrap, anchorPoint) {
 
   const useWideTooltip =
     wrap.classList.contains("card-title-with-tooltip") ||
+    wrap.classList.contains("cell-desc-with-tooltip") ||
     wrap.classList.contains("cell-countries-with-tooltip") ||
     wrap.classList.contains("cell-rice-with-tooltip");
   tooltip.classList.toggle("cell-type-tooltip--wide", useWideTooltip);
@@ -7302,23 +7308,12 @@ function renderProjects() {
       descWrap.className = "cell-desc-with-tooltip";
       descWrap.setAttribute("aria-label", "Project name; hover for description");
       descWrap.appendChild(titleDiv);
-      const tooltipEl = document.createElement("div");
-      tooltipEl.className = "cell-type-tooltip cell-type-tooltip--wide";
-      tooltipEl.setAttribute("role", "tooltip");
-      const tooltipTitleEl = document.createElement("div");
-      tooltipTitleEl.className = "cell-type-tooltip-title";
-      tooltipTitleEl.textContent = "Description";
-      tooltipEl.appendChild(tooltipTitleEl);
-      const tooltipBodyEl = document.createElement("div");
-      tooltipBodyEl.className = "cell-type-tooltip-body";
-      const paragraphs = String(projectDesc).split(/\n\n+/);
-      paragraphs.forEach((p) => {
-        const block = document.createElement("p");
-        block.textContent = p.trim();
-        if (block.textContent) tooltipBodyEl.appendChild(block);
-      });
-      tooltipEl.appendChild(tooltipBodyEl);
-      descWrap.appendChild(tooltipEl);
+      descWrap.appendChild(
+        buildProjectDetailsTooltip({
+          titleLabel: "Description",
+          rawDescription: projectDesc
+        })
+      );
       titleBlock.appendChild(descWrap);
     } else {
       titleBlock.appendChild(titleDiv);
@@ -9565,7 +9560,6 @@ function buildCardTitleTooltipElement(titleClassName, project) {
     project && (project.description != null || project.projectDescription != null)
       ? String(project.description != null ? project.description : project.projectDescription)
       : "";
-  const descriptionText = rawDescription.replace(/\s+/g, " ").trim() || "No description provided.";
 
   const wrap = document.createElement("div");
   wrap.className = `${titleClassName} card-title-with-tooltip`;
@@ -9576,26 +9570,14 @@ function buildCardTitleTooltipElement(titleClassName, project) {
   textSpan.textContent = titleText;
   wrap.appendChild(textSpan);
 
-  const tooltipEl = document.createElement("div");
-  tooltipEl.className = "cell-type-tooltip";
-  tooltipEl.setAttribute("role", "tooltip");
+  wrap.appendChild(
+    buildProjectDetailsTooltip({
+      titleLabel: "Project details",
+      statusText,
+      rawDescription
+    })
+  );
 
-  const titleEl = document.createElement("div");
-  titleEl.className = "cell-type-tooltip-title";
-  titleEl.textContent = "Project details";
-  tooltipEl.appendChild(titleEl);
-
-  const bodyEl = document.createElement("div");
-  bodyEl.className = "cell-type-tooltip-body";
-  const statusLine = document.createElement("p");
-  statusLine.textContent = `Status: ${statusText}`;
-  const descriptionLine = document.createElement("p");
-  descriptionLine.textContent = `Description: ${descriptionText}`;
-  bodyEl.appendChild(statusLine);
-  bodyEl.appendChild(descriptionLine);
-  tooltipEl.appendChild(bodyEl);
-
-  wrap.appendChild(tooltipEl);
   return wrap;
 }
 
@@ -10182,7 +10164,9 @@ function buildProjectTableCard(project, demoReadOnly, options = {}) {
   titleRow.appendChild(buildCardTitleTooltipElement("projects-table-card__title", project));
   body.appendChild(titleRow);
 
-  const description = project.description ? String(project.description).trim() : "";
+  const description = project.description
+    ? richDescriptionToPlainText(project.description).trim()
+    : "";
   if (description) {
     const descEl = document.createElement("p");
     descEl.className = "projects-table-card__desc";
@@ -13228,14 +13212,14 @@ function openProjectModal(mode, projectId) {
         : "";
     elements.projectModalTitle.textContent = (isView ? "View project" : "Edit project") + ownerSuffix;
     elements.projectTitle.value = project.title || "";
-    elements.projectDescription.value = project.description || "";
-    elements.reachDescription.value = project.reachDescription || "";
+    setRichDescriptionValue("projectDescription", project.description || "");
+    setRichDescriptionValue("reachDescription", project.reachDescription || "");
     elements.reachValue.value = project.reachValue != null ? project.reachValue : "";
-    elements.impactDescription.value = project.impactDescription || "";
+    setRichDescriptionValue("impactDescription", project.impactDescription || "");
     elements.impactValue.value = project.impactValue != null ? String(project.impactValue) : "";
-    elements.confidenceDescription.value = project.confidenceDescription || "";
+    setRichDescriptionValue("confidenceDescription", project.confidenceDescription || "");
     elements.confidenceValue.value = project.confidenceValue != null ? project.confidenceValue : "";
-    elements.effortDescription.value = project.effortDescription || "";
+    setRichDescriptionValue("effortDescription", project.effortDescription || "");
     elements.effortValue.value = project.effortValue != null ? String(project.effortValue) : "";
     elements.financialImpactValue.value = project.financialImpactValue != null ? project.financialImpactValue : "";
     const framework = normalizeFinancialFramework(project.financialImpactFramework);
@@ -13277,14 +13261,14 @@ function openProjectModal(mode, projectId) {
       populateProjectOwnerProfileSelect(state.activeProfileId);
     }
     elements.projectTitle.value = "";
-    elements.projectDescription.value = "";
-    elements.reachDescription.value = "";
+    setRichDescriptionValue("projectDescription", "");
+    setRichDescriptionValue("reachDescription", "");
     elements.reachValue.value = "";
-    elements.impactDescription.value = "";
+    setRichDescriptionValue("impactDescription", "");
     elements.impactValue.value = "";
-    elements.confidenceDescription.value = "";
+    setRichDescriptionValue("confidenceDescription", "");
     elements.confidenceValue.value = "";
-    elements.effortDescription.value = "";
+    setRichDescriptionValue("effortDescription", "");
     elements.effortValue.value = "";
     elements.financialImpactValue.value = "";
     if (elements.financialFramework) elements.financialFramework.value = FINANCIAL_FRAMEWORK_DEFAULT;
@@ -13321,7 +13305,12 @@ function openProjectModal(mode, projectId) {
   prepareAppOverlay("projectModal");
   elements.projectModal.setAttribute("aria-hidden", "false");
   elements.projectModal.classList.add("active");
-  elements.projectTitle.focus();
+  elements.projectModal.classList.toggle("project-modal--view", isView);
+  if (!isView) {
+    elements.projectTitle.focus();
+  }
+
+  setRichDescriptionFieldsReadonly(isView);
 
   const inputs = elements.projectForm.querySelectorAll("input, textarea, select");
   inputs.forEach((el) => {
@@ -13362,6 +13351,10 @@ function openProjectModal(mode, projectId) {
 function closeProjectModal({ immediate = false } = {}) {
   hideCellTypeTooltips();
   closeModalBackdrop(elements.projectModal, { immediate });
+  if (elements.projectModal) {
+    elements.projectModal.classList.remove("project-modal--view");
+  }
+  setRichDescriptionFieldsReadonly(false);
   editingProjectId = null;
 }
 
@@ -13389,14 +13382,14 @@ function handleProjectFormSubmit(e) {
 
   const raw = {
     title: (elements.projectTitle.value || "").trim(),
-    description: (elements.projectDescription.value || "").trim(),
-    reachDescription: (elements.reachDescription.value || "").trim(),
+    description: getRichDescriptionValue("projectDescription"),
+    reachDescription: getRichDescriptionValue("reachDescription"),
     reachValue: elements.reachValue.value !== "" ? Number(elements.reachValue.value) : null,
-    impactDescription: (elements.impactDescription.value || "").trim(),
+    impactDescription: getRichDescriptionValue("impactDescription"),
     impactValue: elements.impactValue.value !== "" ? Number(elements.impactValue.value) : null,
-    confidenceDescription: (elements.confidenceDescription.value || "").trim(),
+    confidenceDescription: getRichDescriptionValue("confidenceDescription"),
     confidenceValue: elements.confidenceValue.value !== "" ? Number(elements.confidenceValue.value) : null,
-    effortDescription: (elements.effortDescription.value || "").trim(),
+    effortDescription: getRichDescriptionValue("effortDescription"),
     effortValue: elements.effortValue.value !== "" ? Number(elements.effortValue.value) : null,
     financialImpactValue: elements.financialImpactValue.value !== "" ? Number(elements.financialImpactValue.value) : null,
     financialImpactCurrency: normalizeCurrency(elements.projectCurrency.value),

@@ -1,0 +1,203 @@
+/**
+ * Project details / description tooltips — structured rich content.
+ */
+
+.cell-type-tooltip--project-details {
+  min-width: min(18rem, calc(100vw - 1.5rem));
+  max-width: min(26rem, calc(100vw - 1.5rem));
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow:
+    0 14px 34px rgba(63, 15, 25, 0.14),
+    0 0 0 1px rgba(202, 138, 4, 0.28) !important;
+  background: linear-gradient(180deg, #fffefb 0%, #fff8ef 100%) !important;
+}
+
+.cell-type-tooltip--project-details .cell-type-tooltip-title {
+  padding: 0.55rem 0.85rem 0.45rem !important;
+  font-size: 0.68rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  border-bottom: 1px solid rgba(202, 138, 4, 0.22) !important;
+}
+
+.cell-type-tooltip--project-details .project-details-tooltip__body {
+  padding: 0.55rem 0.85rem 0.7rem !important;
+  line-height: 1.55 !important;
+}
+
+.cell-type-tooltip--project-details.cell-type-tooltip--scroll .project-details-tooltip__body {
+  padding-right: 0.55rem !important;
+}
+
+.project-details-tooltip__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.55rem;
+}
+
+.project-details-tooltip__status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #7c2d12;
+  background: linear-gradient(180deg, #fff7ed, #ffedd5);
+  border: 1px solid rgba(234, 88, 12, 0.28);
+}
+
+.project-details-tooltip__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.project-details-tooltip__heading {
+  margin: 0.15rem 0 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #92400e;
+}
+
+.project-details-tooltip__paragraph {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: #44403c;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.project-details-tooltip__list {
+  margin: 0.1rem 0 0;
+  padding-left: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.project-details-tooltip__list li {
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: #44403c;
+  padding-left: 0.1rem;
+}
+
+.project-details-tooltip__list li::marker {
+  color: #b45309;
+  font-weight: 700;
+}
+
+.project-details-tooltip__rich {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: #44403c;
+  word-break: break-word;
+}
+
+.project-details-tooltip__rich p,
+.project-details-tooltip__rich div {
+  margin: 0;
+}
+
+.project-details-tooltip__rich ul,
+.project-details-tooltip__rich ol {
+  margin: 0.1rem 0 0;
+  padding-left: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.project-details-tooltip__rich li {
+  font-size: 0.8rem;
+  line-height: 1.55;
+  padding-left: 0.1rem;
+}
+
+.project-details-tooltip__rich li::marker {
+  color: #b45309;
+  font-weight: 700;
+}
+
+.project-details-tooltip__rich strong,
+.project-details-tooltip__rich b {
+  font-weight: 700;
+  color: #57534e;
+}
+
+.project-details-tooltip__rich em,
+.project-details-tooltip__rich i {
+  font-style: italic;
+}
+
+.project-details-tooltip__rich u {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.project-details-tooltip__empty {
+  margin: 0;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: #78716c;
+}
+
+.cell-type-tooltip--project-details.cell-type-tooltip--scroll .cell-type-tooltip-body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(180, 83, 9, 0.45) rgba(254, 243, 199, 0.65);
+}
+
+.cell-type-tooltip--project-details.cell-type-tooltip--scroll .cell-type-tooltip-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cell-type-tooltip--project-details.cell-type-tooltip--scroll .cell-type-tooltip-body::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: linear-gradient(180deg, #f59e0b, #b45309);
+}
+
+.cell-type-tooltip--project-details.cell-type-tooltip--scroll .cell-type-tooltip-body::-webkit-scrollbar-track {
+  background: rgba(254, 243, 199, 0.55);
+  border-radius: 999px;
+}
+
+@media (max-width: 1400px) {
+  .cell-type-tooltip--project-details {
+    min-width: min(16.5rem, calc(100vw - 1.25rem));
+    max-width: min(22rem, calc(100vw - 1.25rem));
+  }
+
+  .cell-type-tooltip--project-details.cell-type-tooltip--scroll {
+    max-width: min(24rem, calc(100vw - 1rem));
+  }
+}
+
+@media (max-width: 480px) {
+  .cell-type-tooltip--project-details {
+    min-width: calc(100vw - 1rem);
+    max-width: calc(100vw - 1rem);
+  }
+
+  .project-details-tooltip__paragraph,
+  .project-details-tooltip__list li {
+    font-size: 0.78rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell-type-tooltip--project-details {
+    transition: none;
+  }
+}

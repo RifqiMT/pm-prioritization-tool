@@ -27,6 +27,24 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### UX — Rich-text editor redesign + all description fields — 2026-05-28 — Product Team — Impact: user-visible
+
+- Modern toolbar with SVG icons, grouped controls, and global button-style reset (fixes heavy red primary-button styling on format buttons).
+- Rich text expanded to Reach, Impact, Confidence, and Effort description fields; compact sizing for RICE inputs.
+- Shared mount pattern for all description editors; CSV export strips HTML from every description field.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui187`.
+
+### UX — Rich-text project description editor — 2026-05-28 — Product Team — Impact: user-visible
+
+- Project create/edit description field supports Word-like formatting: bold, italic, underline, alignment, bullet and numbered lists.
+- Stored as sanitized HTML; legacy plain-text descriptions still render; CSV export uses plain-text fallback.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui186`.
+
+### UX — Project details tooltip rich formatting — 2026-05-28 — Product Team — Impact: user-visible
+
+- Description tooltips parse paragraphs, bullets, numbering, and section headers; scrollable wide layout for long content.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui185`.
+
 ### Fix — Filters drawer collapsed by default — 2026-05-28 — Product Team — Impact: user-visible
 
 - Filters drawer always starts collapsed on load; removed localStorage restore of open state; advanced panel closes when drawer collapses.

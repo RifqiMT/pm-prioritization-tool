@@ -9,34 +9,36 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="css/main.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/workspace-modern.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/header-modern.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/profiles-modern.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/portfolio-modern.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/profile-modals-modern.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/export-modals-modern.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/view-toolbars-modern.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/compact-modern.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/moscow-compact.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/board-compact.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/table-compact.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/project-actions-modern.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/fullscreen-modern.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/fullscreen-compact.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/app-footer.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/views-density.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/layout-flow.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/portfolio-cards-compact.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/table-rows-modern.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/table-revamp-modern.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/table-compact-cards.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/super-admin-modern.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/map-tooltip-modern.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/board-drag.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/board-card-interaction.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/view-toolbars-compact-row.css?v=20260528-ui184" rel="stylesheet" />
-  <link href="css/filters-compact-bar.css?v=20260528-ui184" rel="stylesheet" />
+  <link href="css/main.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/workspace-modern.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/header-modern.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/profiles-modern.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/portfolio-modern.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/profile-modals-modern.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/export-modals-modern.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/view-toolbars-modern.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/compact-modern.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/moscow-compact.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/board-compact.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/table-compact.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/project-actions-modern.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/fullscreen-modern.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/fullscreen-compact.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/app-footer.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/views-density.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/layout-flow.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/portfolio-cards-compact.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/table-rows-modern.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/table-revamp-modern.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/table-compact-cards.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/super-admin-modern.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/map-tooltip-modern.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/board-drag.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/board-card-interaction.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/view-toolbars-compact-row.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/filters-compact-bar.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/project-details-tooltip.css?v=20260528-ui187" rel="stylesheet" />
+  <link href="css/rich-text-editor.css?v=20260528-ui187" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 <body>
@@ -1178,11 +1180,20 @@
                   </div>
                 </div>
                 <div class="project-field-tooltip-wrap">
-                  <label for="projectDescription">Description</label>
-                  <textarea id="projectDescription" name="projectDescription" placeholder="Long-form context, goals, and scope for this project."></textarea>
+                  <label id="projectDescriptionLabel" for="projectDescription">Description</label>
+                  <p class="project-dynamic-field-hint">Explain what this project is, why it matters, and what’s in scope. Use bullets for key points if helpful.</p>
+                  <div
+                    class="rich-text-editor-host"
+                    data-rich-text-editor
+                    data-surface-id="projectDescription"
+                    data-toolbar-id="projectDescriptionToolbar"
+                    data-label-id="projectDescriptionLabel"
+                    data-placeholder="e.g. Revamp onboarding emails to improve week-1 activation. Target new sign-ups; include welcome series and in-app nudges."
+                    data-aria-label="Description formatting"
+                  ></div>
                   <div class="cell-type-tooltip">
                     <div class="cell-type-tooltip-title">Description</div>
-                    <div class="cell-type-tooltip-body">Long-form context, goals, and scope. Shown in table tooltip.</div>
+                    <div class="cell-type-tooltip-body">A short summary for your team. Shown when someone hovers the project name in the table. Formatting is optional.</div>
                   </div>
                 </div>
                 <div class="project-field-tooltip-wrap project-meta-dynamic-field">
@@ -1232,11 +1243,20 @@
                   </div>
                 </div>
                 <div class="project-field-tooltip-wrap">
-                  <label for="reachDescription">Reach description</label>
-                  <textarea id="reachDescription" name="reachDescription" placeholder="Who will this affect, and over what period?"></textarea>
+                  <label id="reachDescriptionLabel" for="reachDescription">Reach description</label>
+                  <div
+                    class="rich-text-editor-host"
+                    data-rich-text-editor
+                    data-surface-id="reachDescription"
+                    data-toolbar-id="reachDescriptionToolbar"
+                    data-label-id="reachDescriptionLabel"
+                    data-placeholder="Who will this affect, and over what period?"
+                    data-aria-label="Reach description formatting"
+                    data-size="compact"
+                  ></div>
                   <div class="cell-type-tooltip">
                     <div class="cell-type-tooltip-title">Reach description</div>
-                    <div class="cell-type-tooltip-body">Who will this affect, and over what period?</div>
+                    <div class="cell-type-tooltip-body">Who will this affect, and over what period? Supports rich text formatting.</div>
                   </div>
                 </div>
               </div>
@@ -1258,11 +1278,20 @@
                   </div>
                 </div>
                 <div class="project-field-tooltip-wrap">
-                  <label for="impactDescription">Impact description</label>
-                  <textarea id="impactDescription" name="impactDescription" placeholder="How much will this move your core metric per user?"></textarea>
+                  <label id="impactDescriptionLabel" for="impactDescription">Impact description</label>
+                  <div
+                    class="rich-text-editor-host"
+                    data-rich-text-editor
+                    data-surface-id="impactDescription"
+                    data-toolbar-id="impactDescriptionToolbar"
+                    data-label-id="impactDescriptionLabel"
+                    data-placeholder="How much will this move your core metric per user?"
+                    data-aria-label="Impact description formatting"
+                    data-size="compact"
+                  ></div>
                   <div class="cell-type-tooltip">
                     <div class="cell-type-tooltip-title">Impact description</div>
-                    <div class="cell-type-tooltip-body">How much this moves your core metric per user.</div>
+                    <div class="cell-type-tooltip-body">How much this moves your core metric per user. Supports rich text formatting.</div>
                   </div>
                 </div>
               </div>
@@ -1277,11 +1306,20 @@
                   </div>
                 </div>
                 <div class="project-field-tooltip-wrap">
-                  <label for="confidenceDescription">Confidence description</label>
-                  <textarea id="confidenceDescription" name="confidenceDescription" placeholder="Why do you believe this will work? Link data, experiments, or bets."></textarea>
+                  <label id="confidenceDescriptionLabel" for="confidenceDescription">Confidence description</label>
+                  <div
+                    class="rich-text-editor-host"
+                    data-rich-text-editor
+                    data-surface-id="confidenceDescription"
+                    data-toolbar-id="confidenceDescriptionToolbar"
+                    data-label-id="confidenceDescriptionLabel"
+                    data-placeholder="Why do you believe this will work? Link data, experiments, or bets."
+                    data-aria-label="Confidence description formatting"
+                    data-size="compact"
+                  ></div>
                   <div class="cell-type-tooltip">
                     <div class="cell-type-tooltip-title">Confidence description</div>
-                    <div class="cell-type-tooltip-body">Why you believe this will work; link data, experiments, or bets.</div>
+                    <div class="cell-type-tooltip-body">Why you believe this will work; link data, experiments, or bets. Supports rich text formatting.</div>
                   </div>
                 </div>
               </div>
@@ -1303,11 +1341,20 @@
                   </div>
                 </div>
                 <div class="project-field-tooltip-wrap">
-                  <label for="effortDescription">Effort description</label>
-                  <textarea id="effortDescription" name="effortDescription" placeholder="Rough sizing: people × weeks, dependencies, and complexity."></textarea>
+                  <label id="effortDescriptionLabel" for="effortDescription">Effort description</label>
+                  <div
+                    class="rich-text-editor-host"
+                    data-rich-text-editor
+                    data-surface-id="effortDescription"
+                    data-toolbar-id="effortDescriptionToolbar"
+                    data-label-id="effortDescriptionLabel"
+                    data-placeholder="Rough sizing: people × weeks, dependencies, and complexity."
+                    data-aria-label="Effort description formatting"
+                    data-size="compact"
+                  ></div>
                   <div class="cell-type-tooltip">
                     <div class="cell-type-tooltip-title">Effort description</div>
-                    <div class="cell-type-tooltip-body">Rough sizing: people × weeks, dependencies, and complexity.</div>
+                    <div class="cell-type-tooltip-body">Rough sizing: people × weeks, dependencies, and complexity. Supports rich text formatting.</div>
                   </div>
                 </div>
               </div>
@@ -2030,17 +2077,19 @@
 
   <!-- Classic scripts (no ES modules) so you can just open index.html directly -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="src/constants.js?v=20260528-ui184"></script>
-  <script src="src/utils.js?v=20260528-ui184"></script>
-  <script src="src/modules/profile-security.js?v=20260528-ui184"></script>
-  <script src="src/rice.js?v=20260528-ui184"></script>
-  <script src="src/modules/exchange-rates.js?v=20260528-ui184"></script>
-  <script src="src/modules/fullscreen.js?v=20260528-ui184"></script>
-  <script src="src/modules/overlay-manager.js?v=20260528-ui184"></script>
-  <script src="src/modules/storage.js?v=20260528-ui184"></script>
-  <script src="src/modules/board-drag.js?v=20260528-ui184"></script>
-  <script src="src/modules/board-card-interaction.js?v=20260528-ui184"></script>
-  <script src="src/app.js?v=20260528-ui184"></script>
+  <script src="src/constants.js?v=20260528-ui187"></script>
+  <script src="src/utils.js?v=20260528-ui187"></script>
+  <script src="src/modules/profile-security.js?v=20260528-ui187"></script>
+  <script src="src/rice.js?v=20260528-ui187"></script>
+  <script src="src/modules/exchange-rates.js?v=20260528-ui187"></script>
+  <script src="src/modules/fullscreen.js?v=20260528-ui187"></script>
+  <script src="src/modules/overlay-manager.js?v=20260528-ui187"></script>
+  <script src="src/modules/storage.js?v=20260528-ui187"></script>
+  <script src="src/modules/description-format.js?v=20260528-ui187"></script>
+  <script src="src/modules/rich-text-editor.js?v=20260528-ui187"></script>
+  <script src="src/modules/board-drag.js?v=20260528-ui187"></script>
+  <script src="src/modules/board-card-interaction.js?v=20260528-ui187"></script>
+  <script src="src/app.js?v=20260528-ui187"></script>
 </body>
 </html>
 
