@@ -1959,6 +1959,8 @@ function cacheElements() {
   elements.addProjectLabelBtn = $("addProjectLabelBtn");
   elements.projectLinksContainer = $("projectLinksContainer");
   elements.addProjectLinkBtn = $("addProjectLinkBtn");
+  elements.projectTasksContainer = $("projectTasksContainer");
+  elements.addProjectTaskBtn = $("addProjectTaskBtn");
 
   elements.filterCountriesSearch = $("filterCountriesSearch");
   elements.filterCountriesList = $("filterCountriesList");
@@ -2799,6 +2801,24 @@ function attachEventListeners() {
       elements.projectLinksContainer.removeChild(row);
       if (!elements.projectLinksContainer.querySelector(".project-link-row")) {
         addProjectLinkRow();
+      }
+    });
+  }
+
+  if (elements.addProjectTaskBtn && elements.projectTasksContainer) {
+    elements.addProjectTaskBtn.addEventListener("click", () => {
+      if (projectModalMode === "view") return;
+      addProjectTaskRow();
+    });
+    elements.projectTasksContainer.addEventListener("click", (event) => {
+      if (projectModalMode === "view") return;
+      const btn = event.target.closest(".project-task-remove-btn");
+      if (!btn) return;
+      const row = btn.closest(".project-task-row");
+      if (!row) return;
+      elements.projectTasksContainer.removeChild(row);
+      if (!elements.projectTasksContainer.querySelector(".project-task-row")) {
+        addProjectTaskRow();
       }
     });
   }
@@ -4369,6 +4389,7 @@ function handleExportCsv(profilesForExport, exportMeta) {
       "countries",
       "projectLabels",
       "projectLinks",
+      "projectTasks",
       "riceScore"
     ];
 
@@ -4410,6 +4431,7 @@ function handleExportCsv(profilesForExport, exportMeta) {
           "",
           "",
           "",
+          "",
           ""
         ];
         rows.push(emptyRow.join(","));
@@ -4420,6 +4442,7 @@ function handleExportCsv(profilesForExport, exportMeta) {
         const countries = Array.isArray(project.countries) ? project.countries.join("|") : "";
         const projectLabels = Array.isArray(project.labels) ? project.labels.join("|") : "";
         const projectLinks = JSON.stringify(normalizeProjectLinks(project.links || []));
+        const projectTasks = JSON.stringify(normalizeProjectTasks(project.tasks || []));
         const row = [
           escapeCsvCell(profileId),
           escapeCsvCell(profileName),
@@ -4455,6 +4478,7 @@ function handleExportCsv(profilesForExport, exportMeta) {
           escapeCsvCell(countries),
           escapeCsvCell(projectLabels),
           escapeCsvCell(projectLinks),
+          escapeCsvCell(projectTasks),
           escapeCsvCell(String(rice))
         ];
         rows.push(row.join(","));
@@ -4731,6 +4755,16 @@ function buildProfilesFromCsvRows(header, rows) {
         } catch (_) {
           return [];
         }
+      })(),
+      tasks: (() => {
+        const raw = (cells[colIndex.projectTasks] ?? "").toString().trim();
+        if (!raw) return [];
+        try {
+          const parsed = JSON.parse(raw);
+          return normalizeProjectTasks(Array.isArray(parsed) ? parsed : []);
+        } catch (_) {
+          return [];
+        }
       })()
     };
     project.riceScore = calculateRiceScore(project);
@@ -4803,7 +4837,8 @@ function normalizeImportedProject(project) {
     moscowCategory: (project.moscowCategory != null && String(project.moscowCategory).trim() !== "" && typeof moscowList !== "undefined" && moscowList.includes(project.moscowCategory)) ? String(project.moscowCategory).trim() : null,
     countries: normalizeCountryNames(Array.isArray(project.countries) ? project.countries : []),
     labels: normalizeProjectLabels(project.labels),
-    links: normalizeProjectLinks(project.links)
+    links: normalizeProjectLinks(project.links),
+    tasks: normalizeProjectTasks(project.tasks)
   };
   normalized.riceScore = calculateRiceScore(normalized);
   return normalized;
@@ -5282,6 +5317,150 @@ function getProjectLinksFromControls() {
   return { links: normalizeProjectLinks(links), error: null };
 }
 
+function getProjectTaskStatusOptions() {
+  return typeof projectStatusList !== "undefined" && Array.isArray(projectStatusList)
+    ? projectStatusList.slice()
+    : ["Not Started", "In Progress", "On Hold", "Done", "Cancelled"];
+}
+
+function normalizeProjectTaskStatus(status) {
+  const value = String(status || "").trim();
+  const options = getProjectTaskStatusOptions();
+  return options.includes(value) ? value : "Not Started";
+}
+
+function normalizeProjectTasks(tasks) {
+  if (!Array.isArray(tasks)) return [];
+  const out = [];
+  tasks.forEach((task) => {
+    if (!task || typeof task !== "object") return;
+    const name = String(task.name != null ? task.name : task.title || "").trim();
+    if (!name) return;
+    out.push({
+      name,
+      status: normalizeProjectTaskStatus(task.status)
+    });
+  });
+  return out;
+}
+
+function buildProjectTaskStatusSelect(selectedStatus) {
+  const select = document.createElement("select");
+  select.className = "project-task-status-select";
+  select.setAttribute("aria-label", "Task status");
+  getProjectTaskStatusOptions().forEach((status) => {
+    const option = document.createElement("option");
+    option.value = status;
+    option.textContent = status;
+    select.appendChild(option);
+  });
+  select.value = normalizeProjectTaskStatus(selectedStatus);
+  return select;
+}
+
+function ensureProjectTaskRowHeader() {
+  if (!elements.projectTasksContainer) return;
+  if (elements.projectTasksContainer.querySelector(".project-task-row-header")) return;
+  const header = document.createElement("div");
+  header.className = "project-task-row-header";
+  header.setAttribute("aria-hidden", "true");
+  const colName = document.createElement("span");
+  colName.textContent = "Task";
+  const colStatus = document.createElement("span");
+  colStatus.textContent = "Status";
+  const colAction = document.createElement("span");
+  header.appendChild(colName);
+  header.appendChild(colStatus);
+  header.appendChild(colAction);
+  elements.projectTasksContainer.appendChild(header);
+}
+
+function renderProjectTasksControls(tasks, { readonly = false } = {}) {
+  if (!elements.projectTasksContainer) return;
+  elements.projectTasksContainer.innerHTML = "";
+  const normalized = normalizeProjectTasks(tasks);
+  if (readonly) {
+    if (!normalized.length) {
+      const hint = document.createElement("p");
+      hint.className = "project-field-empty-hint";
+      hint.textContent = "No tasks added";
+      elements.projectTasksContainer.appendChild(hint);
+      return;
+    }
+    const wrap = document.createElement("div");
+    wrap.className = "project-tasks-readonly";
+    normalized.forEach((task) => {
+      const row = document.createElement("div");
+      row.className = "project-task-readonly-row";
+
+      const nameEl = document.createElement("span");
+      nameEl.className = "project-task-readonly-name";
+      nameEl.textContent = task.name;
+
+      const statusEl = document.createElement("span");
+      statusEl.className = "project-task-readonly-status";
+      statusEl.dataset.status = task.status;
+      statusEl.textContent = task.status;
+
+      row.appendChild(nameEl);
+      row.appendChild(statusEl);
+      wrap.appendChild(row);
+    });
+    elements.projectTasksContainer.appendChild(wrap);
+    return;
+  }
+  ensureProjectTaskRowHeader();
+  const list = normalized.length ? normalized : [{ name: "", status: "Not Started" }];
+  list.forEach((task) => addProjectTaskRow(task));
+}
+
+function addProjectTaskRow(task) {
+  if (!elements.projectTasksContainer) return;
+  ensureProjectTaskRowHeader();
+  const row = document.createElement("div");
+  row.className = "project-task-row";
+
+  const fields = document.createElement("div");
+  fields.className = "project-task-row__fields";
+
+  const nameInput = document.createElement("input");
+  nameInput.type = "text";
+  nameInput.className = "project-task-name-input";
+  nameInput.placeholder = "e.g. Draft PRD, Build MVP";
+  nameInput.setAttribute("aria-label", "Task name");
+  nameInput.value = (task && task.name) || "";
+
+  const statusSelect = buildProjectTaskStatusSelect(task && task.status);
+
+  const removeBtn = document.createElement("button");
+  removeBtn.type = "button";
+  removeBtn.className = "project-task-remove-btn";
+  removeBtn.textContent = "×";
+  removeBtn.setAttribute("aria-label", "Remove task");
+
+  fields.appendChild(nameInput);
+  fields.appendChild(statusSelect);
+  row.appendChild(fields);
+  row.appendChild(removeBtn);
+  elements.projectTasksContainer.appendChild(row);
+}
+
+function getProjectTasksFromControls() {
+  if (!elements.projectTasksContainer) return [];
+  const rows = elements.projectTasksContainer.querySelectorAll(".project-task-row");
+  const tasks = [];
+  rows.forEach((row) => {
+    const name = (row.querySelector(".project-task-name-input")?.value || "").trim();
+    const statusRaw = row.querySelector(".project-task-status-select")?.value || "";
+    if (!name) return;
+    tasks.push({
+      name,
+      status: normalizeProjectTaskStatus(statusRaw)
+    });
+  });
+  return normalizeProjectTasks(tasks);
+}
+
 /** Preserves password hashes and board order when loading from storage or import. */
 function normalizeLoadedProfile(raw) {
   if (!raw || typeof raw !== "object") return null;
@@ -5471,7 +5650,8 @@ function normalizeLoadedProject(project) {
     moscowCategory: (project.moscowCategory != null && String(project.moscowCategory).trim() !== "" && typeof moscowList !== "undefined" && moscowList.includes(project.moscowCategory)) ? String(project.moscowCategory).trim() : null,
     countries: normalizeCountryNames(Array.isArray(project.countries) ? project.countries : []),
     labels: normalizeProjectLabels(project.labels),
-    links: normalizeProjectLinks(project.links)
+    links: normalizeProjectLinks(project.links),
+    tasks: normalizeProjectTasks(project.tasks)
   };
 }
 
@@ -13245,6 +13425,7 @@ function openProjectModal(mode, projectId) {
     renderCountriesControls(Array.isArray(project.countries) ? project.countries : []);
     renderProjectLabelsControls(project.labels, { readonly: isView });
     renderProjectLinksControls(project.links, { readonly: isView });
+    renderProjectTasksControls(project.tasks, { readonly: isView });
 
     if (elements.projectMetaId) {
       elements.projectMetaId.textContent = project.id || "—";
@@ -13284,6 +13465,7 @@ function openProjectModal(mode, projectId) {
     renderCountriesControls([]);
     renderProjectLabelsControls([]);
     renderProjectLinksControls([]);
+    renderProjectTasksControls([]);
 
     const now = new Date();
     const nowIso = now.toISOString();
@@ -13329,6 +13511,9 @@ function openProjectModal(mode, projectId) {
   }
   if (elements.addProjectLinkBtn) {
     elements.addProjectLinkBtn.style.display = isView ? "none" : "";
+  }
+  if (elements.addProjectTaskBtn) {
+    elements.addProjectTaskBtn.style.display = isView ? "none" : "";
   }
   elements.projectForm.querySelectorAll(".project-dynamic-field-hint").forEach((hint) => {
     hint.style.display = isView ? "none" : "";
@@ -13404,7 +13589,8 @@ function handleProjectFormSubmit(e) {
     projectPeriod: period,
     moscowCategory: (elements.projectMoscow && elements.projectMoscow.value) ? (elements.projectMoscow.value || "").trim() || "Could have" : "Could have",
     countries: getCountriesFromControls(),
-    labels: getProjectLabelsFromControls()
+    labels: getProjectLabelsFromControls(),
+    tasks: getProjectTasksFromControls()
   };
 
   const linkResult = getProjectLinksFromControls();
@@ -13464,6 +13650,7 @@ function handleProjectFormSubmit(e) {
     project.countries = Array.isArray(raw.countries) ? raw.countries : [];
     project.labels = Array.isArray(raw.labels) ? raw.labels : [];
     project.links = Array.isArray(raw.links) ? raw.links : [];
+    project.tasks = Array.isArray(raw.tasks) ? raw.tasks : [];
     project.modifiedAt = new Date().toISOString();
     project.riceScore = calculateRiceScore(project);
     saveState();
@@ -13507,7 +13694,8 @@ function handleProjectFormSubmit(e) {
       moscowCategory: raw.moscowCategory || "Could have",
       countries: Array.isArray(raw.countries) ? raw.countries : [],
       labels: Array.isArray(raw.labels) ? raw.labels : [],
-      links: Array.isArray(raw.links) ? raw.links : []
+      links: Array.isArray(raw.links) ? raw.links : [],
+      tasks: Array.isArray(raw.tasks) ? raw.tasks : []
     };
     project.riceScore = calculateRiceScore(project);
     targetProfile.projects.unshift(project);

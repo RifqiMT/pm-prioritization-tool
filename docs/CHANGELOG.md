@@ -27,6 +27,12 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Feature — Project tasks with status — 2026-05-28 — Product Team — Impact: user-visible
+
+- Add optional Tasks list in project create, edit, and view modals (task name + status dropdown using project status values).
+- Persist tasks in project data, CSV export/import (JSON column), and storage normalization.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui188`.
+
 ### UX — Rich-text editor redesign + all description fields — 2026-05-28 — Product Team — Impact: user-visible
 
 - Modern toolbar with SVG icons, grouped controls, and global button-style reset (fixes heavy red primary-button styling on format buttons).

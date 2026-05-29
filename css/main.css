@@ -4512,13 +4512,15 @@ th[data-sort-active="true"] .sort-indicator {
 }
 
 #projectModal .project-labels-list,
-#projectModal .project-links-list {
+#projectModal .project-links-list,
+#projectModal .project-tasks-list {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
 }
 
-#projectModal .project-link-row-header {
+#projectModal .project-link-row-header,
+#projectModal .project-task-row-header {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) 34px;
   gap: 0.4rem;
@@ -4530,8 +4532,13 @@ th[data-sort-active="true"] .sort-indicator {
   color: #a16207;
 }
 
+#projectModal .project-task-row-header {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) 34px;
+}
+
 #projectModal .project-label-row,
-#projectModal .project-link-row {
+#projectModal .project-link-row,
+#projectModal .project-task-row {
   display: flex;
   gap: 0.4rem;
   align-items: center;
@@ -4545,15 +4552,26 @@ th[data-sort-active="true"] .sort-indicator {
   min-width: 0;
 }
 
+#projectModal .project-task-row__fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 0.4rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 #projectModal .project-label-row input,
-#projectModal .project-link-row input {
+#projectModal .project-link-row input,
+#projectModal .project-task-row input,
+#projectModal .project-task-row select {
   flex: 1 1 auto;
   min-width: 0;
   width: 100%;
 }
 
 #projectModal .project-label-remove-btn,
-#projectModal .project-link-remove-btn {
+#projectModal .project-link-remove-btn,
+#projectModal .project-task-remove-btn {
   flex-shrink: 0;
   padding: 0;
   min-width: 34px;
@@ -4569,11 +4587,75 @@ th[data-sort-active="true"] .sort-indicator {
 }
 
 #projectModal .project-label-remove-btn:hover,
-#projectModal .project-link-remove-btn:hover {
+#projectModal .project-link-remove-btn:hover,
+#projectModal .project-task-remove-btn:hover {
   background: #fee2e2;
   border-color: #dc2626;
   color: #7f1d1d;
   box-shadow: none;
+}
+
+#projectModal .project-tasks-readonly {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+#projectModal .project-task-readonly-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.42rem 0.55rem;
+  border-radius: 8px;
+  background: #fff7ed;
+  border: 1px solid rgba(234, 88, 12, 0.18);
+}
+
+#projectModal .project-task-readonly-name {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #431407;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+#projectModal .project-task-readonly-status {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: #fff;
+  border: 1px solid rgba(202, 138, 4, 0.28);
+  color: #7c2d12;
+}
+
+#projectModal .project-task-readonly-status[data-status="Done"] {
+  background: #ecfdf5;
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #065f46;
+}
+
+#projectModal .project-task-readonly-status[data-status="In Progress"] {
+  background: #eff6ff;
+  border-color: rgba(59, 130, 246, 0.35);
+  color: #1e40af;
+}
+
+#projectModal .project-task-readonly-status[data-status="On Hold"] {
+  background: #fef3c7;
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #92400e;
+}
+
+#projectModal .project-task-readonly-status[data-status="Cancelled"] {
+  background: #fef2f2;
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #991b1b;
 }
 
 #projectModal .project-labels-readonly {
