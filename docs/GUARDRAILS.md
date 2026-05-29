@@ -109,7 +109,7 @@
 - **UI when active** (`html.is-super-admin-mode`):
   - Workspace banner and header badge (“Super admin · all profiles”).
   - Table **Profile** column + sort; optional **Owner profile** advanced filter and table group-by **Owner profile**.
-  - Owner identity chips / card strips on table cards, Scrum/MoSCoW cards, and map tooltips.
+  - Owner identity chips / card strips on table cards, Scrum/MoSCoW cards, and map tooltips (including **per-profile breakdown** of the selected map metric for each country).
   - Project modal **Owner profile** selector on create; warnings when editing/deleting another profile’s project.
 - **UI placement:** desktop → `#superAdminToggleDesktopSlot` in portfolio command bar; phones/tablets (≤1400px) → `#superAdminToggleMobileSlot` in the profile picker bar on the **same row** as the picker.
 

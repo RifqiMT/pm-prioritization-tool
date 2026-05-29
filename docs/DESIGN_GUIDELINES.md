@@ -112,6 +112,7 @@ Defined in `main.css` `.cell-type-pill[data-status=...]` and `view-toolbars-mode
 | `project-actions-modern.css` | Row/card action rails; desktop board actions `nowrap` |
 | `super-admin-modern.css` | Owner stripe, profile column, workspace-wide chrome — see GUARDRAILS §7 |
 | `app-footer.css` | Centered one-row site footer (LinkedIn, website, GitHub, article) |
+| `map-tooltip-modern.css` | Map view country hover cards (Leaflet HTML tooltips) |
 
 **Load order:** see [TECH_GUIDELINES.md](TECH_GUIDELINES.md).
 

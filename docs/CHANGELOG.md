@@ -27,6 +27,73 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### UI — Map profile breakdown redesign — 2026-05-28 — Product Team — Impact: user-visible
+
+- Profile section: header with metric badge, avatar initials, proportional bars, and scroll when needed; list height auto-fits map viewport to avoid bottom chop.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui163`.
+
+### Fix — Map tooltip no longer clipped at map edges — 2026-05-28 — Product Team — Impact: user-visible
+
+- Tooltips pick top vs bottom from available space and clamp inside the map container after layout.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui162`.
+
+### UI — Simplified map country tooltips — 2026-05-28 — Product Team — Impact: user-visible
+
+- Cleaner layout: country header, inline stat (`13 projects`), short footnote only when no profile list.
+- Profile breakdown is a simple name/value list (no nested cards); values use neutral workspace colors.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui161`.
+
+### UI — Map tooltip per-profile breakdown (workspace-wide mode) — 2026-05-28 — Product Team — Impact: user-visible
+
+- When workspace-wide mode is on (GUARDRAILS §7), country tooltips show total for the selected metric plus a **By profile** list (up to 10 profiles) with each profile’s value for that country.
+- Supports Count, RICE, Avg RICE, EUR, and Avg EUR metrics.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui160`.
+
+### Fix — Map tooltip shows selected metric; legend counts clarified — 2026-05-28 — Product Team — Impact: user-visible
+
+- Map hover tooltip always shows the aggregated value for the toolbar metric (Count, RICE, EUR, etc.), not only in workspace-wide mode.
+- Tooltip values are rebuilt on each hover from live filtered data; improved ISO code matching for country stats.
+- Legend distinguishes **projects in scope** vs **country assignments** (multi-country projects count once per country on the map).
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui159`.
+
+### Fix — Map hover tooltip position and stuck country outlines — 2026-05-28 — Product Team — Impact: user-visible
+
+- Tooltip anchors to cursor position, then Natural Earth `LABEL_X`/`LABEL_Y`, then valid bounds center (fixes cards appearing over the ocean).
+- Only one country highlight at a time: `resetStyle` on the geo layer before each hover; clears on mouse leave / pan / zoom.
+- Removed per-hover `bringToFront` on the whole layer that caused overlapping outlines.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui158`.
+
+### UI — Map tooltip simplified (aggregated only in workspace-wide mode) — 2026-05-28 — Product Team — Impact: user-visible
+
+- Map hover tooltip: country name + flag only by default; no project lists, progress bars, footers, or click-to-pin panel.
+- When workspace-wide mode is on (GUARDRAILS §7), tooltip adds aggregated value for the selected map metric (Count, RICE, EUR, etc.).
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui157`.
+
+### UI — Map hover tooltips pass-through + click-to-pin details — 2026-05-28 — Product Team — Impact: user-visible
+
+- Hover preview tooltip uses `pointer-events: none` so countries under the card remain hoverable; compact summary only (metric + project count).
+- Click a country to pin the full project list in a corner panel (`#projectsMapDetailPanel`); click again or click the map to close.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui156`.
+
+### Fix — Map tooltips single-open policy — 2026-05-28 — Product Team — Impact: user-visible
+
+- Replaced per-country `bindTooltip` with one shared Leaflet tooltip so only one country card is visible at a time.
+- Closing on map pan/zoom/click and deferred close when leaving a country (still allows scrolling the interactive card).
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui155`.
+
+### UI — Map country tooltips revamp — 2026-05-28 — Product Team — Impact: user-visible
+
+- Replaced plain-text Leaflet tooltips with structured cards: country header (flag, name, ISO code, metric badge), hero metric value, relative intensity bar, scrollable project list (RICE, EUR, status, MoSCoW chips; owner when workspace-wide mode is on).
+- Sticky, interactive, auto-positioned tooltips; gold border highlight on country hover.
+- New `css/map-tooltip-modern.css`; cache bust `APP_ASSET_VERSION` = `20260528-ui154`.
+
+### Fix — Map view stuck on “Unlock this profile” — 2026-05-28 — Product Team — Impact: user-visible
+
+- Map view no longer leaves a stale unlock message after the profile is unlocked: Leaflet instances are torn down when showing empty states, and the map is recreated when the host DOM was replaced.
+- Locked-profile portfolio rendering delegates to `renderProjectsMap()` / board / MoSCoW renderers instead of swapping map HTML without clearing `_leafletMap`.
+- If Leaflet is still loading, the map retries instead of failing silently.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui153`.
+
 ### Docs — Full documentation audit (product standard) — 2026-05-28 — Product Team — Impact: documentation
 
 - Comprehensive refresh of README, product documentation, PRD, personas, user stories, variables (with Mermaid relationship charts), metrics/OKRs, design guidelines, traceability matrix, guardrails, changelog, and docs hub.
