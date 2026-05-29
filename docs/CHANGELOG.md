@@ -27,6 +27,110 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Fix — Filters drawer collapsed by default — 2026-05-28 — Product Team — Impact: user-visible
+
+- Filters drawer always starts collapsed on load; removed localStorage restore of open state; advanced panel closes when drawer collapses.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui184`.
+
+### Fix — Compact filter buttons hidden until drawer open — 2026-05-28 — Product Team — Impact: user-visible
+
+- Phones/tablets: Reset + Advanced no longer appear on the collapsed summary; shown only after expanding Filters.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui183`.
+
+### Fix — Compact filter actions when drawer expanded — 2026-05-28 — Product Team — Impact: user-visible
+
+- Phones/tablets: Reset + Advanced move into the expanded filter body (sticky top bar); summary row keeps them when collapsed.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui182`.
+
+### Fix — Filter buttons stuck in summary on desktop — 2026-05-28 — Product Team — Impact: user-visible
+
+- `syncCompactFiltersChrome` now finds `.filters-meta` after DOM move and restores buttons to the toolbar on desktop; summary action slot hidden on `is-desktop-layout`.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui181`.
+
+### UX — Compact filters bar redesign — 2026-05-28 — Product Team — Impact: user-visible
+
+- Phones/tablets: two-row filters header (title row + Reset/Advanced buttons), icons, compact active-count badge, chevron expand control.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui180`.
+
+### Fix — Advanced filters on phones/tablets — 2026-05-28 — Product Team — Impact: user-visible
+
+- Restored **Reset** and **Show advanced** on compact: actions sit on the filters summary row; opening advanced also expands the drawer when collapsed.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui179`.
+
+### UX — MoSCoW compact toolbar single-row — 2026-05-28 — Product Team — Impact: user-visible
+
+- Phones/tablets: MoSCoW toolbar matches board/table (RICE sort left, fullscreen trailing); removed grid/`display:contents` conflicts.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui178`.
+
+### UX — Table group-by selector compact-only — 2026-05-28 — Product Team — Impact: user-visible
+
+- Group-by toolbar control is shown only on phones/tablets (`is-compact-layout`); hidden on desktop with JS `hidden`/`aria-hidden` sync on resize.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui177`.
+
+### UX — Compact toolbar control order standardized — 2026-05-28 — Product Team — Impact: user-visible
+
+- Phones/tablets: all views use selector → RICE sort → fullscreen; table group-by moved before RICE sort in DOM.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui176` (compact-row overrides `display:contents` on control clusters).
+
+### Fix — Compact view toolbars truly single-row — 2026-05-28 — Product Team — Impact: user-visible
+
+- Override `display: block` toolbar rules; table group-by moved into primary cluster; `view-toolbars-compact-row.css` forces flex row layout on phones/tablets.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui174`.
+
+### UX — Compact view toolbars on one row — 2026-05-28 — Product Team — Impact: user-visible
+
+- Phones/tablets: board (status columns + RICE + expand), table (RICE + group by + count + expand), map, and MoSCoW controls align on a single toolbar row.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui173`.
+
+### Fix — Compact table card actions on one row — 2026-05-28 — Product Team — Impact: user-visible
+
+- View, Edit, and Delete stay on a single row on phones/tablets (table card footer no longer inherits the board two-row grid).
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui172`.
+
+### UX — Compact table project cards aligned with board cards — 2026-05-28 — Product Team — Impact: user-visible
+
+- Phones/tablets (≤1400px) table view cards use the same metrics row (type, framework, RICE, size, financial), structured sections, and hover/press feedback as Scrum/MoSCoW cards (no card resize).
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui171`.
+
+### UX — Standardized board card hover & click — 2026-05-28 — Product Team — Impact: user-visible
+
+- Shared `board-card-interaction` styles and pointer feedback for Scrum / MoSCoW cards: inset outline + shadow on hover, stronger ring + tint on press (no padding, margin, or lift).
+- Removed conflicting hover overrides that flattened or shifted cards on desktop.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui170`.
+
+### UX — Desktop board drag-and-drop animation — 2026-05-28 — Product Team — Impact: user-visible
+
+- Shared `BoardDrag` module and `board-drag.css`: floating card preview, pulsing drop slot, dashed source placeholder, and column/quadrant highlight for Scrum and MoSCoW on desktop.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui169`.
+
+### Feature — Board view status column filter — 2026-05-28 — Product Team — Impact: user-visible
+
+- Board toolbar multi-select **Status columns** toggles which project statuses appear as Scrum columns (persisted in workspace state; at least one column required).
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui168`.
+
+### Fix — Desktop Scrum board column width — 2026-05-28 — Product Team — Impact: user-visible
+
+- Columns use a fixed **368px** width (no flex shrink); board scrolls horizontally when all five statuses do not fit.
+- Cards and metrics row have room for type/framework icons, RICE, size, and financial badges without clipping.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui167`.
+
+### Fix — MoSCoW quadrant equal height and scroll — 2026-05-28 — Product Team — Impact: user-visible
+
+- Desktop 2×2 grid: equal row heights (`1fr 1fr`), fixed grid height, scrollable card lists in each quadrant (Could have / Won't have no longer clip).
+- Compact/fullscreen: quadrant max-height with internal scroll so the last card is reachable.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui166`.
+
+### UI — Desktop board card section spacing — 2026-05-28 — Product Team — Impact: user-visible
+
+- Scrum/MoSCoW cards on desktop use structured body + footer with dividers between title, metrics, and actions rows.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui165`.
+
+### UI — Scrum/MoSCoW card metrics in one row — 2026-05-28 — Product Team — Impact: user-visible
+
+- Project type icon, financial framework icon, RICE, t-shirt size, and financial impact share one horizontal metrics row on all breakpoints (desktop, tablet, phone).
+- Shared `buildBoardCardMetricsRow` helper; horizontal scroll on very narrow cards instead of stacking.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui164`.
+
 ### UI — Map profile breakdown redesign — 2026-05-28 — Product Team — Impact: user-visible
 
 - Profile section: header with metric badge, avatar initials, proportional bars, and scroll when needed; list height auto-fits map viewport to avoid bottom chop.

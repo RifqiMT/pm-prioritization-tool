@@ -238,26 +238,23 @@
     box-shadow: 0 8px 22px rgba(185, 28, 28, 0.38);
   }
 
-  /* ── Filters — one summary row, no inner duplicate header ─ */
-  html.is-compact-layout .portfolio-filters-drawer {
-    border-bottom: 1px solid var(--compact-border);
-  }
-
-  html.is-compact-layout .portfolio-filters-summary {
-    padding: 0.4rem 0.45rem;
-    padding-right: 1.75rem;
-  }
-
-  html.is-compact-layout .portfolio-filters-summary-hint {
-    display: none;
-  }
-
-  html.is-compact-layout .portfolio-filters-body .filters-header.portfolio-filters-toolbar {
+  /* ── Filters — compact bar: filters-compact-bar.css ─────── */
+  html.is-compact-layout .portfolio-filters-body .filters-header-copy {
     display: none !important;
   }
 
-  html.is-compact-layout .portfolio-filters-body {
-    padding: 0 0.4rem 0.45rem;
+  html.is-compact-layout .portfolio-filters-toolbar:not(:has(.filters-meta)) {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  html.is-compact-layout .portfolio-filters-toolbar:has(.filters-meta) {
+    display: block !important;
+    margin: 0 0 0.45rem !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
   }
 
   html.is-compact-layout .filters-active-pill.portfolio-filters-badge:not([style*="display: none"]) {
@@ -328,10 +325,15 @@
     grid-template-columns: 1fr !important;
   }
 
-  html.is-compact-layout .view-toolbar__cluster,
-  html.is-compact-layout .view-toolbar__cluster--actions {
+  html.is-compact-layout .view-toolbar__cluster:not(.view-toolbar__cluster--compact-controls),
+  html.is-compact-layout .view-toolbar__cluster--actions:not(.view-toolbar__cluster--compact-controls) {
     width: 100% !important;
     justify-content: stretch !important;
+  }
+
+  html.is-compact-layout .view-toolbar__cluster--compact-controls {
+    width: 100% !important;
+    justify-content: flex-start !important;
   }
 
   html.is-compact-layout .view-toolbar--map .view-toolbar__cluster--actions {

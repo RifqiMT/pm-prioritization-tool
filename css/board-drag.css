@@ -1,0 +1,125 @@
+/**
+ * Standardized Scrum / MoSCoW board drag-and-drop feedback (desktop-first).
+ */
+
+html.is-desktop-layout.board-drag-active {
+  cursor: grabbing !important;
+}
+
+html.is-desktop-layout.board-drag-active .scrum-board-card,
+html.is-desktop-layout.board-drag-active .moscow-board-card {
+  cursor: grabbing !important;
+}
+
+/* Floating card preview */
+html.is-desktop-layout .board-drag-preview {
+  position: fixed;
+  z-index: 10050;
+  pointer-events: none;
+  margin: 0;
+  opacity: 1;
+  transform: rotate(-1.25deg) scale(1.025);
+  border-color: rgba(185, 28, 28, 0.55) !important;
+  box-shadow:
+    0 18px 42px rgba(127, 29, 29, 0.22),
+    0 0 0 2px rgba(220, 38, 38, 0.28) !important;
+  animation: board-drag-preview-enter 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes board-drag-preview-enter {
+  from {
+    opacity: 0.72;
+    transform: rotate(0deg) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-1.25deg) scale(1.025);
+  }
+}
+
+/* Source card placeholder while dragging */
+html.is-desktop-layout .scrum-board-card.scrum-board-card--dragging,
+html.is-desktop-layout .moscow-board-card.moscow-board-card--dragging,
+html.is-desktop-layout .projects-view--board .scrum-board-card.scrum-board-card--dragging {
+  opacity: 0.32 !important;
+  transform: none !important;
+  border-style: dashed !important;
+  border-color: rgba(185, 28, 28, 0.5) !important;
+  background: rgba(254, 242, 242, 0.45) !important;
+  box-shadow: inset 0 0 0 1px rgba(220, 38, 38, 0.12) !important;
+}
+
+/* Drop position slot */
+html.is-desktop-layout .board-drop-indicator {
+  flex-shrink: 0;
+  height: 5px;
+  margin: 0.12rem 0.2rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(220, 38, 38, 0),
+    rgba(220, 38, 38, 0.85),
+    rgba(220, 38, 38, 0)
+  );
+  box-shadow: 0 0 10px rgba(220, 38, 38, 0.35);
+  animation: board-drop-indicator-pulse 0.85s ease-in-out infinite;
+}
+
+@keyframes board-drop-indicator-pulse {
+  0%,
+  100% {
+    opacity: 0.65;
+    transform: scaleY(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleY(1.15);
+  }
+}
+
+/* Target column / quadrant */
+html.is-desktop-layout .scrum-board-column.scrum-board-column--drag-over,
+html.is-desktop-layout .moscow-board-column.moscow-board-column--drag-over,
+html.is-desktop-layout .moscow-board-column.moscow-grid-cell.moscow-board-column--drag-over {
+  border-color: rgba(220, 38, 38, 0.55) !important;
+  box-shadow:
+    0 0 0 3px rgba(220, 38, 38, 0.22),
+    0 14px 32px rgba(127, 29, 29, 0.14) !important;
+  animation: board-column-drag-over 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+html.is-desktop-layout .scrum-board-column.scrum-board-column--drag-over .scrum-board-column-cards,
+html.is-desktop-layout .moscow-board-column.moscow-board-column--drag-over .moscow-board-column-cards {
+  background: rgba(254, 242, 242, 0.4);
+  outline: 1px dashed rgba(220, 38, 38, 0.28);
+  outline-offset: -4px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+@keyframes board-column-drag-over {
+  from {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+  to {
+    box-shadow:
+      0 0 0 3px rgba(220, 38, 38, 0.22),
+      0 14px 32px rgba(127, 29, 29, 0.14);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.is-desktop-layout .board-drag-preview {
+    animation: none;
+  }
+
+  html.is-desktop-layout .board-drop-indicator {
+    animation: none;
+    opacity: 1;
+  }
+
+  html.is-desktop-layout .scrum-board-column.scrum-board-column--drag-over,
+  html.is-desktop-layout .moscow-board-column.moscow-board-column--drag-over {
+    animation: none;
+  }
+}

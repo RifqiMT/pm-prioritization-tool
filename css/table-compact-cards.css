@@ -122,10 +122,7 @@
       0 1px 2px rgba(15, 23, 42, 0.04),
       0 8px 22px rgba(127, 29, 29, 0.08);
     overflow: hidden;
-    transition:
-      border-color 0.18s ease,
-      box-shadow 0.18s ease,
-      transform 0.12s ease;
+    /* Hover / press: board-card-interaction.css */
   }
 
   html.is-compact-layout .projects-table-card--selected {
@@ -133,10 +130,6 @@
     box-shadow:
       0 0 0 2px rgba(254, 202, 202, 0.55),
       0 10px 26px rgba(127, 29, 29, 0.12);
-  }
-
-  html.is-compact-layout .projects-table-card:active {
-    transform: scale(0.992);
   }
 
   html.is-compact-layout .projects-table-card[data-status="Not Started"] {
@@ -394,49 +387,84 @@
     overflow: hidden;
   }
 
-  html.is-compact-layout .projects-table-card__metrics {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.45rem;
-  }
-
-  html.is-compact-layout .projects-table-card__metric {
+  /* Unified metrics row (type, framework, RICE, size, financial) — matches board cards */
+  html.is-compact-layout .projects-table-card-metrics.board-card-metrics-row {
     display: flex;
-    flex-direction: column;
-    gap: 0.12rem;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.35rem;
+    width: 100%;
     min-width: 0;
-    padding: 0.45rem 0.5rem;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.88);
-    border: 1px solid rgba(226, 232, 240, 0.9);
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.1rem 0 0.15rem;
+    scrollbar-width: thin;
   }
 
-  html.is-compact-layout .projects-table-card__metric--rice {
-    background: linear-gradient(145deg, #fff7ed 0%, #ffffff 100%);
-    border-color: rgba(251, 191, 36, 0.35);
+  html.is-compact-layout .projects-table-card-metrics.board-card-metrics-row > * {
+    flex-shrink: 0;
   }
 
-  html.is-compact-layout .projects-table-card__metric-label {
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: #92400e;
+  html.is-compact-layout .projects-table-card-metrics .board-card-metric-icon,
+  html.is-compact-layout .projects-table-card-metrics .scrum-board-card-type-wrap.board-card-metric-icon {
+    flex: 0 0 1.85rem;
+    width: 1.85rem;
+    height: 1.85rem;
+    min-width: 1.85rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 8px;
+    border: 1px solid rgba(226, 232, 240, 0.98);
+    background: #fff;
   }
 
-  html.is-compact-layout .projects-table-card__metric-value {
-    font-size: 0.88rem;
-    font-weight: 800;
-    color: #1c1917;
-    line-height: 1.2;
+  html.is-compact-layout .projects-table-card-metrics .board-card-metric-icon svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  html.is-compact-layout .projects-table-card-rice,
+  html.is-compact-layout .projects-table-card-size,
+  html.is-compact-layout .projects-table-card-financial {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.65rem;
+    padding: 0 0.5rem;
+    font-size: 0.72rem;
+    line-height: 1;
+    border-radius: 999px;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
-  html.is-compact-layout .projects-table-card__metric--rice .projects-table-card__metric-value {
-    color: #b91c1c;
-    font-size: 0.95rem;
+  html.is-compact-layout .projects-table-card-rice {
+    font-weight: 700;
+    border: 1px solid rgba(79, 70, 229, 0.26);
+    background: #eef2ff;
+    color: #4338ca;
+  }
+
+  html.is-compact-layout .projects-table-card-size {
+    font-weight: 600;
+    border: 1px solid rgba(148, 163, 184, 0.32);
+    background: #f8fafc;
+    color: #475569;
+  }
+
+  html.is-compact-layout .projects-table-card-financial {
+    font-weight: 700;
+    border: 1px solid rgba(16, 185, 129, 0.28);
+    background: #ecfdf5;
+    color: #047857;
+  }
+
+  html.is-compact-layout .board-card-section--metrics.projects-table-card-metrics {
+    padding-top: 0.15rem;
+    border-top: 1px solid rgba(241, 245, 249, 0.92);
+    margin-top: 0.15rem;
   }
 
   html.is-compact-layout .projects-table-card__meta-row {
@@ -493,25 +521,35 @@
     border-color: rgba(226, 232, 240, 0.95);
   }
 
-  html.is-compact-layout .projects-table-card__actions {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    gap: 0.4rem;
+  /* One row of actions — overrides board footer grid (move + actions) on .portfolio-card-footer */
+  html.is-compact-layout .projects-table-card__actions.portfolio-card-footer,
+  html.is-compact-layout .projects-view--table .projects-table-card__actions.portfolio-card-footer {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    grid-template-rows: auto !important;
+    grid-auto-flow: column !important;
+    align-items: stretch !important;
+    gap: 0.4rem !important;
+    width: 100% !important;
     padding: 0.55rem 0.65rem 0.65rem;
     border-top: 1px solid rgba(241, 245, 249, 0.95);
     background: linear-gradient(180deg, rgba(248, 250, 252, 0.55), rgba(255, 255, 255, 0.92));
   }
 
   html.is-compact-layout .projects-table-card__actions .project-action-btn {
-    flex: 1 1 0;
-    min-width: 0;
+    flex: none !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    grid-column: auto !important;
+    grid-row: auto !important;
     min-height: 44px;
     justify-content: center;
     gap: 0.28rem;
     border-radius: 11px;
     border: 1px solid transparent;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    transform: none !important;
   }
 
   html.is-compact-layout .projects-table-card__actions .project-action-btn--view {
@@ -539,6 +577,18 @@
     letter-spacing: 0.02em;
   }
 
+  /* Narrow phones: icon-only, still one row */
+  @media (max-width: 420px) {
+    html.is-compact-layout .projects-table-card__actions.portfolio-card-footer {
+      gap: 0.35rem !important;
+    }
+
+    html.is-compact-layout .projects-table-card__actions .project-action-btn {
+      min-height: 42px;
+      padding: 0.38rem !important;
+    }
+  }
+
   /* Fullscreen table view: card list fills viewport */
   html.is-compact-layout .projects-view--table:fullscreen .projects-table-cards-shell,
   html.is-compact-layout .projects-view--table::-webkit-full-screen .projects-table-cards-shell,
@@ -558,10 +608,15 @@
   }
 }
 
-/* Desktop: card list and group bar hidden (table is primary) */
+/* Desktop: card list and compact-only group-by bar hidden (table is primary) */
+html.is-desktop-layout .projects-table-cards-shell,
+html.is-desktop-layout .projects-table-group-bar--compact-only {
+  display: none !important;
+}
+
 @media (min-width: 1401px) {
   .projects-table-cards-shell,
-  .projects-table-group-bar {
+  .projects-table-group-bar--compact-only {
     display: none !important;
   }
 }

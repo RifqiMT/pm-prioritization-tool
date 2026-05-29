@@ -970,8 +970,10 @@ html.filters-drawer-open .portfolio-filters-body {
 }
 
 .workspace-panel--v2 .scrum-board-column {
-  min-width: min(85vw, 300px);
-  max-width: 320px;
+  flex: 0 0 368px;
+  width: 368px;
+  min-width: 368px;
+  max-width: 368px;
 }
 
 /* Map — fixed height shell; Leaflet fills container (no flex dead space) */

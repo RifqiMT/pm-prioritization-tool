@@ -99,11 +99,22 @@
     min-width: 0 !important;
     flex: none !important;
     min-height: 200px !important;
+    max-height: min(48vh, 420px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
   }
 
   html.is-compact-layout .view-in-fullscreen-host .moscow-board-column-cards {
-    max-height: none !important;
-    overflow-y: visible !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain;
+    scroll-padding-bottom: 0.65rem;
+    padding-bottom: 0.65rem !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   html.is-compact-layout .view-in-fullscreen-host .scrum-board {

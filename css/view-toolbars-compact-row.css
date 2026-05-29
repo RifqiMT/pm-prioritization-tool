@@ -1,0 +1,294 @@
+/**
+ * Phones & tablets (≤1400px): one-row view toolbars.
+ * Standard order: selector (flex) → RICE sort → fullscreen (trailing).
+ */
+
+@media (max-width: 1400px) {
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-view--table .projects-table-toolbar.view-toolbar,
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-view--board .scrum-board-toolbar.view-toolbar,
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-view--moscow .moscow-view-header.view-toolbar,
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-view--map .projects-map-toolbar.view-toolbar {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    padding: 0.4rem 0.45rem !important;
+    margin-bottom: 0.35rem !important;
+    box-sizing: border-box !important;
+  }
+
+  html.is-compact-layout .view-toolbar--table .view-toolbar__row--primary,
+  html.is-compact-layout .view-toolbar--board .view-toolbar__row--primary,
+  html.is-compact-layout .view-toolbar--moscow .view-toolbar__row--primary,
+  html.is-compact-layout .view-toolbar--map .view-toolbar__row--primary {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: 0 !important;
+    grid-template-columns: unset !important;
+  }
+
+  /* Shared compact control strip: selector | RICE | fullscreen (beats display:contents / grid in earlier sheets) */
+  html.is-compact-layout .view-toolbar--table .view-toolbar__cluster--compact-controls,
+  html.is-compact-layout .view-toolbar--board .view-toolbar__cluster--compact-controls,
+  html.is-compact-layout .view-toolbar--moscow .view-toolbar__cluster--compact-controls,
+  html.is-compact-layout .view-toolbar--map .view-toolbar__cluster--compact-controls,
+  html.is-compact-layout .view-toolbar--map .view-toolbar__cluster--actions.view-toolbar__cluster--compact-controls {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    gap: 0.35rem !important;
+    justify-content: flex-start !important;
+    grid-template-columns: unset !important;
+  }
+
+  html.is-compact-layout .view-toolbar--table .view-toolbar__cluster--table-tools .view-toolbar__btn--danger[hidden] {
+    display: none !important;
+  }
+
+  html.is-compact-layout .view-toolbar__compact-selector {
+    order: 1 !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  html.is-compact-layout .view-toolbar__compact-rice {
+    order: 2 !important;
+    flex: 0 0 auto !important;
+    min-height: 40px !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-compact-layout .view-toolbar__compact-fullscreen {
+    order: 3 !important;
+    flex: 0 0 auto !important;
+    min-width: 44px !important;
+    min-height: 40px !important;
+    margin-left: auto !important;
+  }
+
+  /* Table — group by selector (compact phones/tablets only) */
+  html.is-compact-layout .view-toolbar--table .projects-table-group-bar--compact-only.view-toolbar__compact-selector {
+    display: flex !important;
+    visibility: visible !important;
+    width: auto !important;
+    max-width: none !important;
+    pointer-events: auto !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  html.is-compact-layout .view-toolbar--table .projects-table-group-label {
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+  }
+
+  html.is-compact-layout .view-toolbar--table .projects-table-group-control-wrap {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  html.is-compact-layout .view-toolbar--table .projects-table-group-select {
+    width: 100% !important;
+    min-height: 40px !important;
+    padding: 0.35rem 1.75rem 0.35rem 0.55rem !important;
+    font-size: 0.78rem !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(202, 138, 4, 0.35) !important;
+    background: #fff !important;
+  }
+
+  html.is-compact-layout .view-toolbar--table .projects-table-group-summary {
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    padding-left: 0.15rem !important;
+    white-space: nowrap !important;
+    font-size: 0.65rem !important;
+    line-height: 1.2 !important;
+    color: #78716c !important;
+  }
+
+  /* Board — status columns selector */
+  html.is-compact-layout .view-toolbar--board .scrum-board-status-filter.view-toolbar__field {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+  }
+
+  html.is-compact-layout .view-toolbar--board .scrum-board-status-filter .view-toolbar__field-label {
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+    font-size: 0.62rem !important;
+    line-height: 1.2 !important;
+  }
+
+  html.is-compact-layout .view-toolbar--board .scrum-board-status-columns {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    width: auto !important;
+  }
+
+  html.is-compact-layout .view-toolbar--board .scrum-board-status-columns-toggle {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 40px !important;
+  }
+
+  html.is-compact-layout .view-toolbar--board .filter-countries-summary {
+    font-size: 0.72rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* Map — metric selector (no RICE on map; fullscreen still trails) */
+  html.is-compact-layout .view-toolbar--map .view-toolbar__metric--map {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+  }
+
+  html.is-compact-layout .view-toolbar--map .view-toolbar__metric--map .view-toolbar__field-label,
+  html.is-compact-layout .view-toolbar--map .projects-map-metric-label {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    font-size: 0.62rem !important;
+  }
+
+  html.is-compact-layout .view-toolbar--map .map-metric-picker {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+
+  html.is-compact-layout .view-toolbar--map .map-metric-picker__trigger {
+    min-height: 40px !important;
+    width: 100% !important;
+  }
+
+  /* MoSCoW — single row: RICE sort (left) → fullscreen (trailing), matches board/table */
+  html.is-compact-layout .moscow-view-header.view-toolbar,
+  html.is-compact-layout .view-toolbar--moscow.moscow-view-header {
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+  }
+
+  html.is-compact-layout .view-toolbar--moscow .view-toolbar__row--primary {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: 0 !important;
+    grid-template-columns: unset !important;
+  }
+
+  html.is-compact-layout .view-toolbar--moscow .view-toolbar__cluster--compact-controls {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+  }
+
+  html.is-compact-layout .view-toolbar--moscow .view-toolbar__compact-rice,
+  html.is-compact-layout .view-toolbar--moscow .moscow-sort-toggle.view-toolbar__compact-rice {
+    order: 2 !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    min-height: 40px !important;
+  }
+
+  html.is-compact-layout .view-toolbar--moscow .view-toolbar__compact-fullscreen,
+  html.is-compact-layout .view-toolbar--moscow .moscow-fullscreen-btn.view-toolbar__compact-fullscreen {
+    order: 3 !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 44px !important;
+    max-width: none !important;
+    margin-left: auto !important;
+  }
+
+  html.is-compact-layout .view-toolbar--moscow .view-toolbar__identity,
+  html.is-compact-layout .view-toolbar--moscow .view-toolbar__desc,
+  html.is-compact-layout .view-toolbar--moscow .moscow-board-hint {
+    display: none !important;
+  }
+
+  html.is-compact-layout .view-toolbar--moscow .view-fullscreen-label {
+    display: none !important;
+  }
+
+  html.is-compact-layout .view-toolbar--moscow .view-toolbar__btn,
+  html.is-compact-layout .view-toolbar--moscow .view-fullscreen-btn {
+    flex: 0 0 auto !important;
+  }
+}
+
+/* Desktop: group-by selector is compact-only (phones/tablets) */
+html.is-desktop-layout .view-toolbar--table .projects-table-group-bar,
+html.is-desktop-layout .projects-table-group-bar--compact-only {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
+
+@media (min-width: 1401px) {
+  html.is-desktop-layout .view-toolbar__compact-selector,
+  html.is-desktop-layout .view-toolbar__compact-rice,
+  html.is-desktop-layout .view-toolbar__compact-fullscreen {
+    order: unset !important;
+    margin-left: unset !important;
+  }
+}
+
+@media (max-width: 360px) {
+  html.is-compact-layout .view-toolbar--board .scrum-board-status-filter .view-toolbar__field-label,
+  html.is-compact-layout .view-toolbar--table .projects-table-group-label__text,
+  html.is-compact-layout .view-toolbar--map .projects-map-metric-label {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
+}

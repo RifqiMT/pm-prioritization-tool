@@ -53,14 +53,7 @@
     cursor: default !important;
   }
 
-  html.is-compact-layout .moscow-board-card:hover,
-  html.is-compact-layout .scrum-board-card:hover {
-    border-color: rgba(203, 213, 225, 0.98) !important;
-    box-shadow:
-      0 2px 4px rgba(15, 23, 42, 0.05),
-      0 10px 24px rgba(127, 29, 29, 0.09) !important;
-    transform: translateY(-1px) !important;
-  }
+  /* Hover / press: board-card-interaction.css */
 
   html.is-compact-layout .moscow-board-card.moscow-board-card--dragging,
   html.is-compact-layout .scrum-board-card.scrum-board-card--dragging {
@@ -117,9 +110,23 @@
   html.is-compact-layout .portfolio-card-body {
     display: flex;
     flex-direction: column;
-    gap: var(--pcard-space-3);
+    gap: 0;
     padding: var(--pcard-pad-y) var(--pcard-pad-x);
     flex: 1 1 auto;
+  }
+
+  html.is-compact-layout .board-card-section--title.scrum-board-card-title-row,
+  html.is-compact-layout .board-card-section--title.moscow-board-card-title-row {
+    padding-bottom: var(--pcard-space-3);
+    margin-bottom: 0;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.92);
+  }
+
+  html.is-compact-layout .board-card-section--metrics.scrum-board-card-meta,
+  html.is-compact-layout .board-card-section--metrics.moscow-board-card-meta {
+    margin-top: 0 !important;
+    padding-top: var(--pcard-space-3);
+    padding-bottom: 0.1rem;
   }
 
   html.is-compact-layout .moscow-board-card-title-row,
@@ -166,17 +173,54 @@
   html.is-compact-layout .scrum-board-card-meta {
     display: flex !important;
     flex-direction: row !important;
-    flex-wrap: wrap !important;
+    flex-wrap: nowrap !important;
     align-items: center !important;
-    justify-content: space-between !important;
-    gap: var(--pcard-space-2) !important;
+    justify-content: flex-start !important;
+    gap: 0 !important;
     margin-top: 0 !important;
+    min-width: 0 !important;
+  }
+
+  html.is-compact-layout .board-card-metrics-row,
+  html.is-compact-layout .scrum-board-card-metrics,
+  html.is-compact-layout .moscow-board-card-metrics {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: var(--pcard-space-2) !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+  }
+
+  html.is-compact-layout .board-card-metrics-row > *,
+  html.is-compact-layout .scrum-board-card-metrics > *,
+  html.is-compact-layout .moscow-board-card-metrics > * {
+    flex-shrink: 0 !important;
+  }
+
+  html.is-compact-layout .board-card-metric-icon,
+  html.is-compact-layout .scrum-board-card-type-wrap.board-card-metric-icon,
+  html.is-compact-layout .moscow-board-card .scrum-board-card-type-wrap.board-card-metric-icon {
+    flex: 0 0 var(--pcard-type-icon) !important;
+    width: var(--pcard-type-icon) !important;
+    height: var(--pcard-type-icon) !important;
+    min-width: var(--pcard-type-icon) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    border-radius: var(--pcard-radius-sm) !important;
+    border: 1px solid rgba(226, 232, 240, 0.98) !important;
+    background: #fff !important;
   }
 
   html.is-compact-layout .moscow-board-card-meta-left,
   html.is-compact-layout .scrum-board-card-meta-left {
     display: flex !important;
-    flex-wrap: wrap !important;
+    flex-wrap: nowrap !important;
     align-items: center !important;
     gap: var(--pcard-space-2) !important;
     flex: 1 1 auto !important;
@@ -226,10 +270,12 @@
   html.is-compact-layout .scrum-board-card-icons {
     margin-left: 0 !important;
     flex: 0 0 auto !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
   }
 
   /* ── Footer — compact control strip ─────────────────────── */
-  html.is-compact-layout .portfolio-card-footer {
+  html.is-compact-layout .portfolio-card-footer:not(.projects-table-card__actions) {
     display: flex;
     flex-direction: column;
     gap: var(--pcard-space-2);
@@ -370,9 +416,9 @@
     border: 1px solid rgba(239, 68, 68, 0.22) !important;
   }
 
-  /* Tablet: move + actions on one row to save vertical space */
+  /* Tablet: move + actions on one row (board/MoSCoW only — not table card list) */
   @media (min-width: 600px) and (max-width: 1400px) {
-    html.is-compact-layout .portfolio-card-footer {
+    html.is-compact-layout .portfolio-card-footer:not(.projects-table-card__actions) {
       display: grid !important;
       grid-template-columns: minmax(0, 1fr) auto;
       grid-template-rows: auto auto;
@@ -398,8 +444,103 @@
   html.is-compact-layout .scrum-board-card-meta,
   html.is-compact-layout .moscow-board-card-meta {
     flex-direction: row !important;
+    flex-wrap: nowrap !important;
     align-items: center !important;
   }
+
+  html.is-compact-layout .board-card-metrics-row,
+  html.is-compact-layout .scrum-board-card-metrics,
+  html.is-compact-layout .moscow-board-card-metrics {
+    flex-wrap: nowrap !important;
+  }
+}
+
+/* Board metrics — single row on desktop and compact */
+html.is-desktop-layout .board-card-metrics-row,
+html.is-desktop-layout .scrum-board-card-metrics,
+html.is-desktop-layout .moscow-board-card-metrics {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+html.is-desktop-layout .board-card-metric-icon,
+html.is-desktop-layout .scrum-board-card-type-wrap.board-card-metric-icon {
+  flex: 0 0 1.75rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  min-width: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* Desktop Scrum board — fixed column width; scroll horizontally instead of squeezing cards */
+html.is-desktop-layout {
+  --scrum-board-column-width: 368px;
+}
+
+html.is-desktop-layout .projects-view--board .scrum-board,
+html.is-desktop-layout .workspace-panel--v2 .scrum-board {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  gap: 1rem !important;
+  padding-bottom: 0.85rem !important;
+  scroll-padding-inline: 0.75rem;
+}
+
+html.is-desktop-layout .projects-view--board .scrum-board-column,
+html.is-desktop-layout .workspace-panel--v2 .scrum-board-column {
+  flex: 0 0 var(--scrum-board-column-width) !important;
+  width: var(--scrum-board-column-width) !important;
+  min-width: var(--scrum-board-column-width) !important;
+  max-width: var(--scrum-board-column-width) !important;
+}
+
+html.is-desktop-layout .projects-view--board .scrum-board-card,
+html.is-desktop-layout .workspace-panel--v2 .scrum-board-card {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+html.is-desktop-layout .projects-view--board .scrum-board-column-cards {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding-bottom: 0.75rem;
+  padding-bottom: 0.65rem;
+}
+
+html.is-desktop-layout .projects-view--board .board-card-metrics-row,
+html.is-desktop-layout .projects-view--board .scrum-board-card-metrics {
+  gap: 0.45rem;
+  padding-right: 0.15rem;
+}
+
+html.is-desktop-layout .projects-view--board .scrum-board-card-rice,
+html.is-desktop-layout .projects-view--board .scrum-board-card-size,
+html.is-desktop-layout .projects-view--board .scrum-board-card-financial {
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+}
+
+html.is-desktop-layout .view-in-fullscreen-host .scrum-board-column {
+  flex: 0 0 var(--scrum-board-column-width) !important;
+  width: var(--scrum-board-column-width) !important;
+  min-width: var(--scrum-board-column-width) !important;
+  max-width: var(--scrum-board-column-width) !important;
 }
 
 @media (max-width: 1400px) {
@@ -437,17 +578,7 @@ html.is-desktop-layout .workspace-panel--v2 .projects-view--board .scrum-board-c
   box-shadow: var(--pcard-shadow) !important;
 }
 
-html.is-desktop-layout .moscow-board-card:hover,
-html.is-desktop-layout .scrum-board-card:hover,
-html.is-desktop-layout .projects-view--board .scrum-board-card:hover,
-html.is-desktop-layout .projects-view--moscow .moscow-board-card:hover,
-html.is-desktop-layout .workspace-panel--v2 .projects-view--board .scrum-board-card:hover {
-  border-color: rgba(203, 213, 225, 0.98) !important;
-  box-shadow:
-    0 2px 4px rgba(15, 23, 42, 0.05),
-    0 10px 24px rgba(127, 29, 29, 0.09) !important;
-  transform: translateY(-1px) !important;
-}
+/* Hover / press: board-card-interaction.css */
 
 html.is-desktop-layout .moscow-board-card.moscow-board-card--dragging,
 html.is-desktop-layout .scrum-board-card.scrum-board-card--dragging,
@@ -463,6 +594,73 @@ html.is-desktop-layout .moscow-board-card .scrum-board-card-type-wrap.cell-type-
   border-radius: var(--pcard-radius-sm) !important;
 }
 
+/* Desktop — sectioned card body (title | metrics | footer) with clear row breaks */
+html.is-desktop-layout .scrum-board-card.portfolio-board-card--structured,
+html.is-desktop-layout .moscow-board-card.portfolio-board-card--structured {
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+}
+
+html.is-desktop-layout .scrum-board-card .portfolio-card-body,
+html.is-desktop-layout .moscow-board-card .portfolio-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.8rem 0.95rem 0.7rem;
+}
+
+html.is-desktop-layout .portfolio-board-card--has-owner-strip.scrum-board-card .portfolio-card-body,
+html.is-desktop-layout .portfolio-board-card--has-owner-strip.moscow-board-card .portfolio-card-body {
+  padding-top: 0.65rem;
+}
+
+html.is-desktop-layout .board-card-section--title.scrum-board-card-title-row,
+html.is-desktop-layout .board-card-section--title.moscow-board-card-title-row {
+  padding-bottom: 0.6rem;
+  margin-bottom: 0;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.92);
+}
+
+html.is-desktop-layout .board-card-section--metrics.scrum-board-card-meta,
+html.is-desktop-layout .board-card-section--metrics.moscow-board-card-meta {
+  margin-top: 0 !important;
+  padding-top: 0.6rem;
+  padding-bottom: 0.15rem;
+}
+
+html.is-desktop-layout .scrum-board-card .portfolio-card-footer,
+html.is-desktop-layout .moscow-board-card .portfolio-card-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.6rem 0.95rem 0.75rem;
+  border-top: 1px solid rgba(226, 232, 240, 0.92);
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.72) 0%, rgba(255, 253, 248, 0.95) 100%);
+  flex-shrink: 0;
+}
+
+html.is-desktop-layout .scrum-board-card .board-card-section--actions.scrum-board-card-actions,
+html.is-desktop-layout .moscow-board-card .board-card-section--actions.moscow-board-card-actions {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  border-top: none !important;
+}
+
+html.is-desktop-layout .scrum-board-card-title,
+html.is-desktop-layout .moscow-board-card-title {
+  line-height: 1.4 !important;
+}
+
+html.is-desktop-layout .board-card-metrics-row,
+html.is-desktop-layout .scrum-board-card-metrics,
+html.is-desktop-layout .moscow-board-card-metrics {
+  gap: 0.45rem;
+  padding-bottom: 0.1rem;
+}
+
 html.is-desktop-layout .scrum-board-card-actions .portfolio-card-action-btn,
 html.is-desktop-layout .moscow-board-card-actions .portfolio-card-action-btn,
 html.is-desktop-layout .scrum-board-card-btn--order,
@@ -470,12 +668,4 @@ html.is-desktop-layout .moscow-board-card-btn--order {
   border-radius: var(--pcard-radius-sm) !important;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  html.is-desktop-layout .moscow-board-card:hover,
-  html.is-desktop-layout .scrum-board-card:hover,
-  html.is-desktop-layout .projects-view--board .scrum-board-card:hover,
-  html.is-desktop-layout .projects-view--moscow .moscow-board-card:hover,
-  html.is-desktop-layout .workspace-panel--v2 .projects-view--board .scrum-board-card:hover {
-    transform: none !important;
-  }
-}
+/* Reduced motion for board cards: board-card-interaction.css */

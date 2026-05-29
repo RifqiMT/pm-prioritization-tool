@@ -1358,9 +1358,10 @@ button:disabled {
 }
 
 .scrum-board-column {
-  flex: 0 0 320px;
-  min-width: 320px;
-  max-width: 320px;
+  flex: 0 0 368px;
+  width: 368px;
+  min-width: 368px;
+  max-width: 368px;
   border-radius: var(--radius-md);
   border: 1px solid rgba(51, 65, 85, 0.8);
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.92) 0%, rgba(15, 23, 42, 0.97) 100%);
@@ -1548,18 +1549,58 @@ button:disabled {
 
 .scrum-board-card-meta {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.35rem 0.6rem;
+  justify-content: flex-start;
+  gap: 0;
   font-size: 0.72rem;
   color: #7a4b12;
-  margin-top: 0.18rem;
+  margin-top: 0.5rem;
+  min-width: 0;
+}
+
+.portfolio-board-card--structured .scrum-board-card-meta,
+.portfolio-board-card--structured .moscow-board-card-meta {
+  margin-top: 0;
+}
+
+.board-card-metrics-row,
+.scrum-board-card-metrics,
+.moscow-board-card-metrics {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.35rem;
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(161, 98, 7, 0.35) transparent;
+  padding-bottom: 0.05rem;
+}
+
+.board-card-metrics-row::-webkit-scrollbar {
+  height: 3px;
+}
+
+.board-card-metrics-row::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(161, 98, 7, 0.35);
+}
+
+.board-card-metrics-row > * {
+  flex-shrink: 0;
 }
 
 .scrum-board-card-meta-left {
   display: inline-flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 0.35rem 0.6rem;
 }
@@ -1576,9 +1617,16 @@ button:disabled {
 
 .scrum-board-card-icons {
   display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 0.35rem;
-  margin-left: auto;
+  margin-left: 0;
+}
+
+.board-card-metric-icon,
+.scrum-board-card-type-wrap.board-card-metric-icon {
+  flex-shrink: 0;
 }
 
 .scrum-board-card-type-wrap svg {
@@ -1743,9 +1791,9 @@ button:disabled {
 }
 
 .projects-view--moscow .moscow-grid {
-  flex: 1;
-  min-height: 0;
-  max-height: none;
+  flex: 1 1 auto;
+  min-height: 420px;
+  max-height: min(72vh, 720px);
 }
 
 .moscow-view-header {
@@ -1772,9 +1820,11 @@ button:disabled {
 .moscow-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: minmax(300px, 1fr) minmax(300px, 1fr);
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
   gap: 0;
-  min-height: 400px;
+  min-height: 420px;
+  height: min(65vh, 640px);
+  max-height: min(72vh, 720px);
   border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--surface);
@@ -1790,7 +1840,9 @@ button:disabled {
 .moscow-board-column.moscow-grid-cell {
   flex: none;
   min-width: 0;
-  min-height: 300px;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   border: 1px solid rgba(51, 65, 85, 0.5);
@@ -1911,14 +1963,19 @@ button:disabled {
 
 .moscow-board-column-cards {
   flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior: contain;
   padding: 0.75rem;
+  padding-bottom: 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
-  min-height: 160px;
   scroll-behavior: smooth;
+  scroll-padding-bottom: 0.75rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 .moscow-board-column-cards::-webkit-scrollbar {
@@ -2017,18 +2074,20 @@ button:disabled {
 
 .moscow-board-card-meta {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.35rem 0.6rem;
+  justify-content: flex-start;
+  gap: 0;
   font-size: 0.6875rem;
   color: #7a4b12;
-  margin-top: 0.18rem;
+  margin-top: 0.5rem;
+  min-width: 0;
 }
 
 .moscow-board-card-meta-left {
   display: inline-flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 0.4rem 0.75rem;
 }
@@ -2151,19 +2210,27 @@ button:disabled {
 
   .scrum-board-card-meta,
   .moscow-board-card-meta {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.3rem;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .board-card-metrics-row,
+  .scrum-board-card-metrics,
+  .moscow-board-card-metrics {
+    flex-wrap: nowrap;
   }
 
   .scrum-board-card-meta-left,
   .moscow-board-card-meta-left {
+    flex-wrap: nowrap;
     gap: 0.3rem 0.45rem;
   }
 
   .scrum-board-card-icons {
     margin-left: 0;
-    justify-content: flex-start;
+    flex-direction: row;
+    flex-wrap: nowrap;
   }
 
   .scrum-board-card-actions,
@@ -2231,13 +2298,21 @@ button:disabled {
 
   .moscow-grid {
     grid-template-columns: 1fr;
-    grid-template-rows: repeat(4, minmax(220px, auto));
+    grid-template-rows: repeat(4, minmax(0, auto));
     max-height: none;
     min-height: auto;
+    height: auto;
   }
 
   .moscow-board-column.moscow-grid-cell {
     min-height: 200px;
+    max-height: min(50vh, 420px);
+  }
+
+  .moscow-board-column-cards {
+    min-height: 0;
+    max-height: 100%;
+    overflow-y: auto;
   }
 
   .moscow-quadrant-description {

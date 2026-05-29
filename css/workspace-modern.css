@@ -496,9 +496,10 @@
 }
 
 .projects-view--board .scrum-board-column {
-  flex: 1 1 280px;
-  min-width: min(300px, 88vw);
-  max-width: 360px;
+  flex: 0 0 368px;
+  width: 368px;
+  min-width: 368px;
+  max-width: 368px;
   max-height: 100%;
   display: flex;
   flex-direction: column;
@@ -1093,8 +1094,4 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .pr
   transition: none !important;
 }
 
-.workspace-panel--v2 .projects-view--board .scrum-board-card:hover {
-  transform: none !important;
-  box-shadow: 0 1px 3px rgba(63, 15, 25, 0.06) !important;
-  border-color: var(--ws-border) !important;
-}
+/* Board card hover / press: board-card-interaction.css */

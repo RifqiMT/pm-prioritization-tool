@@ -31,12 +31,7 @@
     background: linear-gradient(180deg, rgba(255, 253, 248, 0.98) 0%, rgba(255, 250, 240, 0.92) 100%) !important;
   }
 
-  html.is-compact-layout .view-toolbar--moscow .view-toolbar__cluster {
-    display: grid !important;
-    grid-template-columns: 1fr auto !important;
-    gap: 0.35rem !important;
-    align-items: center !important;
-  }
+  /* Toolbar 1-row layout: view-toolbars-compact-row.css (RICE sort → fullscreen) */
 
   html.is-compact-layout .view-toolbar--moscow .moscow-sort-toggle {
     min-height: var(--compact-touch, 44px);
@@ -401,13 +396,23 @@
   }
 
   /* ── Column cards area ───────────────────────────────────── */
+  html.is-compact-layout .moscow-board-column.moscow-grid-cell {
+    min-height: 200px !important;
+    max-height: min(52vh, 440px) !important;
+    height: auto !important;
+  }
+
   html.is-compact-layout .moscow-board-column-cards {
     padding: 0.3rem !important;
     gap: 0.3rem !important;
-    min-height: 80px !important;
-    max-height: none !important;
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
+    max-height: 100% !important;
     overflow-x: hidden !important;
-    overflow-y: visible !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    scroll-padding-bottom: 0.65rem;
+    padding-bottom: 0.65rem !important;
     -webkit-overflow-scrolling: touch;
   }
 
@@ -440,6 +445,62 @@
   html.is-compact-layout .view-in-fullscreen-host .moscow-compact-nav {
     margin-bottom: 0.4rem;
   }
+}
+
+/* Desktop 2×2 — equal quadrant height, scrollable card lists */
+html.is-desktop-layout .projects-view--moscow .moscow-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) !important;
+  min-height: 420px !important;
+  height: min(65vh, 640px) !important;
+  max-height: min(72vh, 720px) !important;
+  overflow: hidden !important;
+}
+
+html.is-desktop-layout .moscow-board-column.moscow-grid-cell {
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+html.is-desktop-layout .moscow-board-column-cards {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain;
+  scroll-padding-bottom: 0.75rem;
+  padding-bottom: 1rem !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+html.is-desktop-layout .view-in-fullscreen-host .moscow-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: none !important;
+  overflow: hidden !important;
+}
+
+html.is-desktop-layout .view-in-fullscreen-host .moscow-board-column.moscow-grid-cell {
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
+html.is-desktop-layout .view-in-fullscreen-host .scrum-board {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  gap: 1rem !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -568,17 +629,11 @@ html.is-desktop-layout .projects-view--board .scrum-board-card {
   flex-shrink: 0;
 }
 
-html.is-desktop-layout .projects-view--board .scrum-board-card:hover {
+html.is-desktop-layout .projects-view--board .scrum-board-card.portfolio-board-card--structured:hover,
+html.is-desktop-layout .projects-view--board .scrum-board-card.portfolio-board-card--structured.portfolio-board-card--pressed {
   transform: none !important;
   margin: 0 !important;
-  padding: 0.7rem 0.75rem !important;
-  outline: none !important;
-  box-shadow: 0 1px 3px rgba(63, 15, 25, 0.06) !important;
-  border-style: solid !important;
-  border-color: var(--ws-border, rgba(231, 201, 120, 0.45)) !important;
-  border-top-width: 1px !important;
-  border-right-width: 1px !important;
-  border-bottom-width: 1px !important;
+  padding: 0 !important;
 }
 
 html.is-desktop-layout .scrum-board-column[data-status="Not Started"] .scrum-board-card,
