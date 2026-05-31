@@ -236,7 +236,30 @@
   cursor: not-allowed;
 }
 
-#bulkDeleteBtn[hidden] {
+.view-toolbar__btn--secondary {
+  background: #fff !important;
+  border: 1px solid rgba(180, 83, 9, 0.35) !important;
+  color: #92400e !important;
+}
+
+.view-toolbar__btn--secondary:hover:not(:disabled) {
+  background: #fff7ed !important;
+  border-color: rgba(180, 83, 9, 0.55) !important;
+  color: #9a3412 !important;
+}
+
+.view-toolbar__btn--secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+html:not(.is-super-admin-mode) .super-admin-bulk-action {
+  display: none !important;
+}
+
+#bulkDeleteBtn[hidden],
+#bulkDuplicateBtn[hidden],
+#bulkMoveBtn[hidden] {
   display: none !important;
 }
 

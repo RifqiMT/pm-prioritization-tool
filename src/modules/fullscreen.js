@@ -6,7 +6,7 @@
   const PORTAL_IDS = [
     "exportFormatModal", "importFormatModal", "projectModal",
     "profileViewModal", "profileEditModal", "profileDeleteModal",
-    "projectDeleteModal", "toastContainer"
+    "projectDeleteModal", "projectBulkTransferModal", "toastContainer"
   ];
 
   const COMPACT_MQ =

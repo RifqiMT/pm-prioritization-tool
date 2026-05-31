@@ -6417,7 +6417,9 @@ tbody tr:hover {
 }
 
 #addProjectBtn,
-#bulkDeleteBtn {
+#bulkDeleteBtn,
+#bulkDuplicateBtn,
+#bulkMoveBtn {
   min-height: 42px !important;
   padding: 0.58rem 1rem !important;
   border-radius: 11px !important;

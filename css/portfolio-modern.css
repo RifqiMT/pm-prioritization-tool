@@ -1554,7 +1554,8 @@ html.filters-drawer-open .portfolio-filters-body {
 }
 
 .portfolio-selection-bar__clear,
-.portfolio-selection-bar__delete {
+.portfolio-selection-bar__delete,
+.portfolio-selection-bar__action {
   min-height: 44px;
   padding: 0.45rem 0.75rem;
   border-radius: 10px;
@@ -1565,6 +1566,10 @@ html.filters-drawer-open .portfolio-filters-body {
   touch-action: manipulation;
   text-transform: none;
   letter-spacing: normal;
+}
+
+html:not(.is-super-admin-mode) .portfolio-selection-bar .super-admin-bulk-action {
+  display: none !important;
 }
 
 .portfolio-selection-bar__clear {
@@ -1578,6 +1583,19 @@ html.filters-drawer-open .portfolio-filters-body {
   border: none !important;
   color: #fff !important;
   box-shadow: 0 4px 12px rgba(185, 28, 28, 0.25);
+}
+
+.portfolio-selection-bar__duplicate,
+.portfolio-selection-bar__move {
+  background: #fff;
+  border: 1px solid rgba(180, 83, 9, 0.35);
+  color: #92400e;
+}
+
+.portfolio-selection-bar__duplicate:disabled,
+.portfolio-selection-bar__move:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .portfolio-selection-bar__delete:disabled {

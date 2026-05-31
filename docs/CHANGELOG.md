@@ -27,6 +27,12 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Feature — Bulk duplicate and move across profiles — 2026-05-28 — Product Team — Impact: user-visible
+
+- When workspace-wide mode is active, table multi-select shows **Duplicate selected** and **Move selected** (desktop toolbar and compact selection bar).
+- Duplicate creates copies in a chosen target profile; move re-homes selected projects to another profile and cleans board/MoSCoW order references.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui189`.
+
 ### Feature — Project tasks with status — 2026-05-28 — Product Team — Impact: user-visible
 
 - Add optional Tasks list in project create, edit, and view modals (task name + status dropdown using project status values).

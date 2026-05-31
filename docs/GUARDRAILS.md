@@ -105,7 +105,8 @@
 - Persisted flag: `state.superAdminMode` (boolean in workspace payload / `saveState`).
 - Active only when: trust profile is active, toggle is on, profile is unlocked → `isSuperAdminModeActive()`.
 - **Read scope:** portfolio views list **all projects in the workspace** (every profile), with owner metadata attached (`ownerProfileId`, `ownerProfileName`).
-- **Write scope:** create, edit, and delete apply to each project’s **home (owner) profile**, not by re-homing projects to the active session profile.
+- **Write scope:** create, edit, and delete apply to each project’s **home (owner) profile**, not by re-homing projects to the active session profile — except **bulk move**, which explicitly transfers selected projects to a chosen target profile (super admin table selection only).
+- **Bulk transfer (table selection):** when mode is active, multi-select in table view exposes **Duplicate selected** and **Move selected**. Duplicate deep-copies projects into a target profile (new IDs, “(copy)” title suffix). Move removes projects from source profiles and adds them to the target profile; board/MoSCoW order arrays on source profiles are cleaned.
 - **UI when active** (`html.is-super-admin-mode`):
   - Workspace banner and header badge (“Super admin · all profiles”).
   - Table **Profile** column + sort; optional **Owner profile** advanced filter and table group-by **Owner profile**.

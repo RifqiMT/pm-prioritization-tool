@@ -1753,6 +1753,18 @@ function cacheElements() {
   elements.projectsHeaderBadges = $("projectsHeaderBadges");
   elements.addProjectBtn = $("addProjectBtn");
   elements.bulkDeleteBtn = $("bulkDeleteBtn");
+  elements.bulkDuplicateBtn = $("bulkDuplicateBtn");
+  elements.bulkMoveBtn = $("bulkMoveBtn");
+  elements.portfolioSelectionDuplicateBtn = $("portfolioSelectionDuplicateBtn");
+  elements.portfolioSelectionMoveBtn = $("portfolioSelectionMoveBtn");
+  elements.projectBulkTransferModal = $("projectBulkTransferModal");
+  elements.projectBulkTransferModalTitle = $("projectBulkTransferModalTitle");
+  elements.projectBulkTransferModalSubtitle = $("projectBulkTransferModalSubtitle");
+  elements.projectBulkTransferCountLabel = $("projectBulkTransferCountLabel");
+  elements.projectBulkTransferHelpText = $("projectBulkTransferHelpText");
+  elements.projectBulkTransferTargetProfile = $("projectBulkTransferTargetProfile");
+  elements.projectBulkTransferCancelBtn = $("projectBulkTransferCancelBtn");
+  elements.projectBulkTransferConfirmBtn = $("projectBulkTransferConfirmBtn");
 
   elements.filterTitle = $("filterTitle");
   elements.filterProjectPeriodToggle = $("filterProjectPeriodToggle");
@@ -2300,8 +2312,20 @@ function attachEventListeners() {
   if (elements.bulkDeleteBtn) {
     elements.bulkDeleteBtn.addEventListener("click", handleBulkDelete);
   }
+  if (elements.bulkDuplicateBtn) {
+    elements.bulkDuplicateBtn.addEventListener("click", () => handleBulkProjectTransfer("duplicate"));
+  }
+  if (elements.bulkMoveBtn) {
+    elements.bulkMoveBtn.addEventListener("click", () => handleBulkProjectTransfer("move"));
+  }
   if (elements.portfolioSelectionDeleteBtn) {
     elements.portfolioSelectionDeleteBtn.addEventListener("click", handleBulkDelete);
+  }
+  if (elements.portfolioSelectionDuplicateBtn) {
+    elements.portfolioSelectionDuplicateBtn.addEventListener("click", () => handleBulkProjectTransfer("duplicate"));
+  }
+  if (elements.portfolioSelectionMoveBtn) {
+    elements.portfolioSelectionMoveBtn.addEventListener("click", () => handleBulkProjectTransfer("move"));
   }
   if (elements.portfolioSelectionClearBtn) {
     elements.portfolioSelectionClearBtn.addEventListener("click", clearProjectSelection);
@@ -3065,6 +3089,14 @@ function attachEventListeners() {
     elements.projectDeleteModal.addEventListener("click", (e) => {
       if (e.target === elements.projectDeleteModal) {
         closeProjectDeleteModal();
+      }
+    });
+  }
+
+  if (elements.projectBulkTransferModal) {
+    elements.projectBulkTransferModal.addEventListener("click", (e) => {
+      if (e.target === elements.projectBulkTransferModal) {
+        closeProjectBulkTransferModal();
       }
     });
   }
@@ -3854,6 +3886,7 @@ function syncSuperAdminChrome() {
   refreshFilterAutocompleteDropdowns();
   syncProjectsTableColumnLayout();
   syncSuperAdminModeBanner();
+  updateBulkSelectionActions();
 }
 
 function setSuperAdminMode(enabled) {
@@ -3902,6 +3935,106 @@ function removeProjectsByIds(projectIds) {
     if (removeProjectById(id)) removed += 1;
   });
   return removed;
+}
+
+function purgeProjectIdFromProfileOrders(profile, projectId) {
+  if (!profile || !projectId) return;
+  if (profile.boardOrder && typeof profile.boardOrder === "object") {
+    Object.keys(profile.boardOrder).forEach((key) => {
+      if (Array.isArray(profile.boardOrder[key])) {
+        profile.boardOrder[key] = profile.boardOrder[key].filter((id) => id !== projectId);
+      }
+    });
+  }
+  if (profile.moscowOrder && typeof profile.moscowOrder === "object") {
+    Object.keys(profile.moscowOrder).forEach((key) => {
+      if (Array.isArray(profile.moscowOrder[key])) {
+        profile.moscowOrder[key] = profile.moscowOrder[key].filter((id) => id !== projectId);
+      }
+    });
+  }
+}
+
+function cloneProjectForDuplicate(sourceProject) {
+  const normalized = normalizeLoadedProject(sourceProject) || sourceProject;
+  if (!normalized) return null;
+  const now = new Date().toISOString();
+  const titleBase = String(normalized.title || "Untitled project").trim() || "Untitled project";
+  const clone = {
+    ...normalized,
+    id: generateId("project"),
+    createdAt: now,
+    modifiedAt: now,
+    title: /\(\s*copy\s*\)$/i.test(titleBase) ? titleBase : `${titleBase} (copy)`,
+    countries: Array.isArray(normalized.countries) ? normalized.countries.slice() : [],
+    labels: Array.isArray(normalized.labels) ? normalized.labels.slice() : [],
+    links: Array.isArray(normalized.links) ? normalized.links.map((link) => ({ ...link })) : [],
+    tasks: Array.isArray(normalized.tasks) ? normalized.tasks.map((task) => ({ ...task })) : [],
+    financialImpactInputs:
+      normalized.financialImpactInputs && typeof normalized.financialImpactInputs === "object"
+        ? JSON.parse(JSON.stringify(normalized.financialImpactInputs))
+        : {}
+  };
+  clone.riceScore = calculateRiceScore(clone);
+  return clone;
+}
+
+function populateBulkTransferTargetProfileSelect(selectedProfileId) {
+  if (!elements.projectBulkTransferTargetProfile) return;
+  const previous = selectedProfileId || elements.projectBulkTransferTargetProfile.value || state.activeProfileId || "";
+  elements.projectBulkTransferTargetProfile.innerHTML = "";
+  getSortedProfiles().forEach((profile) => {
+    const opt = document.createElement("option");
+    opt.value = profile.id;
+    const team = (profile.team || "").trim();
+    opt.textContent = team ? `${profile.name} (${team})` : profile.name || "Unnamed profile";
+    elements.projectBulkTransferTargetProfile.appendChild(opt);
+  });
+  if (previous && Array.from(elements.projectBulkTransferTargetProfile.options).some((o) => o.value === previous)) {
+    elements.projectBulkTransferTargetProfile.value = previous;
+  } else if (state.activeProfileId) {
+    elements.projectBulkTransferTargetProfile.value = state.activeProfileId;
+  }
+}
+
+function getSelectedProjectIdsFromTable() {
+  return Array.from(getProjectSelectCheckboxes())
+    .filter((cb) => cb.checked)
+    .map((cb) => cb.getAttribute("data-id"))
+    .filter(Boolean);
+}
+
+function duplicateProjectsToProfile(projectIds, targetProfileId) {
+  const targetProfile = findProfileById(targetProfileId);
+  if (!targetProfile || !Array.isArray(targetProfile.projects)) return 0;
+  let count = 0;
+  (Array.isArray(projectIds) ? projectIds : []).forEach((projectId) => {
+    const located = findProjectWithOwner(projectId);
+    if (!located.project) return;
+    const clone = cloneProjectForDuplicate(located.project);
+    if (!clone) return;
+    targetProfile.projects.unshift(clone);
+    count += 1;
+  });
+  return count;
+}
+
+function moveProjectsToProfile(projectIds, targetProfileId) {
+  const targetProfile = findProfileById(targetProfileId);
+  if (!targetProfile || !Array.isArray(targetProfile.projects)) return 0;
+  let count = 0;
+  (Array.isArray(projectIds) ? projectIds : []).forEach((projectId) => {
+    const located = findProjectWithOwner(projectId);
+    const sourceProfile = located.profile;
+    const project = located.project;
+    if (!sourceProfile || !project || sourceProfile.id === targetProfileId) return;
+    sourceProfile.projects = sourceProfile.projects.filter((p) => p.id !== project.id);
+    purgeProjectIdFromProfileOrders(sourceProfile, project.id);
+    project.modifiedAt = new Date().toISOString();
+    targetProfile.projects.unshift(project);
+    count += 1;
+  });
+  return count;
 }
 
 const PROJECTS_TABLE_COL_CLASS = {
@@ -6007,7 +6140,7 @@ function refreshWorkspaceAfterFullscreenExit() {
   resetActiveViewShellLayout();
   syncProjectsViewVisibility();
   syncPortfolioViewTabState();
-  updateBulkDeleteButton();
+  updateBulkSelectionActions();
 
   const view = state.projectsView;
   if (view === "moscow") {
@@ -6381,7 +6514,7 @@ function initPortfolioWorkspace() {
     });
   }
 
-  window.addEventListener("resize", () => updateBulkDeleteButton());
+  window.addEventListener("resize", () => updateBulkSelectionActions());
 }
 
 /** Profile modals: password visibility toggles, close control. */
@@ -6461,6 +6594,7 @@ function registerAppOverlays() {
   OverlayManager.register("profileDeleteModal", closeNow(closeProfileDeleteModal));
   OverlayManager.register("profileUnlockModal", closeNow(closeProfileUnlockModal));
   OverlayManager.register("projectDeleteModal", closeNow(closeProjectDeleteModal));
+  OverlayManager.register("projectBulkTransferModal", closeNow(closeProjectBulkTransferModal));
   OverlayManager.register("exportFormatModal", closeNow(closeExportFormatModal));
   OverlayManager.register("importFormatModal", closeNow(closeImportFormatModal));
   OverlayManager.register("exportUnlockModal", closeNow(closeExportUnlockModal));
@@ -7316,7 +7450,7 @@ function renderProfiles() {
         : "Create or select a profile to start adding projects."
     );
     elements.projectsHeaderBadges.innerHTML = "";
-    updateBulkDeleteButton();
+    updateBulkSelectionActions();
     syncPortfolioActionButtons();
     return;
   }
@@ -7363,7 +7497,7 @@ function renderProjects() {
 
   if (!activeProfile) {
     renderProjectsTableEmptyMessage("Create or select a profile to start adding projects.");
-    updateBulkDeleteButton();
+    updateBulkSelectionActions();
     if (state.projectsView === "board" && elements.scrumBoardContainer) {
       renderScrumBoard();
     }
@@ -7380,7 +7514,7 @@ function renderProjects() {
     renderProjectsTableEmptyMessage(
       "This profile is locked. Enter your password in the banner above to unlock."
     );
-    updateBulkDeleteButton();
+    updateBulkSelectionActions();
     syncPortfolioActionButtons();
     if (elements.selectAllProjects) elements.selectAllProjects.checked = false;
     if (state.projectsView === "board" && elements.scrumBoardContainer) {
@@ -7412,7 +7546,7 @@ function renderProjects() {
         ? "No projects match the current filters across all profiles. Adjust filters or add a new project."
         : "No projects match the current filters. Adjust filters or add a new project."
     );
-    updateBulkDeleteButton();
+    updateBulkSelectionActions();
     elements.selectAllProjects.checked = false;
     if (state.projectsView === "board" && elements.scrumBoardContainer) {
       renderScrumBoard();
@@ -7431,7 +7565,7 @@ function renderProjects() {
   if (useCompactTableCards) {
     renderProjectsTableCards(projects, demoReadOnly);
     syncHeaderCheckbox();
-    updateBulkDeleteButton();
+    updateBulkSelectionActions();
     updateSortIndicators();
     if (state.projectsView === "table" && projects.some((p) => p.financialImpactValue != null && p.financialImpactValue !== "")) {
       if (Object.keys(state.exchangeRatesToEUR || {}).length === 0) {
@@ -7979,7 +8113,7 @@ function renderProjects() {
 
   elements.projectsTableBody.appendChild(rows);
   syncHeaderCheckbox();
-  updateBulkDeleteButton();
+  updateBulkSelectionActions();
   updateSortIndicators();
   if (state.projectsView === "table" && projects.some((p) => p.financialImpactValue != null && p.financialImpactValue !== "")) {
     if (Object.keys(state.exchangeRatesToEUR || {}).length === 0) {
@@ -8033,7 +8167,7 @@ function switchProjectsView(view) {
   scrollActivePortfolioViewTabIntoView();
   blurPortfolioViewTabs();
   renderProjects();
-  updateBulkDeleteButton();
+  updateBulkSelectionActions();
   if (showMap) {
     requestAnimationFrame(() => {
       if (state.projectsView !== "map" || !elements.projectsMapContainer) return;
@@ -12103,7 +12237,7 @@ function getTableSelectionCount() {
 
 function syncProjectTableSelection() {
   syncHeaderCheckbox();
-  updateBulkDeleteButton();
+  updateBulkSelectionActions();
   syncProjectTableCardSelectionStyles();
 }
 
@@ -12115,24 +12249,32 @@ function clearProjectSelection() {
   syncProjectTableSelection();
 }
 
-function updateBulkDeleteButton() {
+function updateBulkSelectionActions() {
   const count = getTableSelectionCount();
   const anyChecked = count > 0;
   const inTableView = state.projectsView === "table";
   const isCompactTable = isTableCompactLayout();
-
-  if (elements.bulkDeleteBtn) {
-    const showToolbarBtn = inTableView && anyChecked && !isCompactTable;
-    elements.bulkDeleteBtn.hidden = !showToolbarBtn;
-    elements.bulkDeleteBtn.disabled = !anyChecked || isActiveDemoProfile();
-    if (isActiveDemoProfile()) {
-      elements.bulkDeleteBtn.title = DEMO_READ_ONLY_ACTION_TITLE;
-    } else {
-      elements.bulkDeleteBtn.removeAttribute("title");
-    }
-  }
-
+  const superAdmin = isSuperAdminModeActive();
+  const demoLocked = isActiveDemoProfile();
+  const showToolbarBtns = inTableView && anyChecked && !isCompactTable;
   const showMobileBar = inTableView && anyChecked && isCompactTable;
+
+  const syncToolbarBtn = (btn, { show = showToolbarBtns, superAdminOnly = false } = {}) => {
+    if (!btn) return;
+    const visible = show && (!superAdminOnly || superAdmin);
+    btn.hidden = !visible;
+    btn.disabled = !anyChecked || demoLocked;
+    if (demoLocked) {
+      btn.title = DEMO_READ_ONLY_ACTION_TITLE;
+    } else {
+      btn.removeAttribute("title");
+    }
+  };
+
+  syncToolbarBtn(elements.bulkDeleteBtn);
+  syncToolbarBtn(elements.bulkDuplicateBtn, { superAdminOnly: true });
+  syncToolbarBtn(elements.bulkMoveBtn, { superAdminOnly: true });
+
   if (elements.portfolioSelectionBar) {
     elements.portfolioSelectionBar.hidden = !showMobileBar;
     elements.portfolioSelectionBar.classList.toggle("portfolio-selection-bar--visible", showMobileBar);
@@ -12142,14 +12284,22 @@ function updateBulkDeleteButton() {
     elements.portfolioSelectionCount.textContent =
       count === 1 ? "1 selected" : `${count} selected`;
   }
-  if (elements.portfolioSelectionDeleteBtn) {
-    elements.portfolioSelectionDeleteBtn.disabled = !anyChecked || isActiveDemoProfile();
-    if (isActiveDemoProfile()) {
-      elements.portfolioSelectionDeleteBtn.title = DEMO_READ_ONLY_ACTION_TITLE;
+
+  const syncMobileBtn = (btn, { superAdminOnly = false } = {}) => {
+    if (!btn) return;
+    const visible = showMobileBar && (!superAdminOnly || superAdmin);
+    btn.hidden = !visible;
+    btn.disabled = !anyChecked || demoLocked;
+    if (demoLocked) {
+      btn.title = DEMO_READ_ONLY_ACTION_TITLE;
     } else {
-      elements.portfolioSelectionDeleteBtn.removeAttribute("title");
+      btn.removeAttribute("title");
     }
-  }
+  };
+
+  syncMobileBtn(elements.portfolioSelectionDeleteBtn);
+  syncMobileBtn(elements.portfolioSelectionDuplicateBtn, { superAdminOnly: true });
+  syncMobileBtn(elements.portfolioSelectionMoveBtn, { superAdminOnly: true });
 }
 
 function syncHeaderCheckbox() {
@@ -12167,12 +12317,10 @@ function handleBulkDelete() {
   if (state.projectsView !== "table") return;
   if (!requireWritableActiveProfile("Bulk delete")) return;
   if (!getUnlockedActiveProfile() || !elements.projectDeleteModal) return;
-  const checked = Array.from(getProjectSelectCheckboxes()).filter((cb) => cb.checked);
-  if (!checked.length) return;
+  const ids = getSelectedProjectIdsFromTable();
+  if (!ids.length) return;
 
   prepareAppOverlay("projectDeleteModal");
-  const ids = checked.map((cb) => cb.getAttribute("data-id"));
-
   elements.projectDeleteModal.setAttribute("data-delete-mode", "bulk");
   elements.projectDeleteModal.setAttribute("data-project-ids", ids.join(","));
 
@@ -12210,6 +12358,107 @@ function handleBulkDelete() {
   if (elements.projectDeleteCancelBtn) {
     elements.projectDeleteCancelBtn.onclick = () => {
       closeProjectDeleteModal();
+    };
+  }
+}
+
+function closeProjectBulkTransferModal({ immediate = false } = {}) {
+  if (!elements.projectBulkTransferModal) return;
+  closeModalBackdrop(elements.projectBulkTransferModal, { immediate });
+  elements.projectBulkTransferModal.removeAttribute("data-transfer-mode");
+  elements.projectBulkTransferModal.removeAttribute("data-project-ids");
+}
+
+function handleBulkProjectTransfer(mode) {
+  if (state.projectsView !== "table") return;
+  if (!isSuperAdminModeActive()) return;
+  const actionLabel = mode === "move" ? "Move projects" : "Duplicate projects";
+  if (!requireWritableActiveProfile(actionLabel)) return;
+  if (!getUnlockedActiveProfile() || !elements.projectBulkTransferModal) return;
+
+  const ids = getSelectedProjectIdsFromTable();
+  if (!ids.length) return;
+
+  prepareAppOverlay("projectBulkTransferModal");
+  elements.projectBulkTransferModal.setAttribute("data-transfer-mode", mode);
+  elements.projectBulkTransferModal.setAttribute("data-project-ids", ids.join(","));
+
+  const countLabel = `${ids.length} project${ids.length === 1 ? "" : "s"} selected`;
+  if (elements.projectBulkTransferModalTitle) {
+    elements.projectBulkTransferModalTitle.textContent =
+      mode === "move" ? "Move projects to another profile" : "Duplicate projects to another profile";
+  }
+  if (elements.projectBulkTransferCountLabel) {
+    elements.projectBulkTransferCountLabel.textContent = countLabel;
+  }
+  if (elements.projectBulkTransferHelpText) {
+    elements.projectBulkTransferHelpText.textContent =
+      mode === "move"
+        ? "Projects will be removed from their current owner profiles and added to the profile you choose below."
+        : "Copies of the selected projects will be created in the profile you choose below. Original projects stay unchanged.";
+  }
+  if (elements.projectBulkTransferConfirmBtn) {
+    elements.projectBulkTransferConfirmBtn.textContent = mode === "move" ? "Move projects" : "Duplicate projects";
+  }
+
+  populateBulkTransferTargetProfileSelect(state.activeProfileId);
+
+  elements.projectBulkTransferModal.setAttribute("aria-hidden", "false");
+  elements.projectBulkTransferModal.classList.add("active");
+
+  if (elements.projectBulkTransferConfirmBtn) {
+    elements.projectBulkTransferConfirmBtn.onclick = () => {
+      const transferMode = elements.projectBulkTransferModal.getAttribute("data-transfer-mode") || "duplicate";
+      const idsAttr = elements.projectBulkTransferModal.getAttribute("data-project-ids") || "";
+      const idList = idsAttr ? idsAttr.split(",").filter(Boolean) : [];
+      const targetProfileId = elements.projectBulkTransferTargetProfile
+        ? (elements.projectBulkTransferTargetProfile.value || "").trim()
+        : "";
+      const targetProfile = findProfileById(targetProfileId);
+      if (!idList.length || !targetProfile) {
+        showToast("Choose a valid target profile.");
+        return;
+      }
+
+      let count = 0;
+      if (transferMode === "move") {
+        count = moveProjectsToProfile(idList, targetProfileId);
+        if (!count) {
+          showToast("No projects moved. Choose a different profile than the current owner.");
+          return;
+        }
+      } else {
+        count = duplicateProjectsToProfile(idList, targetProfileId);
+        if (!count) {
+          showToast("Could not duplicate the selected projects.");
+          return;
+        }
+      }
+
+      saveState();
+      clearProjectSelection();
+      renderProjects();
+      closeProjectBulkTransferModal();
+      const profileName = targetProfile.name || "Unnamed profile";
+      if (transferMode === "move") {
+        showToast(
+          count === 1
+            ? `Project moved to profile “${profileName}”.`
+            : `${count} projects moved to profile “${profileName}”.`
+        );
+      } else {
+        showToast(
+          count === 1
+            ? `Project duplicated into profile “${profileName}”.`
+            : `${count} projects duplicated into profile “${profileName}”.`
+        );
+      }
+    };
+  }
+
+  if (elements.projectBulkTransferCancelBtn) {
+    elements.projectBulkTransferCancelBtn.onclick = () => {
+      closeProjectBulkTransferModal();
     };
   }
 }
