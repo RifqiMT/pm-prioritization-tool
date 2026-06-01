@@ -27,6 +27,15 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Fix — Project labels and links persist to MongoDB (prod) — 2026-05-31 — Product Team — Impact: user-visible
+
+- Canonicalize labels/links on every workspace save and MongoDB write; accept legacy link field names (`name`, `href`, `text`) and string URL arrays.
+- Flush cloud sync immediately after project create/edit so background pulls do not overwrite unsaved label/link changes.
+- Skip automatic cloud pull while local edits are pending or newer than the last applied remote snapshot.
+- Server-side normalization in `api/state` before MongoDB upsert.
+- GitHub `fix-vercel-protection` workflow no longer fails when Vercel secrets are missing (skips with notice).
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui190`.
+
 ### Feature — Bulk duplicate and move across profiles — 2026-05-28 — Product Team — Impact: user-visible
 
 - When workspace-wide mode is active, table multi-select shows **Duplicate selected** and **Move selected** (desktop toolbar and compact selection bar).

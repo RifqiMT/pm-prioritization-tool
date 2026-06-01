@@ -5210,7 +5210,23 @@ function projectMatchesLabelFilter(project, labelQuery) {
 /** Deduplicated, trimmed project labels (each may contain spaces). */
 function normalizeProjectLabels(raw) {
   if (!Array.isArray(raw)) {
-    if (typeof raw === "string" && raw.trim()) return [raw.trim()];
+    if (typeof raw === "string" && raw.trim()) {
+      const parts = raw
+        .split(/[|,]/)
+        .map((part) => part.trim())
+        .filter(Boolean);
+      if (parts.length > 1) {
+        const seen = new Set();
+        const out = [];
+        parts.forEach((label) => {
+          if (!label || seen.has(label)) return;
+          seen.add(label);
+          out.push(label);
+        });
+        return out;
+      }
+      return [raw.trim()];
+    }
     return [];
   }
   const seen = new Set();
@@ -5258,9 +5274,27 @@ function normalizeProjectLinks(raw) {
   const out = [];
   const seen = new Set();
   raw.forEach((item) => {
+    if (typeof item === "string") {
+      const url = normalizeProjectLinkUrl(item);
+      if (!url) return;
+      const label = formatProjectLinkPreviewUrl(url) || url;
+      const key = label + "\0" + url;
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push({ label, url });
+      return;
+    }
     if (!item || typeof item !== "object") return;
-    const label = String(item.label != null ? item.label : item.text || "").trim();
-    const url = normalizeProjectLinkUrl(item.url || item.href || "");
+    const label = String(
+      item.label != null
+        ? item.label
+        : item.text != null
+          ? item.text
+          : item.name != null
+            ? item.name
+            : item.title || ""
+    ).trim();
+    const url = normalizeProjectLinkUrl(item.url || item.href || item.link || "");
     if (!label || !url) return;
     const key = label + "\0" + url;
     if (seen.has(key)) return;
@@ -5618,9 +5652,27 @@ function normalizeLoadedProfile(raw) {
   return profile;
 }
 
+function serializeProjectForStorage(project) {
+  if (!project || typeof project !== "object") return project;
+  return Object.assign({}, project, {
+    labels: normalizeProjectLabels(project.labels),
+    links: normalizeProjectLinks(project.links),
+    tasks: normalizeProjectTasks(project.tasks)
+  });
+}
+
+function serializeProfileForStorage(profile) {
+  if (!profile || typeof profile !== "object") return profile;
+  const serialized = Object.assign({}, profile);
+  serialized.projects = Array.isArray(profile.projects)
+    ? profile.projects.map(serializeProjectForStorage)
+    : [];
+  return serialized;
+}
+
 function serializeStatePayload() {
   return {
-    profiles: state.profiles,
+    profiles: state.profiles.map(serializeProfileForStorage),
     activeProfileId: state.activeProfileId,
     sortField: state.sortField,
     sortDirection: state.sortDirection,
@@ -5788,11 +5840,12 @@ function normalizeLoadedProject(project) {
   };
 }
 
-function saveState() {
+function saveState(options) {
   const payload = serializeStatePayload();
+  const flush = options && options.flush === true;
   try {
     if (typeof AppStorage !== "undefined") {
-      AppStorage.persistState(payload);
+      AppStorage.persistState(payload, { flush });
     } else {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     }
@@ -12435,7 +12488,7 @@ function handleBulkProjectTransfer(mode) {
         }
       }
 
-      saveState();
+      saveState({ flush: true });
       clearProjectSelection();
       renderProjects();
       closeProjectBulkTransferModal();
@@ -13897,12 +13950,12 @@ function handleProjectFormSubmit(e) {
     project.projectPeriod = raw.projectPeriod || null;
     project.moscowCategory = raw.moscowCategory || null;
     project.countries = Array.isArray(raw.countries) ? raw.countries : [];
-    project.labels = Array.isArray(raw.labels) ? raw.labels : [];
-    project.links = Array.isArray(raw.links) ? raw.links : [];
-    project.tasks = Array.isArray(raw.tasks) ? raw.tasks : [];
+    project.labels = normalizeProjectLabels(raw.labels);
+    project.links = normalizeProjectLinks(raw.links);
+    project.tasks = normalizeProjectTasks(raw.tasks);
     project.modifiedAt = new Date().toISOString();
     project.riceScore = calculateRiceScore(project);
-    saveState();
+    saveState({ flush: true });
     closeProjectModal();
     renderProjects();
     showToast(
@@ -13942,13 +13995,13 @@ function handleProjectFormSubmit(e) {
       projectPeriod: raw.projectPeriod || null,
       moscowCategory: raw.moscowCategory || "Could have",
       countries: Array.isArray(raw.countries) ? raw.countries : [],
-      labels: Array.isArray(raw.labels) ? raw.labels : [],
-      links: Array.isArray(raw.links) ? raw.links : [],
-      tasks: Array.isArray(raw.tasks) ? raw.tasks : []
+      labels: normalizeProjectLabels(raw.labels),
+      links: normalizeProjectLinks(raw.links),
+      tasks: normalizeProjectTasks(raw.tasks)
     };
     project.riceScore = calculateRiceScore(project);
     targetProfile.projects.unshift(project);
-    saveState();
+    saveState({ flush: true });
     closeProjectModal();
     renderProjects();
     showToast(

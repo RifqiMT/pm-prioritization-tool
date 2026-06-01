@@ -485,16 +485,29 @@ const AppStorage = (function () {
     }
   }
 
-  function scheduleRemoteSave(payload) {
+  function scheduleRemoteSave(payload, options) {
     const stamped = stampPayload(payload);
     pendingPayload = stamped;
     writeLocalCache(stamped);
     markLocalModified(stamped._storageMeta.updatedAt);
     if (mode === "mongodb-pending-auth") {
       setSyncStatus("error", "Connect cloud storage to sync changes.");
-      return;
+      return Promise.resolve(false);
     }
-    if (mode !== "mongodb") return;
+    if (mode !== "mongodb") return Promise.resolve(true);
+
+    const flushNow = options && options.flush === true;
+    if (flushNow) {
+      if (saveTimer) {
+        clearTimeout(saveTimer);
+        saveTimer = null;
+      }
+      inFlightSave = saveRemoteNow(stamped).finally(() => {
+        inFlightSave = null;
+        pendingPayload = null;
+      });
+      return inFlightSave;
+    }
 
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
@@ -506,6 +519,7 @@ const AppStorage = (function () {
         inFlightSave = null;
       });
     }, SAVE_DEBOUNCE_MS);
+    return Promise.resolve(true);
   }
 
   async function flushPendingSave() {
@@ -650,6 +664,19 @@ const AppStorage = (function () {
     };
   }
 
+  function hasUnsyncedLocalChanges(remoteAt) {
+    const localMeta = readLocalMeta();
+    const lastLocalMs = localMeta.lastLocalModifiedAt
+      ? Date.parse(localMeta.lastLocalModifiedAt) || 0
+      : 0;
+    const lastRemoteMs = lastAppliedRemoteAt ? Date.parse(lastAppliedRemoteAt) || 0 : 0;
+    if (pendingPayload || saveTimer) return true;
+    if (!lastLocalMs) return false;
+    if (lastLocalMs > lastRemoteMs) return true;
+    if (remoteAt && lastLocalMs > remoteAt) return true;
+    return false;
+  }
+
   async function pullFromCloudIfNewer(options) {
     if (mode !== "mongodb") {
       return { updated: false, reason: "not_cloud" };
@@ -666,6 +693,10 @@ const AppStorage = (function () {
 
       if (isEmptyPayload(remote.payload)) {
         return { updated: false, reason: "remote_empty" };
+      }
+
+      if (!force && hasUnsyncedLocalChanges(remoteAt)) {
+        return { updated: false, reason: "local_pending" };
       }
 
       if (!force && remoteAt && lastAt && remoteAt <= lastAt) {
@@ -795,9 +826,13 @@ const AppStorage = (function () {
     };
   }
 
-  function persistState(payload) {
+  function persistState(payload, options) {
     if (!payload) return;
-    scheduleRemoteSave(payload);
+    return scheduleRemoteSave(payload, options);
+  }
+
+  async function flushPersistState() {
+    await flushPendingSave();
   }
 
   function shouldSeedDefaultProfile() {
@@ -903,6 +938,7 @@ const AppStorage = (function () {
   return {
     bootstrap,
     persistState,
+    flushPersistState,
     connectWithApiSecret,
     forceSyncNow,
     pullFromCloud,

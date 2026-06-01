@@ -17,4 +17,5 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      - run: node -e "require('./api/health'); require('./api/state');"
+      - run: npm test
+      - run: node -e "require('./api/health'); require('./api/state'); require('./api/_lib/project-metadata');"

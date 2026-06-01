@@ -1,6 +1,7 @@
 const { getDb, isMongoConfigured } = require("./_lib/mongo");
 const { verifyRequest } = require("./_lib/auth");
 const { sendJson, readJsonBody } = require("./_lib/http");
+const { normalizeWorkspacePayload } = require("./_lib/project-metadata");
 
 const COLLECTION = "workspaces";
 
@@ -16,11 +17,12 @@ function validatePayload(payload) {
 
 async function handleWrite(req, res, workspaceId) {
   const body = await readJsonBody(req);
-  const payload = body && body.payload != null ? body.payload : body;
-  const validation = validatePayload(payload);
+  const rawPayload = body && body.payload != null ? body.payload : body;
+  const validation = validatePayload(rawPayload);
   if (!validation.ok) {
     return sendJson(res, 400, { ok: false, error: validation.error });
   }
+  const payload = normalizeWorkspacePayload(rawPayload);
 
   const db = await getDb();
   const collection = db.collection(COLLECTION);
