@@ -2,7 +2,7 @@
 
 **Purpose:** Map PRD requirements to concrete implementation evidence and verification steps.  
 **Standard:** Requirement IDs must remain synchronized with [PRD.md](PRD.md).  
-**Last audited:** 2026-05-28 · **Baseline:** `APP_ASSET_VERSION` = `20260528-ui152`
+**Last audited:** 2026-05-31 · **Baseline:** `APP_ASSET_VERSION` = `20260528-ui190`
 
 ---
 
@@ -41,6 +41,9 @@
 | FR-2.3 | Metadata (type, status, MoSCoW, period, countries, t-shirt, labels, links) | Project modal + normalization helpers | Fields visible in table/cards/board/MoSCoW/map/filters |
 | FR-2.4 | Bulk delete (table) | Selection + bulk delete handlers | Confirm dialog; selection clears after delete |
 | FR-2.5 | Project ID in modal footer | Modal footer metadata | ID stable across edits/export |
+| FR-2.7 | Rich-text descriptions | `rich-text-editor.js`; `description-format.js`; `project-modal--view` CSS | Toolbar in edit; hidden in view; HTML sanitized |
+| FR-2.8 | Project tasks | Task rows in modal; `normalizeProjectTasks`; CSV `projectTasks` | Tasks persist after save and cloud reload |
+| FR-2.9 | Labels/links cloud persistence | `serializeProjectForStorage`; `storage.js` flush; `project-metadata.js` | Labels/links survive prod reload |
 
 ---
 
@@ -152,6 +155,7 @@
 | FR-10.4 | Table owner column + filter + group-by | Profile column; `filterOwnerProfile`; owner group-by | Only when mode active |
 | FR-10.5 | Owner stripes on cards | `buildPortfolioCardOwnerStrip`; `prependPortfolioCardOwnerStrip` | Table compact, board, MoSCoW show owner stripe |
 | FR-10.6 | Deactivation restores scope | Toggle off → re-render | Single-profile scope immediately |
+| FR-10.7 | Bulk duplicate / move | `handleBulkProjectTransfer`; `projectBulkTransferModal` | Duplicate copies to target profile; move re-homes projects |
 
 ---
 

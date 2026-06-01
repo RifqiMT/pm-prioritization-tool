@@ -27,6 +27,12 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Docs — Full documentation audit (product standard) — 2026-05-31 — Product Team — Impact: documentation
+
+- Re-audited repository against `APP_ASSET_VERSION` = `20260528-ui190`.
+- Updated README, documentation hub, PRD, product documentation, personas, user stories, variables (with relationship charts), metrics/OKRs, design guidelines, traceability matrix, guardrails, architecture, and tech guidelines.
+- Documented rich-text descriptions, project tasks, labels/links cloud persistence, bulk duplicate/move, and complete source/CSS/module map.
+
 ### Fix — Project labels and links persist to MongoDB (prod) — 2026-05-31 — Product Team — Impact: user-visible
 
 - Canonicalize labels/links on every workspace save and MongoDB write; accept legacy link field names (`name`, `href`, `text`) and string URL arrays.
@@ -243,12 +249,12 @@ When updating this file after a change:
 - Aligned layout breakpoint documentation to **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) across PRD, architecture, tech guidelines, variables, and design guidelines.
 - Traceability matrix expanded for FR-5.2 group-by, FR-5.4 MoSCoW display names, FR-6 labels/links filters, FR-9.6–9.7, and FR-10 (cross-references GUARDRAILS §7).
 - Variables dictionary: `tableGroupBy`, filter extensions, layout constants, filter pipeline and privileged-mode charts (neutral naming; policy in GUARDRAILS §7 only).
-- Asset baseline documented: `APP_ASSET_VERSION` = `20260528-ui152`.
+- Asset baseline documented: `APP_ASSET_VERSION` = `20260528-ui190`.
 
 ### UI — Site footer GitHub & article links — 2026-05-28 — Product Team — Impact: user-visible
 
 - Footer icon row: GitHub repo and prioritization article links alongside LinkedIn and website.
-- Cache bust: `APP_ASSET_VERSION` = `20260528-ui152`.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui190`.
 
 ### UI — Compact profile bar controls on one row — 2026-05-28 — Product Team — Impact: user-visible
 

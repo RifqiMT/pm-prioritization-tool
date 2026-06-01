@@ -8,7 +8,7 @@
 |---|---|
 | **Production** | [pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app) |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui152` |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui190` (cache-bust all CSS/JS) |
 | **Docs hub** | [docs/README.md](docs/README.md) |
 
 > Do not use `pm-prioritization-tool.vercel.app` — that hostname serves a legacy React app. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
@@ -56,11 +56,13 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 
 ### Projects
 
-- Full CRUD via modal (create, edit, read-only view)  
+- Full CRUD via modal (create, edit, read-only view) with section navigation  
+- **Rich-text descriptions** on project and RICE fields (sanitized HTML; plain text in CSV export)  
 - RICE validation and live score calculation  
-- Metadata: type, status, MoSCoW, quarter (`YYYY-Qn`), countries, t-shirt size, labels, links  
+- Metadata: type, status, MoSCoW, quarter (`YYYY-Qn`), countries, t-shirt size, **labels**, **links**, **tasks** (name + status)  
 - Six financial frameworks with computed impact  
 - Bulk delete in table (toolbar on desktop; **floating selection bar** on compact)  
+- **Bulk duplicate / move** across profiles when privileged workspace mode is active (see [docs/GUARDRAILS.md](docs/GUARDRAILS.md) §7)  
 - Stable **project ID** in modal footer metadata  
 
 ### Filters
@@ -122,9 +124,10 @@ pm-prioritization-tool/
 │   ├── constants.js        # Enums, tooltips, APP_ASSET_VERSION
 │   ├── rice.js             # RICE formula + validation
 │   ├── utils.js            # Formatting, CSV, IDs, flags
-│   └── modules/            # storage, profile-security, exchange-rates, fullscreen, overlay-manager
-├── api/                    # health.js, config.js, state.js (Vercel)
-├── scripts/                # verify-deployment, storage tests
+│   └── modules/            # storage, profile-security, exchange-rates, fullscreen, overlay-manager,
+│                           # description-format, rich-text-editor, board-drag, board-card-interaction
+├── api/                    # health.js, config.js, state.js + _lib (Vercel)
+├── scripts/                # verify-deployment, test:storage, test:metadata
 ├── docs/                   # Product documentation suite
 ├── vercel.json
 └── package.json
@@ -156,6 +159,12 @@ pm-prioritization-tool/
 | `table-revamp-modern.css` | Modern table structure |
 | `table-compact-cards.css` | Compact table card list |
 | `super-admin-modern.css` | Workspace-wide mode UI (see GUARDRAILS §7) |
+| `rich-text-editor.css` | Rich-text toolbar and fields |
+| `project-details-tooltip.css` | Description tooltips on cards |
+| `map-tooltip-modern.css` | Map country tooltips |
+| `board-drag.css` / `board-card-interaction.css` | Board interactions |
+| `filters-compact-bar.css` | Compact filters drawer bar |
+| `view-toolbars-compact-row.css` | Single-row compact toolbars |
 | `app-footer.css` | Site footer |
 
 ### Layout breakpoint
@@ -243,4 +252,4 @@ UNLICENSED (private). See `package.json`.
 - GitHub: [RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool)  
 - Article: [Effort–impact confusion to clear-cut priorities](https://rifqi-tjahyono.com/%f0%9f%93%8a-effort-impact-confusion-to-clear-cut-priorities-replace-tab-hopping-with-visual-roadmap-sanity-%f0%9f%a7%ad%e2%9c%a8/)
 
-**Documentation last comprehensively audited:** 2026-05-28.
+**Documentation last comprehensively audited:** 2026-05-31 (baseline `20260528-ui190`).

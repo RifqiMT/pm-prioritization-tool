@@ -4,8 +4,8 @@ Engineering standards for the Product Management Prioritization Tool codebase.
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-05-28 |
-| **APP_ASSET_VERSION** | `20260528-ui152` |
+| **Last updated** | 2026-05-31 |
+| **APP_ASSET_VERSION** | `20260528-ui190` |
 | **COMPACT_LAYOUT_MAX_WIDTH_PX** | `1400` |
 
 ---
@@ -35,8 +35,12 @@ Defined in `index.html` (order matters — globals, not ES modules):
 5. `src/modules/exchange-rates.js`
 6. `src/modules/fullscreen.js`
 7. `src/modules/overlay-manager.js`
-8. `src/modules/storage.js`
-9. `src/app.js` — defines `init()` and runs on `DOMContentLoaded`
+8. `src/modules/description-format.js`
+9. `src/modules/rich-text-editor.js`
+10. `src/modules/board-drag.js`
+11. `src/modules/board-card-interaction.js`
+12. `src/modules/storage.js`
+13. `src/app.js` — defines `init()` and runs on `DOMContentLoaded`
 
 All shared symbols are **global functions and constants**. Do not introduce ES module imports without a planned migration.
 
@@ -73,6 +77,13 @@ Later files win for equal specificity (all query `?v=APP_ASSET_VERSION`):
 | 21 | `table-revamp-modern.css` | Semantic `projects-table-col--*` widths |
 | 22 | `table-compact-cards.css` | Table card list ≤1400px |
 | 23 | `super-admin-modern.css` | Workspace-wide mode UI ([GUARDRAILS.md §7](GUARDRAILS.md)) |
+| 24 | `map-tooltip-modern.css` | Map tooltips |
+| 25 | `board-drag.css` | Board DnD |
+| 26 | `board-card-interaction.css` | Card press feedback |
+| 27 | `filters-compact-bar.css` | Filters compact bar |
+| 28 | `view-toolbars-compact-row.css` | Compact toolbar single row |
+| 29 | `rich-text-editor.css` | Rich-text fields |
+| 30 | `project-details-tooltip.css` | Description tooltips |
 
 ### 3.2 Compact layout
 
@@ -100,7 +111,7 @@ Later files win for equal specificity (all query `?v=APP_ASSET_VERSION`):
 | Constant | Role |
 |----------|------|
 | `STORAGE_KEY` | `localStorage` key (`rice_prioritizer_v1`) |
-| `APP_ASSET_VERSION` | Cache buster (`20260528-ui152`) |
+| `APP_ASSET_VERSION` | Cache buster (`20260528-ui190`) |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | `1400` — single compact breakpoint |
 | `moscowList` | Stored MoSCoW values |
 | `moscowDisplayNames` | UI labels (Must Have, …) |
@@ -128,7 +139,7 @@ Persisted via `saveState()` → `AppStorage` → `localStorage` + optional cloud
 | `scrumBoardSortByRice`, `moscowSortByRice` | Yes | |
 | `mapMetric` | Yes | |
 | `exchangeRatesToEUR`, `exchangeRatesDate`, `exchangeRatesLastSource` | Yes | |
-| `workspaceWideMode` (or equivalent) | Yes | See GUARDRAILS §7 |
+| `superAdminMode` | Yes | See GUARDRAILS §7 |
 
 **Not persisted:** `unlockedProfileIds` (session only, `sessionStorage`).
 
@@ -144,7 +155,13 @@ Persisted via `saveState()` → `AppStorage` → `localStorage` + optional cloud
 | `exchange-rates.js` | FX helpers | Fetch/cache rates to EUR |
 | `fullscreen.js` | `Fullscreen` | Fullscreen toggle, view switch while fullscreen |
 | `overlay-manager.js` | Overlay coordination | One modal/sheet at a time |
-| `storage.js` | `AppStorage` | Load/save, cloud sync debounce, backend detection |
+| `storage.js` | `AppStorage` | Load/save, cloud sync debounce, flush on project save, pull guard |
+| `description-format.js` | HTML sanitize/render for descriptions |
+| `rich-text-editor.js` | `RichTextEditor` |
+| `board-drag.js` | `BoardDrag` |
+| `board-card-interaction.js` | Card interaction feedback |
+
+**Project metadata on save:** `serializeProjectForStorage()` normalizes `labels`, `links`, and `tasks` before persist. `saveState({ flush: true })` after project modal save. Server: `api/_lib/project-metadata.js` on PUT.
 
 ---
 

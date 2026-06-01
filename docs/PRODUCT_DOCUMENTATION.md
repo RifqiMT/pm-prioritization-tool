@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Document owner** | Product Team |
-| **Last audited** | 2026-05-28 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui152` |
+| **Last audited** | 2026-05-31 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui190` |
 
 ---
 
@@ -50,10 +50,15 @@ The application is a **static single-page app** (HTML, layered CSS, vanilla Java
 
 ### 3.2 Projects
 
-- Full CRUD via modal (create, edit, read-only view).
+- Full CRUD via modal (create, edit, read-only view) with section navigation (Project, RICE, Details, Financial).
 - **RICE** with validation (`src/rice.js`).
-- Metadata: type, status, MoSCoW, quarter (`YYYY-Qn`), countries, t-shirt size, **labels**, **links**.
+- **Rich-text descriptions** on project and all four RICE description fields (`RichTextEditor` in `src/modules/rich-text-editor.js`); stored as sanitized HTML; view mode hides toolbar; CSV export strips HTML to plain text.
+- Metadata: type, status, MoSCoW, quarter (`YYYY-Qn`), countries (including **EU** region shortcut), t-shirt size, **labels**, **links**, **tasks**.
+- **Labels** — optional multi-value tags (multi-word allowed); normalized on save and cloud sync (`normalizeProjectLabels`).
+- **Links** — optional named hyperlinks (`{ label, url }`); http/https only; legacy import shapes (`name`, `href`, string URLs) normalized on load.
+- **Tasks** — optional checklist items with name + status (uses `projectStatusList` values); persisted as `tasks[]`; CSV column `projectTasks` (JSON).
 - **Bulk delete** in table (toolbar on desktop; floating **selection bar** on compact).
+- **Bulk duplicate** and **bulk move** to another profile when privileged workspace mode is active (see [GUARDRAILS.md](GUARDRAILS.md) §7) — `projectBulkTransferModal`.
 - Stable **project ID** and metadata in modal footer (collapsible on compact).
 
 ### 3.3 Financial frameworks
@@ -112,8 +117,11 @@ When `html.is-compact-layout` and table view:
 
 ### 3.9 Cloud storage (optional)
 
-- `AppStorage` (`src/modules/storage.js`): load/save workspace to MongoDB.
-- Header status, Cloud modal, pull/save; debounced sync; merge by `updatedAt`.
+- `AppStorage` (`src/modules/storage.js`): load/save workspace to MongoDB via `/api/state`.
+- Header status, Cloud modal (connect, pull, push, diagnostics); debounced sync (250ms) with **immediate flush** after project save.
+- Background pull skipped while local edits are pending or newer than last applied remote snapshot (prevents overwriting labels/links).
+- Server normalizes labels/links on every MongoDB write (`api/_lib/project-metadata.js`).
+- Merge on load by document `updatedAt` and profile-count heuristics; local cache under `rice_prioritizer_v1`.
 
 ### 3.10 Site chrome
 
@@ -181,9 +189,9 @@ See [ARCHITECTURE.md](ARCHITECTURE.md).
 
 | Layer | Technology |
 |-------|------------|
-| UI | `index.html`, 23 layered CSS files |
+| UI | `index.html`, 30 layered CSS files |
 | Logic | `src/app.js`, `src/rice.js`, `src/constants.js`, `src/utils.js` |
-| Modules | `profile-security`, `storage`, `exchange-rates`, `fullscreen`, `overlay-manager` |
+| Modules | `storage`, `profile-security`, `exchange-rates`, `fullscreen`, `overlay-manager`, `description-format`, `rich-text-editor`, `board-drag`, `board-card-interaction` |
 | API | `api/health.js`, `api/config.js`, `api/state.js` |
 | Database | MongoDB Atlas (optional) |
 | Map | Leaflet 1.9.4 (CDN) |

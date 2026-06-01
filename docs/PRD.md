@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Status** | Implemented (local-first static app) |
-| **Last updated** | 2026-05-28 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui152` |
+| **Last updated** | 2026-05-31 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui190` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -66,10 +66,13 @@ See [USER_PERSONAS.md](USER_PERSONAS.md).
 |----|-------------|------------|
 | FR-2.1 | CRUD projects | Modal create/edit; view read-only |
 | FR-2.2 | RICE inputs with validation | See FR-3 |
-| FR-2.3 | Metadata: type, status, MoSCoW, period, countries, t-shirt, labels, links | Saved on project |
+| FR-2.3 | Metadata: type, status, MoSCoW, period, countries, t-shirt, labels, links, tasks | Saved on project; normalized on load/save |
 | FR-2.4 | Bulk delete (table) | Confirmation; selection respected (toolbar desktop; selection bar compact) |
 | FR-2.5 | Project ID in modal footer | Stable id visible in footer metadata |
 | FR-2.6 | Modal footer disclosure (compact) | At ≤1400px: metadata in `<details>` collapsed by default; desktop forces open |
+| FR-2.7 | Rich-text descriptions | Project + RICE description fields; sanitized HTML; view mode read-only without toolbar |
+| FR-2.8 | Project tasks | Optional task list with name + status per task; CSV import/export |
+| FR-2.9 | Labels/links cloud persistence | Canonical format on serialize; immediate cloud flush on project save; server normalize on API write |
 
 ### FR-3 RICE
 
@@ -232,6 +235,7 @@ Cross-profile read/write behavior, eligibility, UI placement, and safety rules a
 | FR-10.4 | Table | Profile column + sort; owner advanced filter; group-by owner profile |
 | FR-10.5 | Cards | Owner attribution on table compact cards, board cards, MoSCoW cards, map tooltips |
 | FR-10.6 | Deactivation | Turning mode off restores single-profile scope immediately |
+| FR-10.7 | Bulk duplicate / move | Table multi-select can duplicate or move projects to a chosen target profile via modal |
 
 Do not duplicate §7 policy detail here; update GUARDRAILS when behavior changes.
 

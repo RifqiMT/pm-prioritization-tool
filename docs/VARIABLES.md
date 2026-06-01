@@ -2,8 +2,8 @@
 
 **Purpose:** Authoritative dictionary of application variables — technical name, friendly name, definition, formula, UI location, and examples.  
 **Audience:** Product, engineering, QA, analytics.  
-**Last audited:** 2026-05-28  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260528-ui152`
+**Last audited:** 2026-05-31  
+**Implementation baseline:** `APP_ASSET_VERSION` = `20260528-ui190`
 
 > Privileged cross-profile workspace variables (workspace-wide mode, owner filter, owner metadata) are specified in [GUARDRAILS.md](GUARDRAILS.md) §7 only. This dictionary uses neutral names below.
 
@@ -36,7 +36,7 @@ Persisted to `localStorage` under `rice_prioritizer_v1` unless noted.
 | `tableSortByRice` | Table RICE Sort | When true, table rows sorted by RICE score. | Boolean; persisted. | Table toolbar | `true` |
 | `tableGroupBy` | Table Group By | Compact table card grouping key. | See `TABLE_GROUP_BY_OPTIONS` in `constants.js`. | Table compact group bar | `"projectStatus"` |
 | `scrumBoardSortByRice` | Board RICE Sort | When true, board cards sorted by RICE per column. | Boolean; persisted. | Board toolbar toggle | `true` |
-| `workspaceWideMode` | Workspace-wide mode flag | When true (and eligibility rules in GUARDRAILS §7), all workspace projects are visible across profiles. | Boolean; persisted in workspace payload | See GUARDRAILS §7 | `false` |
+| `superAdminMode` | Workspace-wide mode flag | When true (and eligibility rules in GUARDRAILS §7), all workspace projects are visible across profiles. | Boolean; persisted in workspace payload | See GUARDRAILS §7; `isSuperAdminModeActive()` | `false` |
 | `moscowSortByRice` | MoSCoW RICE Sort | When true, cards in each MoSCoW quadrant sorted by RICE. | Boolean; persisted. | MoSCoW toolbar toggle | `true` |
 | `mapMetric` | Map Aggregation Metric | What the choropleth represents. | `projects` \| `rice` \| `riceAvg` \| `financial` \| `financialAvg` | Map metric picker | `"financial"` |
 | `exchangeRatesToEUR` | FX Rates to EUR | Map of currency code → EUR multiplier. | `amountEUR = amount × rate`. | FX refresh; table/map EUR | `{ "USD": 0.92, "IDR": 0.000058 }` |
@@ -76,7 +76,7 @@ Persisted to `localStorage` under `rice_prioritizer_v1` unless noted.
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
 | `reachValue` | Reach | People/events affected in the planning window. | **R** in RICE; integer ≥ 0. | Project modal, table | `5000` |
-| `reachDescription` | Reach Notes | Qualitative reach context. | Optional text. | Project modal | `"Monthly active users"` |
+| `reachDescription` | Reach Notes | Qualitative reach context (rich text). | Sanitized HTML. | Project modal RICE section | `"<p>Monthly active users</p>"` |
 | `impactValue` | Impact | Impact per reach unit. | **I** in RICE; 1–5. | Project modal | `3` |
 | `impactDescription` | Impact Notes | Qualitative impact context. | Optional text. | Project modal | `"Revenue per user"` |
 | `confidenceValue` | Confidence | Confidence in estimates (%). | **C** in RICE; 0–100. | Project modal | `80` |
@@ -137,7 +137,7 @@ Full input field whitelists: `sanitizeFinancialImpactInputs` in `src/app.js`.
 |----------------|---------------|------------|-----------------|--------------|---------|
 | `id` | Project ID | Stable project identifier. | `generateId("project")`. | Modal footer, merge | `"project_1745..."` |
 | `title` | Project Title | Short initiative name. | Required. | Table, cards, modal | `"EU GDPR compliance"` |
-| `description` | Description | Scope/outcome narrative. | Optional; in card tooltip. | Project modal | `"Enable consent flows..."` |
+| `description` | Description | Scope/outcome narrative (rich text). | Sanitized HTML via `RichTextEditor`; plain text in CSV export. | Project modal; card tooltip | `"<p>Enable consent flows…</p>"` |
 | `financialImpactFramework` | Financial Framework | Active value model. | Normalized enum. | Modal, table Framework column | `"operational"` |
 | `financialImpactInputs` | Framework Inputs | Key-value inputs per framework. | Sanitized on save/switch. | Project modal sections | `{ opAnnualVolume: 10000 }` |
 | `financialImpactValue` | Financial Impact | Computed or manual amount. | From framework or custom. | Table, map | `166500` |
@@ -148,8 +148,9 @@ Full input field whitelists: `sanitizeFinancialImpactInputs` in `src/app.js`.
 | `tshirtSize` | T-Shirt Size | Rough sizing. | XS–XL. | Table | `"M"` |
 | `projectPeriod` | Project Period | Planning quarter. | `YYYY-Q[1-4]`. | Filters, table | `"2026-Q2"` |
 | `countries` | Countries | Geo tags (normalized names). | Array; drives map. | Project modal, map | `["Germany","France"]` |
-| `labels` | Labels | Free-form tags (multi-word allowed). | `normalizeProjectLabels`; pipe-separated in CSV. | Project modal (create/edit/view) | `["Growth bet","Platform"]` |
-| `links` | Links | Named hyperlinks. | `{ label, url }[]`; `normalizeProjectLinkUrl`; JSON in CSV. | Project modal (create/edit/view) | `[{"label":"PRD","url":"https://…"}]` |
+| `labels` | Labels | Free-form tags (multi-word allowed). | `normalizeProjectLabels`; pipe-separated in CSV; comma/pipe string on import. | Project modal (create/edit/view) | `["Growth bet","Platform"]` |
+| `links` | Links | Named hyperlinks. | `{ label, url }[]`; accepts legacy `name`/`href`/`text`; JSON in CSV. | Project modal (create/edit/view) | `[{"label":"PRD","url":"https://example.com/prd"}]` |
+| `tasks` | Tasks | Optional checklist items. | `{ name, status }[]`; `normalizeProjectTasks`; JSON in CSV `projectTasks`. | Project modal Details section | `[{"name":"API spec","status":"In Progress"}]` |
 | `createdAt` | Created At | Creation timestamp. | ISO 8601. | Modal footer | `"2026-03-01T..."` |
 | `modifiedAt` | Last Modified | Last edit timestamp. | ISO 8601. | Modal footer | `"2026-05-20T..."` |
 
@@ -318,10 +319,35 @@ flowchart TD
 ```mermaid
 flowchart TD
   TRUST[Trust profile active + unlocked] --> TOG[Workspace-wide toggle on]
-  TOG --> FLAG[state.workspaceWideMode true]
+  TOG --> FLAG[state.superAdminMode true]
   FLAG --> META[attach ownerProfileId + ownerProfileName on projects]
   META --> UI[Profile column owner strips owner filter group-by]
+  FLAG --> BULK[Bulk duplicate / move table selection]
   FLAG --> OFF[Toggle off restores single-profile scope]
+```
+
+### 8.9 Labels and links persistence (cloud)
+
+```mermaid
+flowchart TD
+  EDIT[User saves project modal] --> NORM[normalizeProjectLabels + normalizeProjectLinks]
+  NORM --> MEM[state.profiles in memory]
+  MEM --> SER[serializeProjectForStorage on saveState]
+  SER --> CACHE[localStorage cache]
+  SER --> FLUSH[saveState flush true → immediate PUT /api/state]
+  FLUSH --> API[api/_lib/project-metadata normalize]
+  API --> MONGO[(MongoDB workspaces)]
+  PULL[Background pullFromCloudIfNewer] -->|local_pending| SKIP[Skip overwrite]
+```
+
+### 8.10 Rich-text description fields
+
+```mermaid
+flowchart LR
+  RTE[RichTextEditor.mountAllFromDom] --> FIELDS[projectDescription reach impact confidence effort]
+  FIELDS --> HTML[sanitized HTML in project object]
+  HTML --> VIEW[View modal: toolbar hidden]
+  HTML --> CSV[CSV export: strip HTML to plain text]
 ```
 
 ---
@@ -330,7 +356,7 @@ flowchart TD
 
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
-| `APP_ASSET_VERSION` | Asset Cache Version | Query-string cache buster for CSS/JS in `index.html`. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260528-ui152"` |
+| `APP_ASSET_VERSION` | Asset Cache Version | Query-string cache buster for CSS/JS in `index.html`. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260528-ui190"` |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | Compact Breakpoint (px) | Max viewport width for phone/tablet UI. | Constant in `constants.js`. | `src/constants.js` | `1400` |
 | `is-compact-layout` | Compact Layout Class | Viewport ≤1400px; enables compact CSS. | Set on `<html>` by `initCompactLayoutClass()`. | Global layout | class present |
 | `is-phone-layout` | Phone Layout Class | Same threshold as compact (unified phone UI). | Set together with compact class. | Global layout | class present |

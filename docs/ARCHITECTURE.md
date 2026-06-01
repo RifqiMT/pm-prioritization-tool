@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last audited** | 2026-05-28 |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui152` |
+| **Last audited** | 2026-05-31 |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui190` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -46,10 +46,16 @@ The UI is a **static SPA** (`index.html` + `src/`). On Vercel, **serverless rout
 | `src/modules/exchange-rates.js` | Fetch/cache FX to EUR |
 | `src/modules/fullscreen.js` | Fullscreen API; compact media query uses `COMPACT_LAYOUT_MAX_WIDTH_PX` |
 | `src/modules/overlay-manager.js` | Single-popup coordination (modals, sheets, menus) |
-| `src/modules/storage.js` | MongoDB vs local persistence, migration, debounced sync |
+| `src/modules/storage.js` | MongoDB vs local persistence, debounced sync, flush on project save, pull guard |
+| `src/modules/description-format.js` | Sanitize/render description HTML |
+| `src/modules/rich-text-editor.js` | RichTextEditor mount for description fields |
+| `src/modules/board-drag.js` | Board drag-and-drop visuals |
+| `src/modules/board-card-interaction.js` | Board card press feedback |
 | `api/health.js` | Storage backend probe |
+| `api/config.js` | Client config probe (same as health) |
 | `api/state.js` | GET/PUT workspace document |
-| `src/app.js` | Bootstrap, `state`, events, rendering, filters, autocomplete, import/export, layout classes |
+| `api/_lib/project-metadata.js` | Server-side labels/links normalization before MongoDB write |
+| `src/app.js` | Bootstrap, `state`, events, rendering, filters, autocomplete, import/export, bulk transfer |
 | `css/*` | Layered presentation (see §10) |
 
 ---
@@ -72,6 +78,7 @@ erDiagram
     string title
     array labels
     array links
+    array tasks
     number reachValue
     number impactValue
     number confidenceValue

@@ -1,5 +1,10 @@
 # Product Guardrails
 
+| Field | Value |
+|-------|-------|
+| **Last updated** | 2026-05-31 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui190` |
+
 ## 1. Business Guardrails
 
 - Keep prioritization explainable; no hidden scoring paths.

@@ -4,7 +4,7 @@ Guidelines for teams using the Product Management Prioritization Tool in plannin
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-05-28 |
+| **Last updated** | 2026-05-31 |
 | **Audience** | Product managers, delivery leads, portfolio stakeholders |
 
 ---
@@ -104,7 +104,7 @@ Frameworks produce a **planning estimate** in project currency, with optional **
 
 ---
 
-## 5. Labels, links, and search hygiene
+## 5. Labels, links, tasks, and search hygiene
 
 | Control | Business use |
 |---------|----------------|
@@ -112,8 +112,11 @@ Frameworks produce a **planning estimate** in project currency, with optional **
 | **Label search + autocomplete** | Theme slicing (e.g. `growth`, `compliance`) |
 | **Labels filter (any / with / without)** | Audits for undocumented themes or mandatory tagging policies |
 | **Links filter (any / with / without)** | Ensure PRDs, designs, or tickets are attached before review |
+| **Project labels** | Multi-word tags on each initiative (e.g. `Platform`, `Q2 bet`) |
+| **Project links** | Named URLs to specs, Figma, Jira, or docs |
+| **Project tasks** | Sub-items with workflow status for delivery tracking inside an initiative |
 
-**Recommendation:** Define a small allowed label vocabulary in team guidelines; avoid one-off labels that break filters.
+**Recommendation:** Define a small allowed label vocabulary in team guidelines; avoid one-off labels that break filters. When using cloud sync, save projects after editing labels/links so metadata flushes to MongoDB immediately.
 
 ---
 

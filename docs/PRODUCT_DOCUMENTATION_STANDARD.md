@@ -2,12 +2,12 @@
 
 **Purpose:** Define how product, design, and engineering maintain documentation for the Product Management Prioritization Tool.  
 **Audience:** Contributors, reviewers, release owners.  
-**Last updated:** 2026-05-28  
-**Last audited:** 2026-05-28
+**Last updated:** 2026-05-31  
+**Last audited:** 2026-05-31
 
 | Baseline | Value |
 |----------|-------|
-| **APP_ASSET_VERSION** | `20260528-ui152` |
+| **APP_ASSET_VERSION** | `20260528-ui190` |
 | **Compact breakpoint** | **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) |
 
 ---

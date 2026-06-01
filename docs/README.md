@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Maintainer** | Product Team |
-| **Last audited** | 2026-05-28 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui152` |
+| **Last audited** | 2026-05-31 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui190` |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
 
 This folder is the **single source of product truth** for engineering, design, product management, and stakeholders. Documents are maintained against the **current** implementation in `index.html`, `css/`, `src/`, and `api/`.
@@ -65,56 +65,74 @@ This folder is the **single source of product truth** for engineering, design, p
 
 ---
 
-## Source code map (audited 2026-05-28)
+## Source code map (audited 2026-05-31)
 
 ```
 pm-prioritization-tool/
-├── index.html                      # Shell, modals, filters, views, footer
-├── css/
-│   ├── main.css                    # Base design system
-│   ├── workspace-modern.css        # Table, board, filters shell
-│   ├── header-modern.css           # App header, actions menu
-│   ├── profiles-modern.css         # Profile panel v2
-│   ├── portfolio-modern.css        # Portfolio command bar, FAB, filters
+├── index.html                      # Shell, modals, filters, four views, footer
+├── css/                            # 30 layered stylesheets (see DESIGN_GUIDELINES.md §4)
+│   ├── main.css                    # Base tokens, global buttons, status/framework pills
+│   ├── workspace-modern.css        # Workspace panel, table, board columns
+│   ├── header-modern.css           # App header, compact actions menu
+│   ├── profiles-modern.css         # Profile panel v2, bottom sheet
+│   ├── portfolio-modern.css        # Command bar, FAB, filters, selection bar
 │   ├── profile-modals-modern.css   # Profile CRUD modals
-│   ├── export-modals-modern.css    # Export / import modals
-│   ├── view-toolbars-modern.css    # Per-view toolbars
+│   ├── export-modals-modern.css    # Export / import / unlock modals
+│   ├── view-toolbars-modern.css    # Table, board, MoSCoW, map toolbars
+│   ├── view-toolbars-compact-row.css
 │   ├── compact-modern.css          # Compact chrome (≤1400px)
 │   ├── moscow-compact.css          # MoSCoW compact nav + quadrants
 │   ├── board-compact.css           # Board compact stack
 │   ├── table-compact.css           # Table compact toolbar
+│   ├── table-compact-cards.css     # Compact table card list + grouping
+│   ├── table-rows-modern.css       # Desktop table rows
+│   ├── table-revamp-modern.css     # Semantic column layout
 │   ├── project-actions-modern.css  # View / Edit / Delete actions
+│   ├── project-details-tooltip.css # Card/table description tooltips
+│   ├── rich-text-editor.css        # Rich-text toolbar + fields
+│   ├── super-admin-modern.css      # Workspace-wide mode (GUARDRAILS §7)
+│   ├── map-tooltip-modern.css      # Map hover / pinned tooltips
+│   ├── board-drag.css              # Board DnD visuals
+│   ├── board-card-interaction.css  # Card press feedback
+│   ├── filters-compact-bar.css     # Filters drawer compact bar
+│   ├── portfolio-cards-compact.css # Board/MoSCoW card shells
 │   ├── fullscreen-modern.css       # Fullscreen host
-│   ├── fullscreen-compact.css      # Fullscreen + compact layouts
+│   ├── fullscreen-compact.css      # Fullscreen + compact
 │   ├── views-density.css           # Density scaling
 │   ├── layout-flow.css             # Flat dividers (compact)
-│   ├── portfolio-cards-compact.css # Board/MoSCoW card shells
-│   ├── table-rows-modern.css       # Table row presentation
-│   ├── table-revamp-modern.css     # Semantic table columns
-│   ├── table-compact-cards.css     # Compact table card list
-│   ├── super-admin-modern.css      # Workspace-wide mode UI (see GUARDRAILS §7)
 │   └── app-footer.css              # Site footer
 ├── src/
-│   ├── app.js                      # State, render, CRUD, filters, boards
+│   ├── app.js                      # State, render, CRUD, filters, import/export
 │   ├── constants.js                # Enums, tooltips, APP_ASSET_VERSION
-│   ├── rice.js                     # RICE + validation
-│   ├── utils.js                    # Format, CSV, IDs
+│   ├── rice.js                     # RICE formula + validation
+│   ├── utils.js                    # Format, CSV, IDs, legacy field strip
 │   └── modules/
-│       ├── exchange-rates.js
-│       ├── fullscreen.js
-│       ├── overlay-manager.js
-│       ├── profile-security.js
-│       └── storage.js
+│       ├── storage.js              # localStorage + MongoDB sync
+│       ├── profile-security.js     # PBKDF2 profile passwords
+│       ├── exchange-rates.js       # FX to EUR
+│       ├── fullscreen.js           # Per-view fullscreen
+│       ├── overlay-manager.js      # Single-overlay policy
+│       ├── description-format.js   # Sanitize/render description HTML
+│       ├── rich-text-editor.js     # RichTextEditor for description fields
+│       ├── board-drag.js           # Board drag-and-drop
+│       └── board-card-interaction.js
 ├── api/
-│   ├── health.js
-│   ├── config.js
-│   ├── state.js
-│   └── _lib/                       # auth, mongo helpers
+│   ├── health.js                   # GET storage probe
+│   ├── config.js                   # GET client config (same probe as health)
+│   ├── state.js                    # GET/PUT/POST workspace document
+│   └── _lib/
+│       ├── auth.js                 # Bearer PM_API_SECRET
+│       ├── mongo.js                # Mongo client
+│       ├── http.js                 # JSON helpers
+│       └── project-metadata.js     # Server-side labels/links normalize
 ├── scripts/
-│   ├── verify-deployment.js
-│   └── test-storage-sync-logic.js
-├── docs/                           # This folder
-├── vercel.json
+│   ├── verify-deployment.js        # Production smoke test
+│   ├── test-storage-sync-logic.js  # npm run test:storage
+│   ├── test-project-metadata.js    # npm run test:metadata
+│   └── disable-vercel-deployment-protection.sh
+├── .github/workflows/              # ci.yml, vercel-production.yml, fix-vercel-protection.yml
+├── docs/                           # This documentation suite
+├── vercel.json                     # Static deploy, CSP, API functions
 └── package.json
 ```
 

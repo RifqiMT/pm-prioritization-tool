@@ -4,7 +4,7 @@
 |-------|-------|
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
-| **Last updated** | 2026-05-28 |
+| **Last updated** | 2026-05-31 |
 | **Compact breakpoint** | ≤ **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) |
 
 **Purpose:** Epics and user-story contracts with **Given / When / Then** acceptance criteria, including edge cases and error handling.
@@ -657,6 +657,88 @@ Policy and eligibility: **[GUARDRAILS.md §7](GUARDRAILS.md)** only.
 - **When** the user turns mode off  
 - **Then** views immediately show only the active profile’s projects  
 - **And** owner-only filters and columns hide.
+
+---
+
+## Epic N — Rich-text descriptions
+
+### US-N1 — Format project and RICE narratives
+
+- **Persona:** Product Manager  
+- **Goal:** Write readable descriptions without leaving the app.
+
+**Acceptance criteria**
+
+- **Given** the user creates or edits a project  
+- **When** they use bold, lists, or alignment on description fields  
+- **Then** formatting is saved as sanitized HTML  
+- **And** view mode shows formatted text without the editing toolbar.
+
+**Error / edge handling**
+
+- **Given** view mode  
+- **When** the modal opens  
+- **Then** description fields are read-only and toolbar is hidden.
+
+---
+
+## Epic O — Project tasks
+
+### US-O1 — Track tasks with status on a project
+
+- **Persona:** Delivery Lead  
+- **Goal:** Break work into trackable items under an initiative.
+
+**Acceptance criteria**
+
+- **Given** the user adds task rows in the project modal  
+- **When** they save  
+- **Then** `tasks[]` persists with name and status  
+- **And** view mode shows read-only task rows with status badges.
+
+---
+
+## Epic P — Labels and links reliability (cloud)
+
+### US-P1 — Labels and links survive production reload
+
+- **Persona:** Product Manager using MongoDB sync  
+- **Goal:** Trust that metadata is not lost after refresh.
+
+**Acceptance criteria**
+
+- **Given** cloud sync is active  
+- **When** the user saves labels and links on a project  
+- **Then** an immediate cloud flush runs  
+- **And** after reload (or another device pull) labels and links are unchanged.
+
+---
+
+## Epic Q — Bulk transfer (privileged workspace mode)
+
+### US-Q1 — Duplicate selected projects to another profile
+
+- **Persona:** Trust profile operator  
+- **Goal:** Clone initiatives into another portfolio.
+
+**Acceptance criteria**
+
+- **Given** workspace-wide mode and table multi-select  
+- **When** the user chooses Duplicate and a target profile  
+- **Then** copies are created with new IDs and “(copy)” title suffix  
+- **And** originals remain in source profiles.
+
+### US-Q2 — Move selected projects to another profile
+
+- **Persona:** Trust profile operator  
+- **Goal:** Re-home initiatives to the correct owner profile.
+
+**Acceptance criteria**
+
+- **Given** workspace-wide mode and table multi-select  
+- **When** the user chooses Move and a target profile  
+- **Then** projects are removed from source profiles and added to the target  
+- **And** board/MoSCoW order arrays on sources are cleaned.
 
 ---
 

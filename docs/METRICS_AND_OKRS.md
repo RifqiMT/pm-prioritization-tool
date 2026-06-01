@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-05-28 |
+| **Last updated** | 2026-05-31 |
 | **Measurement** | Local-first — no default telemetry; manual QA + optional instrumentation |
 
 ---
@@ -76,6 +76,8 @@ Among workspaces that had ≥3 projects 30 days ago, count those with ≥1 sessi
 | ENG-03 | Import integrity | Clean merges | `clean_imports / import_attempts` | ≥ 99% |
 | ENG-04 | Render responsiveness | Table rerender after filter/sort | p95 latency (ms) | ≤ 300 |
 | ENG-05 | Cloud sync success | Debounced PUT without user-visible failure | `successful_cloud_saves / cloud_save_attempts` | ≥ 99% |
+| ENG-06 | Metadata round-trip | Labels/links unchanged after save + reload (cloud) | `metadata_match_after_reload / metadata_save_attempts` | ≥ 99% |
+| PM-09 | Rich metadata usage | Projects with labels, links, or tasks | `projects_with_metadata / total_projects` | ≥ 40% |
 
 ---
 
