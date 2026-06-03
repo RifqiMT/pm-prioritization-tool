@@ -36,6 +36,7 @@ Persisted to `localStorage` under `rice_prioritizer_v1` unless noted.
 | `tableSortByRice` | Table RICE Sort | When true, table rows sorted by RICE score. | Boolean; persisted. | Table toolbar | `true` |
 | `tableGroupBy` | Table Group By | Compact table card grouping key. | See `TABLE_GROUP_BY_OPTIONS` in `constants.js`. | Table compact group bar | `"projectStatus"` |
 | `scrumBoardSortByRice` | Board RICE Sort | When true, board cards sorted by RICE per column. | Boolean; persisted. | Board toolbar toggle | `true` |
+| `scrumBoardVisibleStatuses` | Board Status Columns | Which project statuses appear as Scrum columns. | Subset of `projectStatusList`; at least one required. | Board toolbar multi-select | `["Not Started","In Progress","Done"]` |
 | `superAdminMode` | Workspace-wide mode flag | When true (and eligibility rules in GUARDRAILS §7), all workspace projects are visible across profiles. | Boolean; persisted in workspace payload | See GUARDRAILS §7; `isSuperAdminModeActive()` | `false` |
 | `moscowSortByRice` | MoSCoW RICE Sort | When true, cards in each MoSCoW quadrant sorted by RICE. | Boolean; persisted. | MoSCoW toolbar toggle | `true` |
 | `mapMetric` | Map Aggregation Metric | What the choropleth represents. | `projects` \| `rice` \| `riceAvg` \| `financial` \| `financialAvg` | Map metric picker | `"financial"` |
@@ -66,6 +67,7 @@ Persisted to `localStorage` under `rice_prioritizer_v1` unless noted.
 | `createdAt` | Created At | Profile creation timestamp. | ISO 8601. | Storage | `"2026-01-15T08:00:00.000Z"` |
 | `projects` | Projects | Array of project objects. | Owned by profile. | All views | `[...]` |
 | `boardOrder` | Board Order | Per-status ordered project id lists. | Used when RICE sort off. | Board drag-drop | `{ "In Progress": ["p1","p2"] }` |
+| `moscowOrder` | MoSCoW Order | Per-quadrant ordered project id lists. | Used when MoSCoW RICE sort off. | MoSCoW drag-drop | `{ "Must Have": ["p1","p2"] }` |
 | `passwordSalt` | Password Salt | Salt for PBKDF2 hash. | From `ProfileSecurity.generateSalt()`. | Never shown in UI | `"a1b2c3..."` |
 | `passwordHash` | Password Hash | PBKDF2 hash with prefix `v1:`. | Verified on unlock/export. | Never shown | `"v1:9f3a..."` |
 
@@ -191,6 +193,7 @@ Full input field whitelists: `sanitizeFinancialImpactInputs` in `src/app.js`.
 | `tshirtSizeList` | T-Shirt Enum | Allowed sizes. | XS–XL |
 | `currencyList` | Currency List | Selectable currencies. | EUR, USD, IDR, … |
 | `LEGACY_WORKSPACE_FIELDS` | Legacy Workspace Keys | Deprecated workspace JSON keys stripped on load/import/persist. | `["boardHiddenStatuses"]` |
+| `WORKSPACE_PERSISTED_STATE_KEYS` | Persisted UI State Keys | Registry of top-level workspace fields saved to `localStorage` and MongoDB. | Listed in `src/constants.js`; used by `serializeStatePayload()` | Storage layer | See constants source |
 | `countryList` | Country List | Normalized country names for geo. | `"Germany"` |
 | `COUNTRY_OPTION_EU` | EU Region Option | Pseudo-value `EU` in target-country selects; expands to all EU members on selection. | `"EU"` |
 | `EU_MEMBER_COUNTRIES` | EU Member States | 27 canonical `countryList` names filled when `EU` is chosen. | `["Germany", "France", …]` |

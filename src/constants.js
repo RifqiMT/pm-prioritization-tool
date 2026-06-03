@@ -216,6 +216,28 @@ const currencyList = [
 /** Workspace JSON keys removed from the product; stripped on load, import, and persist. */
 const LEGACY_WORKSPACE_FIELDS = ["boardHiddenStatuses"];
 
+/**
+ * Top-level workspace UI keys written by serializeStatePayload() and restored on load.
+ * Add new persisted state fields here so localStorage and Vercel MongoDB stay in sync.
+ * (profiles[] is always serialized separately.)
+ */
+const WORKSPACE_PERSISTED_STATE_KEYS = [
+  "activeProfileId",
+  "sortField",
+  "sortDirection",
+  "projectsView",
+  "tableSortByRice",
+  "tableGroupBy",
+  "scrumBoardSortByRice",
+  "scrumBoardVisibleStatuses",
+  "moscowSortByRice",
+  "mapMetric",
+  "exchangeRatesToEUR",
+  "exchangeRatesDate",
+  "exchangeRatesLastSource",
+  "superAdminMode"
+];
+
 /** ISO currency code → display symbol for profile view and summaries. */
 const CURRENCY_SYMBOLS = {
   USD: "$",

@@ -15,6 +15,7 @@ The app is a **static UI** plus **Vercel serverless API** routes under `/api`. P
 | **Vercel Functions** | `GET /api/health`, `GET/PUT /api/state` → MongoDB |
 | **MongoDB Atlas** | Primary workspace document (`workspaces` collection) |
 | **Browser** | UI logic; `sessionStorage` for profile unlock + API key; `localStorage` cache when cloud is active |
+| **Persistence** | Full workspace JSON (`profiles`, UI prefs, exchange rates) under `STORAGE_KEY`; cloud mirror at `PUT /api/state` when `MONGODB_URI` is set |
 | **External APIs** | Exchange rates, map tiles, GeoJSON |
 
 ## Required environment variables (Vercel)

@@ -94,11 +94,74 @@ function normalizeProjectLinks(raw) {
   return out;
 }
 
+const RACI_ROLES = ["responsible", "accountable", "consulted", "informed"];
+const RACI_DOMAIN_OPTIONS = ["Business", "Tech"];
+
+function normalizeRaciDomain(domain) {
+  const value = String(domain || "").trim();
+  return RACI_DOMAIN_OPTIONS.includes(value) ? value : "Business";
+}
+
+function normalizeRaciEntries(entries) {
+  if (!Array.isArray(entries)) return [];
+  const out = [];
+  entries.forEach((entry) => {
+    if (!entry || typeof entry !== "object") return;
+    const name = String(entry.name != null ? entry.name : entry.person || entry.label || "").trim();
+    if (!name) return;
+    out.push({
+      name,
+      domain: normalizeRaciDomain(entry.domain || entry.type || entry.side)
+    });
+  });
+  return out;
+}
+
+function normalizeProjectRaci(raci) {
+  const source = raci && typeof raci === "object" ? raci : {};
+  return {
+    responsible: normalizeRaciEntries(source.responsible),
+    accountable: normalizeRaciEntries(source.accountable),
+    consulted: normalizeRaciEntries(source.consulted),
+    informed: normalizeRaciEntries(source.informed)
+  };
+}
+
+const PROJECT_TASK_STATUSES = [
+  "Not Started",
+  "In Progress",
+  "On Hold",
+  "Done",
+  "Cancelled"
+];
+
+function normalizeProjectTaskStatus(status) {
+  const value = String(status || "").trim();
+  return PROJECT_TASK_STATUSES.includes(value) ? value : "Not Started";
+}
+
+function normalizeProjectTasks(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  raw.forEach((task) => {
+    if (!task || typeof task !== "object") return;
+    const name = String(task.name != null ? task.name : task.title || "").trim();
+    if (!name) return;
+    out.push({
+      name,
+      status: normalizeProjectTaskStatus(task.status)
+    });
+  });
+  return out;
+}
+
 function normalizeProjectForStorage(project) {
   if (!project || typeof project !== "object") return project;
   return Object.assign({}, project, {
     labels: normalizeProjectLabels(project.labels),
-    links: normalizeProjectLinks(project.links)
+    links: normalizeProjectLinks(project.links),
+    tasks: normalizeProjectTasks(project.tasks),
+    raci: normalizeProjectRaci(project.raci)
   });
 }
 
@@ -128,5 +191,7 @@ function normalizeWorkspacePayload(payload) {
 module.exports = {
   normalizeWorkspacePayload,
   normalizeProjectLabels,
-  normalizeProjectLinks
+  normalizeProjectLinks,
+  normalizeProjectTasks,
+  normalizeProjectRaci
 };

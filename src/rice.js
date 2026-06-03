@@ -33,35 +33,76 @@ function formatRice(value) {
   });
 }
 
+function projectDescriptionPlainText(raw) {
+  if (typeof descriptionToPlainText === "function") {
+    return descriptionToPlainText(raw || "");
+  }
+  return String(raw || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function validateProjectInput(raw) {
-  if (!raw.title) return "Project title is required.";
-  if (raw.reachValue == null || !Number.isFinite(raw.reachValue) || raw.reachValue < 0) {
-    return "Reach value must be a non-negative integer.";
+  if (!raw.title || !String(raw.title).trim()) {
+    return "Project title is required.";
   }
-  if (!Number.isInteger(raw.reachValue)) {
-    return "Reach value must be an integer (no decimals).";
+
+  if (!projectDescriptionPlainText(raw.description)) {
+    return "Project description is required.";
   }
-  if (raw.impactValue == null || !Number.isFinite(raw.impactValue) || raw.impactValue < 1 || raw.impactValue > 5) {
-    return "Impact must be between 1 and 5.";
+
+  if (raw.reachValue != null && raw.reachValue !== "") {
+    if (!Number.isFinite(raw.reachValue) || raw.reachValue < 0) {
+      return "Reach value must be a non-negative integer.";
+    }
+    if (!Number.isInteger(raw.reachValue)) {
+      return "Reach value must be an integer (no decimals).";
+    }
   }
-  if (raw.confidenceValue == null || !Number.isFinite(raw.confidenceValue) || raw.confidenceValue < 0 || raw.confidenceValue > 100) {
-    return "Confidence must be between 0 and 100.";
+
+  if (raw.impactValue != null && raw.impactValue !== "") {
+    if (!Number.isFinite(raw.impactValue) || raw.impactValue < 1 || raw.impactValue > 5) {
+      return "Impact must be between 1 and 5.";
+    }
   }
-  if (raw.effortValue == null || !Number.isFinite(raw.effortValue) || raw.effortValue < 1 || raw.effortValue > 5) {
-    return "Effort must be between 1 and 5.";
+
+  if (raw.confidenceValue != null && raw.confidenceValue !== "") {
+    if (
+      !Number.isFinite(raw.confidenceValue) ||
+      raw.confidenceValue < 0 ||
+      raw.confidenceValue > 100
+    ) {
+      return "Confidence must be between 0 and 100.";
+    }
   }
-  if (raw.financialImpactValue != null && !Number.isFinite(raw.financialImpactValue)) {
+
+  if (raw.effortValue != null && raw.effortValue !== "") {
+    if (!Number.isFinite(raw.effortValue) || raw.effortValue < 1 || raw.effortValue > 5) {
+      return "Effort must be between 1 and 5.";
+    }
+  }
+
+  if (raw.financialImpactValue != null && raw.financialImpactValue !== "" && !Number.isFinite(raw.financialImpactValue)) {
     return "Financial impact must be a valid number.";
   }
-  if (raw.financialImpactValue != null && raw.financialImpactValue !== 0 && !raw.financialImpactCurrency) {
+
+  if (
+    raw.financialImpactValue != null &&
+    raw.financialImpactValue !== 0 &&
+    Number.isFinite(raw.financialImpactValue) &&
+    !raw.financialImpactCurrency
+  ) {
     return "Select a currency when financial impact is provided.";
   }
+
   if (raw.projectPeriod) {
     const periodPattern = /^\d{4}-Q[1-4]$/;
     if (!periodPattern.test(raw.projectPeriod)) {
       return "Project period must be in the format YYYY-QX (e.g. 2026-Q1).";
     }
   }
+
   return "";
 }
-

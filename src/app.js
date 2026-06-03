@@ -1147,14 +1147,24 @@ function initProjectModalSectionNav() {
     btn.addEventListener("click", () => {
       const id = btn.getAttribute("data-scroll-target");
       const el = id ? document.getElementById(id) : null;
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (el) {
+        expandOptionalProjectSection(el);
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
       modal.querySelectorAll(".project-modal-section-btn").forEach((b) => b.classList.remove("is-active"));
       btn.classList.add("is-active");
     });
   });
 
   if (!scrollRoot) return;
-  const sectionEls = ["projectModalSectionProject", "projectModalSectionRice", "projectModalSectionMeta", "projectModalSectionFinancial"]
+  const sectionEls = [
+    "projectModalSectionProject",
+    "projectModalSectionRice",
+    "projectModalSectionMoscow",
+    "projectModalSectionMeta",
+    "projectModalSectionRaci",
+    "projectModalSectionFinancial"
+  ]
     .map((id) => document.getElementById(id))
     .filter(Boolean);
   if (sectionEls.length === 0) return;
@@ -1229,6 +1239,334 @@ function ensureProjectFormFieldTooltips() {
     tooltipEl.appendChild(bodyNode);
 
     wrap.appendChild(tooltipEl);
+  });
+}
+
+function shouldWrapOptionalProjectField(wrap) {
+  if (!wrap || wrap.closest(".project-optional-field-details")) return false;
+  if (wrap.closest("[data-optional-section]")) return false;
+  return wrap.hasAttribute("data-optional-collapsible");
+}
+
+function getOptionalFieldSummaryText(labelEl) {
+  if (!labelEl) return "Optional field";
+  const clone = labelEl.cloneNode(true);
+  clone.querySelectorAll(".field-optional-tag").forEach((el) => el.remove());
+  return (clone.textContent || "").replace(/\s*\(optional[^)]*\)\s*/gi, "").replace(/\s+/g, " ").trim();
+}
+
+function buildOptionalDisclosureSummary(titleText, options = {}) {
+  const subtitle = options.subtitle || "";
+  const summaryKind = options.kind === "section" ? "section" : "field";
+
+  const summary = document.createElement("summary");
+  summary.className =
+    summaryKind === "section"
+      ? "form-section-header project-optional-section-summary"
+      : "project-optional-field-summary";
+  summary.dataset.optionalKind = summaryKind;
+
+  const row = document.createElement("div");
+  row.className = "project-optional-summary-row";
+
+  const lead = document.createElement("span");
+  lead.className = "project-optional-summary-lead";
+  lead.setAttribute("aria-hidden", "true");
+
+  const copy = document.createElement("div");
+  copy.className = "project-optional-summary-copy";
+
+  const titleSpan = document.createElement("span");
+  titleSpan.className =
+    summaryKind === "section"
+      ? "form-section-title project-optional-section-title"
+      : "project-optional-field-summary-title";
+  titleSpan.textContent = titleText || "Optional field";
+  copy.appendChild(titleSpan);
+
+  if (subtitle) {
+    const subtitleSpan = document.createElement("span");
+    subtitleSpan.className =
+      summaryKind === "section"
+        ? "form-section-hint project-optional-section-subtitle"
+        : "project-optional-field-summary-subtitle";
+    subtitleSpan.textContent = subtitle;
+    copy.appendChild(subtitleSpan);
+  }
+
+  const statusDot = document.createElement("span");
+  statusDot.className = "project-optional-status-dot";
+  statusDot.setAttribute("title", "Has data");
+  statusDot.setAttribute("aria-hidden", "true");
+
+  const optionalBadge = document.createElement("span");
+  optionalBadge.className =
+    summaryKind === "section"
+      ? "project-optional-badge project-optional-badge--section"
+      : "project-optional-badge project-optional-badge--field";
+  optionalBadge.textContent = summaryKind === "section" ? "Optional section" : "Optional field";
+
+  const chevron = document.createElement("span");
+  chevron.className = "project-optional-summary-chevron";
+  chevron.setAttribute("aria-hidden", "true");
+
+  row.appendChild(lead);
+  row.appendChild(copy);
+  row.appendChild(statusDot);
+  row.appendChild(optionalBadge);
+
+  summary.appendChild(row);
+  summary.appendChild(chevron);
+  summary.setAttribute("aria-label", `Expand ${titleText || "section"}`);
+  return summary;
+}
+
+function wrapOptionalProjectField(wrap) {
+  if (!shouldWrapOptionalProjectField(wrap)) return;
+
+  const labelEl = wrap.querySelector(":scope > label") || wrap.querySelector("label");
+  if (!labelEl) return;
+
+  const titleText = getOptionalFieldSummaryText(labelEl) || "Optional field";
+  const hintEl = wrap.querySelector(":scope > .project-dynamic-field-hint");
+  const subtitle = hintEl ? hintEl.textContent.trim() : "";
+
+  const details = document.createElement("details");
+  details.className = "project-optional-disclosure project-optional-field-details";
+  details.dataset.optionalKind = "field";
+
+  const summary = buildOptionalDisclosureSummary(titleText, {
+    kind: "field",
+    subtitle: subtitle.length > 72 ? `${subtitle.slice(0, 69)}…` : subtitle
+  });
+
+  const body = document.createElement("div");
+  body.className = "project-optional-field-body";
+
+  Array.from(wrap.childNodes).forEach((child) => {
+    if (child === labelEl) return;
+    body.appendChild(child);
+  });
+
+  labelEl.remove();
+  details.appendChild(summary);
+  details.appendChild(body);
+  wrap.appendChild(details);
+  wrap.classList.add("project-optional-field-wrap");
+}
+
+function wrapOptionalProjectSections() {
+  document.querySelectorAll("#projectForm [data-optional-section]").forEach((section) => {
+    if (section.dataset.optionalSectionWrapped === "1") return;
+
+    const header = section.querySelector(":scope > .form-section-header");
+    if (!header) return;
+
+    const contentNodes = [];
+    let node = header.nextElementSibling;
+    while (node) {
+      const next = node.nextElementSibling;
+      contentNodes.push(node);
+      node = next;
+    }
+    if (!contentNodes.length) return;
+
+    const titleEl = header.querySelector(".form-section-title");
+    const hintEl = header.querySelector(".form-section-hint");
+    const titleText = (titleEl?.textContent || "Section").replace(/\s*\(optional\)\s*/i, "").trim();
+    const subtitle = (hintEl?.textContent || section.getAttribute("data-optional-subtitle") || "").trim();
+
+    const details = document.createElement("details");
+    details.className = "project-optional-disclosure project-optional-section-details";
+    details.dataset.optionalSection = section.id || "";
+    details.dataset.optionalKind = "section";
+
+    const summary = buildOptionalDisclosureSummary(titleText, {
+      kind: "section",
+      subtitle
+    });
+
+    const body = document.createElement("div");
+    body.className = "project-optional-section-body";
+    contentNodes.forEach((contentNode) => body.appendChild(contentNode));
+
+    details.appendChild(summary);
+    details.appendChild(body);
+    header.replaceWith(details);
+    section.dataset.optionalSectionWrapped = "1";
+    section.classList.add("project-optional-section-host");
+  });
+}
+
+function ensureProjectOptionalDisclosures() {
+  const projectForm = elements.projectForm || $("projectForm");
+  if (!projectForm || projectForm.dataset.optionalDisclosuresReady === "1") return;
+
+  try {
+    projectForm.querySelectorAll("[data-optional-collapsible]").forEach(wrapOptionalProjectField);
+    wrapOptionalProjectSections();
+    ensureProjectTasksDisclosure();
+    projectForm.dataset.optionalDisclosuresReady = "1";
+  } catch (err) {
+    console.error("Optional project disclosures failed to initialize:", err);
+  }
+}
+
+function projectOptionalFieldHasData(wrap) {
+  if (!wrap) return false;
+  const body = wrap.querySelector(".project-optional-field-body") || wrap;
+
+  const standaloneInputs = body.querySelectorAll(":scope > .form-grid input, :scope > .form-grid select, :scope > .form-grid textarea, :scope > input, :scope > select, :scope > textarea");
+  for (const input of standaloneInputs) {
+    if (input.type === "hidden") continue;
+    if ((input.value || "").trim()) return true;
+  }
+
+  const dynamicRows = body.querySelectorAll(
+    ".project-label-row, .project-link-row, .project-task-row, .project-raci-row, .country-row"
+  );
+  for (const row of dynamicRows) {
+    const rowInputs = row.querySelectorAll("input, select, textarea");
+    for (const input of rowInputs) {
+      if ((input.value || "").trim()) return true;
+    }
+  }
+
+  if (
+    body.querySelector(
+      ".project-raci-card, .project-raci-readonly-row, .project-task-card, .project-task-readonly-row, .project-label-readonly-row"
+    )
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function projectOptionalSectionHasData(sectionId) {
+  if (sectionId === "projectModalSectionRice") {
+    const scalarFields = ["reachValue", "impactValue", "confidenceValue", "effortValue"];
+    for (const fieldId of scalarFields) {
+      const el = document.getElementById(fieldId);
+      if (el && String(el.value || "").trim()) return true;
+    }
+    const richFields = ["reachDescription", "impactDescription", "confidenceDescription", "effortDescription"];
+    for (const fieldId of richFields) {
+      if (richDescriptionToPlainText(getRichDescriptionValue(fieldId))) return true;
+    }
+    return false;
+  }
+  if (sectionId === "projectModalSectionMoscow") {
+    return !!(elements.projectMoscow && String(elements.projectMoscow.value || "").trim());
+  }
+  if (sectionId === "projectModalSectionMeta") {
+    const scalarFields = [
+      elements.projectType,
+      elements.projectStatus,
+      elements.projectTshirtSize,
+      elements.projectPeriod
+    ];
+    for (const el of scalarFields) {
+      if (el && String(el.value || "").trim()) return true;
+    }
+    const sectionBody =
+      document.querySelector("#projectModalSectionMeta .project-optional-section-body") ||
+      document.getElementById("projectModalSectionMeta");
+    if (!sectionBody) return false;
+    const taskRows = sectionBody.querySelectorAll(".project-task-row");
+    for (const row of taskRows) {
+      if ((row.querySelector("input")?.value || "").trim()) return true;
+    }
+    const countryRows = sectionBody.querySelectorAll(".country-row select");
+    for (const select of countryRows) {
+      if ((select.value || "").trim()) return true;
+    }
+    if (sectionBody.querySelector(".project-task-card, .project-task-readonly-row")) {
+      return true;
+    }
+    return false;
+  }
+  if (sectionId === "projectModalSectionRaci") {
+    const rows = document.querySelectorAll("#projectModalSectionRaci .project-raci-row");
+    for (const row of rows) {
+      const name = (row.querySelector(".project-raci-name-input")?.value || "").trim();
+      if (name) return true;
+    }
+    if (document.querySelector("#projectModalSectionRaci .project-raci-card, #projectModalSectionRaci .project-raci-readonly-row")) {
+      return true;
+    }
+    return false;
+  }
+  if (sectionId === "projectModalSectionFinancial") {
+    const impactVal = elements.financialImpactValue?.value;
+    if (impactVal != null && String(impactVal).trim() !== "" && Number(impactVal) !== 0) {
+      return true;
+    }
+    const currency = elements.projectCurrency?.value;
+    if (currency && String(currency).trim()) return true;
+    const framework = normalizeFinancialFramework(
+      elements.financialFramework?.value || FINANCIAL_FRAMEWORK_DEFAULT
+    );
+    const activePanel = document.querySelector(
+      `#financialFrameworkFields [data-framework-fields="${framework}"]`
+    );
+    if (activePanel) {
+      const frameworkInputs = activePanel.querySelectorAll("input, select, textarea");
+      for (const input of frameworkInputs) {
+        if ((input.value || "").trim()) return true;
+      }
+    }
+    return false;
+  }
+  return false;
+}
+
+function syncProjectOptionalDisclosureState(detailsEl, hasData, resetCollapsed) {
+  if (!detailsEl) return;
+  if (resetCollapsed) {
+    detailsEl.open = !!hasData;
+  }
+  detailsEl.classList.toggle("project-optional--has-data", !!hasData);
+  syncProjectOptionalDisclosureAria(detailsEl);
+}
+
+function syncProjectOptionalDisclosureAria(detailsEl) {
+  if (!detailsEl) return;
+  const summary = detailsEl.querySelector("summary");
+  if (!summary) return;
+  const titleEl = summary.querySelector(
+    ".project-optional-field-summary-title, .project-optional-section-title, .form-section-title"
+  );
+  const name = titleEl ? titleEl.textContent.trim() : "section";
+  summary.setAttribute("aria-expanded", detailsEl.open ? "true" : "false");
+  summary.setAttribute("aria-label", detailsEl.open ? `Collapse ${name}` : `Expand ${name}`);
+}
+
+function expandOptionalProjectSection(sectionEl) {
+  if (!sectionEl) return;
+  const details = sectionEl.querySelector(":scope > .project-optional-section-details");
+  if (details) {
+    details.open = true;
+    syncProjectOptionalDisclosureAria(details);
+  }
+}
+
+function syncProjectOptionalDisclosures({ resetCollapsed = false } = {}) {
+  const projectForm = elements.projectForm || $("projectForm");
+  if (!projectForm) return;
+
+  projectForm.querySelectorAll(".project-optional-field-details").forEach((detailsEl) => {
+    const wrap = detailsEl.closest(".project-field-tooltip-wrap");
+    syncProjectOptionalDisclosureState(detailsEl, projectOptionalFieldHasData(wrap), resetCollapsed);
+  });
+
+  projectForm.querySelectorAll(".project-optional-section-details").forEach((detailsEl) => {
+    const sectionId = detailsEl.dataset.optionalSection;
+    syncProjectOptionalDisclosureState(
+      detailsEl,
+      sectionId ? projectOptionalSectionHasData(sectionId) : false,
+      resetCollapsed
+    );
   });
 }
 
@@ -1417,91 +1755,90 @@ function updateStorageStatusUI(status) {
   showStorageStatusToast(message);
 }
 
+function setCloudStorageModalError(msg) {
+  const errorEl = $("cloudStorageError");
+  if (!errorEl) return;
+  if (msg) {
+    errorEl.textContent = msg;
+    errorEl.hidden = false;
+  } else {
+    errorEl.textContent = "";
+    errorEl.hidden = true;
+  }
+}
+
+async function refreshCloudStorageDiagnostics() {
+  const diagEl = $("cloudStorageDiagnostics");
+  if (!diagEl || typeof AppStorage === "undefined" || !AppStorage.getCloudDiagnostics) {
+    return;
+  }
+  diagEl.hidden = false;
+  diagEl.textContent = "Checking cloud workspace…";
+  try {
+    const d = await AppStorage.getCloudDiagnostics();
+    const cloud =
+      d.cloudProfileCount != null
+        ? d.cloudProfileCount + " profile" + (d.cloudProfileCount !== 1 ? "s" : "")
+        : d.cloudError
+          ? "unreachable"
+          : "—";
+    const device =
+      d.deviceProfileCount +
+      " profile" +
+      (d.deviceProfileCount !== 1 ? "s" : "") +
+      " on this device";
+    const modeLabel = d.mode || "unknown";
+    let line =
+      "Cloud: " + cloud + " · Device: " + device + " · Storage: " + modeLabel;
+    if (d.cloudUpdatedAt) {
+      line += " · Cloud updated " + formatStorageSyncTime(d.cloudUpdatedAt);
+    }
+    if (d.hostname && d.hostname.indexOf("pm-prioritization-tool-six") < 0) {
+      line += " · Warning: not on production URL";
+    }
+    diagEl.textContent = line;
+    if (
+      d.cloudProfileCount != null &&
+      d.cloudProfileCount > d.deviceProfileCount
+    ) {
+      diagEl.classList.add("cloud-storage-diagnostics--warn");
+    } else {
+      diagEl.classList.remove("cloud-storage-diagnostics--warn");
+    }
+  } catch (err) {
+    diagEl.textContent = err && err.message ? err.message : "Could not read diagnostics.";
+  }
+}
+
+function openCloudStorageModal() {
+  const modal = elements.cloudStorageModal || $("cloudStorageModal");
+  const input = $("cloudStorageApiKeyInput");
+  if (!modal || !input) return;
+  activateBlockingModal(modal, "cloudStorage");
+  input.value =
+    typeof AppStorage !== "undefined" && AppStorage.getApiSecret
+      ? AppStorage.getApiSecret()
+      : "";
+  setCloudStorageModalError("");
+  refreshCloudStorageDiagnostics();
+  input.focus();
+}
+
+function closeCloudStorageModal({ immediate = false } = {}) {
+  const modal = elements.cloudStorageModal || $("cloudStorageModal");
+  if (!modal) return;
+  deactivateBlockingModal(modal, { immediate });
+  setCloudStorageModalError("");
+}
+
 function initCloudStorageModal() {
-  const modal = $("cloudStorageModal");
+  const modal = elements.cloudStorageModal || $("cloudStorageModal");
   const cancelBtn = $("cloudStorageCancelBtn");
   const submitBtn = $("cloudStorageSubmitBtn");
   const input = $("cloudStorageApiKeyInput");
-  const errorEl = $("cloudStorageError");
   if (!modal || !submitBtn || !input) return;
 
-  function setError(msg) {
-    if (!errorEl) return;
-    if (msg) {
-      errorEl.textContent = msg;
-      errorEl.hidden = false;
-    } else {
-      errorEl.textContent = "";
-      errorEl.hidden = true;
-    }
-  }
-
-  async function refreshCloudDiagnostics() {
-    const diagEl = $("cloudStorageDiagnostics");
-    if (!diagEl || typeof AppStorage === "undefined" || !AppStorage.getCloudDiagnostics) {
-      return;
-    }
-    diagEl.hidden = false;
-    diagEl.textContent = "Checking cloud workspace…";
-    try {
-      const d = await AppStorage.getCloudDiagnostics();
-      const cloud =
-        d.cloudProfileCount != null
-          ? d.cloudProfileCount + " profile" + (d.cloudProfileCount !== 1 ? "s" : "")
-          : d.cloudError
-            ? "unreachable"
-            : "—";
-      const device =
-        d.deviceProfileCount +
-        " profile" +
-        (d.deviceProfileCount !== 1 ? "s" : "") +
-        " on this device";
-      const modeLabel = d.mode || "unknown";
-      let line =
-        "Cloud: " + cloud + " · Device: " + device + " · Storage: " + modeLabel;
-      if (d.cloudUpdatedAt) {
-        line += " · Cloud updated " + formatStorageSyncTime(d.cloudUpdatedAt);
-      }
-      if (d.hostname && d.hostname.indexOf("pm-prioritization-tool-six") < 0) {
-        line += " · Warning: not on production URL";
-      }
-      diagEl.textContent = line;
-      if (
-        d.cloudProfileCount != null &&
-        d.cloudProfileCount > d.deviceProfileCount
-      ) {
-        diagEl.classList.add("cloud-storage-diagnostics--warn");
-      } else {
-        diagEl.classList.remove("cloud-storage-diagnostics--warn");
-      }
-    } catch (err) {
-      diagEl.textContent = err && err.message ? err.message : "Could not read diagnostics.";
-    }
-  }
-
-  function openModal() {
-    prepareAppOverlay("cloudStorage");
-    modal.classList.add("active");
-    modal.setAttribute("aria-hidden", "false");
-    input.value =
-      typeof AppStorage !== "undefined" && AppStorage.getApiSecret
-        ? AppStorage.getApiSecret()
-        : "";
-    setError("");
-    refreshCloudDiagnostics();
-    input.focus();
-  }
-
-  function closeModal({ immediate = false } = {}) {
-    closeModalBackdrop(modal, { immediate });
-    setError("");
-  }
-
-  if (typeof OverlayManager !== "undefined") {
-    OverlayManager.register("cloudStorage", () => closeModal({ immediate: true }));
-  }
-
-  if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
+  if (cancelBtn) cancelBtn.addEventListener("click", () => closeCloudStorageModal());
 
   const pullBtn = $("cloudStoragePullBtn");
   const pushBtn = $("cloudStoragePushBtn");
@@ -1509,7 +1846,7 @@ function initCloudStorageModal() {
     pullBtn.addEventListener("click", async () => {
       if (typeof AppStorage === "undefined" || !AppStorage.pullFromCloud) return;
       pullBtn.disabled = true;
-      setError("");
+      setCloudStorageModalError("");
       try {
         const result = await AppStorage.pullFromCloud({ force: true });
         refreshUiAfterCloudDataChange();
@@ -1518,9 +1855,9 @@ function initCloudStorageModal() {
         } else {
           showToast("Cloud workspace is already up to date on this device.");
         }
-        refreshCloudDiagnostics();
+        refreshCloudStorageDiagnostics();
       } catch (err) {
-        setError(err && err.message ? err.message : "Could not pull from cloud.");
+        setCloudStorageModalError(err && err.message ? err.message : "Could not pull from cloud.");
       } finally {
         pullBtn.disabled = false;
       }
@@ -1530,21 +1867,18 @@ function initCloudStorageModal() {
     pushBtn.addEventListener("click", async () => {
       if (typeof AppStorage === "undefined" || !AppStorage.forceSyncNow) return;
       pushBtn.disabled = true;
-      setError("");
+      setCloudStorageModalError("");
       try {
         await AppStorage.forceSyncNow();
         showToast("Saved this device to cloud.");
+        refreshCloudStorageDiagnostics();
       } catch (err) {
-        setError(err && err.message ? err.message : "Could not save to cloud.");
+        setCloudStorageModalError(err && err.message ? err.message : "Could not save to cloud.");
       } finally {
         pushBtn.disabled = false;
       }
     });
   }
-  if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) closeModal();
-  });
 
   submitBtn.addEventListener("click", async () => {
     const secret = input.value.trim();
@@ -1555,17 +1889,17 @@ function initCloudStorageModal() {
     const authRequired =
       status && status.cloudConfig && status.cloudConfig.authRequired === true;
     if (!secret && authRequired) {
-      setError("Enter the API key from your Vercel environment (PM_API_SECRET).");
+      setCloudStorageModalError("Enter the API key from your Vercel environment (PM_API_SECRET).");
       return;
     }
     submitBtn.disabled = true;
-    setError("");
+    setCloudStorageModalError("");
     try {
       if (typeof AppStorage === "undefined") {
         throw new Error("Storage module is not loaded.");
       }
       await AppStorage.connectWithApiSecret(secret);
-      closeModal();
+      closeCloudStorageModal();
       resetProfileUnlockSession();
       ensureDefaultProfile();
       applyDefaultActiveProfileSelection();
@@ -1574,7 +1908,7 @@ function initCloudStorageModal() {
       focusLockedProfileUnlockIfNeeded();
       showToast("Connected to cloud storage. Your workspace is now saved in MongoDB.");
     } catch (err) {
-      setError(err && err.message ? err.message : "Could not connect to cloud storage.");
+      setCloudStorageModalError(err && err.message ? err.message : "Could not connect to cloud storage.");
     } finally {
       submitBtn.disabled = false;
     }
@@ -1597,6 +1931,7 @@ async function init() {
   cacheElements();
   syncSiteFooterYear();
   ensureProjectFormFieldTooltips();
+  ensureProjectOptionalDisclosures();
   initProjectModalSectionNav();
   initCurrencyOptions();
   initFilterCountriesOptions();
@@ -1635,6 +1970,7 @@ async function init() {
   initProfileModals();
   initPortfolioWorkspace();
   initCloudStorageModal();
+  initBlockingModalGuards();
   registerAppOverlays();
 
   if (typeof AppStorage !== "undefined") {
@@ -1653,10 +1989,8 @@ async function init() {
     if (boot && boot.apiIssue) {
       showDeploymentIssueBanner(boot);
     }
-    if (boot && boot.needsAuth && $("cloudStorageModal")) {
-      prepareAppOverlay("cloudStorage");
-      $("cloudStorageModal").classList.add("active");
-      $("cloudStorageModal").setAttribute("aria-hidden", "false");
+    if (boot && boot.needsAuth && elements.cloudStorageModal) {
+      openCloudStorageModal();
     }
   } else {
     applyStatePayload(
@@ -1972,7 +2306,9 @@ function cacheElements() {
   elements.projectLinksContainer = $("projectLinksContainer");
   elements.addProjectLinkBtn = $("addProjectLinkBtn");
   elements.projectTasksContainer = $("projectTasksContainer");
+  elements.projectTasksCollapsibleWrap = document.querySelector("[data-project-tasks-collapsible]");
   elements.addProjectTaskBtn = $("addProjectTaskBtn");
+  elements.projectRaciSection = $("projectModalSectionRaci");
 
   elements.filterCountriesSearch = $("filterCountriesSearch");
   elements.filterCountriesList = $("filterCountriesList");
@@ -2051,6 +2387,7 @@ function cacheElements() {
   elements.importFormatModalSubtitle = $("importFormatModalSubtitle");
   elements.importAsJsonBtn = $("importAsJsonBtn");
   elements.importAsCsvBtn = $("importAsCsvBtn");
+  elements.cloudStorageModal = $("cloudStorageModal");
 }
 
 function initCurrencyOptions() {
@@ -2441,33 +2778,14 @@ function attachEventListeners() {
       return;
     }
     updateExportFormatModalNotice();
-    prepareAppOverlay("exportFormatModal");
-    elements.exportFormatModal.setAttribute("aria-hidden", "false");
-    elements.exportFormatModal.classList.add("active");
+    activateBlockingModal(elements.exportFormatModal, "exportFormatModal");
   });
 
   elements.importDataBtn.addEventListener("click", () => {
     if (!elements.importFormatModal) return;
     updateImportFormatModalNotice();
-    prepareAppOverlay("importFormatModal");
-    elements.importFormatModal.setAttribute("aria-hidden", "false");
-    elements.importFormatModal.classList.add("active");
+    activateBlockingModal(elements.importFormatModal, "importFormatModal");
   });
-
-  if (elements.exportFormatModal) {
-    elements.exportFormatModal.addEventListener("click", (e) => {
-      if (e.target === elements.exportFormatModal) {
-        closeExportFormatModal();
-      }
-    });
-  }
-  if (elements.importFormatModal) {
-    elements.importFormatModal.addEventListener("click", (e) => {
-      if (e.target === elements.importFormatModal) {
-        closeImportFormatModal();
-      }
-    });
-  }
 
   initExportUnlockModal();
 
@@ -2507,11 +2825,6 @@ function attachEventListeners() {
     elements.importFileInput.addEventListener("change", handleUnifiedImportChange);
   }
 
-  if (elements.profileViewModal) {
-    elements.profileViewModal.addEventListener("click", (e) => {
-      if (e.target === elements.profileViewModal) closeProfileViewModal();
-    });
-  }
   if (elements.profileViewCloseBtnFooter) {
     elements.profileViewCloseBtnFooter.addEventListener("click", () => closeProfileViewModal());
   }
@@ -2528,12 +2841,48 @@ function attachEventListeners() {
       syncProjectModalFooterMetaDetails();
     });
   }
-
-  if (elements.profileEditModal) {
-    elements.profileEditModal.addEventListener("click", (e) => {
-      if (e.target === elements.profileEditModal) closeProfileEditModal();
+  if (elements.projectForm) {
+    elements.projectForm.addEventListener("input", (event) => {
+      if (event.target.closest(".project-task-row, .project-tasks-readonly, #projectTasksContainer")) {
+        scheduleProjectTasksDisclosureSync();
+      }
+    });
+    elements.projectForm.addEventListener("change", (event) => {
+      if (
+        event.target.matches(".project-task-name-input, .project-task-status-select") ||
+        event.target.closest("#projectTasksContainer")
+      ) {
+        scheduleProjectTasksDisclosureSync();
+      }
+    });
+    elements.projectForm.addEventListener("toggle", (event) => {
+      const target = event.target;
+      if (
+        target instanceof HTMLDetailsElement &&
+        (target.classList.contains("project-optional-field-details") ||
+          target.classList.contains("project-optional-section-details") ||
+          target.classList.contains("project-optional-disclosure") ||
+          target.classList.contains("project-tasks-disclosure"))
+      ) {
+        syncProjectOptionalDisclosureAria(target);
+        if (target.classList.contains("project-tasks-disclosure")) {
+          syncProjectTasksDisclosure();
+          return;
+        }
+        if (target.classList.contains("project-optional-field-details")) {
+          const wrap = target.closest(".project-field-tooltip-wrap");
+          target.classList.toggle("project-optional--has-data", projectOptionalFieldHasData(wrap));
+        } else {
+          const sectionId = target.dataset.optionalSection;
+          target.classList.toggle(
+            "project-optional--has-data",
+            sectionId ? projectOptionalSectionHasData(sectionId) : false
+          );
+        }
+      }
     });
   }
+
   if (elements.profileEditCancelBtn) {
     elements.profileEditCancelBtn.addEventListener("click", () => closeProfileEditModal());
   }
@@ -2563,11 +2912,6 @@ function attachEventListeners() {
           console.error("Inline unlock failed:", err);
           showProfileLockedInlineError("Something went wrong. Please try again.");
         });
-    });
-  }
-  if (elements.profileUnlockModal) {
-    elements.profileUnlockModal.addEventListener("click", (e) => {
-      if (e.target === elements.profileUnlockModal) closeProfileUnlockModal();
     });
   }
   if (elements.profileUnlockCancelBtn) {
@@ -2713,6 +3057,10 @@ function attachEventListeners() {
 
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
+    if (closeTopBlockingModal()) {
+      event.preventDefault();
+      return;
+    }
     if (elements.filterCountriesToggle) {
       const countriesContainer = elements.filterCountriesToggle.closest(".filter-countries");
       if (countriesContainer) {
@@ -2833,6 +3181,7 @@ function attachEventListeners() {
     elements.addProjectTaskBtn.addEventListener("click", () => {
       if (projectModalMode === "view") return;
       addProjectTaskRow();
+      scheduleProjectTasksDisclosureSync();
     });
     elements.projectTasksContainer.addEventListener("click", (event) => {
       if (projectModalMode === "view") return;
@@ -2843,6 +3192,28 @@ function attachEventListeners() {
       elements.projectTasksContainer.removeChild(row);
       if (!elements.projectTasksContainer.querySelector(".project-task-row")) {
         addProjectTaskRow();
+      }
+      scheduleProjectTasksDisclosureSync();
+    });
+  }
+
+  if (elements.projectRaciSection) {
+    elements.projectRaciSection.addEventListener("click", (event) => {
+      if (projectModalMode === "view") return;
+      const addBtn = event.target.closest(".project-raci-add-btn");
+      if (addBtn) {
+        const role = addBtn.getAttribute("data-raci-role");
+        if (role) addProjectRaciRow(role);
+        return;
+      }
+      const removeBtn = event.target.closest(".project-raci-remove-btn");
+      if (!removeBtn) return;
+      const row = removeBtn.closest(".project-raci-row");
+      const container = removeBtn.closest(".project-raci-list");
+      if (!row || !container) return;
+      container.removeChild(row);
+      if (!container.querySelector(".project-raci-row")) {
+        addProjectRaciRow(container.getAttribute("data-raci-role"));
       }
     });
   }
@@ -3078,28 +3449,6 @@ function attachEventListeners() {
     e.preventDefault();
     closeProjectModal();
   });
-
-  elements.projectModal.addEventListener("click", (e) => {
-    if (e.target === elements.projectModal) {
-      closeProjectModal();
-    }
-  });
-
-  if (elements.projectDeleteModal) {
-    elements.projectDeleteModal.addEventListener("click", (e) => {
-      if (e.target === elements.projectDeleteModal) {
-        closeProjectDeleteModal();
-      }
-    });
-  }
-
-  if (elements.projectBulkTransferModal) {
-    elements.projectBulkTransferModal.addEventListener("click", (e) => {
-      if (e.target === elements.projectBulkTransferModal) {
-        closeProjectBulkTransferModal();
-      }
-    });
-  }
 
   elements.projectForm.addEventListener("submit", handleProjectFormSubmit);
 
@@ -4196,7 +4545,7 @@ function showExportUnlockError(message) {
 
 function closeExportUnlockModal({ immediate = false } = {}) {
   if (!elements.exportUnlockModal) return;
-  closeModalBackdrop(elements.exportUnlockModal, { immediate });
+  deactivateBlockingModal(elements.exportUnlockModal, { immediate });
   showExportUnlockError("");
 }
 
@@ -4307,9 +4656,7 @@ function openExportUnlockModal(lockedProfiles) {
   }
   renderExportUnlockProfileList(lockedProfiles);
   showExportUnlockError("");
-  prepareAppOverlay("exportUnlockModal");
-  elements.exportUnlockModal.classList.add("active");
-  elements.exportUnlockModal.setAttribute("aria-hidden", "false");
+  activateBlockingModal(elements.exportUnlockModal, "exportUnlockModal");
   const firstInput = elements.exportUnlockProfileList.querySelector("input[type='password']");
   if (firstInput) setTimeout(() => firstInput.focus(), 80);
 }
@@ -4393,11 +4740,6 @@ function executeExport(format, meta) {
 }
 
 function initExportUnlockModal() {
-  if (elements.exportUnlockModal) {
-    elements.exportUnlockModal.addEventListener("click", (e) => {
-      if (e.target === elements.exportUnlockModal) closeExportUnlockModal();
-    });
-  }
   if (elements.exportUnlockSkipBtn) {
     elements.exportUnlockSkipBtn.addEventListener("click", () => {
       closeExportUnlockModal();
@@ -4480,7 +4822,7 @@ function handleExportData(profilesForExport, exportMeta) {
 
 function closeExportFormatModal({ immediate = false } = {}) {
   if (!elements.exportFormatModal) return;
-  closeModalBackdrop(elements.exportFormatModal, { immediate });
+  deactivateBlockingModal(elements.exportFormatModal, { immediate });
 }
 
 function handleExportCsv(profilesForExport, exportMeta) {
@@ -4640,7 +4982,7 @@ function handleExportCsv(profilesForExport, exportMeta) {
 
 function closeImportFormatModal({ immediate = false } = {}) {
   if (!elements.importFormatModal) return;
-  closeModalBackdrop(elements.importFormatModal, { immediate });
+  deactivateBlockingModal(elements.importFormatModal, { immediate });
 }
 
 function mergeImportedProfiles(importedProfiles) {
@@ -4971,7 +5313,8 @@ function normalizeImportedProject(project) {
     countries: normalizeCountryNames(Array.isArray(project.countries) ? project.countries : []),
     labels: normalizeProjectLabels(project.labels),
     links: normalizeProjectLinks(project.links),
-    tasks: normalizeProjectTasks(project.tasks)
+    tasks: normalizeProjectTasks(project.tasks),
+    raci: normalizeProjectRaci(project.raci)
   };
   normalized.riceScore = calculateRiceScore(normalized);
   return normalized;
@@ -5490,6 +5833,526 @@ function getProjectTaskStatusOptions() {
     : ["Not Started", "In Progress", "On Hold", "Done", "Cancelled"];
 }
 
+const PROJECT_TASK_PROGRESS_STATUSES = [
+  "Not Started",
+  "In Progress",
+  "On Hold",
+  "Done",
+  "Cancelled"
+];
+
+function getProjectTaskStatusSlug(status) {
+  return String(status || "")
+    .trim()
+    .toLowerCase()
+    .replace(/'/g, "")
+    .replace(/\s+/g, "-");
+}
+
+function getProjectTasksSnapshotForProgress() {
+  const container = elements.projectTasksContainer;
+  if (!container) return [];
+
+  const cards = container.querySelectorAll(".project-task-card");
+  if (cards.length) {
+    return Array.from(cards)
+      .map((card) => ({
+        name: (card.querySelector(".project-task-card__name")?.textContent || "").trim(),
+        status: card.querySelector(".project-task-card__status")?.dataset.status || "Not Started"
+      }))
+      .filter((task) => task.name);
+  }
+
+  const rows = container.querySelectorAll(".project-task-row");
+  if (rows.length) {
+    const tasks = [];
+    rows.forEach((row) => {
+      const name = (row.querySelector(".project-task-name-input")?.value || "").trim();
+      const statusRaw = row.querySelector(".project-task-status-select")?.value || "";
+      if (!name) return;
+      tasks.push({
+        name,
+        status: normalizeProjectTaskStatus(statusRaw)
+      });
+    });
+    return tasks;
+  }
+
+  return [];
+}
+
+function shouldShowProjectTasksProgress(detailsEl, breakdown) {
+  if (!detailsEl || !breakdown.total) return false;
+  if (projectModalMode === "view") return !detailsEl.open;
+  return true;
+}
+
+function computeProjectTaskStatusBreakdown(tasks) {
+  const normalized = normalizeProjectTasks(Array.isArray(tasks) ? tasks : []);
+  const total = normalized.length;
+  const counts = Object.fromEntries(PROJECT_TASK_PROGRESS_STATUSES.map((status) => [status, 0]));
+
+  normalized.forEach((task) => {
+    const status = normalizeProjectTaskStatus(task.status);
+    if (counts[status] != null) counts[status] += 1;
+  });
+
+  const segments = PROJECT_TASK_PROGRESS_STATUSES.map((status) => ({
+    status,
+    count: counts[status] || 0
+  })).filter((segment) => segment.count > 0);
+
+  if (!total) {
+    return { total: 0, segments: [] };
+  }
+
+  const withExact = segments.map((segment) => ({
+    ...segment,
+    exact: (segment.count / total) * 100
+  }));
+  const withPct = withExact.map((segment) => ({
+    ...segment,
+    pct: Math.floor(segment.exact)
+  }));
+  let remainder = 100 - withPct.reduce((sum, segment) => sum + segment.pct, 0);
+  const byFraction = withExact
+    .map((segment, index) => ({
+      index,
+      fraction: segment.exact - withPct[index].pct
+    }))
+    .sort((a, b) => b.fraction - a.fraction);
+  for (let i = 0; remainder > 0 && i < byFraction.length; i += 1) {
+    withPct[byFraction[i].index].pct += 1;
+    remainder -= 1;
+  }
+
+  return { total, segments: withPct };
+}
+
+function buildProjectTaskProgressSummaryLabel(breakdown) {
+  if (!breakdown.total) return "No tasks yet";
+  const parts = breakdown.segments.map((segment) => `${segment.status} ${segment.pct}%`);
+  return `Task progress: ${parts.join(", ")}`;
+}
+
+function formatProjectTaskProgressSegmentCount(count) {
+  const value = Number(count) || 0;
+  return value === 1 ? "1 task" : `${value} tasks`;
+}
+
+function buildProjectTaskProgressSegmentTooltip(segment) {
+  const taskLabel = formatProjectTaskProgressSegmentCount(segment.count);
+  return {
+    title: segment.status,
+    body: `${taskLabel} · ${segment.pct}% of total`
+  };
+}
+
+function appendProjectTaskProgressSegmentTooltip(segmentEl, segment) {
+  const tooltipCopy = buildProjectTaskProgressSegmentTooltip(segment);
+  const tooltipEl = document.createElement("span");
+  tooltipEl.className = "project-tasks-progress-segment-tooltip";
+  tooltipEl.setAttribute("role", "tooltip");
+
+  const titleEl = document.createElement("span");
+  titleEl.className = "project-tasks-progress-segment-tooltip-title";
+  titleEl.textContent = tooltipCopy.title;
+
+  const bodyEl = document.createElement("span");
+  bodyEl.className = "project-tasks-progress-segment-tooltip-body";
+  bodyEl.textContent = tooltipCopy.body;
+
+  tooltipEl.appendChild(titleEl);
+  tooltipEl.appendChild(bodyEl);
+  segmentEl.appendChild(tooltipEl);
+
+  const ariaLabel = `${tooltipCopy.title}: ${formatProjectTaskProgressSegmentCount(segment.count)}`;
+  segmentEl.setAttribute("aria-label", ariaLabel);
+  segmentEl.setAttribute("tabindex", "0");
+}
+
+function renderProjectTaskProgressSummary(detailsEl, breakdown) {
+  if (!detailsEl) return;
+  const progressWrap = detailsEl.querySelector(".project-tasks-progress");
+  const barEl = detailsEl.querySelector(".project-tasks-progress-bar");
+  const legendEl = detailsEl.querySelector(".project-tasks-progress-legend");
+  const countEl = detailsEl.querySelector(".project-tasks-summary-count");
+  if (!progressWrap || !barEl || !legendEl) return;
+
+  const showProgress = shouldShowProjectTasksProgress(detailsEl, breakdown);
+  progressWrap.hidden = !showProgress;
+  progressWrap.setAttribute("aria-hidden", showProgress ? "false" : "true");
+  detailsEl.classList.toggle("project-tasks-disclosure--progress-visible", showProgress);
+
+  if (countEl) {
+    countEl.textContent = breakdown.total ? `${breakdown.total} task${breakdown.total === 1 ? "" : "s"}` : "";
+    countEl.hidden = !breakdown.total;
+  }
+
+  barEl.innerHTML = "";
+  legendEl.innerHTML = "";
+
+  if (!showProgress) {
+    barEl.removeAttribute("aria-label");
+    return;
+  }
+
+  barEl.setAttribute("aria-label", buildProjectTaskProgressSummaryLabel(breakdown));
+
+  legendEl.style.gridTemplateColumns = `repeat(${breakdown.segments.length}, minmax(0, 1fr))`;
+
+  breakdown.segments.forEach((segment) => {
+    const segmentEl = document.createElement("span");
+    segmentEl.className = "project-tasks-progress-segment";
+    segmentEl.dataset.status = segment.status;
+    segmentEl.style.flexBasis = `${segment.pct}%`;
+    segmentEl.style.width = `${segment.pct}%`;
+    appendProjectTaskProgressSegmentTooltip(segmentEl, segment);
+    barEl.appendChild(segmentEl);
+
+    const legendItem = document.createElement("span");
+    legendItem.className = "project-tasks-progress-legend-item";
+    legendItem.dataset.status = segment.status;
+    legendItem.innerHTML = `<span class="project-tasks-progress-legend-dot" aria-hidden="true"></span><span class="project-tasks-progress-legend-copy">${segment.status} <strong>${segment.pct}%</strong></span>`;
+    legendEl.appendChild(legendItem);
+  });
+}
+
+function syncProjectTasksDisclosureAria(detailsEl) {
+  if (!detailsEl) return;
+  const summary = detailsEl.querySelector("summary");
+  if (!summary) return;
+  const titleEl = summary.querySelector(".project-tasks-summary-title");
+  const name = titleEl ? titleEl.textContent.trim() : "Tasks";
+  summary.setAttribute("aria-expanded", detailsEl.open ? "true" : "false");
+  summary.setAttribute("aria-label", detailsEl.open ? `Collapse ${name}` : `Expand ${name}`);
+}
+
+function syncProjectTasksDisclosure({ resetCollapsed = false } = {}) {
+  const wrap =
+    document.querySelector("[data-project-tasks-collapsible]") || elements.projectTasksCollapsibleWrap;
+  if (!wrap) return;
+  const detailsEl = wrap.querySelector(".project-tasks-disclosure");
+  if (!detailsEl) return;
+
+  if (resetCollapsed) {
+    detailsEl.open = false;
+  }
+
+  const breakdown = computeProjectTaskStatusBreakdown(getProjectTasksSnapshotForProgress());
+  detailsEl.classList.toggle("project-tasks-disclosure--has-tasks", breakdown.total > 0);
+  renderProjectTaskProgressSummary(detailsEl, breakdown);
+  syncProjectTasksDisclosureAria(detailsEl);
+}
+
+function scheduleProjectTasksDisclosureSync() {
+  if (projectTasksDisclosureSyncFrame != null) {
+    cancelAnimationFrame(projectTasksDisclosureSyncFrame);
+  }
+  projectTasksDisclosureSyncFrame = requestAnimationFrame(() => {
+    projectTasksDisclosureSyncFrame = null;
+    syncProjectTasksDisclosure();
+  });
+}
+
+let projectTasksDisclosureSyncFrame = null;
+
+function wrapProjectTasksField(wrap) {
+  if (!wrap || wrap.dataset.tasksDisclosureWrapped === "1") return;
+  if (!wrap.hasAttribute("data-project-tasks-collapsible")) return;
+
+  const labelEl = wrap.querySelector(":scope > label") || wrap.querySelector("label");
+  if (!labelEl) return;
+
+  const titleText = getOptionalFieldSummaryText(labelEl) || "Tasks";
+  const hintEl = wrap.querySelector(":scope > .project-dynamic-field-hint");
+  const subtitle = hintEl ? hintEl.textContent.trim() : "";
+
+  const details = document.createElement("details");
+  details.className = "project-tasks-disclosure project-optional-disclosure";
+  details.open = false;
+
+  const summary = document.createElement("summary");
+  summary.className = "project-tasks-disclosure-summary project-optional-field-summary";
+
+  const row = document.createElement("div");
+  row.className = "project-optional-summary-row project-tasks-summary-row";
+
+  const lead = document.createElement("span");
+  lead.className = "project-optional-summary-lead project-tasks-summary-lead";
+  lead.setAttribute("aria-hidden", "true");
+
+  const copy = document.createElement("div");
+  copy.className = "project-optional-summary-copy";
+
+  const titleSpan = document.createElement("span");
+  titleSpan.className = "project-optional-field-summary-title project-tasks-summary-title";
+  titleSpan.textContent = titleText;
+  copy.appendChild(titleSpan);
+
+  if (subtitle) {
+    const subtitleSpan = document.createElement("span");
+    subtitleSpan.className = "project-optional-field-summary-subtitle project-tasks-summary-subtitle";
+    subtitleSpan.textContent = subtitle.length > 72 ? `${subtitle.slice(0, 69)}…` : subtitle;
+    copy.appendChild(subtitleSpan);
+  }
+
+  const countBadge = document.createElement("span");
+  countBadge.className = "project-tasks-summary-count";
+  countBadge.hidden = true;
+
+  const chevron = document.createElement("span");
+  chevron.className = "project-optional-summary-chevron";
+  chevron.setAttribute("aria-hidden", "true");
+
+  row.appendChild(lead);
+  row.appendChild(copy);
+  row.appendChild(countBadge);
+  row.appendChild(chevron);
+
+  const progressWrap = document.createElement("div");
+  progressWrap.className = "project-tasks-progress";
+  progressWrap.hidden = true;
+  progressWrap.setAttribute("aria-hidden", "true");
+
+  const barEl = document.createElement("div");
+  barEl.className = "project-tasks-progress-bar";
+  barEl.setAttribute("role", "img");
+
+  const legendEl = document.createElement("div");
+  legendEl.className = "project-tasks-progress-legend";
+
+  progressWrap.appendChild(barEl);
+  progressWrap.appendChild(legendEl);
+
+  summary.appendChild(row);
+  summary.appendChild(progressWrap);
+
+  const body = document.createElement("div");
+  body.className = "project-tasks-disclosure-body project-optional-field-body";
+
+  Array.from(wrap.childNodes).forEach((child) => {
+    if (child === labelEl) return;
+    body.appendChild(child);
+  });
+
+  labelEl.remove();
+  details.appendChild(summary);
+  details.appendChild(body);
+  wrap.appendChild(details);
+  wrap.dataset.tasksDisclosureWrapped = "1";
+}
+
+function ensureProjectTasksDisclosure() {
+  const wrap = document.querySelector("#projectForm [data-project-tasks-collapsible]");
+  if (!wrap) return;
+  try {
+    wrapProjectTasksField(wrap);
+    syncProjectTasksDisclosure({ resetCollapsed: true });
+  } catch (err) {
+    console.error("Project tasks disclosure failed to initialize:", err);
+  }
+}
+
+const RACI_ROLES = ["responsible", "accountable", "consulted", "informed"];
+const RACI_DOMAIN_OPTIONS = ["Business", "Tech"];
+
+function getEmptyProjectRaci() {
+  return {
+    responsible: [],
+    accountable: [],
+    consulted: [],
+    informed: []
+  };
+}
+
+function normalizeRaciDomain(domain) {
+  const value = String(domain || "").trim();
+  return RACI_DOMAIN_OPTIONS.includes(value) ? value : "Business";
+}
+
+function normalizeRaciEntries(entries) {
+  if (!Array.isArray(entries)) return [];
+  const out = [];
+  entries.forEach((entry) => {
+    if (!entry || typeof entry !== "object") return;
+    const name = String(entry.name != null ? entry.name : entry.person || entry.label || "").trim();
+    if (!name) return;
+    out.push({
+      name,
+      domain: normalizeRaciDomain(entry.domain || entry.type || entry.side)
+    });
+  });
+  return out;
+}
+
+function normalizeProjectRaci(raci) {
+  const source = raci && typeof raci === "object" ? raci : {};
+  return {
+    responsible: normalizeRaciEntries(source.responsible),
+    accountable: normalizeRaciEntries(source.accountable),
+    consulted: normalizeRaciEntries(source.consulted),
+    informed: normalizeRaciEntries(source.informed)
+  };
+}
+
+function getProjectRaciContainer(role) {
+  if (!elements.projectRaciSection) return null;
+  return elements.projectRaciSection.querySelector(`.project-raci-list[data-raci-role="${role}"]`);
+}
+
+function getPersonDisplayInitials(name) {
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!parts.length) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function buildProjectRaciDomainSelect(selectedDomain) {
+  const select = document.createElement("select");
+  select.className = "project-raci-domain-select";
+  select.setAttribute("aria-label", "Business or Tech");
+  RACI_DOMAIN_OPTIONS.forEach((domain) => {
+    const option = document.createElement("option");
+    option.value = domain;
+    option.textContent = domain;
+    select.appendChild(option);
+  });
+  select.value = normalizeRaciDomain(selectedDomain);
+  return select;
+}
+
+function ensureProjectRaciRowHeader(container) {
+  if (!container) return;
+  if (container.querySelector(".project-raci-row-header")) return;
+  const header = document.createElement("div");
+  header.className = "project-raci-row-header";
+  header.setAttribute("aria-hidden", "true");
+  const colName = document.createElement("span");
+  colName.textContent = "Name";
+  const colDomain = document.createElement("span");
+  colDomain.textContent = "Domain";
+  const colAction = document.createElement("span");
+  header.appendChild(colName);
+  header.appendChild(colDomain);
+  header.appendChild(colAction);
+  container.appendChild(header);
+}
+
+function renderProjectRaciRoleControls(role, entries, { readonly = false } = {}) {
+  const container = getProjectRaciContainer(role);
+  if (!container) return;
+  container.innerHTML = "";
+  const normalized = normalizeRaciEntries(entries);
+  if (readonly) {
+    if (!normalized.length) {
+      const hint = document.createElement("p");
+      hint.className = "project-field-empty-hint";
+      hint.textContent = "No entries added";
+      container.appendChild(hint);
+      return;
+    }
+    const wrap = document.createElement("div");
+    wrap.className = "project-raci-readonly";
+    wrap.setAttribute("role", "list");
+    normalized.forEach((entry) => {
+      const row = document.createElement("article");
+      row.className = "project-raci-card";
+      row.setAttribute("role", "listitem");
+
+      const avatar = document.createElement("span");
+      avatar.className = "project-raci-card__avatar";
+      avatar.setAttribute("aria-hidden", "true");
+      avatar.textContent = getPersonDisplayInitials(entry.name);
+
+      const body = document.createElement("div");
+      body.className = "project-raci-card__body";
+
+      const nameEl = document.createElement("span");
+      nameEl.className = "project-raci-card__name";
+      nameEl.textContent = entry.name;
+
+      const domainEl = document.createElement("span");
+      domainEl.className = "project-raci-card__domain";
+      domainEl.dataset.domain = entry.domain;
+      domainEl.textContent = entry.domain;
+
+      body.appendChild(nameEl);
+      row.appendChild(avatar);
+      row.appendChild(body);
+      row.appendChild(domainEl);
+      wrap.appendChild(row);
+    });
+    container.appendChild(wrap);
+    return;
+  }
+  ensureProjectRaciRowHeader(container);
+  const list = normalized.length ? normalized : [{ name: "", domain: "Business" }];
+  list.forEach((entry) => addProjectRaciRow(role, entry));
+}
+
+function renderProjectRaciControls(raci, { readonly = false } = {}) {
+  const normalized = normalizeProjectRaci(raci);
+  RACI_ROLES.forEach((role) => {
+    renderProjectRaciRoleControls(role, normalized[role], { readonly });
+  });
+}
+
+function addProjectRaciRow(role, entry) {
+  const container = getProjectRaciContainer(role);
+  if (!container) return;
+  ensureProjectRaciRowHeader(container);
+  const row = document.createElement("div");
+  row.className = "project-raci-row";
+
+  const fields = document.createElement("div");
+  fields.className = "project-raci-row__fields";
+
+  const nameInput = document.createElement("input");
+  nameInput.type = "text";
+  nameInput.className = "project-raci-name-input";
+  nameInput.placeholder = "e.g. Jane Doe, Platform team";
+  nameInput.setAttribute("aria-label", "RACI entry name");
+  nameInput.value = (entry && entry.name) || "";
+
+  const domainSelect = buildProjectRaciDomainSelect(entry && entry.domain);
+
+  const removeBtn = document.createElement("button");
+  removeBtn.type = "button";
+  removeBtn.className = "project-raci-remove-btn";
+  removeBtn.textContent = "×";
+  removeBtn.setAttribute("aria-label", "Remove entry");
+
+  fields.appendChild(nameInput);
+  fields.appendChild(domainSelect);
+  row.appendChild(fields);
+  row.appendChild(removeBtn);
+  container.appendChild(row);
+}
+
+function getProjectRaciFromControls() {
+  const raci = getEmptyProjectRaci();
+  RACI_ROLES.forEach((role) => {
+    const container = getProjectRaciContainer(role);
+    if (!container) return;
+    const rows = container.querySelectorAll(".project-raci-row");
+    rows.forEach((row) => {
+      const name = (row.querySelector(".project-raci-name-input")?.value || "").trim();
+      const domainRaw = row.querySelector(".project-raci-domain-select")?.value || "";
+      if (!name) return;
+      raci[role].push({
+        name,
+        domain: normalizeRaciDomain(domainRaw)
+      });
+    });
+    raci[role] = normalizeRaciEntries(raci[role]);
+  });
+  return normalizeProjectRaci(raci);
+}
+
 function normalizeProjectTaskStatus(status) {
   const value = String(status || "").trim();
   const options = getProjectTaskStatusOptions();
@@ -5556,29 +6419,43 @@ function renderProjectTasksControls(tasks, { readonly = false } = {}) {
     }
     const wrap = document.createElement("div");
     wrap.className = "project-tasks-readonly";
+    wrap.setAttribute("role", "list");
     normalized.forEach((task) => {
-      const row = document.createElement("div");
-      row.className = "project-task-readonly-row";
+      const row = document.createElement("article");
+      row.className = "project-task-card";
+      row.setAttribute("role", "listitem");
+
+      const main = document.createElement("div");
+      main.className = "project-task-card__main";
+
+      const statusDot = document.createElement("span");
+      statusDot.className = "project-task-card__status-dot";
+      statusDot.dataset.status = task.status;
+      statusDot.setAttribute("aria-hidden", "true");
 
       const nameEl = document.createElement("span");
-      nameEl.className = "project-task-readonly-name";
+      nameEl.className = "project-task-card__name";
       nameEl.textContent = task.name;
 
       const statusEl = document.createElement("span");
-      statusEl.className = "project-task-readonly-status";
+      statusEl.className = "project-task-card__status";
       statusEl.dataset.status = task.status;
       statusEl.textContent = task.status;
 
-      row.appendChild(nameEl);
+      main.appendChild(statusDot);
+      main.appendChild(nameEl);
+      row.appendChild(main);
       row.appendChild(statusEl);
       wrap.appendChild(row);
     });
     elements.projectTasksContainer.appendChild(wrap);
+    syncProjectTasksDisclosure();
     return;
   }
   ensureProjectTaskRowHeader();
   const list = normalized.length ? normalized : [{ name: "", status: "Not Started" }];
   list.forEach((task) => addProjectTaskRow(task));
+  syncProjectTasksDisclosure();
 }
 
 function addProjectTaskRow(task) {
@@ -5610,6 +6487,7 @@ function addProjectTaskRow(task) {
   row.appendChild(fields);
   row.appendChild(removeBtn);
   elements.projectTasksContainer.appendChild(row);
+  scheduleProjectTasksDisclosureSync();
 }
 
 function getProjectTasksFromControls() {
@@ -5628,21 +6506,25 @@ function getProjectTasksFromControls() {
   return normalizeProjectTasks(tasks);
 }
 
-/** Preserves password hashes and board order when loading from storage or import. */
+/** Preserves password hashes, drag order maps, and forward-compatible profile fields on load. */
 function normalizeLoadedProfile(raw) {
   if (!raw || typeof raw !== "object") return null;
   const projects = Array.isArray(raw.projects)
     ? raw.projects.map(normalizeLoadedProject).filter(Boolean)
     : [];
   const boardOrder = raw.boardOrder && typeof raw.boardOrder === "object" ? raw.boardOrder : {};
-  const profile = {
+  const moscowOrder = raw.moscowOrder && typeof raw.moscowOrder === "object" ? raw.moscowOrder : {};
+  const profile = Object.assign({}, raw, {
     id: typeof raw.id === "string" && raw.id.trim() ? raw.id.trim() : generateId("profile"),
     name: String(raw.name || "Unnamed profile"),
     team: String(raw.team || ""),
     createdAt: raw.createdAt || new Date().toISOString(),
     projects,
-    boardOrder
-  };
+    boardOrder,
+    moscowOrder
+  });
+  delete profile.passwordSalt;
+  delete profile.passwordHash;
   const salt = raw.passwordSalt != null ? String(raw.passwordSalt).trim() : "";
   const hash = raw.passwordHash != null ? String(raw.passwordHash).trim() : "";
   if (salt && hash) {
@@ -5657,7 +6539,8 @@ function serializeProjectForStorage(project) {
   return Object.assign({}, project, {
     labels: normalizeProjectLabels(project.labels),
     links: normalizeProjectLinks(project.links),
-    tasks: normalizeProjectTasks(project.tasks)
+    tasks: normalizeProjectTasks(project.tasks),
+    raci: normalizeProjectRaci(project.raci)
   });
 }
 
@@ -5670,24 +6553,88 @@ function serializeProfileForStorage(profile) {
   return serialized;
 }
 
+/** Reads one workspace UI field for persistence (see WORKSPACE_PERSISTED_STATE_KEYS). */
+function readPersistedWorkspaceField(key) {
+  if (key === "scrumBoardVisibleStatuses") {
+    return getScrumBoardVisibleStatuses();
+  }
+  if (key === "superAdminMode") {
+    return !!state.superAdminMode;
+  }
+  if (Object.prototype.hasOwnProperty.call(state, key)) {
+    return state[key];
+  }
+  return undefined;
+}
+
 function serializeStatePayload() {
-  return {
-    profiles: state.profiles.map(serializeProfileForStorage),
-    activeProfileId: state.activeProfileId,
-    sortField: state.sortField,
-    sortDirection: state.sortDirection,
-    projectsView: state.projectsView,
-    tableSortByRice: state.tableSortByRice,
-    tableGroupBy: state.tableGroupBy,
-    scrumBoardSortByRice: state.scrumBoardSortByRice,
-    scrumBoardVisibleStatuses: getScrumBoardVisibleStatuses(),
-    moscowSortByRice: state.moscowSortByRice,
-    mapMetric: state.mapMetric,
-    exchangeRatesToEUR: state.exchangeRatesToEUR,
-    exchangeRatesDate: state.exchangeRatesDate,
-    exchangeRatesLastSource: state.exchangeRatesLastSource,
-    superAdminMode: !!state.superAdminMode
+  const payload = {
+    profiles: state.profiles.map(serializeProfileForStorage)
   };
+  const keys =
+    typeof WORKSPACE_PERSISTED_STATE_KEYS !== "undefined" && Array.isArray(WORKSPACE_PERSISTED_STATE_KEYS)
+      ? WORKSPACE_PERSISTED_STATE_KEYS
+      : [];
+  keys.forEach((key) => {
+    const value = readPersistedWorkspaceField(key);
+    if (value !== undefined) {
+      payload[key] = value;
+    }
+  });
+  return payload;
+}
+
+/** Restores workspace UI fields from localStorage or MongoDB payload. */
+function applyPersistedWorkspaceUiState(parsed) {
+  if (!parsed || Array.isArray(parsed)) return;
+
+  if (typeof parsed.sortField === "string" && parsed.sortField.trim()) {
+    state.sortField = parsed.sortField;
+  }
+  if (parsed.sortDirection === "asc" || parsed.sortDirection === "desc") {
+    state.sortDirection = parsed.sortDirection;
+  }
+  if (
+    parsed.projectsView === "table" ||
+    parsed.projectsView === "board" ||
+    parsed.projectsView === "moscow" ||
+    parsed.projectsView === "map"
+  ) {
+    state.projectsView = parsed.projectsView;
+  }
+  if (typeof parsed.tableSortByRice === "boolean") {
+    state.tableSortByRice = parsed.tableSortByRice;
+  }
+  if (
+    typeof TABLE_GROUP_BY_OPTIONS !== "undefined" &&
+    TABLE_GROUP_BY_OPTIONS.some((opt) => opt.id === parsed.tableGroupBy)
+  ) {
+    state.tableGroupBy = parsed.tableGroupBy;
+  }
+  if (typeof parsed.scrumBoardSortByRice === "boolean") {
+    state.scrumBoardSortByRice = parsed.scrumBoardSortByRice;
+  }
+  if (Array.isArray(parsed.scrumBoardVisibleStatuses)) {
+    state.scrumBoardVisibleStatuses = normalizeScrumBoardVisibleStatuses(parsed.scrumBoardVisibleStatuses);
+  }
+  if (typeof parsed.moscowSortByRice === "boolean") {
+    state.moscowSortByRice = parsed.moscowSortByRice;
+  }
+  if (MAP_METRIC_OPTIONS.some((opt) => opt.id === parsed.mapMetric)) {
+    state.mapMetric = parsed.mapMetric;
+  }
+  if (parsed.exchangeRatesToEUR && typeof parsed.exchangeRatesToEUR === "object") {
+    state.exchangeRatesToEUR = parsed.exchangeRatesToEUR;
+  }
+  if (parsed.exchangeRatesDate) {
+    state.exchangeRatesDate = parsed.exchangeRatesDate;
+  }
+  if (parsed.exchangeRatesLastSource === "manual" || parsed.exchangeRatesLastSource === "auto") {
+    state.exchangeRatesLastSource = parsed.exchangeRatesLastSource;
+  }
+  if (typeof parsed.superAdminMode === "boolean") {
+    state.superAdminMode = parsed.superAdminMode;
+  }
 }
 
 function findProfileIdByDisplayName(name) {
@@ -5737,44 +6684,11 @@ function applyStatePayload(parsed) {
       : resolveFallbackActiveProfileId();
     state.activeProfileId = validActiveId;
 
-    state.sortField = !Array.isArray(parsed) && parsed.sortField ? parsed.sortField : "createdAt";
-    state.sortDirection = !Array.isArray(parsed) && parsed.sortDirection ? parsed.sortDirection : "desc";
-    if (!Array.isArray(parsed) && (parsed.projectsView === "table" || parsed.projectsView === "board" || parsed.projectsView === "moscow" || parsed.projectsView === "map")) {
-      state.projectsView = parsed.projectsView;
-    }
-    if (!Array.isArray(parsed) && typeof parsed.tableSortByRice === "boolean") {
-      state.tableSortByRice = parsed.tableSortByRice;
-    }
-    if (
-      !Array.isArray(parsed) &&
-      typeof TABLE_GROUP_BY_OPTIONS !== "undefined" &&
-      TABLE_GROUP_BY_OPTIONS.some((opt) => opt.id === parsed.tableGroupBy)
-    ) {
-      state.tableGroupBy = parsed.tableGroupBy;
-    }
-    if (!Array.isArray(parsed) && typeof parsed.scrumBoardSortByRice === "boolean") {
-      state.scrumBoardSortByRice = parsed.scrumBoardSortByRice;
-    }
-    if (!Array.isArray(parsed) && Array.isArray(parsed.scrumBoardVisibleStatuses)) {
-      state.scrumBoardVisibleStatuses = normalizeScrumBoardVisibleStatuses(parsed.scrumBoardVisibleStatuses);
-    }
-    if (!Array.isArray(parsed) && typeof parsed.moscowSortByRice === "boolean") {
-      state.moscowSortByRice = parsed.moscowSortByRice;
-    }
-    if (!Array.isArray(parsed) && MAP_METRIC_OPTIONS.some((opt) => opt.id === parsed.mapMetric)) {
-      state.mapMetric = parsed.mapMetric;
-    }
-    if (!Array.isArray(parsed) && parsed.exchangeRatesToEUR && typeof parsed.exchangeRatesToEUR === "object") {
-      state.exchangeRatesToEUR = parsed.exchangeRatesToEUR;
-    }
-    if (!Array.isArray(parsed) && parsed.exchangeRatesDate) {
-      state.exchangeRatesDate = parsed.exchangeRatesDate;
-    }
-    if (!Array.isArray(parsed) && (parsed.exchangeRatesLastSource === "manual" || parsed.exchangeRatesLastSource === "auto")) {
-      state.exchangeRatesLastSource = parsed.exchangeRatesLastSource;
-    }
-    if (!Array.isArray(parsed) && typeof parsed.superAdminMode === "boolean") {
-      state.superAdminMode = parsed.superAdminMode;
+    if (!Array.isArray(parsed)) {
+      applyPersistedWorkspaceUiState(parsed);
+    } else {
+      state.sortField = "createdAt";
+      state.sortDirection = "desc";
     }
     const activeAfterLoad = state.profiles.find((p) => p.id === state.activeProfileId);
     if (!isSuperAdminProfile(activeAfterLoad)) {
@@ -5810,7 +6724,7 @@ function normalizeLoadedProject(project) {
     financialImpactInputs,
     Number.isFinite(toNumberOrNull(project.financialImpactValue)) ? Number(project.financialImpactValue) : null
   );
-  return {
+  const normalized = {
     id,
     createdAt,
     modifiedAt,
@@ -5836,8 +6750,10 @@ function normalizeLoadedProject(project) {
     countries: normalizeCountryNames(Array.isArray(project.countries) ? project.countries : []),
     labels: normalizeProjectLabels(project.labels),
     links: normalizeProjectLinks(project.links),
-    tasks: normalizeProjectTasks(project.tasks)
+    tasks: normalizeProjectTasks(project.tasks),
+    raci: normalizeProjectRaci(project.raci)
   };
+  return Object.assign({}, project, normalized);
 }
 
 function saveState(options) {
@@ -6599,6 +7515,175 @@ function markOverlayCloseImmediate(el) {
   });
 }
 
+const BLOCKING_MODAL_OVERLAY_IDS = new Set([
+  "projectModal",
+  "profileViewModal",
+  "profileEditModal",
+  "profileDeleteModal",
+  "profileUnlockModal",
+  "projectDeleteModal",
+  "projectBulkTransferModal",
+  "exportFormatModal",
+  "importFormatModal",
+  "exportUnlockModal",
+  "cloudStorage"
+]);
+
+function getBlockingModalCandidates() {
+  return [
+    ["projectModal", elements.projectModal],
+    ["profileViewModal", elements.profileViewModal],
+    ["profileEditModal", elements.profileEditModal],
+    ["profileDeleteModal", elements.profileDeleteModal],
+    ["profileUnlockModal", elements.profileUnlockModal],
+    ["projectDeleteModal", elements.projectDeleteModal],
+    ["projectBulkTransferModal", elements.projectBulkTransferModal],
+    ["exportFormatModal", elements.exportFormatModal],
+    ["importFormatModal", elements.importFormatModal],
+    ["exportUnlockModal", elements.exportUnlockModal],
+    ["cloudStorage", elements.cloudStorageModal]
+  ];
+}
+
+let appScrollLockDepth = 0;
+let appScrollLockY = 0;
+
+function lockAppScroll() {
+  appScrollLockDepth += 1;
+  if (appScrollLockDepth !== 1) return;
+  appScrollLockY = window.scrollY || document.documentElement.scrollTop || 0;
+  document.documentElement.classList.add("app-scroll-lock");
+  document.body.classList.add("app-scroll-lock");
+  document.body.style.position = "fixed";
+  document.body.style.top = `-${appScrollLockY}px`;
+  document.body.style.left = "0";
+  document.body.style.right = "0";
+  document.body.style.width = "100%";
+}
+
+function unlockAppScroll() {
+  if (appScrollLockDepth <= 0) return;
+  appScrollLockDepth -= 1;
+  if (appScrollLockDepth !== 0) return;
+  document.documentElement.classList.remove("app-scroll-lock");
+  document.body.classList.remove("app-scroll-lock");
+  document.body.style.position = "";
+  document.body.style.top = "";
+  document.body.style.left = "";
+  document.body.style.right = "";
+  document.body.style.width = "";
+  window.scrollTo(0, appScrollLockY);
+}
+
+function getActiveBlockingModalOverlayId() {
+  let activeId = null;
+  for (const [id, el] of getBlockingModalCandidates()) {
+    if (el && el.classList.contains("active")) activeId = id;
+  }
+  return activeId;
+}
+
+function isBlockingModalOpen(el) {
+  return !!(el && el.classList.contains("active"));
+}
+
+function isProjectModalOpen() {
+  return isBlockingModalOpen(elements.projectModal);
+}
+
+function syncBlockingModalOpenClass() {
+  const hasOpen = getBlockingModalCandidates().some(([, el]) => isBlockingModalOpen(el));
+  document.documentElement.classList.toggle("blocking-modal-open", hasOpen);
+}
+
+function activateBlockingModal(el, overlayId) {
+  if (!el || !overlayId) return;
+  prepareAppOverlay(overlayId);
+  lockAppScroll();
+  syncBlockingModalOpenClass();
+  el.setAttribute("aria-hidden", "false");
+  el.classList.add("active");
+}
+
+function deactivateBlockingModal(el, { immediate = false } = {}) {
+  if (!el) return;
+  closeModalBackdrop(el, { immediate });
+  unlockAppScroll();
+  syncBlockingModalOpenClass();
+}
+
+function closeTopBlockingModal() {
+  const id = getActiveBlockingModalOverlayId();
+  if (!id) return false;
+  switch (id) {
+    case "projectModal":
+      closeProjectModal();
+      break;
+    case "profileViewModal":
+      closeProfileViewModal();
+      break;
+    case "profileEditModal":
+      closeProfileEditModal();
+      break;
+    case "profileDeleteModal":
+      closeProfileDeleteModal();
+      break;
+    case "profileUnlockModal":
+      closeProfileUnlockModal();
+      break;
+    case "projectDeleteModal":
+      closeProjectDeleteModal();
+      break;
+    case "projectBulkTransferModal":
+      closeProjectBulkTransferModal();
+      break;
+    case "exportFormatModal":
+      closeExportFormatModal();
+      break;
+    case "importFormatModal":
+      closeImportFormatModal();
+      break;
+    case "exportUnlockModal":
+      closeExportUnlockModal();
+      break;
+    case "cloudStorage":
+      closeCloudStorageModal();
+      break;
+    default:
+      return false;
+  }
+  return true;
+}
+
+function initBlockingModalGuards() {
+  document.querySelectorAll(".modal-backdrop").forEach((modal) => {
+    if (modal.dataset.interactionGuardsReady === "1") return;
+    modal.dataset.interactionGuardsReady = "1";
+
+    modal.addEventListener(
+      "wheel",
+      (event) => {
+        if (!isBlockingModalOpen(modal)) return;
+        const panel = modal.querySelector(".modal-panel");
+        if (panel && panel.contains(event.target)) return;
+        event.preventDefault();
+      },
+      { passive: false }
+    );
+
+    modal.addEventListener(
+      "touchmove",
+      (event) => {
+        if (!isBlockingModalOpen(modal)) return;
+        const panel = modal.querySelector(".modal-panel");
+        if (panel && panel.contains(event.target)) return;
+        event.preventDefault();
+      },
+      { passive: false }
+    );
+  });
+}
+
 function closeModalBackdrop(el, { immediate = false } = {}) {
   if (!el) return;
   if (immediate) markOverlayCloseImmediate(el);
@@ -6607,8 +7692,16 @@ function closeModalBackdrop(el, { immediate = false } = {}) {
 }
 
 function prepareAppOverlay(id) {
-  if (typeof OverlayManager !== "undefined") OverlayManager.prepareOpen(id);
   hideCellTypeTooltips();
+  if (typeof OverlayManager === "undefined") return;
+
+  const activeModalId = getActiveBlockingModalOverlayId();
+  if (activeModalId && id !== activeModalId && !BLOCKING_MODAL_OVERLAY_IDS.has(id)) {
+    OverlayManager.closeAllExcept(activeModalId);
+    return;
+  }
+
+  OverlayManager.prepareOpen(id);
 }
 
 function closeAppHeaderMenu() {
@@ -6651,6 +7744,8 @@ function registerAppOverlays() {
   OverlayManager.register("exportFormatModal", closeNow(closeExportFormatModal));
   OverlayManager.register("importFormatModal", closeNow(closeImportFormatModal));
   OverlayManager.register("exportUnlockModal", closeNow(closeExportUnlockModal));
+  OverlayManager.register("cloudStorage", closeNow(closeCloudStorageModal));
+  OverlayManager.register("filterAutocomplete", () => {});
 }
 
 /** Expand “New profile” on wide layouts; keep collapsed on phones by default. */
@@ -12373,7 +13468,7 @@ function handleBulkDelete() {
   const ids = getSelectedProjectIdsFromTable();
   if (!ids.length) return;
 
-  prepareAppOverlay("projectDeleteModal");
+  activateBlockingModal(elements.projectDeleteModal, "projectDeleteModal");
   elements.projectDeleteModal.setAttribute("data-delete-mode", "bulk");
   elements.projectDeleteModal.setAttribute("data-project-ids", ids.join(","));
 
@@ -12385,9 +13480,6 @@ function handleBulkDelete() {
       ? "This will permanently remove the selected projects from their owner profiles. This action cannot be undone."
       : "This will permanently remove the selected projects from this profile. This action cannot be undone.";
   }
-
-  elements.projectDeleteModal.setAttribute("aria-hidden", "false");
-  elements.projectDeleteModal.classList.add("active");
 
   if (elements.projectDeleteConfirmBtn) {
     elements.projectDeleteConfirmBtn.onclick = () => {
@@ -12417,7 +13509,7 @@ function handleBulkDelete() {
 
 function closeProjectBulkTransferModal({ immediate = false } = {}) {
   if (!elements.projectBulkTransferModal) return;
-  closeModalBackdrop(elements.projectBulkTransferModal, { immediate });
+  deactivateBlockingModal(elements.projectBulkTransferModal, { immediate });
   elements.projectBulkTransferModal.removeAttribute("data-transfer-mode");
   elements.projectBulkTransferModal.removeAttribute("data-project-ids");
 }
@@ -12432,7 +13524,7 @@ function handleBulkProjectTransfer(mode) {
   const ids = getSelectedProjectIdsFromTable();
   if (!ids.length) return;
 
-  prepareAppOverlay("projectBulkTransferModal");
+  activateBlockingModal(elements.projectBulkTransferModal, "projectBulkTransferModal");
   elements.projectBulkTransferModal.setAttribute("data-transfer-mode", mode);
   elements.projectBulkTransferModal.setAttribute("data-project-ids", ids.join(","));
 
@@ -12455,9 +13547,6 @@ function handleBulkProjectTransfer(mode) {
   }
 
   populateBulkTransferTargetProfileSelect(state.activeProfileId);
-
-  elements.projectBulkTransferModal.setAttribute("aria-hidden", "false");
-  elements.projectBulkTransferModal.classList.add("active");
 
   if (elements.projectBulkTransferConfirmBtn) {
     elements.projectBulkTransferConfirmBtn.onclick = () => {
@@ -12518,7 +13607,7 @@ function handleBulkProjectTransfer(mode) {
 
 function closeProjectDeleteModal({ immediate = false } = {}) {
   if (!elements.projectDeleteModal) return;
-  closeModalBackdrop(elements.projectDeleteModal, { immediate });
+  deactivateBlockingModal(elements.projectDeleteModal, { immediate });
   elements.projectDeleteModal.removeAttribute("data-project-id");
   elements.projectDeleteModal.removeAttribute("data-project-ids");
   elements.projectDeleteModal.removeAttribute("data-delete-mode");
@@ -12526,7 +13615,7 @@ function closeProjectDeleteModal({ immediate = false } = {}) {
 
 function closeProfileDeleteModal({ immediate = false } = {}) {
   if (!elements.profileDeleteModal) return;
-  closeModalBackdrop(elements.profileDeleteModal, { immediate });
+  deactivateBlockingModal(elements.profileDeleteModal, { immediate });
   elements.profileDeleteModal.removeAttribute("data-profile-id");
   if (elements.profileDeletePassword) elements.profileDeletePassword.value = "";
   if (elements.profileDeletePasswordWrap) elements.profileDeletePasswordWrap.style.display = "none";
@@ -12625,7 +13714,7 @@ async function completeProfileUnlockSuccess(profileId) {
 function openProfileUnlockModal(profileId) {
   const profile = state.profiles.find((p) => p.id === profileId);
   if (!profile || !elements.profileUnlockModal) return;
-  prepareAppOverlay("profileUnlockModal");
+  activateBlockingModal(elements.profileUnlockModal, "profileUnlockModal");
   elements.profileUnlockModal.setAttribute("data-profile-id", profileId);
   if (elements.profileUnlockModalSubtitle) {
     elements.profileUnlockModalSubtitle.textContent = `Enter the password for “${profile.name || "this profile"}” to continue.`;
@@ -12634,8 +13723,6 @@ function openProfileUnlockModal(profileId) {
     elements.profileUnlockPassword.value = "";
   }
   hideProfileUnlockError();
-  elements.profileUnlockModal.setAttribute("aria-hidden", "false");
-  elements.profileUnlockModal.classList.add("active");
   if (elements.profileUnlockPassword) {
     setTimeout(() => elements.profileUnlockPassword.focus(), 50);
   }
@@ -12643,7 +13730,7 @@ function openProfileUnlockModal(profileId) {
 
 function closeProfileUnlockModal({ immediate = false } = {}) {
   if (!elements.profileUnlockModal) return;
-  closeModalBackdrop(elements.profileUnlockModal, { immediate });
+  deactivateBlockingModal(elements.profileUnlockModal, { immediate });
   elements.profileUnlockModal.removeAttribute("data-profile-id");
   if (elements.profileUnlockPassword) elements.profileUnlockPassword.value = "";
   hideProfileUnlockError();
@@ -13257,7 +14344,7 @@ function openProfileViewModal(profileId) {
   const profile = state.profiles.find((p) => p.id === profileId);
   if (!profile || !elements.profileViewModal) return;
   if (!requireProfileUnlocked(profileId, "view")) return;
-  prepareAppOverlay("profileViewModal");
+  activateBlockingModal(elements.profileViewModal, "profileViewModal");
 
   const profileName = profile.name || "Untitled profile";
   if (elements.profileViewAvatar) {
@@ -13357,14 +14444,11 @@ function openProfileViewModal(profileId) {
   });
 
   renderProfileViewFinancialStats(projects);
-
-  elements.profileViewModal.setAttribute("aria-hidden", "false");
-  elements.profileViewModal.classList.add("active");
 }
 
 function closeProfileViewModal({ immediate = false } = {}) {
   if (!elements.profileViewModal) return;
-  closeModalBackdrop(elements.profileViewModal, { immediate });
+  deactivateBlockingModal(elements.profileViewModal, { immediate });
 }
 
 function openProfileEditModal(profileId) {
@@ -13375,7 +14459,7 @@ function openProfileEditModal(profileId) {
     return;
   }
   if (!requireProfileUnlocked(profileId, "edit")) return;
-  prepareAppOverlay("profileEditModal");
+  activateBlockingModal(elements.profileEditModal, "profileEditModal");
   elements.profileEditModal.setAttribute("data-profile-id", profileId);
   if (elements.profileEditName) {
     elements.profileEditName.value = profile.name || "";
@@ -13401,8 +14485,6 @@ function openProfileEditModal(profileId) {
     elements.profileEditPasswordError.style.display = "none";
     elements.profileEditPasswordError.textContent = "";
   }
-  elements.profileEditModal.setAttribute("aria-hidden", "false");
-  elements.profileEditModal.classList.add("active");
   setTimeout(() => {
     if (elements.profileEditName) elements.profileEditName.focus();
   }, 80);
@@ -13410,7 +14492,7 @@ function openProfileEditModal(profileId) {
 
 function closeProfileEditModal({ immediate = false } = {}) {
   if (!elements.profileEditModal) return;
-  closeModalBackdrop(elements.profileEditModal, { immediate });
+  deactivateBlockingModal(elements.profileEditModal, { immediate });
   elements.profileEditModal.removeAttribute("data-profile-id");
   if (elements.profileEditCurrentPassword) elements.profileEditCurrentPassword.value = "";
   if (elements.profileEditNewPassword) elements.profileEditNewPassword.value = "";
@@ -13503,7 +14585,7 @@ function deleteProfile(profileId) {
     showToast("Demo profile is read-only. Profile deletion is disabled.");
     return;
   }
-  prepareAppOverlay("profileDeleteModal");
+  activateBlockingModal(elements.profileDeleteModal, "profileDeleteModal");
   const projectCount = profile.projects ? profile.projects.length : 0;
 
   elements.profileDeleteModal.setAttribute("data-profile-id", profileId);
@@ -13534,8 +14616,6 @@ function deleteProfile(profileId) {
     elements.profileDeletePasswordError.textContent = "";
   }
 
-  elements.profileDeleteModal.setAttribute("aria-hidden", "false");
-  elements.profileDeleteModal.classList.add("active");
   updateProfileDeleteConfirmState();
 
   if (elements.profileDeleteConfirmBtn) {
@@ -13611,7 +14691,7 @@ function handleSingleDelete(projectId) {
   const project = located.project;
   if (!ownerProfile || !project) return;
 
-  prepareAppOverlay("projectDeleteModal");
+  activateBlockingModal(elements.projectDeleteModal, "projectDeleteModal");
   elements.projectDeleteModal.setAttribute("data-delete-mode", "single");
   elements.projectDeleteModal.setAttribute("data-project-id", projectId);
   elements.projectDeleteModal.removeAttribute("data-project-ids");
@@ -13625,9 +14705,6 @@ function handleSingleDelete(projectId) {
     elements.projectDeleteWarningText.textContent =
       `This will permanently remove this project${ownerNote}. This action cannot be undone.`;
   }
-
-  elements.projectDeleteModal.setAttribute("aria-hidden", "false");
-  elements.projectDeleteModal.classList.add("active");
 
   if (elements.projectDeleteConfirmBtn) {
     elements.projectDeleteConfirmBtn.onclick = () => {
@@ -13728,6 +14805,7 @@ function openProjectModal(mode, projectId) {
     renderProjectLabelsControls(project.labels, { readonly: isView });
     renderProjectLinksControls(project.links, { readonly: isView });
     renderProjectTasksControls(project.tasks, { readonly: isView });
+    renderProjectRaciControls(project.raci, { readonly: isView });
 
     if (elements.projectMetaId) {
       elements.projectMetaId.textContent = project.id || "—";
@@ -13760,20 +14838,18 @@ function openProjectModal(mode, projectId) {
     toggleFinancialFrameworkFields(FINANCIAL_FRAMEWORK_DEFAULT);
     elements.projectCurrency.value = "";
     elements.projectType.value = "";
-    elements.projectStatus.value = "Not Started";
+    elements.projectStatus.value = "";
     elements.projectTshirtSize.value = "";
     elements.projectPeriod.value = "";
-    elements.projectMoscow.value = "Could have";
+    elements.projectMoscow.value = "";
     renderCountriesControls([]);
     renderProjectLabelsControls([]);
     renderProjectLinksControls([]);
     renderProjectTasksControls([]);
+    renderProjectRaciControls(getEmptyProjectRaci());
 
     const now = new Date();
     const nowIso = now.toISOString();
-    const currentYear = now.getFullYear();
-    const currentQuarter = Math.floor(now.getMonth() / 3) + 1;
-    elements.projectPeriod.value = `${currentYear}-Q${currentQuarter}`;
     if (elements.projectMetaId) {
       elements.projectMetaId.textContent = "Will be generated on save";
     }
@@ -13785,10 +14861,10 @@ function openProjectModal(mode, projectId) {
 
   updateModalRicePreview();
   resetProjectModalSectionNav();
+  syncProjectOptionalDisclosures({ resetCollapsed: true });
+  syncProjectTasksDisclosure({ resetCollapsed: true });
   syncProjectModalFooterMetaDetails({ resetCollapsed: true });
-  prepareAppOverlay("projectModal");
-  elements.projectModal.setAttribute("aria-hidden", "false");
-  elements.projectModal.classList.add("active");
+  activateBlockingModal(elements.projectModal, "projectModal");
   elements.projectModal.classList.toggle("project-modal--view", isView);
   if (!isView) {
     elements.projectTitle.focus();
@@ -13817,6 +14893,14 @@ function openProjectModal(mode, projectId) {
   if (elements.addProjectTaskBtn) {
     elements.addProjectTaskBtn.style.display = isView ? "none" : "";
   }
+  if (elements.projectRaciSection) {
+    elements.projectRaciSection.querySelectorAll(".project-raci-add-btn").forEach((btn) => {
+      btn.style.display = isView ? "none" : "";
+    });
+    elements.projectRaciSection.querySelectorAll(".project-raci-remove-btn").forEach((btn) => {
+      btn.style.display = isView ? "none" : "";
+    });
+  }
   elements.projectForm.querySelectorAll(".project-dynamic-field-hint").forEach((hint) => {
     hint.style.display = isView ? "none" : "";
   });
@@ -13837,12 +14921,22 @@ function openProjectModal(mode, projectId) {
 
 function closeProjectModal({ immediate = false } = {}) {
   hideCellTypeTooltips();
-  closeModalBackdrop(elements.projectModal, { immediate });
+  deactivateBlockingModal(elements.projectModal, { immediate });
   if (elements.projectModal) {
     elements.projectModal.classList.remove("project-modal--view");
   }
   setRichDescriptionFieldsReadonly(false);
   editingProjectId = null;
+}
+
+function projectFormHasFinancialInput(raw) {
+  if (raw.financialImpactValue != null && Number.isFinite(raw.financialImpactValue)) return true;
+  if (raw.financialImpactCurrency) return true;
+  const inputs = raw.financialImpactInputs && typeof raw.financialImpactInputs === "object" ? raw.financialImpactInputs : {};
+  return Object.keys(inputs).some((key) => {
+    const value = inputs[key];
+    return value != null && String(value).trim() !== "";
+  });
 }
 
 function handleProjectFormSubmit(e) {
@@ -13889,10 +14983,13 @@ function handleProjectFormSubmit(e) {
     projectStatus: (elements.projectStatus.value || "").trim() || null,
     tshirtSize: (elements.projectTshirtSize.value || "").trim() || null,
     projectPeriod: period,
-    moscowCategory: (elements.projectMoscow && elements.projectMoscow.value) ? (elements.projectMoscow.value || "").trim() || "Could have" : "Could have",
+    moscowCategory: (elements.projectMoscow && elements.projectMoscow.value)
+      ? (elements.projectMoscow.value || "").trim() || null
+      : null,
     countries: getCountriesFromControls(),
     labels: getProjectLabelsFromControls(),
-    tasks: getProjectTasksFromControls()
+    tasks: getProjectTasksFromControls(),
+    raci: getProjectRaciFromControls()
   };
 
   const linkResult = getProjectLinksFromControls();
@@ -13909,7 +15006,11 @@ function handleProjectFormSubmit(e) {
     raw.financialImpactValue
   );
 
-  if (raw.financialImpactFramework !== FINANCIAL_FRAMEWORK_DEFAULT && !Number.isFinite(raw.financialImpactValue)) {
+  if (
+    raw.financialImpactFramework !== FINANCIAL_FRAMEWORK_DEFAULT &&
+    !Number.isFinite(raw.financialImpactValue) &&
+    projectFormHasFinancialInput(raw)
+  ) {
     elements.projectFormError.textContent = getFinancialFrameworkValidationMessage(
       raw.financialImpactFramework,
       raw.financialImpactInputs
@@ -13918,10 +15019,20 @@ function handleProjectFormSubmit(e) {
     return;
   }
 
+  if (!Number.isFinite(raw.financialImpactValue)) {
+    raw.financialImpactValue = null;
+  }
+
   const validationError = validateProjectInput(raw);
   if (validationError) {
     elements.projectFormError.textContent = validationError;
     elements.projectFormError.style.display = "block";
+    if (validationError === "Project title is required.") {
+      elements.projectTitle?.focus();
+    } else if (validationError === "Project description is required.") {
+      const surface = getRichDescriptionSurface("projectDescription");
+      if (surface) surface.focus();
+    }
     return;
   }
 
@@ -13953,6 +15064,7 @@ function handleProjectFormSubmit(e) {
     project.labels = normalizeProjectLabels(raw.labels);
     project.links = normalizeProjectLinks(raw.links);
     project.tasks = normalizeProjectTasks(raw.tasks);
+    project.raci = normalizeProjectRaci(raw.raci);
     project.modifiedAt = new Date().toISOString();
     project.riceScore = calculateRiceScore(project);
     saveState({ flush: true });
@@ -13993,11 +15105,12 @@ function handleProjectFormSubmit(e) {
       projectStatus: raw.projectStatus || null,
       tshirtSize: raw.tshirtSize || null,
       projectPeriod: raw.projectPeriod || null,
-      moscowCategory: raw.moscowCategory || "Could have",
+      moscowCategory: raw.moscowCategory || null,
       countries: Array.isArray(raw.countries) ? raw.countries : [],
       labels: normalizeProjectLabels(raw.labels),
       links: normalizeProjectLinks(raw.links),
-      tasks: normalizeProjectTasks(raw.tasks)
+      tasks: normalizeProjectTasks(raw.tasks),
+      raci: normalizeProjectRaci(raw.raci)
     };
     project.riceScore = calculateRiceScore(project);
     targetProfile.projects.unshift(project);

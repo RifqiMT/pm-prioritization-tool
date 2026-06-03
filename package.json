@@ -15,7 +15,8 @@
     "verify:production": "node scripts/verify-deployment.js https://pm-prioritization-tool-six.vercel.app",
     "test:storage": "node scripts/test-storage-sync-logic.js",
     "test:metadata": "node scripts/test-project-metadata.js",
-    "test": "npm run test:storage && npm run test:metadata"
+    "test:persistence": "node scripts/test-persistence-keys.js",
+    "test": "npm run test:storage && npm run test:metadata && npm run test:persistence"
   },
   "keywords": [
     "product-management",

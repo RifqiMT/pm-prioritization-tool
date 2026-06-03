@@ -27,6 +27,13 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Data — Workspace persistence registry and round-trip fixes — 2026-06-03 — Product Team — Impact: user-visible
+
+- Added `WORKSPACE_PERSISTED_STATE_KEYS` in `constants.js` so new UI state fields are saved to `localStorage` and Vercel MongoDB via one registry.
+- Fixed `moscowOrder` dropped on reload; profile/project loaders now merge unknown fields forward-compatibly.
+- Cloud API normalizes `tasks[]` on write (aligned with labels/links/raci).
+- Added `npm run test:persistence` for key-registry and round-trip checks.
+
 ### Docs — Full documentation audit (product standard) — 2026-05-31 — Product Team — Impact: documentation
 
 - Re-audited repository against `APP_ASSET_VERSION` = `20260528-ui190`.

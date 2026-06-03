@@ -129,6 +129,8 @@ Central object: `state` in `src/app.js`.
 
 Persisted via `saveState()` → `AppStorage` → `localStorage` + optional cloud PUT.
 
+**Adding a new workspace-level variable:** extend `state` in `app.js`, append the key to `WORKSPACE_PERSISTED_STATE_KEYS` in `constants.js`, add validation in `applyPersistedWorkspaceUiState()`, and document in `docs/VARIABLES.md`. Project/profile fields should merge via `Object.assign` in `normalizeLoadedProject` / `normalizeLoadedProfile` (unknown keys round-trip). Cloud writes run `normalizeWorkspacePayload()` in `api/_lib/project-metadata.js`.
+
 | Field | Persisted | Notes |
 |-------|-----------|-------|
 | `profiles` | Yes | Includes `passwordSalt` / `passwordHash` when protected |

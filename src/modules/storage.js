@@ -74,6 +74,15 @@ const AppStorage = (function () {
     return window.location.protocol === "file:";
   }
 
+  function isLocalDevOrigin() {
+    const host = (window.location.hostname || "").toLowerCase();
+    return host === "localhost" || host === "127.0.0.1" || host === "[::1]";
+  }
+
+  function isOfflineDevOrigin() {
+    return isLocalFileOrigin() || isLocalDevOrigin();
+  }
+
   function getApiSecret() {
     try {
       const fromSession = sessionStorage.getItem(API_SECRET_STORAGE_KEY);
@@ -366,7 +375,7 @@ const AppStorage = (function () {
   }
 
   async function fetchCloudConfig() {
-    if (isLocalFileOrigin()) return { config: null, apiIssue: null };
+    if (isOfflineDevOrigin()) return { config: null, apiIssue: null };
 
     const endpoints = ["/api/config", "/api/health"];
     let configError = null;

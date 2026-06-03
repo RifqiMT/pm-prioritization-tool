@@ -85,7 +85,9 @@ const RichTextEditor = (function () {
       `<div class="rich-text-editor ${size}">` +
       buildToolbarHtml(toolbarId, options.ariaLabel || "Description formatting") +
       `<div id="${surfaceId}" class="rich-text-editor__surface" contenteditable="true" role="textbox" ` +
-      `aria-multiline="true"${labelId ? ` aria-labelledby="${labelId}"` : ""} ` +
+      `aria-multiline="true"${labelId ? ` aria-labelledby="${labelId}"` : ""}${
+        options.required ? ' aria-required="true"' : ""
+      } ` +
       `data-placeholder="${placeholder.replace(/"/g, "&quot;")}"></div></div>`
     );
   }
@@ -110,7 +112,8 @@ const RichTextEditor = (function () {
         labelId: host.getAttribute("data-label-id") || "",
         placeholder: host.getAttribute("data-placeholder") || "",
         ariaLabel: host.getAttribute("data-aria-label") || "Description formatting",
-        size: host.getAttribute("data-size") || "standard"
+        size: host.getAttribute("data-size") || "standard",
+        required: host.hasAttribute("data-required")
       });
     });
   }
