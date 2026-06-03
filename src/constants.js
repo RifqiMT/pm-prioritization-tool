@@ -328,6 +328,7 @@ const WORKSPACE_PERSISTED_STATE_KEYS = [
   "scrumBoardVisibleStatuses",
   "moscowSortByRice",
   "mapMetric",
+  "raciMatrixDomain",
   "exchangeRatesToEUR",
   "exchangeRatesDate",
   "exchangeRatesLastSource",

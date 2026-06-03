@@ -14,34 +14,38 @@
       ? `(max-width: ${Number(COMPACT_LAYOUT_MAX_WIDTH_PX)}px)`
       : "(max-width: 1400px)";
 
-  const VIEW_KEYS = ["table", "board", "moscow", "map"];
+  const VIEW_KEYS = ["table", "board", "moscow", "map", "raci"];
 
   const VIEW_TAB_ARIA = {
     table: "Table view",
     board: "Board view",
     moscow: "MoSCoW view",
-    map: "Map view"
+    map: "Map view",
+    raci: "RACI matrix view"
   };
 
   const VIEW_TAB_FS_ARIA = {
     table: "Switch to Table view",
     board: "Switch to Board view",
     moscow: "Switch to MoSCoW view",
-    map: "Switch to Map view"
+    map: "Switch to Map view",
+    raci: "Switch to RACI matrix view"
   };
 
   const VIEW_TAB_LABELS = {
     table: "Table",
     board: "Board",
     moscow: "MoSCoW",
-    map: "Map"
+    map: "Map",
+    raci: "RACI"
   };
 
   const VIEW_TAB_ICONS = {
     table: '<svg class="view-fullscreen-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/></svg>',
     board: '<svg class="view-fullscreen-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="12" rx="1"/></svg>',
     moscow: '<svg class="view-fullscreen-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>',
-    map: '<svg class="view-fullscreen-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></svg>'
+    map: '<svg class="view-fullscreen-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></svg>',
+    raci: '<svg class="view-fullscreen-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 0 1-6.75 0 3.375 3.375 0 0 1 6.75 0zm8.25 2.25a2.625 2.625 0 0 1-5.25 0 2.625 2.625 0 0 1 5.25 0z"/></svg>'
   };
 
   let getState;
@@ -71,7 +75,7 @@
   ];
 
   const VIEW_SHELL_SELECTOR =
-    ".view-toolbar, .projects-map-container, .projects-map-legend, .scrum-board, .moscow-grid, .table-wrapper";
+    ".view-toolbar, .projects-map-container, .projects-map-legend, .scrum-board, .moscow-grid, .table-wrapper, .raci-matrix-wrap";
 
   function isCompactViewport() {
     return window.matchMedia(COMPACT_MQ).matches;
@@ -79,7 +83,7 @@
 
   function getViewRoots() {
     const els = getElements();
-    return [els.projectsTableView, els.projectsBoardView, els.projectsMoscowView, els.projectsMapView].filter(Boolean);
+    return [els.projectsTableView, els.projectsBoardView, els.projectsMoscowView, els.projectsMapView, els.projectsRaciView].filter(Boolean);
   }
 
   function getViewTabButtons() {
@@ -88,7 +92,8 @@
       [els.projectsViewTableBtn, "table"],
       [els.projectsViewBoardBtn, "board"],
       [els.projectsViewMoscowBtn, "moscow"],
-      [els.projectsViewMapBtn, "map"]
+      [els.projectsViewMapBtn, "map"],
+      [els.projectsViewRaciBtn, "raci"]
     ].filter(([btn]) => !!btn);
   }
 
@@ -150,6 +155,7 @@
     const showBoard = view === "board";
     const showMoscow = view === "moscow";
     const showMap = view === "map";
+    const showRaci = view === "raci";
 
     if (els.projectsTableView && els.projectsTableView.parentNode !== fullscreenStage) {
       els.projectsTableView.style.display = showTable ? "flex" : "none";
@@ -162,6 +168,9 @@
     }
     if (els.projectsMapView && els.projectsMapView.parentNode !== fullscreenStage) {
       els.projectsMapView.style.display = showMap ? "flex" : "none";
+    }
+    if (els.projectsRaciView && els.projectsRaciView.parentNode !== fullscreenStage) {
+      els.projectsRaciView.style.display = showRaci ? "flex" : "none";
     }
   }
 
@@ -524,12 +533,14 @@
     updateBtn(els.scrumBoardFullscreenBtn, els.projectsBoardView, "Full screen", "Exit full screen");
     updateBtn(els.moscowFullscreenBtn, els.projectsMoscowView, "Full screen", "Exit full screen");
     updateBtn(els.tableFullscreenBtn, els.projectsTableView, "Full screen", "Exit full screen");
+    updateBtn(els.raciMatrixFullscreenBtn, els.projectsRaciView, "Full screen", "Exit full screen");
 
     document.documentElement.classList.toggle("has-view-fullscreen", !!(
       activeEl === els.projectsTableView ||
       activeEl === els.projectsBoardView ||
       activeEl === els.projectsMoscowView ||
-      activeEl === els.projectsMapView
+      activeEl === els.projectsMapView ||
+      activeEl === els.projectsRaciView
     ));
   }
 
@@ -696,7 +707,7 @@
     const el = document.fullscreenElement || document.webkitFullscreenElement;
     const els = getElements();
     const isAny = el === els.projectsMapView || el === els.projectsBoardView ||
-      el === els.projectsMoscowView || el === els.projectsTableView;
+      el === els.projectsMoscowView || el === els.projectsTableView || el === els.projectsRaciView;
 
     if (isAny && el) {
       currentFullscreenEl = el;
@@ -733,7 +744,7 @@
     const el = document.fullscreenElement || document.webkitFullscreenElement;
     const els = getElements();
     return el === els.projectsTableView || el === els.projectsBoardView ||
-      el === els.projectsMoscowView || el === els.projectsMapView;
+      el === els.projectsMoscowView || el === els.projectsMapView || el === els.projectsRaciView;
   }
 
   function switchViewWhileFullscreen(view) {

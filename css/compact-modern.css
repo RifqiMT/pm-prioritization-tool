@@ -203,7 +203,7 @@
   html.is-compact-layout .portfolio-view-tabs.view-toggle-group--portfolio {
     width: 100% !important;
     display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 0.22rem !important;
     padding: 0.18rem !important;
     border-radius: var(--compact-radius-sm);
@@ -228,11 +228,9 @@
     height: 18px;
   }
 
-  /* Single create affordance — FAB on all compact widths */
-  html.is-compact-layout .portfolio-fab {
+  /* Single create affordance — FAB in bottom dock on all compact widths */
+  html.is-compact-layout .portfolio-bottom-bar .portfolio-fab {
     display: inline-flex !important;
-    right: max(0.85rem, env(safe-area-inset-right));
-    bottom: calc(1rem + env(safe-area-inset-bottom));
     width: 54px;
     height: 54px;
     box-shadow: 0 8px 22px rgba(185, 28, 28, 0.38);
@@ -424,6 +422,8 @@
     grid-column: 1;
     grid-row: 1;
     min-width: 0;
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
     gap: 0.2rem;
     padding: 0.16rem;
     border-radius: var(--compact-radius-sm);
@@ -514,13 +514,8 @@
     pointer-events: none;
   }
 
-  /* ── Selection bar + FAB spacing ───────────────────────── */
-  html.is-compact-layout .portfolio-selection-bar {
-    bottom: calc(4.85rem + env(safe-area-inset-bottom));
+  /* ── Selection bar in bottom dock ──────────────────────── */
+  html.is-compact-layout .portfolio-bottom-bar .portfolio-selection-bar {
     border-radius: var(--compact-radius-sm);
-  }
-
-  html.is-compact-layout.has-portfolio-selection-bar .portfolio-fab {
-    bottom: calc(8.35rem + env(safe-area-inset-bottom));
   }
 }

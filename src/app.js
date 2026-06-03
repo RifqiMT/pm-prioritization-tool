@@ -28,6 +28,7 @@ let state = {
   scrumBoardVisibleStatuses: null,
   moscowSortByRice: true,
   mapMetric: "projects",
+  raciMatrixDomain: "Business",
   exchangeRatesToEUR: {},
   exchangeRatesDate: null,
   exchangeRatesLastSource: null,
@@ -1136,6 +1137,209 @@ function computeFrameworkFinancialImpact(framework, inputs, customAmount) {
 
 // --- Initialization ---
 let projectModalSectionNavObserver = null;
+let projectModalSectionNavSyncFrame = null;
+let projectModalSectionNavRatioMap = new Map();
+let projectModalSectionNavLockUntil = 0;
+let projectModalSectionNavLockedId = null;
+let projectModalSectionNavResizeObserver = null;
+
+const PROJECT_MODAL_SECTION_NAV_IDS = [
+  "projectModalSectionProject",
+  "projectModalSectionRice",
+  "projectModalSectionMoscow",
+  "projectModalSectionKano",
+  "projectModalSectionMeta",
+  "projectModalSectionRaci",
+  "projectModalSectionFinancial"
+];
+
+function projectModalSectionProjectHasData() {
+  if ((elements.projectTitle?.value || "").trim()) return true;
+  if (richDescriptionToPlainText(getRichDescriptionValue("projectDescription"))) return true;
+  const section = document.getElementById("projectModalSectionProject");
+  if (!section) return false;
+  for (const details of section.querySelectorAll(".project-optional-field-details")) {
+    const wrap = details.closest(".project-field-tooltip-wrap");
+    if (projectOptionalFieldHasData(wrap)) return true;
+  }
+  return false;
+}
+
+function projectModalSectionHasData(sectionId) {
+  if (!sectionId) return false;
+  if (sectionId === "projectModalSectionProject") {
+    return projectModalSectionProjectHasData();
+  }
+  return projectOptionalSectionHasData(sectionId);
+}
+
+const PROJECT_MODAL_SECTION_STATUS_MARKUP =
+  '<svg class="project-modal-section-status-icon" viewBox="0 0 12 12" aria-hidden="true">' +
+  '<path d="M2.4 6.2 4.9 8.7 9.6 3.6" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function ensureProjectModalSectionStatusBadge(btn) {
+  if (!btn) return;
+  let status = btn.querySelector(".project-modal-section-status");
+  if (!status) {
+    status = document.createElement("span");
+    status.className = "project-modal-section-status";
+    status.setAttribute("aria-hidden", "true");
+    btn.appendChild(status);
+  }
+  if (!status.querySelector(".project-modal-section-status-icon")) {
+    status.innerHTML = PROJECT_MODAL_SECTION_STATUS_MARKUP;
+  }
+}
+
+function syncProjectModalSectionNavIndicators() {
+  const modal = document.getElementById("projectModal");
+  if (!modal) return;
+  modal.querySelectorAll(".project-modal-section-btn[data-scroll-target]").forEach((btn) => {
+    ensureProjectModalSectionStatusBadge(btn);
+    if (!btn.dataset.sectionLabel) {
+      btn.dataset.sectionLabel = btn.getAttribute("aria-label") || "Section";
+    }
+    const sectionId = btn.getAttribute("data-scroll-target");
+    const hasData = projectModalSectionHasData(sectionId);
+    const isActive = btn.classList.contains("is-active");
+    const wasPopulated = btn.classList.contains("is-populated");
+    btn.classList.toggle("is-populated", hasData);
+    const baseLabel = btn.dataset.sectionLabel;
+    const contentStatus = hasData ? "has content" : "no content yet";
+    const labelSuffix = isActive ? `, ${contentStatus}, current section` : `, ${contentStatus}`;
+    btn.setAttribute("aria-label", `${baseLabel}${labelSuffix}`);
+    btn.setAttribute("title", `${baseLabel} — ${contentStatus}${isActive ? " · current section" : ""}`);
+    btn.setAttribute("aria-current", isActive ? "location" : "false");
+    if (hasData && !wasPopulated) {
+      btn.classList.add("is-populated-pulse");
+      window.setTimeout(() => btn.classList.remove("is-populated-pulse"), 650);
+    }
+  });
+
+  syncProjectModalSectionActiveIndicator(modal);
+}
+
+function setProjectModalActiveSection(modal, sectionId, { userInitiated = false } = {}) {
+  if (!modal || !sectionId) return;
+  if (userInitiated) {
+    projectModalSectionNavLockedId = sectionId;
+    projectModalSectionNavLockUntil = Date.now() + 850;
+  }
+  modal.querySelectorAll(".project-modal-section-btn").forEach((btn) => {
+    btn.classList.toggle("is-active", btn.getAttribute("data-scroll-target") === sectionId);
+  });
+  syncProjectModalSectionNavIndicators();
+}
+
+function resolveProjectModalActiveSectionId(scrollRoot, sectionEls) {
+  if (!scrollRoot || !sectionEls.length) return null;
+
+  let bestId = null;
+  let bestRatio = 0;
+  sectionEls.forEach((sec) => {
+    const ratio = projectModalSectionNavRatioMap.get(sec.id) || 0;
+    if (ratio > bestRatio) {
+      bestRatio = ratio;
+      bestId = sec.id;
+    }
+  });
+  if (bestId && bestRatio >= 0.12) return bestId;
+
+  const rootRect = scrollRoot.getBoundingClientRect();
+  const focusLine = rootRect.top + Math.min(rootRect.height * 0.24, 96);
+  let nearestId = sectionEls[0].id;
+  let nearestDistance = Infinity;
+  sectionEls.forEach((sec) => {
+    const rect = sec.getBoundingClientRect();
+    if (rect.bottom <= rootRect.top + 8) return;
+    const distance = Math.abs(rect.top - focusLine);
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearestId = sec.id;
+    }
+  });
+  return nearestId;
+}
+
+function syncProjectModalSectionActiveIndicator(modal) {
+  const rail = modal?.querySelector(".project-modal-section-rail");
+  if (!rail) return;
+
+  let indicator = rail.querySelector(".project-modal-section-active-indicator");
+  if (!indicator) {
+    indicator = document.createElement("span");
+    indicator.className = "project-modal-section-active-indicator";
+    indicator.setAttribute("aria-hidden", "true");
+    rail.appendChild(indicator);
+  } else if (indicator !== rail.lastElementChild) {
+    rail.appendChild(indicator);
+  }
+
+  const activeBtn = rail.querySelector(".project-modal-section-btn.is-active");
+  if (!activeBtn) {
+    rail.classList.remove("project-modal-section-rail--indicator-ready");
+    return;
+  }
+
+  const isHorizontal = getComputedStyle(rail).flexDirection === "row";
+  rail.classList.toggle("project-modal-section-rail--layout-horizontal", isHorizontal);
+
+  const railRect = rail.getBoundingClientRect();
+  const btnRect = activeBtn.getBoundingClientRect();
+  const indicatorRect = indicator.getBoundingClientRect();
+
+  let offsetX;
+  let offsetY;
+  if (isHorizontal) {
+    const indicatorWidth = indicatorRect.width || 20.5;
+    const indicatorHeight = indicatorRect.height || 2.9;
+    offsetX = btnRect.left - railRect.left + (btnRect.width - indicatorWidth) / 2;
+    offsetY = btnRect.top - railRect.top;
+  } else {
+    const indicatorHeight = indicatorRect.height || 24;
+    offsetX = btnRect.left - railRect.left;
+    offsetY = btnRect.top - railRect.top + (btnRect.height - indicatorHeight) / 2;
+  }
+
+  const isFirstPaint = !rail.classList.contains("project-modal-section-rail--indicator-ready");
+  if (isFirstPaint) {
+    indicator.classList.add("is-instant");
+  }
+
+  rail.style.setProperty("--section-indicator-x", `${offsetX}px`);
+  rail.style.setProperty("--section-indicator-y", `${offsetY}px`);
+  rail.classList.add("project-modal-section-rail--indicator-ready");
+
+  if (isFirstPaint) {
+    requestAnimationFrame(() => indicator.classList.remove("is-instant"));
+  }
+}
+
+function ensureProjectModalSectionNavIndicatorObserver(modal) {
+  const rail = modal?.querySelector(".project-modal-section-rail");
+  if (!rail || rail.dataset.indicatorObserverReady === "1") return;
+  rail.dataset.indicatorObserverReady = "1";
+  if (projectModalSectionNavResizeObserver) {
+    projectModalSectionNavResizeObserver.disconnect();
+  }
+  projectModalSectionNavResizeObserver = new ResizeObserver(() => {
+    syncProjectModalSectionActiveIndicator(modal);
+  });
+  projectModalSectionNavResizeObserver.observe(rail);
+  rail.querySelectorAll(".project-modal-section-btn").forEach((btn) => {
+    projectModalSectionNavResizeObserver.observe(btn);
+  });
+}
+
+function scheduleProjectModalSectionNavSync() {
+  if (projectModalSectionNavSyncFrame != null) {
+    cancelAnimationFrame(projectModalSectionNavSyncFrame);
+  }
+  projectModalSectionNavSyncFrame = requestAnimationFrame(() => {
+    projectModalSectionNavSyncFrame = null;
+    syncProjectOptionalDisclosures({ resetCollapsed: false });
+  });
+}
 
 function initProjectModalSectionNav() {
   const modal = document.getElementById("projectModal");
@@ -1143,7 +1347,11 @@ function initProjectModalSectionNav() {
   modal.dataset.sectionNavReady = "1";
   const scrollRoot =
     modal.querySelector("#projectModalScrollRegion") || modal.querySelector(".project-modal-scroll") || modal.querySelector(".modal-body");
+
+  ensureProjectModalSectionNavIndicatorObserver(modal);
+
   modal.querySelectorAll(".project-modal-section-btn[data-scroll-target]").forEach((btn) => {
+    ensureProjectModalSectionStatusBadge(btn);
     btn.addEventListener("click", () => {
       const id = btn.getAttribute("data-scroll-target");
       const el = id ? document.getElementById(id) : null;
@@ -1151,24 +1359,16 @@ function initProjectModalSectionNav() {
         expandOptionalProjectSection(el);
         el.scrollIntoView({ behavior: "smooth", block: "start" });
       }
-      modal.querySelectorAll(".project-modal-section-btn").forEach((b) => b.classList.remove("is-active"));
-      btn.classList.add("is-active");
+      setProjectModalActiveSection(modal, id, { userInitiated: true });
     });
   });
 
   if (!scrollRoot) return;
-  const sectionEls = [
-    "projectModalSectionProject",
-    "projectModalSectionRice",
-    "projectModalSectionMoscow",
-    "projectModalSectionKano",
-    "projectModalSectionMeta",
-    "projectModalSectionRaci",
-    "projectModalSectionFinancial"
-  ]
-    .map((id) => document.getElementById(id))
-    .filter(Boolean);
+  const sectionEls = PROJECT_MODAL_SECTION_NAV_IDS.map((id) => document.getElementById(id)).filter(Boolean);
   if (sectionEls.length === 0) return;
+
+  projectModalSectionNavRatioMap = new Map();
+  sectionEls.forEach((sec) => projectModalSectionNavRatioMap.set(sec.id, 0));
 
   if (projectModalSectionNavObserver) {
     projectModalSectionNavObserver.disconnect();
@@ -1176,23 +1376,29 @@ function initProjectModalSectionNav() {
   }
   projectModalSectionNavObserver = new IntersectionObserver(
     (entries) => {
-      let best = null;
-      let bestRatio = 0;
-      entries.forEach((e) => {
-        if (e.isIntersecting && e.intersectionRatio > bestRatio) {
-          bestRatio = e.intersectionRatio;
-          best = e.target;
-        }
+      if (Date.now() < projectModalSectionNavLockUntil) return;
+
+      entries.forEach((entry) => {
+        projectModalSectionNavRatioMap.set(entry.target.id, entry.isIntersecting ? entry.intersectionRatio : 0);
       });
-      if (!best || bestRatio < 0.08) return;
-      const id = best.id;
-      modal.querySelectorAll(".project-modal-section-btn").forEach((b) => {
-        b.classList.toggle("is-active", b.getAttribute("data-scroll-target") === id);
-      });
+
+      const activeId = resolveProjectModalActiveSectionId(scrollRoot, sectionEls);
+      if (!activeId) return;
+
+      const currentActive = modal.querySelector(".project-modal-section-btn.is-active");
+      const currentId = currentActive?.getAttribute("data-scroll-target");
+      if (currentId === activeId) return;
+
+      setProjectModalActiveSection(modal, activeId);
     },
-    { root: scrollRoot, threshold: [0, 0.05, 0.1, 0.2, 0.35, 0.55, 0.75, 1] }
+    {
+      root: scrollRoot,
+      threshold: [0, 0.08, 0.15, 0.25, 0.4, 0.55, 0.7, 0.85, 1],
+      rootMargin: "-10% 0px -62% 0px"
+    }
   );
   sectionEls.forEach((sec) => projectModalSectionNavObserver.observe(sec));
+  setProjectModalActiveSection(modal, sectionEls[0].id);
 }
 
 function resetProjectModalSectionNav() {
@@ -1201,8 +1407,10 @@ function resetProjectModalSectionNav() {
   const scrollRegion =
     modal.querySelector("#projectModalScrollRegion") || modal.querySelector(".project-modal-scroll") || modal.querySelector(".modal-body");
   if (scrollRegion) scrollRegion.scrollTop = 0;
-  const btns = modal.querySelectorAll(".project-modal-section-btn");
-  btns.forEach((b, i) => b.classList.toggle("is-active", i === 0));
+  projectModalSectionNavLockUntil = 0;
+  projectModalSectionNavLockedId = null;
+  projectModalSectionNavRatioMap = new Map();
+  setProjectModalActiveSection(modal, PROJECT_MODAL_SECTION_NAV_IDS[0]);
 }
 
 function ensureProjectFormFieldTooltips() {
@@ -2058,6 +2266,8 @@ function syncProjectOptionalDisclosures({ resetCollapsed = false } = {}) {
       resetCollapsed
     );
   });
+
+  syncProjectModalSectionNavIndicators();
 }
 
 function isLegacyWrongHostname() {
@@ -2419,6 +2629,8 @@ async function init() {
     RichTextEditor.mountAllFromDom();
   }
   cacheElements();
+  markPasswordManagerIgnore(document);
+  syncFormFieldAccessibleNames(document);
   syncSiteFooterYear();
   ensureProjectFormFieldTooltips();
   ensureProjectOptionalDisclosures();
@@ -2426,6 +2638,7 @@ async function init() {
   initCurrencyOptions();
   initFilterCountriesOptions();
   initScrumBoardStatusColumnsOptions();
+  syncFormFieldAccessibleNames(document);
   ExchangeRates.init({
     getState: () => state,
     saveState,
@@ -2445,6 +2658,7 @@ async function init() {
       if (view === "board") return elements.projectsBoardView;
       if (view === "moscow") return elements.projectsMoscowView;
       if (view === "map") return elements.projectsMapView;
+      if (view === "raci") return elements.projectsRaciView;
       return null;
     },
     onExitFullscreen: refreshWorkspaceAfterFullscreenExit,
@@ -2515,6 +2729,7 @@ async function init() {
     .finally(() => {
       ExchangeRates.updateLabel();
       ExchangeRates.scheduleDailyRefresh();
+      syncFormFieldAccessibleNames(document);
     });
 }
 
@@ -2629,10 +2844,16 @@ function cacheElements() {
   elements.projectsViewBoardBtn = $("projectsViewBoardBtn");
   elements.projectsViewMoscowBtn = $("projectsViewMoscowBtn");
   elements.projectsViewMapBtn = $("projectsViewMapBtn");
+  elements.projectsViewRaciBtn = $("projectsViewRaciBtn");
   elements.projectsTableView = $("projectsTableView");
   elements.projectsBoardView = $("projectsBoardView");
   elements.projectsMoscowView = $("projectsMoscowView");
   elements.projectsMapView = $("projectsMapView");
+  elements.projectsRaciView = $("projectsRaciView");
+  elements.projectsRaciMatrixWrap = $("projectsRaciMatrixWrap");
+  elements.projectsRaciMatrixTable = $("projectsRaciMatrixTable");
+  elements.raciMatrixDomainToggle = document.querySelector(".raci-matrix-domain-toggle__buttons");
+  elements.raciMatrixFullscreenBtn = $("raciMatrixFullscreenBtn");
   elements.tableFullscreenBtn = $("tableFullscreenBtn");
   elements.projectsMapContainer = $("projectsMapContainer");
   elements.projectsMapLegend = $("projectsMapLegend");
@@ -2923,6 +3144,35 @@ function ensureCurrencyOption(select, code) {
   }
 }
 
+function createFilterCheckboxRow(options) {
+  const {
+    value,
+    text,
+    checked = false,
+    rowClass = "filter-country-option",
+    checkboxId,
+    rowDataset = {}
+  } = options;
+  const row = document.createElement("div");
+  row.className = rowClass;
+  Object.entries(rowDataset).forEach(([key, datasetValue]) => {
+    row.dataset[key] = datasetValue;
+  });
+  const cb = document.createElement("input");
+  cb.type = "checkbox";
+  cb.id =
+    checkboxId ||
+    `filter-cb-${String(value).replace(/[^a-zA-Z0-9_-]+/g, "-").toLowerCase()}-${Math.random().toString(36).slice(2, 7)}`;
+  cb.value = value;
+  cb.checked = checked;
+  const label = document.createElement("label");
+  label.setAttribute("for", cb.id);
+  label.textContent = text;
+  row.appendChild(cb);
+  row.appendChild(label);
+  return { row, cb, label };
+}
+
 function initFilterCountriesOptions() {
   if (!elements.filterCountriesList) return;
   elements.filterCountriesList.innerHTML = "";
@@ -2930,40 +3180,30 @@ function initFilterCountriesOptions() {
   const selected = new Set(getSelectedFilterCountriesRaw());
 
   if (typeof COUNTRY_OPTION_EU !== "undefined") {
-    const euRow = document.createElement("div");
-    euRow.className = "filter-country-option filter-country-option--eu";
-    euRow.dataset.name = COUNTRY_OPTION_EU;
-    const euCb = document.createElement("input");
-    euCb.type = "checkbox";
-    euCb.value = COUNTRY_OPTION_EU;
-    const allEuSelected =
-      typeof EU_MEMBER_COUNTRIES !== "undefined" &&
-      EU_MEMBER_COUNTRIES.length > 0 &&
-      EU_MEMBER_COUNTRIES.every((c) => selected.has(c));
-    euCb.checked = selected.has(COUNTRY_OPTION_EU) || allEuSelected;
-    const euLabel = document.createElement("span");
-    euLabel.textContent = "EU (European Union)";
-    euRow.appendChild(euCb);
-    euRow.appendChild(euLabel);
-    elements.filterCountriesList.appendChild(euRow);
+    const euRowBundle = createFilterCheckboxRow({
+      value: COUNTRY_OPTION_EU,
+      text: "EU (European Union)",
+      checked:
+        selected.has(COUNTRY_OPTION_EU) ||
+        (typeof EU_MEMBER_COUNTRIES !== "undefined" &&
+          EU_MEMBER_COUNTRIES.length > 0 &&
+          EU_MEMBER_COUNTRIES.every((c) => selected.has(c))),
+      rowClass: "filter-country-option filter-country-option--eu",
+      checkboxId: "filterCountryEu",
+      rowDataset: { name: COUNTRY_OPTION_EU }
+    });
+    elements.filterCountriesList.appendChild(euRowBundle.row);
   }
 
-  sorted.forEach((name) => {
-    const row = document.createElement("div");
-    row.className = "filter-country-option";
-    row.dataset.name = name;
-
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.value = name;
-    if (selected.has(name)) cb.checked = true;
-
-    const label = document.createElement("span");
-    label.textContent = name;
-
-    row.appendChild(cb);
-    row.appendChild(label);
-    elements.filterCountriesList.appendChild(row);
+  sorted.forEach((name, index) => {
+    const rowBundle = createFilterCheckboxRow({
+      value: name,
+      text: name,
+      checked: selected.has(name),
+      checkboxId: `filterCountry-${index}`,
+      rowDataset: { name }
+    });
+    elements.filterCountriesList.appendChild(rowBundle.row);
   });
   filterFilterCountriesBySearchTerm();
   updateFilterCountriesSummary();
@@ -2983,22 +3223,15 @@ function initFilterProjectPeriodOptions(projects) {
   const periods = Array.from(periodsSet).sort();
   listEl.innerHTML = "";
 
-  periods.forEach((period) => {
-    const row = document.createElement("div");
-    row.className = "filter-country-option";
-    row.dataset.period = period;
-
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.value = period;
-    if (previouslySelected.has(period)) cb.checked = true;
-
-    const label = document.createElement("span");
-    label.textContent = period;
-
-    row.appendChild(cb);
-    row.appendChild(label);
-    listEl.appendChild(row);
+  periods.forEach((period, index) => {
+    const rowBundle = createFilterCheckboxRow({
+      value: period,
+      text: period,
+      checked: previouslySelected.has(period),
+      checkboxId: `filterProjectPeriod-${index}`,
+      rowDataset: { period }
+    });
+    listEl.appendChild(rowBundle.row);
   });
 
   filterFilterProjectPeriodsBySearchTerm();
@@ -3015,6 +3248,20 @@ function getCompactLayoutMediaQueryString() {
 
 function isCompactLayoutViewport() {
   return window.matchMedia(getCompactLayoutMediaQueryString()).matches;
+}
+
+/** RACI desktop grid uses 1025px (CSS), not the 1400px compact breakpoint. */
+function isRaciMatrixDesktopLayout() {
+  return window.matchMedia("(min-width: 1025px)").matches;
+}
+
+function handleRaciMatrixTooltipShow(e) {
+  if (!isRaciMatrixDesktopLayout()) return;
+  const wrap = e.target.closest(".raci-matrix-with-tooltip");
+  if (!wrap) return;
+  if (activeTooltipWrap === wrap) return;
+  document.body.classList.remove("cell-type-tooltip-hidden");
+  positionProfileTooltip(wrap);
 }
 
 /** Mobile/tablet header actions menu (export, import, rates). */
@@ -3035,6 +3282,8 @@ function initCompactLayoutClass() {
       syncMoscowCompactNav();
     } else if (state.projectsView === "board") {
       renderScrumBoard();
+    } else if (state.projectsView === "raci") {
+      renderRaciMatrix();
     } else if (state.projectsView === "table") {
       renderProjects();
     }
@@ -3205,8 +3454,17 @@ function attachEventListeners() {
       }
     });
   }
+  if (elements.projectsViewRaciBtn) {
+    elements.projectsViewRaciBtn.addEventListener("click", () => {
+      if (Fullscreen.isViewFullscreen() && state.projectsView !== "raci") {
+        Fullscreen.switchViewWhileFullscreen("raci");
+      } else {
+        switchProjectsView("raci");
+      }
+    });
+  }
 
-  [elements.projectsViewTableBtn, elements.projectsViewBoardBtn, elements.projectsViewMoscowBtn, elements.projectsViewMapBtn]
+  [elements.projectsViewTableBtn, elements.projectsViewBoardBtn, elements.projectsViewMoscowBtn, elements.projectsViewMapBtn, elements.projectsViewRaciBtn]
     .filter(Boolean)
     .forEach((btn) => {
       btn.addEventListener("touchend", () => {
@@ -3242,6 +3500,30 @@ function attachEventListeners() {
   }
 
   initMapMetricPicker();
+  initRaciMatrixDomainToggle();
+
+  if (elements.raciMatrixFullscreenBtn && elements.projectsRaciView) {
+    elements.raciMatrixFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.projectsRaciView));
+  }
+  if (elements.projectsRaciMatrixTable) {
+    elements.projectsRaciMatrixTable.addEventListener("click", (event) => {
+      const roleToggle = event.target.closest(".raci-matrix-card__role-toggle");
+      if (roleToggle) {
+        event.preventDefault();
+        event.stopPropagation();
+        handleRaciMatrixCardRoleToggle(roleToggle);
+        return;
+      }
+      const viewBtn = event.target.closest("[data-action='viewProject']");
+      if (viewBtn) openProjectModal("view", viewBtn.getAttribute("data-id"));
+    });
+    elements.projectsRaciMatrixTable.addEventListener("mouseover", handleRaciMatrixTooltipShow, true);
+  }
+  if (elements.projectsRaciMatrixWrap) {
+    elements.projectsRaciMatrixWrap.addEventListener("scroll", () => {
+      hideCellTypeTooltips();
+    }, { passive: true });
+  }
 
   if (elements.projectsMapFullscreenBtn && elements.projectsMapView) {
     elements.projectsMapFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.projectsMapView));
@@ -3344,11 +3626,13 @@ function attachEventListeners() {
   }
   if (elements.projectForm) {
     elements.projectForm.addEventListener("input", (event) => {
+      scheduleProjectModalSectionNavSync();
       if (event.target.closest(".project-task-row, .project-tasks-readonly, #projectTasksContainer")) {
         scheduleProjectTasksDisclosureSync();
       }
     });
     elements.projectForm.addEventListener("change", (event) => {
+      scheduleProjectModalSectionNavSync();
       if (
         event.target.matches(".project-task-name-input, .project-task-status-select") ||
         event.target.closest("#projectTasksContainer")
@@ -3657,6 +3941,7 @@ function attachEventListeners() {
       if (!elements.projectLabelsContainer.querySelector(".project-label-row")) {
         addProjectLabelRow();
       }
+      scheduleProjectModalSectionNavSync();
     });
   }
 
@@ -3675,6 +3960,7 @@ function attachEventListeners() {
       if (!elements.projectLinksContainer.querySelector(".project-link-row")) {
         addProjectLinkRow();
       }
+      scheduleProjectModalSectionNavSync();
     });
   }
 
@@ -3716,6 +4002,7 @@ function attachEventListeners() {
       if (!container.querySelector(".project-raci-row")) {
         addProjectRaciRow(container.getAttribute("data-raci-role"));
       }
+      scheduleProjectModalSectionNavSync();
     });
   }
 
@@ -3862,12 +4149,28 @@ function attachEventListeners() {
   }, true);
 
   document.body.addEventListener("focusin", (e) => {
+    const raciWrap = e.target.closest(".raci-matrix-with-tooltip");
+    if (raciWrap && isRaciMatrixDesktopLayout()) {
+      positionProfileTooltip(raciWrap);
+      return;
+    }
     const wrap = e.target.closest(".profile-icon-wrap");
     if (!wrap) return;
     positionProfileTooltip(wrap);
   }, true);
 
+  document.body.addEventListener("mouseover", (e) => {
+    handleRaciMatrixTooltipShow(e);
+  }, true);
+
   document.body.addEventListener("mouseenter", (e) => {
+    const raciHover =
+      e.target.closest(".raci-matrix-with-tooltip") ||
+      e.target.closest(".cell-type-tooltip--raci");
+    if (raciHover && isRaciMatrixDesktopLayout()) {
+      cancelTooltipHoverHide();
+      return;
+    }
     if (isCompactLayoutViewport()) return;
     const tooltip = e.target.closest(".cell-type-tooltip.cell-type-tooltip-visible");
     if (tooltip && tooltip._ownerWrap) {
@@ -3875,7 +4178,7 @@ function attachEventListeners() {
       return;
     }
     const wrap = e.target.closest(
-      ".profile-icon-wrap, .cell-type-icon-wrap, .scrum-board-card-type-wrap, .project-field-tooltip-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip"
+      ".profile-icon-wrap, .cell-type-icon-wrap, .scrum-board-card-type-wrap, .project-field-tooltip-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip, .raci-matrix-with-tooltip"
     );
     if (wrap) cancelTooltipHoverHide();
   }, true);
@@ -3892,7 +4195,7 @@ function attachEventListeners() {
     }
 
     const wrap = e.target.closest(
-      ".profile-icon-wrap, .cell-type-icon-wrap, .scrum-board-card-type-wrap, .project-field-tooltip-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip"
+      ".profile-icon-wrap, .cell-type-icon-wrap, .scrum-board-card-type-wrap, .project-field-tooltip-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip, .raci-matrix-with-tooltip"
     );
     if (!wrap) return;
     if (e.relatedTarget && isWithinTooltipHoverZone(e.relatedTarget, wrap)) {
@@ -5132,6 +5435,7 @@ function renderExportUnlockProfileList(lockedProfiles) {
     input.setAttribute("data-profile-id", profile.id);
     input.setAttribute("autocomplete", "off");
     input.placeholder = "Enter password";
+    markPasswordManagerIgnore(input);
 
     const toggleBtn = document.createElement("button");
     toggleBtn.type = "button";
@@ -6009,6 +6313,7 @@ function addCountryRow(selectedCountry) {
   row.className = "country-row";
 
   const select = document.createElement("select");
+  select.setAttribute("aria-label", "Project country");
   populateProjectCountrySelect(select, selectedCountry);
 
   const removeBtn = document.createElement("button");
@@ -6666,6 +6971,18 @@ function ensureProjectTasksDisclosure() {
 
 const RACI_ROLES = ["responsible", "accountable", "consulted", "informed"];
 const RACI_DOMAIN_OPTIONS = ["Business", "Tech"];
+const RACI_MATRIX_ROLE_LABELS = {
+  responsible: "Responsible",
+  accountable: "Accountable",
+  consulted: "Consulted",
+  informed: "Informed"
+};
+const RACI_MATRIX_ROLE_SHORT = {
+  responsible: "R",
+  accountable: "A",
+  consulted: "C",
+  informed: "I"
+};
 
 function getEmptyProjectRaci() {
   return {
@@ -6861,6 +7178,467 @@ function getProjectRaciFromControls() {
     raci[role] = normalizeRaciEntries(raci[role]);
   });
   return normalizeProjectRaci(raci);
+}
+
+function getRaciEntriesForMatrixDomain(project, role, domain) {
+  const raci = normalizeProjectRaci(project && project.raci);
+  const needle = normalizeRaciDomain(domain);
+  return raci[role].filter((entry) => entry.domain === needle);
+}
+
+function syncRaciMatrixDomainToggle(domain) {
+  const normalized = normalizeRaciDomain(domain);
+  if (elements.raciMatrixDomainToggle) {
+    elements.raciMatrixDomainToggle.dataset.activeDomain = normalized;
+    elements.raciMatrixDomainToggle.querySelectorAll(".raci-matrix-domain-btn").forEach((btn) => {
+      const active = btn.getAttribute("data-raci-domain") === normalized;
+      btn.classList.toggle("raci-matrix-domain-btn--active", active);
+      btn.setAttribute("aria-selected", String(active));
+    });
+  }
+}
+
+function renderRaciMatrixEmptyMessage(message) {
+  if (!elements.projectsRaciMatrixTable) return;
+  elements.projectsRaciMatrixTable.innerHTML = "";
+  elements.projectsRaciMatrixTable.className = "raci-matrix-board-host raci-matrix-board-host--empty";
+  const empty = document.createElement("p");
+  empty.className = "raci-matrix-empty";
+  empty.textContent = message;
+  elements.projectsRaciMatrixTable.appendChild(empty);
+}
+
+function buildRaciMatrixProjectLink(project) {
+  const titleBtn = document.createElement("button");
+  titleBtn.type = "button";
+  titleBtn.className = "raci-matrix-project-link";
+  titleBtn.textContent = project.title || "Untitled project";
+  titleBtn.setAttribute("data-action", "viewProject");
+  titleBtn.setAttribute("data-id", project.id);
+  return titleBtn;
+}
+
+function buildRaciMatrixNameChip(entry) {
+  const item = document.createElement("li");
+  item.className = "raci-matrix-name-chip";
+  const avatar = document.createElement("span");
+  avatar.className = "raci-matrix-name-chip__avatar";
+  avatar.setAttribute("aria-hidden", "true");
+  avatar.textContent = getPersonDisplayInitials(entry.name);
+  const label = document.createElement("span");
+  label.className = "raci-matrix-name-chip__label";
+  label.textContent = entry.name;
+  label.title = entry.name;
+  item.appendChild(avatar);
+  item.appendChild(label);
+  return item;
+}
+
+function formatRaciEntriesTooltip(entries, role) {
+  const roleLabel = RACI_MATRIX_ROLE_LABELS[role] || role;
+  const names = entries.map((entry) => String(entry.name || "").trim()).filter(Boolean);
+  if (!names.length) return "";
+  if (names.length === 1) return `${roleLabel}: ${names[0]}`;
+  return `${roleLabel} (${names.length}): ${names.join(", ")}`;
+}
+
+function buildRaciMatrixEntriesTooltip(entries, role) {
+  const roleLabel = RACI_MATRIX_ROLE_LABELS[role] || role;
+  const names = entries.map((entry) => String(entry.name || "").trim()).filter(Boolean);
+
+  const tooltipEl = document.createElement("div");
+  tooltipEl.className = "cell-type-tooltip cell-type-tooltip--wide cell-type-tooltip--raci";
+  if (names.length > 5) tooltipEl.classList.add("cell-type-tooltip--scroll");
+  tooltipEl.setAttribute("role", "tooltip");
+
+  const titleEl = document.createElement("div");
+  titleEl.className = "cell-type-tooltip-title";
+  titleEl.textContent = names.length === 1 ? roleLabel : `${roleLabel} (${names.length})`;
+  tooltipEl.appendChild(titleEl);
+
+  const bodyEl = document.createElement("div");
+  bodyEl.className = "cell-type-tooltip-body raci-matrix-tooltip-body";
+  const listEl = document.createElement("ul");
+  listEl.className = "raci-matrix-tooltip-list";
+  names.forEach((name) => {
+    const item = document.createElement("li");
+    item.className = "raci-matrix-tooltip-item";
+    item.dataset.raciRole = role;
+    const avatar = document.createElement("span");
+    avatar.className = "raci-matrix-tooltip-item__avatar";
+    avatar.setAttribute("aria-hidden", "true");
+    avatar.textContent = getPersonDisplayInitials(name);
+    const label = document.createElement("span");
+    label.className = "raci-matrix-tooltip-item__name";
+    label.textContent = name;
+    item.appendChild(avatar);
+    item.appendChild(label);
+    listEl.appendChild(item);
+  });
+  bodyEl.appendChild(listEl);
+  tooltipEl.appendChild(bodyEl);
+  bodyEl.addEventListener(
+    "wheel",
+    (e) => {
+      e.stopPropagation();
+    },
+    { passive: true }
+  );
+  return tooltipEl;
+}
+
+function buildRaciMatrixTooltipWrap(entries, role, contentNode) {
+  const wrap = document.createElement("span");
+  wrap.className = "raci-matrix-with-tooltip";
+  wrap.setAttribute("tabindex", "0");
+  wrap.setAttribute("aria-label", formatRaciEntriesTooltip(entries, role));
+  wrap.dataset.raciRole = role;
+  wrap.appendChild(contentNode);
+  wrap.appendChild(buildRaciMatrixEntriesTooltip(entries, role));
+  return wrap;
+}
+
+function buildRaciMatrixCardRoleValue(entries, role, projectId) {
+  const body = document.createElement("div");
+  body.className = "raci-matrix-card__role-body";
+
+  const value = document.createElement("div");
+  value.className = "raci-matrix-card__role-value raci-matrix-role-value";
+  value.dataset.raciRole = role;
+  value.id = `raci-card-${projectId}-${role}-assignees`;
+
+  if (!entries.length) {
+    const empty = document.createElement("span");
+    empty.className = "raci-matrix-cell-empty";
+    empty.textContent = "—";
+    empty.setAttribute("aria-label", "No assignment");
+    value.appendChild(empty);
+    body.appendChild(value);
+    return body;
+  }
+
+  const list = document.createElement("ul");
+  list.className = "raci-matrix-name-list";
+  list.appendChild(buildRaciMatrixNameChip(entries[0]));
+
+  if (entries.length > 1) {
+    entries.slice(1).forEach((entry) => {
+      const chip = buildRaciMatrixNameChip(entry);
+      chip.classList.add("raci-matrix-card__role-extra");
+      list.appendChild(chip);
+    });
+    value.appendChild(list);
+    body.appendChild(value);
+
+    const roleLabel = RACI_MATRIX_ROLE_LABELS[role] || role;
+    const hiddenCount = entries.length - 1;
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "raci-matrix-card__role-toggle";
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.setAttribute("aria-controls", value.id);
+    toggle.setAttribute(
+      "aria-label",
+      `Show ${hiddenCount} more ${roleLabel} assignee${hiddenCount === 1 ? "" : "s"}`
+    );
+    toggle.textContent = `+${hiddenCount} more`;
+    body.appendChild(toggle);
+    return body;
+  }
+
+  value.appendChild(list);
+  body.appendChild(value);
+  return body;
+}
+
+function handleRaciMatrixCardRoleToggle(toggleBtn) {
+  const roleRow = toggleBtn.closest(".raci-matrix-card__role");
+  if (!roleRow) return;
+
+  const isCollapsed = roleRow.classList.contains("raci-matrix-card__role--collapsed");
+  const nextCollapsed = !isCollapsed;
+  roleRow.classList.toggle("raci-matrix-card__role--collapsed", nextCollapsed);
+  roleRow.classList.toggle("raci-matrix-card__role--expanded", !nextCollapsed);
+  toggleBtn.setAttribute("aria-expanded", String(!nextCollapsed));
+
+  const role = roleRow.dataset.raciRole || "";
+  const roleLabel = RACI_MATRIX_ROLE_LABELS[role] || role;
+  const extraCount = roleRow.querySelectorAll(".raci-matrix-card__role-extra").length;
+
+  if (nextCollapsed) {
+    toggleBtn.textContent = `+${extraCount} more`;
+    toggleBtn.setAttribute(
+      "aria-label",
+      `Show ${extraCount} more ${roleLabel} assignee${extraCount === 1 ? "" : "s"}`
+    );
+  } else {
+    toggleBtn.textContent = "Show less";
+    toggleBtn.setAttribute("aria-label", `Show fewer ${roleLabel} assignees`);
+  }
+}
+
+function buildRaciMatrixDesktopRoleValue(entries, role) {
+  const value = document.createElement("div");
+  value.className =
+    "raci-matrix-role-value raci-matrix-role-value--compact raci-matrix-role-value--grid";
+  value.dataset.raciRole = role;
+  if (!entries.length) {
+    const empty = document.createElement("span");
+    empty.className = "raci-matrix-cell-empty";
+    empty.textContent = "—";
+    empty.setAttribute("aria-label", "No assignment");
+    value.appendChild(empty);
+    return value;
+  }
+
+  const list = document.createElement("ul");
+  list.className = "raci-matrix-name-list raci-matrix-name-list--compact";
+  list.appendChild(buildRaciMatrixNameChip(entries[0]));
+
+  if (entries.length > 1) {
+    const more = document.createElement("li");
+    more.className = "raci-matrix-name-chip raci-matrix-name-chip--more";
+    more.textContent = `+${entries.length - 1}`;
+    more.setAttribute("aria-hidden", "true");
+    list.appendChild(more);
+    value.appendChild(buildRaciMatrixTooltipWrap(entries, role, list));
+  } else {
+    value.appendChild(list);
+  }
+  return value;
+}
+
+function buildRaciMatrixColumnHead(role) {
+  const label = RACI_MATRIX_ROLE_LABELS[role] || role;
+  const short = RACI_MATRIX_ROLE_SHORT[role] || role.slice(0, 1).toUpperCase();
+  const wrap = document.createElement("span");
+  wrap.className = "raci-matrix-col-head";
+  const badge = document.createElement("span");
+  badge.className = "raci-matrix-role-badge";
+  badge.textContent = short;
+  badge.setAttribute("aria-hidden", "true");
+  const text = document.createElement("span");
+  text.className = "raci-matrix-col-head__label";
+  text.textContent = label;
+  wrap.appendChild(badge);
+  wrap.appendChild(text);
+  return wrap;
+}
+
+function buildRaciMatrixDesktopProjectCell(project) {
+  const wrap = document.createElement("div");
+  wrap.className = "raci-matrix-grid__project";
+
+  if (isSuperAdminModeActive() && project.ownerProfileName) {
+    const ownerStrip = buildProjectOwnerIdentityElement(project, {
+      variant: "raci-grid",
+      showTeam: false,
+      showScopeHint: true
+    });
+    if (ownerStrip) {
+      wrap.classList.add("raci-matrix-grid__project--has-owner");
+      wrap.appendChild(ownerStrip);
+    }
+  }
+
+  const titleBtn = buildRaciMatrixProjectLink(project);
+  titleBtn.classList.add("raci-matrix-grid__project-link");
+  wrap.appendChild(titleBtn);
+
+  return wrap;
+}
+
+function buildRaciMatrixDesktopGrid(projects, domain) {
+  const panel = document.createElement("div");
+  panel.className = "raci-matrix-table-panel";
+
+  const grid = document.createElement("div");
+  grid.className = "raci-matrix-grid";
+  grid.setAttribute("role", "table");
+  grid.setAttribute("aria-label", `RACI matrix (${domain} perspective)`);
+
+  const headerRow = document.createElement("div");
+  headerRow.className = "raci-matrix-grid__row raci-matrix-grid__row--head";
+  headerRow.setAttribute("role", "row");
+
+  const projectHead = document.createElement("div");
+  projectHead.className = "raci-matrix-grid__cell raci-matrix-grid__cell--project";
+  projectHead.setAttribute("role", "columnheader");
+  projectHead.textContent = "Project";
+  headerRow.appendChild(projectHead);
+
+  RACI_ROLES.forEach((role) => {
+    const headCell = document.createElement("div");
+    headCell.className = "raci-matrix-grid__cell raci-matrix-grid__cell--role";
+    headCell.setAttribute("role", "columnheader");
+    headCell.id = `raci-col-${role}`;
+    headCell.dataset.raciRole = role;
+    headCell.appendChild(buildRaciMatrixColumnHead(role));
+    headerRow.appendChild(headCell);
+  });
+  grid.appendChild(headerRow);
+
+  projects.forEach((project) => {
+    const row = document.createElement("div");
+    row.className = "raci-matrix-grid__row";
+    row.setAttribute("role", "row");
+    if (
+      isSuperAdminModeActive() &&
+      project.ownerProfileId &&
+      project.ownerProfileId !== state.activeProfileId
+    ) {
+      row.classList.add("raci-matrix-grid__row--external-profile");
+    }
+
+    const projectCell = document.createElement("div");
+    projectCell.className = "raci-matrix-grid__cell raci-matrix-grid__cell--project";
+    projectCell.setAttribute("role", "rowheader");
+    projectCell.appendChild(buildRaciMatrixDesktopProjectCell(project));
+    row.appendChild(projectCell);
+
+    const raci = normalizeProjectRaci(project.raci);
+    RACI_ROLES.forEach((role) => {
+      const roleCell = document.createElement("div");
+      roleCell.className = "raci-matrix-grid__cell raci-matrix-grid__cell--role";
+      roleCell.setAttribute("role", "cell");
+      roleCell.dataset.raciRole = role;
+      roleCell.setAttribute("headers", `raci-col-${role}`);
+      const entries = getRaciEntriesForMatrixDomain({ raci }, role, domain);
+      roleCell.appendChild(buildRaciMatrixDesktopRoleValue(entries, role));
+      row.appendChild(roleCell);
+    });
+    grid.appendChild(row);
+  });
+
+  panel.appendChild(grid);
+  return panel;
+}
+
+function buildRaciMatrixCards(projects, domain) {
+  const cards = document.createElement("div");
+  cards.className = "raci-matrix-cards";
+  cards.setAttribute("role", "list");
+  cards.setAttribute("aria-label", `RACI project cards (${domain} perspective)`);
+
+  projects.forEach((project) => {
+    const card = document.createElement("article");
+    card.className = "raci-matrix-card";
+    card.setAttribute("role", "listitem");
+    if (
+      isSuperAdminModeActive() &&
+      project.ownerProfileId &&
+      project.ownerProfileId !== state.activeProfileId
+    ) {
+      card.classList.add("raci-matrix-card--external-profile");
+    }
+
+    const header = document.createElement("header");
+    header.className = "raci-matrix-card__header";
+    header.appendChild(buildRaciMatrixProjectLink(project));
+
+    const roles = document.createElement("div");
+    roles.className = "raci-matrix-card__roles";
+    const raci = normalizeProjectRaci(project.raci);
+    RACI_ROLES.forEach((role) => {
+      const roleRow = document.createElement("div");
+      roleRow.className = "raci-matrix-card__role";
+      roleRow.dataset.raciRole = role;
+
+      const roleLabel = document.createElement("div");
+      roleLabel.className = "raci-matrix-card__role-label";
+      const badge = document.createElement("span");
+      badge.className = "raci-matrix-role-badge";
+      badge.textContent = RACI_MATRIX_ROLE_SHORT[role] || role.slice(0, 1).toUpperCase();
+      badge.setAttribute("aria-hidden", "true");
+      const labelText = document.createElement("span");
+      labelText.className = "raci-matrix-card__role-name";
+      labelText.textContent = RACI_MATRIX_ROLE_LABELS[role] || role;
+      roleLabel.appendChild(badge);
+      roleLabel.appendChild(labelText);
+
+      const entries = getRaciEntriesForMatrixDomain({ raci }, role, domain);
+      roleRow.appendChild(roleLabel);
+      if (entries.length > 1) {
+        roleRow.classList.add("raci-matrix-card__role--expandable", "raci-matrix-card__role--collapsed");
+      }
+      roleRow.appendChild(buildRaciMatrixCardRoleValue(entries, role, project.id));
+      roles.appendChild(roleRow);
+    });
+
+    const ownerStrip = buildPortfolioCardOwnerStrip(project);
+    if (ownerStrip) {
+      card.classList.add("raci-matrix-card--has-owner");
+      card.appendChild(ownerStrip);
+    }
+    card.appendChild(header);
+    card.appendChild(roles);
+    cards.appendChild(card);
+  });
+
+  return cards;
+}
+
+function renderRaciMatrix() {
+  if (!elements.projectsRaciMatrixTable) return;
+  const domain = normalizeRaciDomain(state.raciMatrixDomain);
+  syncRaciMatrixDomainToggle(domain);
+
+  const activeProfile = getActiveProfile();
+  if (!activeProfile) {
+    renderRaciMatrixEmptyMessage("Create or select a profile to view the RACI matrix.");
+    return;
+  }
+  if (!isProfileUnlocked(activeProfile.id)) {
+    renderRaciMatrixEmptyMessage("Unlock this profile to view the RACI matrix.");
+    return;
+  }
+
+  const baseProjects = getPortfolioProjectsBaseList();
+  const projects = sortProjects(applyFilters(baseProjects));
+  if (!projects.length) {
+    renderRaciMatrixEmptyMessage(
+      isSuperAdminModeActive()
+        ? "No projects match the current filters across all profiles."
+        : "No projects match the current filters."
+    );
+    return;
+  }
+
+  const board = document.createElement("div");
+  board.className = "raci-matrix-board";
+  board.appendChild(buildRaciMatrixDesktopGrid(projects, domain));
+  board.appendChild(buildRaciMatrixCards(projects, domain));
+
+  elements.projectsRaciMatrixTable.className = "raci-matrix-board-host";
+  elements.projectsRaciMatrixTable.innerHTML = "";
+  elements.projectsRaciMatrixTable.appendChild(board);
+}
+
+function renderNonTableProjectsView() {
+  if (state.projectsView === "board" && elements.scrumBoardContainer) {
+    renderScrumBoard();
+  } else if (state.projectsView === "moscow" && elements.moscowBoardContainer) {
+    renderMoscowBoard();
+  } else if (state.projectsView === "map" && elements.projectsMapContainer) {
+    renderProjectsMap();
+  } else if (state.projectsView === "raci" && elements.projectsRaciMatrixTable) {
+    renderRaciMatrix();
+  }
+}
+
+function initRaciMatrixDomainToggle() {
+  if (!elements.raciMatrixDomainToggle) return;
+  syncRaciMatrixDomainToggle(state.raciMatrixDomain);
+  elements.raciMatrixDomainToggle.addEventListener("click", (event) => {
+    const btn = event.target.closest(".raci-matrix-domain-btn");
+    if (!btn) return;
+    const next = normalizeRaciDomain(btn.getAttribute("data-raci-domain"));
+    if (state.raciMatrixDomain === next) return;
+    state.raciMatrixDomain = next;
+    saveState();
+    syncRaciMatrixDomainToggle(next);
+    if (state.projectsView === "raci") renderRaciMatrix();
+  });
 }
 
 function normalizeProjectTaskStatus(status) {
@@ -7108,9 +7886,13 @@ function applyPersistedWorkspaceUiState(parsed) {
     parsed.projectsView === "table" ||
     parsed.projectsView === "board" ||
     parsed.projectsView === "moscow" ||
-    parsed.projectsView === "map"
+    parsed.projectsView === "map" ||
+    parsed.projectsView === "raci"
   ) {
     state.projectsView = parsed.projectsView;
+  }
+  if (RACI_DOMAIN_OPTIONS.includes(parsed.raciMatrixDomain)) {
+    state.raciMatrixDomain = parsed.raciMatrixDomain;
   }
   if (typeof parsed.tableSortByRice === "boolean") {
     state.tableSortByRice = parsed.tableSortByRice;
@@ -7510,6 +8292,7 @@ function syncProjectsViewVisibility() {
   const showBoard = view === "board";
   const showMoscow = view === "moscow";
   const showMap = view === "map";
+  const showRaci = view === "raci";
 
   elements.projectsTableView.style.display = showTable ? "flex" : "none";
   elements.projectsBoardView.style.display = showBoard ? "flex" : "none";
@@ -7522,6 +8305,10 @@ function syncProjectsViewVisibility() {
     elements.projectsMapView.style.display = showMap ? "flex" : "none";
     elements.projectsMapView.setAttribute("aria-hidden", String(!showMap));
   }
+  if (elements.projectsRaciView) {
+    elements.projectsRaciView.style.display = showRaci ? "flex" : "none";
+    elements.projectsRaciView.setAttribute("aria-hidden", String(!showRaci));
+  }
 }
 
 function getActiveProjectsViewRoot() {
@@ -7529,6 +8316,7 @@ function getActiveProjectsViewRoot() {
   if (state.projectsView === "board") return elements.projectsBoardView;
   if (state.projectsView === "moscow") return elements.projectsMoscowView;
   if (state.projectsView === "map") return elements.projectsMapView;
+  if (state.projectsView === "raci") return elements.projectsRaciView;
   return null;
 }
 
@@ -7748,7 +8536,7 @@ function syncCompactTooltipBackdrop(tooltip) {
 }
 
 const TABLE_VIEW_TOOLTIP_TRIGGER_SELECTOR =
-  ".cell-type-icon-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip, .projects-table-card__status-pill, .projects-table-card__chip--more";
+  ".cell-type-icon-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip, .projects-table-card__status-pill, .projects-table-card__chip--more, .raci-matrix-with-tooltip";
 
 function findTableViewTooltipTrigger(target) {
   if (!target || !(target instanceof Element)) return null;
@@ -7885,7 +8673,8 @@ function positionProfileTooltip(wrap, anchorPoint) {
     wrap.classList.contains("card-title-with-tooltip") ||
     wrap.classList.contains("cell-desc-with-tooltip") ||
     wrap.classList.contains("cell-countries-with-tooltip") ||
-    wrap.classList.contains("cell-rice-with-tooltip");
+    wrap.classList.contains("cell-rice-with-tooltip") ||
+    wrap.classList.contains("raci-matrix-with-tooltip");
   tooltip.classList.toggle("cell-type-tooltip--wide", useWideTooltip);
 
   clampTooltipHorizontal(tooltip, centerX);
@@ -8327,7 +9116,8 @@ function syncPortfolioViewTabState(view) {
     [elements.projectsViewTableBtn, "table"],
     [elements.projectsViewBoardBtn, "board"],
     [elements.projectsViewMoscowBtn, "moscow"],
-    [elements.projectsViewMapBtn, "map"]
+    [elements.projectsViewMapBtn, "map"],
+    [elements.projectsViewRaciBtn, "raci"]
   ];
 
   tabMap.forEach(([btn, name]) => {
@@ -9158,15 +9948,7 @@ function renderProjects() {
   if (!activeProfile) {
     renderProjectsTableEmptyMessage("Create or select a profile to start adding projects.");
     updateBulkSelectionActions();
-    if (state.projectsView === "board" && elements.scrumBoardContainer) {
-      renderScrumBoard();
-    }
-    if (state.projectsView === "moscow" && elements.moscowBoardContainer) {
-      renderMoscowBoard();
-    }
-    if (state.projectsView === "map" && elements.projectsMapContainer) {
-      renderProjectsMap();
-    }
+    renderNonTableProjectsView();
     return;
   }
 
@@ -9177,15 +9959,7 @@ function renderProjects() {
     updateBulkSelectionActions();
     syncPortfolioActionButtons();
     if (elements.selectAllProjects) elements.selectAllProjects.checked = false;
-    if (state.projectsView === "board" && elements.scrumBoardContainer) {
-      renderScrumBoard();
-    }
-    if (state.projectsView === "moscow" && elements.moscowBoardContainer) {
-      renderMoscowBoard();
-    }
-    if (state.projectsView === "map" && elements.projectsMapContainer) {
-      renderProjectsMap();
-    }
+    renderNonTableProjectsView();
     return;
   }
 
@@ -9208,15 +9982,7 @@ function renderProjects() {
     );
     updateBulkSelectionActions();
     elements.selectAllProjects.checked = false;
-    if (state.projectsView === "board" && elements.scrumBoardContainer) {
-      renderScrumBoard();
-    }
-    if (state.projectsView === "moscow" && elements.moscowBoardContainer) {
-      renderMoscowBoard();
-    }
-    if (state.projectsView === "map" && elements.projectsMapContainer) {
-      renderProjectsMap();
-    }
+    renderNonTableProjectsView();
     return;
   }
 
@@ -9232,15 +9998,7 @@ function renderProjects() {
         ExchangeRates.ensure().then(() => renderProjects()).catch(() => {});
       }
     }
-    if (state.projectsView === "board" && elements.scrumBoardContainer) {
-      renderScrumBoard();
-    }
-    if (state.projectsView === "moscow" && elements.moscowBoardContainer) {
-      renderMoscowBoard();
-    }
-    if (state.projectsView === "map" && elements.projectsMapContainer) {
-      renderProjectsMap();
-    }
+    renderNonTableProjectsView();
     return;
   }
 
@@ -9260,6 +10018,7 @@ function renderProjects() {
     cb.type = "checkbox";
     cb.className = "checkbox-input project-select-checkbox";
     cb.setAttribute("data-id", project.id);
+    cb.setAttribute("aria-label", `Select ${project.title || "project"}`);
     if (demoReadOnly) {
       cb.disabled = true;
       cb.title = DEMO_READ_ONLY_ACTION_TITLE;
@@ -9780,15 +10539,7 @@ function renderProjects() {
       ExchangeRates.ensure().then(() => renderProjects()).catch(() => {});
     }
   }
-  if (state.projectsView === "board" && elements.scrumBoardContainer) {
-    renderScrumBoard();
-  }
-  if (state.projectsView === "moscow" && elements.moscowBoardContainer) {
-    renderMoscowBoard();
-  }
-  if (state.projectsView === "map" && elements.projectsMapContainer) {
-    renderProjectsMap();
-  }
+  renderNonTableProjectsView();
 }
 
 function switchProjectsView(view) {
@@ -9800,6 +10551,7 @@ function switchProjectsView(view) {
   const showBoard = view === "board";
   const showMoscow = view === "moscow";
   const showMap = view === "map";
+  const showRaci = view === "raci";
 
   elements.projectsTableView.style.display = showTable ? "" : "none";
   elements.projectsBoardView.style.display = showBoard ? "flex" : "none";
@@ -9811,6 +10563,10 @@ function switchProjectsView(view) {
   if (elements.projectsMapView) {
     elements.projectsMapView.style.display = showMap ? "flex" : "none";
     elements.projectsMapView.setAttribute("aria-hidden", String(!showMap));
+  }
+  if (elements.projectsRaciView) {
+    elements.projectsRaciView.style.display = showRaci ? "flex" : "none";
+    elements.projectsRaciView.setAttribute("aria-hidden", String(!showRaci));
   }
 
   if (!showTable) {
@@ -12119,6 +12875,7 @@ function buildProjectTableCard(project, demoReadOnly, options = {}) {
   cb.type = "checkbox";
   cb.className = "checkbox-input project-select-checkbox";
   cb.setAttribute("data-id", project.id);
+  cb.setAttribute("aria-label", `Select ${project.title || "project"}`);
   if (demoReadOnly) {
     cb.disabled = true;
     cb.title = DEMO_READ_ONLY_ACTION_TITLE;
@@ -12290,18 +13047,20 @@ function initScrumBoardStatusColumnsOptions() {
   if (!elements.scrumBoardStatusColumnsList) return;
   elements.scrumBoardStatusColumnsList.innerHTML = "";
   const visible = new Set(getScrumBoardVisibleStatuses());
-  getAllProjectStatuses().forEach((status) => {
+  getAllProjectStatuses().forEach((status, index) => {
     const row = document.createElement("div");
     row.className = "filter-country-option scrum-board-status-option";
     row.dataset.status = status;
 
     const cb = document.createElement("input");
     cb.type = "checkbox";
+    cb.id = `scrumBoardStatus-${index}`;
     cb.value = status;
     cb.checked = visible.has(status);
 
-    const label = document.createElement("span");
+    const label = document.createElement("label");
     label.className = "scrum-board-status-option-label";
+    label.setAttribute("for", cb.id);
     if (typeof projectStatusIcons !== "undefined" && projectStatusIcons[status]) {
       const iconWrap = document.createElement("span");
       iconWrap.className = "scrum-board-status-option-icon";

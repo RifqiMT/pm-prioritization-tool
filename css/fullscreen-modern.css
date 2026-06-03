@@ -319,7 +319,7 @@ html:not(.is-compact-layout) .view-in-fullscreen-host .moscow-grid {
   width: 100%;
   min-width: 0;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .view-fullscreen-host--compact .view-fullscreen-actions {

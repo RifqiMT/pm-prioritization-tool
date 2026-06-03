@@ -74,20 +74,38 @@ const RichTextEditor = (function () {
     );
   }
 
+  function escapeAttr(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function getAccessibleName(labelId, fallback) {
+    if (labelId) {
+      const labelEl = document.getElementById(labelId);
+      if (labelEl) {
+        const text = (labelEl.textContent || "").replace(/\s+/g, " ").trim();
+        if (text) return text;
+      }
+    }
+    return fallback || "Description";
+  }
+
   function buildEditorHtml(options) {
     const surfaceId = options.surfaceId;
     const toolbarId = options.toolbarId;
     const labelId = options.labelId || "";
     const placeholder = options.placeholder || "";
     const size = options.size === "compact" ? "rich-text-editor--compact" : "";
+    const accessibleName = getAccessibleName(labelId, options.ariaLabel || "Description");
 
     return (
       `<div class="rich-text-editor ${size}">` +
       buildToolbarHtml(toolbarId, options.ariaLabel || "Description formatting") +
       `<div id="${surfaceId}" class="rich-text-editor__surface" contenteditable="true" role="textbox" ` +
-      `aria-multiline="true"${labelId ? ` aria-labelledby="${labelId}"` : ""}${
-        options.required ? ' aria-required="true"' : ""
-      } ` +
+      `aria-multiline="true" aria-label="${escapeAttr(accessibleName)}"${
+        labelId ? ` aria-labelledby="${labelId}"` : ""
+      }${options.required ? ' aria-required="true"' : ""} ` +
       `data-placeholder="${placeholder.replace(/"/g, "&quot;")}"></div></div>`
     );
   }

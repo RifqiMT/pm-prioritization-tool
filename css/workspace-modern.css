@@ -647,7 +647,7 @@ html.is-compact-layout .projects-view--board .scrum-board-card {
 .view-fullscreen-tabs {
   flex: 1 1 auto;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.28rem;
   min-width: 0;
 }
@@ -843,6 +843,7 @@ body.view-pseudo-fullscreen-active {
   right: 0;
 }
 
+html.has-view-fullscreen .portfolio-bottom-bar,
 html.has-view-fullscreen .portfolio-fab,
 html.has-view-fullscreen .profile-picker-bar,
 html.has-view-fullscreen .profile-unlock-panel {
@@ -929,7 +930,8 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .pr
 
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--board,
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--table,
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--moscow {
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--moscow,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--raci {
   min-height: 0 !important;
   padding: 0 1.15rem 1.15rem !important;
 }

@@ -1,28 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-lpignore="true">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Capture projects per profile, score them with RICE (reach, impact, confidence, effort) and optional financial impact, and auto-rank by priority—all in the browser." />
   <link rel="canonical" href="https://pm-prioritization-tool-six.vercel.app/" />
   <title>Product Management Prioritization Tool</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="css/main.css?v=20260603-kano4" rel="stylesheet" />
-  <link href="css/workspace-modern.css?v=20260528-ui190" rel="stylesheet" />
+  <link href="css/main.css?v=20260603-a11ylabels" rel="stylesheet" />
+  <link href="css/workspace-modern.css?v=20260603-bottombar" rel="stylesheet" />
   <link href="css/header-modern.css?v=20260528-ui190" rel="stylesheet" />
   <link href="css/profiles-modern.css?v=20260528-ui190" rel="stylesheet" />
-  <link href="css/portfolio-modern.css?v=20260528-ui190" rel="stylesheet" />
+  <link href="css/portfolio-modern.css?v=20260603-bottombar" rel="stylesheet" />
   <link href="css/profile-modals-modern.css?v=20260528-ui190" rel="stylesheet" />
   <link href="css/export-modals-modern.css?v=20260528-ui190" rel="stylesheet" />
-  <link href="css/view-toolbars-modern.css?v=20260528-ui190" rel="stylesheet" />
-  <link href="css/compact-modern.css?v=20260528-ui190" rel="stylesheet" />
+  <link href="css/view-toolbars-modern.css?v=20260603-raciscroll" rel="stylesheet" />
+  <link href="css/compact-modern.css?v=20260603-bottombar" rel="stylesheet" />
   <link href="css/moscow-compact.css?v=20260528-ui190" rel="stylesheet" />
   <link href="css/board-compact.css?v=20260528-ui190" rel="stylesheet" />
   <link href="css/table-compact.css?v=20260528-ui190" rel="stylesheet" />
   <link href="css/project-actions-modern.css?v=20260528-ui190" rel="stylesheet" />
-  <link href="css/fullscreen-modern.css?v=20260528-ui190" rel="stylesheet" />
+  <link href="css/fullscreen-modern.css?v=20260603-viewtabs5" rel="stylesheet" />
   <link href="css/fullscreen-compact.css?v=20260528-ui190" rel="stylesheet" />
   <link href="css/app-footer.css?v=20260528-ui190" rel="stylesheet" />
   <link href="css/views-density.css?v=20260528-ui190" rel="stylesheet" />
@@ -31,7 +34,7 @@
   <link href="css/table-rows-modern.css?v=20260528-ui190" rel="stylesheet" />
   <link href="css/table-revamp-modern.css?v=20260528-ui190" rel="stylesheet" />
   <link href="css/table-compact-cards.css?v=20260528-ui190" rel="stylesheet" />
-  <link href="css/super-admin-modern.css?v=20260528-ui190" rel="stylesheet" />
+  <link href="css/super-admin-modern.css?v=20260603-raciowner2" rel="stylesheet" />
   <link href="css/map-tooltip-modern.css?v=20260528-ui190" rel="stylesheet" />
   <link href="css/board-drag.css?v=20260528-ui190" rel="stylesheet" />
   <link href="css/board-card-interaction.css?v=20260528-ui190" rel="stylesheet" />
@@ -377,6 +380,10 @@
                 <svg class="view-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></svg>
                 <span class="view-tab-text">Map</span>
               </button>
+              <button type="button" id="projectsViewRaciBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="raci" aria-label="RACI matrix view">
+                <svg class="view-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 0 1-6.75 0 3.375 3.375 0 0 1 6.75 0zm8.25 2.25a2.625 2.625 0 0 1-5.25 0 2.625 2.625 0 0 1 5.25 0z"/></svg>
+                <span class="view-tab-text">RACI</span>
+              </button>
             </nav>
             <div class="portfolio-action-group">
               <div id="superAdminToggleDesktopSlot" class="super-admin-toggle-slot super-admin-toggle-slot--desktop">
@@ -420,7 +427,7 @@
           <div class="filters-header portfolio-filters-toolbar">
             <div class="filters-header-copy">
               <div class="filters-title">Refine results</div>
-              <div class="filters-quick-label">Applies to table, board, MoSCoW, and map.</div>
+              <div class="filters-quick-label">Applies to table, board, MoSCoW, map, and RACI matrix.</div>
             </div>
             <div class="filters-meta">
               <button type="button" id="filtersResetBtn" class="filters-reset-btn portfolio-filter-btn portfolio-filter-btn--reset">
@@ -509,7 +516,7 @@
                       <span class="filter-countries-toggle-icon">▾</span>
                     </button>
                     <div id="filterCountriesPopup" class="filter-countries-popup">
-                      <input id="filterCountriesSearch" type="text" placeholder="Search countries..." />
+                      <input id="filterCountriesSearch" type="text" placeholder="Search countries..." aria-label="Search countries" />
                       <div id="filterCountriesList" class="filter-countries-list"></div>
                     </div>
                   </div>
@@ -526,6 +533,7 @@
                         id="filterProjectPeriodSearch"
                         type="text"
                         placeholder="Search periods..."
+                        aria-label="Search project periods"
                       />
                       <div id="filterProjectPeriodList" class="filter-countries-list"></div>
                     </div>
@@ -662,12 +670,12 @@
                   <span class="projects-table-group-label__text">Group by</span>
                 </label>
                 <div class="projects-table-group-control-wrap">
-                  <select id="tableGroupBySelect" class="projects-table-group-select" aria-describedby="tableGroupBySummary"></select>
+                  <select id="tableGroupBySelect" class="projects-table-group-select" aria-label="Group by" aria-describedby="tableGroupBySummary"></select>
                 </div>
                 <p class="projects-table-group-summary" id="tableGroupBySummary" aria-live="polite"></p>
               </div>
               <label class="view-toolbar__toggle table-sort-toggle view-toolbar__compact-rice" for="tableSortByRiceToggle">
-                <input type="checkbox" class="view-toolbar__toggle-input" id="tableSortByRiceToggle" checked aria-describedby="tableSortByRiceLabel" />
+                <input type="checkbox" class="view-toolbar__toggle-input" id="tableSortByRiceToggle" checked aria-label="RICE sort" aria-labelledby="tableSortByRiceLabel" />
                 <span class="view-toolbar__toggle-track" aria-hidden="true"><span class="view-toolbar__toggle-thumb"></span></span>
                 <span class="view-toolbar__toggle-label" id="tableSortByRiceLabel">RICE sort</span>
               </label>
@@ -714,7 +722,7 @@
             <thead>
               <tr>
                 <th class="projects-table-col--select">
-                  <input id="selectAllProjects" type="checkbox" class="checkbox-input" />
+                  <input id="selectAllProjects" type="checkbox" class="checkbox-input" aria-label="Select all projects" />
                 </th>
                 <th class="projects-table-col--title" data-sort-field="title">
                   <button class="sort-button" type="button">
@@ -840,7 +848,7 @@
                   </div>
                 </div>
                 <label class="view-toolbar__toggle scrum-board-sort-toggle view-toolbar__compact-rice" for="scrumBoardSortByRiceToggle">
-                  <input type="checkbox" class="view-toolbar__toggle-input" id="scrumBoardSortByRiceToggle" checked aria-describedby="scrumBoardSortByRiceLabel" />
+                  <input type="checkbox" class="view-toolbar__toggle-input" id="scrumBoardSortByRiceToggle" checked aria-label="RICE sort" aria-labelledby="scrumBoardSortByRiceLabel" />
                   <span class="view-toolbar__toggle-track" aria-hidden="true"><span class="view-toolbar__toggle-thumb"></span></span>
                   <span class="view-toolbar__toggle-label" id="scrumBoardSortByRiceLabel">RICE sort</span>
                 </label>
@@ -918,6 +926,40 @@
           <div id="projectsMapContainer" class="projects-map-container" aria-label="World map of projects by country"></div>
         </div>
 
+        <div id="projectsRaciView" class="projects-view projects-view--raci portfolio-view" aria-hidden="true" style="display:none;">
+          <div class="view-toolbar view-toolbar--raci projects-raci-toolbar" role="region" aria-label="RACI matrix controls">
+            <div class="view-toolbar__row view-toolbar__row--primary">
+              <div class="view-toolbar__identity">
+                <span class="view-toolbar__icon" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 0 1-6.75 0 3.375 3.375 0 0 1 6.75 0zm8.25 2.25a2.625 2.625 0 0 1-5.25 0 2.625 2.625 0 0 1 5.25 0z"/></svg>
+                </span>
+                <div class="view-toolbar__copy">
+                  <h3 class="view-toolbar__title">RACI matrix</h3>
+                  <p class="view-toolbar__desc">Desktop shows a 5-column matrix; phones and tablets show one card per project.</p>
+                </div>
+              </div>
+              <div class="view-toolbar__cluster view-toolbar__cluster--compact-controls">
+                <div class="raci-matrix-domain-toggle view-toolbar__field" role="group" aria-label="RACI perspective">
+                  <span class="view-toolbar__field-label" id="raciMatrixDomainLabel">Perspective</span>
+                  <div class="raci-matrix-domain-toggle__buttons" role="tablist" aria-labelledby="raciMatrixDomainLabel" data-active-domain="Business">
+                    <span class="raci-matrix-domain-indicator" aria-hidden="true"></span>
+                    <button type="button" class="raci-matrix-domain-btn" data-raci-domain="Business" role="tab" aria-selected="true">Business</button>
+                    <button type="button" class="raci-matrix-domain-btn" data-raci-domain="Tech" role="tab" aria-selected="false">Tech</button>
+                  </div>
+                </div>
+                <button type="button" id="raciMatrixFullscreenBtn" class="view-toolbar__btn view-fullscreen-btn view-toolbar__compact-fullscreen" aria-label="Expand RACI matrix to full screen" title="Full screen">
+                  <svg class="view-fullscreen-icon icon-expand" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                  <svg class="view-fullscreen-icon icon-compress" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v3a2 2 0 0 1 2 2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+                  <span class="view-toolbar__btn-label view-fullscreen-label">Expand</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div id="projectsRaciMatrixWrap" class="raci-matrix-wrap" aria-live="polite">
+            <div id="projectsRaciMatrixTable" class="raci-matrix-board-host"></div>
+          </div>
+        </div>
+
         <div id="projectsMoscowView" class="projects-view projects-view--moscow portfolio-view" aria-hidden="true" style="display:none;">
           <header class="view-toolbar view-toolbar--moscow moscow-view-header" role="region" aria-label="MoSCoW view controls">
             <div class="view-toolbar__row view-toolbar__row--primary">
@@ -932,7 +974,7 @@
               </div>
               <div class="view-toolbar__cluster view-toolbar__cluster--compact-controls">
                 <label class="view-toolbar__toggle moscow-sort-toggle view-toolbar__compact-rice" for="moscowSortByRiceToggle">
-                  <input type="checkbox" class="view-toolbar__toggle-input" id="moscowSortByRiceToggle" checked aria-describedby="moscowSortByRiceLabel" />
+                  <input type="checkbox" class="view-toolbar__toggle-input" id="moscowSortByRiceToggle" checked aria-label="RICE sort" aria-labelledby="moscowSortByRiceLabel" />
                   <span class="view-toolbar__toggle-track" aria-hidden="true"><span class="view-toolbar__toggle-thumb"></span></span>
                   <span class="view-toolbar__toggle-label" id="moscowSortByRiceLabel">RICE sort</span>
                 </label>
@@ -949,18 +991,19 @@
         </div>
         </div>
 
-        <button type="button" id="portfolioFabAddProject" class="portfolio-fab" aria-label="New project" title="New project" disabled>
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-        </button>
-
-        <div id="portfolioSelectionBar" class="portfolio-selection-bar" role="status" aria-live="polite" hidden>
-          <span id="portfolioSelectionCount" class="portfolio-selection-bar__count" aria-atomic="true">0 selected</span>
-          <div class="portfolio-selection-bar__actions">
-            <button type="button" id="portfolioSelectionClearBtn" class="portfolio-selection-bar__clear">Clear</button>
-            <button type="button" id="portfolioSelectionDuplicateBtn" class="portfolio-selection-bar__action portfolio-selection-bar__duplicate super-admin-bulk-action" disabled hidden>Duplicate</button>
-            <button type="button" id="portfolioSelectionMoveBtn" class="portfolio-selection-bar__action portfolio-selection-bar__move super-admin-bulk-action" disabled hidden>Move</button>
-            <button type="button" id="portfolioSelectionDeleteBtn" class="portfolio-selection-bar__delete" disabled>Delete selected</button>
+        <div class="portfolio-bottom-bar">
+          <div id="portfolioSelectionBar" class="portfolio-selection-bar" role="status" aria-live="polite" hidden>
+            <span id="portfolioSelectionCount" class="portfolio-selection-bar__count" aria-atomic="true">0 selected</span>
+            <div class="portfolio-selection-bar__actions">
+              <button type="button" id="portfolioSelectionClearBtn" class="portfolio-selection-bar__clear">Clear</button>
+              <button type="button" id="portfolioSelectionDuplicateBtn" class="portfolio-selection-bar__action portfolio-selection-bar__duplicate super-admin-bulk-action" disabled hidden>Duplicate</button>
+              <button type="button" id="portfolioSelectionMoveBtn" class="portfolio-selection-bar__action portfolio-selection-bar__move super-admin-bulk-action" disabled hidden>Move</button>
+              <button type="button" id="portfolioSelectionDeleteBtn" class="portfolio-selection-bar__delete" disabled>Delete selected</button>
+            </div>
           </div>
+          <button type="button" id="portfolioFabAddProject" class="portfolio-fab" aria-label="New project" title="New project" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          </button>
         </div>
       </section>
     </main>
@@ -1043,6 +1086,7 @@
     type="file"
     id="importFileInput"
     accept=".json,application/json,.csv,text/csv"
+    aria-label="Import project data file"
     style="display:none;"
   />
 
@@ -1190,7 +1234,7 @@
                   </div>
                 </div>
                 <div class="project-field-tooltip-wrap">
-                  <label id="projectDescriptionLabel" for="projectDescription">Description <span class="field-required-tag">required</span></label>
+                  <span id="projectDescriptionLabel" class="project-field-label">Description <span class="field-required-tag">required</span></span>
                   <p class="project-dynamic-field-hint">Explain what this project is, why it matters, and what’s in scope. Use bullets for key points if helpful.</p>
                   <div
                     class="rich-text-editor-host"
@@ -1208,10 +1252,10 @@
                   </div>
                 </div>
                 <div class="project-field-tooltip-wrap project-meta-dynamic-field" data-optional-collapsible>
-                  <label for="projectLabelsContainer">Labels</label>
+                  <span id="projectLabelsLabel" class="project-field-label">Labels</span>
                   <p class="project-dynamic-field-hint">Tags for grouping or discovery. Each label can use multiple words.</p>
                   <div class="project-dynamic-field-panel">
-                    <div id="projectLabelsContainer" class="project-labels-list" aria-live="polite"></div>
+                    <div id="projectLabelsContainer" class="project-labels-list" role="group" aria-labelledby="projectLabelsLabel" aria-live="polite"></div>
                   </div>
                   <button type="button" id="addProjectLabelBtn" class="btn-secondary project-dynamic-add-btn">
                     + Add label
@@ -1222,10 +1266,10 @@
                   </div>
                 </div>
                 <div class="project-field-tooltip-wrap project-meta-dynamic-field" data-optional-collapsible>
-                  <label for="projectLinksContainer">Links</label>
+                  <span id="projectLinksLabel" class="project-field-label">Links</span>
                   <p class="project-dynamic-field-hint">Named hyperlinks (PRD, Jira, Figma). Provide display text and a URL for each row.</p>
                   <div class="project-dynamic-field-panel">
-                    <div id="projectLinksContainer" class="project-links-list" aria-live="polite"></div>
+                    <div id="projectLinksContainer" class="project-links-list" role="group" aria-labelledby="projectLinksLabel" aria-live="polite"></div>
                   </div>
                   <button type="button" id="addProjectLinkBtn" class="btn-secondary project-dynamic-add-btn">
                     + Add link
@@ -1254,7 +1298,7 @@
                   </div>
                 </div>
                 <div class="project-field-tooltip-wrap">
-                  <label id="reachDescriptionLabel" for="reachDescription">Reach description</label>
+                  <span id="reachDescriptionLabel" class="project-field-label">Reach description</span>
                   <div
                     class="rich-text-editor-host"
                     data-rich-text-editor
@@ -1289,7 +1333,7 @@
                   </div>
                 </div>
                 <div class="project-field-tooltip-wrap">
-                  <label id="impactDescriptionLabel" for="impactDescription">Impact description</label>
+                  <span id="impactDescriptionLabel" class="project-field-label">Impact description</span>
                   <div
                     class="rich-text-editor-host"
                     data-rich-text-editor
@@ -1317,7 +1361,7 @@
                   </div>
                 </div>
                 <div class="project-field-tooltip-wrap">
-                  <label id="confidenceDescriptionLabel" for="confidenceDescription">Confidence description</label>
+                  <span id="confidenceDescriptionLabel" class="project-field-label">Confidence description</span>
                   <div
                     class="rich-text-editor-host"
                     data-rich-text-editor
@@ -1352,7 +1396,7 @@
                   </div>
                 </div>
                 <div class="project-field-tooltip-wrap">
-                  <label id="effortDescriptionLabel" for="effortDescription">Effort description</label>
+                  <span id="effortDescriptionLabel" class="project-field-label">Effort description</span>
                   <div
                     class="rich-text-editor-host"
                     data-rich-text-editor
@@ -1427,10 +1471,10 @@
                 <div class="project-field-tooltip-wrap project-kano-field-wrap">
                   <div class="project-kano-panel">
                     <div class="project-kano-panel__header">
-                      <label for="projectKanoMatrix" class="project-kano-panel__title">KANO positioning matrix</label>
+                      <span id="projectKanoMatrixLabel" class="project-kano-panel__title">KANO positioning matrix</span>
                       <p class="project-kano-panel__hint">Click a cell or use the axis selectors above. Hover to preview zones.</p>
                     </div>
-                    <div id="projectKanoMatrix" class="project-kano-matrix-host" aria-live="polite"></div>
+                    <div id="projectKanoMatrix" class="project-kano-matrix-host" role="group" aria-labelledby="projectKanoMatrixLabel" aria-live="polite"></div>
                     <div id="projectKanoLegend" class="project-kano-legend" aria-label="KANO category legend"></div>
                     <div id="projectKanoResult" class="project-kano-result project-kano-result--empty">
                       <div class="project-kano-result__bar">
@@ -1527,10 +1571,10 @@
                     </div>
 
                     <div class="project-field-tooltip-wrap project-meta-dynamic-field project-tasks-collapsible-wrap" data-project-tasks-collapsible style="margin-top:0.55rem;">
-                      <label for="projectTasksContainer">Tasks</label>
+                      <span id="projectTasksLabel" class="project-field-label">Tasks</span>
                       <p class="project-dynamic-field-hint">Break work into trackable tasks. Each task uses the same status options as project status.</p>
                       <div class="project-dynamic-field-panel">
-                        <div id="projectTasksContainer" class="project-tasks-list" aria-live="polite"></div>
+                        <div id="projectTasksContainer" class="project-tasks-list" role="group" aria-labelledby="projectTasksLabel" aria-live="polite"></div>
                       </div>
                       <button type="button" id="addProjectTaskBtn" class="btn-secondary project-dynamic-add-btn">
                         + Add task
@@ -2269,7 +2313,7 @@
   <!-- Classic scripts (no ES modules) so you can just open index.html directly -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="src/constants.js?v=20260603-kano3"></script>
-  <script src="src/utils.js?v=20260528-ui190"></script>
+  <script src="src/utils.js?v=20260603-a11ylabels2"></script>
   <script src="src/modules/profile-security.js?v=20260528-ui190"></script>
   <script src="src/rice.js?v=20260603-required1"></script>
   <script src="src/modules/exchange-rates.js?v=20260528-ui190"></script>
@@ -2277,10 +2321,10 @@
   <script src="src/modules/overlay-manager.js?v=20260528-ui190"></script>
   <script src="src/modules/storage.js?v=20260603-optional2"></script>
   <script src="src/modules/description-format.js?v=20260528-ui190"></script>
-  <script src="src/modules/rich-text-editor.js?v=20260528-ui190"></script>
+  <script src="src/modules/rich-text-editor.js?v=20260603-a11ylabels2"></script>
   <script src="src/modules/board-drag.js?v=20260528-ui190"></script>
   <script src="src/modules/board-card-interaction.js?v=20260528-ui190"></script>
-  <script src="src/app.js?v=20260603-kano4"></script>
+  <script src="src/app.js?v=20260603-a11ylabels2"></script>
 </body>
 </html>
 

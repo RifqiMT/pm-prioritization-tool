@@ -259,3 +259,71 @@ function formatCurrencyChipLabel(code) {
   return `${symbol} ${upper}`;
 }
 
+/**
+ * Tell password-manager extensions (LastPass, 1Password, Bitwarden) not to scan
+ * profile/API fields — reduces console noise from extension content scripts.
+ * @param {ParentNode|Element|null} [root]
+ */
+function markPasswordManagerIgnore(root) {
+  const scope = root && typeof root.querySelectorAll === "function" ? root : document;
+  const nodes =
+    root &&
+    typeof root.matches === "function" &&
+    root.matches('input[type="password"]')
+      ? [root]
+      : Array.from(scope.querySelectorAll('input[type="password"]'));
+  nodes.forEach((el) => {
+    el.setAttribute("data-lpignore", "true");
+    el.setAttribute("data-1p-ignore", "");
+    el.setAttribute("data-bwignore", "true");
+    el.setAttribute("data-form-type", "other");
+  });
+}
+
+/**
+ * Ensures every visible form control has an accessible name for DevTools / AT.
+ * Adds aria-label when association exists only via aria-labelledby or implicit label text.
+ * @param {ParentNode|Document|null} [root]
+ */
+function syncFormFieldAccessibleNames(root) {
+  const scope = root && typeof root.querySelectorAll === "function" ? root : document;
+  const selector =
+    'input:not([type="hidden"]):not([type="file"]), select, textarea, [contenteditable="true"][role="textbox"]';
+  scope.querySelectorAll(selector).forEach((field) => {
+    if (field.getAttribute("aria-label")) return;
+    const labelText = resolveAccessibleLabel(field);
+    if (labelText) field.setAttribute("aria-label", labelText);
+  });
+}
+
+function getElementAccessibleText(el) {
+  if (!el) return "";
+  return (el.textContent || "").replace(/\s+/g, " ").trim();
+}
+
+function resolveAccessibleLabel(field) {
+  const labelledBy = field.getAttribute("aria-labelledby");
+  if (labelledBy) {
+    const text = labelledBy
+      .split(/\s+/)
+      .map((id) => getElementAccessibleText(document.getElementById(id)))
+      .filter(Boolean)
+      .join(" ");
+    if (text) return text;
+  }
+  if (field.id) {
+    const explicit = document.querySelector(`label[for="${CSS.escape(field.id)}"]`);
+    if (explicit) {
+      const text = getElementAccessibleText(explicit);
+      if (text) return text;
+    }
+  }
+  const nested = field.closest("label");
+  if (nested) {
+    const clone = nested.cloneNode(true);
+    clone.querySelectorAll("input, select, textarea, button").forEach((el) => el.remove());
+    const text = getElementAccessibleText(clone);
+    if (text) return text;
+  }
+  return "";
+}
