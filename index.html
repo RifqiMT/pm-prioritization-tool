@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="css/main.css?v=20260603-blocking-modals1" rel="stylesheet" />
+  <link href="css/main.css?v=20260603-kano4" rel="stylesheet" />
   <link href="css/workspace-modern.css?v=20260528-ui190" rel="stylesheet" />
   <link href="css/header-modern.css?v=20260528-ui190" rel="stylesheet" />
   <link href="css/profiles-modern.css?v=20260528-ui190" rel="stylesheet" />
@@ -1394,6 +1394,69 @@
               </div>
             </div>
 
+            <div id="projectModalSectionKano" class="form-section" data-optional-section>
+              <div class="form-section-header">
+                <span class="form-section-title">KANO model</span>
+                <span class="form-section-hint">Functionality (x-axis) × satisfaction (y-axis)</span>
+              </div>
+              <div class="form-grid project-kano-axis-selects">
+                <div class="project-field-tooltip-wrap project-kano-axis-card">
+                  <label for="projectKanoFunctionalitySelect">Functionality (x-axis)</label>
+                  <select id="projectKanoFunctionalitySelect" name="projectKanoFunctionalitySelect" class="project-kano-axis-select">
+                    <option value="">— Not set —</option>
+                  </select>
+                  <div id="projectKanoFunctionalityMeter" class="project-kano-axis-meter" aria-hidden="true"></div>
+                  <div class="cell-type-tooltip cell-type-tooltip--field">
+                    <div class="cell-type-tooltip-title">Functionality</div>
+                    <div class="cell-type-tooltip-body">Five levels from absent to full implementation. Increases left to right on the matrix.</div>
+                  </div>
+                </div>
+                <div class="project-field-tooltip-wrap project-kano-axis-card">
+                  <label for="projectKanoSatisfactionSelect">Satisfaction (y-axis)</label>
+                  <select id="projectKanoSatisfactionSelect" name="projectKanoSatisfactionSelect" class="project-kano-axis-select">
+                    <option value="">— Not set —</option>
+                  </select>
+                  <div id="projectKanoSatisfactionMeter" class="project-kano-axis-meter" aria-hidden="true"></div>
+                  <div class="cell-type-tooltip cell-type-tooltip--field">
+                    <div class="cell-type-tooltip-title">Satisfaction</div>
+                    <div class="cell-type-tooltip-body">Five levels from very dissatisfied to delighted. Increases bottom to top on the matrix.</div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-grid form-grid-full">
+                <div class="project-field-tooltip-wrap project-kano-field-wrap">
+                  <div class="project-kano-panel">
+                    <div class="project-kano-panel__header">
+                      <label for="projectKanoMatrix" class="project-kano-panel__title">KANO positioning matrix</label>
+                      <p class="project-kano-panel__hint">Click a cell or use the axis selectors above. Hover to preview zones.</p>
+                    </div>
+                    <div id="projectKanoMatrix" class="project-kano-matrix-host" aria-live="polite"></div>
+                    <div id="projectKanoLegend" class="project-kano-legend" aria-label="KANO category legend"></div>
+                    <div id="projectKanoResult" class="project-kano-result project-kano-result--empty">
+                      <div class="project-kano-result__bar">
+                        <div id="projectKanoSelectionSummary" class="project-kano-selection-summary" aria-live="polite">
+                          No position selected yet.
+                        </div>
+                        <div class="project-kano-result__tools">
+                          <span id="projectKanoCategoryBadge" class="project-kano-category-badge" hidden></span>
+                          <button type="button" class="project-kano-clear-btn btn-ghost" id="projectKanoClearBtn" aria-label="Clear KANO position" hidden>
+                            <span class="project-kano-clear-btn__label">Clear</span>
+                          </button>
+                        </div>
+                      </div>
+                      <p id="projectKanoCategoryDescription" class="project-kano-category-description" hidden></p>
+                    </div>
+                  </div>
+                  <div class="cell-type-tooltip cell-type-tooltip--field">
+                    <div class="cell-type-tooltip-title">KANO model</div>
+                    <div class="cell-type-tooltip-body">
+                      Place the project on a 5×5 matrix: functionality increases left to right; satisfaction increases bottom to top. The derived KANO category is indicative only.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div id="projectModalSectionMeta" class="form-section" data-optional-section>
               <div class="form-section-header">
                 <span class="form-section-title">Project Details</span>
@@ -1814,6 +1877,9 @@
               <button type="button" class="project-modal-section-btn" data-scroll-target="projectModalSectionMoscow" aria-label="MoSCoW prioritization">
                 <svg class="project-modal-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75h7.5v7.5h-7.5V3.75zm9.75 0h7.5v7.5h-7.5V3.75zM3.75 13.5h7.5v7.5h-7.5v-7.5zm9.75 0h7.5v7.5h-7.5v-7.5z" /></svg>
               </button>
+              <button type="button" class="project-modal-section-btn" data-scroll-target="projectModalSectionKano" aria-label="KANO model">
+                <svg class="project-modal-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3" /><circle cx="12" cy="12" r="2.25" fill="currentColor" stroke="none" /></svg>
+              </button>
               <button type="button" class="project-modal-section-btn" data-scroll-target="projectModalSectionMeta" aria-label="Project Details">
                 <svg class="project-modal-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
               </button>
@@ -2202,7 +2268,7 @@
 
   <!-- Classic scripts (no ES modules) so you can just open index.html directly -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="src/constants.js?v=20260528-ui190"></script>
+  <script src="src/constants.js?v=20260603-kano3"></script>
   <script src="src/utils.js?v=20260528-ui190"></script>
   <script src="src/modules/profile-security.js?v=20260528-ui190"></script>
   <script src="src/rice.js?v=20260603-required1"></script>
@@ -2214,7 +2280,7 @@
   <script src="src/modules/rich-text-editor.js?v=20260528-ui190"></script>
   <script src="src/modules/board-drag.js?v=20260528-ui190"></script>
   <script src="src/modules/board-card-interaction.js?v=20260528-ui190"></script>
-  <script src="src/app.js?v=20260603-blocking-modals1"></script>
+  <script src="src/app.js?v=20260603-kano4"></script>
 </body>
 </html>
 

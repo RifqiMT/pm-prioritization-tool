@@ -6,7 +6,8 @@ const {
   normalizeProjectLabels,
   normalizeProjectLinks,
   normalizeProjectTasks,
-  normalizeProjectRaci
+  normalizeProjectRaci,
+  normalizeKanoAxisLevel
 } = require("../api/_lib/project-metadata");
 
 assert.deepStrictEqual(normalizeProjectLabels("alpha, beta | gamma"), [
@@ -53,5 +54,11 @@ assert.deepStrictEqual(
     informed: [{ name: "Dave", domain: "Business" }]
   }
 );
+
+assert.strictEqual(normalizeKanoAxisLevel(3), 3);
+assert.strictEqual(normalizeKanoAxisLevel("4"), 4);
+assert.strictEqual(normalizeKanoAxisLevel(0), null);
+assert.strictEqual(normalizeKanoAxisLevel(6), null);
+assert.strictEqual(normalizeKanoAxisLevel("x"), null);
 
 console.log("OK: project metadata normalization tests passed");

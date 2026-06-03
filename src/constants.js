@@ -139,6 +139,102 @@ const moscowDisplayNames = {
 };
 
 /**
+ * KANO model axes for the project modal matrix (5 levels each).
+ * X-axis: functionality depth; Y-axis: customer satisfaction response.
+ */
+const kanoFunctionalityLevels = [
+  { level: 1, label: "Absent", shortLabel: "Absent", description: "Feature is not implemented." },
+  { level: 2, label: "Minimal", shortLabel: "Minimal", description: "Bare-minimum or latent functionality." },
+  { level: 3, label: "Basic", shortLabel: "Basic", description: "Expected baseline capability." },
+  { level: 4, label: "Enhanced", shortLabel: "Enhanced", description: "Above-average performance." },
+  { level: 5, label: "Full", shortLabel: "Full", description: "Best-in-class or complete functionality." }
+];
+
+const kanoSatisfactionLevels = [
+  { level: 1, label: "Very dissatisfied", shortLabel: "V. low", description: "Strong negative response." },
+  { level: 2, label: "Dissatisfied", shortLabel: "Low", description: "Below expectations." },
+  { level: 3, label: "Neutral", shortLabel: "Neutral", description: "Neither strong delight nor frustration." },
+  { level: 4, label: "Satisfied", shortLabel: "High", description: "Meets or exceeds expectations." },
+  { level: 5, label: "Delighted", shortLabel: "V. high", description: "Strong positive emotional response." }
+];
+
+/** Legend entries for the project modal KANO matrix. */
+const kanoCategoryLegend = [
+  {
+    id: "attractive",
+    label: "Attractive",
+    hint: "Delighter",
+    description: "Low functionality, high satisfaction."
+  },
+  {
+    id: "one-dimensional",
+    label: "One-dimensional",
+    hint: "Performance",
+    description: "More functionality drives more satisfaction."
+  },
+  {
+    id: "must-be",
+    label: "Must-be",
+    hint: "Baseline",
+    description: "Expected capability at this level."
+  },
+  {
+    id: "reverse",
+    label: "Reverse",
+    hint: "Simplify",
+    description: "High functionality, low satisfaction."
+  },
+  {
+    id: "indifferent",
+    label: "Indifferent",
+    hint: "Neutral",
+    description: "Low impact on satisfaction."
+  }
+];
+
+/** Interpretive KANO category from a matrix position (display only; axes are persisted). */
+function getKanoCategoryFromPosition(functionality, satisfaction) {
+  const f = Number(functionality);
+  const s = Number(satisfaction);
+  if (!Number.isInteger(f) || !Number.isInteger(s) || f < 1 || f > 5 || s < 1 || s > 5) {
+    return null;
+  }
+  if (f <= 2 && s >= 4) {
+    return {
+      id: "attractive",
+      label: "Attractive",
+      description: "Low functionality yet high satisfaction — a potential delighter."
+    };
+  }
+  if (f >= 4 && s >= 4) {
+    return {
+      id: "one-dimensional",
+      label: "One-dimensional",
+      description: "Higher functionality correlates with higher satisfaction."
+    };
+  }
+  if (f >= 3 && s >= 3 && s <= 4) {
+    return {
+      id: "must-be",
+      label: "Must-be",
+      description: "Expected capability; satisfaction tracks baseline delivery."
+    };
+  }
+  if (f >= 4 && s <= 2) {
+    return {
+      id: "reverse",
+      label: "Reverse",
+      description: "High functionality with low satisfaction — may need simplification."
+    };
+  }
+  return {
+    id: "indifferent",
+    label: "Indifferent",
+    description: "Low impact on satisfaction at this functionality level."
+  };
+}
+
+/**
  * Project period tooltip for the table column (same style as project type / MOSCOW).
  * tooltipTitle: column label; tooltipBodyDescription: static description. Interpretation (e.g. "2026-Q1 = Jan–Mar 2026") is appended in app.js when a value is present.
  */

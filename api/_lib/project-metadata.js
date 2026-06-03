@@ -155,13 +155,22 @@ function normalizeProjectTasks(raw) {
   return out;
 }
 
+function normalizeKanoAxisLevel(value) {
+  if (value == null || value === "") return null;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 1 || n > 5) return null;
+  return n;
+}
+
 function normalizeProjectForStorage(project) {
   if (!project || typeof project !== "object") return project;
   return Object.assign({}, project, {
     labels: normalizeProjectLabels(project.labels),
     links: normalizeProjectLinks(project.links),
     tasks: normalizeProjectTasks(project.tasks),
-    raci: normalizeProjectRaci(project.raci)
+    raci: normalizeProjectRaci(project.raci),
+    kanoFunctionality: normalizeKanoAxisLevel(project.kanoFunctionality),
+    kanoSatisfaction: normalizeKanoAxisLevel(project.kanoSatisfaction)
   });
 }
 
@@ -193,5 +202,6 @@ module.exports = {
   normalizeProjectLabels,
   normalizeProjectLinks,
   normalizeProjectTasks,
-  normalizeProjectRaci
+  normalizeProjectRaci,
+  normalizeKanoAxisLevel
 };

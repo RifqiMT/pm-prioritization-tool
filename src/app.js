@@ -1161,6 +1161,7 @@ function initProjectModalSectionNav() {
     "projectModalSectionProject",
     "projectModalSectionRice",
     "projectModalSectionMoscow",
+    "projectModalSectionKano",
     "projectModalSectionMeta",
     "projectModalSectionRaci",
     "projectModalSectionFinancial"
@@ -1406,6 +1407,10 @@ function ensureProjectOptionalDisclosures() {
     projectForm.querySelectorAll("[data-optional-collapsible]").forEach(wrapOptionalProjectField);
     wrapOptionalProjectSections();
     ensureProjectTasksDisclosure();
+    ensureProjectKanoAxisSelects();
+    ensureProjectKanoAxisMeters();
+    ensureProjectKanoLegend();
+    ensureProjectKanoMatrixMounted();
     projectForm.dataset.optionalDisclosuresReady = "1";
   } catch (err) {
     console.error("Optional project disclosures failed to initialize:", err);
@@ -1458,6 +1463,10 @@ function projectOptionalSectionHasData(sectionId) {
   }
   if (sectionId === "projectModalSectionMoscow") {
     return !!(elements.projectMoscow && String(elements.projectMoscow.value || "").trim());
+  }
+  if (sectionId === "projectModalSectionKano") {
+    const { kanoFunctionality, kanoSatisfaction } = getProjectKanoFromControls();
+    return kanoFunctionality != null && kanoSatisfaction != null;
   }
   if (sectionId === "projectModalSectionMeta") {
     const scalarFields = [
@@ -1519,6 +1528,487 @@ function projectOptionalSectionHasData(sectionId) {
     return false;
   }
   return false;
+}
+
+function normalizeKanoAxisLevel(value) {
+  if (value == null || value === "") return null;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 1 || n > 5) return null;
+  return n;
+}
+
+function getKanoLevelMeta(levels, level) {
+  if (!Array.isArray(levels) || level == null) return null;
+  return levels.find((item) => item.level === level) || null;
+}
+
+function populateProjectKanoAxisSelect(selectEl, levels) {
+  if (!selectEl || selectEl.dataset.kanoOptionsReady === "1") return;
+  if (!Array.isArray(levels)) return;
+  selectEl.dataset.kanoOptionsReady = "1";
+  levels.forEach((meta) => {
+    const opt = document.createElement("option");
+    opt.value = String(meta.level);
+    opt.textContent = `${meta.level} — ${meta.label}`;
+    if (meta.description) opt.title = meta.description;
+    selectEl.appendChild(opt);
+  });
+}
+
+function ensureProjectKanoAxisSelects() {
+  if (typeof kanoFunctionalityLevels === "undefined" || typeof kanoSatisfactionLevels === "undefined") {
+    return;
+  }
+  populateProjectKanoAxisSelect(elements.projectKanoFunctionalitySelect, kanoFunctionalityLevels);
+  populateProjectKanoAxisSelect(elements.projectKanoSatisfactionSelect, kanoSatisfactionLevels);
+
+  const bindAxisSelect = (selectEl) => {
+    if (!selectEl || selectEl.dataset.kanoBound === "1") return;
+    selectEl.dataset.kanoBound = "1";
+    selectEl.addEventListener("change", () => {
+      if (projectModalMode === "view") return;
+      const f = normalizeKanoAxisLevel(elements.projectKanoFunctionalitySelect?.value);
+      const s = normalizeKanoAxisLevel(elements.projectKanoSatisfactionSelect?.value);
+      if (f == null || s == null) {
+        setProjectKanoSelection(null, null);
+        return;
+      }
+      setProjectKanoSelection(f, s);
+    });
+  };
+
+  bindAxisSelect(elements.projectKanoFunctionalitySelect);
+  bindAxisSelect(elements.projectKanoSatisfactionSelect);
+}
+
+function ensureProjectKanoAxisMeters() {
+  const buildMeter = (container, levels) => {
+    if (!container || container.dataset.kanoMeterReady === "1" || !Array.isArray(levels)) return;
+    container.dataset.kanoMeterReady = "1";
+    container.innerHTML = "";
+    levels.forEach((meta) => {
+      const dot = document.createElement("span");
+      dot.className = "project-kano-axis-meter__dot";
+      dot.dataset.level = String(meta.level);
+      dot.title = meta.description || meta.label;
+      container.appendChild(dot);
+    });
+  };
+  if (typeof kanoFunctionalityLevels !== "undefined") {
+    buildMeter(elements.projectKanoFunctionalityMeter, kanoFunctionalityLevels);
+  }
+  if (typeof kanoSatisfactionLevels !== "undefined") {
+    buildMeter(elements.projectKanoSatisfactionMeter, kanoSatisfactionLevels);
+  }
+}
+
+function syncProjectKanoAxisMeters(functionality, satisfaction) {
+  const f = normalizeKanoAxisLevel(functionality);
+  const s = normalizeKanoAxisLevel(satisfaction);
+  const syncOne = (container, level) => {
+    if (!container) return;
+    container.querySelectorAll(".project-kano-axis-meter__dot").forEach((dot) => {
+      const dotLevel = Number(dot.dataset.level);
+      dot.classList.toggle("is-active", level != null && dotLevel === level);
+      dot.classList.toggle("is-dimmed", level != null && dotLevel !== level);
+    });
+  };
+  syncOne(elements.projectKanoFunctionalityMeter, f);
+  syncOne(elements.projectKanoSatisfactionMeter, s);
+}
+
+function ensureProjectKanoLegend() {
+  const legend = elements.projectKanoLegend || $("projectKanoLegend");
+  if (!legend || legend.dataset.kanoLegendReady === "1") return;
+  if (typeof kanoCategoryLegend === "undefined" || !Array.isArray(kanoCategoryLegend)) return;
+  legend.dataset.kanoLegendReady = "1";
+  legend.innerHTML = "";
+  kanoCategoryLegend.forEach((entry) => {
+    const item = document.createElement("span");
+    item.className = `project-kano-legend__item project-kano-legend__item--${entry.id}`;
+    item.dataset.kanoZone = entry.id;
+    item.title = entry.description || entry.label;
+    const swatch = document.createElement("span");
+    swatch.className = "project-kano-legend__swatch";
+    swatch.setAttribute("aria-hidden", "true");
+    const label = document.createElement("span");
+    label.className = "project-kano-legend__label";
+    label.textContent = entry.label;
+    item.appendChild(swatch);
+    item.appendChild(label);
+    legend.appendChild(item);
+  });
+}
+
+function syncProjectKanoLegendHighlight(functionality, satisfaction, { hoverZone = null } = {}) {
+  const legend = elements.projectKanoLegend || $("projectKanoLegend");
+  if (!legend) return;
+  const f = normalizeKanoAxisLevel(functionality);
+  const s = normalizeKanoAxisLevel(satisfaction);
+  const activeZone =
+    hoverZone ||
+    (f != null && s != null && typeof getKanoCategoryFromPosition === "function"
+      ? getKanoCategoryFromPosition(f, s)?.id
+      : null);
+  legend.querySelectorAll(".project-kano-legend__item").forEach((item) => {
+    const zone = item.dataset.kanoZone;
+    item.classList.toggle("is-active", !!activeZone && zone === activeZone);
+  });
+}
+
+function getKanoCellZoneId(functionality, satisfaction) {
+  if (typeof getKanoCategoryFromPosition !== "function") return "indifferent";
+  const category = getKanoCategoryFromPosition(functionality, satisfaction);
+  return category && category.id ? category.id : "indifferent";
+}
+
+function syncProjectKanoMatrixCrosshair(functionality, satisfaction, { hover = false } = {}) {
+  const host = elements.projectKanoMatrix || $("projectKanoMatrix");
+  if (!host) return;
+  const f = normalizeKanoAxisLevel(functionality);
+  const s = normalizeKanoAxisLevel(satisfaction);
+  host.querySelectorAll(".project-kano-matrix-cell").forEach((cell) => {
+    const cellF = Number(cell.dataset.functionality);
+    const cellS = Number(cell.dataset.satisfaction);
+    const inRow = f != null && cellS === s;
+    const inCol = s != null && cellF === f;
+    cell.classList.toggle("is-crosshair-row", inRow);
+    cell.classList.toggle("is-crosshair-col", inCol);
+    cell.classList.toggle("is-crosshair-hover", hover && (inRow || inCol));
+  });
+}
+
+
+function ensureProjectKanoMatrixMounted() {
+  const host = elements.projectKanoMatrix || $("projectKanoMatrix");
+  if (!host || host.dataset.kanoVersion === "5") return;
+  if (typeof kanoFunctionalityLevels === "undefined" || typeof kanoSatisfactionLevels === "undefined") {
+    return;
+  }
+
+  host.dataset.kanoVersion = "5";
+  host.innerHTML = "";
+
+  const wrap = document.createElement("div");
+  wrap.className = "project-kano-matrix-wrap";
+
+  const yAxis = document.createElement("div");
+  yAxis.className = "project-kano-matrix-y-axis";
+  yAxis.setAttribute("aria-hidden", "true");
+  const yTitle = document.createElement("span");
+  yTitle.className = "project-kano-axis-title project-kano-axis-title--y";
+  yTitle.textContent = "Satisfaction";
+  yAxis.appendChild(yTitle);
+  for (let s = 5; s >= 1; s -= 1) {
+    const meta = getKanoLevelMeta(kanoSatisfactionLevels, s);
+    const label = document.createElement("span");
+    label.className = "project-kano-axis-label project-kano-axis-label--y";
+    label.dataset.level = String(s);
+    label.textContent = meta ? meta.shortLabel : String(s);
+    if (meta && meta.description) label.title = meta.description;
+    yAxis.appendChild(label);
+  }
+  wrap.appendChild(yAxis);
+
+  const main = document.createElement("div");
+  main.className = "project-kano-matrix-main";
+
+  const grid = document.createElement("div");
+  grid.className = "project-kano-matrix-grid";
+  grid.setAttribute("role", "grid");
+  grid.setAttribute("aria-label", "KANO functionality and satisfaction matrix");
+  grid.tabIndex = 0;
+
+  for (let s = 5; s >= 1; s -= 1) {
+    for (let f = 1; f <= 5; f += 1) {
+      const fMeta = getKanoLevelMeta(kanoFunctionalityLevels, f);
+      const sMeta = getKanoLevelMeta(kanoSatisfactionLevels, s);
+      const zoneId = getKanoCellZoneId(f, s);
+      const category =
+        typeof getKanoCategoryFromPosition === "function" ? getKanoCategoryFromPosition(f, s) : null;
+
+      const cell = document.createElement("div");
+      cell.className = `project-kano-matrix-cell project-kano-matrix-cell--zone-${zoneId}`;
+      cell.dataset.functionality = String(f);
+      cell.dataset.satisfaction = String(s);
+      cell.dataset.kanoZone = zoneId;
+      cell.style.setProperty("--kano-f", String((f - 1) / 4));
+      cell.style.setProperty("--kano-s", String((s - 1) / 4));
+      cell.setAttribute("role", "gridcell");
+      cell.setAttribute("tabindex", "-1");
+      cell.setAttribute("aria-selected", "false");
+      cell.setAttribute(
+        "aria-label",
+        `Functionality ${f}${fMeta ? `: ${fMeta.label}` : ""}, Satisfaction ${s}${sMeta ? `: ${sMeta.label}` : ""}${category ? `, ${category.label}` : ""}`
+      );
+
+      const marker = document.createElement("span");
+      marker.className = "project-kano-matrix-cell__marker";
+      marker.setAttribute("aria-hidden", "true");
+      cell.appendChild(marker);
+
+      const tip = document.createElement("span");
+      tip.className = "project-kano-matrix-cell__tip";
+      tip.textContent = category ? category.label : "";
+      cell.appendChild(tip);
+
+      const activateCell = () => {
+        if (projectModalMode === "view") return;
+        setProjectKanoSelection(f, s);
+      };
+
+      cell.addEventListener("click", activateCell);
+      cell.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          activateCell();
+        }
+      });
+      cell.addEventListener("mouseenter", () => {
+        syncProjectKanoMatrixCrosshair(f, s, { hover: true });
+        syncProjectKanoAxisLabelHighlight(f, s);
+        syncProjectKanoAxisMeters(f, s);
+        syncProjectKanoLegendHighlight(f, s, { hoverZone: zoneId });
+        cell.classList.add("is-preview");
+      });
+      cell.addEventListener("mouseleave", () => {
+        const current = getProjectKanoFromControls();
+        syncProjectKanoMatrixCrosshair(current.kanoFunctionality, current.kanoSatisfaction);
+        syncProjectKanoAxisLabelHighlight(current.kanoFunctionality, current.kanoSatisfaction);
+        syncProjectKanoAxisMeters(current.kanoFunctionality, current.kanoSatisfaction);
+        syncProjectKanoLegendHighlight(current.kanoFunctionality, current.kanoSatisfaction);
+        cell.classList.remove("is-preview");
+      });
+      cell.addEventListener("focus", () => {
+        syncProjectKanoMatrixCrosshair(f, s, { hover: true });
+        syncProjectKanoAxisLabelHighlight(f, s);
+        syncProjectKanoAxisMeters(f, s);
+        syncProjectKanoLegendHighlight(f, s, { hoverZone: zoneId });
+      });
+      cell.addEventListener("blur", () => {
+        const current = getProjectKanoFromControls();
+        syncProjectKanoMatrixCrosshair(current.kanoFunctionality, current.kanoSatisfaction);
+        syncProjectKanoAxisLabelHighlight(current.kanoFunctionality, current.kanoSatisfaction);
+        syncProjectKanoAxisMeters(current.kanoFunctionality, current.kanoSatisfaction);
+        syncProjectKanoLegendHighlight(current.kanoFunctionality, current.kanoSatisfaction);
+      });
+
+      grid.appendChild(cell);
+    }
+  }
+
+  grid.addEventListener("keydown", (event) => {
+    if (projectModalMode === "view") return;
+    const current = getProjectKanoFromControls();
+    let f = current.kanoFunctionality != null ? current.kanoFunctionality : 3;
+    let s = current.kanoSatisfaction != null ? current.kanoSatisfaction : 3;
+    let handled = true;
+    if (event.key === "ArrowRight") f = Math.min(5, f + 1);
+    else if (event.key === "ArrowLeft") f = Math.max(1, f - 1);
+    else if (event.key === "ArrowUp") s = Math.min(5, s + 1);
+    else if (event.key === "ArrowDown") s = Math.max(1, s - 1);
+    else if (event.key === "Enter" || event.key === " ") {
+      setProjectKanoSelection(f, s);
+      event.preventDefault();
+      return;
+    } else if (event.key === "Escape") {
+      grid.blur();
+      return;
+    } else {
+      handled = false;
+    }
+    if (!handled) return;
+    event.preventDefault();
+    setProjectKanoSelection(f, s);
+    const target = grid.querySelector(
+      `.project-kano-matrix-cell[data-functionality="${f}"][data-satisfaction="${s}"]`
+    );
+    if (target) target.focus();
+  });
+
+  main.appendChild(grid);
+
+  const xAxis = document.createElement("div");
+  xAxis.className = "project-kano-matrix-x-axis";
+  xAxis.setAttribute("aria-hidden", "true");
+  for (let f = 1; f <= 5; f += 1) {
+    const meta = getKanoLevelMeta(kanoFunctionalityLevels, f);
+    const label = document.createElement("span");
+    label.className = "project-kano-axis-label project-kano-axis-label--x";
+    label.dataset.level = String(f);
+    label.textContent = meta ? meta.shortLabel : String(f);
+    if (meta && meta.description) label.title = meta.description;
+    xAxis.appendChild(label);
+  }
+  main.appendChild(xAxis);
+
+  const xTitle = document.createElement("span");
+  xTitle.className = "project-kano-axis-title project-kano-axis-title--x";
+  xTitle.textContent = "Functionality";
+  main.appendChild(xTitle);
+
+  wrap.appendChild(main);
+  host.appendChild(wrap);
+
+  if (elements.projectKanoClearBtn && elements.projectKanoClearBtn.dataset.kanoBound !== "1") {
+    elements.projectKanoClearBtn.dataset.kanoBound = "1";
+    elements.projectKanoClearBtn.addEventListener("click", () => {
+      if (projectModalMode === "view") return;
+      setProjectKanoSelection(null, null);
+      if (elements.projectKanoFunctionalitySelect) elements.projectKanoFunctionalitySelect.focus();
+    });
+  }
+}
+
+function syncProjectKanoAxisLabelHighlight(functionality, satisfaction) {
+  const host = elements.projectKanoMatrix || $("projectKanoMatrix");
+  if (!host) return;
+  const f = normalizeKanoAxisLevel(functionality);
+  const s = normalizeKanoAxisLevel(satisfaction);
+  host.querySelectorAll(".project-kano-axis-label").forEach((label) => {
+    const level = Number(label.dataset.level);
+    const axis = label.classList.contains("project-kano-axis-label--x") ? "x" : "y";
+    const active = axis === "x" ? f != null && level === f : s != null && level === s;
+    label.classList.toggle("is-active", active);
+  });
+}
+
+function renderProjectKanoResultMetrics(functionality, satisfaction) {
+  const f = normalizeKanoAxisLevel(functionality);
+  const s = normalizeKanoAxisLevel(satisfaction);
+  const fMeta = getKanoLevelMeta(kanoFunctionalityLevels, f);
+  const sMeta = getKanoLevelMeta(kanoSatisfactionLevels, s);
+  const fShort = fMeta?.shortLabel || fMeta?.label || `L${f}`;
+  const sShort = sMeta?.shortLabel || sMeta?.label || `L${s}`;
+  const fLong = fMeta?.label || `Level ${f}`;
+  const sLong = sMeta?.label || `Level ${s}`;
+
+  return `<span class="project-kano-result__chip" title="Functionality: ${fLong}">
+      <span class="project-kano-result__chip-kicker" aria-hidden="true">F</span>
+      <span class="project-kano-result__chip-value"><span class="project-kano-result__chip-num">${f}</span><span class="project-kano-result__chip-sep" aria-hidden="true">·</span><span class="project-kano-result__chip-label">${fShort}</span></span>
+    </span><span class="project-kano-result__chip" title="Satisfaction: ${sLong}">
+      <span class="project-kano-result__chip-kicker" aria-hidden="true">S</span>
+      <span class="project-kano-result__chip-value"><span class="project-kano-result__chip-num">${s}</span><span class="project-kano-result__chip-sep" aria-hidden="true">·</span><span class="project-kano-result__chip-label">${sShort}</span></span>
+    </span>`;
+}
+
+function syncProjectKanoSummary(functionality, satisfaction) {
+  const summaryEl = elements.projectKanoSelectionSummary || $("projectKanoSelectionSummary");
+  const categoryEl = elements.projectKanoCategoryBadge || $("projectKanoCategoryBadge");
+  const categoryDescEl = elements.projectKanoCategoryDescription || $("projectKanoCategoryDescription");
+  const resultEl = elements.projectKanoResult || $("projectKanoResult");
+  const clearBtn = elements.projectKanoClearBtn || $("projectKanoClearBtn");
+  if (!summaryEl) return;
+
+  const f = normalizeKanoAxisLevel(functionality);
+  const s = normalizeKanoAxisLevel(satisfaction);
+  const hasSelection = f != null && s != null;
+
+  if (resultEl) {
+    resultEl.classList.toggle("project-kano-result--empty", !hasSelection);
+    resultEl.classList.toggle("project-kano-result--filled", hasSelection);
+  }
+
+  if (!hasSelection) {
+    summaryEl.textContent = "No position selected";
+    summaryEl.title = "Choose axis levels or pick a cell on the matrix.";
+    if (categoryEl) {
+      categoryEl.hidden = true;
+      categoryEl.textContent = "";
+      categoryEl.className = "project-kano-category-badge";
+    }
+    if (categoryDescEl) {
+      categoryDescEl.hidden = true;
+      categoryDescEl.textContent = "";
+    }
+    if (clearBtn) clearBtn.hidden = true;
+    return;
+  }
+
+  const fMeta = getKanoLevelMeta(kanoFunctionalityLevels, f);
+  const sMeta = getKanoLevelMeta(kanoSatisfactionLevels, s);
+  summaryEl.innerHTML = renderProjectKanoResultMetrics(f, s);
+  summaryEl.title = `Functionality ${f} (${fMeta ? fMeta.label : "Level " + f}), Satisfaction ${s} (${sMeta ? sMeta.label : "Level " + s})`;
+
+  if (categoryEl && typeof getKanoCategoryFromPosition === "function") {
+    const category = getKanoCategoryFromPosition(f, s);
+    if (category) {
+      categoryEl.hidden = false;
+      categoryEl.textContent = category.label;
+      categoryEl.title = category.description || "";
+      categoryEl.className = `project-kano-category-badge project-kano-category-badge--${category.id}`;
+      if (categoryDescEl) {
+        categoryDescEl.hidden = false;
+        categoryDescEl.textContent = category.description || "";
+      }
+    } else {
+      categoryEl.hidden = true;
+      categoryEl.textContent = "";
+      categoryEl.className = "project-kano-category-badge";
+      if (categoryDescEl) {
+        categoryDescEl.hidden = true;
+        categoryDescEl.textContent = "";
+      }
+    }
+  }
+
+  if (clearBtn) {
+    clearBtn.hidden = projectModalMode === "view";
+  }
+}
+
+function setProjectKanoSelection(functionality, satisfaction, { readonly = false } = {}) {
+  ensureProjectKanoAxisSelects();
+  ensureProjectKanoMatrixMounted();
+  const f = normalizeKanoAxisLevel(functionality);
+  const s = normalizeKanoAxisLevel(satisfaction);
+
+  if (elements.projectKanoFunctionalitySelect) {
+    elements.projectKanoFunctionalitySelect.value = f != null ? String(f) : "";
+  }
+  if (elements.projectKanoSatisfactionSelect) {
+    elements.projectKanoSatisfactionSelect.value = s != null ? String(s) : "";
+  }
+
+  const host = elements.projectKanoMatrix || $("projectKanoMatrix");
+  if (host) {
+    host.classList.toggle("project-kano-matrix-host--readonly", !!readonly);
+    host.classList.toggle("project-kano-matrix-host--has-selection", f != null && s != null);
+    host.querySelectorAll(".project-kano-matrix-cell").forEach((cell) => {
+      const cellF = Number(cell.dataset.functionality);
+      const cellS = Number(cell.dataset.satisfaction);
+      const selected = f != null && s != null && cellF === f && cellS === s;
+      cell.classList.toggle("is-selected", selected);
+      cell.classList.toggle("is-readonly", !!readonly);
+      cell.setAttribute("aria-selected", selected ? "true" : "false");
+      cell.setAttribute("aria-disabled", readonly ? "true" : "false");
+      cell.tabIndex = readonly ? -1 : selected ? 0 : -1;
+    });
+    syncProjectKanoMatrixCrosshair(f, s);
+    syncProjectKanoAxisLabelHighlight(f, s);
+    syncProjectKanoAxisMeters(f, s);
+    syncProjectKanoLegendHighlight(f, s);
+  }
+
+  syncProjectKanoSummary(f, s);
+
+  const section = document.getElementById("projectModalSectionKano");
+  if (section) {
+    const details = section.querySelector(".project-optional-section-details");
+    if (details) {
+      details.classList.toggle("project-optional--has-data", f != null && s != null);
+    }
+  }
+}
+
+function getProjectKanoFromControls() {
+  const f = elements.projectKanoFunctionalitySelect
+    ? normalizeKanoAxisLevel(elements.projectKanoFunctionalitySelect.value)
+    : null;
+  const s = elements.projectKanoSatisfactionSelect
+    ? normalizeKanoAxisLevel(elements.projectKanoSatisfactionSelect.value)
+    : null;
+  return { kanoFunctionality: f, kanoSatisfaction: s };
 }
 
 function syncProjectOptionalDisclosureState(detailsEl, hasData, resetCollapsed) {
@@ -2278,6 +2768,17 @@ function cacheElements() {
   elements.projectTshirtSize = $("projectTshirtSize");
   elements.projectPeriod = $("projectPeriod");
   elements.projectMoscow = $("projectMoscow");
+  elements.projectKanoFunctionalitySelect = $("projectKanoFunctionalitySelect");
+  elements.projectKanoSatisfactionSelect = $("projectKanoSatisfactionSelect");
+  elements.projectKanoFunctionalityMeter = $("projectKanoFunctionalityMeter");
+  elements.projectKanoSatisfactionMeter = $("projectKanoSatisfactionMeter");
+  elements.projectKanoMatrix = $("projectKanoMatrix");
+  elements.projectKanoLegend = $("projectKanoLegend");
+  elements.projectKanoSelectionSummary = $("projectKanoSelectionSummary");
+  elements.projectKanoCategoryBadge = $("projectKanoCategoryBadge");
+  elements.projectKanoCategoryDescription = $("projectKanoCategoryDescription");
+  elements.projectKanoResult = $("projectKanoResult");
+  elements.projectKanoClearBtn = $("projectKanoClearBtn");
 
   elements.projectMetaId = $("projectMetaId");
   elements.projectMetaCreated = $("projectMetaCreated");
@@ -4861,6 +5362,8 @@ function handleExportCsv(profilesForExport, exportMeta) {
       "tshirtSize",
       "projectPeriod",
       "moscowCategory",
+      "kanoFunctionality",
+      "kanoSatisfaction",
       "countries",
       "projectLabels",
       "projectLinks",
@@ -4882,6 +5385,7 @@ function handleExportCsv(profilesForExport, exportMeta) {
           escapeCsvCell(profileName),
           escapeCsvCell(profileTeam),
           escapeCsvCell(profileCreatedAt),
+          "",
           "",
           "",
           "",
@@ -4950,6 +5454,8 @@ function handleExportCsv(profilesForExport, exportMeta) {
           escapeCsvCell(project.tshirtSize || ""),
           escapeCsvCell(project.projectPeriod || ""),
           escapeCsvCell(project.moscowCategory || ""),
+          escapeCsvCell(project.kanoFunctionality != null ? String(project.kanoFunctionality) : ""),
+          escapeCsvCell(project.kanoSatisfaction != null ? String(project.kanoSatisfaction) : ""),
           escapeCsvCell(countries),
           escapeCsvCell(projectLabels),
           escapeCsvCell(projectLinks),
@@ -5213,6 +5719,8 @@ function buildProfilesFromCsvRows(header, rows) {
       tshirtSize: (cells[colIndex.tshirtSize] ?? "").toString().trim() || null,
       projectPeriod: (cells[colIndex.projectPeriod] ?? "").toString().trim().toUpperCase() || null,
       moscowCategory: (cells[colIndex.moscowCategory] ?? "").toString().trim() || null,
+      kanoFunctionality: normalizeKanoAxisLevel(cells[colIndex.kanoFunctionality]),
+      kanoSatisfaction: normalizeKanoAxisLevel(cells[colIndex.kanoSatisfaction]),
       countries: normalizeCountryNames((cells[colIndex.countries] ?? "").toString().split("|").map((c) => c.trim()).filter((c) => c !== "")),
       labels: normalizeProjectLabels(
         (cells[colIndex.projectLabels] ?? "")
@@ -5310,6 +5818,8 @@ function normalizeImportedProject(project) {
     tshirtSize: (project.tshirtSize != null && String(project.tshirtSize).trim() !== "") ? String(project.tshirtSize).trim() : null,
     projectPeriod,
     moscowCategory: (project.moscowCategory != null && String(project.moscowCategory).trim() !== "" && typeof moscowList !== "undefined" && moscowList.includes(project.moscowCategory)) ? String(project.moscowCategory).trim() : null,
+    kanoFunctionality: normalizeKanoAxisLevel(project.kanoFunctionality),
+    kanoSatisfaction: normalizeKanoAxisLevel(project.kanoSatisfaction),
     countries: normalizeCountryNames(Array.isArray(project.countries) ? project.countries : []),
     labels: normalizeProjectLabels(project.labels),
     links: normalizeProjectLinks(project.links),
@@ -6747,6 +7257,8 @@ function normalizeLoadedProject(project) {
     tshirtSize: (project.tshirtSize != null && String(project.tshirtSize).trim() !== "") ? String(project.tshirtSize).trim() : null,
     projectPeriod,
     moscowCategory: (project.moscowCategory != null && String(project.moscowCategory).trim() !== "" && typeof moscowList !== "undefined" && moscowList.includes(project.moscowCategory)) ? String(project.moscowCategory).trim() : null,
+    kanoFunctionality: normalizeKanoAxisLevel(project.kanoFunctionality),
+    kanoSatisfaction: normalizeKanoAxisLevel(project.kanoSatisfaction),
     countries: normalizeCountryNames(Array.isArray(project.countries) ? project.countries : []),
     labels: normalizeProjectLabels(project.labels),
     links: normalizeProjectLinks(project.links),
@@ -14801,6 +15313,7 @@ function openProjectModal(mode, projectId) {
     elements.projectTshirtSize.value = project.tshirtSize || "";
     elements.projectPeriod.value = project.projectPeriod || "";
     elements.projectMoscow.value = project.moscowCategory || "";
+    setProjectKanoSelection(project.kanoFunctionality, project.kanoSatisfaction, { readonly: isView });
     renderCountriesControls(Array.isArray(project.countries) ? project.countries : []);
     renderProjectLabelsControls(project.labels, { readonly: isView });
     renderProjectLinksControls(project.links, { readonly: isView });
@@ -14842,6 +15355,7 @@ function openProjectModal(mode, projectId) {
     elements.projectTshirtSize.value = "";
     elements.projectPeriod.value = "";
     elements.projectMoscow.value = "";
+    setProjectKanoSelection(null, null, { readonly: false });
     renderCountriesControls([]);
     renderProjectLabelsControls([]);
     renderProjectLinksControls([]);
@@ -14986,6 +15500,8 @@ function handleProjectFormSubmit(e) {
     moscowCategory: (elements.projectMoscow && elements.projectMoscow.value)
       ? (elements.projectMoscow.value || "").trim() || null
       : null,
+    kanoFunctionality: getProjectKanoFromControls().kanoFunctionality,
+    kanoSatisfaction: getProjectKanoFromControls().kanoSatisfaction,
     countries: getCountriesFromControls(),
     labels: getProjectLabelsFromControls(),
     tasks: getProjectTasksFromControls(),
@@ -15060,6 +15576,8 @@ function handleProjectFormSubmit(e) {
     project.tshirtSize = raw.tshirtSize || null;
     project.projectPeriod = raw.projectPeriod || null;
     project.moscowCategory = raw.moscowCategory || null;
+    project.kanoFunctionality = raw.kanoFunctionality != null ? raw.kanoFunctionality : null;
+    project.kanoSatisfaction = raw.kanoSatisfaction != null ? raw.kanoSatisfaction : null;
     project.countries = Array.isArray(raw.countries) ? raw.countries : [];
     project.labels = normalizeProjectLabels(raw.labels);
     project.links = normalizeProjectLinks(raw.links);
@@ -15106,6 +15624,8 @@ function handleProjectFormSubmit(e) {
       tshirtSize: raw.tshirtSize || null,
       projectPeriod: raw.projectPeriod || null,
       moscowCategory: raw.moscowCategory || null,
+      kanoFunctionality: raw.kanoFunctionality != null ? raw.kanoFunctionality : null,
+      kanoSatisfaction: raw.kanoSatisfaction != null ? raw.kanoSatisfaction : null,
       countries: Array.isArray(raw.countries) ? raw.countries : [],
       labels: normalizeProjectLabels(raw.labels),
       links: normalizeProjectLinks(raw.links),
