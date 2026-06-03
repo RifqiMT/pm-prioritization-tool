@@ -1490,7 +1490,7 @@ html.filters-drawer-open .portfolio-filters-body {
   position: fixed;
   left: max(0.75rem, env(safe-area-inset-left));
   right: max(0.75rem, env(safe-area-inset-right));
-  bottom: calc(0.85rem + env(safe-area-inset-bottom));
+  bottom: calc(var(--site-footer-stack-height, 3.25rem) + 0.55rem);
   z-index: 101;
   align-items: stretch;
   gap: 0.5rem;

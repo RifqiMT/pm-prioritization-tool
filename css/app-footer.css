@@ -3,6 +3,10 @@
  * Aligns with app-header--modern warm shell tokens.
  */
 
+:root {
+  --site-footer-stack-height: calc(var(--footer-row-h, 2.5rem) + 1.1rem + env(safe-area-inset-bottom));
+}
+
 .app-site-footer {
   --footer-bg: linear-gradient(180deg, rgba(255, 253, 248, 0.98) 0%, rgba(254, 246, 232, 0.96) 100%);
   --footer-border: rgba(231, 201, 120, 0.55);
@@ -184,6 +188,10 @@
 
 /* Tablet / phone — one centered row, tighter copy */
 @media (max-width: 1400px) {
+  :root {
+    --site-footer-stack-height: calc(2.35rem + 0.9rem + env(safe-area-inset-bottom));
+  }
+
   .app-site-footer {
     --footer-row-h: 2.35rem;
     padding-top: 0.45rem;
