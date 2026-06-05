@@ -1,7 +1,7 @@
 const { getDb, isMongoConfigured } = require("./_lib/mongo");
 const { verifyRequest } = require("./_lib/auth");
 const { sendJson, readJsonBody } = require("./_lib/http");
-const { normalizeWorkspacePayload } = require("./_lib/project-metadata");
+const { normalizeWorkspacePayload } = require("./_lib/roadmap-metadata");
 
 const COLLECTION = "workspaces";
 

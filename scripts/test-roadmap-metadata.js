@@ -3,21 +3,22 @@
  */
 const assert = require("assert");
 const {
-  normalizeProjectLabels,
-  normalizeProjectLinks,
-  normalizeProjectTasks,
-  normalizeProjectRaci,
+  normalizeWorkspacePayload,
+  normalizeRoadmapLabels,
+  normalizeRoadmapLinks,
+  normalizeRoadmapTasks,
+  normalizeRoadmapRaci,
   normalizeKanoAxisLevel
-} = require("../api/_lib/project-metadata");
+} = require("../api/_lib/roadmap-metadata");
 
-assert.deepStrictEqual(normalizeProjectLabels("alpha, beta | gamma"), [
+assert.deepStrictEqual(normalizeRoadmapLabels("alpha, beta | gamma"), [
   "alpha",
   "beta",
   "gamma"
 ]);
 
 assert.deepStrictEqual(
-  normalizeProjectLinks([
+  normalizeRoadmapLinks([
     { name: "Spec", href: "example.com/doc" },
     "https://docs.example.com/guide"
   ]),
@@ -28,17 +29,17 @@ assert.deepStrictEqual(
 );
 
 assert.deepStrictEqual(
-  normalizeProjectLinks([{ text: "Wiki", url: "https://wiki.test/a" }]),
+  normalizeRoadmapLinks([{ text: "Wiki", url: "https://wiki.test/a" }]),
   [{ label: "Wiki", url: "https://wiki.test/a" }]
 );
 
 assert.deepStrictEqual(
-  normalizeProjectTasks([{ title: "Launch", status: "invalid" }]),
+  normalizeRoadmapTasks([{ title: "Launch", status: "invalid" }]),
   [{ name: "Launch", status: "Not Started" }]
 );
 
 assert.deepStrictEqual(
-  normalizeProjectRaci({
+  normalizeRoadmapRaci({
     responsible: [{ name: "Alice", domain: "Business" }, { person: "Bob", type: "Tech" }],
     accountable: [{ label: "Carol", side: "Business" }],
     consulted: "invalid",
@@ -61,4 +62,18 @@ assert.strictEqual(normalizeKanoAxisLevel(0), null);
 assert.strictEqual(normalizeKanoAxisLevel(6), null);
 assert.strictEqual(normalizeKanoAxisLevel("x"), null);
 
-console.log("OK: project metadata normalization tests passed");
+const migrated = normalizeWorkspacePayload({
+  profiles: [
+    {
+      id: "p1",
+      name: "Legacy",
+      projects: [{ id: "old1", labels: ["alpha"], links: ["https://example.com"] }]
+    }
+  ]
+});
+assert.ok(Array.isArray(migrated.profiles[0].roadmaps));
+assert.strictEqual(migrated.profiles[0].roadmaps[0].id, "old1");
+assert.strictEqual(migrated.profiles[0].roadmaps[0].labels[0], "alpha");
+assert.strictEqual(migrated.profiles[0].projects, undefined);
+
+console.log("OK: roadmap metadata normalization tests passed");

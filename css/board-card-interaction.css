@@ -1,5 +1,5 @@
 /**
- * Standardized Scrum / MoSCoW project card hover & press feedback.
+ * Standardized Scrum / MoSCoW roadmap card hover & press feedback.
  * No padding, margin, transform, or scale changes — outline + shadow only.
  */
 
@@ -19,10 +19,10 @@ html.is-desktop-layout .scrum-board-card.portfolio-board-card--structured,
 html.is-desktop-layout .moscow-board-card.portfolio-board-card--structured,
 html.is-compact-layout .scrum-board-card.portfolio-board-card--structured,
 html.is-compact-layout .moscow-board-card.portfolio-board-card--structured,
-html.is-desktop-layout .projects-view--board .scrum-board-card.portfolio-board-card--structured,
-html.is-desktop-layout .projects-view--moscow .moscow-board-card.portfolio-board-card--structured,
-.workspace-panel--v2 .projects-view--board .scrum-board-card.portfolio-board-card--structured,
-.workspace-panel--v2 .projects-view--moscow .moscow-board-card.portfolio-board-card--structured {
+html.is-desktop-layout .roadmaps-view--board .scrum-board-card.portfolio-board-card--structured,
+html.is-desktop-layout .roadmaps-view--moscow .moscow-board-card.portfolio-board-card--structured,
+.workspace-panel--v2 .roadmaps-view--board .scrum-board-card.portfolio-board-card--structured,
+.workspace-panel--v2 .roadmaps-view--moscow .moscow-board-card.portfolio-board-card--structured {
   transform: none !important;
   margin: 0 !important;
   outline: 2px solid transparent;
@@ -35,8 +35,8 @@ html.is-desktop-layout .projects-view--moscow .moscow-board-card.portfolio-board
 
 html.is-desktop-layout .scrum-board-card.portfolio-board-card--structured,
 html.is-desktop-layout .moscow-board-card.portfolio-board-card--structured,
-html.is-desktop-layout .projects-view--board .scrum-board-card.portfolio-board-card--structured,
-html.is-desktop-layout .projects-view--moscow .moscow-board-card.portfolio-board-card--structured {
+html.is-desktop-layout .roadmaps-view--board .scrum-board-card.portfolio-board-card--structured,
+html.is-desktop-layout .roadmaps-view--moscow .moscow-board-card.portfolio-board-card--structured {
   cursor: grab !important;
 }
 
@@ -50,8 +50,8 @@ html.is-desktop-layout .scrum-board-card.portfolio-board-card--structured:hover:
 html.is-desktop-layout .moscow-board-card.portfolio-board-card--structured:hover:not(.scrum-board-card--dragging):not(.moscow-board-card--dragging):not(.portfolio-board-card--pressed),
 html.is-compact-layout .scrum-board-card.portfolio-board-card--structured:hover:not(.scrum-board-card--dragging):not(.moscow-board-card--dragging):not(.portfolio-board-card--pressed),
 html.is-compact-layout .moscow-board-card.portfolio-board-card--structured:hover:not(.scrum-board-card--dragging):not(.moscow-board-card--dragging):not(.portfolio-board-card--pressed),
-.workspace-panel--v2 .projects-view--board .scrum-board-card.portfolio-board-card--structured:hover:not(.scrum-board-card--dragging):not(.portfolio-board-card--pressed),
-.workspace-panel--v2 .projects-view--moscow .moscow-board-card.portfolio-board-card--structured:hover:not(.moscow-board-card--dragging):not(.portfolio-board-card--pressed) {
+.workspace-panel--v2 .roadmaps-view--board .scrum-board-card.portfolio-board-card--structured:hover:not(.scrum-board-card--dragging):not(.portfolio-board-card--pressed),
+.workspace-panel--v2 .roadmaps-view--moscow .moscow-board-card.portfolio-board-card--structured:hover:not(.moscow-board-card--dragging):not(.portfolio-board-card--pressed) {
   outline-color: var(--bci-outline-hover) !important;
   box-shadow: var(--bci-shadow-hover) !important;
   transform: none !important;
@@ -103,8 +103,8 @@ html.board-drag-active .moscow-board-card.portfolio-board-card--structured:not(.
   transform: none !important;
 }
 
-/* Compact table view — project cards (phones & tablets) */
-html.is-compact-layout .projects-table-card.portfolio-board-card--structured {
+/* Compact table view — roadmap cards (phones & tablets) */
+html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured {
   transform: none !important;
   margin: 0 !important;
   outline: 2px solid transparent;
@@ -116,16 +116,16 @@ html.is-compact-layout .projects-table-card.portfolio-board-card--structured {
   cursor: default;
 }
 
-html.is-compact-layout .projects-table-card.portfolio-board-card--structured:hover:not(.portfolio-board-card--pressed),
-html.is-compact-layout .projects-table-card.portfolio-board-card--structured.projects-table-card--selected:hover:not(.portfolio-board-card--pressed) {
+html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured:hover:not(.portfolio-board-card--pressed),
+html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured.roadmaps-table-card--selected:hover:not(.portfolio-board-card--pressed) {
   outline-color: var(--bci-outline-hover) !important;
   box-shadow: var(--bci-shadow-hover) !important;
   transform: none !important;
   z-index: 2;
 }
 
-html.is-compact-layout .projects-table-card.portfolio-board-card--structured.portfolio-board-card--pressed,
-html.is-compact-layout .projects-table-card.portfolio-board-card--structured:active:not(.portfolio-board-card--pressed) {
+html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured.portfolio-board-card--pressed,
+html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured:active:not(.portfolio-board-card--pressed) {
   outline-color: var(--bci-outline-pressed) !important;
   box-shadow: var(--bci-shadow-pressed) !important;
   background-color: var(--bci-surface-pressed) !important;
@@ -133,23 +133,23 @@ html.is-compact-layout .projects-table-card.portfolio-board-card--structured:act
   z-index: 3;
 }
 
-html.is-compact-layout .projects-table-card.portfolio-board-card--structured.projects-table-card--selected {
+html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured.roadmaps-table-card--selected {
   border-color: rgba(185, 28, 28, 0.42) !important;
   box-shadow:
     0 0 0 2px rgba(254, 202, 202, 0.55),
     var(--bci-shadow-rest) !important;
 }
 
-html.is-compact-layout .projects-table-card.portfolio-board-card--structured.projects-table-card--selected.portfolio-board-card--pressed,
-html.is-compact-layout .projects-table-card.portfolio-board-card--structured.projects-table-card--selected:active {
+html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured.roadmaps-table-card--selected.portfolio-board-card--pressed,
+html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured.roadmaps-table-card--selected:active {
   box-shadow:
     0 0 0 2px rgba(254, 202, 202, 0.55),
     var(--bci-shadow-pressed) !important;
 }
 
-.projects-table-card.portfolio-board-card--structured .projects-table-card__select,
-.projects-table-card.portfolio-board-card--structured .projects-table-card__actions,
-.projects-table-card.portfolio-board-card--structured .projects-table-card__actions button {
+.roadmaps-table-card.portfolio-board-card--structured .roadmaps-table-card__select,
+.roadmaps-table-card.portfolio-board-card--structured .roadmaps-table-card__actions,
+.roadmaps-table-card.portfolio-board-card--structured .roadmaps-table-card__actions button {
   cursor: pointer;
 }
 
@@ -158,7 +158,7 @@ html.is-compact-layout .projects-table-card.portfolio-board-card--structured.pro
   html.is-desktop-layout .moscow-board-card.portfolio-board-card--structured,
   html.is-compact-layout .scrum-board-card.portfolio-board-card--structured,
   html.is-compact-layout .moscow-board-card.portfolio-board-card--structured,
-  html.is-compact-layout .projects-table-card.portfolio-board-card--structured {
+  html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured {
     transition: none !important;
   }
 }

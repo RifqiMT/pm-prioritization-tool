@@ -14,24 +14,24 @@
 }
 
 /* Scoped: card rows only outside the revamp shell */
-.table-wrapper:not(.projects-table-shell) table,
-.table-wrapper--modern:not(.projects-table-shell) table {
+.table-wrapper:not(.roadmaps-table-shell) table,
+.table-wrapper--modern:not(.roadmaps-table-shell) table {
   border-collapse: separate !important;
   border-spacing: 0 var(--table-row-gap) !important;
 }
 
-.table-wrapper--modern:not(.projects-table-shell) {
+.table-wrapper--modern:not(.roadmaps-table-shell) {
   padding: 0.35rem 0.45rem 0.5rem !important;
 }
 
-.table-wrapper:not(.projects-table-shell) thead th,
-.table-wrapper--modern:not(.projects-table-shell) thead th {
+.table-wrapper:not(.roadmaps-table-shell) thead th,
+.table-wrapper--modern:not(.roadmaps-table-shell) thead th {
   padding: 0.58rem 0.5rem !important;
   line-height: 1.35 !important;
 }
 
-.table-wrapper:not(.projects-table-shell) tbody td,
-.table-wrapper--modern:not(.projects-table-shell) tbody td {
+.table-wrapper:not(.roadmaps-table-shell) tbody td,
+.table-wrapper--modern:not(.roadmaps-table-shell) tbody td {
   padding: var(--table-row-pad-y) var(--table-row-pad-x) !important;
   line-height: 1.45 !important;
   vertical-align: middle !important;
@@ -44,38 +44,38 @@
     border-color 0.16s ease;
 }
 
-.table-wrapper:not(.projects-table-shell) tbody td:first-child,
-.table-wrapper--modern:not(.projects-table-shell) tbody td:first-child {
+.table-wrapper:not(.roadmaps-table-shell) tbody td:first-child,
+.table-wrapper--modern:not(.roadmaps-table-shell) tbody td:first-child {
   border-left: 1px solid var(--table-row-border) !important;
   border-top-left-radius: var(--table-row-radius);
   border-bottom-left-radius: var(--table-row-radius);
 }
 
-.table-wrapper:not(.projects-table-shell) tbody td:last-child,
-.table-wrapper--modern:not(.projects-table-shell) tbody td:last-child {
+.table-wrapper:not(.roadmaps-table-shell) tbody td:last-child,
+.table-wrapper--modern:not(.roadmaps-table-shell) tbody td:last-child {
   border-right: 1px solid var(--table-row-border) !important;
   border-top-right-radius: var(--table-row-radius);
   border-bottom-right-radius: var(--table-row-radius);
 }
 
-.table-wrapper:not(.projects-table-shell) tbody tr:last-child td,
-.table-wrapper--modern:not(.projects-table-shell) tbody tr:last-child td {
+.table-wrapper:not(.roadmaps-table-shell) tbody tr:last-child td,
+.table-wrapper--modern:not(.roadmaps-table-shell) tbody tr:last-child td {
   border-bottom: 1px solid var(--table-row-border) !important;
 }
 
-.table-wrapper:not(.projects-table-shell) tbody tr:hover td,
-.table-wrapper--modern:not(.projects-table-shell) tbody tr:hover td {
+.table-wrapper:not(.roadmaps-table-shell) tbody tr:hover td,
+.table-wrapper--modern:not(.roadmaps-table-shell) tbody tr:hover td {
   border-color: rgba(212, 175, 55, 0.55) !important;
   box-shadow: var(--table-row-shadow-hover);
 }
 
-.table-wrapper:not(.projects-table-shell) tbody tr:focus-within td,
-.table-wrapper--modern:not(.projects-table-shell) tbody tr:focus-within td {
+.table-wrapper:not(.roadmaps-table-shell) tbody tr:focus-within td,
+.table-wrapper--modern:not(.roadmaps-table-shell) tbody tr:focus-within td {
   border-color: rgba(185, 28, 28, 0.28) !important;
   box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.08), var(--table-row-shadow-hover);
 }
 
-/* Project column — clearer hierarchy */
+/* Roadmap column — clearer hierarchy */
 .table-wrapper .cell-title-block,
 .table-wrapper--modern .cell-title-block {
   display: flex;
@@ -117,8 +117,8 @@
 }
 
 /* Actions column breathing room */
-.table-wrapper .cell-actions--project,
-.table-wrapper--modern .cell-actions--project {
+.table-wrapper .cell-actions--roadmap,
+.table-wrapper--modern .cell-actions--roadmap {
   gap: 0.1rem !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;

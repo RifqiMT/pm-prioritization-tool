@@ -5,13 +5,13 @@
  */
 
 @media (max-width: 1400px) {
-  html.is-compact-layout .projects-view--board {
+  html.is-compact-layout .roadmaps-view--board {
     max-width: 100%;
     overflow-x: hidden;
     box-sizing: border-box;
   }
 
-  html.is-compact-layout .projects-view--board .scrum-board {
+  html.is-compact-layout .roadmaps-view--board .scrum-board {
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) !important;
     grid-auto-rows: auto !important;
@@ -31,7 +31,7 @@
     box-sizing: border-box;
   }
 
-  html.is-compact-layout .projects-view--board .scrum-board-column {
+  html.is-compact-layout .roadmaps-view--board .scrum-board-column {
     flex: none !important;
     width: 100% !important;
     min-width: 0 !important;
@@ -44,11 +44,11 @@
     flex-direction: column !important;
   }
 
-  html.is-compact-layout .projects-view--board .scrum-board-column-header {
+  html.is-compact-layout .roadmaps-view--board .scrum-board-column-header {
     position: static !important;
   }
 
-  html.is-compact-layout .projects-view--board .scrum-board-column-cards {
+  html.is-compact-layout .roadmaps-view--board .scrum-board-column-cards {
     flex: 1 1 auto !important;
     min-height: 72px !important;
     max-height: none !important;
@@ -57,20 +57,20 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  html.is-compact-layout .projects-view--board .scrum-board-card {
+  html.is-compact-layout .roadmaps-view--board .scrum-board-card {
     max-width: 100%;
     overflow-wrap: anywhere;
     word-break: break-word;
   }
 
-  html.is-compact-layout .projects-view--board .scrum-board-card-title {
+  html.is-compact-layout .roadmaps-view--board .scrum-board-card-title {
     overflow-wrap: anywhere;
     word-break: break-word;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html.is-compact-layout .projects-view--board .scrum-board {
+  html.is-compact-layout .roadmaps-view--board .scrum-board {
     scroll-behavior: auto;
   }
 }

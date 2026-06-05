@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-05-31 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui190` |
+| **Last updated** | 2026-05-28 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui192` |
 
 The app is a **static UI** plus **Vercel serverless API** routes under `/api`. Portfolio data is stored in **MongoDB Atlas** when `MONGODB_URI` is configured; the browser keeps a **local cache** for faster reload and offline fallback.
 
@@ -90,7 +90,7 @@ npx vercel dev
 
 1. `GET /api/health` → `{ "storage": "mongodb" }`
 2. Open `/` → connect cloud with API key → status **Saved to cloud**
-3. Create a profile and project → refresh → data persists (from MongoDB)
+3. Create a profile and roadmap → refresh → data persists (from MongoDB)
 4. Open in another browser (same key) → same workspace data
 5. Export/import still works as backup
 
@@ -131,7 +131,7 @@ Open `https://YOUR-DOMAIN/api/config`. Expected JSON:
 { "ok": true, "storage": "mongodb", "authRequired": false, "workspaceId": "default", "version": 1 }
 ```
 
-If you see **HTML** for a React app (“PM Prioritization Matrix”), the domain points at the **wrong** Vercel project. Fix **Settings → Git** to use this repo, or create a new project and move the domain. Production URL: **`pm-prioritization-tool-six.vercel.app`** — not `pm-prioritization-tool.vercel.app` (legacy React app).
+If you see **HTML** for a React app (“PM Prioritization Matrix”), the domain points at the **wrong** Vercel roadmap. Fix **Settings → Git** to use this repo, or create a new roadmap and move the domain. Production URL: **`pm-prioritization-tool-six.vercel.app`** — not `pm-prioritization-tool.vercel.app` (legacy React app).
 
 ### 3. Environment variables and Atlas
 

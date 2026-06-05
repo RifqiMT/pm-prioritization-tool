@@ -187,7 +187,7 @@
 
   html.is-compact-layout .portfolio-command-bar .portfolio-eyebrow,
   html.is-compact-layout .portfolio-command-bar .workspace-eyebrow,
-  html.is-compact-layout .portfolio-command-mark {
+  html.is-compact-layout .portfolio-identity__avatar {
     display: none !important;
   }
 
@@ -203,7 +203,7 @@
   html.is-compact-layout .portfolio-view-tabs.view-toggle-group--portfolio {
     width: 100% !important;
     display: grid !important;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 0.22rem !important;
     padding: 0.18rem !important;
     border-radius: var(--compact-radius-sm);
@@ -211,8 +211,29 @@
     border: 1px solid rgba(231, 201, 120, 0.45);
   }
 
+  html.is-compact-layout .portfolio-view-tabs-track {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.22rem;
+    min-width: 0;
+  }
+
+  html.is-compact-layout .portfolio-view-tabs[data-view-tabs-mode="duo"] .portfolio-view-tabs-track {
+    flex: none;
+    width: 100%;
+  }
+
   html.is-compact-layout .portfolio-view-tabs .view-tab-text {
     display: none;
+  }
+
+  html.is-compact-layout .portfolio-view-tabs[data-view-tabs-mode="duo"] .portfolio-view-tabs-track .view-tab-text,
+  html.is-compact-layout .portfolio-view-tabs[data-view-tabs-mode="duo"] .portfolio-view-tabs-more-label {
+    display: inline;
+  }
+
+  html.is-compact-layout .portfolio-view-tabs-more-menu .view-tab-text {
+    display: inline;
   }
 
   html.is-compact-layout .portfolio-view-tabs .view-toggle-btn {
@@ -265,7 +286,7 @@
   }
 
   html.is-compact-layout .workspace-panel--v2 .portfolio-view,
-  html.is-compact-layout .workspace-panel--v2 .projects-view {
+  html.is-compact-layout .workspace-panel--v2 .roadmaps-view {
     padding: 0 0.25rem 0.35rem !important;
     gap: 0.25rem !important;
   }
@@ -287,12 +308,12 @@
   }
 
   html.is-compact-layout .view-toolbar .view-fullscreen-label,
-  html.is-compact-layout .view-toolbar .projects-map-fullscreen-label {
+  html.is-compact-layout .view-toolbar .roadmaps-map-fullscreen-label {
     display: none;
   }
 
   html.is-compact-layout .view-toolbar .view-fullscreen-btn.is-fullscreen .view-fullscreen-label,
-  html.is-compact-layout .view-toolbar .view-fullscreen-btn.is-fullscreen .projects-map-fullscreen-label {
+  html.is-compact-layout .view-toolbar .view-fullscreen-btn.is-fullscreen .roadmaps-map-fullscreen-label {
     display: inline;
     font-size: 0.7rem;
   }
@@ -345,11 +366,11 @@
   }
 
   html.is-compact-layout .view-toolbar .view-fullscreen-btn,
-  html.is-compact-layout .view-toolbar .projects-map-fullscreen-btn {
+  html.is-compact-layout .view-toolbar .roadmaps-map-fullscreen-btn {
     min-height: var(--compact-touch) !important;
   }
 
-  html.is-compact-layout .workspace-panel--v2 .projects-map-container {
+  html.is-compact-layout .workspace-panel--v2 .roadmaps-map-container {
     border-radius: var(--compact-radius-sm) !important;
     aspect-ratio: 2.05 / 1 !important;
     height: auto !important;
@@ -422,13 +443,18 @@
     grid-column: 1;
     grid-row: 1;
     min-width: 0;
-    display: grid !important;
-    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
     gap: 0.2rem;
     padding: 0.16rem;
     border-radius: var(--compact-radius-sm);
     background: rgba(254, 243, 199, 0.35);
     border: 1px solid rgba(231, 201, 120, 0.45);
+  }
+
+  html.is-compact-layout .view-fullscreen-tab {
+    flex: 1 1 0;
+    min-width: 0;
   }
 
   html.is-compact-layout .view-fullscreen-actions {
@@ -494,7 +520,7 @@
   }
 
   html.is-compact-layout .view-in-fullscreen-host .view-fullscreen-btn,
-  html.is-compact-layout .view-in-fullscreen-host .projects-map-fullscreen-btn {
+  html.is-compact-layout .view-in-fullscreen-host .roadmaps-map-fullscreen-btn {
     display: none !important;
   }
 

@@ -1,8 +1,8 @@
 # Design Guidelines
 
 **Product:** Product Management Prioritization Tool  
-**Last updated:** 2026-05-31  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260528-ui190`  
+**Last updated:** 2026-05-28  
+**Implementation baseline:** `APP_ASSET_VERSION` = `20260528-ui192`  
 **Layout breakpoint:** `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** (`html.is-compact-layout` + `html.is-phone-layout`)
 
 Visual and interaction standards for the local-first prioritization workspace.
@@ -60,7 +60,7 @@ Visual and interaction standards for the local-first prioritization workspace.
 
 ## 3. Color semantics
 
-### Project status (board pills / table)
+### Roadmap status (board pills / table)
 
 | Status | Color family |
 |--------|----------------|
@@ -82,6 +82,27 @@ Defined in `main.css` `.cell-type-pill[data-status=...]` and `view-toolbars-mode
 | risk | Rose |
 | headcount | Violet |
 | operational | Green |
+
+### KANO category colors (`portfolio-kano-modern.css`)
+
+| Category | Visual role |
+|----------|-------------|
+| Attractive (Delighter) | Warm accent — unexpected value |
+| One-dimensional (Performance) | Blue family — scales with delivery |
+| Must-be (Basic) | Neutral slate — table stakes |
+| Indifferent | Muted gray — low sensitivity |
+| Reverse | Rose warning — over-delivery risk |
+
+Category badges use `categoryCode` (A/O/M/I/R) on compact cards; desktop matrix cells use matching border and fill tokens.
+
+### RACI matrix (`super-admin-modern.css`, `view-toolbars-modern.css`)
+
+| Element | Pattern |
+|---------|---------|
+| Domain toggle | Pill track with sliding indicator (`Business` / `Tech`) |
+| Matrix columns | Fixed five-column grid on desktop; horizontal scroll wrapper |
+| Compact cards | One roadmap card with four role sections stacked |
+| Name tooltips | Hover on truncated names in matrix cells |
 
 ---
 
@@ -109,25 +130,26 @@ Defined in `main.css` `.cell-type-pill[data-status=...]` and `view-toolbars-mode
 | `layout-flow.css` | Shared flow/layout helpers across surfaces |
 | `portfolio-cards-compact.css` | Compact + desktop card stacks (12px radius, shared shadow) |
 | `table-compact-cards.css` | Compact table **card list** (replaces wide grid ≤1400px) |
-| `project-actions-modern.css` | Row/card action rails; desktop board actions `nowrap` |
+| `roadmap-actions-modern.css` | Row/card action rails; desktop board actions `nowrap` |
 | `super-admin-modern.css` | Owner stripe, profile column, workspace-wide chrome — see GUARDRAILS §7 |
 | `app-footer.css` | Centered one-row site footer (LinkedIn, website, GitHub, article) |
 | `map-tooltip-modern.css` | Map view country hover cards (Leaflet HTML tooltips) |
 | `rich-text-editor.css` | Rich-text toolbar, format buttons, compact RICE fields |
-| `project-details-tooltip.css` | HTML description previews on cards |
+| `roadmap-details-tooltip.css` | HTML description previews on cards |
 | `board-drag.css` | Board drag ghost and drop targets |
 | `board-card-interaction.css` | Card press/hover feedback |
 | `filters-compact-bar.css` | Compact filters drawer summary bar |
 | `view-toolbars-compact-row.css` | Single-row compact toolbar layout |
+| `portfolio-kano-modern.css` | KANO portfolio matrix, category legend, positioned/unpositioned cards |
 
-**Load order:** see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) — **30** stylesheets total.
+**Load order:** see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) — **31** stylesheets total.
 
 ### 4.1 Compact layout tokens (`compact-modern.css`)
 
 | Token / pattern | Usage |
 |-----------------|--------|
 | Icon-only portfolio tabs | Labels hidden; icons remain tappable |
-| `.portfolio-fab` | Floating action for new project on compact |
+| `.portfolio-fab` | Floating action for new roadmap on compact |
 | `.portfolio-selection-bar` | Fixed bulk-delete bar when rows selected |
 | Hidden `.view-toolbar__label` | Toolbar actions icon-only on compact |
 
@@ -144,7 +166,7 @@ Defined in `main.css` `.cell-type-pill[data-status=...]` and `view-toolbars-mode
 
 ### 5.2 Profile card (v2)
 
-- Avatar initials, name, team, project count.  
+- Avatar initials, name, team, roadmap count.  
 - Active indicator + Locked/Active chip.  
 - Icon rail: view / edit / delete.
 
@@ -180,10 +202,10 @@ Defined in `main.css` `.cell-type-pill[data-status=...]` and `view-toolbars-mode
 
 - Toolbar: grouped bold / italic / underline / alignment / lists; SVG icons; **not** global red `button` styles (`rich-text-editor.css` resets).
 - **Compact** variant for RICE description fields (shorter toolbar).
-- **View mode:** `#projectModal.project-modal--view` hides toolbar; content read-only.
+- **View mode:** `#roadmapModal.roadmap-modal--view` hides toolbar; content read-only.
 - Stored HTML sanitized on save (`description-format.js`).
 
-### 5.8 Labels, links, and tasks (project modal)
+### 5.8 Labels, links, and tasks (roadmap modal)
 
 - **Labels:** chip display in view mode; multi-row inputs in edit.
 - **Links:** column headers “Display text” / “URL”; card layout in view with title + URL preview.

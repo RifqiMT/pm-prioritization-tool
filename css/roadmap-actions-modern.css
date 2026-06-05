@@ -1,5 +1,5 @@
 /**
- * Modern project & profile action controls — table, board, MoSCoW, profiles.
+ * Modern roadmap & profile action controls — table, board, MoSCoW, profiles.
  * Loaded last so it overrides legacy stacked / segmented layouts.
  */
 
@@ -22,7 +22,7 @@
 }
 
 /* ── Shared action button ─────────────────────────────────── */
-.project-action-btn,
+.roadmap-action-btn,
 .profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip,
 .profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn {
   display: inline-flex !important;
@@ -52,7 +52,7 @@
     transform var(--action-transition) !important;
 }
 
-.project-action-btn__icon,
+.roadmap-action-btn__icon,
 .profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip svg,
 .profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn svg {
   display: inline-flex !important;
@@ -64,13 +64,13 @@
   line-height: 0 !important;
 }
 
-.project-action-btn__icon svg {
+.roadmap-action-btn__icon svg {
   width: 15px !important;
   height: 15px !important;
   display: block !important;
 }
 
-.project-action-btn__label,
+.roadmap-action-btn__label,
 .profiles-panel--v2 .profiles-card-actions--footer .profile-action-label--visible {
   position: static !important;
   width: auto !important;
@@ -84,52 +84,52 @@
   text-transform: none !important;
 }
 
-.project-action-btn--view {
+.roadmap-action-btn--view {
   color: var(--action-view) !important;
   background: var(--action-view-bg) !important;
   border-color: var(--action-view-border) !important;
 }
 
-.project-action-btn--edit {
+.roadmap-action-btn--edit {
   color: var(--action-edit) !important;
   background: var(--action-edit-bg) !important;
   border-color: var(--action-edit-border) !important;
 }
 
-.project-action-btn--delete {
+.roadmap-action-btn--delete {
   color: var(--action-delete) !important;
   background: var(--action-delete-bg) !important;
   border-color: var(--action-delete-border) !important;
 }
 
-.project-action-btn:hover:not(:disabled),
+.roadmap-action-btn:hover:not(:disabled),
 .profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip:hover:not(:disabled),
 .profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn:hover:not(:disabled) {
   transform: translateY(-1px) !important;
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
 }
 
-.project-action-btn--view:hover:not(:disabled) {
+.roadmap-action-btn--view:hover:not(:disabled) {
   background: #e0e7ff !important;
   border-color: rgba(99, 102, 241, 0.45) !important;
 }
 
-.project-action-btn--edit:hover:not(:disabled) {
+.roadmap-action-btn--edit:hover:not(:disabled) {
   background: #fef3c7 !important;
   border-color: rgba(245, 158, 11, 0.5) !important;
 }
 
-.project-action-btn--delete:hover:not(:disabled) {
+.roadmap-action-btn--delete:hover:not(:disabled) {
   background: #fee2e2 !important;
   border-color: rgba(239, 68, 68, 0.45) !important;
 }
 
-.project-action-btn:active:not(:disabled) {
+.roadmap-action-btn:active:not(:disabled) {
   transform: translateY(0) !important;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
 }
 
-.project-action-btn:disabled,
+.roadmap-action-btn:disabled,
 .profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip:disabled,
 .profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn:disabled {
   opacity: 0.58 !important;
@@ -139,20 +139,20 @@
   filter: none !important;
 }
 
-.project-action-btn:focus-visible,
+.roadmap-action-btn:focus-visible,
 .profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip:focus-visible {
   outline: 2px solid rgba(99, 102, 241, 0.45) !important;
   outline-offset: 2px !important;
 }
 
-.project-action-btn--icon-only {
+.roadmap-action-btn--icon-only {
   min-width: 34px !important;
   min-height: 34px !important;
   padding: 0.34rem !important;
   gap: 0 !important;
 }
 
-.project-action-btn--icon-only .project-action-btn__label {
+.roadmap-action-btn--icon-only .roadmap-action-btn__label {
   position: absolute !important;
   width: 1px !important;
   height: 1px !important;
@@ -165,10 +165,10 @@
 }
 
 /* ── Table row actions ────────────────────────────────────── */
-.project-row-actions,
-.cell-actions--project,
-.table-wrapper--modern .cell-actions--project,
-.table-wrapper .cell-actions--project {
+.roadmap-row-actions,
+.cell-actions--roadmap,
+.table-wrapper--modern .cell-actions--roadmap,
+.table-wrapper .cell-actions--roadmap {
   display: inline-flex !important;
   flex-direction: row !important;
   flex-wrap: wrap !important;
@@ -351,19 +351,19 @@ html.is-desktop-layout .moscow-board-card-btn--order {
 
 /* ── Compact / touch layouts ─────────────────────────────── */
 @media (max-width: 1400px) {
-  html.is-compact-layout .cell-actions--project {
+  html.is-compact-layout .cell-actions--roadmap {
     flex-direction: row !important;
     align-items: center !important;
     gap: 0.3rem !important;
   }
 
-  html.is-compact-layout .project-action-btn {
+  html.is-compact-layout .roadmap-action-btn {
     flex: 1 1 0 !important;
     min-width: 0 !important;
     padding: 0.38rem 0.35rem !important;
   }
 
-  html.is-compact-layout .project-action-btn__label {
+  html.is-compact-layout .roadmap-action-btn__label {
     font-size: 0.68rem !important;
   }
 
@@ -401,7 +401,7 @@ html.is-desktop-layout .moscow-board-card-btn--order {
 }
 
 @media (max-width: 420px) {
-  html.is-compact-layout .project-action-btn__label,
+  html.is-compact-layout .roadmap-action-btn__label,
   html.is-compact-layout .portfolio-card-action-text {
     position: absolute !important;
     width: 1px !important;
@@ -414,7 +414,7 @@ html.is-desktop-layout .moscow-board-card-btn--order {
     border: 0 !important;
   }
 
-  html.is-compact-layout .project-action-btn,
+  html.is-compact-layout .roadmap-action-btn,
   html.is-compact-layout .portfolio-card-action-btn,
   html.is-compact-layout .moscow-board-card-btn,
   html.is-compact-layout .scrum-board-card-btn {
@@ -428,7 +428,7 @@ html.is-desktop-layout .moscow-board-card-btn--order {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .project-action-btn,
+  .roadmap-action-btn,
   .scrum-board-card-btn,
   .moscow-board-card-btn,
   .profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip {

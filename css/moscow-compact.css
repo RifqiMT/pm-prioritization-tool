@@ -6,7 +6,7 @@
 
 @media (max-width: 1400px) {
   /* ── View shell ─────────────────────────────────────────── */
-  html.is-compact-layout .projects-view--moscow {
+  html.is-compact-layout .roadmaps-view--moscow {
     gap: 0.25rem !important;
     min-height: 0 !important;
     max-width: 100%;
@@ -14,7 +14,7 @@
     box-sizing: border-box;
   }
 
-  html.is-compact-layout .projects-view--moscow .moscow-grid {
+  html.is-compact-layout .roadmaps-view--moscow .moscow-grid {
     max-height: none !important;
     min-height: auto !important;
     width: 100%;
@@ -429,7 +429,7 @@
     border-radius: 999px;
   }
 
-  /* Portfolio project cards — see portfolio-cards-compact.css */
+  /* Portfolio roadmap cards — see portfolio-cards-compact.css */
 
   html.is-compact-layout .moscow-board-empty {
     min-height: 200px;
@@ -448,7 +448,7 @@
 }
 
 /* Desktop 2×2 — equal quadrant height, scrollable card lists */
-html.is-desktop-layout .projects-view--moscow .moscow-grid {
+html.is-desktop-layout .roadmaps-view--moscow .moscow-grid {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
   grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) !important;
@@ -519,17 +519,17 @@ html.is-desktop-layout .view-in-fullscreen-host .scrum-board {
 /* ── Portfolio cards: hover disabled (all breakpoints) ─────── */
 .scrum-board-card,
 .moscow-board-card,
-.projects-view--board .scrum-board-card,
-.projects-view--moscow .moscow-board-card,
-.workspace-panel--v2 .projects-view--board .scrum-board-card {
+.roadmaps-view--board .scrum-board-card,
+.roadmaps-view--moscow .moscow-board-card,
+.workspace-panel--v2 .roadmaps-view--board .scrum-board-card {
   transition: none !important;
 }
 
 .scrum-board-card:hover,
 .moscow-board-card:hover,
-.projects-view--board .scrum-board-card:hover,
-.projects-view--moscow .moscow-board-card:hover,
-.workspace-panel--v2 .projects-view--board .scrum-board-card:hover {
+.roadmaps-view--board .scrum-board-card:hover,
+.roadmaps-view--moscow .moscow-board-card:hover,
+.workspace-panel--v2 .roadmaps-view--board .scrum-board-card:hover {
   transform: none !important;
 }
 
@@ -620,7 +620,7 @@ html.is-compact-layout .scrum-board-column[data-status="Cancelled"] .scrum-board
 }
 
 /* ── Desktop board: stable card size (no hover layout shift) ─ */
-html.is-desktop-layout .projects-view--board .scrum-board-card {
+html.is-desktop-layout .roadmaps-view--board .scrum-board-card {
   box-sizing: border-box !important;
   width: 100%;
   max-width: 100%;
@@ -629,8 +629,8 @@ html.is-desktop-layout .projects-view--board .scrum-board-card {
   flex-shrink: 0;
 }
 
-html.is-desktop-layout .projects-view--board .scrum-board-card.portfolio-board-card--structured:hover,
-html.is-desktop-layout .projects-view--board .scrum-board-card.portfolio-board-card--structured.portfolio-board-card--pressed {
+html.is-desktop-layout .roadmaps-view--board .scrum-board-card.portfolio-board-card--structured:hover,
+html.is-desktop-layout .roadmaps-view--board .scrum-board-card.portfolio-board-card--structured.portfolio-board-card--pressed {
   transform: none !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -666,24 +666,24 @@ html.is-desktop-layout .scrum-board-column[data-status="Cancelled"] .scrum-board
   border-left-color: rgba(248, 113, 113, 0.9) !important;
 }
 
-html.is-desktop-layout .projects-view--board .scrum-board-card .scrum-board-card-btn,
-html.is-desktop-layout .projects-view--board .scrum-board-card .scrum-board-card-btn:hover,
-html.is-desktop-layout .projects-view--board .scrum-board-card .scrum-board-card-btn:active,
-html.is-desktop-layout .projects-view--board .scrum-board-card .scrum-board-card-btn:focus-visible {
+html.is-desktop-layout .roadmaps-view--board .scrum-board-card .scrum-board-card-btn,
+html.is-desktop-layout .roadmaps-view--board .scrum-board-card .scrum-board-card-btn:hover,
+html.is-desktop-layout .roadmaps-view--board .scrum-board-card .scrum-board-card-btn:active,
+html.is-desktop-layout .roadmaps-view--board .scrum-board-card .scrum-board-card-btn:focus-visible {
   transform: none !important;
   box-shadow: none !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
 }
 
-html.is-desktop-layout .projects-view--board .scrum-board-card-actions,
-html.is-desktop-layout .projects-view--moscow .moscow-board-card-actions {
+html.is-desktop-layout .roadmaps-view--board .scrum-board-card-actions,
+html.is-desktop-layout .roadmaps-view--moscow .moscow-board-card-actions {
   min-height: 2.15rem;
   align-items: center;
   flex-wrap: nowrap;
 }
 
-html.is-desktop-layout .projects-view--board .scrum-board-card-actions-order,
-html.is-desktop-layout .projects-view--moscow .moscow-board-card-actions-order {
+html.is-desktop-layout .roadmaps-view--board .scrum-board-card-actions-order,
+html.is-desktop-layout .roadmaps-view--moscow .moscow-board-card-actions-order {
   flex-shrink: 0;
 }

@@ -37,7 +37,7 @@ async function main() {
 
   if (res.status === 401 && text.includes("Authentication Required")) {
     console.error("FAIL: Vercel Deployment Protection blocks /api (401).");
-    console.error("Disable: Vercel → Project → Deployment Protection → turn off for Production.");
+    console.error("Disable: Vercel → Roadmap → Deployment Protection → turn off for Production.");
     process.exit(7);
   }
 

@@ -69,7 +69,7 @@
   color: var(--ws-gold);
 }
 
-.workspace-panel .projects-header-title {
+.workspace-panel .roadmaps-header-title {
   font-size: clamp(1.15rem, 2.2vw, 1.45rem) !important;
   font-weight: 700 !important;
   letter-spacing: -0.02em !important;
@@ -77,7 +77,7 @@
   color: var(--ws-text) !important;
 }
 
-.workspace-panel .projects-header-subtitle {
+.workspace-panel .roadmaps-header-subtitle {
   font-size: 0.9rem !important;
   line-height: 1.45 !important;
   color: var(--ws-text-soft) !important;
@@ -125,7 +125,7 @@
   box-shadow: 0 1px 4px rgba(185, 28, 28, 0.15) !important;
 }
 
-.workspace-panel #addProjectBtn {
+.workspace-panel #addRoadmapBtn {
   border-radius: 10px !important;
   font-weight: 600 !important;
   padding: 0.5rem 1rem !important;
@@ -155,8 +155,8 @@
   letter-spacing: 0.06em !important;
 }
 
-/* ── Projects views (shared) ─────────────────────────────── */
-.workspace-panel .projects-view {
+/* ── Roadmaps views (shared) ─────────────────────────────── */
+.workspace-panel .roadmaps-view {
   flex: 1;
   min-height: 0;
   display: flex;
@@ -400,7 +400,7 @@
   white-space: nowrap;
 }
 
-.table-wrapper--modern .cell-actions button[data-action="deleteProject"] {
+.table-wrapper--modern .cell-actions button[data-action="deleteRoadmap"] {
   margin-left: 0.1rem;
 }
 
@@ -419,25 +419,25 @@
 }
 
 /* ── Board (Scrum / Kanban) ──────────────────────────────── */
-.projects-view--board {
+.roadmaps-view--board {
   padding-bottom: 1rem !important;
 }
 
-.projects-view--board .scrum-board-toolbar.workspace-view-toolbar {
+.roadmaps-view--board .scrum-board-toolbar.workspace-view-toolbar {
   align-items: center;
   padding-top: 0.75rem;
 }
 
-.projects-view--board .scrum-board-toolbar .workspace-view-toolbar-text {
+.roadmaps-view--board .scrum-board-toolbar .workspace-view-toolbar-text {
   flex: 1 1 100%;
 }
 
-.projects-view--board .scrum-board-toolbar .scrum-board-legend--modern {
+.roadmaps-view--board .scrum-board-toolbar .scrum-board-legend--modern {
   flex: 1 1 240px;
 }
 
-.projects-view--board .scrum-board-toolbar .scrum-board-sort-toggle,
-.projects-view--board .scrum-board-toolbar .view-fullscreen-btn {
+.roadmaps-view--board .scrum-board-toolbar .scrum-board-sort-toggle,
+.roadmaps-view--board .scrum-board-toolbar .view-fullscreen-btn {
   flex: 0 0 auto;
 }
 
@@ -461,7 +461,7 @@
   border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-.projects-view--board .scrum-board-sort-toggle {
+.roadmaps-view--board .scrum-board-sort-toggle {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -477,12 +477,12 @@
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.projects-view--board .scrum-board-sort-toggle:hover {
+.roadmaps-view--board .scrum-board-sort-toggle:hover {
   border-color: var(--ws-border-strong);
   box-shadow: var(--ws-focus);
 }
 
-.projects-view--board .scrum-board {
+.roadmaps-view--board .scrum-board {
   display: flex;
   gap: 0.85rem;
   align-items: stretch;
@@ -495,7 +495,7 @@
   -webkit-overflow-scrolling: touch;
 }
 
-.projects-view--board .scrum-board-column {
+.roadmaps-view--board .scrum-board-column {
   flex: 0 0 368px;
   width: 368px;
   min-width: 368px;
@@ -511,12 +511,12 @@
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.projects-view--board .scrum-board-column:hover {
+.roadmaps-view--board .scrum-board-column:hover {
   box-shadow: var(--ws-shadow-lift) !important;
   border-color: var(--ws-border-strong) !important;
 }
 
-.projects-view--board .scrum-board-column-header {
+.roadmaps-view--board .scrum-board-column-header {
   padding: 0.75rem 0.85rem !important;
   border-bottom: 1px solid var(--ws-border) !important;
   background: rgba(255, 255, 255, 0.92) !important;
@@ -526,14 +526,14 @@
   z-index: 1;
 }
 
-.projects-view--board .scrum-board-column-title {
+.roadmaps-view--board .scrum-board-column-title {
   font-size: 0.82rem !important;
   font-weight: 700 !important;
   letter-spacing: 0.04em !important;
   color: var(--ws-text) !important;
 }
 
-.projects-view--board .scrum-board-column-count {
+.roadmaps-view--board .scrum-board-column-count {
   font-size: 0.72rem !important;
   font-weight: 700 !important;
   padding: 0.12rem 0.5rem !important;
@@ -543,7 +543,7 @@
   border: 1px solid var(--ws-border) !important;
 }
 
-.projects-view--board .scrum-board-column-cards {
+.roadmaps-view--board .scrum-board-column-cards {
   flex: 1;
   min-height: 120px;
   overflow-y: auto;
@@ -553,7 +553,7 @@
   gap: 0.55rem !important;
 }
 
-.projects-view--board .scrum-board-card {
+.roadmaps-view--board .scrum-board-card {
   border-radius: var(--ws-radius-sm) !important;
   border: 1px solid var(--ws-border) !important;
   background: var(--ws-surface) !important;
@@ -563,21 +563,21 @@
   transition: none !important;
 }
 
-.projects-view--board .scrum-board-card:hover {
+.roadmaps-view--board .scrum-board-card:hover {
   transform: none !important;
   box-shadow: 0 1px 3px rgba(63, 15, 25, 0.06) !important;
   border-color: var(--ws-border) !important;
 }
 
-html.is-compact-layout .projects-view--board .scrum-board-card {
+html.is-compact-layout .roadmaps-view--board .scrum-board-card {
   cursor: default !important;
 }
 
-.projects-view--board .scrum-board-card:active {
+.roadmaps-view--board .scrum-board-card:active {
   cursor: grabbing;
 }
 
-.projects-view--board .scrum-board-card.scrum-board-card--dragging {
+.roadmaps-view--board .scrum-board-card.scrum-board-card--dragging {
   opacity: 0.94;
   transform: none !important;
   box-shadow: 0 8px 20px rgba(127, 29, 29, 0.14) !important;
@@ -586,19 +586,19 @@ html.is-compact-layout .projects-view--board .scrum-board-card {
   z-index: 20;
 }
 
-.projects-view--board .scrum-board-card-title {
+.roadmaps-view--board .scrum-board-card-title {
   font-size: 0.86rem !important;
   font-weight: 600 !important;
   line-height: 1.35 !important;
   color: var(--ws-text) !important;
 }
 
-.projects-view--board .scrum-board-card-meta {
+.roadmaps-view--board .scrum-board-card-meta {
   margin-top: 0.45rem !important;
   gap: 0.35rem !important;
 }
 
-.projects-view--board .scrum-board-empty {
+.roadmaps-view--board .scrum-board-empty {
   padding: 1.25rem 0.75rem !important;
   font-size: 0.78rem !important;
   color: var(--ws-text-soft) !important;
@@ -609,7 +609,7 @@ html.is-compact-layout .projects-view--board .scrum-board-card {
 }
 
 /* Drag-over column highlight */
-.projects-view--board .scrum-board-column.scrum-board-column--drag-over {
+.roadmaps-view--board .scrum-board-column.scrum-board-column--drag-over {
   border-color: var(--ws-accent) !important;
   box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.25), var(--ws-shadow-lift) !important;
 }
@@ -704,7 +704,7 @@ html.is-compact-layout .projects-view--board .scrum-board-card {
   overflow: hidden;
 }
 
-.view-fullscreen-stage > .projects-view.view-in-fullscreen-host {
+.view-fullscreen-stage > .roadmaps-view.view-in-fullscreen-host {
   flex: 1 1 auto;
   min-height: 0;
   width: 100% !important;
@@ -757,7 +757,7 @@ html:not(.is-compact-layout) .view-in-fullscreen-host .moscow-grid {
   -webkit-overflow-scrolling: touch;
 }
 
-.view-in-fullscreen-host .projects-map-container {
+.view-in-fullscreen-host .roadmaps-map-container {
   flex: 1 1 auto;
   min-height: 0 !important;
   max-height: none !important;
@@ -766,7 +766,7 @@ html:not(.is-compact-layout) .view-in-fullscreen-host .moscow-grid {
 }
 
 
-.view-in-fullscreen-host .projects-map-legend {
+.view-in-fullscreen-host .roadmaps-map-legend {
   flex: 0 0 auto;
 }
 
@@ -783,11 +783,11 @@ html.pseudo-view-fullscreen .profiles-panel--modern {
 }
 
 /* Native + pseudo fullscreen (desktop in-place fallback) */
-.projects-view--table:fullscreen,
-.projects-view--board:fullscreen,
-.projects-view--moscow:fullscreen,
-.projects-view--map:fullscreen,
-.projects-view.view-pseudo-fullscreen {
+.roadmaps-view--table:fullscreen,
+.roadmaps-view--board:fullscreen,
+.roadmaps-view--moscow:fullscreen,
+.roadmaps-view--map:fullscreen,
+.roadmaps-view.view-pseudo-fullscreen {
   display: flex !important;
   flex-direction: column;
   background: var(--ws-surface) !important;
@@ -796,7 +796,7 @@ html.pseudo-view-fullscreen .profiles-panel--modern {
   box-sizing: border-box;
 }
 
-.projects-view.view-pseudo-fullscreen:not(.view-in-fullscreen-host) {
+.roadmaps-view.view-pseudo-fullscreen:not(.view-in-fullscreen-host) {
   position: fixed;
   inset: 0;
   z-index: 880;
@@ -817,14 +817,14 @@ html.pseudo-view-fullscreen .profiles-panel--modern {
 }
 
 /* Pseudo fullscreen — hide portfolio chrome; view fills the screen */
-html.pseudo-view-fullscreen .workspace-portfolio-body > .projects-header-row,
+html.pseudo-view-fullscreen .workspace-portfolio-body > .roadmaps-header-row,
 html.pseudo-view-fullscreen .workspace-portfolio-body > .filters-shell,
 html.pseudo-view-fullscreen .workspace-portfolio-body > .profile-picker-bar,
 html.pseudo-view-fullscreen .workspace-portfolio-body > .profile-unlock-panel {
   display: none !important;
 }
 
-html.pseudo-view-fullscreen .projects-view.view-pseudo-fullscreen {
+html.pseudo-view-fullscreen .roadmaps-view.view-pseudo-fullscreen {
   top: 0;
   bottom: 0;
   left: 0;
@@ -851,42 +851,42 @@ html.has-view-fullscreen .profile-unlock-panel {
   pointer-events: none;
 }
 
-.projects-view--table:fullscreen .table-wrapper--modern,
-.projects-view.view-pseudo-fullscreen.projects-view--table .table-wrapper--modern {
+.roadmaps-view--table:fullscreen .table-wrapper--modern,
+.roadmaps-view.view-pseudo-fullscreen.roadmaps-view--table .table-wrapper--modern {
   flex: 1;
   max-height: none;
   min-height: 0;
 }
 
-.projects-view--board:fullscreen .scrum-board,
-.projects-view.view-pseudo-fullscreen.projects-view--board .scrum-board {
+.roadmaps-view--board:fullscreen .scrum-board,
+.roadmaps-view.view-pseudo-fullscreen.roadmaps-view--board .scrum-board {
   flex: 1;
   max-height: none;
   min-height: min(480px, calc(100dvh - 180px));
 }
 
-.projects-view.view-pseudo-fullscreen .projects-header-row,
-.projects-view.view-pseudo-fullscreen .filters-shell {
+.roadmaps-view.view-pseudo-fullscreen .roadmaps-header-row,
+.roadmaps-view.view-pseudo-fullscreen .filters-shell {
   flex-shrink: 0;
 }
 
-.projects-view.view-pseudo-fullscreen.projects-view--map {
+.roadmaps-view.view-pseudo-fullscreen.roadmaps-view--map {
   display: flex !important;
   flex-direction: column;
 }
 
-.projects-view.view-pseudo-fullscreen.projects-view--map .projects-map-container {
+.roadmaps-view.view-pseudo-fullscreen.roadmaps-view--map .roadmaps-map-container {
   flex: 1 1 auto;
   min-height: 0;
 }
 
-.projects-view.view-pseudo-fullscreen.projects-view--moscow .moscow-grid {
+.roadmaps-view.view-pseudo-fullscreen.roadmaps-view--moscow .moscow-grid {
   flex: 1 1 auto;
   min-height: 0;
   max-height: none;
 }
 
-.projects-view.view-pseudo-fullscreen .view-toolbar {
+.roadmaps-view.view-pseudo-fullscreen .view-toolbar {
   position: sticky;
   top: 0;
   z-index: 2;
@@ -895,7 +895,7 @@ html.has-view-fullscreen .profile-unlock-panel {
   margin-bottom: 0.5rem !important;
 }
 
-.projects-view.view-pseudo-fullscreen .view-fullscreen-btn.is-fullscreen {
+.roadmaps-view.view-pseudo-fullscreen .view-fullscreen-btn.is-fullscreen {
   border-color: rgba(185, 28, 28, 0.35) !important;
   background: rgba(254, 243, 199, 0.55) !important;
   color: var(--ws-accent, #b91c1c) !important;
@@ -907,7 +907,7 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage {
   -webkit-overflow-scrolling: touch;
 }
 
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view {
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view {
   flex-direction: column !important;
   flex: 1 1 auto !important;
   min-height: 0 !important;
@@ -920,7 +920,7 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .pr
   width: 100% !important;
 }
 
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--map {
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--map {
   flex: 0 0 auto !important;
   min-height: 0 !important;
   height: auto !important;
@@ -928,29 +928,29 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .pr
   padding: 0 1.15rem 0.45rem !important;
 }
 
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--board,
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--table,
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--moscow,
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--raci {
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--board,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--table,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--moscow,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--raci {
   min-height: 0 !important;
   padding: 0 1.15rem 1.15rem !important;
 }
 
 /* ── MOSCOW & Map (light polish) ─────────────────────────── */
-.workspace-panel .projects-view--moscow,
-.workspace-panel .projects-view--map {
+.workspace-panel .roadmaps-view--moscow,
+.workspace-panel .roadmaps-view--map {
   padding: 0 1.35rem 0.45rem;
 }
 
 .workspace-panel .moscow-board,
-.workspace-panel .projects-map-container {
+.workspace-panel .roadmaps-map-container {
   border-radius: var(--ws-radius-md);
   border: 1px solid var(--ws-border);
   box-shadow: var(--ws-shadow-soft);
   overflow: hidden;
 }
 
-.workspace-panel .projects-map-toolbar {
+.workspace-panel .roadmaps-map-toolbar {
   padding: 0.85rem 0 0.5rem;
 }
 
@@ -1016,7 +1016,7 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .pr
     min-height: auto;
   }
 
-  .workspace-panel .projects-view {
+  .workspace-panel .roadmaps-view {
     padding: 0 0.85rem 1rem;
   }
 
@@ -1041,12 +1041,12 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .pr
     width: 100% !important;
   }
 
-  .projects-view--board .scrum-board-toolbar.workspace-view-toolbar {
+  .roadmaps-view--board .scrum-board-toolbar.workspace-view-toolbar {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .projects-view--board .scrum-board {
+  .roadmaps-view--board .scrum-board {
     min-height: 420px;
   }
 }
@@ -1079,20 +1079,20 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .pr
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .projects-view--board .scrum-board-card,
-  .projects-view--board .scrum-board-column,
+  .roadmaps-view--board .scrum-board-card,
+  .roadmaps-view--board .scrum-board-column,
   .view-toggle-group--modern .view-toggle-btn {
     transition: none;
   }
 
-  .projects-view--board .scrum-board-card:hover,
-  .projects-view--board .scrum-board-card.scrum-board-card--dragging {
+  .roadmaps-view--board .scrum-board-card:hover,
+  .roadmaps-view--board .scrum-board-card.scrum-board-card--dragging {
     transform: none;
   }
 }
 
 /* Portfolio cards: no hover highlight in workspace board */
-.workspace-panel--v2 .projects-view--board .scrum-board-card {
+.workspace-panel--v2 .roadmaps-view--board .scrum-board-card {
   transition: none !important;
 }
 

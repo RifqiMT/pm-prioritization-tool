@@ -1,6 +1,6 @@
 /**
  * Portfolio table — stable layout (no header/row overlap, readable columns).
- * Loaded last; scoped to .projects-table-shell only.
+ * Loaded last; scoped to .roadmaps-table-shell only.
  */
 
 :root {
@@ -12,7 +12,7 @@
 }
 
 /* ── Table shell ─────────────────────────────────────────── */
-.table-wrapper--modern.projects-table-shell {
+.table-wrapper--modern.roadmaps-table-shell {
   border-radius: 14px !important;
   background: #ffffff !important;
   box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.22) !important;
@@ -21,7 +21,7 @@
   scrollbar-gutter: auto !important;
 }
 
-.workspace-panel--v2 .table-wrapper--modern.projects-table-shell::before {
+.workspace-panel--v2 .table-wrapper--modern.roadmaps-table-shell::before {
   position: relative !important;
   top: auto !important;
   left: auto !important;
@@ -35,13 +35,13 @@
 }
 
 @media (min-width: 1200px) {
-  .workspace-panel--v2 .table-wrapper--modern.projects-table-shell::before {
+  .workspace-panel--v2 .table-wrapper--modern.roadmaps-table-shell::before {
     display: none !important;
   }
 }
 
 /* Flat rows — no card gaps (fixes sticky header eating first row) */
-.table-wrapper--modern.projects-table-shell table.projects-data-table {
+.table-wrapper--modern.roadmaps-table-shell table.roadmaps-data-table {
   width: 100% !important;
   min-width: 1316px !important;
   table-layout: fixed !important;
@@ -49,18 +49,18 @@
   border-spacing: 0 !important;
 }
 
-.table-wrapper--modern.projects-table-shell table.projects-data-table.projects-data-table--owner-col {
+.table-wrapper--modern.roadmaps-table-shell table.roadmaps-data-table.roadmaps-data-table--owner-col {
   min-width: 1448px !important;
 }
 
-.table-wrapper--modern.projects-table-shell thead,
-.table-wrapper--modern.projects-table-shell thead th {
+.table-wrapper--modern.roadmaps-table-shell thead,
+.table-wrapper--modern.roadmaps-table-shell thead th {
   position: static !important;
   top: auto !important;
   z-index: auto !important;
 }
 
-.table-wrapper--modern.projects-table-shell thead th {
+.table-wrapper--modern.roadmaps-table-shell thead th {
   background: var(--table-revamp-header-bg) !important;
   color: rgba(255, 255, 255, 0.94) !important;
   font-size: 0.67rem !important;
@@ -78,23 +78,23 @@
   text-align: center !important;
 }
 
-.table-wrapper--modern.projects-table-shell tbody tr:first-child td {
+.table-wrapper--modern.roadmaps-table-shell tbody tr:first-child td {
   border-top: 1px solid rgba(148, 163, 184, 0.12) !important;
 }
 
 /* Override legacy column-stack on action cells */
-.table-wrapper.projects-table-shell .cell-actions-cell {
+.table-wrapper.roadmaps-table-shell .cell-actions-cell {
   display: table-cell !important;
   flex-direction: unset !important;
   align-items: unset !important;
 }
 
-.table-wrapper.projects-table-shell .cell-actions-cell .btn-secondary {
+.table-wrapper.roadmaps-table-shell .cell-actions-cell .btn-secondary {
   width: auto !important;
   min-height: 0 !important;
 }
 
-.table-wrapper--modern.projects-table-shell tbody td {
+.table-wrapper--modern.roadmaps-table-shell tbody td {
   padding: 0.62rem 0.48rem !important;
   line-height: 1.4 !important;
   vertical-align: middle !important;
@@ -107,65 +107,65 @@
   text-overflow: ellipsis !important;
 }
 
-.table-wrapper--modern.projects-table-shell tbody tr:last-child td {
+.table-wrapper--modern.roadmaps-table-shell tbody tr:last-child td {
   border-bottom: none !important;
 }
 
-.table-wrapper--modern.projects-table-shell tbody tr:hover td {
+.table-wrapper--modern.roadmaps-table-shell tbody tr:hover td {
   background: #f8fafc !important;
   border-color: rgba(148, 163, 184, 0.28) !important;
   box-shadow: none !important;
 }
 
-.table-wrapper--modern.projects-table-shell tbody tr:focus-within td {
+.table-wrapper--modern.roadmaps-table-shell tbody tr:focus-within td {
   background: #f1f5f9 !important;
   box-shadow: inset 3px 0 0 #6366f1 !important;
 }
 
 /* Column widths — semantic classes (stable when Profile column is hidden) */
-.table-wrapper.projects-table-shell .projects-table-col--select { width: 44px !important; min-width: 44px !important; max-width: 44px !important; }
+.table-wrapper.roadmaps-table-shell .roadmaps-table-col--select { width: 44px !important; min-width: 44px !important; max-width: 44px !important; }
 
-.table-wrapper.projects-table-shell .projects-table-col--title { width: 208px !important; min-width: 208px !important; max-width: 208px !important; }
+.table-wrapper.roadmaps-table-shell .roadmaps-table-col--title { width: 208px !important; min-width: 208px !important; max-width: 208px !important; }
 
-.table-wrapper.projects-table-shell .projects-table-col--owner { width: 132px !important; min-width: 132px !important; max-width: 132px !important; }
+.table-wrapper.roadmaps-table-shell .roadmaps-table-col--owner { width: 132px !important; min-width: 132px !important; max-width: 132px !important; }
 
-.table-wrapper.projects-table-shell .projects-table-col--type { width: 72px !important; min-width: 72px !important; max-width: 72px !important; }
+.table-wrapper.roadmaps-table-shell .roadmaps-table-col--type { width: 72px !important; min-width: 72px !important; max-width: 72px !important; }
 
-.table-wrapper.projects-table-shell .projects-table-col--status { width: 72px !important; min-width: 72px !important; max-width: 72px !important; }
+.table-wrapper.roadmaps-table-shell .roadmaps-table-col--status { width: 72px !important; min-width: 72px !important; max-width: 72px !important; }
 
-.table-wrapper.projects-table-shell .projects-table-col--framework { width: 108px !important; min-width: 108px !important; max-width: 108px !important; }
+.table-wrapper.roadmaps-table-shell .roadmaps-table-col--framework { width: 108px !important; min-width: 108px !important; max-width: 108px !important; }
 
-.table-wrapper.projects-table-shell .projects-table-col--period { width: 88px !important; min-width: 88px !important; max-width: 88px !important; }
+.table-wrapper.roadmaps-table-shell .roadmaps-table-col--period { width: 88px !important; min-width: 88px !important; max-width: 88px !important; }
 
-.table-wrapper.projects-table-shell .projects-table-col--size { width: 68px !important; min-width: 68px !important; max-width: 68px !important; }
+.table-wrapper.roadmaps-table-shell .roadmaps-table-col--size { width: 68px !important; min-width: 68px !important; max-width: 68px !important; }
 
-.table-wrapper.projects-table-shell .projects-table-col--moscow { width: 88px !important; min-width: 88px !important; max-width: 88px !important; }
+.table-wrapper.roadmaps-table-shell .roadmaps-table-col--moscow { width: 88px !important; min-width: 88px !important; max-width: 88px !important; }
 
-.table-wrapper.projects-table-shell .projects-table-col--rice { width: 84px !important; min-width: 84px !important; max-width: 84px !important; }
+.table-wrapper.roadmaps-table-shell .roadmaps-table-col--rice { width: 84px !important; min-width: 84px !important; max-width: 84px !important; }
 
-.table-wrapper.projects-table-shell .projects-table-col--financial { width: 124px !important; min-width: 124px !important; max-width: 124px !important; }
+.table-wrapper.roadmaps-table-shell .roadmaps-table-col--financial { width: 124px !important; min-width: 124px !important; max-width: 124px !important; }
 
-.table-wrapper.projects-table-shell .projects-table-col--created { width: 168px !important; min-width: 168px !important; max-width: 168px !important; }
+.table-wrapper.roadmaps-table-shell .roadmaps-table-col--created { width: 168px !important; min-width: 168px !important; max-width: 168px !important; }
 
-.table-wrapper.projects-table-shell .projects-table-col--actions { width: var(--table-revamp-actions-col) !important; min-width: var(--table-revamp-actions-col) !important; max-width: var(--table-revamp-actions-col) !important; }
+.table-wrapper.roadmaps-table-shell .roadmaps-table-col--actions { width: var(--table-revamp-actions-col) !important; min-width: var(--table-revamp-actions-col) !important; max-width: var(--table-revamp-actions-col) !important; }
 
-.table-wrapper--modern.projects-table-shell tbody td:first-child {
+.table-wrapper--modern.roadmaps-table-shell tbody td:first-child {
   text-align: center !important;
   padding-left: 0.35rem !important;
   padding-right: 0.35rem !important;
 }
 
-.table-wrapper--modern.projects-table-shell thead th:first-child {
+.table-wrapper--modern.roadmaps-table-shell thead th:first-child {
   text-align: center !important;
 }
 
-.table-wrapper--modern.projects-table-shell thead th:last-child,
-.table-wrapper--modern.projects-table-shell tbody td:last-child {
+.table-wrapper--modern.roadmaps-table-shell thead th:last-child,
+.table-wrapper--modern.roadmaps-table-shell tbody td:last-child {
   text-align: center !important;
 }
 
 /* Sort controls — centered labels + indicators */
-.table-wrapper--modern.projects-table-shell .sort-button {
+.table-wrapper--modern.roadmaps-table-shell .sort-button {
   color: rgba(255, 255, 255, 0.92) !important;
   width: 100% !important;
   min-width: 0 !important;
@@ -174,7 +174,7 @@
   gap: 0.22rem !important;
 }
 
-.table-wrapper--modern.projects-table-shell .sort-button span:first-child {
+.table-wrapper--modern.roadmaps-table-shell .sort-button span:first-child {
   display: inline !important;
   max-width: none !important;
   white-space: nowrap !important;
@@ -185,29 +185,29 @@
   line-height: 1.2 !important;
 }
 
-.table-wrapper--modern.projects-table-shell .sort-button:hover,
-.table-wrapper--modern.projects-table-shell thead th[data-sort-active="true"] .sort-button {
+.table-wrapper--modern.roadmaps-table-shell .sort-button:hover,
+.table-wrapper--modern.roadmaps-table-shell thead th[data-sort-active="true"] .sort-button {
   color: #f8fafc !important;
 }
 
-.table-wrapper--modern.projects-table-shell .sort-indicator {
+.table-wrapper--modern.roadmaps-table-shell .sort-indicator {
   opacity: 0.45 !important;
   color: rgba(255, 255, 255, 0.85) !important;
   flex-shrink: 0 !important;
 }
 
-.table-wrapper--modern.projects-table-shell thead th[data-sort-active="true"] .sort-indicator {
+.table-wrapper--modern.roadmaps-table-shell thead th[data-sort-active="true"] .sort-indicator {
   opacity: 1 !important;
   color: #fde68a !important;
 }
 
-/* Project column */
-.table-wrapper--modern.projects-table-shell .cell-title-block {
+/* Roadmap column */
+.table-wrapper--modern.roadmaps-table-shell .cell-title-block {
   gap: 0.28rem !important;
   min-width: 0 !important;
 }
 
-.table-wrapper--modern.projects-table-shell .cell-title {
+.table-wrapper--modern.roadmaps-table-shell .cell-title {
   font-size: 0.82rem !important;
   font-weight: 650 !important;
   line-height: 1.3 !important;
@@ -216,7 +216,7 @@
   white-space: nowrap !important;
 }
 
-.table-wrapper--modern.projects-table-shell .countries-badge {
+.table-wrapper--modern.roadmaps-table-shell .countries-badge {
   max-width: 100% !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
@@ -224,30 +224,30 @@
 }
 
 /* Metrics */
-.table-wrapper--modern.projects-table-shell tbody td.cell-rice,
-.table-wrapper--modern.projects-table-shell tbody td[data-cell="financialImpactValue"] {
+.table-wrapper--modern.roadmaps-table-shell tbody td.cell-rice,
+.table-wrapper--modern.roadmaps-table-shell tbody td[data-cell="financialImpactValue"] {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
 }
 
-.table-wrapper--modern.projects-table-shell .cell-rice .rice-score-wrapper,
-.table-wrapper--modern.projects-table-shell .cell-financial-text strong {
+.table-wrapper--modern.roadmaps-table-shell .cell-rice .rice-score-wrapper,
+.table-wrapper--modern.roadmaps-table-shell .cell-financial-text strong {
   font-weight: 700 !important;
   color: #0f172a !important;
 }
 
-.table-wrapper--modern.projects-table-shell .cell-created-date-text {
+.table-wrapper--modern.roadmaps-table-shell .cell-created-date-text {
   font-size: 0.73rem;
   color: #475569;
   white-space: nowrap !important;
 }
 
 /* MOSCOW pills */
-.table-wrapper--modern.projects-table-shell .cell-moscow {
+.table-wrapper--modern.roadmaps-table-shell .cell-moscow {
   white-space: nowrap;
 }
 
-.table-wrapper--modern.projects-table-shell .moscow-pill {
+.table-wrapper--modern.roadmaps-table-shell .moscow-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -261,38 +261,38 @@
   white-space: nowrap;
 }
 
-.table-wrapper--modern.projects-table-shell .moscow-pill--must {
+.table-wrapper--modern.roadmaps-table-shell .moscow-pill--must {
   color: #991b1b;
   background: #fef2f2;
   border-color: rgba(239, 68, 68, 0.28);
 }
 
-.table-wrapper--modern.projects-table-shell .moscow-pill--should {
+.table-wrapper--modern.roadmaps-table-shell .moscow-pill--should {
   color: #b45309;
   background: #fffbeb;
   border-color: rgba(245, 158, 11, 0.32);
 }
 
-.table-wrapper--modern.projects-table-shell .moscow-pill--could {
+.table-wrapper--modern.roadmaps-table-shell .moscow-pill--could {
   color: #1d4ed8;
   background: #eff6ff;
   border-color: rgba(59, 130, 246, 0.28);
 }
 
-.table-wrapper--modern.projects-table-shell .moscow-pill--wont {
+.table-wrapper--modern.roadmaps-table-shell .moscow-pill--wont {
   color: #475569;
   background: #f1f5f9;
   border-color: rgba(100, 116, 139, 0.28);
 }
 
-.table-wrapper--modern.projects-table-shell .moscow-pill--unset {
+.table-wrapper--modern.roadmaps-table-shell .moscow-pill--unset {
   color: #94a3b8;
   background: #f8fafc;
   border-color: rgba(148, 163, 184, 0.25);
 }
 
 /* Actions cell — inner toolbar wrapper (td must stay table-cell) */
-.table-wrapper--modern.projects-table-shell tbody td.cell-actions-cell {
+.table-wrapper--modern.roadmaps-table-shell tbody td.cell-actions-cell {
   padding: 0.38rem 0.18rem !important;
   overflow: hidden !important;
   vertical-align: middle !important;
@@ -301,8 +301,8 @@
   text-align: center !important;
 }
 
-.table-wrapper--modern.projects-table-shell .project-row-actions,
-.table-wrapper .project-row-actions {
+.table-wrapper--modern.roadmaps-table-shell .roadmap-row-actions,
+.table-wrapper .roadmap-row-actions {
   display: inline-flex !important;
   flex-direction: row !important;
   flex-wrap: nowrap !important;
@@ -323,8 +323,8 @@
   vertical-align: middle !important;
 }
 
-.table-wrapper--modern.projects-table-shell .project-row-actions .project-action-btn,
-.table-wrapper .project-row-actions .project-action-btn {
+.table-wrapper--modern.roadmaps-table-shell .roadmap-row-actions .roadmap-action-btn,
+.table-wrapper .roadmap-row-actions .roadmap-action-btn {
   flex: 1 1 0 !important;
   width: var(--table-revamp-action-btn) !important;
   min-width: 0 !important;
@@ -339,38 +339,38 @@
   background: transparent !important;
 }
 
-.table-wrapper .project-row-actions .project-action-btn__icon,
-.table-wrapper--modern .project-row-actions .project-action-btn__icon,
-.table-wrapper .project-row-actions .project-action-btn__icon svg,
-.table-wrapper--modern .project-row-actions .project-action-btn__icon svg {
+.table-wrapper .roadmap-row-actions .roadmap-action-btn__icon,
+.table-wrapper--modern .roadmap-row-actions .roadmap-action-btn__icon,
+.table-wrapper .roadmap-row-actions .roadmap-action-btn__icon svg,
+.table-wrapper--modern .roadmap-row-actions .roadmap-action-btn__icon svg {
   width: 14px !important;
   height: 14px !important;
 }
 
-.table-wrapper .project-row-actions .project-action-btn--view,
-.table-wrapper--modern .project-row-actions .project-action-btn--view {
+.table-wrapper .roadmap-row-actions .roadmap-action-btn--view,
+.table-wrapper--modern .roadmap-row-actions .roadmap-action-btn--view {
   color: var(--action-view) !important;
 }
 
-.table-wrapper .project-row-actions .project-action-btn--edit,
-.table-wrapper--modern .project-row-actions .project-action-btn--edit {
+.table-wrapper .roadmap-row-actions .roadmap-action-btn--edit,
+.table-wrapper--modern .roadmap-row-actions .roadmap-action-btn--edit {
   color: var(--action-edit) !important;
 }
 
-.table-wrapper .project-row-actions .project-action-btn--delete,
-.table-wrapper--modern .project-row-actions .project-action-btn--delete {
+.table-wrapper .roadmap-row-actions .roadmap-action-btn--delete,
+.table-wrapper--modern .roadmap-row-actions .roadmap-action-btn--delete {
   color: var(--action-delete) !important;
 }
 
-.table-wrapper .project-row-actions .project-action-btn:hover:not(:disabled),
-.table-wrapper--modern .project-row-actions .project-action-btn:hover:not(:disabled) {
+.table-wrapper .roadmap-row-actions .roadmap-action-btn:hover:not(:disabled),
+.table-wrapper--modern .roadmap-row-actions .roadmap-action-btn:hover:not(:disabled) {
   transform: none !important;
   background: #ffffff !important;
   box-shadow: none !important;
 }
 
-.table-wrapper .project-row-actions .project-action-btn__label,
-.table-wrapper--modern .project-row-actions .project-action-btn__label {
+.table-wrapper .roadmap-row-actions .roadmap-action-btn__label,
+.table-wrapper--modern .roadmap-row-actions .roadmap-action-btn__label {
   position: absolute !important;
   width: 1px !important;
   height: 1px !important;
@@ -382,8 +382,8 @@
   border: 0 !important;
 }
 
-.table-wrapper--modern.projects-table-shell tbody tr.projects-table-empty-row td.empty-state,
-.table-wrapper--modern.projects-table-shell tbody tr:only-child td.empty-state {
+.table-wrapper--modern.roadmaps-table-shell tbody tr.roadmaps-table-empty-row td.empty-state,
+.table-wrapper--modern.roadmaps-table-shell tbody tr:only-child td.empty-state {
   border: 1px dashed rgba(148, 163, 184, 0.35) !important;
   border-radius: 10px !important;
   padding: 2rem 1.25rem !important;
@@ -393,8 +393,8 @@
   box-shadow: none !important;
 }
 
-.table-wrapper--modern.projects-table-shell tbody tr.projects-table-empty-row td.empty-state::before,
-.table-wrapper--modern.projects-table-shell tbody tr:only-child td.empty-state::before {
+.table-wrapper--modern.roadmaps-table-shell tbody tr.roadmaps-table-empty-row td.empty-state::before,
+.table-wrapper--modern.roadmaps-table-shell tbody tr:only-child td.empty-state::before {
   display: block;
   margin: 0 auto 0.65rem;
   content: "";
@@ -404,7 +404,7 @@
   background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/%3E%3Crect x='8' y='2' width='8' height='4' rx='1'/%3E%3Cpath d='M9 12h6'/%3E%3Cpath d='M9 16h6'/%3E%3C/svg%3E");
 }
 
-.projects-table-empty-state__content {
+.roadmaps-table-empty-state__content {
   display: block;
   max-width: 36rem;
   margin: 0 auto;
@@ -414,28 +414,28 @@
 }
 
 @media (min-width: 1401px) {
-  .table-wrapper--modern.projects-table-shell tbody tr.projects-table-empty-row td.empty-state {
+  .table-wrapper--modern.roadmaps-table-shell tbody tr.roadmaps-table-empty-row td.empty-state {
     min-height: 10.5rem;
   }
 
-  .table-wrapper--modern.projects-table-shell table.projects-data-table {
+  .table-wrapper--modern.roadmaps-table-shell table.roadmaps-data-table {
     width: 100% !important;
   }
 }
 
 @media (max-width: 1400px) {
-  html.is-compact-layout .table-wrapper--modern.projects-table-shell table.projects-data-table {
+  html.is-compact-layout .table-wrapper--modern.roadmaps-table-shell table.roadmaps-data-table {
     min-width: 1280px !important;
   }
 
-  html.is-compact-layout .table-wrapper--modern.projects-table-shell thead th,
-  html.is-compact-layout .table-wrapper--modern.projects-table-shell tbody td {
+  html.is-compact-layout .table-wrapper--modern.roadmaps-table-shell thead th,
+  html.is-compact-layout .table-wrapper--modern.roadmaps-table-shell tbody td {
     padding: 0.52rem 0.38rem !important;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .table-wrapper--modern.projects-table-shell tbody td {
+  .table-wrapper--modern.roadmaps-table-shell tbody td {
     transition: none !important;
   }
 }

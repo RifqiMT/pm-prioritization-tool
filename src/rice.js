@@ -6,11 +6,11 @@
  * NOTE: This file is loaded as a classic <script>, not as an ES module.
  * All top-level functions become globals that the rest of the app can call.
  */
-function calculateRiceScore(project) {
-  const reach = Number(project.reachValue || 0);
-  const impact = Number(project.impactValue || 0);
-  let confidence = Number(project.confidenceValue || 0);
-  const effort = Number(project.effortValue || 0);
+function calculateRiceScore(roadmap) {
+  const reach = Number(roadmap.reachValue || 0);
+  const impact = Number(roadmap.impactValue || 0);
+  let confidence = Number(roadmap.confidenceValue || 0);
+  const effort = Number(roadmap.effortValue || 0);
   if (effort <= 0) return 0;
   if (confidence > 1) {
     confidence = confidence / 100;
@@ -33,7 +33,7 @@ function formatRice(value) {
   });
 }
 
-function projectDescriptionPlainText(raw) {
+function roadmapDescriptionPlainText(raw) {
   if (typeof descriptionToPlainText === "function") {
     return descriptionToPlainText(raw || "");
   }
@@ -44,13 +44,13 @@ function projectDescriptionPlainText(raw) {
     .trim();
 }
 
-function validateProjectInput(raw) {
+function validateRoadmapInput(raw) {
   if (!raw.title || !String(raw.title).trim()) {
-    return "Project title is required.";
+    return "Roadmap title is required.";
   }
 
-  if (!projectDescriptionPlainText(raw.description)) {
-    return "Project description is required.";
+  if (!roadmapDescriptionPlainText(raw.description)) {
+    return "Roadmap description is required.";
   }
 
   if (raw.reachValue != null && raw.reachValue !== "") {
@@ -97,10 +97,10 @@ function validateProjectInput(raw) {
     return "Select a currency when financial impact is provided.";
   }
 
-  if (raw.projectPeriod) {
+  if (raw.roadmapPeriod) {
     const periodPattern = /^\d{4}-Q[1-4]$/;
-    if (!periodPattern.test(raw.projectPeriod)) {
-      return "Project period must be in the format YYYY-QX (e.g. 2026-Q1).";
+    if (!periodPattern.test(raw.roadmapPeriod)) {
+      return "Roadmap period must be in the format YYYY-QX (e.g. 2026-Q1).";
     }
   }
 

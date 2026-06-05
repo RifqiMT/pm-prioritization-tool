@@ -1,5 +1,5 @@
 /**
- * Portfolio & projects workspace — v2 responsive revamp.
+ * Portfolio & roadmaps workspace — v2 responsive revamp.
  * Loaded after workspace-modern.css (extends/overrides).
  */
 
@@ -29,65 +29,107 @@
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch !important;
-  padding: 0.75rem 0.9rem 0.65rem !important;
+  padding: 0.9rem 1.1rem !important;
   margin: 0 !important;
-  border-bottom: 1px solid var(--pf-border) !important;
-  background: linear-gradient(180deg, #fffdf8 0%, #ffffff 88%) !important;
-  gap: 0.55rem !important;
+  border-bottom: 1px solid rgba(231, 201, 120, 0.38) !important;
+  background: #ffffff !important;
+  gap: 0.75rem !important;
 }
 
 .portfolio-command-intro {
   display: flex;
-  align-items: flex-start;
-  gap: 0.65rem;
+  align-items: stretch;
   min-width: 0;
   flex: 1 1 auto;
 }
 
-.portfolio-command-mark {
-  flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  border-radius: 11px;
-  background: linear-gradient(145deg, #b91c1c, #991b1b 50%, #a16207);
-  color: #fff;
-  box-shadow: 0 3px 10px rgba(185, 28, 28, 0.2);
+.portfolio-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+  width: 100%;
 }
 
-.portfolio-command-copy {
+.portfolio-identity__avatar {
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #fff;
+  background: linear-gradient(145deg, #ea580c 0%, #b91c1c 52%, #9f1239 100%);
+  box-shadow: 0 2px 10px rgba(185, 28, 28, 0.16);
+  user-select: none;
+}
+
+.portfolio-identity__avatar--empty {
+  background: linear-gradient(145deg, #a8a29e 0%, #78716c 100%);
+  box-shadow: none;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.portfolio-identity--locked .portfolio-identity__avatar {
+  filter: saturate(0.72);
+}
+
+.portfolio-identity__body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.12rem;
   min-width: 0;
   flex: 1;
 }
 
-.portfolio-command-title-row {
+.portfolio-identity__top {
   display: flex;
-  flex-direction: column;
-  gap: 0.12rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
   min-width: 0;
 }
 
+.portfolio-identity__label {
+  font-size: 0.67rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(122, 75, 18, 0.52);
+}
+
+.portfolio-identity__title,
 .workspace-panel--v2 .portfolio-title,
-.workspace-panel--v2 .projects-header-title {
+.workspace-panel--v2 .roadmaps-header-title {
   margin: 0 !important;
-  font-size: clamp(1.05rem, 2.8vw, 1.35rem) !important;
+  font-size: clamp(1.12rem, 2.1vw, 1.3rem) !important;
   font-weight: 700 !important;
-  letter-spacing: -0.02em !important;
+  letter-spacing: -0.03em !important;
   line-height: 1.2 !important;
   color: var(--pf-text) !important;
   text-transform: none !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+.portfolio-identity__subtitle,
 .workspace-panel--v2 .portfolio-subtitle,
-.workspace-panel--v2 .projects-header-subtitle {
+.workspace-panel--v2 .roadmaps-header-subtitle {
   margin: 0 !important;
-  font-size: 0.82rem !important;
+  font-size: 0.8125rem !important;
   line-height: 1.4 !important;
-  color: var(--pf-text-soft) !important;
+  color: rgba(122, 75, 18, 0.68) !important;
   max-width: none !important;
   text-transform: none !important;
-  letter-spacing: normal !important;
+  letter-spacing: 0 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .portfolio-subtitle--empty {
@@ -95,24 +137,38 @@
 }
 
 .portfolio-badges {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 0.35rem;
+  align-items: center;
+  gap: 0.28rem;
+  margin: 0;
+}
+
+.portfolio-status-badge,
+.portfolio-demo-badge,
+.portfolio-super-admin-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.42rem;
+  border-radius: 5px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.25;
+  white-space: nowrap;
 }
 
 .portfolio-demo-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.18rem 0.55rem;
-  border-radius: 999px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: #92400e;
-  background: #fffbeb;
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #b45309;
+  background: rgba(254, 243, 199, 0.55);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+}
+
+.portfolio-super-admin-badge {
+  color: #6d28d9;
+  background: rgba(237, 233, 254, 0.85);
+  border: 1px solid rgba(167, 139, 250, 0.4);
 }
 
 .portfolio-command-controls {
@@ -123,24 +179,141 @@
   width: 100%;
 }
 
-/* View tabs — equal-width segmented control (beats global button styles) */
+/* View tabs — single-row segmented control with optional overflow menu */
 .workspace-panel--v2 .portfolio-view-tabs.view-toggle-group.view-toggle-group--portfolio {
   display: grid !important;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: stretch !important;
   width: 100% !important;
-  overflow: hidden !important;
+  min-width: 0 !important;
+  overflow: visible !important;
   padding: 0.22rem !important;
   gap: 0.22rem !important;
   border-radius: 12px !important;
   border: 1px solid rgba(231, 201, 120, 0.55) !important;
   background: rgba(254, 243, 199, 0.42) !important;
   box-shadow: inset 0 1px 2px rgba(63, 15, 25, 0.04) !important;
-  align-items: stretch !important;
+}
+
+.workspace-panel--v2 .portfolio-view-tabs-overflow[hidden] {
+  display: none !important;
+}
+
+.workspace-panel--v2 .portfolio-view-tabs-track {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0.22rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.workspace-panel--v2 .portfolio-view-tabs[data-view-tabs-mode="duo"] .portfolio-view-tabs-track,
+.workspace-panel--v2 .portfolio-view-tabs .portfolio-view-tabs-track {
+  flex: none;
+  width: 100%;
+  min-width: 0;
+}
+
+.workspace-panel--v2 .portfolio-view-tabs[data-view-tabs-mode="duo"] .portfolio-view-tabs-track .view-toggle-btn,
+.workspace-panel--v2 .portfolio-view-tabs .portfolio-view-tabs-track .view-toggle-btn {
+  flex: 1 1 100% !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  justify-content: center !important;
+}
+
+.workspace-panel--v2 .portfolio-view-tabs[data-view-tabs-mode="duo"] .portfolio-view-tabs-overflow,
+.workspace-panel--v2 .portfolio-view-tabs .portfolio-view-tabs-overflow {
+  flex: none;
+  width: 100%;
+  min-width: 0;
+}
+
+.workspace-panel--v2 .portfolio-view-tabs[data-view-tabs-mode="duo"] .portfolio-view-tabs-more-btn,
+.workspace-panel--v2 .portfolio-view-tabs .portfolio-view-tabs-more-btn {
+  width: 100% !important;
+  min-width: 0 !important;
+  justify-content: center !important;
+}
+
+.workspace-panel--v2 .portfolio-view-tabs-overflow {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: stretch;
+}
+
+.workspace-panel--v2 .portfolio-view-tabs-more-btn {
+  flex: 0 0 auto !important;
+  min-width: 3.35rem !important;
+  padding: 0.35rem 0.55rem !important;
+  color: var(--pf-text-soft, #7a4b12) !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.workspace-panel--v2 .portfolio-view-tabs-more-btn.view-toggle-btn--active,
+.workspace-panel--v2 .portfolio-view-tabs-more-btn.portfolio-view-tabs-more-btn--active {
+  color: var(--pf-text-soft, #7a4b12) !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.workspace-panel--v2 .portfolio-view-tabs--overflow-open .portfolio-view-tabs-more-btn {
+  background: rgba(255, 255, 255, 0.72) !important;
+  border-color: rgba(231, 201, 120, 0.55) !important;
+}
+
+.workspace-panel--v2 .portfolio-view-tabs-more-menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 40;
+  display: none;
+  flex-direction: column;
+  gap: 0.28rem;
+  min-width: 10.5rem;
+  padding: 0.42rem;
+  border-radius: 12px;
+  border: 1px solid rgba(231, 201, 120, 0.55);
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(63, 15, 25, 0.12);
+  animation: portfolio-view-tabs-menu-in 0.18s ease;
+}
+
+.workspace-panel--v2 .portfolio-view-tabs--overflow-open .portfolio-view-tabs-more-menu:not([hidden]) {
+  display: flex;
+}
+
+@keyframes portfolio-view-tabs-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.workspace-panel--v2 .portfolio-view-tabs-more-menu .view-toggle-btn {
+  width: 100% !important;
+  flex: none !important;
+  justify-content: flex-start !important;
+  min-height: 40px !important;
+  padding: 0.38rem 0.55rem !important;
+}
+
+.workspace-panel--v2 .portfolio-view-tabs--overflow-open {
+  z-index: 35;
 }
 
 .workspace-panel--v2 .portfolio-view-tabs .view-toggle-btn {
   flex: none !important;
-  width: 100% !important;
   min-width: 0 !important;
   min-height: 40px !important;
   padding: 0.35rem 0.4rem !important;
@@ -256,22 +429,30 @@
   }
 }
 
+@media (max-width: 480px) {
+  .workspace-panel--v2 .portfolio-view-tabs-more-menu {
+    left: 0;
+    right: 0;
+    min-width: 0;
+  }
+}
+
 /* Fullscreen: keep view tabs tappable; suppress stuck hover/focus on touch */
 html.has-view-fullscreen .workspace-panel--v2 .portfolio-view-tabs,
-.projects-view.view-pseudo-fullscreen .portfolio-view-tabs {
+.roadmaps-view.view-pseudo-fullscreen .portfolio-view-tabs {
   pointer-events: auto;
   position: relative;
   z-index: 3;
 }
 
 html.has-view-fullscreen .workspace-panel--v2 .portfolio-view-tabs .view-toggle-btn,
-.projects-view.view-pseudo-fullscreen .portfolio-view-tabs .view-toggle-btn {
+.roadmaps-view.view-pseudo-fullscreen .portfolio-view-tabs .view-toggle-btn {
   cursor: pointer;
 }
 
 @media (hover: none), (pointer: coarse) {
   html.has-view-fullscreen .workspace-panel--v2 .portfolio-view-tabs .view-toggle-btn:hover:not(.view-toggle-btn--active):not([aria-selected="true"]),
-  .projects-view.view-pseudo-fullscreen .portfolio-view-tabs .view-toggle-btn:hover:not(.view-toggle-btn--active):not([aria-selected="true"]) {
+  .roadmaps-view.view-pseudo-fullscreen .portfolio-view-tabs .view-toggle-btn:hover:not(.view-toggle-btn--active):not([aria-selected="true"]) {
     background: transparent !important;
     border-color: transparent !important;
     color: var(--pf-text-soft, #7a4b12) !important;
@@ -279,7 +460,7 @@ html.has-view-fullscreen .workspace-panel--v2 .portfolio-view-tabs .view-toggle-
   }
 
   html.has-view-fullscreen .workspace-panel--v2 .portfolio-view-tabs .view-toggle-btn:focus:not(.view-toggle-btn--active):not([aria-selected="true"]),
-  .projects-view.view-pseudo-fullscreen .portfolio-view-tabs .view-toggle-btn:focus:not(.view-toggle-btn--active):not([aria-selected="true"]) {
+  .roadmaps-view.view-pseudo-fullscreen .portfolio-view-tabs .view-toggle-btn:focus:not(.view-toggle-btn--active):not([aria-selected="true"]) {
     background: transparent !important;
     border-color: transparent !important;
     box-shadow: none !important;
@@ -325,7 +506,7 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .workspace-panel--v2
 }
 
 .workspace-panel--v2 .portfolio-btn--primary,
-.workspace-panel--v2 #addProjectBtn.portfolio-btn--primary {
+.workspace-panel--v2 #addRoadmapBtn.portfolio-btn--primary {
   background: linear-gradient(135deg, #b91c1c, #991b1b) !important;
   color: #fffaf5 !important;
   border: 1px solid rgba(127, 29, 29, 0.2) !important;
@@ -573,7 +754,7 @@ html.is-super-admin-mode .super-admin-filter-group:not([hidden]) {
   font-size: 0.88rem !important;
 }
 
-/* Filter text autocomplete (project title, label) */
+/* Filter text autocomplete (roadmap title, label) */
 .filter-autocomplete {
   position: relative;
   width: 100%;
@@ -781,22 +962,8 @@ html.is-workspace-trust-profile #superAdminToggleWrap:not([hidden]) {
   color: #92400e;
 }
 
-.portfolio-super-admin-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.18rem 0.55rem;
-  border-radius: 999px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #78350f;
-  background: #fef3c7;
-  border: 1px solid #fbbf24;
-}
-
-.project-owner-profile-pill,
-.projects-table-card__owner-pill {
+.roadmap-owner-profile-pill,
+.roadmaps-table-card__owner-pill {
   display: inline-flex;
   align-items: center;
   max-width: 100%;
@@ -812,7 +979,7 @@ html.is-workspace-trust-profile #superAdminToggleWrap:not([hidden]) {
   text-overflow: ellipsis;
 }
 
-.projects-table-card__owner-pill {
+.roadmaps-table-card__owner-pill {
   flex-shrink: 0;
   max-width: 42%;
 }
@@ -825,7 +992,7 @@ html.is-super-admin-mode col.super-admin-only-column:not([hidden]) {
   display: table-column !important;
 }
 
-.project-owner-profile-wrap select {
+.roadmap-owner-profile-wrap select {
   width: 100%;
 }
 
@@ -912,7 +1079,7 @@ html.filters-drawer-open .portfolio-filters-body {
 }
 
 .workspace-panel--v2 .portfolio-view,
-.workspace-panel--v2 .projects-view {
+.workspace-panel--v2 .roadmaps-view {
   flex: 1 1 auto;
   min-height: 0;
   overflow: visible;
@@ -964,7 +1131,7 @@ html.filters-drawer-open .portfolio-filters-body {
 
 /* RACI desktop matrix — scrollable body (matches table shell height) */
 @media (min-width: 1025px) {
-  html.is-desktop-layout .workspace-panel--v2 .projects-view--raci .raci-matrix-wrap {
+  html.is-desktop-layout .workspace-panel--v2 .roadmaps-view--raci .raci-matrix-wrap {
     max-height: min(62vh, 600px);
     height: min(62vh, 600px);
   }
@@ -985,7 +1152,7 @@ html.filters-drawer-open .portfolio-filters-body {
 }
 
 /* Map — fixed height shell; Leaflet fills container (no flex dead space) */
-.workspace-panel--v2 .projects-view--map {
+.workspace-panel--v2 .roadmaps-view--map {
   flex: 0 0 auto !important;
   min-height: 0 !important;
   height: auto !important;
@@ -993,7 +1160,7 @@ html.filters-drawer-open .portfolio-filters-body {
   padding: 0 1.15rem 0.45rem !important;
 }
 
-.workspace-panel--v2 .projects-map-container {
+.workspace-panel--v2 .roadmaps-map-container {
   flex: 0 0 auto !important;
   position: relative !important;
   width: 100% !important;
@@ -1005,7 +1172,7 @@ html.filters-drawer-open .portfolio-filters-body {
   overflow: hidden !important;
 }
 
-.workspace-panel--v2 .projects-map-container .leaflet-container {
+.workspace-panel--v2 .roadmaps-map-container .leaflet-container {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
@@ -1013,7 +1180,7 @@ html.filters-drawer-open .portfolio-filters-body {
   min-height: 0 !important;
 }
 
-.workspace-panel--v2 .projects-map-toolbar {
+.workspace-panel--v2 .roadmaps-map-toolbar {
   flex-wrap: wrap;
   gap: 0.5rem;
 }
@@ -1659,7 +1826,7 @@ html:not(.is-super-admin-mode) .portfolio-selection-bar .super-admin-bulk-action
     display: inline-flex;
   }
 
-  /* Hide duplicate “New project” on compact — FAB handles create on phone */
+  /* Hide duplicate “New roadmap” on compact — FAB handles create on phone */
   .portfolio-action-group {
     display: flex;
     flex-wrap: wrap;
@@ -1667,7 +1834,7 @@ html:not(.is-super-admin-mode) .portfolio-selection-bar .super-admin-bulk-action
     gap: 0.45rem;
   }
 
-  .portfolio-action-group #addProjectBtn {
+  .portfolio-action-group #addRoadmapBtn {
     display: none !important;
   }
 
@@ -1693,27 +1860,39 @@ html:not(.is-super-admin-mode) .portfolio-selection-bar .super-admin-bulk-action
 
   .portfolio-command-controls {
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     justify-content: flex-end;
     width: auto;
     flex: 0 1 auto;
+    gap: 0.65rem;
   }
 
-  .workspace-panel--v2 .portfolio-view-tabs.view-toggle-group {
+  .workspace-panel--v2 .portfolio-view-tabs.view-toggle-group,
+  .workspace-panel--v2 .portfolio-view-tabs.view-toggle-group.view-toggle-group--portfolio {
     width: auto !important;
-    flex: 0 1 auto;
+    flex: 0 0 auto;
+    max-width: none;
+    min-width: 14.5rem;
+  }
+
+  .workspace-panel--v2 .portfolio-view-tabs.view-toggle-group.view-toggle-group--portfolio {
+    grid-template-columns: minmax(6.5rem, 1fr) minmax(5.25rem, 0.85fr);
   }
 
   .workspace-panel--v2 .portfolio-view-tabs .view-toggle-btn {
-    flex: 0 0 auto !important;
-    min-width: 4.25rem !important;
-    padding: 0.4rem 0.75rem !important;
+    min-height: 40px !important;
+    padding: 0.4rem 0.65rem !important;
+  }
+
+  .workspace-panel--v2 .portfolio-view-tabs-more-menu {
+    min-width: 11.5rem;
   }
 
   .portfolio-action-group {
     flex: 0 0 auto;
     width: auto;
+    flex-wrap: nowrap;
   }
 
   .workspace-panel--v2 .portfolio-btn {
@@ -1722,10 +1901,33 @@ html:not(.is-super-admin-mode) .portfolio-selection-bar .super-admin-bulk-action
   }
 }
 
+@media (min-width: 1401px) {
+  html.is-desktop-layout .portfolio-command-controls {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 0.65rem !important;
+    width: auto !important;
+  }
+
+  html.is-desktop-layout .portfolio-action-group {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    flex-wrap: nowrap !important;
+  }
+
+  html.is-desktop-layout .workspace-panel--v2 .portfolio-view-tabs.view-toggle-group.view-toggle-group--portfolio {
+    width: auto !important;
+    flex: 0 0 auto !important;
+  }
+}
+
 @media (min-width: 1100px) {
-  .portfolio-command-mark {
-    width: 44px;
-    height: 44px;
+  .portfolio-identity__avatar {
+    width: 48px;
+    height: 48px;
+    font-size: 0.84rem;
   }
 }
 
@@ -1758,48 +1960,38 @@ html:not(.is-super-admin-mode) .portfolio-selection-bar .super-admin-bulk-action
     align-items: stretch !important;
   }
 
-  /* Hide redundant eyebrow — profile picker shows context */
+  /* Hide portfolio identity when profile picker shows context */
   .portfolio-command-bar .portfolio-eyebrow,
   .portfolio-command-bar .workspace-eyebrow {
     display: none !important;
   }
 
-  .profile-picker-bar:not([hidden]) ~ .workspace-portfolio-body .portfolio-command-title-row {
+  .profile-picker-bar:not([hidden]) ~ .workspace-portfolio-body .portfolio-identity__body {
+    display: none !important;
+  }
+
+  .profile-picker-bar:not([hidden]) ~ .workspace-portfolio-body .portfolio-identity__avatar {
     display: none !important;
   }
 
   .portfolio-command-intro {
     flex: 0 0 auto;
-    gap: 0;
   }
 
-  .portfolio-command-mark {
-    display: none !important;
+  .portfolio-identity {
+    gap: 0.55rem;
   }
 
-  .portfolio-command-title-row {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.35rem 0.5rem;
-  }
-
+  .portfolio-identity__title,
   .workspace-panel--v2 .portfolio-title,
-  .workspace-panel--v2 .projects-header-title {
-    font-size: 1.05rem !important;
+  .workspace-panel--v2 .roadmaps-header-title {
+    font-size: 1.02rem !important;
   }
 
+  .portfolio-identity__subtitle,
   .workspace-panel--v2 .portfolio-subtitle,
-  .workspace-panel--v2 .projects-header-subtitle {
-    font-size: 0.78rem !important;
-  }
-
-  /* Inline subtitle after title on one line when short */
-  .portfolio-subtitle--inline:not(.portfolio-subtitle--empty)::before {
-    content: "·";
-    margin-right: 0.35rem;
-    color: rgba(122, 75, 18, 0.45);
-    font-weight: 400;
+  .workspace-panel--v2 .roadmaps-header-subtitle {
+    font-size: 0.76rem !important;
   }
 
   .portfolio-command-controls {
@@ -1834,13 +2026,22 @@ html:not(.is-super-admin-mode) .portfolio-selection-bar .super-admin-bulk-action
   }
 
   .workspace-panel--v2 .portfolio-title,
-  .workspace-panel--v2 .projects-header-title {
+  .workspace-panel--v2 .roadmaps-header-title {
     font-size: 0.98rem !important;
   }
 
-  /* Icon-only tabs on very small screens — equal 5-column grid */
+  /* Icon-only tabs on very small screens — keep labels in duo mode */
   .workspace-panel--v2 .portfolio-view-tabs .view-tab-text {
     display: none;
+  }
+
+  .workspace-panel--v2 .portfolio-view-tabs .portfolio-view-tabs-track .view-tab-text,
+  .workspace-panel--v2 .portfolio-view-tabs .portfolio-view-tabs-more-label {
+    display: inline;
+  }
+
+  .workspace-panel--v2 .portfolio-view-tabs-more-menu .view-tab-text {
+    display: inline;
   }
 
   .workspace-panel--v2 .portfolio-view-tabs .view-toggle-btn {
@@ -1853,12 +2054,34 @@ html:not(.is-super-admin-mode) .portfolio-selection-bar .super-admin-bulk-action
     height: 18px;
   }
 
-  .portfolio-subtitle--inline:not(.portfolio-subtitle--empty) {
-    flex: 1 1 100%;
+  .portfolio-identity {
+    gap: 0.65rem;
   }
 
-  .portfolio-subtitle--inline:not(.portfolio-subtitle--empty)::before {
-    display: none;
+  .portfolio-identity__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    font-size: 0.72rem;
+  }
+}
+
+@media (min-width: 1401px) {
+  html.is-desktop-layout .portfolio-identity {
+    gap: 0.95rem;
+  }
+
+  html.is-desktop-layout .portfolio-identity__avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 15px;
+    font-size: 0.86rem;
+  }
+
+  html.is-desktop-layout .portfolio-identity__subtitle,
+  html.is-desktop-layout .workspace-panel--v2 .portfolio-subtitle,
+  html.is-desktop-layout .workspace-panel--v2 .roadmaps-header-subtitle {
+    max-width: 52ch;
   }
 }
 

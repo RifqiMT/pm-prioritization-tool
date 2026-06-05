@@ -4,9 +4,9 @@
  */
 (function (global) {
   const PORTAL_IDS = [
-    "exportFormatModal", "importFormatModal", "projectModal",
+    "exportFormatModal", "importFormatModal", "roadmapModal",
     "profileViewModal", "profileEditModal", "profileDeleteModal",
-    "projectDeleteModal", "projectBulkTransferModal", "toastContainer"
+    "roadmapDeleteModal", "roadmapBulkTransferModal", "toastContainer"
   ];
 
   const COMPACT_MQ =
@@ -14,7 +14,7 @@
       ? `(max-width: ${Number(COMPACT_LAYOUT_MAX_WIDTH_PX)}px)`
       : "(max-width: 1400px)";
 
-  const VIEW_KEYS = ["table", "board", "moscow", "map", "raci"];
+  const VIEW_KEYS = ["table", "board", "moscow", "map", "raci", "kano"];
 
   const VIEW_TAB_ARIA = {
     table: "Table view",
@@ -29,7 +29,8 @@
     board: "Switch to Board view",
     moscow: "Switch to MoSCoW view",
     map: "Switch to Map view",
-    raci: "Switch to RACI matrix view"
+    raci: "Switch to RACI matrix view",
+    kano: "Switch to KANO model view"
   };
 
   const VIEW_TAB_LABELS = {
@@ -37,7 +38,8 @@
     board: "Board",
     moscow: "MoSCoW",
     map: "Map",
-    raci: "RACI"
+    raci: "RACI",
+    kano: "KANO"
   };
 
   const VIEW_TAB_ICONS = {
@@ -45,7 +47,8 @@
     board: '<svg class="view-fullscreen-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="12" rx="1"/></svg>',
     moscow: '<svg class="view-fullscreen-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>',
     map: '<svg class="view-fullscreen-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></svg>',
-    raci: '<svg class="view-fullscreen-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 0 1-6.75 0 3.375 3.375 0 0 1 6.75 0zm8.25 2.25a2.625 2.625 0 0 1-5.25 0 2.625 2.625 0 0 1 5.25 0z"/></svg>'
+    raci: '<svg class="view-fullscreen-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 0 1-6.75 0 3.375 3.375 0 0 1 6.75 0zm8.25 2.25a2.625 2.625 0 0 1-5.25 0 2.625 2.625 0 0 1 5.25 0z"/></svg>',
+    kano: '<svg class="view-fullscreen-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 5 5-9"/></svg>'
   };
 
   let getState;
@@ -75,7 +78,7 @@
   ];
 
   const VIEW_SHELL_SELECTOR =
-    ".view-toolbar, .projects-map-container, .projects-map-legend, .scrum-board, .moscow-grid, .table-wrapper, .raci-matrix-wrap";
+    ".view-toolbar, .roadmaps-map-container, .roadmaps-map-legend, .scrum-board, .moscow-grid, .table-wrapper, .raci-matrix-wrap, .portfolio-kano-body";
 
   function isCompactViewport() {
     return window.matchMedia(COMPACT_MQ).matches;
@@ -83,17 +86,18 @@
 
   function getViewRoots() {
     const els = getElements();
-    return [els.projectsTableView, els.projectsBoardView, els.projectsMoscowView, els.projectsMapView, els.projectsRaciView].filter(Boolean);
+    return [els.roadmapsTableView, els.roadmapsBoardView, els.roadmapsMoscowView, els.roadmapsMapView, els.roadmapsRaciView, els.roadmapsKanoView].filter(Boolean);
   }
 
   function getViewTabButtons() {
     const els = getElements();
     return [
-      [els.projectsViewTableBtn, "table"],
-      [els.projectsViewBoardBtn, "board"],
-      [els.projectsViewMoscowBtn, "moscow"],
-      [els.projectsViewMapBtn, "map"],
-      [els.projectsViewRaciBtn, "raci"]
+      [els.roadmapsViewTableBtn, "table"],
+      [els.roadmapsViewBoardBtn, "board"],
+      [els.roadmapsViewMoscowBtn, "moscow"],
+      [els.roadmapsViewMapBtn, "map"],
+      [els.roadmapsViewRaciBtn, "raci"],
+      [els.roadmapsViewKanoBtn, "kano"]
     ].filter(([btn]) => !!btn);
   }
 
@@ -121,7 +125,7 @@
 
   function getWorkspaceContainer() {
     const els = getElements();
-    return els.workspacePortfolioBody || document.querySelector(".portfolio-stage") || els.projectsTableView?.parentNode || null;
+    return els.workspacePortfolioBody || document.querySelector(".portfolio-stage") || els.roadmapsTableView?.parentNode || null;
   }
 
   function saveViewAnchor(viewEl) {
@@ -148,29 +152,33 @@
   function applyViewVisibilityFromState() {
     const state = getState();
     const els = getElements();
-    if (!state || !els.projectsTableView) return;
+    if (!state || !els.roadmapsTableView) return;
 
-    const view = state.projectsView;
+    const view = state.roadmapsView;
     const showTable = view === "table";
     const showBoard = view === "board";
     const showMoscow = view === "moscow";
     const showMap = view === "map";
     const showRaci = view === "raci";
+    const showKano = view === "kano";
 
-    if (els.projectsTableView && els.projectsTableView.parentNode !== fullscreenStage) {
-      els.projectsTableView.style.display = showTable ? "flex" : "none";
+    if (els.roadmapsTableView && els.roadmapsTableView.parentNode !== fullscreenStage) {
+      els.roadmapsTableView.style.display = showTable ? "flex" : "none";
     }
-    if (els.projectsBoardView && els.projectsBoardView.parentNode !== fullscreenStage) {
-      els.projectsBoardView.style.display = showBoard ? "flex" : "none";
+    if (els.roadmapsBoardView && els.roadmapsBoardView.parentNode !== fullscreenStage) {
+      els.roadmapsBoardView.style.display = showBoard ? "flex" : "none";
     }
-    if (els.projectsMoscowView && els.projectsMoscowView.parentNode !== fullscreenStage) {
-      els.projectsMoscowView.style.display = showMoscow ? "flex" : "none";
+    if (els.roadmapsMoscowView && els.roadmapsMoscowView.parentNode !== fullscreenStage) {
+      els.roadmapsMoscowView.style.display = showMoscow ? "flex" : "none";
     }
-    if (els.projectsMapView && els.projectsMapView.parentNode !== fullscreenStage) {
-      els.projectsMapView.style.display = showMap ? "flex" : "none";
+    if (els.roadmapsMapView && els.roadmapsMapView.parentNode !== fullscreenStage) {
+      els.roadmapsMapView.style.display = showMap ? "flex" : "none";
     }
-    if (els.projectsRaciView && els.projectsRaciView.parentNode !== fullscreenStage) {
-      els.projectsRaciView.style.display = showRaci ? "flex" : "none";
+    if (els.roadmapsRaciView && els.roadmapsRaciView.parentNode !== fullscreenStage) {
+      els.roadmapsRaciView.style.display = showRaci ? "flex" : "none";
+    }
+    if (els.roadmapsKanoView && els.roadmapsKanoView.parentNode !== fullscreenStage) {
+      els.roadmapsKanoView.style.display = showKano ? "flex" : "none";
     }
   }
 
@@ -326,7 +334,7 @@
 
   function unmountAllViewsFromHost() {
     if (!fullscreenStage) return;
-    Array.from(fullscreenStage.querySelectorAll(".projects-view")).forEach((viewEl) => {
+    Array.from(fullscreenStage.querySelectorAll(".roadmaps-view")).forEach((viewEl) => {
       unmountViewFromHost(viewEl);
     });
     useHostMode = false;
@@ -378,10 +386,10 @@
 
   function restoreChromeToContainer() {
     const container = getWorkspaceContainer();
-    const anchor = getElements().projectsTableView;
+    const anchor = getElements().roadmapsTableView;
     if (!container || !anchor) return;
 
-    const headerRow = document.querySelector(".projects-header-row");
+    const headerRow = document.querySelector(".roadmaps-header-row");
     const filtersShell = document.querySelector(".filters-shell");
 
     if (filtersShell && filtersShell.parentNode !== container) {
@@ -520,7 +528,7 @@
       const compress = btn.querySelector(".icon-compress");
       if (expand) expand.style.display = isFs ? "none" : "";
       if (compress) compress.style.display = isFs ? "" : "none";
-      const labelEl = btn.querySelector(".projects-map-fullscreen-label") || btn.querySelector(".view-fullscreen-label");
+      const labelEl = btn.querySelector(".roadmaps-map-fullscreen-label") || btn.querySelector(".view-fullscreen-label");
       const compressText = isCompactViewport() ? "Exit full screen" : compressLbl;
       const expandText = isCompactViewport() ? "Full screen" : expandLbl;
       if (labelEl) labelEl.textContent = isFs ? compressText : expandText;
@@ -529,24 +537,26 @@
       btn.removeAttribute("title");
     }
 
-    updateBtn(els.projectsMapFullscreenBtn, els.projectsMapView, "Full screen", "Exit full screen");
-    updateBtn(els.scrumBoardFullscreenBtn, els.projectsBoardView, "Full screen", "Exit full screen");
-    updateBtn(els.moscowFullscreenBtn, els.projectsMoscowView, "Full screen", "Exit full screen");
-    updateBtn(els.tableFullscreenBtn, els.projectsTableView, "Full screen", "Exit full screen");
-    updateBtn(els.raciMatrixFullscreenBtn, els.projectsRaciView, "Full screen", "Exit full screen");
+    updateBtn(els.roadmapsMapFullscreenBtn, els.roadmapsMapView, "Full screen", "Exit full screen");
+    updateBtn(els.scrumBoardFullscreenBtn, els.roadmapsBoardView, "Full screen", "Exit full screen");
+    updateBtn(els.moscowFullscreenBtn, els.roadmapsMoscowView, "Full screen", "Exit full screen");
+    updateBtn(els.tableFullscreenBtn, els.roadmapsTableView, "Full screen", "Exit full screen");
+    updateBtn(els.raciMatrixFullscreenBtn, els.roadmapsRaciView, "Full screen", "Exit full screen");
+    updateBtn(els.portfolioKanoFullscreenBtn, els.roadmapsKanoView, "Full screen", "Exit full screen");
 
     document.documentElement.classList.toggle("has-view-fullscreen", !!(
-      activeEl === els.projectsTableView ||
-      activeEl === els.projectsBoardView ||
-      activeEl === els.projectsMoscowView ||
-      activeEl === els.projectsMapView ||
-      activeEl === els.projectsRaciView
+      activeEl === els.roadmapsTableView ||
+      activeEl === els.roadmapsBoardView ||
+      activeEl === els.roadmapsMoscowView ||
+      activeEl === els.roadmapsMapView ||
+      activeEl === els.roadmapsRaciView ||
+      activeEl === els.roadmapsKanoView
     ));
   }
 
   function invalidateMapSize() {
     const els = getElements();
-    const map = els.projectsMapContainer && els.projectsMapContainer._leafletMap;
+    const map = els.roadmapsMapContainer && els.roadmapsMapContainer._leafletMap;
     if (!map) return;
     requestAnimationFrame(() => map.invalidateSize());
     window.setTimeout(() => map.invalidateSize(), 120);
@@ -563,7 +573,7 @@
     if (typeof syncViewTabs === "function") {
       try {
         const state = getState();
-        syncViewTabs(state && state.projectsView);
+        syncViewTabs(state && state.roadmapsView);
       } catch (err) {
         console.warn("Fullscreen view-tab sync failed", err);
       }
@@ -600,7 +610,7 @@
     setViewTabAccessibility(true);
 
     const state = getState();
-    syncFullscreenChromeTabs(state && state.projectsView);
+    syncFullscreenChromeTabs(state && state.roadmapsView);
 
     updateFullscreenButtons();
     scheduleCompactLayoutRefresh();
@@ -706,8 +716,9 @@
 
     const el = document.fullscreenElement || document.webkitFullscreenElement;
     const els = getElements();
-    const isAny = el === els.projectsMapView || el === els.projectsBoardView ||
-      el === els.projectsMoscowView || el === els.projectsTableView || el === els.projectsRaciView;
+    const isAny = el === els.roadmapsMapView || el === els.roadmapsBoardView ||
+      el === els.roadmapsMoscowView || el === els.roadmapsTableView || el === els.roadmapsRaciView ||
+      el === els.roadmapsKanoView;
 
     if (isAny && el) {
       currentFullscreenEl = el;
@@ -743,8 +754,9 @@
     if (pseudoFullscreenEl) return true;
     const el = document.fullscreenElement || document.webkitFullscreenElement;
     const els = getElements();
-    return el === els.projectsTableView || el === els.projectsBoardView ||
-      el === els.projectsMoscowView || el === els.projectsMapView || el === els.projectsRaciView;
+    return el === els.roadmapsTableView || el === els.roadmapsBoardView ||
+      el === els.roadmapsMoscowView || el === els.roadmapsMapView || el === els.roadmapsRaciView ||
+      el === els.roadmapsKanoView;
   }
 
   function switchViewWhileFullscreen(view) {
@@ -752,7 +764,7 @@
     if (!targetEl) return;
 
     const state = getState();
-    if (state.projectsView === view && pseudoFullscreenEl === targetEl) {
+    if (state.roadmapsView === view && pseudoFullscreenEl === targetEl) {
       blurViewTabButtons();
       syncFullscreenChromeTabs(view);
       return;

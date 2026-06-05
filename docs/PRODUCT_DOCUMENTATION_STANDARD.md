@@ -2,12 +2,12 @@
 
 **Purpose:** Define how product, design, and engineering maintain documentation for the Product Management Prioritization Tool.  
 **Audience:** Contributors, reviewers, release owners.  
-**Last updated:** 2026-05-31  
-**Last audited:** 2026-05-31
+**Last updated:** 2026-05-28  
+**Last audited:** 2026-05-28
 
 | Baseline | Value |
 |----------|-------|
-| **APP_ASSET_VERSION** | `20260528-ui190` |
+| **APP_ASSET_VERSION** | `20260528-ui192` |
 | **Compact breakpoint** | **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) |
 
 ---
@@ -110,6 +110,8 @@ When performing a comprehensive audit:
 6. Confirm all `@media (max-width: …)` compact rules use **1400px** unless documented otherwise.
 7. Refresh Mermaid diagrams if data model or flows changed.
 8. Set **Last audited** / **Last updated** dates to audit date (YYYY-MM-DD).
+9. Verify **Roadmap** terminology (not Project) in user-facing docs; document legacy `projects` migration in VARIABLES §8.13 only.
+10. Confirm all **six views** (Table, Board, MoSCoW, Map, RACI, KANO) are documented in PRD FR-5, personas, and user stories.
 
 ---
 

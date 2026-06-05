@@ -16,7 +16,7 @@
   }
 
   /* Board/MoSCoW/table scroll inside stage; map must fill stage (Leaflet needs height) */
-  html.is-compact-layout .view-fullscreen-stage > .projects-view.view-in-fullscreen-host:not(.projects-view--map) {
+  html.is-compact-layout .view-fullscreen-stage > .roadmaps-view.view-in-fullscreen-host:not(.roadmaps-view--map) {
     overflow: visible !important;
     height: auto !important;
     min-height: 0;
@@ -24,11 +24,11 @@
     max-width: 100% !important;
   }
 
-  html.is-compact-layout.pseudo-view-fullscreen .view-fullscreen-stage:has(> .projects-view--map.view-in-fullscreen-host) {
+  html.is-compact-layout.pseudo-view-fullscreen .view-fullscreen-stage:has(> .roadmaps-view--map.view-in-fullscreen-host) {
     overflow: hidden !important;
   }
 
-  html.is-compact-layout .view-fullscreen-stage > .projects-view--map.view-in-fullscreen-host {
+  html.is-compact-layout .view-fullscreen-stage > .roadmaps-view--map.view-in-fullscreen-host {
     flex: 1 1 auto !important;
     min-height: 0 !important;
     height: 100% !important;
@@ -38,12 +38,12 @@
     flex-direction: column !important;
   }
 
-  html.is-compact-layout .view-in-fullscreen-host.projects-view--map .projects-map-toolbar,
-  html.is-compact-layout .view-in-fullscreen-host.projects-view--map .projects-map-legend {
+  html.is-compact-layout .view-in-fullscreen-host.roadmaps-view--map .roadmaps-map-toolbar,
+  html.is-compact-layout .view-in-fullscreen-host.roadmaps-view--map .roadmaps-map-legend {
     flex: 0 0 auto !important;
   }
 
-  html.is-compact-layout .view-in-fullscreen-host.projects-view--map .projects-map-container {
+  html.is-compact-layout .view-in-fullscreen-host.roadmaps-view--map .roadmaps-map-container {
     flex: 1 1 auto !important;
     min-height: min(280px, 42dvh) !important;
     height: 100% !important;
@@ -52,14 +52,14 @@
     overflow: hidden !important;
   }
 
-  html.is-compact-layout .view-in-fullscreen-host.projects-view--map .projects-map-container .leaflet-container {
+  html.is-compact-layout .view-in-fullscreen-host.roadmaps-view--map .roadmaps-map-container .leaflet-container {
     width: 100% !important;
     height: 100% !important;
     min-height: inherit;
   }
 
-  html.is-compact-layout .view-in-fullscreen-host.projects-view--board,
-  html.is-compact-layout .view-in-fullscreen-host.projects-view--moscow {
+  html.is-compact-layout .view-in-fullscreen-host.roadmaps-view--board,
+  html.is-compact-layout .view-in-fullscreen-host.roadmaps-view--moscow {
     gap: 0.45rem !important;
     overflow-x: hidden !important;
     box-sizing: border-box;

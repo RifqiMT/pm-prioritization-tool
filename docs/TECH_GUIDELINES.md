@@ -4,8 +4,8 @@ Engineering standards for the Product Management Prioritization Tool codebase.
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-05-31 |
-| **APP_ASSET_VERSION** | `20260528-ui190` |
+| **Last updated** | 2026-05-28 |
+| **APP_ASSET_VERSION** | `20260528-ui192` |
 | **COMPACT_LAYOUT_MAX_WIDTH_PX** | `1400` |
 
 ---
@@ -66,7 +66,7 @@ Later files win for equal specificity (all query `?v=APP_ASSET_VERSION`):
 | 10 | `moscow-compact.css` | MoSCoW compact |
 | 11 | `board-compact.css` | Board compact |
 | 12 | `table-compact.css` | Table compact toolbar |
-| 13 | `project-actions-modern.css` | Actions |
+| 13 | `roadmap-actions-modern.css` | Actions |
 | 14 | `fullscreen-modern.css` | Fullscreen |
 | 15 | `fullscreen-compact.css` | Fullscreen compact |
 | 16 | `app-footer.css` | Site footer |
@@ -74,7 +74,7 @@ Later files win for equal specificity (all query `?v=APP_ASSET_VERSION`):
 | 18 | `layout-flow.css` | Flat flow ≤1400px |
 | 19 | `portfolio-cards-compact.css` | Board/MoSCoW cards |
 | 20 | `table-rows-modern.css` | Table rows |
-| 21 | `table-revamp-modern.css` | Semantic `projects-table-col--*` widths |
+| 21 | `table-revamp-modern.css` | Semantic `roadmaps-table-col--*` widths |
 | 22 | `table-compact-cards.css` | Table card list ≤1400px |
 | 23 | `super-admin-modern.css` | Workspace-wide mode UI ([GUARDRAILS.md §7](GUARDRAILS.md)) |
 | 24 | `map-tooltip-modern.css` | Map tooltips |
@@ -83,7 +83,8 @@ Later files win for equal specificity (all query `?v=APP_ASSET_VERSION`):
 | 27 | `filters-compact-bar.css` | Filters compact bar |
 | 28 | `view-toolbars-compact-row.css` | Compact toolbar single row |
 | 29 | `rich-text-editor.css` | Rich-text fields |
-| 30 | `project-details-tooltip.css` | Description tooltips |
+| 30 | `roadmap-details-tooltip.css` | Description tooltips |
+| 31 | `portfolio-kano-modern.css` | KANO portfolio matrix and cards |
 
 ### 3.2 Compact layout
 
@@ -92,7 +93,7 @@ Later files win for equal specificity (all query `?v=APP_ASSET_VERSION`):
 - Reads `COMPACT_LAYOUT_MAX_WIDTH_PX` (default **1400**).
 - At `window.matchMedia('(max-width: Npx)')`: sets `html.is-compact-layout` + `html.is-phone-layout`.
 - Above breakpoint: `html.is-desktop-layout`.
-- Calls `syncProjectModalFooterMetaDetails()` on transition so `<details>` open state matches layout.
+- Calls `syncRoadmapModalFooterMetaDetails()` on transition so `<details>` open state matches layout.
 
 `src/modules/fullscreen.js` builds the same max-width media query from the constant.
 
@@ -111,7 +112,7 @@ Later files win for equal specificity (all query `?v=APP_ASSET_VERSION`):
 | Constant | Role |
 |----------|------|
 | `STORAGE_KEY` | `localStorage` key (`rice_prioritizer_v1`) |
-| `APP_ASSET_VERSION` | Cache buster (`20260528-ui190`) |
+| `APP_ASSET_VERSION` | Cache buster (`20260528-ui192`) |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | `1400` — single compact breakpoint |
 | `moscowList` | Stored MoSCoW values |
 | `moscowDisplayNames` | UI labels (Must Have, …) |
@@ -129,14 +130,16 @@ Central object: `state` in `src/app.js`.
 
 Persisted via `saveState()` → `AppStorage` → `localStorage` + optional cloud PUT.
 
-**Adding a new workspace-level variable:** extend `state` in `app.js`, append the key to `WORKSPACE_PERSISTED_STATE_KEYS` in `constants.js`, add validation in `applyPersistedWorkspaceUiState()`, and document in `docs/VARIABLES.md`. Project/profile fields should merge via `Object.assign` in `normalizeLoadedProject` / `normalizeLoadedProfile` (unknown keys round-trip). Cloud writes run `normalizeWorkspacePayload()` in `api/_lib/project-metadata.js`.
+**Adding a new workspace-level variable:** extend `state` in `app.js`, append the key to `WORKSPACE_PERSISTED_STATE_KEYS` in `constants.js`, add validation in `applyPersistedWorkspaceUiState()`, and document in `docs/VARIABLES.md`. Roadmap/profile fields should merge via `Object.assign` in `normalizeLoadedRoadmap` / `normalizeLoadedProfile` (unknown keys round-trip). Cloud writes run `normalizeWorkspacePayload()` in `api/_lib/roadmap-metadata.js`.
 
 | Field | Persisted | Notes |
 |-------|-----------|-------|
 | `profiles` | Yes | Includes `passwordSalt` / `passwordHash` when protected |
 | `activeProfileId` | Yes | |
 | `sortField`, `sortDirection` | Yes | |
-| `projectsView` | Yes | `table\|board\|moscow\|map` |
+| `roadmapsView` | Yes | `table\|board\|moscow\|map\|raci\|kano` |
+| `raciMatrixDomain` | Yes | `Business` or `Tech` |
+| `kanoPortfolioPanel` | Yes | `positioned` or `unpositioned` |
 | `tableGroupBy` | Yes | Compact card grouping |
 | `scrumBoardSortByRice`, `moscowSortByRice` | Yes | |
 | `mapMetric` | Yes | |
@@ -157,13 +160,13 @@ Persisted via `saveState()` → `AppStorage` → `localStorage` + optional cloud
 | `exchange-rates.js` | FX helpers | Fetch/cache rates to EUR |
 | `fullscreen.js` | `Fullscreen` | Fullscreen toggle, view switch while fullscreen |
 | `overlay-manager.js` | Overlay coordination | One modal/sheet at a time |
-| `storage.js` | `AppStorage` | Load/save, cloud sync debounce, flush on project save, pull guard |
+| `storage.js` | `AppStorage` | Load/save, cloud sync debounce, flush on roadmap save, pull guard |
 | `description-format.js` | HTML sanitize/render for descriptions |
 | `rich-text-editor.js` | `RichTextEditor` |
 | `board-drag.js` | `BoardDrag` |
 | `board-card-interaction.js` | Card interaction feedback |
 
-**Project metadata on save:** `serializeProjectForStorage()` normalizes `labels`, `links`, and `tasks` before persist. `saveState({ flush: true })` after project modal save. Server: `api/_lib/project-metadata.js` on PUT.
+**Roadmap metadata on save:** `serializeRoadmapForStorage()` normalizes `labels`, `links`, and `tasks` before persist. `saveState({ flush: true })` after roadmap modal save. Server: `api/_lib/roadmap-metadata.js` on PUT.
 
 ---
 
@@ -182,7 +185,7 @@ Active filter pill text includes human labels for labels/links constraints.
 
 ## 8. Table rendering
 
-- **Desktop:** `renderProjectsTable` — semantic classes `projects-table-col--*`; optional owner column when workspace-wide mode active.
+- **Desktop:** `renderRoadmapsTable` — semantic classes `roadmaps-table-col--*`; optional owner column when workspace-wide mode active.
 - **Compact:** card list in `table-compact-cards.css`; `initTableGroupByControls()` populates `#tableGroupBySelect` from `TABLE_GROUP_BY_OPTIONS`.
 - **Group summary:** `#tableGroupBySummary` (`aria-live="polite"`).
 
@@ -218,8 +221,8 @@ Export gate: `getExportableProfiles()` — only unprotected or session-unlocked 
 
 ## 12. Rendering conventions
 
-- **Single render entry:** `renderProjects()` refreshes table + active view.
-- **Locked profiles:** `getUnlockedActiveProfile()` for project surfaces unless workspace-wide mode applies (§7).
+- **Single render entry:** `renderRoadmaps()` refreshes table + active view.
+- **Locked profiles:** `getUnlockedActiveProfile()` for roadmap surfaces unless workspace-wide mode applies (§7).
 - **Tooltips:** `hideAllTooltipsExcept`, `activeTooltipWrap` — one visible tooltip.
 - **IDs:** `generateId(prefix)` from `utils.js`.
 
@@ -229,8 +232,8 @@ Export gate: `getExportableProfiles()` — only unprotected or session-unlocked 
 
 | Format | Handler | Merge |
 |--------|---------|-------|
-| JSON | `handleImportJsonFile` | `mergeImportedProfiles` by profile/project id |
-| CSV | `handleImportCsvFile` | Row-based project merge |
+| JSON | `handleImportJsonFile` | `mergeImportedProfiles` by profile/roadmap id |
+| CSV | `handleImportCsvFile` | Row-based roadmap merge |
 
 Export: `getExportableProfiles()` → `sanitizeProfilesForExport()` → download.
 
@@ -240,7 +243,7 @@ Export: `getExportableProfiles()` → `sanitizeProfilesForExport()` → download
 
 - User-facing: `showToast`, `window.alert` for import failures, inline/modal errors for unlock
 - Console: `console.error` with context; never log passwords or `WORKSPACE_TRUST_PROFILE_LABEL`
-- Validation: `validateProjectInput` in `rice.js` before save
+- Validation: `validateRoadmapInput` in `rice.js` before save
 
 ---
 
@@ -249,8 +252,8 @@ Export: `getExportableProfiles()` → `sanitizeProfilesForExport()` → download
 Minimum smoke path before release:
 
 1. Create profile (with and without password)
-2. CRUD project with each financial framework
-3. All four views + fullscreen at **375px, 768px, 1400px, 1600px**
+2. CRUD roadmap with each financial framework
+3. All six views + fullscreen at **375px, 768px, 1400px, 1600px**
 4. Title/label autocomplete; labels/links filters
 5. Table group-by on compact card list
 6. MoSCoW display names and compact nav pills
@@ -265,8 +268,8 @@ Minimum smoke path before release:
 ## 16. Performance
 
 - Full re-render on state change is acceptable at typical portfolio sizes.
-- Map: avoid redundant `renderProjectsMap` calls.
-- Target: no perceptible lag &lt; 500 projects per profile on modern laptop; p95 filter/sort ≤ 300ms (see [METRICS_AND_OKRS.md](METRICS_AND_OKRS.md)).
+- Map: avoid redundant `renderRoadmapsMap` calls.
+- Target: no perceptible lag &lt; 500 roadmaps per profile on modern laptop; p95 filter/sort ≤ 300ms (see [METRICS_AND_OKRS.md](METRICS_AND_OKRS.md)).
 
 ---
 

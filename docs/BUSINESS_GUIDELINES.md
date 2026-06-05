@@ -4,7 +4,7 @@ Guidelines for teams using the Product Management Prioritization Tool in plannin
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-05-31 |
+| **Last updated** | 2026-05-28 |
 | **Audience** | Product managers, delivery leads, portfolio stakeholders |
 
 ---
@@ -13,7 +13,7 @@ Guidelines for teams using the Product Management Prioritization Tool in plannin
 
 The application supports **portfolio-level prioritization** in the browser, with optional **cloud sync** when deployed on Vercel with MongoDB. It is designed for:
 
-- Capturing initiatives as **projects** within **profiles** (portfolios)
+- Capturing initiatives as **roadmaps** within **profiles** (portfolios)
 - Ranking with **RICE**
 - Expressing delivery intent with **MoSCoW** (presented as **Must Have**, **Should Have**, **Could Have**, **Won't Have** in the UI)
 - Estimating value with **financial frameworks** (planning-grade, not accounting)
@@ -59,10 +59,10 @@ Cross-profile workspace behavior for the designated trust profile is defined in 
 
 ### Practices
 
-- Document your team’s **Impact** and **Effort** anchors in a shared rubric (Confluence/Notion); link from project descriptions.
+- Document your team’s **Impact** and **Effort** anchors in a shared rubric (Confluence/Notion); link from roadmap descriptions.
 - Revisit **Confidence** when new data arrives; do not treat scores as permanent.
 - Use the in-app **RICE tooltip** in meetings to explain inputs and the computed line.
-- When two projects tie on RICE, break ties with MoSCoW category and delivery risk — not politics.
+- When two roadmaps tie on RICE, break ties with MoSCoW category and delivery risk — not politics.
 
 ---
 
@@ -80,7 +80,7 @@ Cross-profile workspace behavior for the designated trust profile is defined in 
 
 ### Practices
 
-- Assign every in-scope project a MoSCoW category before roadmap sign-off.
+- Assign every in-scope roadmap a MoSCoW category before roadmap sign-off.
 - MoSCoW answers *delivery intent*; RICE answers *relative priority* — use both.
 - Enable **RICE sort** within MoSCoW quadrants when discussing order inside a category.
 - On compact layouts, use **Jump to quadrant** pills instead of horizontal scrolling.
@@ -89,7 +89,7 @@ Cross-profile workspace behavior for the designated trust profile is defined in 
 
 ## 4. Financial frameworks
 
-Frameworks produce a **planning estimate** in project currency, with optional **EUR** display via exchange rates.
+Frameworks produce a **planning estimate** in roadmap currency, with optional **EUR** display via exchange rates.
 
 | Framework | When to use |
 |-----------|-------------|
@@ -112,11 +112,11 @@ Frameworks produce a **planning estimate** in project currency, with optional **
 | **Label search + autocomplete** | Theme slicing (e.g. `growth`, `compliance`) |
 | **Labels filter (any / with / without)** | Audits for undocumented themes or mandatory tagging policies |
 | **Links filter (any / with / without)** | Ensure PRDs, designs, or tickets are attached before review |
-| **Project labels** | Multi-word tags on each initiative (e.g. `Platform`, `Q2 bet`) |
-| **Project links** | Named URLs to specs, Figma, Jira, or docs |
-| **Project tasks** | Sub-items with workflow status for delivery tracking inside an initiative |
+| **Roadmap labels** | Multi-word tags on each initiative (e.g. `Platform`, `Q2 bet`) |
+| **Roadmap links** | Named URLs to specs, Figma, Jira, or docs |
+| **Roadmap tasks** | Sub-items with workflow status for delivery tracking inside an initiative |
 
-**Recommendation:** Define a small allowed label vocabulary in team guidelines; avoid one-off labels that break filters. When using cloud sync, save projects after editing labels/links so metadata flushes to MongoDB immediately.
+**Recommendation:** Define a small allowed label vocabulary in team guidelines; avoid one-off labels that break filters. When using cloud sync, save roadmaps after editing labels/links so metadata flushes to MongoDB immediately.
 
 ---
 
@@ -136,13 +136,13 @@ Frameworks produce a **planning estimate** in project currency, with optional **
 
 1. Create or select profile.
 2. Import prior quarter export (merge) or start fresh.
-3. Enter/update projects with RICE + MoSCoW + framework as needed.
-4. Filter by **Project period** (YYYY-Qn), **Countries**, **Labels**, and **Links**.
+3. Enter/update roadmaps with RICE + MoSCoW + framework as needed.
+4. Filter by **Roadmap period** (YYYY-Qn), **Countries**, **Labels**, and **Links**.
 5. Export JSON backup before major edits.
 
 ### Weekly execution
 
-1. **Board** view by **project status**; RICE sort or drag-and-drop within columns.
+1. **Board** view by **roadmap status**; RICE sort or drag-and-drop within columns.
 2. Update status as work progresses; use compact **Move to** on tablets.
 3. Bulk-delete cancelled rows via table selection (desktop toolbar or compact selection bar).
 
@@ -151,6 +151,28 @@ Frameworks produce a **planning estimate** in project currency, with optional **
 - **Table:** sortable register with Framework, Type, Status icons; group compact cards by MoSCoW or status.
 - **Map:** Count, RICE, or EUR by country.
 - **MoSCoW:** four-quadrant narrative with full category names.
+- **RACI:** portfolio accountability matrix; toggle **Business** vs **Tech** perspective before governance reviews.
+- **KANO:** portfolio value map; use **Positioned** / **Not positioned** to close gaps before roadmap sign-off.
+
+### RACI calibration
+
+| Role | Business meaning |
+|------|------------------|
+| **Responsible** | Does the work to complete the initiative |
+| **Accountable** | Ultimately answerable; one clear owner per roadmap where possible |
+| **Consulted** | Two-way input before decisions |
+| **Informed** | Kept up to date on progress |
+
+Use **Business** domain for product/commercial stakeholders and **Tech** for engineering/platform owners. Empty roles are allowed but reduce matrix usefulness — aim for at least **Accountable** on in-flight roadmaps.
+
+### KANO calibration
+
+| Axis | Scale | Guidance |
+|------|-------|----------|
+| **Functionality** | 1–5 (Absent → Full) | How completely the capability is delivered |
+| **Satisfaction** | 1–5 (Very dissatisfied → Delighted) | How customers respond when the capability exists |
+
+Scores drive category placement (Attractive, One-dimensional, Must-be, Indifferent, Reverse) per `kanoCategoryLegend` in `constants.js`. Use KANO for **portfolio classification**, not as a replacement for RICE priority.
 
 ---
 
@@ -158,8 +180,8 @@ Frameworks produce a **planning estimate** in project currency, with optional **
 
 | Action | Behavior |
 |--------|----------|
-| **Export JSON** | Full backup: profiles, projects, preferences, password hashes for unlocked profiles |
-| **Export CSV** | Flat project rows for spreadsheets |
+| **Export JSON** | Full backup: profiles, roadmaps, preferences, password hashes for unlocked profiles |
+| **Export CSV** | Flat roadmap rows for spreadsheets |
 | **Import** | **Merge** by ID — updates existing, adds new; does not wipe workspace |
 
 ### Export practices (recommended)
@@ -179,7 +201,7 @@ CSV export is best for **stakeholder spreadsheets**; JSON export is best for **f
 
 ## 9. What this tool is not
 
-- Not a project management system (no sprints, assignments, or dependencies).
+- Not a delivery execution system (no sprints, capacity planning, assignments, or dependency graphs).
 - Not multi-user real-time collaboration.
 - Not SOX/accounting-grade financial reporting.
 - Not a substitute for legal/compliance review of sensitive data on shared devices.

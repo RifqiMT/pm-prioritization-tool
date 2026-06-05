@@ -330,7 +330,7 @@ const RichTextEditor = (function () {
 })();
 
 const RICH_TEXT_DESCRIPTION_FIELD_IDS = [
-  "projectDescription",
+  "roadmapDescription",
   "reachDescription",
   "impactDescription",
   "confidenceDescription",

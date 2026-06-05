@@ -1,5 +1,5 @@
 /**
- * Portfolio project cards — phones & tablets (≤1400px).
+ * Portfolio roadmap cards — phones & tablets (≤1400px).
  * Content-first proportions: info body dominates, controls stay compact.
  */
 
@@ -38,8 +38,8 @@
   /* ── Card shell ─────────────────────────────────────────── */
   html.is-compact-layout .moscow-board-card,
   html.is-compact-layout .scrum-board-card,
-  html.is-compact-layout .projects-view--board .scrum-board-card,
-  html.is-compact-layout .projects-view--moscow .moscow-board-card {
+  html.is-compact-layout .roadmaps-view--board .scrum-board-card,
+  html.is-compact-layout .roadmaps-view--moscow .moscow-board-card {
     display: flex !important;
     flex-direction: column !important;
     gap: 0 !important;
@@ -275,7 +275,7 @@
   }
 
   /* ── Footer — compact control strip ─────────────────────── */
-  html.is-compact-layout .portfolio-card-footer:not(.projects-table-card__actions) {
+  html.is-compact-layout .portfolio-card-footer:not(.roadmaps-table-card__actions) {
     display: flex;
     flex-direction: column;
     gap: var(--pcard-space-2);
@@ -418,7 +418,7 @@
 
   /* Tablet: move + actions on one row (board/MoSCoW only — not table card list) */
   @media (min-width: 600px) and (max-width: 1400px) {
-    html.is-compact-layout .portfolio-card-footer:not(.projects-table-card__actions) {
+    html.is-compact-layout .portfolio-card-footer:not(.roadmaps-table-card__actions) {
       display: grid !important;
       grid-template-columns: minmax(0, 1fr) auto;
       grid-template-rows: auto auto;
@@ -487,7 +487,7 @@ html.is-desktop-layout {
   --scrum-board-column-width: 368px;
 }
 
-html.is-desktop-layout .projects-view--board .scrum-board,
+html.is-desktop-layout .roadmaps-view--board .scrum-board,
 html.is-desktop-layout .workspace-panel--v2 .scrum-board {
   display: flex !important;
   flex-wrap: nowrap !important;
@@ -499,7 +499,7 @@ html.is-desktop-layout .workspace-panel--v2 .scrum-board {
   scroll-padding-inline: 0.75rem;
 }
 
-html.is-desktop-layout .projects-view--board .scrum-board-column,
+html.is-desktop-layout .roadmaps-view--board .scrum-board-column,
 html.is-desktop-layout .workspace-panel--v2 .scrum-board-column {
   flex: 0 0 var(--scrum-board-column-width) !important;
   width: var(--scrum-board-column-width) !important;
@@ -507,14 +507,14 @@ html.is-desktop-layout .workspace-panel--v2 .scrum-board-column {
   max-width: var(--scrum-board-column-width) !important;
 }
 
-html.is-desktop-layout .projects-view--board .scrum-board-card,
+html.is-desktop-layout .roadmaps-view--board .scrum-board-card,
 html.is-desktop-layout .workspace-panel--v2 .scrum-board-card {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
 }
 
-html.is-desktop-layout .projects-view--board .scrum-board-column-cards {
+html.is-desktop-layout .roadmaps-view--board .scrum-board-column-cards {
   min-height: 0;
   flex: 1 1 auto;
   overflow-y: auto;
@@ -523,15 +523,15 @@ html.is-desktop-layout .projects-view--board .scrum-board-column-cards {
   padding-bottom: 0.65rem;
 }
 
-html.is-desktop-layout .projects-view--board .board-card-metrics-row,
-html.is-desktop-layout .projects-view--board .scrum-board-card-metrics {
+html.is-desktop-layout .roadmaps-view--board .board-card-metrics-row,
+html.is-desktop-layout .roadmaps-view--board .scrum-board-card-metrics {
   gap: 0.45rem;
   padding-right: 0.15rem;
 }
 
-html.is-desktop-layout .projects-view--board .scrum-board-card-rice,
-html.is-desktop-layout .projects-view--board .scrum-board-card-size,
-html.is-desktop-layout .projects-view--board .scrum-board-card-financial {
+html.is-desktop-layout .roadmaps-view--board .scrum-board-card-rice,
+html.is-desktop-layout .roadmaps-view--board .scrum-board-card-size,
+html.is-desktop-layout .roadmaps-view--board .scrum-board-card-financial {
   padding-left: 0.5rem !important;
   padding-right: 0.5rem !important;
 }
@@ -544,8 +544,8 @@ html.is-desktop-layout .view-in-fullscreen-host .scrum-board-column {
 }
 
 @media (max-width: 1400px) {
-  html.is-compact-layout .projects-view--board .scrum-board-card,
-  html.is-compact-layout .projects-view--moscow .moscow-board-card,
+  html.is-compact-layout .roadmaps-view--board .scrum-board-card,
+  html.is-compact-layout .roadmaps-view--moscow .moscow-board-card,
   html.is-compact-layout .moscow-board-card,
   html.is-compact-layout .scrum-board-card {
     border-radius: var(--pcard-radius, 12px) !important;
@@ -568,9 +568,9 @@ html.is-desktop-layout {
 
 html.is-desktop-layout .moscow-board-card,
 html.is-desktop-layout .scrum-board-card,
-html.is-desktop-layout .projects-view--board .scrum-board-card,
-html.is-desktop-layout .projects-view--moscow .moscow-board-card,
-html.is-desktop-layout .workspace-panel--v2 .projects-view--board .scrum-board-card {
+html.is-desktop-layout .roadmaps-view--board .scrum-board-card,
+html.is-desktop-layout .roadmaps-view--moscow .moscow-board-card,
+html.is-desktop-layout .workspace-panel--v2 .roadmaps-view--board .scrum-board-card {
   overflow: hidden !important;
   border-radius: var(--pcard-radius) !important;
   border: 1px solid var(--pcard-border) !important;
@@ -582,7 +582,7 @@ html.is-desktop-layout .workspace-panel--v2 .projects-view--board .scrum-board-c
 
 html.is-desktop-layout .moscow-board-card.moscow-board-card--dragging,
 html.is-desktop-layout .scrum-board-card.scrum-board-card--dragging,
-html.is-desktop-layout .projects-view--board .scrum-board-card.scrum-board-card--dragging {
+html.is-desktop-layout .roadmaps-view--board .scrum-board-card.scrum-board-card--dragging {
   opacity: 0.97 !important;
   box-shadow: 0 12px 28px rgba(127, 29, 29, 0.16) !important;
   border-color: rgba(185, 28, 28, 0.35) !important;

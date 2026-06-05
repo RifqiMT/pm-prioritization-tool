@@ -5,14 +5,14 @@
  */
 
 @media (max-width: 1400px) {
-  html.is-compact-layout .projects-view--table {
+  html.is-compact-layout .roadmaps-view--table {
     padding-left: 0.25rem !important;
     padding-right: 0.25rem !important;
   }
 
   /* Table toolbar single row: view-toolbars-modern.css (group bar uses display: contents) */
 
-  html.is-compact-layout .projects-table-group-label {
+  html.is-compact-layout .roadmaps-table-group-label {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
@@ -24,16 +24,16 @@
     color: #92400e;
   }
 
-  html.is-compact-layout .projects-table-group-label__icon {
+  html.is-compact-layout .roadmaps-table-group-label__icon {
     display: inline-flex;
     color: #b45309;
   }
 
-  html.is-compact-layout .projects-table-group-control-wrap {
+  html.is-compact-layout .roadmaps-table-group-control-wrap {
     min-width: 0;
   }
 
-  html.is-compact-layout .projects-table-group-select {
+  html.is-compact-layout .roadmaps-table-group-select {
     width: 100%;
     min-height: 44px;
     padding: 0.45rem 2rem 0.45rem 0.65rem;
@@ -50,12 +50,12 @@
     -webkit-appearance: none;
   }
 
-  html.is-compact-layout .projects-table-group-select:focus-visible {
+  html.is-compact-layout .roadmaps-table-group-select:focus-visible {
     outline: 2px solid rgba(180, 83, 9, 0.45);
     outline-offset: 1px;
   }
 
-  html.is-compact-layout .projects-table-group-summary {
+  html.is-compact-layout .roadmaps-table-group-summary {
     margin: 0;
     font-size: 0.72rem;
     line-height: 1.35;
@@ -90,13 +90,13 @@
     max-height: min(58vh, 520px);
   }
 
-  html.is-compact-layout .table-wrapper--modern .cell-actions:not(.cell-actions--project) {
+  html.is-compact-layout .table-wrapper--modern .cell-actions:not(.cell-actions--roadmap) {
     flex-direction: column !important;
     align-items: stretch !important;
     gap: 0.35rem !important;
   }
 
-  html.is-compact-layout .table-wrapper--modern .cell-actions:not(.cell-actions--project) .btn-secondary {
+  html.is-compact-layout .table-wrapper--modern .cell-actions:not(.cell-actions--roadmap) .btn-secondary {
     width: 100% !important;
     min-height: 40px;
     justify-content: center;
@@ -118,7 +118,7 @@
 
 /* Fullscreen table on compact */
 @media (max-width: 1400px) {
-  html.is-compact-layout .view-in-fullscreen-host.projects-view--table .table-wrapper--modern {
+  html.is-compact-layout .view-in-fullscreen-host.roadmaps-view--table .table-wrapper--modern {
     flex: 1 1 auto !important;
     min-height: 0 !important;
     max-height: none !important;

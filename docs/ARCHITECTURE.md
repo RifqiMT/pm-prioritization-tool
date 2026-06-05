@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last audited** | 2026-05-31 |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui190` |
+| **Last audited** | 2026-05-28 |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui192` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -41,12 +41,12 @@ The UI is a **static SPA** (`index.html` + `src/`). On Vercel, **serverless rout
 | `index.html` | DOM: header, profiles, portfolio views, filters, modals, site footer |
 | `src/constants.js` | `STORAGE_KEY`, `APP_ASSET_VERSION`, `COMPACT_LAYOUT_MAX_WIDTH_PX`, enums, tooltips, `TABLE_GROUP_BY_OPTIONS`, `moscowDisplayNames` |
 | `src/utils.js` | Dates, CSV, HTML escape, country flags, IDs, legacy field stripping |
-| `src/rice.js` | `calculateRiceScore`, `validateProjectInput`, `formatRice` |
+| `src/rice.js` | `calculateRiceScore`, `validateRoadmapInput`, `formatRice` |
 | `src/modules/profile-security.js` | PBKDF2 password hash/verify |
 | `src/modules/exchange-rates.js` | Fetch/cache FX to EUR |
 | `src/modules/fullscreen.js` | Fullscreen API; compact media query uses `COMPACT_LAYOUT_MAX_WIDTH_PX` |
 | `src/modules/overlay-manager.js` | Single-popup coordination (modals, sheets, menus) |
-| `src/modules/storage.js` | MongoDB vs local persistence, debounced sync, flush on project save, pull guard |
+| `src/modules/storage.js` | MongoDB vs local persistence, debounced sync, flush on roadmap save, pull guard |
 | `src/modules/description-format.js` | Sanitize/render description HTML |
 | `src/modules/rich-text-editor.js` | RichTextEditor mount for description fields |
 | `src/modules/board-drag.js` | Board drag-and-drop visuals |
@@ -54,7 +54,7 @@ The UI is a **static SPA** (`index.html` + `src/`). On Vercel, **serverless rout
 | `api/health.js` | Storage backend probe |
 | `api/config.js` | Client config probe (same as health) |
 | `api/state.js` | GET/PUT workspace document |
-| `api/_lib/project-metadata.js` | Server-side labels/links normalization before MongoDB write |
+| `api/_lib/roadmap-metadata.js` | Server-side labels/links normalization before MongoDB write |
 | `src/app.js` | Bootstrap, `state`, events, rendering, filters, autocomplete, import/export, bulk transfer |
 | `css/*` | Layered presentation (see §10) |
 
@@ -64,7 +64,7 @@ The UI is a **static SPA** (`index.html` + `src/`). On Vercel, **serverless rout
 
 ```mermaid
 erDiagram
-  PROFILE ||--o{ PROJECT : contains
+  PROFILE ||--o{ ROADMAP : contains
   PROFILE {
     string id
     string name
@@ -73,12 +73,15 @@ erDiagram
     string passwordHash
     object boardOrder
   }
-  PROJECT {
+  ROADMAP {
     string id
     string title
     array labels
     array links
     array tasks
+    object raci
+    number kanoFunctionality
+    number kanoSatisfaction
     number reachValue
     number impactValue
     number confidenceValue
@@ -87,16 +90,16 @@ erDiagram
     object financialImpactInputs
     number financialImpactValue
     string financialImpactCurrency
-    string projectStatus
+    string roadmapStatus
     string moscowCategory
-    string projectType
+    string roadmapType
     string tshirtSize
-    string projectPeriod
+    string roadmapPeriod
     array countries
   }
 ```
 
-Workspace payload also persists UI preferences: `projectsView`, `tableGroupBy`, sort fields, map metric, RICE sort toggles, exchange-rate cache, and privileged workspace mode flag (see [GUARDRAILS.md §7](GUARDRAILS.md)).
+Workspace payload also persists UI preferences: `roadmapsView`, `tableGroupBy`, sort fields, map metric, RICE sort toggles, exchange-rate cache, and privileged workspace mode flag (see [GUARDRAILS.md §7](GUARDRAILS.md)).
 
 ---
 
@@ -116,7 +119,7 @@ sequenceDiagram
   UI->>ST: saveState (debounced)
   ST->>L: write cache
   ST-->>API: optional PUT /api/state
-  UI->>UI: renderProfiles / renderProjects
+  UI->>UI: renderProfiles / renderRoadmaps
   UI->>U: updated view
 ```
 
@@ -146,13 +149,13 @@ CSS layers use `@media (max-width: 1400px)` aligned with the constant — not le
 
 | View | Container | Renderer | Data gate |
 |------|-----------|----------|-----------|
-| Table (desktop) | `#projectsTableBody` | `renderProjectsTable` | `getUnlockedActiveProfile()` or workspace-wide project list |
+| Table (desktop) | `#roadmapsTableBody` | `renderRoadmapsTable` | `getUnlockedActiveProfile()` or workspace-wide roadmap list |
 | Table (compact) | Card list host | Compact card renderer + optional group headers | Same gate |
 | Board | `#scrumBoardContainer` | `renderScrumBoard` | unlocked / workspace-wide |
 | MoSCoW | `#moscowBoardContainer` | `renderMoscowBoard` | unlocked / workspace-wide |
-| Map | `#projectsMapContainer` | `renderProjectsMap` | unlocked + Leaflet |
+| Map | `#roadmapsMapContainer` | `renderRoadmapsMap` | unlocked + Leaflet |
 
-`state.projectsView` controls visibility; switching views does not clear data.
+`state.roadmapsView` controls visibility; switching views does not clear data.
 
 ---
 
@@ -160,7 +163,7 @@ CSS layers use `@media (max-width: 1400px)` aligned with the constant — not le
 
 ```mermaid
 flowchart TD
-  A[Project list for active scope] --> B[applyFilters]
+  A[Roadmap list for active scope] --> B[applyFilters]
   B --> C{Title substring}
   B --> D{Label substring}
   B --> E{Labels with/without}
@@ -171,12 +174,12 @@ flowchart TD
   E --> H
   F --> H
   G --> H
-  H --> I[sortProjects - table]
+  H --> I[sortRoadmaps - table]
   H --> J[Board / MoSCoW / Map renderers]
 ```
 
-1. Resolve project array (single profile or workspace-wide per §7).
-2. `applyFilters(projects)` applies search, quick, and advanced filters.
+1. Resolve roadmap array (single profile or workspace-wide per §7).
+2. `applyFilters(roadmaps)` applies search, quick, and advanced filters.
 3. Table: sort + semantic columns; compact: optional `tableGroupBy` section headers.
 
 ---
@@ -216,7 +219,7 @@ Load order in `index.html` (later wins at equal specificity). All linked with `?
 | 10 | `moscow-compact.css` | MoSCoW compact layout |
 | 11 | `board-compact.css` | Board compact layout |
 | 12 | `table-compact.css` | Table compact toolbar |
-| 13 | `project-actions-modern.css` | Row/card actions |
+| 13 | `roadmap-actions-modern.css` | Row/card actions |
 | 14 | `fullscreen-modern.css` | Fullscreen desktop |
 | 15 | `fullscreen-compact.css` | Fullscreen compact |
 | 16 | `app-footer.css` | Site footer |
@@ -227,6 +230,14 @@ Load order in `index.html` (later wins at equal specificity). All linked with `?
 | 21 | `table-revamp-modern.css` | Semantic column widths |
 | 22 | `table-compact-cards.css` | Table card list (≤1400px) |
 | 23 | `super-admin-modern.css` | Workspace-wide mode chrome (see GUARDRAILS §7) |
+| 24 | `map-tooltip-modern.css` | Map country tooltips |
+| 25 | `board-drag.css` | Board drag-and-drop |
+| 26 | `board-card-interaction.css` | Card press feedback |
+| 27 | `view-toolbars-compact-row.css` | Single-row compact toolbars |
+| 28 | `filters-compact-bar.css` | Filters drawer compact bar |
+| 29 | `roadmap-details-tooltip.css` | Description tooltips on cards |
+| 30 | `rich-text-editor.css` | Rich-text toolbar and fields |
+| 31 | `portfolio-kano-modern.css` | KANO portfolio matrix and cards |
 
 ---
 
@@ -265,7 +276,7 @@ stateDiagram-v2
   note right of Unlocked: unlockedProfileIds in sessionStorage
 ```
 
-Locked state blocks: project list, board, MoSCoW, map, filters (disabled).
+Locked state blocks: roadmap list, board, MoSCoW, map, filters (disabled).
 
 ---
 

@@ -5,7 +5,7 @@
  * IMPORTANT: This file now runs as a classic <script> (no ES modules).
  * It relies on globals defined in:
  *  - src/constants.js  (STORAGE_KEY, currencyList, countryList, countryCodeByName, countryNameAliases, ...)
- *  - src/rice.js       (calculateRiceScore, formatRice, validateProjectInput)
+ *  - src/rice.js       (calculateRiceScore, formatRice, validateRoadmapInput)
  *  - src/utils.js      (formatDateTime, formatDateForFilename, compareDatesDesc, generateId, escapeHtml, countryCodeToFlag, toNumberOrNull, parseCsv, escapeCsvCell)
  *  - src/modules/profile-security.js (ProfileSecurity: password hash/verify for profile lock)
  *
@@ -19,25 +19,27 @@ let state = {
   activeProfileId: null,
   sortField: "createdAt",
   sortDirection: "desc",
-  projectsView: "table",
+  roadmapsView: "table",
   tableSortByRice: true,
   /** Compact table cards: group by attribute (see TABLE_GROUP_BY_OPTIONS). */
   tableGroupBy: "none",
   scrumBoardSortByRice: true,
-  /** Project status values shown as Scrum board columns (subset of projectStatusList). */
+  /** Roadmap status values shown as Scrum board columns (subset of roadmapStatusList). */
   scrumBoardVisibleStatuses: null,
   moscowSortByRice: true,
-  mapMetric: "projects",
+  mapMetric: "roadmaps",
   raciMatrixDomain: "Business",
+  /** Portfolio KANO view: matrix (`positioned`) vs unplaced roadmap cards (`unpositioned`). */
+  kanoPortfolioPanel: "positioned",
   exchangeRatesToEUR: {},
   exchangeRatesDate: null,
   exchangeRatesLastSource: null,
-  /** When true and active profile is super-admin capable, portfolio shows all profiles' projects. */
+  /** When true and active profile is super-admin capable, portfolio shows all profiles' roadmaps. */
   superAdminMode: false
 };
 
-let editingProjectId = null;
-let projectModalMode = "create";
+let editingRoadmapId = null;
+let roadmapModalMode = "create";
 
 /** Profile IDs unlocked for this browser tab session (sessionStorage, not localStorage). */
 const unlockedProfileIds = new Set();
@@ -60,11 +62,11 @@ let profilePickerPointerSelecting = false;
 
 const MAP_METRIC_OPTIONS = [
   {
-    id: "projects",
-    label: "Project count",
+    id: "roadmaps",
+    label: "Roadmap count",
     short: "Count",
-    description: "Number of projects per country",
-    keywords: ["count", "projects", "number", "volume", "quantity"]
+    description: "Number of roadmaps per country",
+    keywords: ["count", "roadmaps", "number", "volume", "quantity"]
   },
   {
     id: "rice",
@@ -77,7 +79,7 @@ const MAP_METRIC_OPTIONS = [
     id: "riceAvg",
     label: "Average RICE score",
     short: "Avg RICE",
-    description: "Mean RICE score per project in each country",
+    description: "Mean RICE score per roadmap in each country",
     keywords: ["rice", "average", "avg", "mean", "score", "priority"]
   },
   {
@@ -91,7 +93,7 @@ const MAP_METRIC_OPTIONS = [
     id: "financialAvg",
     label: "Average financial impact (EUR)",
     short: "Avg EUR",
-    description: "Mean financial impact in EUR per project in each country",
+    description: "Mean financial impact in EUR per roadmap in each country",
     keywords: ["financial", "eur", "average", "avg", "mean", "money", "impact", "euro"]
   }
 ];
@@ -238,7 +240,7 @@ const FINANCIAL_FRAMEWORK_ICONS = {
   }
 };
 
-const PROJECT_FORM_FIELD_TOOLTIPS = {
+const ROADMAP_FORM_FIELD_TOOLTIPS = {
   financialCustomNotes: {
     title: "Custom notes",
     body: "Optional notes that explain assumptions, source data, or rationale used for manual financial impact."
@@ -466,12 +468,12 @@ function sanitizeFinancialImpactInputs(framework, inputs) {
 function sanitizeProfilesForExport(profiles) {
   return (Array.isArray(profiles) ? profiles : []).map((profile) => {
     const safeProfile = { ...profile };
-    safeProfile.projects = (Array.isArray(profile.projects) ? profile.projects : []).map((project) => {
-      const framework = normalizeFinancialFramework(project.financialImpactFramework);
+    safeProfile.roadmaps = (Array.isArray(profile.roadmaps) ? profile.roadmaps : []).map((roadmap) => {
+      const framework = normalizeFinancialFramework(roadmap.financialImpactFramework);
       return {
-        ...project,
+        ...roadmap,
         financialImpactFramework: framework,
-        financialImpactInputs: sanitizeFinancialImpactInputs(framework, project.financialImpactInputs || {})
+        financialImpactInputs: sanitizeFinancialImpactInputs(framework, roadmap.financialImpactInputs || {})
       };
     });
     return safeProfile;
@@ -1136,71 +1138,71 @@ function computeFrameworkFinancialImpact(framework, inputs, customAmount) {
 }
 
 // --- Initialization ---
-let projectModalSectionNavObserver = null;
-let projectModalSectionNavSyncFrame = null;
-let projectModalSectionNavRatioMap = new Map();
-let projectModalSectionNavLockUntil = 0;
-let projectModalSectionNavLockedId = null;
-let projectModalSectionNavResizeObserver = null;
+let roadmapModalSectionNavObserver = null;
+let roadmapModalSectionNavSyncFrame = null;
+let roadmapModalSectionNavRatioMap = new Map();
+let roadmapModalSectionNavLockUntil = 0;
+let roadmapModalSectionNavLockedId = null;
+let roadmapModalSectionNavResizeObserver = null;
 
-const PROJECT_MODAL_SECTION_NAV_IDS = [
-  "projectModalSectionProject",
-  "projectModalSectionRice",
-  "projectModalSectionMoscow",
-  "projectModalSectionKano",
-  "projectModalSectionMeta",
-  "projectModalSectionRaci",
-  "projectModalSectionFinancial"
+const ROADMAP_MODAL_SECTION_NAV_IDS = [
+  "roadmapModalSectionRoadmap",
+  "roadmapModalSectionRice",
+  "roadmapModalSectionMoscow",
+  "roadmapModalSectionKano",
+  "roadmapModalSectionMeta",
+  "roadmapModalSectionRaci",
+  "roadmapModalSectionFinancial"
 ];
 
-function projectModalSectionProjectHasData() {
-  if ((elements.projectTitle?.value || "").trim()) return true;
-  if (richDescriptionToPlainText(getRichDescriptionValue("projectDescription"))) return true;
-  const section = document.getElementById("projectModalSectionProject");
+function roadmapModalSectionRoadmapHasData() {
+  if ((elements.roadmapTitle?.value || "").trim()) return true;
+  if (richDescriptionToPlainText(getRichDescriptionValue("roadmapDescription"))) return true;
+  const section = document.getElementById("roadmapModalSectionRoadmap");
   if (!section) return false;
-  for (const details of section.querySelectorAll(".project-optional-field-details")) {
-    const wrap = details.closest(".project-field-tooltip-wrap");
-    if (projectOptionalFieldHasData(wrap)) return true;
+  for (const details of section.querySelectorAll(".roadmap-optional-field-details")) {
+    const wrap = details.closest(".roadmap-field-tooltip-wrap");
+    if (roadmapOptionalFieldHasData(wrap)) return true;
   }
   return false;
 }
 
-function projectModalSectionHasData(sectionId) {
+function roadmapModalSectionHasData(sectionId) {
   if (!sectionId) return false;
-  if (sectionId === "projectModalSectionProject") {
-    return projectModalSectionProjectHasData();
+  if (sectionId === "roadmapModalSectionRoadmap") {
+    return roadmapModalSectionRoadmapHasData();
   }
-  return projectOptionalSectionHasData(sectionId);
+  return roadmapOptionalSectionHasData(sectionId);
 }
 
-const PROJECT_MODAL_SECTION_STATUS_MARKUP =
-  '<svg class="project-modal-section-status-icon" viewBox="0 0 12 12" aria-hidden="true">' +
+const ROADMAP_MODAL_SECTION_STATUS_MARKUP =
+  '<svg class="roadmap-modal-section-status-icon" viewBox="0 0 12 12" aria-hidden="true">' +
   '<path d="M2.4 6.2 4.9 8.7 9.6 3.6" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-function ensureProjectModalSectionStatusBadge(btn) {
+function ensureRoadmapModalSectionStatusBadge(btn) {
   if (!btn) return;
-  let status = btn.querySelector(".project-modal-section-status");
+  let status = btn.querySelector(".roadmap-modal-section-status");
   if (!status) {
     status = document.createElement("span");
-    status.className = "project-modal-section-status";
+    status.className = "roadmap-modal-section-status";
     status.setAttribute("aria-hidden", "true");
     btn.appendChild(status);
   }
-  if (!status.querySelector(".project-modal-section-status-icon")) {
-    status.innerHTML = PROJECT_MODAL_SECTION_STATUS_MARKUP;
+  if (!status.querySelector(".roadmap-modal-section-status-icon")) {
+    status.innerHTML = ROADMAP_MODAL_SECTION_STATUS_MARKUP;
   }
 }
 
-function syncProjectModalSectionNavIndicators() {
-  const modal = document.getElementById("projectModal");
+function syncRoadmapModalSectionNavIndicators() {
+  const modal = document.getElementById("roadmapModal");
   if (!modal) return;
-  modal.querySelectorAll(".project-modal-section-btn[data-scroll-target]").forEach((btn) => {
-    ensureProjectModalSectionStatusBadge(btn);
+  modal.querySelectorAll(".roadmap-modal-section-btn[data-scroll-target]").forEach((btn) => {
+    ensureRoadmapModalSectionStatusBadge(btn);
     if (!btn.dataset.sectionLabel) {
       btn.dataset.sectionLabel = btn.getAttribute("aria-label") || "Section";
     }
     const sectionId = btn.getAttribute("data-scroll-target");
-    const hasData = projectModalSectionHasData(sectionId);
+    const hasData = roadmapModalSectionHasData(sectionId);
     const isActive = btn.classList.contains("is-active");
     const wasPopulated = btn.classList.contains("is-populated");
     btn.classList.toggle("is-populated", hasData);
@@ -1216,28 +1218,28 @@ function syncProjectModalSectionNavIndicators() {
     }
   });
 
-  syncProjectModalSectionActiveIndicator(modal);
+  syncRoadmapModalSectionActiveIndicator(modal);
 }
 
-function setProjectModalActiveSection(modal, sectionId, { userInitiated = false } = {}) {
+function setRoadmapModalActiveSection(modal, sectionId, { userInitiated = false } = {}) {
   if (!modal || !sectionId) return;
   if (userInitiated) {
-    projectModalSectionNavLockedId = sectionId;
-    projectModalSectionNavLockUntil = Date.now() + 850;
+    roadmapModalSectionNavLockedId = sectionId;
+    roadmapModalSectionNavLockUntil = Date.now() + 850;
   }
-  modal.querySelectorAll(".project-modal-section-btn").forEach((btn) => {
+  modal.querySelectorAll(".roadmap-modal-section-btn").forEach((btn) => {
     btn.classList.toggle("is-active", btn.getAttribute("data-scroll-target") === sectionId);
   });
-  syncProjectModalSectionNavIndicators();
+  syncRoadmapModalSectionNavIndicators();
 }
 
-function resolveProjectModalActiveSectionId(scrollRoot, sectionEls) {
+function resolveRoadmapModalActiveSectionId(scrollRoot, sectionEls) {
   if (!scrollRoot || !sectionEls.length) return null;
 
   let bestId = null;
   let bestRatio = 0;
   sectionEls.forEach((sec) => {
-    const ratio = projectModalSectionNavRatioMap.get(sec.id) || 0;
+    const ratio = roadmapModalSectionNavRatioMap.get(sec.id) || 0;
     if (ratio > bestRatio) {
       bestRatio = ratio;
       bestId = sec.id;
@@ -1261,28 +1263,28 @@ function resolveProjectModalActiveSectionId(scrollRoot, sectionEls) {
   return nearestId;
 }
 
-function syncProjectModalSectionActiveIndicator(modal) {
-  const rail = modal?.querySelector(".project-modal-section-rail");
+function syncRoadmapModalSectionActiveIndicator(modal) {
+  const rail = modal?.querySelector(".roadmap-modal-section-rail");
   if (!rail) return;
 
-  let indicator = rail.querySelector(".project-modal-section-active-indicator");
+  let indicator = rail.querySelector(".roadmap-modal-section-active-indicator");
   if (!indicator) {
     indicator = document.createElement("span");
-    indicator.className = "project-modal-section-active-indicator";
+    indicator.className = "roadmap-modal-section-active-indicator";
     indicator.setAttribute("aria-hidden", "true");
     rail.appendChild(indicator);
   } else if (indicator !== rail.lastElementChild) {
     rail.appendChild(indicator);
   }
 
-  const activeBtn = rail.querySelector(".project-modal-section-btn.is-active");
+  const activeBtn = rail.querySelector(".roadmap-modal-section-btn.is-active");
   if (!activeBtn) {
-    rail.classList.remove("project-modal-section-rail--indicator-ready");
+    rail.classList.remove("roadmap-modal-section-rail--indicator-ready");
     return;
   }
 
   const isHorizontal = getComputedStyle(rail).flexDirection === "row";
-  rail.classList.toggle("project-modal-section-rail--layout-horizontal", isHorizontal);
+  rail.classList.toggle("roadmap-modal-section-rail--layout-horizontal", isHorizontal);
 
   const railRect = rail.getBoundingClientRect();
   const btnRect = activeBtn.getBoundingClientRect();
@@ -1301,95 +1303,95 @@ function syncProjectModalSectionActiveIndicator(modal) {
     offsetY = btnRect.top - railRect.top + (btnRect.height - indicatorHeight) / 2;
   }
 
-  const isFirstPaint = !rail.classList.contains("project-modal-section-rail--indicator-ready");
+  const isFirstPaint = !rail.classList.contains("roadmap-modal-section-rail--indicator-ready");
   if (isFirstPaint) {
     indicator.classList.add("is-instant");
   }
 
   rail.style.setProperty("--section-indicator-x", `${offsetX}px`);
   rail.style.setProperty("--section-indicator-y", `${offsetY}px`);
-  rail.classList.add("project-modal-section-rail--indicator-ready");
+  rail.classList.add("roadmap-modal-section-rail--indicator-ready");
 
   if (isFirstPaint) {
     requestAnimationFrame(() => indicator.classList.remove("is-instant"));
   }
 }
 
-function ensureProjectModalSectionNavIndicatorObserver(modal) {
-  const rail = modal?.querySelector(".project-modal-section-rail");
+function ensureRoadmapModalSectionNavIndicatorObserver(modal) {
+  const rail = modal?.querySelector(".roadmap-modal-section-rail");
   if (!rail || rail.dataset.indicatorObserverReady === "1") return;
   rail.dataset.indicatorObserverReady = "1";
-  if (projectModalSectionNavResizeObserver) {
-    projectModalSectionNavResizeObserver.disconnect();
+  if (roadmapModalSectionNavResizeObserver) {
+    roadmapModalSectionNavResizeObserver.disconnect();
   }
-  projectModalSectionNavResizeObserver = new ResizeObserver(() => {
-    syncProjectModalSectionActiveIndicator(modal);
+  roadmapModalSectionNavResizeObserver = new ResizeObserver(() => {
+    syncRoadmapModalSectionActiveIndicator(modal);
   });
-  projectModalSectionNavResizeObserver.observe(rail);
-  rail.querySelectorAll(".project-modal-section-btn").forEach((btn) => {
-    projectModalSectionNavResizeObserver.observe(btn);
+  roadmapModalSectionNavResizeObserver.observe(rail);
+  rail.querySelectorAll(".roadmap-modal-section-btn").forEach((btn) => {
+    roadmapModalSectionNavResizeObserver.observe(btn);
   });
 }
 
-function scheduleProjectModalSectionNavSync() {
-  if (projectModalSectionNavSyncFrame != null) {
-    cancelAnimationFrame(projectModalSectionNavSyncFrame);
+function scheduleRoadmapModalSectionNavSync() {
+  if (roadmapModalSectionNavSyncFrame != null) {
+    cancelAnimationFrame(roadmapModalSectionNavSyncFrame);
   }
-  projectModalSectionNavSyncFrame = requestAnimationFrame(() => {
-    projectModalSectionNavSyncFrame = null;
-    syncProjectOptionalDisclosures({ resetCollapsed: false });
+  roadmapModalSectionNavSyncFrame = requestAnimationFrame(() => {
+    roadmapModalSectionNavSyncFrame = null;
+    syncRoadmapOptionalDisclosures({ resetCollapsed: false });
   });
 }
 
-function initProjectModalSectionNav() {
-  const modal = document.getElementById("projectModal");
+function initRoadmapModalSectionNav() {
+  const modal = document.getElementById("roadmapModal");
   if (!modal || modal.dataset.sectionNavReady === "1") return;
   modal.dataset.sectionNavReady = "1";
   const scrollRoot =
-    modal.querySelector("#projectModalScrollRegion") || modal.querySelector(".project-modal-scroll") || modal.querySelector(".modal-body");
+    modal.querySelector("#roadmapModalScrollRegion") || modal.querySelector(".roadmap-modal-scroll") || modal.querySelector(".modal-body");
 
-  ensureProjectModalSectionNavIndicatorObserver(modal);
+  ensureRoadmapModalSectionNavIndicatorObserver(modal);
 
-  modal.querySelectorAll(".project-modal-section-btn[data-scroll-target]").forEach((btn) => {
-    ensureProjectModalSectionStatusBadge(btn);
+  modal.querySelectorAll(".roadmap-modal-section-btn[data-scroll-target]").forEach((btn) => {
+    ensureRoadmapModalSectionStatusBadge(btn);
     btn.addEventListener("click", () => {
       const id = btn.getAttribute("data-scroll-target");
       const el = id ? document.getElementById(id) : null;
       if (el) {
-        expandOptionalProjectSection(el);
+        expandOptionalRoadmapSection(el);
         el.scrollIntoView({ behavior: "smooth", block: "start" });
       }
-      setProjectModalActiveSection(modal, id, { userInitiated: true });
+      setRoadmapModalActiveSection(modal, id, { userInitiated: true });
     });
   });
 
   if (!scrollRoot) return;
-  const sectionEls = PROJECT_MODAL_SECTION_NAV_IDS.map((id) => document.getElementById(id)).filter(Boolean);
+  const sectionEls = ROADMAP_MODAL_SECTION_NAV_IDS.map((id) => document.getElementById(id)).filter(Boolean);
   if (sectionEls.length === 0) return;
 
-  projectModalSectionNavRatioMap = new Map();
-  sectionEls.forEach((sec) => projectModalSectionNavRatioMap.set(sec.id, 0));
+  roadmapModalSectionNavRatioMap = new Map();
+  sectionEls.forEach((sec) => roadmapModalSectionNavRatioMap.set(sec.id, 0));
 
-  if (projectModalSectionNavObserver) {
-    projectModalSectionNavObserver.disconnect();
-    projectModalSectionNavObserver = null;
+  if (roadmapModalSectionNavObserver) {
+    roadmapModalSectionNavObserver.disconnect();
+    roadmapModalSectionNavObserver = null;
   }
-  projectModalSectionNavObserver = new IntersectionObserver(
+  roadmapModalSectionNavObserver = new IntersectionObserver(
     (entries) => {
-      if (Date.now() < projectModalSectionNavLockUntil) return;
+      if (Date.now() < roadmapModalSectionNavLockUntil) return;
 
       entries.forEach((entry) => {
-        projectModalSectionNavRatioMap.set(entry.target.id, entry.isIntersecting ? entry.intersectionRatio : 0);
+        roadmapModalSectionNavRatioMap.set(entry.target.id, entry.isIntersecting ? entry.intersectionRatio : 0);
       });
 
-      const activeId = resolveProjectModalActiveSectionId(scrollRoot, sectionEls);
+      const activeId = resolveRoadmapModalActiveSectionId(scrollRoot, sectionEls);
       if (!activeId) return;
 
-      const currentActive = modal.querySelector(".project-modal-section-btn.is-active");
+      const currentActive = modal.querySelector(".roadmap-modal-section-btn.is-active");
       const currentId = currentActive?.getAttribute("data-scroll-target");
       if (currentId === activeId) return;
 
-      setProjectModalActiveSection(modal, activeId);
+      setRoadmapModalActiveSection(modal, activeId);
     },
     {
       root: scrollRoot,
@@ -1397,26 +1399,73 @@ function initProjectModalSectionNav() {
       rootMargin: "-10% 0px -62% 0px"
     }
   );
-  sectionEls.forEach((sec) => projectModalSectionNavObserver.observe(sec));
-  setProjectModalActiveSection(modal, sectionEls[0].id);
+  sectionEls.forEach((sec) => roadmapModalSectionNavObserver.observe(sec));
+  setRoadmapModalActiveSection(modal, sectionEls[0].id);
 }
 
-function resetProjectModalSectionNav() {
-  const modal = document.getElementById("projectModal");
+function resetRoadmapModalSectionNav() {
+  const modal = document.getElementById("roadmapModal");
   if (!modal) return;
   const scrollRegion =
-    modal.querySelector("#projectModalScrollRegion") || modal.querySelector(".project-modal-scroll") || modal.querySelector(".modal-body");
+    modal.querySelector("#roadmapModalScrollRegion") || modal.querySelector(".roadmap-modal-scroll") || modal.querySelector(".modal-body");
   if (scrollRegion) scrollRegion.scrollTop = 0;
-  projectModalSectionNavLockUntil = 0;
-  projectModalSectionNavLockedId = null;
-  projectModalSectionNavRatioMap = new Map();
-  setProjectModalActiveSection(modal, PROJECT_MODAL_SECTION_NAV_IDS[0]);
+  roadmapModalSectionNavLockUntil = 0;
+  roadmapModalSectionNavLockedId = null;
+  roadmapModalSectionNavRatioMap = new Map();
+  setRoadmapModalActiveSection(modal, ROADMAP_MODAL_SECTION_NAV_IDS[0]);
 }
 
-function ensureProjectFormFieldTooltips() {
-  const projectForm = elements.projectForm || $("projectForm");
-  if (!projectForm) return;
-  const wraps = projectForm.querySelectorAll(".project-field-tooltip-wrap");
+function navigateRoadmapModalToSection(sectionId, { focusSelector } = {}) {
+  const modal = document.getElementById("roadmapModal");
+  if (!modal || !sectionId) return;
+  const section = document.getElementById(sectionId);
+  if (!section) return;
+
+  expandOptionalRoadmapSection(section);
+  setRoadmapModalActiveSection(modal, sectionId, { userInitiated: true });
+
+  const scrollRoot =
+    modal.querySelector("#roadmapModalScrollRegion") ||
+    modal.querySelector(".roadmap-modal-scroll") ||
+    modal.querySelector(".modal-body");
+
+  if (scrollRoot) {
+    const rootRect = scrollRoot.getBoundingClientRect();
+    const sectionRect = section.getBoundingClientRect();
+    const nextTop = scrollRoot.scrollTop + (sectionRect.top - rootRect.top) - 12;
+    scrollRoot.scrollTo({ top: Math.max(0, nextTop), behavior: "smooth" });
+  } else {
+    section.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  if (focusSelector) {
+    window.setTimeout(() => {
+      const focusEl =
+        section.querySelector(focusSelector) ||
+        modal.querySelector(focusSelector) ||
+        document.querySelector(focusSelector);
+      if (focusEl && !focusEl.disabled) {
+        focusEl.focus({ preventScroll: true });
+      }
+    }, 420);
+  }
+}
+
+function openRoadmapModalForKanoScoring(roadmapId) {
+  if (!roadmapId) return;
+  const scrollOptions = { scrollToSection: "roadmapModalSectionKano" };
+  if (isActiveDemoProfile()) {
+    openRoadmapModal("view", roadmapId, scrollOptions);
+    showToast("Demo profile is read-only. Switch to your own profile to edit KANO scores.");
+    return;
+  }
+  openRoadmapModal("edit", roadmapId, scrollOptions);
+}
+
+function ensureRoadmapFormFieldTooltips() {
+  const roadmapForm = elements.roadmapForm || $("roadmapForm");
+  if (!roadmapForm) return;
+  const wraps = roadmapForm.querySelectorAll(".roadmap-field-tooltip-wrap");
   wraps.forEach((wrap) => {
     if (wrap.querySelector(".cell-type-tooltip")) return;
     const control = wrap.querySelector("input, select, textarea");
@@ -1425,13 +1474,13 @@ function ensureProjectFormFieldTooltips() {
 
     const labelText = (labelEl.textContent || "").replace(/\s+/g, " ").trim();
     const cleanTitle = labelText.replace(/\s*\(optional\)\s*/ig, "").trim() || "Field details";
-    const tooltipCopy = PROJECT_FORM_FIELD_TOOLTIPS[control.id] || null;
+    const tooltipCopy = ROADMAP_FORM_FIELD_TOOLTIPS[control.id] || null;
     const bodyText = tooltipCopy && tooltipCopy.body
       ? tooltipCopy.body
       : (
         control.tagName === "SELECT"
-          ? `Select the value for ${cleanTitle.toLowerCase()} for this project.`
-          : `Provide a value for ${cleanTitle.toLowerCase()} for this project.`
+          ? `Select the value for ${cleanTitle.toLowerCase()} for this roadmap.`
+          : `Provide a value for ${cleanTitle.toLowerCase()} for this roadmap.`
       );
 
     const tooltipEl = document.createElement("div");
@@ -1451,8 +1500,8 @@ function ensureProjectFormFieldTooltips() {
   });
 }
 
-function shouldWrapOptionalProjectField(wrap) {
-  if (!wrap || wrap.closest(".project-optional-field-details")) return false;
+function shouldWrapOptionalRoadmapField(wrap) {
+  if (!wrap || wrap.closest(".roadmap-optional-field-details")) return false;
   if (wrap.closest("[data-optional-section]")) return false;
   return wrap.hasAttribute("data-optional-collapsible");
 }
@@ -1471,25 +1520,25 @@ function buildOptionalDisclosureSummary(titleText, options = {}) {
   const summary = document.createElement("summary");
   summary.className =
     summaryKind === "section"
-      ? "form-section-header project-optional-section-summary"
-      : "project-optional-field-summary";
+      ? "form-section-header roadmap-optional-section-summary"
+      : "roadmap-optional-field-summary";
   summary.dataset.optionalKind = summaryKind;
 
   const row = document.createElement("div");
-  row.className = "project-optional-summary-row";
+  row.className = "roadmap-optional-summary-row";
 
   const lead = document.createElement("span");
-  lead.className = "project-optional-summary-lead";
+  lead.className = "roadmap-optional-summary-lead";
   lead.setAttribute("aria-hidden", "true");
 
   const copy = document.createElement("div");
-  copy.className = "project-optional-summary-copy";
+  copy.className = "roadmap-optional-summary-copy";
 
   const titleSpan = document.createElement("span");
   titleSpan.className =
     summaryKind === "section"
-      ? "form-section-title project-optional-section-title"
-      : "project-optional-field-summary-title";
+      ? "form-section-title roadmap-optional-section-title"
+      : "roadmap-optional-field-summary-title";
   titleSpan.textContent = titleText || "Optional field";
   copy.appendChild(titleSpan);
 
@@ -1497,26 +1546,26 @@ function buildOptionalDisclosureSummary(titleText, options = {}) {
     const subtitleSpan = document.createElement("span");
     subtitleSpan.className =
       summaryKind === "section"
-        ? "form-section-hint project-optional-section-subtitle"
-        : "project-optional-field-summary-subtitle";
+        ? "form-section-hint roadmap-optional-section-subtitle"
+        : "roadmap-optional-field-summary-subtitle";
     subtitleSpan.textContent = subtitle;
     copy.appendChild(subtitleSpan);
   }
 
   const statusDot = document.createElement("span");
-  statusDot.className = "project-optional-status-dot";
+  statusDot.className = "roadmap-optional-status-dot";
   statusDot.setAttribute("title", "Has data");
   statusDot.setAttribute("aria-hidden", "true");
 
   const optionalBadge = document.createElement("span");
   optionalBadge.className =
     summaryKind === "section"
-      ? "project-optional-badge project-optional-badge--section"
-      : "project-optional-badge project-optional-badge--field";
+      ? "roadmap-optional-badge roadmap-optional-badge--section"
+      : "roadmap-optional-badge roadmap-optional-badge--field";
   optionalBadge.textContent = summaryKind === "section" ? "Optional section" : "Optional field";
 
   const chevron = document.createElement("span");
-  chevron.className = "project-optional-summary-chevron";
+  chevron.className = "roadmap-optional-summary-chevron";
   chevron.setAttribute("aria-hidden", "true");
 
   row.appendChild(lead);
@@ -1530,18 +1579,18 @@ function buildOptionalDisclosureSummary(titleText, options = {}) {
   return summary;
 }
 
-function wrapOptionalProjectField(wrap) {
-  if (!shouldWrapOptionalProjectField(wrap)) return;
+function wrapOptionalRoadmapField(wrap) {
+  if (!shouldWrapOptionalRoadmapField(wrap)) return;
 
   const labelEl = wrap.querySelector(":scope > label") || wrap.querySelector("label");
   if (!labelEl) return;
 
   const titleText = getOptionalFieldSummaryText(labelEl) || "Optional field";
-  const hintEl = wrap.querySelector(":scope > .project-dynamic-field-hint");
+  const hintEl = wrap.querySelector(":scope > .roadmap-dynamic-field-hint");
   const subtitle = hintEl ? hintEl.textContent.trim() : "";
 
   const details = document.createElement("details");
-  details.className = "project-optional-disclosure project-optional-field-details";
+  details.className = "roadmap-optional-disclosure roadmap-optional-field-details";
   details.dataset.optionalKind = "field";
 
   const summary = buildOptionalDisclosureSummary(titleText, {
@@ -1550,7 +1599,7 @@ function wrapOptionalProjectField(wrap) {
   });
 
   const body = document.createElement("div");
-  body.className = "project-optional-field-body";
+  body.className = "roadmap-optional-field-body";
 
   Array.from(wrap.childNodes).forEach((child) => {
     if (child === labelEl) return;
@@ -1561,11 +1610,11 @@ function wrapOptionalProjectField(wrap) {
   details.appendChild(summary);
   details.appendChild(body);
   wrap.appendChild(details);
-  wrap.classList.add("project-optional-field-wrap");
+  wrap.classList.add("roadmap-optional-field-wrap");
 }
 
-function wrapOptionalProjectSections() {
-  document.querySelectorAll("#projectForm [data-optional-section]").forEach((section) => {
+function wrapOptionalRoadmapSections() {
+  document.querySelectorAll("#roadmapForm [data-optional-section]").forEach((section) => {
     if (section.dataset.optionalSectionWrapped === "1") return;
 
     const header = section.querySelector(":scope > .form-section-header");
@@ -1586,7 +1635,7 @@ function wrapOptionalProjectSections() {
     const subtitle = (hintEl?.textContent || section.getAttribute("data-optional-subtitle") || "").trim();
 
     const details = document.createElement("details");
-    details.className = "project-optional-disclosure project-optional-section-details";
+    details.className = "roadmap-optional-disclosure roadmap-optional-section-details";
     details.dataset.optionalSection = section.id || "";
     details.dataset.optionalKind = "section";
 
@@ -1596,38 +1645,38 @@ function wrapOptionalProjectSections() {
     });
 
     const body = document.createElement("div");
-    body.className = "project-optional-section-body";
+    body.className = "roadmap-optional-section-body";
     contentNodes.forEach((contentNode) => body.appendChild(contentNode));
 
     details.appendChild(summary);
     details.appendChild(body);
     header.replaceWith(details);
     section.dataset.optionalSectionWrapped = "1";
-    section.classList.add("project-optional-section-host");
+    section.classList.add("roadmap-optional-section-host");
   });
 }
 
-function ensureProjectOptionalDisclosures() {
-  const projectForm = elements.projectForm || $("projectForm");
-  if (!projectForm || projectForm.dataset.optionalDisclosuresReady === "1") return;
+function ensureRoadmapOptionalDisclosures() {
+  const roadmapForm = elements.roadmapForm || $("roadmapForm");
+  if (!roadmapForm || roadmapForm.dataset.optionalDisclosuresReady === "1") return;
 
   try {
-    projectForm.querySelectorAll("[data-optional-collapsible]").forEach(wrapOptionalProjectField);
-    wrapOptionalProjectSections();
-    ensureProjectTasksDisclosure();
-    ensureProjectKanoAxisSelects();
-    ensureProjectKanoAxisMeters();
-    ensureProjectKanoLegend();
-    ensureProjectKanoMatrixMounted();
-    projectForm.dataset.optionalDisclosuresReady = "1";
+    roadmapForm.querySelectorAll("[data-optional-collapsible]").forEach(wrapOptionalRoadmapField);
+    wrapOptionalRoadmapSections();
+    ensureRoadmapTasksDisclosure();
+    ensureRoadmapKanoAxisSelects();
+    ensureRoadmapKanoAxisMeters();
+    ensureRoadmapKanoLegend();
+    ensureRoadmapKanoMatrixMounted();
+    roadmapForm.dataset.optionalDisclosuresReady = "1";
   } catch (err) {
-    console.error("Optional project disclosures failed to initialize:", err);
+    console.error("Optional roadmap disclosures failed to initialize:", err);
   }
 }
 
-function projectOptionalFieldHasData(wrap) {
+function roadmapOptionalFieldHasData(wrap) {
   if (!wrap) return false;
-  const body = wrap.querySelector(".project-optional-field-body") || wrap;
+  const body = wrap.querySelector(".roadmap-optional-field-body") || wrap;
 
   const standaloneInputs = body.querySelectorAll(":scope > .form-grid input, :scope > .form-grid select, :scope > .form-grid textarea, :scope > input, :scope > select, :scope > textarea");
   for (const input of standaloneInputs) {
@@ -1636,7 +1685,7 @@ function projectOptionalFieldHasData(wrap) {
   }
 
   const dynamicRows = body.querySelectorAll(
-    ".project-label-row, .project-link-row, .project-task-row, .project-raci-row, .country-row"
+    ".roadmap-label-row, .roadmap-link-row, .roadmap-task-row, .roadmap-raci-row, .country-row"
   );
   for (const row of dynamicRows) {
     const rowInputs = row.querySelectorAll("input, select, textarea");
@@ -1647,7 +1696,7 @@ function projectOptionalFieldHasData(wrap) {
 
   if (
     body.querySelector(
-      ".project-raci-card, .project-raci-readonly-row, .project-task-card, .project-task-readonly-row, .project-label-readonly-row"
+      ".roadmap-raci-card, .roadmap-raci-readonly-row, .roadmap-task-card, .roadmap-task-readonly-row, .roadmap-label-readonly-row"
     )
   ) {
     return true;
@@ -1656,8 +1705,8 @@ function projectOptionalFieldHasData(wrap) {
   return false;
 }
 
-function projectOptionalSectionHasData(sectionId) {
-  if (sectionId === "projectModalSectionRice") {
+function roadmapOptionalSectionHasData(sectionId) {
+  if (sectionId === "roadmapModalSectionRice") {
     const scalarFields = ["reachValue", "impactValue", "confidenceValue", "effortValue"];
     for (const fieldId of scalarFields) {
       const el = document.getElementById(fieldId);
@@ -1669,28 +1718,28 @@ function projectOptionalSectionHasData(sectionId) {
     }
     return false;
   }
-  if (sectionId === "projectModalSectionMoscow") {
-    return !!(elements.projectMoscow && String(elements.projectMoscow.value || "").trim());
+  if (sectionId === "roadmapModalSectionMoscow") {
+    return !!(elements.roadmapMoscow && String(elements.roadmapMoscow.value || "").trim());
   }
-  if (sectionId === "projectModalSectionKano") {
-    const { kanoFunctionality, kanoSatisfaction } = getProjectKanoFromControls();
+  if (sectionId === "roadmapModalSectionKano") {
+    const { kanoFunctionality, kanoSatisfaction } = getRoadmapKanoFromControls();
     return kanoFunctionality != null && kanoSatisfaction != null;
   }
-  if (sectionId === "projectModalSectionMeta") {
+  if (sectionId === "roadmapModalSectionMeta") {
     const scalarFields = [
-      elements.projectType,
-      elements.projectStatus,
-      elements.projectTshirtSize,
-      elements.projectPeriod
+      elements.roadmapType,
+      elements.roadmapStatus,
+      elements.roadmapTshirtSize,
+      elements.roadmapPeriod
     ];
     for (const el of scalarFields) {
       if (el && String(el.value || "").trim()) return true;
     }
     const sectionBody =
-      document.querySelector("#projectModalSectionMeta .project-optional-section-body") ||
-      document.getElementById("projectModalSectionMeta");
+      document.querySelector("#roadmapModalSectionMeta .roadmap-optional-section-body") ||
+      document.getElementById("roadmapModalSectionMeta");
     if (!sectionBody) return false;
-    const taskRows = sectionBody.querySelectorAll(".project-task-row");
+    const taskRows = sectionBody.querySelectorAll(".roadmap-task-row");
     for (const row of taskRows) {
       if ((row.querySelector("input")?.value || "").trim()) return true;
     }
@@ -1698,28 +1747,28 @@ function projectOptionalSectionHasData(sectionId) {
     for (const select of countryRows) {
       if ((select.value || "").trim()) return true;
     }
-    if (sectionBody.querySelector(".project-task-card, .project-task-readonly-row")) {
+    if (sectionBody.querySelector(".roadmap-task-card, .roadmap-task-readonly-row")) {
       return true;
     }
     return false;
   }
-  if (sectionId === "projectModalSectionRaci") {
-    const rows = document.querySelectorAll("#projectModalSectionRaci .project-raci-row");
+  if (sectionId === "roadmapModalSectionRaci") {
+    const rows = document.querySelectorAll("#roadmapModalSectionRaci .roadmap-raci-row");
     for (const row of rows) {
-      const name = (row.querySelector(".project-raci-name-input")?.value || "").trim();
+      const name = (row.querySelector(".roadmap-raci-name-input")?.value || "").trim();
       if (name) return true;
     }
-    if (document.querySelector("#projectModalSectionRaci .project-raci-card, #projectModalSectionRaci .project-raci-readonly-row")) {
+    if (document.querySelector("#roadmapModalSectionRaci .roadmap-raci-card, #roadmapModalSectionRaci .roadmap-raci-readonly-row")) {
       return true;
     }
     return false;
   }
-  if (sectionId === "projectModalSectionFinancial") {
+  if (sectionId === "roadmapModalSectionFinancial") {
     const impactVal = elements.financialImpactValue?.value;
     if (impactVal != null && String(impactVal).trim() !== "" && Number(impactVal) !== 0) {
       return true;
     }
-    const currency = elements.projectCurrency?.value;
+    const currency = elements.roadmapCurrency?.value;
     if (currency && String(currency).trim()) return true;
     const framework = normalizeFinancialFramework(
       elements.financialFramework?.value || FINANCIAL_FRAMEWORK_DEFAULT
@@ -1750,7 +1799,7 @@ function getKanoLevelMeta(levels, level) {
   return levels.find((item) => item.level === level) || null;
 }
 
-function populateProjectKanoAxisSelect(selectEl, levels) {
+function populateRoadmapKanoAxisSelect(selectEl, levels) {
   if (!selectEl || selectEl.dataset.kanoOptionsReady === "1") return;
   if (!Array.isArray(levels)) return;
   selectEl.dataset.kanoOptionsReady = "1";
@@ -1763,93 +1812,211 @@ function populateProjectKanoAxisSelect(selectEl, levels) {
   });
 }
 
-function ensureProjectKanoAxisSelects() {
+function ensureRoadmapKanoAxisSelects() {
   if (typeof kanoFunctionalityLevels === "undefined" || typeof kanoSatisfactionLevels === "undefined") {
     return;
   }
-  populateProjectKanoAxisSelect(elements.projectKanoFunctionalitySelect, kanoFunctionalityLevels);
-  populateProjectKanoAxisSelect(elements.projectKanoSatisfactionSelect, kanoSatisfactionLevels);
+  populateRoadmapKanoAxisSelect(elements.roadmapKanoFunctionalitySelect, kanoFunctionalityLevels);
+  populateRoadmapKanoAxisSelect(elements.roadmapKanoSatisfactionSelect, kanoSatisfactionLevels);
 
   const bindAxisSelect = (selectEl) => {
     if (!selectEl || selectEl.dataset.kanoBound === "1") return;
     selectEl.dataset.kanoBound = "1";
     selectEl.addEventListener("change", () => {
-      if (projectModalMode === "view") return;
-      const f = normalizeKanoAxisLevel(elements.projectKanoFunctionalitySelect?.value);
-      const s = normalizeKanoAxisLevel(elements.projectKanoSatisfactionSelect?.value);
+      if (roadmapModalMode === "view") return;
+      const f = normalizeKanoAxisLevel(elements.roadmapKanoFunctionalitySelect?.value);
+      const s = normalizeKanoAxisLevel(elements.roadmapKanoSatisfactionSelect?.value);
       if (f == null || s == null) {
-        setProjectKanoSelection(null, null);
+        setRoadmapKanoSelection(null, null);
         return;
       }
-      setProjectKanoSelection(f, s);
+      setRoadmapKanoSelection(f, s);
     });
   };
 
-  bindAxisSelect(elements.projectKanoFunctionalitySelect);
-  bindAxisSelect(elements.projectKanoSatisfactionSelect);
+  bindAxisSelect(elements.roadmapKanoFunctionalitySelect);
+  bindAxisSelect(elements.roadmapKanoSatisfactionSelect);
 }
 
-function ensureProjectKanoAxisMeters() {
+function ensureRoadmapKanoAxisMeters() {
   const buildMeter = (container, levels) => {
     if (!container || container.dataset.kanoMeterReady === "1" || !Array.isArray(levels)) return;
     container.dataset.kanoMeterReady = "1";
     container.innerHTML = "";
     levels.forEach((meta) => {
       const dot = document.createElement("span");
-      dot.className = "project-kano-axis-meter__dot";
+      dot.className = "roadmap-kano-axis-meter__dot";
       dot.dataset.level = String(meta.level);
       dot.title = meta.description || meta.label;
       container.appendChild(dot);
     });
   };
   if (typeof kanoFunctionalityLevels !== "undefined") {
-    buildMeter(elements.projectKanoFunctionalityMeter, kanoFunctionalityLevels);
+    buildMeter(elements.roadmapKanoFunctionalityMeter, kanoFunctionalityLevels);
   }
   if (typeof kanoSatisfactionLevels !== "undefined") {
-    buildMeter(elements.projectKanoSatisfactionMeter, kanoSatisfactionLevels);
+    buildMeter(elements.roadmapKanoSatisfactionMeter, kanoSatisfactionLevels);
   }
 }
 
-function syncProjectKanoAxisMeters(functionality, satisfaction) {
+function syncRoadmapKanoAxisMeters(functionality, satisfaction) {
   const f = normalizeKanoAxisLevel(functionality);
   const s = normalizeKanoAxisLevel(satisfaction);
   const syncOne = (container, level) => {
     if (!container) return;
-    container.querySelectorAll(".project-kano-axis-meter__dot").forEach((dot) => {
+    container.querySelectorAll(".roadmap-kano-axis-meter__dot").forEach((dot) => {
       const dotLevel = Number(dot.dataset.level);
       dot.classList.toggle("is-active", level != null && dotLevel === level);
       dot.classList.toggle("is-dimmed", level != null && dotLevel !== level);
     });
   };
-  syncOne(elements.projectKanoFunctionalityMeter, f);
-  syncOne(elements.projectKanoSatisfactionMeter, s);
+  syncOne(elements.roadmapKanoFunctionalityMeter, f);
+  syncOne(elements.roadmapKanoSatisfactionMeter, s);
 }
 
-function ensureProjectKanoLegend() {
-  const legend = elements.projectKanoLegend || $("projectKanoLegend");
-  if (!legend || legend.dataset.kanoLegendReady === "1") return;
+function ensureRoadmapKanoLegend() {
+  const legend = elements.roadmapKanoLegend || $("roadmapKanoLegend");
+  if (!legend || legend.dataset.kanoLegendReady === "5") return;
   if (typeof kanoCategoryLegend === "undefined" || !Array.isArray(kanoCategoryLegend)) return;
-  legend.dataset.kanoLegendReady = "1";
+  legend.dataset.kanoLegendReady = "5";
   legend.innerHTML = "";
+
+  const detailHost = elements.roadmapKanoLegendDetail || $("roadmapKanoLegendDetail");
+  if (detailHost) {
+    detailHost.hidden = true;
+    detailHost.className = "roadmap-kano-legend-detail";
+    detailHost.innerHTML = "";
+  }
+
   kanoCategoryLegend.forEach((entry) => {
-    const item = document.createElement("span");
-    item.className = `project-kano-legend__item project-kano-legend__item--${entry.id}`;
+    const item = document.createElement("div");
+    item.className = `roadmap-kano-legend__item roadmap-kano-legend__item--${entry.id}`;
     item.dataset.kanoZone = entry.id;
-    item.title = entry.description || entry.label;
+    item.dataset.kanoDetail = entry.detail || entry.description || "";
+    item.setAttribute("role", "button");
+    item.tabIndex = 0;
+    item.setAttribute("aria-expanded", "false");
+    item.setAttribute(
+      "aria-label",
+      `${entry.label}${entry.hint ? ` (${entry.hint})` : ""}. Tap to read more.`
+    );
+    const swatchWrap = document.createElement("span");
+    swatchWrap.className = "roadmap-kano-legend__swatch-wrap";
     const swatch = document.createElement("span");
-    swatch.className = "project-kano-legend__swatch";
+    swatch.className = "roadmap-kano-legend__swatch";
     swatch.setAttribute("aria-hidden", "true");
+    swatchWrap.appendChild(swatch);
+    const copy = document.createElement("span");
+    copy.className = "roadmap-kano-legend__copy";
     const label = document.createElement("span");
-    label.className = "project-kano-legend__label";
+    label.className = "roadmap-kano-legend__label";
     label.textContent = entry.label;
-    item.appendChild(swatch);
-    item.appendChild(label);
+    const hint = document.createElement("span");
+    hint.className = "roadmap-kano-legend__hint";
+    hint.textContent = entry.hint || "";
+    const compact = document.createElement("span");
+    compact.className = "roadmap-kano-legend__compact";
+    compact.textContent = entry.compactLabel || entry.hint || entry.label;
+    const chevron = document.createElement("span");
+    chevron.className = "roadmap-kano-legend__chevron";
+    chevron.setAttribute("aria-hidden", "true");
+    copy.appendChild(label);
+    if (entry.hint) copy.appendChild(hint);
+    copy.appendChild(compact);
+    item.appendChild(swatchWrap);
+    item.appendChild(copy);
+    item.appendChild(chevron);
     legend.appendChild(item);
+  });
+
+  if (legend.dataset.kanoLegendBound !== "1") {
+    legend.dataset.kanoLegendBound = "1";
+    legend.addEventListener("click", (event) => {
+      const item = event.target.closest(".roadmap-kano-legend__item");
+      if (!item || !legend.contains(item)) return;
+      toggleRoadmapKanoLegendDetail(item.dataset.kanoZone);
+    });
+    legend.addEventListener("keydown", (event) => {
+      const item = event.target.closest(".roadmap-kano-legend__item");
+      if (!item || !legend.contains(item)) return;
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        toggleRoadmapKanoLegendDetail(item.dataset.kanoZone);
+      }
+    });
+  }
+}
+
+function toggleRoadmapKanoLegendDetail(zoneId) {
+  const legend = elements.roadmapKanoLegend || $("roadmapKanoLegend");
+  const detailHost = elements.roadmapKanoLegendDetail || $("roadmapKanoLegendDetail");
+  if (!legend || !detailHost || !zoneId) return;
+
+  const item = legend.querySelector(`.roadmap-kano-legend__item[data-kano-zone="${zoneId}"]`);
+  if (!item) return;
+
+  const isOpen = item.classList.contains("is-expanded");
+  legend.querySelectorAll(".roadmap-kano-legend__item").forEach((pill) => {
+    pill.classList.remove("is-expanded");
+    pill.setAttribute("aria-expanded", "false");
+  });
+
+  if (isOpen) {
+    detailHost.hidden = true;
+    detailHost.classList.remove("is-visible");
+    detailHost.innerHTML = "";
+    return;
+  }
+
+  const entry = kanoCategoryLegend.find((row) => row.id === zoneId);
+  item.classList.add("is-expanded");
+  item.setAttribute("aria-expanded", "true");
+
+  const title = entry ? entry.label : zoneId;
+  const hint = entry && entry.hint ? entry.hint : "";
+  const body = entry ? entry.detail || entry.description || "" : item.dataset.kanoDetail || "";
+
+  detailHost.innerHTML = "";
+  detailHost.className = `roadmap-kano-legend-detail roadmap-kano-legend-detail--${zoneId}`;
+
+  const inner = document.createElement("div");
+  inner.className = "roadmap-kano-legend-detail__inner";
+
+  const header = document.createElement("div");
+  header.className = "roadmap-kano-legend-detail__header";
+  const swatch = document.createElement("span");
+  swatch.className = "roadmap-kano-legend-detail__swatch";
+  swatch.setAttribute("aria-hidden", "true");
+  const heading = document.createElement("div");
+  heading.className = "roadmap-kano-legend-detail__heading";
+  const titleEl = document.createElement("span");
+  titleEl.className = "roadmap-kano-legend-detail__title";
+  titleEl.textContent = title;
+  heading.appendChild(titleEl);
+  if (hint) {
+    const hintEl = document.createElement("span");
+    hintEl.className = "roadmap-kano-legend-detail__hint";
+    hintEl.textContent = hint;
+    heading.appendChild(hintEl);
+  }
+  header.appendChild(swatch);
+  header.appendChild(heading);
+
+  const text = document.createElement("p");
+  text.className = "roadmap-kano-legend-detail__text";
+  text.textContent = body;
+
+  inner.appendChild(header);
+  inner.appendChild(text);
+  detailHost.appendChild(inner);
+  detailHost.hidden = false;
+  requestAnimationFrame(() => {
+    detailHost.classList.add("is-visible");
   });
 }
 
-function syncProjectKanoLegendHighlight(functionality, satisfaction, { hoverZone = null } = {}) {
-  const legend = elements.projectKanoLegend || $("projectKanoLegend");
+function syncRoadmapKanoLegendHighlight(functionality, satisfaction, { hoverZone = null } = {}) {
+  const legend = elements.roadmapKanoLegend || $("roadmapKanoLegend");
   if (!legend) return;
   const f = normalizeKanoAxisLevel(functionality);
   const s = normalizeKanoAxisLevel(satisfaction);
@@ -1858,7 +2025,7 @@ function syncProjectKanoLegendHighlight(functionality, satisfaction, { hoverZone
     (f != null && s != null && typeof getKanoCategoryFromPosition === "function"
       ? getKanoCategoryFromPosition(f, s)?.id
       : null);
-  legend.querySelectorAll(".project-kano-legend__item").forEach((item) => {
+  legend.querySelectorAll(".roadmap-kano-legend__item").forEach((item) => {
     const zone = item.dataset.kanoZone;
     item.classList.toggle("is-active", !!activeZone && zone === activeZone);
   });
@@ -1870,12 +2037,12 @@ function getKanoCellZoneId(functionality, satisfaction) {
   return category && category.id ? category.id : "indifferent";
 }
 
-function syncProjectKanoMatrixCrosshair(functionality, satisfaction, { hover = false } = {}) {
-  const host = elements.projectKanoMatrix || $("projectKanoMatrix");
+function syncRoadmapKanoMatrixCrosshair(functionality, satisfaction, { hover = false } = {}) {
+  const host = elements.roadmapKanoMatrix || $("roadmapKanoMatrix");
   if (!host) return;
   const f = normalizeKanoAxisLevel(functionality);
   const s = normalizeKanoAxisLevel(satisfaction);
-  host.querySelectorAll(".project-kano-matrix-cell").forEach((cell) => {
+  host.querySelectorAll(".roadmap-kano-matrix-cell").forEach((cell) => {
     const cellF = Number(cell.dataset.functionality);
     const cellS = Number(cell.dataset.satisfaction);
     const inRow = f != null && cellS === s;
@@ -1887,42 +2054,112 @@ function syncProjectKanoMatrixCrosshair(functionality, satisfaction, { hover = f
 }
 
 
-function ensureProjectKanoMatrixMounted() {
-  const host = elements.projectKanoMatrix || $("projectKanoMatrix");
-  if (!host || host.dataset.kanoVersion === "5") return;
+function buildRoadmapKanoCellGlyph(zoneId) {
+  const entry =
+    typeof kanoCategoryLegend !== "undefined"
+      ? kanoCategoryLegend.find((row) => row.id === zoneId)
+      : null;
+  const cat = entry && entry.categoryCode ? entry.categoryCode : "";
+  const hint = entry && entry.hintCode ? entry.hintCode : "";
+
+  const glyph = document.createElement("span");
+  glyph.className = "roadmap-kano-matrix-cell__glyph";
+  glyph.setAttribute("aria-hidden", "true");
+
+  const code = document.createElement("span");
+  code.className = "roadmap-kano-matrix-cell__code";
+
+  const catEl = document.createElement("span");
+  catEl.className = "roadmap-kano-matrix-cell__code-cat";
+  catEl.textContent = cat;
+
+  const sep = document.createElement("span");
+  sep.className = "roadmap-kano-matrix-cell__code-sep";
+  sep.textContent = "-";
+  sep.setAttribute("aria-hidden", "true");
+
+  const hintEl = document.createElement("span");
+  hintEl.className = "roadmap-kano-matrix-cell__code-hint";
+  hintEl.textContent = hint;
+
+  code.appendChild(catEl);
+  code.appendChild(sep);
+  code.appendChild(hintEl);
+  glyph.appendChild(code);
+  return glyph;
+}
+
+function getRoadmapKanoCompactCodeLabel(zoneId) {
+  const entry =
+    typeof kanoCategoryLegend !== "undefined"
+      ? kanoCategoryLegend.find((row) => row.id === zoneId)
+      : null;
+  if (!entry || !entry.categoryCode || !entry.hintCode) return "";
+  return `${entry.categoryCode} - ${entry.hintCode}`;
+}
+
+
+function ensureRoadmapKanoMatrixMounted() {
+  const host = elements.roadmapKanoMatrix || $("roadmapKanoMatrix");
+  if (!host || host.dataset.kanoVersion === "9") return;
   if (typeof kanoFunctionalityLevels === "undefined" || typeof kanoSatisfactionLevels === "undefined") {
     return;
   }
 
-  host.dataset.kanoVersion = "5";
+  host.dataset.kanoVersion = "9";
+  host.classList.add("roadmap-kano-matrix-host--v9");
   host.innerHTML = "";
 
+  const band = document.createElement("div");
+  band.className = "roadmap-kano-matrix-band";
+  band.setAttribute("aria-hidden", "true");
+  const bandY = document.createElement("span");
+  bandY.className = "roadmap-kano-matrix-band__item roadmap-kano-matrix-band__item--y";
+  bandY.textContent = "Satisfaction increases upward";
+  const bandX = document.createElement("span");
+  bandX.className = "roadmap-kano-matrix-band__item roadmap-kano-matrix-band__item--x";
+  bandX.textContent = "Functionality increases rightward";
+  band.appendChild(bandY);
+  band.appendChild(bandX);
+  host.appendChild(band);
+
   const wrap = document.createElement("div");
-  wrap.className = "project-kano-matrix-wrap";
+  wrap.className = "roadmap-kano-matrix-wrap";
 
-  const yAxis = document.createElement("div");
-  yAxis.className = "project-kano-matrix-y-axis";
-  yAxis.setAttribute("aria-hidden", "true");
+  const corner = document.createElement("div");
+  corner.className = "roadmap-kano-matrix-corner";
+  corner.setAttribute("aria-hidden", "true");
   const yTitle = document.createElement("span");
-  yTitle.className = "project-kano-axis-title project-kano-axis-title--y";
-  yTitle.textContent = "Satisfaction";
-  yAxis.appendChild(yTitle);
-  for (let s = 5; s >= 1; s -= 1) {
-    const meta = getKanoLevelMeta(kanoSatisfactionLevels, s);
-    const label = document.createElement("span");
-    label.className = "project-kano-axis-label project-kano-axis-label--y";
-    label.dataset.level = String(s);
-    label.textContent = meta ? meta.shortLabel : String(s);
-    if (meta && meta.description) label.title = meta.description;
-    yAxis.appendChild(label);
-  }
-  wrap.appendChild(yAxis);
+  yTitle.className = "roadmap-kano-axis-title roadmap-kano-axis-title--y";
+  yTitle.innerHTML =
+    '<span class="roadmap-kano-axis-title__full">Satisfaction</span><span class="roadmap-kano-axis-title__micro">Sat</span>';
+  corner.appendChild(yTitle);
+  wrap.appendChild(corner);
 
-  const main = document.createElement("div");
-  main.className = "project-kano-matrix-main";
+  const appendAxisLabel = (axis, level, meta) => {
+    const label = document.createElement("span");
+    label.className = `roadmap-kano-axis-label roadmap-kano-axis-label--${axis}`;
+    label.dataset.level = String(level);
+    const full = document.createElement("span");
+    full.className = "roadmap-kano-axis-label__full";
+    full.textContent = meta ? meta.shortLabel : String(level);
+    const micro = document.createElement("span");
+    micro.className = "roadmap-kano-axis-label__micro";
+    micro.textContent = String(level);
+    micro.setAttribute("aria-hidden", "true");
+    label.appendChild(full);
+    label.appendChild(micro);
+    if (meta && meta.description) label.title = `${meta.label || meta.shortLabel}: ${meta.description}`;
+    else if (meta) label.title = meta.label || meta.shortLabel;
+    wrap.appendChild(label);
+  };
+
+  for (let s = 5; s >= 1; s -= 1) {
+    appendAxisLabel("y", s, getKanoLevelMeta(kanoSatisfactionLevels, s));
+  }
 
   const grid = document.createElement("div");
-  grid.className = "project-kano-matrix-grid";
+  grid.className = "roadmap-kano-matrix-grid";
   grid.setAttribute("role", "grid");
   grid.setAttribute("aria-label", "KANO functionality and satisfaction matrix");
   grid.tabIndex = 0;
@@ -1934,35 +2171,51 @@ function ensureProjectKanoMatrixMounted() {
       const zoneId = getKanoCellZoneId(f, s);
       const category =
         typeof getKanoCategoryFromPosition === "function" ? getKanoCategoryFromPosition(f, s) : null;
+      const compactCode = getRoadmapKanoCompactCodeLabel(zoneId);
 
       const cell = document.createElement("div");
-      cell.className = `project-kano-matrix-cell project-kano-matrix-cell--zone-${zoneId}`;
+      cell.className = `roadmap-kano-matrix-cell roadmap-kano-matrix-cell--zone-${zoneId}`;
       cell.dataset.functionality = String(f);
       cell.dataset.satisfaction = String(s);
       cell.dataset.kanoZone = zoneId;
-      cell.style.setProperty("--kano-f", String((f - 1) / 4));
-      cell.style.setProperty("--kano-s", String((s - 1) / 4));
+      cell.style.gridColumn = String(f + 1);
+      cell.style.gridRow = String(7 - s);
       cell.setAttribute("role", "gridcell");
       cell.setAttribute("tabindex", "-1");
       cell.setAttribute("aria-selected", "false");
       cell.setAttribute(
         "aria-label",
-        `Functionality ${f}${fMeta ? `: ${fMeta.label}` : ""}, Satisfaction ${s}${sMeta ? `: ${sMeta.label}` : ""}${category ? `, ${category.label}` : ""}`
+        `Functionality ${f}${fMeta ? `: ${fMeta.label}` : ""}, Satisfaction ${s}${sMeta ? `: ${sMeta.label}` : ""}${category ? `, ${category.label}` : ""}${compactCode ? ` (${compactCode})` : ""}`
       );
 
+      const zoneTag = document.createElement("span");
+      zoneTag.className = "roadmap-kano-matrix-cell__zone-tag";
+      if (category && typeof kanoCategoryLegend !== "undefined") {
+        const legendEntry = kanoCategoryLegend.find((entry) => entry.id === category.id);
+        zoneTag.textContent = legendEntry && legendEntry.hint ? legendEntry.hint : category.label;
+      }
+      cell.appendChild(zoneTag);
+
+      cell.appendChild(buildRoadmapKanoCellGlyph(zoneId));
+
+      const coords = document.createElement("span");
+      coords.className = "roadmap-kano-matrix-cell__coords";
+      coords.textContent = `${fMeta ? fMeta.shortLabel : f} · ${sMeta ? sMeta.shortLabel : s}`;
+      cell.appendChild(coords);
+
       const marker = document.createElement("span");
-      marker.className = "project-kano-matrix-cell__marker";
+      marker.className = "roadmap-kano-matrix-cell__marker";
       marker.setAttribute("aria-hidden", "true");
       cell.appendChild(marker);
 
       const tip = document.createElement("span");
-      tip.className = "project-kano-matrix-cell__tip";
+      tip.className = "roadmap-kano-matrix-cell__tip";
       tip.textContent = category ? category.label : "";
       cell.appendChild(tip);
 
       const activateCell = () => {
-        if (projectModalMode === "view") return;
-        setProjectKanoSelection(f, s);
+        if (roadmapModalMode === "view") return;
+        setRoadmapKanoSelection(f, s);
       };
 
       cell.addEventListener("click", activateCell);
@@ -1973,32 +2226,32 @@ function ensureProjectKanoMatrixMounted() {
         }
       });
       cell.addEventListener("mouseenter", () => {
-        syncProjectKanoMatrixCrosshair(f, s, { hover: true });
-        syncProjectKanoAxisLabelHighlight(f, s);
-        syncProjectKanoAxisMeters(f, s);
-        syncProjectKanoLegendHighlight(f, s, { hoverZone: zoneId });
+        syncRoadmapKanoMatrixCrosshair(f, s, { hover: true });
+        syncRoadmapKanoAxisLabelHighlight(f, s);
+        syncRoadmapKanoAxisMeters(f, s);
+        syncRoadmapKanoLegendHighlight(f, s, { hoverZone: zoneId });
         cell.classList.add("is-preview");
       });
       cell.addEventListener("mouseleave", () => {
-        const current = getProjectKanoFromControls();
-        syncProjectKanoMatrixCrosshair(current.kanoFunctionality, current.kanoSatisfaction);
-        syncProjectKanoAxisLabelHighlight(current.kanoFunctionality, current.kanoSatisfaction);
-        syncProjectKanoAxisMeters(current.kanoFunctionality, current.kanoSatisfaction);
-        syncProjectKanoLegendHighlight(current.kanoFunctionality, current.kanoSatisfaction);
+        const current = getRoadmapKanoFromControls();
+        syncRoadmapKanoMatrixCrosshair(current.kanoFunctionality, current.kanoSatisfaction);
+        syncRoadmapKanoAxisLabelHighlight(current.kanoFunctionality, current.kanoSatisfaction);
+        syncRoadmapKanoAxisMeters(current.kanoFunctionality, current.kanoSatisfaction);
+        syncRoadmapKanoLegendHighlight(current.kanoFunctionality, current.kanoSatisfaction);
         cell.classList.remove("is-preview");
       });
       cell.addEventListener("focus", () => {
-        syncProjectKanoMatrixCrosshair(f, s, { hover: true });
-        syncProjectKanoAxisLabelHighlight(f, s);
-        syncProjectKanoAxisMeters(f, s);
-        syncProjectKanoLegendHighlight(f, s, { hoverZone: zoneId });
+        syncRoadmapKanoMatrixCrosshair(f, s, { hover: true });
+        syncRoadmapKanoAxisLabelHighlight(f, s);
+        syncRoadmapKanoAxisMeters(f, s);
+        syncRoadmapKanoLegendHighlight(f, s, { hoverZone: zoneId });
       });
       cell.addEventListener("blur", () => {
-        const current = getProjectKanoFromControls();
-        syncProjectKanoMatrixCrosshair(current.kanoFunctionality, current.kanoSatisfaction);
-        syncProjectKanoAxisLabelHighlight(current.kanoFunctionality, current.kanoSatisfaction);
-        syncProjectKanoAxisMeters(current.kanoFunctionality, current.kanoSatisfaction);
-        syncProjectKanoLegendHighlight(current.kanoFunctionality, current.kanoSatisfaction);
+        const current = getRoadmapKanoFromControls();
+        syncRoadmapKanoMatrixCrosshair(current.kanoFunctionality, current.kanoSatisfaction);
+        syncRoadmapKanoAxisLabelHighlight(current.kanoFunctionality, current.kanoSatisfaction);
+        syncRoadmapKanoAxisMeters(current.kanoFunctionality, current.kanoSatisfaction);
+        syncRoadmapKanoLegendHighlight(current.kanoFunctionality, current.kanoSatisfaction);
       });
 
       grid.appendChild(cell);
@@ -2006,8 +2259,8 @@ function ensureProjectKanoMatrixMounted() {
   }
 
   grid.addEventListener("keydown", (event) => {
-    if (projectModalMode === "view") return;
-    const current = getProjectKanoFromControls();
+    if (roadmapModalMode === "view") return;
+    const current = getRoadmapKanoFromControls();
     let f = current.kanoFunctionality != null ? current.kanoFunctionality : 3;
     let s = current.kanoSatisfaction != null ? current.kanoSatisfaction : 3;
     let handled = true;
@@ -2016,7 +2269,7 @@ function ensureProjectKanoMatrixMounted() {
     else if (event.key === "ArrowUp") s = Math.min(5, s + 1);
     else if (event.key === "ArrowDown") s = Math.max(1, s - 1);
     else if (event.key === "Enter" || event.key === " ") {
-      setProjectKanoSelection(f, s);
+      setRoadmapKanoSelection(f, s);
       event.preventDefault();
       return;
     } else if (event.key === "Escape") {
@@ -2027,61 +2280,50 @@ function ensureProjectKanoMatrixMounted() {
     }
     if (!handled) return;
     event.preventDefault();
-    setProjectKanoSelection(f, s);
+    setRoadmapKanoSelection(f, s);
     const target = grid.querySelector(
-      `.project-kano-matrix-cell[data-functionality="${f}"][data-satisfaction="${s}"]`
+      `.roadmap-kano-matrix-cell[data-functionality="${f}"][data-satisfaction="${s}"]`
     );
     if (target) target.focus();
   });
 
-  main.appendChild(grid);
-
-  const xAxis = document.createElement("div");
-  xAxis.className = "project-kano-matrix-x-axis";
-  xAxis.setAttribute("aria-hidden", "true");
   for (let f = 1; f <= 5; f += 1) {
-    const meta = getKanoLevelMeta(kanoFunctionalityLevels, f);
-    const label = document.createElement("span");
-    label.className = "project-kano-axis-label project-kano-axis-label--x";
-    label.dataset.level = String(f);
-    label.textContent = meta ? meta.shortLabel : String(f);
-    if (meta && meta.description) label.title = meta.description;
-    xAxis.appendChild(label);
+    appendAxisLabel("x", f, getKanoLevelMeta(kanoFunctionalityLevels, f));
   }
-  main.appendChild(xAxis);
 
   const xTitle = document.createElement("span");
-  xTitle.className = "project-kano-axis-title project-kano-axis-title--x";
-  xTitle.textContent = "Functionality";
-  main.appendChild(xTitle);
+  xTitle.className = "roadmap-kano-axis-title roadmap-kano-axis-title--x";
+  xTitle.innerHTML =
+    '<span class="roadmap-kano-axis-title__full">Functionality</span><span class="roadmap-kano-axis-title__micro">Func</span>';
+  wrap.appendChild(xTitle);
 
-  wrap.appendChild(main);
+  wrap.appendChild(grid);
   host.appendChild(wrap);
 
-  if (elements.projectKanoClearBtn && elements.projectKanoClearBtn.dataset.kanoBound !== "1") {
-    elements.projectKanoClearBtn.dataset.kanoBound = "1";
-    elements.projectKanoClearBtn.addEventListener("click", () => {
-      if (projectModalMode === "view") return;
-      setProjectKanoSelection(null, null);
-      if (elements.projectKanoFunctionalitySelect) elements.projectKanoFunctionalitySelect.focus();
+  if (elements.roadmapKanoClearBtn && elements.roadmapKanoClearBtn.dataset.kanoBound !== "1") {
+    elements.roadmapKanoClearBtn.dataset.kanoBound = "1";
+    elements.roadmapKanoClearBtn.addEventListener("click", () => {
+      if (roadmapModalMode === "view") return;
+      setRoadmapKanoSelection(null, null);
+      if (elements.roadmapKanoFunctionalitySelect) elements.roadmapKanoFunctionalitySelect.focus();
     });
   }
 }
 
-function syncProjectKanoAxisLabelHighlight(functionality, satisfaction) {
-  const host = elements.projectKanoMatrix || $("projectKanoMatrix");
+function syncRoadmapKanoAxisLabelHighlight(functionality, satisfaction) {
+  const host = elements.roadmapKanoMatrix || $("roadmapKanoMatrix");
   if (!host) return;
   const f = normalizeKanoAxisLevel(functionality);
   const s = normalizeKanoAxisLevel(satisfaction);
-  host.querySelectorAll(".project-kano-axis-label").forEach((label) => {
+  host.querySelectorAll(".roadmap-kano-axis-label").forEach((label) => {
     const level = Number(label.dataset.level);
-    const axis = label.classList.contains("project-kano-axis-label--x") ? "x" : "y";
+    const axis = label.classList.contains("roadmap-kano-axis-label--x") ? "x" : "y";
     const active = axis === "x" ? f != null && level === f : s != null && level === s;
     label.classList.toggle("is-active", active);
   });
 }
 
-function renderProjectKanoResultMetrics(functionality, satisfaction) {
+function renderRoadmapKanoResultMetrics(functionality, satisfaction) {
   const f = normalizeKanoAxisLevel(functionality);
   const s = normalizeKanoAxisLevel(satisfaction);
   const fMeta = getKanoLevelMeta(kanoFunctionalityLevels, f);
@@ -2091,21 +2333,28 @@ function renderProjectKanoResultMetrics(functionality, satisfaction) {
   const fLong = fMeta?.label || `Level ${f}`;
   const sLong = sMeta?.label || `Level ${s}`;
 
-  return `<span class="project-kano-result__chip" title="Functionality: ${fLong}">
-      <span class="project-kano-result__chip-kicker" aria-hidden="true">F</span>
-      <span class="project-kano-result__chip-value"><span class="project-kano-result__chip-num">${f}</span><span class="project-kano-result__chip-sep" aria-hidden="true">·</span><span class="project-kano-result__chip-label">${fShort}</span></span>
-    </span><span class="project-kano-result__chip" title="Satisfaction: ${sLong}">
-      <span class="project-kano-result__chip-kicker" aria-hidden="true">S</span>
-      <span class="project-kano-result__chip-value"><span class="project-kano-result__chip-num">${s}</span><span class="project-kano-result__chip-sep" aria-hidden="true">·</span><span class="project-kano-result__chip-label">${sShort}</span></span>
+  return `<span class="roadmap-kano-result__chip" title="Functionality: ${fLong}">
+      <span class="roadmap-kano-result__chip-kicker" aria-hidden="true">F</span>
+      <span class="roadmap-kano-result__chip-body">
+        <span class="roadmap-kano-result__chip-level">${f}</span>
+        <span class="roadmap-kano-result__chip-value"><span class="roadmap-kano-result__chip-num">${f}</span><span class="roadmap-kano-result__chip-sep" aria-hidden="true">·</span><span class="roadmap-kano-result__chip-label">${fShort}</span></span>
+        <span class="roadmap-kano-result__chip-caption">${fShort}</span>
+      </span>
+    </span><span class="roadmap-kano-result__chip" title="Satisfaction: ${sLong}">
+      <span class="roadmap-kano-result__chip-kicker" aria-hidden="true">S</span>
+      <span class="roadmap-kano-result__chip-body">
+        <span class="roadmap-kano-result__chip-level">${s}</span>
+        <span class="roadmap-kano-result__chip-value"><span class="roadmap-kano-result__chip-num">${s}</span><span class="roadmap-kano-result__chip-sep" aria-hidden="true">·</span><span class="roadmap-kano-result__chip-label">${sShort}</span></span>
+        <span class="roadmap-kano-result__chip-caption">${sShort}</span>
+      </span>
     </span>`;
 }
 
-function syncProjectKanoSummary(functionality, satisfaction) {
-  const summaryEl = elements.projectKanoSelectionSummary || $("projectKanoSelectionSummary");
-  const categoryEl = elements.projectKanoCategoryBadge || $("projectKanoCategoryBadge");
-  const categoryDescEl = elements.projectKanoCategoryDescription || $("projectKanoCategoryDescription");
-  const resultEl = elements.projectKanoResult || $("projectKanoResult");
-  const clearBtn = elements.projectKanoClearBtn || $("projectKanoClearBtn");
+function syncRoadmapKanoSummary(functionality, satisfaction) {
+  const summaryEl = elements.roadmapKanoSelectionSummary || $("roadmapKanoSelectionSummary");
+  const categoryEl = elements.roadmapKanoCategoryBadge || $("roadmapKanoCategoryBadge");
+  const resultEl = elements.roadmapKanoResult || $("roadmapKanoResult");
+  const clearBtn = elements.roadmapKanoClearBtn || $("roadmapKanoClearBtn");
   if (!summaryEl) return;
 
   const f = normalizeKanoAxisLevel(functionality);
@@ -2113,8 +2362,8 @@ function syncProjectKanoSummary(functionality, satisfaction) {
   const hasSelection = f != null && s != null;
 
   if (resultEl) {
-    resultEl.classList.toggle("project-kano-result--empty", !hasSelection);
-    resultEl.classList.toggle("project-kano-result--filled", hasSelection);
+    resultEl.classList.toggle("roadmap-kano-result--empty", !hasSelection);
+    resultEl.classList.toggle("roadmap-kano-result--filled", hasSelection);
   }
 
   if (!hasSelection) {
@@ -2123,11 +2372,7 @@ function syncProjectKanoSummary(functionality, satisfaction) {
     if (categoryEl) {
       categoryEl.hidden = true;
       categoryEl.textContent = "";
-      categoryEl.className = "project-kano-category-badge";
-    }
-    if (categoryDescEl) {
-      categoryDescEl.hidden = true;
-      categoryDescEl.textContent = "";
+      categoryEl.className = "roadmap-kano-category-badge";
     }
     if (clearBtn) clearBtn.hidden = true;
     return;
@@ -2135,7 +2380,7 @@ function syncProjectKanoSummary(functionality, satisfaction) {
 
   const fMeta = getKanoLevelMeta(kanoFunctionalityLevels, f);
   const sMeta = getKanoLevelMeta(kanoSatisfactionLevels, s);
-  summaryEl.innerHTML = renderProjectKanoResultMetrics(f, s);
+  summaryEl.innerHTML = renderRoadmapKanoResultMetrics(f, s);
   summaryEl.title = `Functionality ${f} (${fMeta ? fMeta.label : "Level " + f}), Satisfaction ${s} (${sMeta ? sMeta.label : "Level " + s})`;
 
   if (categoryEl && typeof getKanoCategoryFromPosition === "function") {
@@ -2143,46 +2388,38 @@ function syncProjectKanoSummary(functionality, satisfaction) {
     if (category) {
       categoryEl.hidden = false;
       categoryEl.textContent = category.label;
-      categoryEl.title = category.description || "";
-      categoryEl.className = `project-kano-category-badge project-kano-category-badge--${category.id}`;
-      if (categoryDescEl) {
-        categoryDescEl.hidden = false;
-        categoryDescEl.textContent = category.description || "";
-      }
+      categoryEl.title = "Tap the matching category above to read the full analysis.";
+      categoryEl.className = `roadmap-kano-category-badge roadmap-kano-category-badge--${category.id}`;
     } else {
       categoryEl.hidden = true;
       categoryEl.textContent = "";
-      categoryEl.className = "project-kano-category-badge";
-      if (categoryDescEl) {
-        categoryDescEl.hidden = true;
-        categoryDescEl.textContent = "";
-      }
+      categoryEl.className = "roadmap-kano-category-badge";
     }
   }
 
   if (clearBtn) {
-    clearBtn.hidden = projectModalMode === "view";
+    clearBtn.hidden = roadmapModalMode === "view";
   }
 }
 
-function setProjectKanoSelection(functionality, satisfaction, { readonly = false } = {}) {
-  ensureProjectKanoAxisSelects();
-  ensureProjectKanoMatrixMounted();
+function setRoadmapKanoSelection(functionality, satisfaction, { readonly = false } = {}) {
+  ensureRoadmapKanoAxisSelects();
+  ensureRoadmapKanoMatrixMounted();
   const f = normalizeKanoAxisLevel(functionality);
   const s = normalizeKanoAxisLevel(satisfaction);
 
-  if (elements.projectKanoFunctionalitySelect) {
-    elements.projectKanoFunctionalitySelect.value = f != null ? String(f) : "";
+  if (elements.roadmapKanoFunctionalitySelect) {
+    elements.roadmapKanoFunctionalitySelect.value = f != null ? String(f) : "";
   }
-  if (elements.projectKanoSatisfactionSelect) {
-    elements.projectKanoSatisfactionSelect.value = s != null ? String(s) : "";
+  if (elements.roadmapKanoSatisfactionSelect) {
+    elements.roadmapKanoSatisfactionSelect.value = s != null ? String(s) : "";
   }
 
-  const host = elements.projectKanoMatrix || $("projectKanoMatrix");
+  const host = elements.roadmapKanoMatrix || $("roadmapKanoMatrix");
   if (host) {
-    host.classList.toggle("project-kano-matrix-host--readonly", !!readonly);
-    host.classList.toggle("project-kano-matrix-host--has-selection", f != null && s != null);
-    host.querySelectorAll(".project-kano-matrix-cell").forEach((cell) => {
+    host.classList.toggle("roadmap-kano-matrix-host--readonly", !!readonly);
+    host.classList.toggle("roadmap-kano-matrix-host--has-selection", f != null && s != null);
+    host.querySelectorAll(".roadmap-kano-matrix-cell").forEach((cell) => {
       const cellF = Number(cell.dataset.functionality);
       const cellS = Number(cell.dataset.satisfaction);
       const selected = f != null && s != null && cellF === f && cellS === s;
@@ -2192,82 +2429,93 @@ function setProjectKanoSelection(functionality, satisfaction, { readonly = false
       cell.setAttribute("aria-disabled", readonly ? "true" : "false");
       cell.tabIndex = readonly ? -1 : selected ? 0 : -1;
     });
-    syncProjectKanoMatrixCrosshair(f, s);
-    syncProjectKanoAxisLabelHighlight(f, s);
-    syncProjectKanoAxisMeters(f, s);
-    syncProjectKanoLegendHighlight(f, s);
+    syncRoadmapKanoMatrixCrosshair(f, s);
+    syncRoadmapKanoAxisLabelHighlight(f, s);
+    syncRoadmapKanoAxisMeters(f, s);
+    syncRoadmapKanoLegendHighlight(f, s);
   }
 
-  syncProjectKanoSummary(f, s);
+  syncRoadmapKanoSummary(f, s);
 
-  const section = document.getElementById("projectModalSectionKano");
+  const section = document.getElementById("roadmapModalSectionKano");
   if (section) {
-    const details = section.querySelector(".project-optional-section-details");
+    const details = section.querySelector(".roadmap-optional-section-details");
     if (details) {
-      details.classList.toggle("project-optional--has-data", f != null && s != null);
+      details.classList.toggle("roadmap-optional--has-data", f != null && s != null);
     }
   }
 }
 
-function getProjectKanoFromControls() {
-  const f = elements.projectKanoFunctionalitySelect
-    ? normalizeKanoAxisLevel(elements.projectKanoFunctionalitySelect.value)
+function getRoadmapKanoFromControls() {
+  const f = elements.roadmapKanoFunctionalitySelect
+    ? normalizeKanoAxisLevel(elements.roadmapKanoFunctionalitySelect.value)
     : null;
-  const s = elements.projectKanoSatisfactionSelect
-    ? normalizeKanoAxisLevel(elements.projectKanoSatisfactionSelect.value)
+  const s = elements.roadmapKanoSatisfactionSelect
+    ? normalizeKanoAxisLevel(elements.roadmapKanoSatisfactionSelect.value)
     : null;
   return { kanoFunctionality: f, kanoSatisfaction: s };
 }
 
-function syncProjectOptionalDisclosureState(detailsEl, hasData, resetCollapsed) {
+function syncRoadmapOptionalDisclosureState(detailsEl, hasData, resetCollapsed) {
   if (!detailsEl) return;
   if (resetCollapsed) {
     detailsEl.open = !!hasData;
   }
-  detailsEl.classList.toggle("project-optional--has-data", !!hasData);
-  syncProjectOptionalDisclosureAria(detailsEl);
+  detailsEl.classList.toggle("roadmap-optional--has-data", !!hasData);
+  syncRoadmapOptionalDisclosureAria(detailsEl);
 }
 
-function syncProjectOptionalDisclosureAria(detailsEl) {
+function syncRoadmapOptionalDisclosureAria(detailsEl) {
   if (!detailsEl) return;
   const summary = detailsEl.querySelector("summary");
   if (!summary) return;
   const titleEl = summary.querySelector(
-    ".project-optional-field-summary-title, .project-optional-section-title, .form-section-title"
+    ".roadmap-optional-field-summary-title, .roadmap-optional-section-title, .form-section-title"
   );
   const name = titleEl ? titleEl.textContent.trim() : "section";
   summary.setAttribute("aria-expanded", detailsEl.open ? "true" : "false");
   summary.setAttribute("aria-label", detailsEl.open ? `Collapse ${name}` : `Expand ${name}`);
 }
 
-function expandOptionalProjectSection(sectionEl) {
+function expandOptionalRoadmapSection(sectionEl) {
   if (!sectionEl) return;
-  const details = sectionEl.querySelector(":scope > .project-optional-section-details");
+  const details = sectionEl.querySelector(":scope > .roadmap-optional-section-details");
   if (details) {
     details.open = true;
-    syncProjectOptionalDisclosureAria(details);
+    syncRoadmapOptionalDisclosureAria(details);
   }
 }
 
-function syncProjectOptionalDisclosures({ resetCollapsed = false } = {}) {
-  const projectForm = elements.projectForm || $("projectForm");
-  if (!projectForm) return;
+function forceRoadmapModalSectionOpen(sectionId) {
+  if (!sectionId) return;
+  expandOptionalRoadmapSection(document.getElementById(sectionId));
+}
 
-  projectForm.querySelectorAll(".project-optional-field-details").forEach((detailsEl) => {
-    const wrap = detailsEl.closest(".project-field-tooltip-wrap");
-    syncProjectOptionalDisclosureState(detailsEl, projectOptionalFieldHasData(wrap), resetCollapsed);
+function syncRoadmapOptionalDisclosures({ resetCollapsed = false, forceOpenSectionIds = [] } = {}) {
+  const roadmapForm = elements.roadmapForm || $("roadmapForm");
+  if (!roadmapForm) return;
+  const forceOpenSet = new Set(forceOpenSectionIds.filter(Boolean));
+
+  roadmapForm.querySelectorAll(".roadmap-optional-field-details").forEach((detailsEl) => {
+    const wrap = detailsEl.closest(".roadmap-field-tooltip-wrap");
+    syncRoadmapOptionalDisclosureState(detailsEl, roadmapOptionalFieldHasData(wrap), resetCollapsed);
   });
 
-  projectForm.querySelectorAll(".project-optional-section-details").forEach((detailsEl) => {
+  roadmapForm.querySelectorAll(".roadmap-optional-section-details").forEach((detailsEl) => {
     const sectionId = detailsEl.dataset.optionalSection;
-    syncProjectOptionalDisclosureState(
+    const forceOpen = sectionId && forceOpenSet.has(sectionId);
+    syncRoadmapOptionalDisclosureState(
       detailsEl,
-      sectionId ? projectOptionalSectionHasData(sectionId) : false,
-      resetCollapsed
+      sectionId ? roadmapOptionalSectionHasData(sectionId) : false,
+      resetCollapsed && !forceOpen
     );
+    if (forceOpen) {
+      detailsEl.open = true;
+      syncRoadmapOptionalDisclosureAria(detailsEl);
+    }
   });
 
-  syncProjectModalSectionNavIndicators();
+  syncRoadmapModalSectionNavIndicators();
 }
 
 function isLegacyWrongHostname() {
@@ -2307,7 +2555,7 @@ function showDeploymentIssueBanner(boot) {
     if (textEl) {
       textEl.textContent =
         "Deployment Protection returns 401 on /api/config, so MongoDB cannot sync from the browser. " +
-        "In Vercel → your project → Deployment Protection → disable Vercel Authentication for Production (or set Standard Protection off).";
+        "In Vercel → your roadmap → Deployment Protection → disable Vercel Authentication for Production (or set Standard Protection off).";
     }
   } else if (boot.apiIssue === "html_response") {
     if (titleEl) {
@@ -2365,11 +2613,11 @@ function formatStorageSyncTime(iso) {
 function refreshUiAfterCloudDataChange() {
   applyDefaultActiveProfileSelection();
   renderProfiles();
-  renderProjects();
+  renderRoadmaps();
   updateProfileLockedBanner();
   focusLockedProfileUnlockIfNeeded();
-  if (state.projectsView === "map" && elements.projectsMapContainer) {
-    renderProjectsMap();
+  if (state.roadmapsView === "map" && elements.roadmapsMapContainer) {
+    renderRoadmapsMap();
   }
 }
 
@@ -2396,7 +2644,7 @@ function showCloudWorkspaceToast(extra) {
     msg +=
       ". " +
       lockedCount +
-      " locked — unlock to view projects on this device.";
+      " locked — unlock to view roadmaps on this device.";
   }
   showStorageStatusToast(msg);
 }
@@ -2604,7 +2852,7 @@ function initCloudStorageModal() {
       ensureDefaultProfile();
       applyDefaultActiveProfileSelection();
       renderProfiles();
-      renderProjects();
+      renderRoadmaps();
       focusLockedProfileUnlockIfNeeded();
       showToast("Connected to cloud storage. Your workspace is now saved in MongoDB.");
     } catch (err) {
@@ -2632,9 +2880,9 @@ async function init() {
   markPasswordManagerIgnore(document);
   syncFormFieldAccessibleNames(document);
   syncSiteFooterYear();
-  ensureProjectFormFieldTooltips();
-  ensureProjectOptionalDisclosures();
-  initProjectModalSectionNav();
+  ensureRoadmapFormFieldTooltips();
+  ensureRoadmapOptionalDisclosures();
+  initRoadmapModalSectionNav();
   initCurrencyOptions();
   initFilterCountriesOptions();
   initScrumBoardStatusColumnsOptions();
@@ -2644,21 +2892,22 @@ async function init() {
     saveState,
     getElements: () => elements,
     onRatesUpdated: () => {
-      renderProjects();
-      if (state.projectsView === "map" && elements.projectsMapContainer) renderProjectsMap();
+      renderRoadmaps();
+      if (state.roadmapsView === "map" && elements.roadmapsMapContainer) renderRoadmapsMap();
     }
   });
   Fullscreen.init({
     getState: () => state,
     getElements: () => elements,
-    switchView: switchProjectsView,
+    switchView: switchRoadmapsView,
     syncViewTabs: syncPortfolioViewTabState,
     getViewElement(view) {
-      if (view === "table") return elements.projectsTableView;
-      if (view === "board") return elements.projectsBoardView;
-      if (view === "moscow") return elements.projectsMoscowView;
-      if (view === "map") return elements.projectsMapView;
-      if (view === "raci") return elements.projectsRaciView;
+      if (view === "table") return elements.roadmapsTableView;
+      if (view === "board") return elements.roadmapsBoardView;
+      if (view === "moscow") return elements.roadmapsMoscowView;
+      if (view === "map") return elements.roadmapsMapView;
+      if (view === "raci") return elements.roadmapsRaciView;
+      if (view === "kano") return elements.roadmapsKanoView;
       return null;
     },
     onExitFullscreen: refreshWorkspaceAfterFullscreenExit,
@@ -2667,6 +2916,7 @@ async function init() {
   attachEventListeners();
   initCompactLayoutClass();
   initAppHeaderMenu();
+  initPortfolioViewTabsOverflow();
   initProfilesPanel();
   initProfilePicker();
   initFilterAutocompletes();
@@ -2711,19 +2961,21 @@ async function init() {
   }
 
   resetProfileUnlockSession();
-  ensureDefaultProfile();
+  if (!ensureDevWorkspaceSeed()) {
+    ensureDefaultProfile();
+  }
   applyDefaultActiveProfileSelection();
   toggleFinancialFrameworkFields(FINANCIAL_FRAMEWORK_DEFAULT);
   renderProfiles();
-  renderProjects();
+  renderRoadmaps();
   focusLockedProfileUnlockIfNeeded();
-  if (elements.projectsTableView && elements.projectsBoardView) {
-    switchProjectsView(state.projectsView);
+  if (elements.roadmapsTableView && elements.roadmapsBoardView) {
+    switchRoadmapsView(state.roadmapsView);
   }
   ExchangeRates.ensure()
     .then(() => {
-      renderProjects();
-      if (state.projectsView === "map" && elements.projectsMapContainer) renderProjectsMap();
+      renderRoadmaps();
+      if (state.roadmapsView === "map" && elements.roadmapsMapContainer) renderRoadmapsMap();
     })
     .catch(() => {})
     .finally(() => {
@@ -2768,7 +3020,7 @@ function cacheElements() {
   elements.profilesNoResults = $("profilesNoResults");
   elements.portfolioFiltersDrawer = $("portfolioFiltersDrawer");
   elements.portfolioFiltersSummaryActions = $("portfolioFiltersSummaryActions");
-  elements.portfolioFabAddProject = $("portfolioFabAddProject");
+  elements.portfolioFabAddRoadmap = $("portfolioFabAddRoadmap");
   elements.portfolioSelectionBar = $("portfolioSelectionBar");
   elements.portfolioSelectionCount = $("portfolioSelectionCount");
   elements.portfolioSelectionDeleteBtn = $("portfolioSelectionDeleteBtn");
@@ -2789,27 +3041,29 @@ function cacheElements() {
 
   elements.activeProfileTitleText = $("activeProfileTitleText");
   elements.activeProfileSubtitleText = $("activeProfileSubtitleText");
-  elements.projectsHeaderBadges = $("projectsHeaderBadges");
-  elements.addProjectBtn = $("addProjectBtn");
+  elements.portfolioCommandAvatar = $("portfolioCommandAvatar");
+  elements.portfolioIdentity = $("portfolioIdentity");
+  elements.roadmapsHeaderBadges = $("roadmapsHeaderBadges");
+  elements.addRoadmapBtn = $("addRoadmapBtn");
   elements.bulkDeleteBtn = $("bulkDeleteBtn");
   elements.bulkDuplicateBtn = $("bulkDuplicateBtn");
   elements.bulkMoveBtn = $("bulkMoveBtn");
   elements.portfolioSelectionDuplicateBtn = $("portfolioSelectionDuplicateBtn");
   elements.portfolioSelectionMoveBtn = $("portfolioSelectionMoveBtn");
-  elements.projectBulkTransferModal = $("projectBulkTransferModal");
-  elements.projectBulkTransferModalTitle = $("projectBulkTransferModalTitle");
-  elements.projectBulkTransferModalSubtitle = $("projectBulkTransferModalSubtitle");
-  elements.projectBulkTransferCountLabel = $("projectBulkTransferCountLabel");
-  elements.projectBulkTransferHelpText = $("projectBulkTransferHelpText");
-  elements.projectBulkTransferTargetProfile = $("projectBulkTransferTargetProfile");
-  elements.projectBulkTransferCancelBtn = $("projectBulkTransferCancelBtn");
-  elements.projectBulkTransferConfirmBtn = $("projectBulkTransferConfirmBtn");
+  elements.roadmapBulkTransferModal = $("roadmapBulkTransferModal");
+  elements.roadmapBulkTransferModalTitle = $("roadmapBulkTransferModalTitle");
+  elements.roadmapBulkTransferModalSubtitle = $("roadmapBulkTransferModalSubtitle");
+  elements.roadmapBulkTransferCountLabel = $("roadmapBulkTransferCountLabel");
+  elements.roadmapBulkTransferHelpText = $("roadmapBulkTransferHelpText");
+  elements.roadmapBulkTransferTargetProfile = $("roadmapBulkTransferTargetProfile");
+  elements.roadmapBulkTransferCancelBtn = $("roadmapBulkTransferCancelBtn");
+  elements.roadmapBulkTransferConfirmBtn = $("roadmapBulkTransferConfirmBtn");
 
   elements.filterTitle = $("filterTitle");
-  elements.filterProjectPeriodToggle = $("filterProjectPeriodToggle");
-  elements.filterProjectPeriodSearch = $("filterProjectPeriodSearch");
-  elements.filterProjectPeriodList = $("filterProjectPeriodList");
-  elements.filterProjectPeriodSummary = $("filterProjectPeriodSummary");
+  elements.filterRoadmapPeriodToggle = $("filterRoadmapPeriodToggle");
+  elements.filterRoadmapPeriodSearch = $("filterRoadmapPeriodSearch");
+  elements.filterRoadmapPeriodList = $("filterRoadmapPeriodList");
+  elements.filterRoadmapPeriodSummary = $("filterRoadmapPeriodSummary");
   elements.filterImpact = $("filterImpact");
   elements.filterEffort = $("filterEffort");
   elements.filterCurrency = $("filterCurrency");
@@ -2832,31 +3086,45 @@ function cacheElements() {
   elements.superAdminToggleMobileSlot = $("superAdminToggleMobileSlot");
   elements.filterOwnerProfile = $("filterOwnerProfile");
   elements.filterOwnerProfileGroup = $("filterOwnerProfileGroup");
-  elements.projectOwnerProfileWrap = $("projectOwnerProfileWrap");
-  elements.projectOwnerProfile = $("projectOwnerProfile");
-  elements.filterProjectType = $("filterProjectType");
+  elements.roadmapOwnerProfileWrap = $("roadmapOwnerProfileWrap");
+  elements.roadmapOwnerProfile = $("roadmapOwnerProfile");
+  elements.filterRoadmapType = $("filterRoadmapType");
 
-  elements.projectsTableBody = $("projectsTableBody");
-  elements.projectsTableCardsList = $("projectsTableCardsList");
-  elements.projectsTableCardsShell = $("projectsTableCardsShell");
-  elements.selectAllProjects = $("selectAllProjects");
-  elements.projectsViewTableBtn = $("projectsViewTableBtn");
-  elements.projectsViewBoardBtn = $("projectsViewBoardBtn");
-  elements.projectsViewMoscowBtn = $("projectsViewMoscowBtn");
-  elements.projectsViewMapBtn = $("projectsViewMapBtn");
-  elements.projectsViewRaciBtn = $("projectsViewRaciBtn");
-  elements.projectsTableView = $("projectsTableView");
-  elements.projectsBoardView = $("projectsBoardView");
-  elements.projectsMoscowView = $("projectsMoscowView");
-  elements.projectsMapView = $("projectsMapView");
-  elements.projectsRaciView = $("projectsRaciView");
-  elements.projectsRaciMatrixWrap = $("projectsRaciMatrixWrap");
-  elements.projectsRaciMatrixTable = $("projectsRaciMatrixTable");
+  elements.roadmapsTableBody = $("roadmapsTableBody");
+  elements.roadmapsTableCardsList = $("roadmapsTableCardsList");
+  elements.roadmapsTableCardsShell = $("roadmapsTableCardsShell");
+  elements.selectAllRoadmaps = $("selectAllRoadmaps");
+  elements.roadmapsViewTableBtn = $("roadmapsViewTableBtn");
+  elements.roadmapsViewBoardBtn = $("roadmapsViewBoardBtn");
+  elements.roadmapsViewMoscowBtn = $("roadmapsViewMoscowBtn");
+  elements.roadmapsViewMapBtn = $("roadmapsViewMapBtn");
+  elements.roadmapsViewRaciBtn = $("roadmapsViewRaciBtn");
+  elements.roadmapsViewKanoBtn = $("roadmapsViewKanoBtn");
+  elements.portfolioViewTabsMoreBtn = $("portfolioViewTabsMoreBtn");
+  elements.portfolioViewTabsMoreMenu = $("portfolioViewTabsMoreMenu");
+  elements.roadmapsTableView = $("roadmapsTableView");
+  elements.roadmapsBoardView = $("roadmapsBoardView");
+  elements.roadmapsMoscowView = $("roadmapsMoscowView");
+  elements.roadmapsMapView = $("roadmapsMapView");
+  elements.roadmapsRaciView = $("roadmapsRaciView");
+  elements.roadmapsRaciMatrixWrap = $("roadmapsRaciMatrixWrap");
+  elements.roadmapsRaciMatrixTable = $("roadmapsRaciMatrixTable");
   elements.raciMatrixDomainToggle = document.querySelector(".raci-matrix-domain-toggle__buttons");
   elements.raciMatrixFullscreenBtn = $("raciMatrixFullscreenBtn");
+  elements.roadmapsKanoView = $("roadmapsKanoView");
+  elements.portfolioKanoPanelToggle = document.querySelector(".portfolio-kano-panel-toggle__buttons");
+  elements.portfolioKanoLegend = $("portfolioKanoLegend");
+  elements.portfolioKanoMatrix = $("portfolioKanoMatrix");
+  elements.portfolioKanoPositionedList = $("portfolioKanoPositionedList");
+  elements.portfolioKanoPositionedPanel = $("portfolioKanoPositionedPanel");
+  elements.portfolioKanoPositionedEmpty = $("portfolioKanoPositionedEmpty");
+  elements.portfolioKanoUnpositionedPanel = $("portfolioKanoUnpositionedPanel");
+  elements.portfolioKanoUnpositionedList = $("portfolioKanoUnpositionedList");
+  elements.portfolioKanoUnpositionedEmpty = $("portfolioKanoUnpositionedEmpty");
+  elements.portfolioKanoFullscreenBtn = $("portfolioKanoFullscreenBtn");
   elements.tableFullscreenBtn = $("tableFullscreenBtn");
-  elements.projectsMapContainer = $("projectsMapContainer");
-  elements.projectsMapLegend = $("projectsMapLegend");
+  elements.roadmapsMapContainer = $("roadmapsMapContainer");
+  elements.roadmapsMapLegend = $("roadmapsMapLegend");
   elements.mapMetricPicker = $("mapMetricPicker");
   elements.mapMetricPickerTrigger = $("mapMetricPickerTrigger");
   elements.mapMetricPickerBadge = $("mapMetricPickerBadge");
@@ -2865,14 +3133,14 @@ function cacheElements() {
   elements.mapMetricPickerDropdown = $("mapMetricPickerDropdown");
   elements.mapMetricPickerListbox = $("mapMetricPickerListbox");
   elements.mapMetricPickerEmpty = $("mapMetricPickerEmpty");
-  elements.projectsMapFullscreenBtn = $("projectsMapFullscreenBtn");
+  elements.roadmapsMapFullscreenBtn = $("roadmapsMapFullscreenBtn");
   elements.refreshExchangeRatesBtn = $("refreshExchangeRatesBtn");
   elements.exchangeRatesDateLabel = $("exchangeRatesDateLabel");
   elements.tableSortByRiceToggle = $("tableSortByRiceToggle");
   elements.tableSortByRiceLabel = $("tableSortByRiceLabel");
   elements.tableGroupBySelect = $("tableGroupBySelect");
   elements.tableGroupBySummary = $("tableGroupBySummary");
-  elements.projectsTableGroupBar = $("projectsTableGroupBar");
+  elements.roadmapsTableGroupBar = $("roadmapsTableGroupBar");
   elements.scrumBoardContainer = $("scrumBoardContainer");
   elements.scrumBoardSortByRiceToggle = $("scrumBoardSortByRiceToggle");
   elements.scrumBoardStatusColumnsToggle = $("scrumBoardStatusColumnsToggle");
@@ -2887,17 +3155,17 @@ function cacheElements() {
   elements.moscowSortByRiceToggle = $("moscowSortByRiceToggle");
   elements.moscowSortByRiceLabel = $("moscowSortByRiceLabel");
 
-  elements.projectModal = $("projectModal");
-  elements.projectModalTitle = $("projectModalTitle");
-  elements.projectModalSubtitle = $("projectModalSubtitle");
-  elements.projectModalCloseBtn = $("projectModalCloseBtn");
-  elements.projectForm = $("projectForm");
-  elements.projectFormCancelBtn = $("projectFormCancelBtn");
-  elements.projectFormSubmitBtn = $("projectFormSubmitBtn");
-  elements.projectFormError = $("projectFormError");
+  elements.roadmapModal = $("roadmapModal");
+  elements.roadmapModalTitle = $("roadmapModalTitle");
+  elements.roadmapModalSubtitle = $("roadmapModalSubtitle");
+  elements.roadmapModalCloseBtn = $("roadmapModalCloseBtn");
+  elements.roadmapForm = $("roadmapForm");
+  elements.roadmapFormCancelBtn = $("roadmapFormCancelBtn");
+  elements.roadmapFormSubmitBtn = $("roadmapFormSubmitBtn");
+  elements.roadmapFormError = $("roadmapFormError");
 
-  elements.projectTitle = $("projectTitle");
-  elements.projectDescription = $("projectDescription");
+  elements.roadmapTitle = $("roadmapTitle");
+  elements.roadmapDescription = $("roadmapDescription");
   elements.reachDescription = $("reachDescription");
   elements.reachValue = $("reachValue");
   elements.impactDescription = $("impactDescription");
@@ -2983,31 +3251,31 @@ function cacheElements() {
   elements.financialOperationalBreakdownCostPerUnitSavings = $("financialOperationalBreakdownCostPerUnitSavings");
   elements.financialOperationalBreakdownLaborSavings = $("financialOperationalBreakdownLaborSavings");
   elements.financialOperationalBreakdownTotalSavings = $("financialOperationalBreakdownTotalSavings");
-  elements.projectCurrency = $("projectCurrency");
-  elements.projectType = $("projectType");
-  elements.projectStatus = $("projectStatus");
-  elements.projectTshirtSize = $("projectTshirtSize");
-  elements.projectPeriod = $("projectPeriod");
-  elements.projectMoscow = $("projectMoscow");
-  elements.projectKanoFunctionalitySelect = $("projectKanoFunctionalitySelect");
-  elements.projectKanoSatisfactionSelect = $("projectKanoSatisfactionSelect");
-  elements.projectKanoFunctionalityMeter = $("projectKanoFunctionalityMeter");
-  elements.projectKanoSatisfactionMeter = $("projectKanoSatisfactionMeter");
-  elements.projectKanoMatrix = $("projectKanoMatrix");
-  elements.projectKanoLegend = $("projectKanoLegend");
-  elements.projectKanoSelectionSummary = $("projectKanoSelectionSummary");
-  elements.projectKanoCategoryBadge = $("projectKanoCategoryBadge");
-  elements.projectKanoCategoryDescription = $("projectKanoCategoryDescription");
-  elements.projectKanoResult = $("projectKanoResult");
-  elements.projectKanoClearBtn = $("projectKanoClearBtn");
+  elements.roadmapCurrency = $("roadmapCurrency");
+  elements.roadmapType = $("roadmapType");
+  elements.roadmapStatus = $("roadmapStatus");
+  elements.roadmapTshirtSize = $("roadmapTshirtSize");
+  elements.roadmapPeriod = $("roadmapPeriod");
+  elements.roadmapMoscow = $("roadmapMoscow");
+  elements.roadmapKanoFunctionalitySelect = $("roadmapKanoFunctionalitySelect");
+  elements.roadmapKanoSatisfactionSelect = $("roadmapKanoSatisfactionSelect");
+  elements.roadmapKanoFunctionalityMeter = $("roadmapKanoFunctionalityMeter");
+  elements.roadmapKanoSatisfactionMeter = $("roadmapKanoSatisfactionMeter");
+  elements.roadmapKanoMatrix = $("roadmapKanoMatrix");
+  elements.roadmapKanoLegend = $("roadmapKanoLegend");
+  elements.roadmapKanoLegendDetail = $("roadmapKanoLegendDetail");
+  elements.roadmapKanoSelectionSummary = $("roadmapKanoSelectionSummary");
+  elements.roadmapKanoCategoryBadge = $("roadmapKanoCategoryBadge");
+  elements.roadmapKanoResult = $("roadmapKanoResult");
+  elements.roadmapKanoClearBtn = $("roadmapKanoClearBtn");
 
-  elements.projectMetaId = $("projectMetaId");
-  elements.projectMetaCreated = $("projectMetaCreated");
-  elements.projectMetaModified = $("projectMetaModified");
-  elements.projectMetaRice = $("projectMetaRice");
-  elements.projectMetaFinancialEur = $("projectMetaFinancialEur");
-  elements.projectMetaExchangeRate = $("projectMetaExchangeRate");
-  elements.projectModalFooterMetaDetails = $("projectModalFooterMetaDetails");
+  elements.roadmapMetaId = $("roadmapMetaId");
+  elements.roadmapMetaCreated = $("roadmapMetaCreated");
+  elements.roadmapMetaModified = $("roadmapMetaModified");
+  elements.roadmapMetaRice = $("roadmapMetaRice");
+  elements.roadmapMetaFinancialEur = $("roadmapMetaFinancialEur");
+  elements.roadmapMetaExchangeRate = $("roadmapMetaExchangeRate");
+  elements.roadmapModalFooterMetaDetails = $("roadmapModalFooterMetaDetails");
 
   elements.exportDataBtn = $("exportDataBtn");
   elements.importDataBtn = $("importDataBtn");
@@ -3023,14 +3291,14 @@ function cacheElements() {
 
   elements.countriesContainer = $("countriesContainer");
   elements.addCountryBtn = $("addCountryBtn");
-  elements.projectLabelsContainer = $("projectLabelsContainer");
-  elements.addProjectLabelBtn = $("addProjectLabelBtn");
-  elements.projectLinksContainer = $("projectLinksContainer");
-  elements.addProjectLinkBtn = $("addProjectLinkBtn");
-  elements.projectTasksContainer = $("projectTasksContainer");
-  elements.projectTasksCollapsibleWrap = document.querySelector("[data-project-tasks-collapsible]");
-  elements.addProjectTaskBtn = $("addProjectTaskBtn");
-  elements.projectRaciSection = $("projectModalSectionRaci");
+  elements.roadmapLabelsContainer = $("roadmapLabelsContainer");
+  elements.addRoadmapLabelBtn = $("addRoadmapLabelBtn");
+  elements.roadmapLinksContainer = $("roadmapLinksContainer");
+  elements.addRoadmapLinkBtn = $("addRoadmapLinkBtn");
+  elements.roadmapTasksContainer = $("roadmapTasksContainer");
+  elements.roadmapTasksCollapsibleWrap = document.querySelector("[data-roadmap-tasks-collapsible]");
+  elements.addRoadmapTaskBtn = $("addRoadmapTaskBtn");
+  elements.roadmapRaciSection = $("roadmapModalSectionRaci");
 
   elements.filterCountriesSearch = $("filterCountriesSearch");
   elements.filterCountriesList = $("filterCountriesList");
@@ -3061,7 +3329,7 @@ function cacheElements() {
   elements.profileViewCloseBtn = $("profileViewCloseBtn");
   elements.profileViewCloseBtnFooter = $("profileViewCloseBtnFooter");
   elements.profileViewUniqueCountries = $("profileViewUniqueCountries");
-  elements.profileViewTotalProjects = $("profileViewTotalProjects");
+  elements.profileViewTotalRoadmaps = $("profileViewTotalRoadmaps");
   elements.profileViewByStatus = $("profileViewByStatus");
   elements.profileViewByType = $("profileViewByType");
   elements.profileViewByTshirt = $("profileViewByTshirt");
@@ -3090,11 +3358,11 @@ function cacheElements() {
   elements.profileEditPasswordError = $("profileEditPasswordError");
   elements.profileEditPasswordHint = $("profileEditPasswordHint");
 
-  elements.projectDeleteModal = $("projectDeleteModal");
-  elements.projectDeleteNameLabel = $("projectDeleteNameLabel");
-  elements.projectDeleteWarningText = $("projectDeleteWarningText");
-  elements.projectDeleteCancelBtn = $("projectDeleteCancelBtn");
-  elements.projectDeleteConfirmBtn = $("projectDeleteConfirmBtn");
+  elements.roadmapDeleteModal = $("roadmapDeleteModal");
+  elements.roadmapDeleteNameLabel = $("roadmapDeleteNameLabel");
+  elements.roadmapDeleteWarningText = $("roadmapDeleteWarningText");
+  elements.roadmapDeleteCancelBtn = $("roadmapDeleteCancelBtn");
+  elements.roadmapDeleteConfirmBtn = $("roadmapDeleteConfirmBtn");
 
   elements.exportFormatModal = $("exportFormatModal");
   elements.exportFormatModalSubtitle = $("exportFormatModalSubtitle");
@@ -3113,7 +3381,7 @@ function cacheElements() {
 }
 
 function initCurrencyOptions() {
-  const currencySelects = [elements.filterCurrency, elements.projectCurrency];
+  const currencySelects = [elements.filterCurrency, elements.roadmapCurrency];
   currencyList.sort().forEach((code) => {
     currencySelects.forEach((select) => {
       if (!select) return;
@@ -3126,8 +3394,8 @@ function initCurrencyOptions() {
 }
 
 /**
- * Ensures the project currency select has an option for the given code.
- * Used when opening the project modal so imported/JSON data with a currency
+ * Ensures the roadmap currency select has an option for the given code.
+ * Used when opening the roadmap modal so imported/JSON data with a currency
  * not in the initial list (or with different casing) still displays correctly.
  */
 function ensureCurrencyOption(select, code) {
@@ -3209,14 +3477,14 @@ function initFilterCountriesOptions() {
   updateFilterCountriesSummary();
 }
 
-function initFilterProjectPeriodOptions(projects) {
-  if (!elements.filterProjectPeriodList) return;
-  const listEl = elements.filterProjectPeriodList;
-  const previouslySelected = new Set(getSelectedFilterProjectPeriods());
+function initFilterRoadmapPeriodOptions(roadmaps) {
+  if (!elements.filterRoadmapPeriodList) return;
+  const listEl = elements.filterRoadmapPeriodList;
+  const previouslySelected = new Set(getSelectedFilterRoadmapPeriods());
 
   const periodsSet = new Set();
-  (projects || []).forEach((p) => {
-    const raw = p.projectPeriod != null ? String(p.projectPeriod).trim().toUpperCase() : "";
+  (roadmaps || []).forEach((p) => {
+    const raw = p.roadmapPeriod != null ? String(p.roadmapPeriod).trim().toUpperCase() : "";
     if (raw) periodsSet.add(raw);
   });
 
@@ -3228,14 +3496,14 @@ function initFilterProjectPeriodOptions(projects) {
       value: period,
       text: period,
       checked: previouslySelected.has(period),
-      checkboxId: `filterProjectPeriod-${index}`,
+      checkboxId: `filterRoadmapPeriod-${index}`,
       rowDataset: { period }
     });
     listEl.appendChild(rowBundle.row);
   });
 
-  filterFilterProjectPeriodsBySearchTerm();
-  updateFilterProjectPeriodsSummary();
+  filterFilterRoadmapPeriodsBySearchTerm();
+  updateFilterRoadmapPeriodsSummary();
 }
 
 function getCompactLayoutMediaQueryString() {
@@ -3277,15 +3545,17 @@ function initCompactLayoutClass() {
     if (typeof Fullscreen !== "undefined" && typeof Fullscreen.updateHostLayoutClass === "function") {
       Fullscreen.updateHostLayoutClass();
     }
-    if (state.projectsView === "moscow") {
+    if (state.roadmapsView === "moscow") {
       renderMoscowBoard();
       syncMoscowCompactNav();
-    } else if (state.projectsView === "board") {
+    } else if (state.roadmapsView === "board") {
       renderScrumBoard();
-    } else if (state.projectsView === "raci") {
+    } else if (state.roadmapsView === "raci") {
       renderRaciMatrix();
-    } else if (state.projectsView === "table") {
-      renderProjects();
+    } else if (state.roadmapsView === "kano") {
+      renderKanoPortfolioMatrix();
+    } else if (state.roadmapsView === "table") {
+      renderRoadmaps();
     }
     if (compact && elements.portfolioFiltersDrawer?.open) {
       elements.portfolioFiltersDrawer.open = false;
@@ -3299,9 +3569,10 @@ function initCompactLayoutClass() {
     syncCompactFiltersChrome();
     mountSuperAdminToggleForLayout();
     syncSuperAdminChrome();
-    if (elements.projectModal?.classList.contains("active")) {
-      syncProjectModalFooterMetaDetails({ resetCollapsed: compact });
+    if (elements.roadmapModal?.classList.contains("active")) {
+      syncRoadmapModalFooterMetaDetails({ resetCollapsed: compact });
     }
+    schedulePortfolioViewTabsLayout();
   };
 
   apply();
@@ -3350,7 +3621,7 @@ function initAppHeaderMenu() {
 }
 
 function attachEventListeners() {
-  // --- Profiles & projects: core interactions ---
+  // --- Profiles & roadmaps: core interactions ---
   elements.addProfileForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const name = (elements.newProfileName.value || "").trim();
@@ -3392,79 +3663,88 @@ function attachEventListeners() {
       });
   });
 
-  elements.addProjectBtn.addEventListener("click", () => {
-    openProjectModal("create");
+  elements.addRoadmapBtn.addEventListener("click", () => {
+    openRoadmapModal("create");
   });
 
   if (elements.bulkDeleteBtn) {
     elements.bulkDeleteBtn.addEventListener("click", handleBulkDelete);
   }
   if (elements.bulkDuplicateBtn) {
-    elements.bulkDuplicateBtn.addEventListener("click", () => handleBulkProjectTransfer("duplicate"));
+    elements.bulkDuplicateBtn.addEventListener("click", () => handleBulkRoadmapTransfer("duplicate"));
   }
   if (elements.bulkMoveBtn) {
-    elements.bulkMoveBtn.addEventListener("click", () => handleBulkProjectTransfer("move"));
+    elements.bulkMoveBtn.addEventListener("click", () => handleBulkRoadmapTransfer("move"));
   }
   if (elements.portfolioSelectionDeleteBtn) {
     elements.portfolioSelectionDeleteBtn.addEventListener("click", handleBulkDelete);
   }
   if (elements.portfolioSelectionDuplicateBtn) {
-    elements.portfolioSelectionDuplicateBtn.addEventListener("click", () => handleBulkProjectTransfer("duplicate"));
+    elements.portfolioSelectionDuplicateBtn.addEventListener("click", () => handleBulkRoadmapTransfer("duplicate"));
   }
   if (elements.portfolioSelectionMoveBtn) {
-    elements.portfolioSelectionMoveBtn.addEventListener("click", () => handleBulkProjectTransfer("move"));
+    elements.portfolioSelectionMoveBtn.addEventListener("click", () => handleBulkRoadmapTransfer("move"));
   }
   if (elements.portfolioSelectionClearBtn) {
-    elements.portfolioSelectionClearBtn.addEventListener("click", clearProjectSelection);
+    elements.portfolioSelectionClearBtn.addEventListener("click", clearRoadmapSelection);
   }
 
-  if (elements.projectsViewTableBtn) {
-    elements.projectsViewTableBtn.addEventListener("click", () => {
-      if (Fullscreen.isViewFullscreen() && state.projectsView !== "table") {
+  if (elements.roadmapsViewTableBtn) {
+    elements.roadmapsViewTableBtn.addEventListener("click", () => {
+      if (Fullscreen.isViewFullscreen() && state.roadmapsView !== "table") {
         Fullscreen.switchViewWhileFullscreen("table");
       } else {
-        switchProjectsView("table");
+        switchRoadmapsView("table");
       }
     });
   }
-  if (elements.projectsViewBoardBtn) {
-    elements.projectsViewBoardBtn.addEventListener("click", () => {
-      if (Fullscreen.isViewFullscreen() && state.projectsView !== "board") {
+  if (elements.roadmapsViewBoardBtn) {
+    elements.roadmapsViewBoardBtn.addEventListener("click", () => {
+      if (Fullscreen.isViewFullscreen() && state.roadmapsView !== "board") {
         Fullscreen.switchViewWhileFullscreen("board");
       } else {
-        switchProjectsView("board");
+        switchRoadmapsView("board");
       }
     });
   }
-  if (elements.projectsViewMoscowBtn) {
-    elements.projectsViewMoscowBtn.addEventListener("click", () => {
-      if (Fullscreen.isViewFullscreen() && state.projectsView !== "moscow") {
+  if (elements.roadmapsViewMoscowBtn) {
+    elements.roadmapsViewMoscowBtn.addEventListener("click", () => {
+      if (Fullscreen.isViewFullscreen() && state.roadmapsView !== "moscow") {
         Fullscreen.switchViewWhileFullscreen("moscow");
       } else {
-        switchProjectsView("moscow");
+        switchRoadmapsView("moscow");
       }
     });
   }
-  if (elements.projectsViewMapBtn) {
-    elements.projectsViewMapBtn.addEventListener("click", () => {
-      if (Fullscreen.isViewFullscreen() && state.projectsView !== "map") {
+  if (elements.roadmapsViewMapBtn) {
+    elements.roadmapsViewMapBtn.addEventListener("click", () => {
+      if (Fullscreen.isViewFullscreen() && state.roadmapsView !== "map") {
         Fullscreen.switchViewWhileFullscreen("map");
       } else {
-        switchProjectsView("map");
+        switchRoadmapsView("map");
       }
     });
   }
-  if (elements.projectsViewRaciBtn) {
-    elements.projectsViewRaciBtn.addEventListener("click", () => {
-      if (Fullscreen.isViewFullscreen() && state.projectsView !== "raci") {
+  if (elements.roadmapsViewRaciBtn) {
+    elements.roadmapsViewRaciBtn.addEventListener("click", () => {
+      if (Fullscreen.isViewFullscreen() && state.roadmapsView !== "raci") {
         Fullscreen.switchViewWhileFullscreen("raci");
       } else {
-        switchProjectsView("raci");
+        switchRoadmapsView("raci");
+      }
+    });
+  }
+  if (elements.roadmapsViewKanoBtn) {
+    elements.roadmapsViewKanoBtn.addEventListener("click", () => {
+      if (Fullscreen.isViewFullscreen() && state.roadmapsView !== "kano") {
+        Fullscreen.switchViewWhileFullscreen("kano");
+      } else {
+        switchRoadmapsView("kano");
       }
     });
   }
 
-  [elements.projectsViewTableBtn, elements.projectsViewBoardBtn, elements.projectsViewMoscowBtn, elements.projectsViewMapBtn, elements.projectsViewRaciBtn]
+  [elements.roadmapsViewTableBtn, elements.roadmapsViewBoardBtn, elements.roadmapsViewMoscowBtn, elements.roadmapsViewMapBtn, elements.roadmapsViewRaciBtn, elements.roadmapsViewKanoBtn]
     .filter(Boolean)
     .forEach((btn) => {
       btn.addEventListener("touchend", () => {
@@ -3478,7 +3758,7 @@ function attachEventListeners() {
     elements.tableSortByRiceToggle.addEventListener("change", () => {
       state.tableSortByRice = elements.tableSortByRiceToggle.checked;
       saveState();
-      if (state.projectsView === "table") renderProjects();
+      if (state.roadmapsView === "table") renderRoadmaps();
     });
   }
 
@@ -3488,25 +3768,26 @@ function attachEventListeners() {
     elements.scrumBoardSortByRiceToggle.addEventListener("change", () => {
       state.scrumBoardSortByRice = elements.scrumBoardSortByRiceToggle.checked;
       saveState();
-      if (state.projectsView === "board") renderScrumBoard();
+      if (state.roadmapsView === "board") renderScrumBoard();
     });
   }
   if (elements.moscowSortByRiceToggle) {
     elements.moscowSortByRiceToggle.addEventListener("change", () => {
       state.moscowSortByRice = elements.moscowSortByRiceToggle.checked;
       saveState();
-      if (state.projectsView === "moscow") renderMoscowBoard();
+      if (state.roadmapsView === "moscow") renderMoscowBoard();
     });
   }
 
   initMapMetricPicker();
   initRaciMatrixDomainToggle();
+  initPortfolioKanoPanelToggle();
 
-  if (elements.raciMatrixFullscreenBtn && elements.projectsRaciView) {
-    elements.raciMatrixFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.projectsRaciView));
+  if (elements.raciMatrixFullscreenBtn && elements.roadmapsRaciView) {
+    elements.raciMatrixFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.roadmapsRaciView));
   }
-  if (elements.projectsRaciMatrixTable) {
-    elements.projectsRaciMatrixTable.addEventListener("click", (event) => {
+  if (elements.roadmapsRaciMatrixTable) {
+    elements.roadmapsRaciMatrixTable.addEventListener("click", (event) => {
       const roleToggle = event.target.closest(".raci-matrix-card__role-toggle");
       if (roleToggle) {
         event.preventDefault();
@@ -3514,19 +3795,54 @@ function attachEventListeners() {
         handleRaciMatrixCardRoleToggle(roleToggle);
         return;
       }
-      const viewBtn = event.target.closest("[data-action='viewProject']");
-      if (viewBtn) openProjectModal("view", viewBtn.getAttribute("data-id"));
+      const viewBtn = event.target.closest("[data-action='viewRoadmap']");
+      if (viewBtn) openRoadmapModal("view", viewBtn.getAttribute("data-id"));
     });
-    elements.projectsRaciMatrixTable.addEventListener("mouseover", handleRaciMatrixTooltipShow, true);
+    elements.roadmapsRaciMatrixTable.addEventListener("mouseover", handleRaciMatrixTooltipShow, true);
   }
-  if (elements.projectsRaciMatrixWrap) {
-    elements.projectsRaciMatrixWrap.addEventListener("scroll", () => {
+  if (elements.roadmapsRaciMatrixWrap) {
+    elements.roadmapsRaciMatrixWrap.addEventListener("scroll", () => {
       hideCellTypeTooltips();
     }, { passive: true });
   }
+  if (elements.portfolioKanoFullscreenBtn && elements.roadmapsKanoView) {
+    elements.portfolioKanoFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.roadmapsKanoView));
+  }
+  if (elements.roadmapsKanoView) {
+    elements.roadmapsKanoView.addEventListener("click", (event) => {
+      const kanoBtn = event.target.closest("[data-action='setRoadmapKano']");
+      if (kanoBtn) {
+        openRoadmapModalForKanoScoring(kanoBtn.getAttribute("data-id"));
+        return;
+      }
+      const viewBtn = event.target.closest("[data-action='viewRoadmap']");
+      if (viewBtn) {
+        if (portfolioKanoSuppressNextTileClick) return;
+        openRoadmapModal("view", viewBtn.getAttribute("data-id"));
+      }
+    });
+    elements.roadmapsKanoView.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      const tile = event.target.closest(".portfolio-kano-matrix-tile[role='button']");
+      if (!tile || portfolioKanoSuppressNextTileClick) return;
+      event.preventDefault();
+      openRoadmapModal("view", tile.getAttribute("data-id"));
+    });
+    elements.roadmapsKanoView.addEventListener("change", (event) => {
+      const select = event.target.closest("[data-action='setRoadmapKanoAxis']");
+      if (!select) return;
+      const card = select.closest(".portfolio-kano-compact-card");
+      if (!card) return;
+      const roadmapId = select.getAttribute("data-roadmap-id");
+      const fSelect = card.querySelector("[data-kano-axis='functionality']");
+      const sSelect = card.querySelector("[data-kano-axis='satisfaction']");
+      if (!roadmapId || !fSelect || !sSelect) return;
+      setRoadmapKanoPosition(roadmapId, fSelect.value, sSelect.value);
+    });
+  }
 
-  if (elements.projectsMapFullscreenBtn && elements.projectsMapView) {
-    elements.projectsMapFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.projectsMapView));
+  if (elements.roadmapsMapFullscreenBtn && elements.roadmapsMapView) {
+    elements.roadmapsMapFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.roadmapsMapView));
   }
   if (elements.refreshExchangeRatesBtn) {
     elements.refreshExchangeRatesBtn.addEventListener("click", () => {
@@ -3535,14 +3851,14 @@ function attachEventListeners() {
         .catch(() => showToast("Could not refresh exchange rates. Try again later."));
     });
   }
-  if (elements.scrumBoardFullscreenBtn && elements.projectsBoardView) {
-    elements.scrumBoardFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.projectsBoardView));
+  if (elements.scrumBoardFullscreenBtn && elements.roadmapsBoardView) {
+    elements.scrumBoardFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.roadmapsBoardView));
   }
-  if (elements.tableFullscreenBtn && elements.projectsTableView) {
-    elements.tableFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.projectsTableView));
+  if (elements.tableFullscreenBtn && elements.roadmapsTableView) {
+    elements.tableFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.roadmapsTableView));
   }
-  if (elements.moscowFullscreenBtn && elements.projectsMoscowView) {
-    elements.moscowFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.projectsMoscowView));
+  if (elements.moscowFullscreenBtn && elements.roadmapsMoscowView) {
+    elements.moscowFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.roadmapsMoscowView));
   }
   document.addEventListener("fullscreenchange", () => {
     Fullscreen.onChange();
@@ -3619,49 +3935,49 @@ function attachEventListeners() {
       syncProfileViewCurrencyDetails();
     });
   }
-  if (elements.projectModalFooterMetaDetails) {
-    elements.projectModalFooterMetaDetails.addEventListener("toggle", () => {
-      syncProjectModalFooterMetaDetails();
+  if (elements.roadmapModalFooterMetaDetails) {
+    elements.roadmapModalFooterMetaDetails.addEventListener("toggle", () => {
+      syncRoadmapModalFooterMetaDetails();
     });
   }
-  if (elements.projectForm) {
-    elements.projectForm.addEventListener("input", (event) => {
-      scheduleProjectModalSectionNavSync();
-      if (event.target.closest(".project-task-row, .project-tasks-readonly, #projectTasksContainer")) {
-        scheduleProjectTasksDisclosureSync();
+  if (elements.roadmapForm) {
+    elements.roadmapForm.addEventListener("input", (event) => {
+      scheduleRoadmapModalSectionNavSync();
+      if (event.target.closest(".roadmap-task-row, .roadmap-tasks-readonly, #roadmapTasksContainer")) {
+        scheduleRoadmapTasksDisclosureSync();
       }
     });
-    elements.projectForm.addEventListener("change", (event) => {
-      scheduleProjectModalSectionNavSync();
+    elements.roadmapForm.addEventListener("change", (event) => {
+      scheduleRoadmapModalSectionNavSync();
       if (
-        event.target.matches(".project-task-name-input, .project-task-status-select") ||
-        event.target.closest("#projectTasksContainer")
+        event.target.matches(".roadmap-task-name-input, .roadmap-task-status-select") ||
+        event.target.closest("#roadmapTasksContainer")
       ) {
-        scheduleProjectTasksDisclosureSync();
+        scheduleRoadmapTasksDisclosureSync();
       }
     });
-    elements.projectForm.addEventListener("toggle", (event) => {
+    elements.roadmapForm.addEventListener("toggle", (event) => {
       const target = event.target;
       if (
         target instanceof HTMLDetailsElement &&
-        (target.classList.contains("project-optional-field-details") ||
-          target.classList.contains("project-optional-section-details") ||
-          target.classList.contains("project-optional-disclosure") ||
-          target.classList.contains("project-tasks-disclosure"))
+        (target.classList.contains("roadmap-optional-field-details") ||
+          target.classList.contains("roadmap-optional-section-details") ||
+          target.classList.contains("roadmap-optional-disclosure") ||
+          target.classList.contains("roadmap-tasks-disclosure"))
       ) {
-        syncProjectOptionalDisclosureAria(target);
-        if (target.classList.contains("project-tasks-disclosure")) {
-          syncProjectTasksDisclosure();
+        syncRoadmapOptionalDisclosureAria(target);
+        if (target.classList.contains("roadmap-tasks-disclosure")) {
+          syncRoadmapTasksDisclosure();
           return;
         }
-        if (target.classList.contains("project-optional-field-details")) {
-          const wrap = target.closest(".project-field-tooltip-wrap");
-          target.classList.toggle("project-optional--has-data", projectOptionalFieldHasData(wrap));
+        if (target.classList.contains("roadmap-optional-field-details")) {
+          const wrap = target.closest(".roadmap-field-tooltip-wrap");
+          target.classList.toggle("roadmap-optional--has-data", roadmapOptionalFieldHasData(wrap));
         } else {
           const sectionId = target.dataset.optionalSection;
           target.classList.toggle(
-            "project-optional--has-data",
-            sectionId ? projectOptionalSectionHasData(sectionId) : false
+            "roadmap-optional--has-data",
+            sectionId ? roadmapOptionalSectionHasData(sectionId) : false
           );
         }
       }
@@ -3744,7 +4060,7 @@ function attachEventListeners() {
       event.stopPropagation();
       openPortfolioFiltersDrawerIfClosed();
       clearFilters();
-      renderProjects();
+      renderRoadmaps();
     });
   }
 
@@ -3763,17 +4079,17 @@ function attachEventListeners() {
     });
   }
 
-  if (elements.filterProjectPeriodToggle) {
-    elements.filterProjectPeriodToggle.addEventListener("click", (event) => {
+  if (elements.filterRoadmapPeriodToggle) {
+    elements.filterRoadmapPeriodToggle.addEventListener("click", (event) => {
       event.stopPropagation();
-      const container = elements.filterProjectPeriodToggle.closest(".filter-countries");
+      const container = elements.filterRoadmapPeriodToggle.closest(".filter-countries");
       if (!container) return;
       const willOpen = !container.classList.contains("open");
-      if (willOpen) prepareAppOverlay("filterProjectPeriod");
+      if (willOpen) prepareAppOverlay("filterRoadmapPeriod");
       container.classList.toggle("open");
-      if (willOpen && elements.filterProjectPeriodSearch) {
-        elements.filterProjectPeriodSearch.focus();
-        elements.filterProjectPeriodSearch.select();
+      if (willOpen && elements.filterRoadmapPeriodSearch) {
+        elements.filterRoadmapPeriodSearch.focus();
+        elements.filterRoadmapPeriodSearch.select();
       }
     });
   }
@@ -3800,7 +4116,7 @@ function attachEventListeners() {
     elements.scrumBoardStatusColumnsSelectAll.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      setScrumBoardVisibleStatuses(getAllProjectStatuses());
+      setScrumBoardVisibleStatuses(getAllRoadmapStatuses());
       renderScrumBoard();
     });
   }
@@ -3826,8 +4142,8 @@ function attachEventListeners() {
         countriesContainer.classList.remove("open");
       }
     }
-    if (elements.filterProjectPeriodToggle) {
-      const periodContainer = elements.filterProjectPeriodToggle.closest(".filter-countries");
+    if (elements.filterRoadmapPeriodToggle) {
+      const periodContainer = elements.filterRoadmapPeriodToggle.closest(".filter-countries");
       if (periodContainer && !periodContainer.contains(event.target)) {
         periodContainer.classList.remove("open");
       }
@@ -3852,8 +4168,8 @@ function attachEventListeners() {
         countriesContainer.classList.remove("open");
       }
     }
-    if (elements.filterProjectPeriodToggle) {
-      const periodContainer = elements.filterProjectPeriodToggle.closest(".filter-countries");
+    if (elements.filterRoadmapPeriodToggle) {
+      const periodContainer = elements.filterRoadmapPeriodToggle.closest(".filter-countries");
       if (periodContainer) {
         periodContainer.classList.remove("open");
       }
@@ -3864,7 +4180,7 @@ function attachEventListeners() {
   if (elements.filterCountriesSearch) {
     elements.filterCountriesSearch.addEventListener("input", () => {
       filterFilterCountriesBySearchTerm();
-      renderProjects();
+      renderRoadmaps();
       updateFiltersActivePill();
       updateFilterCountriesSummary();
     });
@@ -3875,40 +4191,40 @@ function attachEventListeners() {
       const target = event.target;
       if (target && target.type === "checkbox") {
         syncFilterEuRegionCheckbox(target);
-        renderProjects();
+        renderRoadmaps();
         updateFiltersActivePill();
         updateFilterCountriesSummary();
       }
     });
   }
 
-  if (elements.filterProjectPeriodSearch) {
-    elements.filterProjectPeriodSearch.addEventListener("input", () => {
-      filterFilterProjectPeriodsBySearchTerm();
-      renderProjects();
+  if (elements.filterRoadmapPeriodSearch) {
+    elements.filterRoadmapPeriodSearch.addEventListener("input", () => {
+      filterFilterRoadmapPeriodsBySearchTerm();
+      renderRoadmaps();
       updateFiltersActivePill();
-      updateFilterProjectPeriodsSummary();
+      updateFilterRoadmapPeriodsSummary();
     });
   }
 
-  if (elements.filterProjectPeriodList) {
-    elements.filterProjectPeriodList.addEventListener("change", (event) => {
+  if (elements.filterRoadmapPeriodList) {
+    elements.filterRoadmapPeriodList.addEventListener("change", (event) => {
       const target = event.target;
       if (target && target.type === "checkbox") {
-        renderProjects();
+        renderRoadmaps();
         updateFiltersActivePill();
-        updateFilterProjectPeriodsSummary();
+        updateFilterRoadmapPeriodsSummary();
       }
     });
   }
 
   if (elements.addCountryBtn && elements.countriesContainer) {
     elements.addCountryBtn.addEventListener("click", () => {
-      if (projectModalMode === "view") return;
+      if (roadmapModalMode === "view") return;
       addCountryRow();
     });
     elements.countriesContainer.addEventListener("click", (event) => {
-      if (projectModalMode === "view") return;
+      if (roadmapModalMode === "view") return;
       const btn = event.target.closest(".country-remove-btn");
       if (!btn) return;
       const row = btn.closest(".country-row");
@@ -3919,90 +4235,90 @@ function attachEventListeners() {
       }
     });
     elements.countriesContainer.addEventListener("change", (event) => {
-      if (projectModalMode === "view") return;
+      if (roadmapModalMode === "view") return;
       const select = event.target.closest(".country-row select");
       if (!select || !isEuRegionOption(select.value)) return;
-      applyEuRegionToProjectCountries();
+      applyEuRegionToRoadmapCountries();
     });
   }
 
-  if (elements.addProjectLabelBtn && elements.projectLabelsContainer) {
-    elements.addProjectLabelBtn.addEventListener("click", () => {
-      if (projectModalMode === "view") return;
-      addProjectLabelRow();
+  if (elements.addRoadmapLabelBtn && elements.roadmapLabelsContainer) {
+    elements.addRoadmapLabelBtn.addEventListener("click", () => {
+      if (roadmapModalMode === "view") return;
+      addRoadmapLabelRow();
     });
-    elements.projectLabelsContainer.addEventListener("click", (event) => {
-      if (projectModalMode === "view") return;
-      const btn = event.target.closest(".project-label-remove-btn");
+    elements.roadmapLabelsContainer.addEventListener("click", (event) => {
+      if (roadmapModalMode === "view") return;
+      const btn = event.target.closest(".roadmap-label-remove-btn");
       if (!btn) return;
-      const row = btn.closest(".project-label-row");
+      const row = btn.closest(".roadmap-label-row");
       if (!row) return;
-      elements.projectLabelsContainer.removeChild(row);
-      if (!elements.projectLabelsContainer.querySelector(".project-label-row")) {
-        addProjectLabelRow();
+      elements.roadmapLabelsContainer.removeChild(row);
+      if (!elements.roadmapLabelsContainer.querySelector(".roadmap-label-row")) {
+        addRoadmapLabelRow();
       }
-      scheduleProjectModalSectionNavSync();
+      scheduleRoadmapModalSectionNavSync();
     });
   }
 
-  if (elements.addProjectLinkBtn && elements.projectLinksContainer) {
-    elements.addProjectLinkBtn.addEventListener("click", () => {
-      if (projectModalMode === "view") return;
-      addProjectLinkRow();
+  if (elements.addRoadmapLinkBtn && elements.roadmapLinksContainer) {
+    elements.addRoadmapLinkBtn.addEventListener("click", () => {
+      if (roadmapModalMode === "view") return;
+      addRoadmapLinkRow();
     });
-    elements.projectLinksContainer.addEventListener("click", (event) => {
-      if (projectModalMode === "view") return;
-      const btn = event.target.closest(".project-link-remove-btn");
+    elements.roadmapLinksContainer.addEventListener("click", (event) => {
+      if (roadmapModalMode === "view") return;
+      const btn = event.target.closest(".roadmap-link-remove-btn");
       if (!btn) return;
-      const row = btn.closest(".project-link-row");
+      const row = btn.closest(".roadmap-link-row");
       if (!row) return;
-      elements.projectLinksContainer.removeChild(row);
-      if (!elements.projectLinksContainer.querySelector(".project-link-row")) {
-        addProjectLinkRow();
+      elements.roadmapLinksContainer.removeChild(row);
+      if (!elements.roadmapLinksContainer.querySelector(".roadmap-link-row")) {
+        addRoadmapLinkRow();
       }
-      scheduleProjectModalSectionNavSync();
+      scheduleRoadmapModalSectionNavSync();
     });
   }
 
-  if (elements.addProjectTaskBtn && elements.projectTasksContainer) {
-    elements.addProjectTaskBtn.addEventListener("click", () => {
-      if (projectModalMode === "view") return;
-      addProjectTaskRow();
-      scheduleProjectTasksDisclosureSync();
+  if (elements.addRoadmapTaskBtn && elements.roadmapTasksContainer) {
+    elements.addRoadmapTaskBtn.addEventListener("click", () => {
+      if (roadmapModalMode === "view") return;
+      addRoadmapTaskRow();
+      scheduleRoadmapTasksDisclosureSync();
     });
-    elements.projectTasksContainer.addEventListener("click", (event) => {
-      if (projectModalMode === "view") return;
-      const btn = event.target.closest(".project-task-remove-btn");
+    elements.roadmapTasksContainer.addEventListener("click", (event) => {
+      if (roadmapModalMode === "view") return;
+      const btn = event.target.closest(".roadmap-task-remove-btn");
       if (!btn) return;
-      const row = btn.closest(".project-task-row");
+      const row = btn.closest(".roadmap-task-row");
       if (!row) return;
-      elements.projectTasksContainer.removeChild(row);
-      if (!elements.projectTasksContainer.querySelector(".project-task-row")) {
-        addProjectTaskRow();
+      elements.roadmapTasksContainer.removeChild(row);
+      if (!elements.roadmapTasksContainer.querySelector(".roadmap-task-row")) {
+        addRoadmapTaskRow();
       }
-      scheduleProjectTasksDisclosureSync();
+      scheduleRoadmapTasksDisclosureSync();
     });
   }
 
-  if (elements.projectRaciSection) {
-    elements.projectRaciSection.addEventListener("click", (event) => {
-      if (projectModalMode === "view") return;
-      const addBtn = event.target.closest(".project-raci-add-btn");
+  if (elements.roadmapRaciSection) {
+    elements.roadmapRaciSection.addEventListener("click", (event) => {
+      if (roadmapModalMode === "view") return;
+      const addBtn = event.target.closest(".roadmap-raci-add-btn");
       if (addBtn) {
         const role = addBtn.getAttribute("data-raci-role");
-        if (role) addProjectRaciRow(role);
+        if (role) addRoadmapRaciRow(role);
         return;
       }
-      const removeBtn = event.target.closest(".project-raci-remove-btn");
+      const removeBtn = event.target.closest(".roadmap-raci-remove-btn");
       if (!removeBtn) return;
-      const row = removeBtn.closest(".project-raci-row");
-      const container = removeBtn.closest(".project-raci-list");
+      const row = removeBtn.closest(".roadmap-raci-row");
+      const container = removeBtn.closest(".roadmap-raci-list");
       if (!row || !container) return;
       container.removeChild(row);
-      if (!container.querySelector(".project-raci-row")) {
-        addProjectRaciRow(container.getAttribute("data-raci-role"));
+      if (!container.querySelector(".roadmap-raci-row")) {
+        addRoadmapRaciRow(container.getAttribute("data-raci-role"));
       }
-      scheduleProjectModalSectionNavSync();
+      scheduleRoadmapModalSectionNavSync();
     });
   }
 
@@ -4016,12 +4332,12 @@ function attachEventListeners() {
     elements.filterMoscow,
     elements.filterLinks,
     elements.filterLabels,
-    elements.filterProjectType,
+    elements.filterRoadmapType,
     elements.filterOwnerProfile
   ].filter(Boolean); // guard against missing DOM nodes so we never throw while wiring listeners
 
   const applyFiltersAndUpdateUI = () => {
-    renderProjects();
+    renderRoadmaps();
     updateFiltersActivePill();
   };
   const debouncedApplyFilters = typeof debounce === "function" ? debounce(applyFiltersAndUpdateUI, 200) : applyFiltersAndUpdateUI;
@@ -4032,47 +4348,47 @@ function attachEventListeners() {
     input.addEventListener("change", applyFiltersAndUpdateUI);
   });
 
-  if (elements.selectAllProjects) {
-    elements.selectAllProjects.addEventListener("change", (e) => {
+  if (elements.selectAllRoadmaps) {
+    elements.selectAllRoadmaps.addEventListener("change", (e) => {
       if (isActiveDemoProfile()) {
         e.target.checked = false;
         return;
       }
       const checked = e.target.checked;
-      getProjectSelectCheckboxes().forEach((cb) => {
+      getRoadmapSelectCheckboxes().forEach((cb) => {
         cb.checked = checked;
       });
-      syncProjectTableSelection();
+      syncRoadmapTableSelection();
     });
   }
 
-  function handleProjectTableRowActionClick(e) {
-    const viewBtn = e.target.closest("[data-action='viewProject']");
-    const editBtn = e.target.closest("[data-action='editProject']");
-    const deleteBtn = e.target.closest("[data-action='deleteProject']");
+  function handleRoadmapTableRowActionClick(e) {
+    const viewBtn = e.target.closest("[data-action='viewRoadmap']");
+    const editBtn = e.target.closest("[data-action='editRoadmap']");
+    const deleteBtn = e.target.closest("[data-action='deleteRoadmap']");
 
     if (viewBtn) {
-      openProjectModal("view", viewBtn.getAttribute("data-id"));
+      openRoadmapModal("view", viewBtn.getAttribute("data-id"));
     } else if (editBtn) {
-      openProjectModal("edit", editBtn.getAttribute("data-id"));
+      openRoadmapModal("edit", editBtn.getAttribute("data-id"));
     } else if (deleteBtn) {
       handleSingleDelete(deleteBtn.getAttribute("data-id"));
     }
   }
 
-  function handleProjectTableSelectionChange(e) {
-    if (e.target.classList.contains("project-select-checkbox")) {
-      syncProjectTableSelection();
+  function handleRoadmapTableSelectionChange(e) {
+    if (e.target.classList.contains("roadmap-select-checkbox")) {
+      syncRoadmapTableSelection();
     }
   }
 
-  function handleProjectTableSelectionClick(e) {
-    if (e.target.classList.contains("project-select-checkbox")) {
-      requestAnimationFrame(() => syncProjectTableSelection());
+  function handleRoadmapTableSelectionClick(e) {
+    if (e.target.classList.contains("roadmap-select-checkbox")) {
+      requestAnimationFrame(() => syncRoadmapTableSelection());
     }
   }
 
-  function handleProjectTableTooltipMouseEnter(e) {
+  function handleRoadmapTableTooltipMouseEnter(e) {
     if (isCompactLayoutViewport()) return;
     const wrap = findTableViewTooltipTrigger(e.target);
     if (!wrap) return;
@@ -4080,23 +4396,23 @@ function attachEventListeners() {
     positionProfileTooltip(wrap);
   }
 
-  if (elements.projectsTableBody) {
-    elements.projectsTableBody.addEventListener("change", handleProjectTableSelectionChange);
-    elements.projectsTableBody.addEventListener("input", handleProjectTableSelectionChange);
-    elements.projectsTableBody.addEventListener("click", handleProjectTableSelectionClick);
-    elements.projectsTableBody.addEventListener("click", handleProjectTableRowActionClick);
-    elements.projectsTableBody.addEventListener("mouseenter", handleProjectTableTooltipMouseEnter, true);
+  if (elements.roadmapsTableBody) {
+    elements.roadmapsTableBody.addEventListener("change", handleRoadmapTableSelectionChange);
+    elements.roadmapsTableBody.addEventListener("input", handleRoadmapTableSelectionChange);
+    elements.roadmapsTableBody.addEventListener("click", handleRoadmapTableSelectionClick);
+    elements.roadmapsTableBody.addEventListener("click", handleRoadmapTableRowActionClick);
+    elements.roadmapsTableBody.addEventListener("mouseenter", handleRoadmapTableTooltipMouseEnter, true);
   }
 
-  if (elements.projectsTableCardsList) {
-    elements.projectsTableCardsList.addEventListener("change", handleProjectTableSelectionChange);
-    elements.projectsTableCardsList.addEventListener("input", handleProjectTableSelectionChange);
-    elements.projectsTableCardsList.addEventListener("click", (e) => {
+  if (elements.roadmapsTableCardsList) {
+    elements.roadmapsTableCardsList.addEventListener("change", handleRoadmapTableSelectionChange);
+    elements.roadmapsTableCardsList.addEventListener("input", handleRoadmapTableSelectionChange);
+    elements.roadmapsTableCardsList.addEventListener("click", (e) => {
       handleCompactTableTooltipClick(e);
-      handleProjectTableSelectionClick(e);
-      handleProjectTableRowActionClick(e);
+      handleRoadmapTableSelectionClick(e);
+      handleRoadmapTableRowActionClick(e);
     }, true);
-    elements.projectsTableCardsList.addEventListener("mouseenter", handleProjectTableTooltipMouseEnter, true);
+    elements.roadmapsTableCardsList.addEventListener("mouseenter", handleRoadmapTableTooltipMouseEnter, true);
   }
 
   document.addEventListener("pointerdown", handleCompactTooltipDismissPointerDown, true);
@@ -4107,14 +4423,14 @@ function attachEventListeners() {
     }
   });
 
-  const tableWrapper = elements.projectsTableBody && elements.projectsTableBody.closest(".table-wrapper");
+  const tableWrapper = elements.roadmapsTableBody && elements.roadmapsTableBody.closest(".table-wrapper");
   if (tableWrapper) {
     tableWrapper.addEventListener("scroll", () => {
       hideCellTypeTooltips();
     }, { passive: true });
   }
-  if (elements.projectsTableCardsList) {
-    elements.projectsTableCardsList.addEventListener("scroll", () => {
+  if (elements.roadmapsTableCardsList) {
+    elements.roadmapsTableCardsList.addEventListener("scroll", () => {
       hideCellTypeTooltips();
     }, { passive: true });
   }
@@ -4137,7 +4453,7 @@ function attachEventListeners() {
   }, true);
 
   document.body.addEventListener("mouseenter", (e) => {
-    if (isCompactLayoutViewport() && e.target.closest(".projects-table-card")) return;
+    if (isCompactLayoutViewport() && e.target.closest(".roadmaps-table-card")) return;
     const wrap = e.target.closest(".cell-type-icon-wrap, .scrum-board-card-type-wrap, .card-meta-with-tooltip, .card-title-with-tooltip");
     if (!wrap) return;
     const tooltip = wrap.querySelector(".cell-type-tooltip");
@@ -4178,13 +4494,13 @@ function attachEventListeners() {
       return;
     }
     const wrap = e.target.closest(
-      ".profile-icon-wrap, .cell-type-icon-wrap, .scrum-board-card-type-wrap, .project-field-tooltip-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip, .raci-matrix-with-tooltip"
+      ".profile-icon-wrap, .cell-type-icon-wrap, .scrum-board-card-type-wrap, .roadmap-field-tooltip-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip, .raci-matrix-with-tooltip"
     );
     if (wrap) cancelTooltipHoverHide();
   }, true);
 
   document.body.addEventListener("mouseout", (e) => {
-    if (isCompactLayoutViewport() && e.target.closest(".projects-table-card")) return;
+    if (isCompactLayoutViewport() && e.target.closest(".roadmaps-table-card")) return;
 
     const tooltipEl = e.target.closest(".cell-type-tooltip.cell-type-tooltip-visible");
     if (tooltipEl && tooltipEl._ownerWrap) {
@@ -4195,7 +4511,7 @@ function attachEventListeners() {
     }
 
     const wrap = e.target.closest(
-      ".profile-icon-wrap, .cell-type-icon-wrap, .scrum-board-card-type-wrap, .project-field-tooltip-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip, .raci-matrix-with-tooltip"
+      ".profile-icon-wrap, .cell-type-icon-wrap, .scrum-board-card-type-wrap, .roadmap-field-tooltip-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip, .raci-matrix-with-tooltip"
     );
     if (!wrap) return;
     if (e.relatedTarget && isWithinTooltipHoverZone(e.relatedTarget, wrap)) {
@@ -4211,18 +4527,18 @@ function attachEventListeners() {
     }, { passive: true });
   }
 
-  if (elements.projectModal) {
-    elements.projectModal.addEventListener("mouseover", (e) => {
-      const wrap = e.target.closest(".project-field-tooltip-wrap");
+  if (elements.roadmapModal) {
+    elements.roadmapModal.addEventListener("mouseover", (e) => {
+      const wrap = e.target.closest(".roadmap-field-tooltip-wrap");
       if (!wrap) return;
       if (activeTooltipWrap === wrap) return;
       positionProfileTooltip(wrap);
     }, true);
-    elements.projectModal.addEventListener("mouseleave", () => {
+    elements.roadmapModal.addEventListener("mouseleave", () => {
       hideCellTypeTooltips();
     });
-    elements.projectModal.addEventListener("focusin", (e) => {
-      const wrap = e.target.closest(".project-field-tooltip-wrap");
+    elements.roadmapModal.addEventListener("focusin", (e) => {
+      const wrap = e.target.closest(".roadmap-field-tooltip-wrap");
       if (!wrap) return;
       positionProfileTooltip(wrap);
     }, true);
@@ -4248,13 +4564,13 @@ function attachEventListeners() {
     });
   });
 
-  elements.projectModalCloseBtn.addEventListener("click", closeProjectModal);
-  elements.projectFormCancelBtn.addEventListener("click", (e) => {
+  elements.roadmapModalCloseBtn.addEventListener("click", closeRoadmapModal);
+  elements.roadmapFormCancelBtn.addEventListener("click", (e) => {
     e.preventDefault();
-    closeProjectModal();
+    closeRoadmapModal();
   });
 
-  elements.projectForm.addEventListener("submit", handleProjectFormSubmit);
+  elements.roadmapForm.addEventListener("submit", handleRoadmapFormSubmit);
 
   if (elements.financialFramework) {
     elements.financialFramework.addEventListener("change", () => {
@@ -4275,7 +4591,7 @@ function attachEventListeners() {
     elements.confidenceValue,
     elements.effortValue,
     elements.financialImpactValue,
-    elements.projectCurrency,
+    elements.roadmapCurrency,
     elements.financialCustomNotes,
     elements.financialClvCustomers,
     elements.financialClvMargin,
@@ -4324,9 +4640,9 @@ function updateFiltersActivePill() {
   if (!elements.filtersActivePill) return;
   const activeFilters = [];
   if ((elements.filterTitle.value || "").trim()) activeFilters.push("Title");
-  if (elements.filterProjectType.value) activeFilters.push("Type");
+  if (elements.filterRoadmapType.value) activeFilters.push("Type");
   if (getSelectedFilterCountries().length) activeFilters.push("Countries");
-  if (getSelectedFilterProjectPeriods().length) activeFilters.push("Project period");
+  if (getSelectedFilterRoadmapPeriods().length) activeFilters.push("Roadmap period");
   if (elements.filterImpact.value) activeFilters.push("Impact");
   if (elements.filterEffort.value) activeFilters.push("Effort");
   if (elements.filterCurrency.value) activeFilters.push("Currency");
@@ -4370,7 +4686,7 @@ function updateFiltersActivePill() {
   }
 }
 
-// --- Filter autocomplete (project title, label) ---
+// --- Filter autocomplete (roadmap title, label) ---
 const FILTER_AUTOCOMPLETE_MAX_SUGGESTIONS = 12;
 
 const filterAutocompleteState = {
@@ -4381,11 +4697,11 @@ const filterAutocompleteState = {
 const debouncedFilterTextApply =
   typeof debounce === "function"
     ? debounce(() => {
-        renderProjects();
+        renderRoadmaps();
         updateFiltersActivePill();
       }, 200)
     : () => {
-        renderProjects();
+        renderRoadmaps();
         updateFiltersActivePill();
       };
 
@@ -4415,20 +4731,20 @@ function getFilterAutocompleteField(kind) {
   return null;
 }
 
-function getActiveProfileProjectsForFilters() {
+function getActiveProfileRoadmapsForFilters() {
   if (isSuperAdminModeActive()) {
-    return getPortfolioProjectsBaseList();
+    return getPortfolioRoadmapsBaseList();
   }
   const profile = getActiveProfile();
-  if (!profile || !Array.isArray(profile.projects)) return [];
-  return profile.projects;
+  if (!profile || !Array.isArray(profile.roadmaps)) return [];
+  return profile.roadmaps;
 }
 
 function collectFilterTitleSuggestions() {
   const seen = new Set();
   const out = [];
-  getActiveProfileProjectsForFilters().forEach((project) => {
-    const title = (project.title || "").trim();
+  getActiveProfileRoadmapsForFilters().forEach((roadmap) => {
+    const title = (roadmap.title || "").trim();
     if (!title || seen.has(title)) return;
     seen.add(title);
     out.push(title);
@@ -4439,8 +4755,8 @@ function collectFilterTitleSuggestions() {
 function collectFilterLabelSuggestions() {
   const seen = new Set();
   const out = [];
-  getActiveProfileProjectsForFilters().forEach((project) => {
-    normalizeProjectLabels(project.labels).forEach((label) => {
+  getActiveProfileRoadmapsForFilters().forEach((roadmap) => {
+    normalizeRoadmapLabels(roadmap.labels).forEach((label) => {
       if (seen.has(label)) return;
       seen.add(label);
       out.push(label);
@@ -4737,20 +5053,20 @@ function findProfileById(profileId) {
 }
 
 /** Rich owner profile chip for super admin mode (table, cards, boards). */
-function buildProjectOwnerIdentityElement(project, options = {}) {
-  if (!isSuperAdminModeActive() || !project) return null;
-  const name = (project.ownerProfileName || "").trim();
+function buildRoadmapOwnerIdentityElement(roadmap, options = {}) {
+  if (!isSuperAdminModeActive() || !roadmap) return null;
+  const name = (roadmap.ownerProfileName || "").trim();
   if (!name) return null;
 
   const variant = options.variant || "inline";
-  const profileId = project.ownerProfileId || "";
+  const profileId = roadmap.ownerProfileId || "";
   const ownerProfile = findProfileById(profileId);
   const team = ownerProfile && ownerProfile.team ? String(ownerProfile.team).trim() : "";
   const isCurrentProfile = profileId && profileId === state.activeProfileId;
 
   const root = document.createElement(variant === "card-strip" ? "div" : "span");
-  root.className = `project-owner-identity project-owner-identity--${variant}`;
-  if (isCurrentProfile) root.classList.add("project-owner-identity--current");
+  root.className = `roadmap-owner-identity roadmap-owner-identity--${variant}`;
+  if (isCurrentProfile) root.classList.add("roadmap-owner-identity--current");
   root.setAttribute(
     "aria-label",
     `Owner profile: ${name}${team ? `, team ${team}` : ""}${isCurrentProfile ? " (active profile)" : ""}`
@@ -4758,22 +5074,22 @@ function buildProjectOwnerIdentityElement(project, options = {}) {
   root.title = root.getAttribute("aria-label");
 
   const avatar = document.createElement("span");
-  avatar.className = "project-owner-identity__avatar";
+  avatar.className = "roadmap-owner-identity__avatar";
   avatar.setAttribute("aria-hidden", "true");
   avatar.textContent = getProfileInitials(name);
   const hue = getProfileAvatarHue(profileId || name);
   avatar.style.background = `linear-gradient(145deg, hsl(${hue} 62% 48%), hsl(${(hue + 24) % 360} 58% 38%))`;
 
   const copy = document.createElement("span");
-  copy.className = "project-owner-identity__copy";
+  copy.className = "roadmap-owner-identity__copy";
   const nameEl = document.createElement("span");
-  nameEl.className = "project-owner-identity__name";
+  nameEl.className = "roadmap-owner-identity__name";
   nameEl.textContent = name;
   copy.appendChild(nameEl);
 
   if (team && options.showTeam !== false) {
     const teamEl = document.createElement("span");
-    teamEl.className = "project-owner-identity__team";
+    teamEl.className = "roadmap-owner-identity__team";
     teamEl.textContent = team;
     copy.appendChild(teamEl);
   }
@@ -4783,7 +5099,7 @@ function buildProjectOwnerIdentityElement(project, options = {}) {
 
   if (!isCurrentProfile && options.showScopeHint) {
     const scope = document.createElement("span");
-    scope.className = "project-owner-identity__scope";
+    scope.className = "roadmap-owner-identity__scope";
     scope.textContent = "Other profile";
     root.appendChild(scope);
   }
@@ -4791,8 +5107,8 @@ function buildProjectOwnerIdentityElement(project, options = {}) {
   return root;
 }
 
-function appendProjectOwnerBadge(container, project, options = {}) {
-  const el = buildProjectOwnerIdentityElement(project, options);
+function appendRoadmapOwnerBadge(container, roadmap, options = {}) {
+  const el = buildRoadmapOwnerIdentityElement(roadmap, options);
   if (!el || !container) return null;
   if (options.className) {
     String(options.className)
@@ -4825,7 +5141,7 @@ function syncSuperAdminModeBanner() {
   }
 
   const profileCount = state.profiles.length;
-  const projectCount = getPortfolioProjectsBaseList().length;
+  const roadmapCount = getPortfolioRoadmapsBaseList().length;
   banner.replaceChildren();
 
   const icon = document.createElement("span");
@@ -4841,7 +5157,7 @@ function syncSuperAdminModeBanner() {
   title.textContent = "Workspace-wide view";
   const detail = document.createElement("p");
   detail.className = "super-admin-mode-banner__detail";
-  detail.textContent = `${projectCount} project${projectCount !== 1 ? "s" : ""} across ${profileCount} profile${profileCount !== 1 ? "s" : ""}. Edits stay in each project’s owner profile.`;
+  detail.textContent = `${roadmapCount} roadmap${roadmapCount !== 1 ? "s" : ""} across ${profileCount} profile${profileCount !== 1 ? "s" : ""}. Edits stay in each roadmap’s owner profile.`;
   copy.appendChild(title);
   copy.appendChild(detail);
 
@@ -4913,50 +5229,50 @@ function populateFilterOwnerProfileOptions() {
   }
 }
 
-function attachProjectOwnerMeta(project, ownerProfile) {
-  if (!project || !ownerProfile) return project;
-  return Object.assign({}, project, {
+function attachRoadmapOwnerMeta(roadmap, ownerProfile) {
+  if (!roadmap || !ownerProfile) return roadmap;
+  return Object.assign({}, roadmap, {
     ownerProfileId: ownerProfile.id,
     ownerProfileName: ownerProfile.name || "Unnamed profile"
   });
 }
 
-function findProjectOwnerProfile(projectId) {
-  if (!projectId) return null;
+function findRoadmapOwnerProfile(roadmapId) {
+  if (!roadmapId) return null;
   for (let i = 0; i < state.profiles.length; i += 1) {
     const profile = state.profiles[i];
-    if (!Array.isArray(profile.projects)) continue;
-    if (profile.projects.some((p) => p.id === projectId)) return profile;
+    if (!Array.isArray(profile.roadmaps)) continue;
+    if (profile.roadmaps.some((p) => p.id === roadmapId)) return profile;
   }
   return null;
 }
 
-function findProjectWithOwner(projectId) {
-  const profile = findProjectOwnerProfile(projectId);
-  if (!profile) return { profile: null, project: null };
-  const project = profile.projects.find((p) => p.id === projectId) || null;
-  return { profile, project };
+function findRoadmapWithOwner(roadmapId) {
+  const profile = findRoadmapOwnerProfile(roadmapId);
+  if (!profile) return { profile: null, roadmap: null };
+  const roadmap = profile.roadmaps.find((p) => p.id === roadmapId) || null;
+  return { profile, roadmap };
 }
 
-function getPortfolioProjectsBaseList() {
+function getPortfolioRoadmapsBaseList() {
   if (!isSuperAdminModeActive()) {
     const active = getUnlockedActiveProfile();
-    if (!active || !Array.isArray(active.projects)) return [];
-    return active.projects.map((p) => attachProjectOwnerMeta(p, active));
+    if (!active || !Array.isArray(active.roadmaps)) return [];
+    return active.roadmaps.map((p) => attachRoadmapOwnerMeta(p, active));
   }
   const combined = [];
   state.profiles.forEach((profile) => {
-    if (!Array.isArray(profile.projects)) return;
-    profile.projects.forEach((p) => {
-      combined.push(attachProjectOwnerMeta(p, profile));
+    if (!Array.isArray(profile.roadmaps)) return;
+    profile.roadmaps.forEach((p) => {
+      combined.push(attachRoadmapOwnerMeta(p, profile));
     });
   });
   return combined;
 }
 
-function getTargetProfileForProjectCreate() {
-  if (isSuperAdminModeActive() && elements.projectOwnerProfile) {
-    const selectedId = (elements.projectOwnerProfile.value || "").trim();
+function getTargetProfileForRoadmapCreate() {
+  if (isSuperAdminModeActive() && elements.roadmapOwnerProfile) {
+    const selectedId = (elements.roadmapOwnerProfile.value || "").trim();
     if (selectedId) {
       const selected = state.profiles.find((p) => p.id === selectedId);
       if (selected) return selected;
@@ -4965,21 +5281,21 @@ function getTargetProfileForProjectCreate() {
   return getUnlockedActiveProfile();
 }
 
-function populateProjectOwnerProfileSelect(selectedProfileId) {
-  if (!elements.projectOwnerProfile) return;
-  const previous = selectedProfileId || elements.projectOwnerProfile.value || state.activeProfileId || "";
-  elements.projectOwnerProfile.innerHTML = "";
+function populateRoadmapOwnerProfileSelect(selectedProfileId) {
+  if (!elements.roadmapOwnerProfile) return;
+  const previous = selectedProfileId || elements.roadmapOwnerProfile.value || state.activeProfileId || "";
+  elements.roadmapOwnerProfile.innerHTML = "";
   getSortedProfiles().forEach((profile) => {
     const opt = document.createElement("option");
     opt.value = profile.id;
     const team = (profile.team || "").trim();
     opt.textContent = team ? `${profile.name} (${team})` : profile.name || "Unnamed profile";
-    elements.projectOwnerProfile.appendChild(opt);
+    elements.roadmapOwnerProfile.appendChild(opt);
   });
-  if (previous && Array.from(elements.projectOwnerProfile.options).some((o) => o.value === previous)) {
-    elements.projectOwnerProfile.value = previous;
+  if (previous && Array.from(elements.roadmapOwnerProfile.options).some((o) => o.value === previous)) {
+    elements.roadmapOwnerProfile.value = previous;
   } else if (state.activeProfileId) {
-    elements.projectOwnerProfile.value = state.activeProfileId;
+    elements.roadmapOwnerProfile.value = state.activeProfileId;
   }
 }
 
@@ -5018,26 +5334,26 @@ function syncSuperAdminChrome() {
     const hadOwnerFilter = !!(elements.filterOwnerProfile.value || "").trim();
     elements.filterOwnerProfile.value = "";
     if (hadOwnerFilter) {
-      renderProjects();
+      renderRoadmaps();
       updateFiltersActivePill();
     }
   }
 
-  if (elements.projectsHeaderBadges && capable) {
-    const existing = elements.projectsHeaderBadges.querySelector(".portfolio-super-admin-badge");
+  if (elements.roadmapsHeaderBadges && capable) {
+    const existing = elements.roadmapsHeaderBadges.querySelector(".portfolio-super-admin-badge");
     if (active && !existing) {
       const badge = document.createElement("span");
-      badge.className = "portfolio-super-admin-badge";
-      badge.title = "Viewing and editing projects across all profiles. Ownership stays with each profile.";
-      badge.textContent = "Super admin · all profiles";
-      elements.projectsHeaderBadges.appendChild(badge);
+      badge.className = "portfolio-super-admin-badge portfolio-status-badge";
+      badge.title = "Viewing and editing roadmaps across all profiles. Ownership stays with each profile.";
+      badge.textContent = "All profiles";
+      elements.roadmapsHeaderBadges.appendChild(badge);
     } else if (!active && existing) {
       existing.remove();
     }
   }
 
   refreshFilterAutocompleteDropdowns();
-  syncProjectsTableColumnLayout();
+  syncRoadmapsTableColumnLayout();
   syncSuperAdminModeBanner();
   updateBulkSelectionActions();
 }
@@ -5058,11 +5374,11 @@ function setSuperAdminMode(enabled) {
   state.superAdminMode = !!enabled;
   saveState();
   syncSuperAdminChrome();
-  renderProjects();
+  renderRoadmaps();
   if (state.superAdminMode) {
-    showToast("Super admin mode on — all workspace projects are visible. Changes stay in each project’s owner profile.");
+    showToast("Super admin mode on — all workspace roadmaps are visible. Changes stay in each roadmap’s owner profile.");
   } else {
-    showToast("Super admin mode off — showing this profile’s projects only.");
+    showToast("Super admin mode off — showing this profile’s roadmaps only.");
   }
 }
 
@@ -5073,49 +5389,49 @@ function initSuperAdminToggle() {
   });
 }
 
-function removeProjectById(projectId) {
-  const owner = findProjectOwnerProfile(projectId);
-  if (!owner || !Array.isArray(owner.projects)) return false;
-  const before = owner.projects.length;
-  owner.projects = owner.projects.filter((p) => p.id !== projectId);
-  return owner.projects.length < before;
+function removeRoadmapById(roadmapId) {
+  const owner = findRoadmapOwnerProfile(roadmapId);
+  if (!owner || !Array.isArray(owner.roadmaps)) return false;
+  const before = owner.roadmaps.length;
+  owner.roadmaps = owner.roadmaps.filter((p) => p.id !== roadmapId);
+  return owner.roadmaps.length < before;
 }
 
-function removeProjectsByIds(projectIds) {
-  const ids = Array.isArray(projectIds) ? projectIds : [];
+function removeRoadmapsByIds(roadmapIds) {
+  const ids = Array.isArray(roadmapIds) ? roadmapIds : [];
   let removed = 0;
   ids.forEach((id) => {
-    if (removeProjectById(id)) removed += 1;
+    if (removeRoadmapById(id)) removed += 1;
   });
   return removed;
 }
 
-function purgeProjectIdFromProfileOrders(profile, projectId) {
-  if (!profile || !projectId) return;
+function purgeRoadmapIdFromProfileOrders(profile, roadmapId) {
+  if (!profile || !roadmapId) return;
   if (profile.boardOrder && typeof profile.boardOrder === "object") {
     Object.keys(profile.boardOrder).forEach((key) => {
       if (Array.isArray(profile.boardOrder[key])) {
-        profile.boardOrder[key] = profile.boardOrder[key].filter((id) => id !== projectId);
+        profile.boardOrder[key] = profile.boardOrder[key].filter((id) => id !== roadmapId);
       }
     });
   }
   if (profile.moscowOrder && typeof profile.moscowOrder === "object") {
     Object.keys(profile.moscowOrder).forEach((key) => {
       if (Array.isArray(profile.moscowOrder[key])) {
-        profile.moscowOrder[key] = profile.moscowOrder[key].filter((id) => id !== projectId);
+        profile.moscowOrder[key] = profile.moscowOrder[key].filter((id) => id !== roadmapId);
       }
     });
   }
 }
 
-function cloneProjectForDuplicate(sourceProject) {
-  const normalized = normalizeLoadedProject(sourceProject) || sourceProject;
+function cloneRoadmapForDuplicate(sourceRoadmap) {
+  const normalized = normalizeLoadedRoadmap(sourceRoadmap) || sourceRoadmap;
   if (!normalized) return null;
   const now = new Date().toISOString();
-  const titleBase = String(normalized.title || "Untitled project").trim() || "Untitled project";
+  const titleBase = String(normalized.title || "Untitled roadmap").trim() || "Untitled roadmap";
   const clone = {
     ...normalized,
-    id: generateId("project"),
+    id: generateId("roadmap"),
     createdAt: now,
     modifiedAt: now,
     title: /\(\s*copy\s*\)$/i.test(titleBase) ? titleBase : `${titleBase} (copy)`,
@@ -5133,105 +5449,105 @@ function cloneProjectForDuplicate(sourceProject) {
 }
 
 function populateBulkTransferTargetProfileSelect(selectedProfileId) {
-  if (!elements.projectBulkTransferTargetProfile) return;
-  const previous = selectedProfileId || elements.projectBulkTransferTargetProfile.value || state.activeProfileId || "";
-  elements.projectBulkTransferTargetProfile.innerHTML = "";
+  if (!elements.roadmapBulkTransferTargetProfile) return;
+  const previous = selectedProfileId || elements.roadmapBulkTransferTargetProfile.value || state.activeProfileId || "";
+  elements.roadmapBulkTransferTargetProfile.innerHTML = "";
   getSortedProfiles().forEach((profile) => {
     const opt = document.createElement("option");
     opt.value = profile.id;
     const team = (profile.team || "").trim();
     opt.textContent = team ? `${profile.name} (${team})` : profile.name || "Unnamed profile";
-    elements.projectBulkTransferTargetProfile.appendChild(opt);
+    elements.roadmapBulkTransferTargetProfile.appendChild(opt);
   });
-  if (previous && Array.from(elements.projectBulkTransferTargetProfile.options).some((o) => o.value === previous)) {
-    elements.projectBulkTransferTargetProfile.value = previous;
+  if (previous && Array.from(elements.roadmapBulkTransferTargetProfile.options).some((o) => o.value === previous)) {
+    elements.roadmapBulkTransferTargetProfile.value = previous;
   } else if (state.activeProfileId) {
-    elements.projectBulkTransferTargetProfile.value = state.activeProfileId;
+    elements.roadmapBulkTransferTargetProfile.value = state.activeProfileId;
   }
 }
 
-function getSelectedProjectIdsFromTable() {
-  return Array.from(getProjectSelectCheckboxes())
+function getSelectedRoadmapIdsFromTable() {
+  return Array.from(getRoadmapSelectCheckboxes())
     .filter((cb) => cb.checked)
     .map((cb) => cb.getAttribute("data-id"))
     .filter(Boolean);
 }
 
-function duplicateProjectsToProfile(projectIds, targetProfileId) {
+function duplicateRoadmapsToProfile(roadmapIds, targetProfileId) {
   const targetProfile = findProfileById(targetProfileId);
-  if (!targetProfile || !Array.isArray(targetProfile.projects)) return 0;
+  if (!targetProfile || !Array.isArray(targetProfile.roadmaps)) return 0;
   let count = 0;
-  (Array.isArray(projectIds) ? projectIds : []).forEach((projectId) => {
-    const located = findProjectWithOwner(projectId);
-    if (!located.project) return;
-    const clone = cloneProjectForDuplicate(located.project);
+  (Array.isArray(roadmapIds) ? roadmapIds : []).forEach((roadmapId) => {
+    const located = findRoadmapWithOwner(roadmapId);
+    if (!located.roadmap) return;
+    const clone = cloneRoadmapForDuplicate(located.roadmap);
     if (!clone) return;
-    targetProfile.projects.unshift(clone);
+    targetProfile.roadmaps.unshift(clone);
     count += 1;
   });
   return count;
 }
 
-function moveProjectsToProfile(projectIds, targetProfileId) {
+function moveRoadmapsToProfile(roadmapIds, targetProfileId) {
   const targetProfile = findProfileById(targetProfileId);
-  if (!targetProfile || !Array.isArray(targetProfile.projects)) return 0;
+  if (!targetProfile || !Array.isArray(targetProfile.roadmaps)) return 0;
   let count = 0;
-  (Array.isArray(projectIds) ? projectIds : []).forEach((projectId) => {
-    const located = findProjectWithOwner(projectId);
+  (Array.isArray(roadmapIds) ? roadmapIds : []).forEach((roadmapId) => {
+    const located = findRoadmapWithOwner(roadmapId);
     const sourceProfile = located.profile;
-    const project = located.project;
-    if (!sourceProfile || !project || sourceProfile.id === targetProfileId) return;
-    sourceProfile.projects = sourceProfile.projects.filter((p) => p.id !== project.id);
-    purgeProjectIdFromProfileOrders(sourceProfile, project.id);
-    project.modifiedAt = new Date().toISOString();
-    targetProfile.projects.unshift(project);
+    const roadmap = located.roadmap;
+    if (!sourceProfile || !roadmap || sourceProfile.id === targetProfileId) return;
+    sourceProfile.roadmaps = sourceProfile.roadmaps.filter((p) => p.id !== roadmap.id);
+    purgeRoadmapIdFromProfileOrders(sourceProfile, roadmap.id);
+    roadmap.modifiedAt = new Date().toISOString();
+    targetProfile.roadmaps.unshift(roadmap);
     count += 1;
   });
   return count;
 }
 
-const PROJECTS_TABLE_COL_CLASS = {
-  select: "projects-table-col--select",
-  title: "projects-table-col--title",
-  owner: "projects-table-col--owner",
-  type: "projects-table-col--type",
-  status: "projects-table-col--status",
-  framework: "projects-table-col--framework",
-  period: "projects-table-col--period",
-  size: "projects-table-col--size",
-  moscow: "projects-table-col--moscow",
-  rice: "projects-table-col--rice",
-  financial: "projects-table-col--financial",
-  created: "projects-table-col--created",
-  actions: "projects-table-col--actions"
+const ROADMAPS_TABLE_COL_CLASS = {
+  select: "roadmaps-table-col--select",
+  title: "roadmaps-table-col--title",
+  owner: "roadmaps-table-col--owner",
+  type: "roadmaps-table-col--type",
+  status: "roadmaps-table-col--status",
+  framework: "roadmaps-table-col--framework",
+  period: "roadmaps-table-col--period",
+  size: "roadmaps-table-col--size",
+  moscow: "roadmaps-table-col--moscow",
+  rice: "roadmaps-table-col--rice",
+  financial: "roadmaps-table-col--financial",
+  created: "roadmaps-table-col--created",
+  actions: "roadmaps-table-col--actions"
 };
 
-function stampProjectsTableCol(cell, colKey) {
+function stampRoadmapsTableCol(cell, colKey) {
   if (!cell || !colKey) return cell;
-  const cls = PROJECTS_TABLE_COL_CLASS[colKey];
+  const cls = ROADMAPS_TABLE_COL_CLASS[colKey];
   if (cls) cell.classList.add(cls);
   return cell;
 }
 
-function getProjectsTableColSpan() {
+function getRoadmapsTableColSpan() {
   return isSuperAdminModeActive() ? 13 : 12;
 }
 
-function syncProjectsTableColumnLayout() {
-  const table = document.querySelector(".projects-data-table");
+function syncRoadmapsTableColumnLayout() {
+  const table = document.querySelector(".roadmaps-data-table");
   if (!table) return;
-  table.classList.toggle("projects-data-table--owner-col", isSuperAdminModeActive());
+  table.classList.toggle("roadmaps-data-table--owner-col", isSuperAdminModeActive());
 }
 
-function buildProjectOwnerTableCell(project) {
+function buildRoadmapOwnerTableCell(roadmap) {
   const td = document.createElement("td");
-  td.className = "super-admin-only-column projects-table-col--owner";
-  stampProjectsTableCol(td, "owner");
+  td.className = "super-admin-only-column roadmaps-table-col--owner";
+  stampRoadmapsTableCol(td, "owner");
   if (!isSuperAdminModeActive()) {
     td.hidden = true;
     return td;
   }
-  const identity = buildProjectOwnerIdentityElement(project, {
+  const identity = buildRoadmapOwnerIdentityElement(roadmap, {
     variant: "table",
     showTeam: false,
     showScopeHint: false
@@ -5240,7 +5556,7 @@ function buildProjectOwnerTableCell(project) {
     td.appendChild(identity);
     return td;
   }
-  td.innerHTML = '<span class="project-owner-identity__empty">—</span>';
+  td.innerHTML = '<span class="roadmap-owner-identity__empty">—</span>';
   return td;
 }
 
@@ -5273,12 +5589,12 @@ function syncDemoReadOnlyChrome() {
   if (elements.workspacePanel) {
     elements.workspacePanel.classList.toggle("workspace-panel--demo-readonly", demoActive);
   }
-  if (elements.selectAllProjects) {
-    elements.selectAllProjects.disabled = demoActive;
-    elements.selectAllProjects.title = demoActive ? DEMO_READ_ONLY_ACTION_TITLE : "";
+  if (elements.selectAllRoadmaps) {
+    elements.selectAllRoadmaps.disabled = demoActive;
+    elements.selectAllRoadmaps.title = demoActive ? DEMO_READ_ONLY_ACTION_TITLE : "";
     if (demoActive) {
-      elements.selectAllProjects.checked = false;
-      clearProjectSelection();
+      elements.selectAllRoadmaps.checked = false;
+      clearRoadmapSelection();
     }
   }
 }
@@ -5304,11 +5620,11 @@ function getLockedProfilesForExport() {
 function getExportCounts(profiles) {
   const list = Array.isArray(profiles) ? profiles : getExportableProfiles();
   const profileCount = list.length;
-  const projectCount = list.reduce(
-    (n, p) => n + (Array.isArray(p.projects) ? p.projects.length : 0),
+  const roadmapCount = list.reduce(
+    (n, p) => n + (Array.isArray(p.roadmaps) ? p.roadmaps.length : 0),
     0
   );
-  return { profileCount, projectCount };
+  return { profileCount, roadmapCount };
 }
 
 function updateExportFormatModalNotice() {
@@ -5327,12 +5643,12 @@ function updateExportFormatModalNotice() {
 function updateImportFormatModalNotice() {
   if (!elements.importFormatModalSubtitle) return;
   const profileCount = state.profiles.length;
-  const projectCount = state.profiles.reduce(
-    (n, p) => n + (Array.isArray(p.projects) ? p.projects.length : 0),
+  const roadmapCount = state.profiles.reduce(
+    (n, p) => n + (Array.isArray(p.roadmaps) ? p.roadmaps.length : 0),
     0
   );
   elements.importFormatModalSubtitle.textContent =
-    `Choose a format, then pick a file. Merges into your workspace (${profileCount} profile${profileCount !== 1 ? "s" : ""}, ${projectCount} project${projectCount !== 1 ? "s" : ""}).`;
+    `Choose a format, then pick a file. Merges into your workspace (${profileCount} profile${profileCount !== 1 ? "s" : ""}, ${roadmapCount} roadmap${roadmapCount !== 1 ? "s" : ""}).`;
 }
 
 function showExportUnlockError(message) {
@@ -5507,8 +5823,8 @@ function beginExport(format) {
   openExportUnlockModal(locked);
 }
 
-function buildExportResultMessage(profileCount, projectCount, excludedCount, failedNames) {
-  let msg = `Exported ${profileCount} profile${profileCount !== 1 ? "s" : ""} and ${projectCount} project${projectCount !== 1 ? "s" : ""}.`;
+function buildExportResultMessage(profileCount, roadmapCount, excludedCount, failedNames) {
+  let msg = `Exported ${profileCount} profile${profileCount !== 1 ? "s" : ""} and ${roadmapCount} roadmap${roadmapCount !== 1 ? "s" : ""}.`;
   if (excludedCount > 0) {
     msg += ` ${excludedCount} password-protected profile${excludedCount !== 1 ? "s were" : " was"} omitted`;
     if (failedNames.length > 0) {
@@ -5616,8 +5932,8 @@ function handleExportData(profilesForExport, exportMeta) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    const { profileCount, projectCount } = getExportCounts(profiles);
-    const msg = buildExportResultMessage(profileCount, projectCount, excludedCount, failedNames);
+    const { profileCount, roadmapCount } = getExportCounts(profiles);
+    const msg = buildExportResultMessage(profileCount, roadmapCount, excludedCount, failedNames);
     setTimeout(() => showToast(msg), 0);
   } catch (err) {
     console.error("Export failed", err);
@@ -5644,11 +5960,11 @@ function handleExportCsv(profilesForExport, exportMeta) {
       "profileName",
       "profileTeam",
       "profileCreatedAt",
-      "projectId",
-      "projectTitle",
-      "projectDescription",
-      "projectCreatedAt",
-      "projectModifiedAt",
+      "roadmapId",
+      "roadmapTitle",
+      "roadmapDescription",
+      "roadmapCreatedAt",
+      "roadmapModifiedAt",
       "reachValue",
       "reachDescription",
       "impactValue",
@@ -5661,17 +5977,17 @@ function handleExportCsv(profilesForExport, exportMeta) {
       "financialImpactCurrency",
       "financialImpactFramework",
       "financialImpactInputs",
-      "projectType",
-      "projectStatus",
+      "roadmapType",
+      "roadmapStatus",
       "tshirtSize",
-      "projectPeriod",
+      "roadmapPeriod",
       "moscowCategory",
       "kanoFunctionality",
       "kanoSatisfaction",
       "countries",
-      "projectLabels",
-      "projectLinks",
-      "projectTasks",
+      "roadmapLabels",
+      "roadmapLinks",
+      "roadmapTasks",
       "riceScore"
     ];
 
@@ -5682,8 +5998,8 @@ function handleExportCsv(profilesForExport, exportMeta) {
       const profileName = profile.name || "";
       const profileTeam = profile.team || "";
       const profileCreatedAt = profile.createdAt || "";
-      const projectsArray = Array.isArray(profile.projects) ? profile.projects : [];
-      if (!projectsArray.length) {
+      const roadmapsArray = Array.isArray(profile.roadmaps) ? profile.roadmaps : [];
+      if (!roadmapsArray.length) {
         const emptyRow = [
           escapeCsvCell(profileId),
           escapeCsvCell(profileName),
@@ -5720,50 +6036,50 @@ function handleExportCsv(profilesForExport, exportMeta) {
         rows.push(emptyRow.join(","));
         return;
       }
-      projectsArray.forEach((project) => {
-        const rice = calculateRiceScore(project);
-        const countries = Array.isArray(project.countries) ? project.countries.join("|") : "";
-        const projectLabels = Array.isArray(project.labels) ? project.labels.join("|") : "";
-        const projectLinks = JSON.stringify(normalizeProjectLinks(project.links || []));
-        const projectTasks = JSON.stringify(normalizeProjectTasks(project.tasks || []));
+      roadmapsArray.forEach((roadmap) => {
+        const rice = calculateRiceScore(roadmap);
+        const countries = Array.isArray(roadmap.countries) ? roadmap.countries.join("|") : "";
+        const roadmapLabels = Array.isArray(roadmap.labels) ? roadmap.labels.join("|") : "";
+        const roadmapLinks = JSON.stringify(normalizeRoadmapLinks(roadmap.links || []));
+        const roadmapTasks = JSON.stringify(normalizeRoadmapTasks(roadmap.tasks || []));
         const row = [
           escapeCsvCell(profileId),
           escapeCsvCell(profileName),
           escapeCsvCell(profileTeam),
           escapeCsvCell(profileCreatedAt),
-          escapeCsvCell(project.id || ""),
-          escapeCsvCell(project.title || ""),
-          escapeCsvCell(richDescriptionToPlainText(project.description || "")),
-          escapeCsvCell(project.createdAt || ""),
-          escapeCsvCell(project.modifiedAt || ""),
-          escapeCsvCell(project.reachValue != null ? String(project.reachValue) : ""),
-          escapeCsvCell(richDescriptionToPlainText(project.reachDescription || "")),
-          escapeCsvCell(project.impactValue != null ? String(project.impactValue) : ""),
-          escapeCsvCell(richDescriptionToPlainText(project.impactDescription || "")),
-          escapeCsvCell(project.confidenceValue != null ? String(project.confidenceValue) : ""),
-          escapeCsvCell(richDescriptionToPlainText(project.confidenceDescription || "")),
-          escapeCsvCell(project.effortValue != null ? String(project.effortValue) : ""),
-          escapeCsvCell(richDescriptionToPlainText(project.effortDescription || "")),
-          escapeCsvCell(project.financialImpactValue != null ? String(project.financialImpactValue) : ""),
-          escapeCsvCell(project.financialImpactCurrency || ""),
-          escapeCsvCell(normalizeFinancialFramework(project.financialImpactFramework)),
+          escapeCsvCell(roadmap.id || ""),
+          escapeCsvCell(roadmap.title || ""),
+          escapeCsvCell(richDescriptionToPlainText(roadmap.description || "")),
+          escapeCsvCell(roadmap.createdAt || ""),
+          escapeCsvCell(roadmap.modifiedAt || ""),
+          escapeCsvCell(roadmap.reachValue != null ? String(roadmap.reachValue) : ""),
+          escapeCsvCell(richDescriptionToPlainText(roadmap.reachDescription || "")),
+          escapeCsvCell(roadmap.impactValue != null ? String(roadmap.impactValue) : ""),
+          escapeCsvCell(richDescriptionToPlainText(roadmap.impactDescription || "")),
+          escapeCsvCell(roadmap.confidenceValue != null ? String(roadmap.confidenceValue) : ""),
+          escapeCsvCell(richDescriptionToPlainText(roadmap.confidenceDescription || "")),
+          escapeCsvCell(roadmap.effortValue != null ? String(roadmap.effortValue) : ""),
+          escapeCsvCell(richDescriptionToPlainText(roadmap.effortDescription || "")),
+          escapeCsvCell(roadmap.financialImpactValue != null ? String(roadmap.financialImpactValue) : ""),
+          escapeCsvCell(roadmap.financialImpactCurrency || ""),
+          escapeCsvCell(normalizeFinancialFramework(roadmap.financialImpactFramework)),
           escapeCsvCell(JSON.stringify(
             sanitizeFinancialImpactInputs(
-              project.financialImpactFramework,
-              project.financialImpactInputs || {}
+              roadmap.financialImpactFramework,
+              roadmap.financialImpactInputs || {}
             )
           )),
-          escapeCsvCell(project.projectType || ""),
-          escapeCsvCell(project.projectStatus || ""),
-          escapeCsvCell(project.tshirtSize || ""),
-          escapeCsvCell(project.projectPeriod || ""),
-          escapeCsvCell(project.moscowCategory || ""),
-          escapeCsvCell(project.kanoFunctionality != null ? String(project.kanoFunctionality) : ""),
-          escapeCsvCell(project.kanoSatisfaction != null ? String(project.kanoSatisfaction) : ""),
+          escapeCsvCell(roadmap.roadmapType || ""),
+          escapeCsvCell(roadmap.roadmapStatus || ""),
+          escapeCsvCell(roadmap.tshirtSize || ""),
+          escapeCsvCell(roadmap.roadmapPeriod || ""),
+          escapeCsvCell(roadmap.moscowCategory || ""),
+          escapeCsvCell(roadmap.kanoFunctionality != null ? String(roadmap.kanoFunctionality) : ""),
+          escapeCsvCell(roadmap.kanoSatisfaction != null ? String(roadmap.kanoSatisfaction) : ""),
           escapeCsvCell(countries),
-          escapeCsvCell(projectLabels),
-          escapeCsvCell(projectLinks),
-          escapeCsvCell(projectTasks),
+          escapeCsvCell(roadmapLabels),
+          escapeCsvCell(roadmapLinks),
+          escapeCsvCell(roadmapTasks),
           escapeCsvCell(String(rice))
         ];
         rows.push(row.join(","));
@@ -5781,8 +6097,8 @@ function handleExportCsv(profilesForExport, exportMeta) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    const { profileCount, projectCount } = getExportCounts(profiles);
-    const msg = buildExportResultMessage(profileCount, projectCount, excludedCount, failedNames);
+    const { profileCount, roadmapCount } = getExportCounts(profiles);
+    const msg = buildExportResultMessage(profileCount, roadmapCount, excludedCount, failedNames);
     setTimeout(() => showToast(msg), 0);
   } catch (err) {
     console.error("CSV export failed", err);
@@ -5796,13 +6112,13 @@ function closeImportFormatModal({ immediate = false } = {}) {
 }
 
 function mergeImportedProfiles(importedProfiles) {
-  if (!Array.isArray(importedProfiles) || !importedProfiles.length) return { addedProfiles: 0, mergedProfiles: 0, addedProjects: 0, mergedProjects: 0, skippedProjects: 0 };
+  if (!Array.isArray(importedProfiles) || !importedProfiles.length) return { addedProfiles: 0, mergedProfiles: 0, addedRoadmaps: 0, mergedRoadmaps: 0, skippedRoadmaps: 0 };
 
   let addedProfiles = 0;
   let mergedProfiles = 0;
-  let addedProjects = 0;
-  let mergedProjects = 0;
-  let skippedProjects = 0;
+  let addedRoadmaps = 0;
+  let mergedRoadmaps = 0;
+  let skippedRoadmaps = 0;
 
   importedProfiles.forEach((rawProfile) => {
     const profile = normalizeImportedProfile(rawProfile);
@@ -5812,28 +6128,28 @@ function mergeImportedProfiles(importedProfiles) {
     if (!existing) {
       state.profiles.push(profile);
       addedProfiles += 1;
-      addedProjects += profile.projects.length;
+      addedRoadmaps += profile.roadmaps.length;
       return;
     }
 
     mergedProfiles += 1;
-    if (!Array.isArray(existing.projects)) existing.projects = [];
-    const existingById = new Map(existing.projects.map((p) => [p.id, p]));
-    profile.projects.forEach((proj) => {
-      const normProj = normalizeImportedProject(proj);
+    if (!Array.isArray(existing.roadmaps)) existing.roadmaps = [];
+    const existingById = new Map(existing.roadmaps.map((p) => [p.id, p]));
+    profile.roadmaps.forEach((proj) => {
+      const normProj = normalizeImportedRoadmap(proj);
       if (!normProj) return;
       if (existingById.has(normProj.id)) {
-        skippedProjects += 1;
+        skippedRoadmaps += 1;
         return;
       }
-      existing.projects.push(normProj);
+      existing.roadmaps.push(normProj);
       existingById.set(normProj.id, normProj);
-      addedProjects += 1;
-      mergedProjects += 1;
+      addedRoadmaps += 1;
+      mergedRoadmaps += 1;
     });
   });
 
-  return { addedProfiles, mergedProfiles, addedProjects, mergedProjects, skippedProjects };
+  return { addedProfiles, mergedProfiles, addedRoadmaps, mergedRoadmaps, skippedRoadmaps };
 }
 
 // Unified handler: decides between JSON and CSV based on the selected file and the data-import-kind flag.
@@ -5883,19 +6199,19 @@ function handleImportJsonFile(file) {
         window.alert("Import file contains no profiles.");
         return;
       }
-      const { addedProfiles, mergedProfiles, addedProjects, mergedProjects } = mergeImportedProfiles(importedProfiles);
+      const { addedProfiles, mergedProfiles, addedRoadmaps, mergedRoadmaps } = mergeImportedProfiles(importedProfiles);
       if (!state.activeProfileId && state.profiles.length) {
         state.activeProfileId = resolveFallbackActiveProfileId();
       }
       saveState();
       renderProfiles();
-      renderProjects();
-      const addedOnly = addedProjects - mergedProjects;
+      renderRoadmaps();
+      const addedOnly = addedRoadmaps - mergedRoadmaps;
       const parts = [];
       if (addedProfiles) parts.push(`${addedProfiles} profile${addedProfiles !== 1 ? "s" : ""} added`);
       if (mergedProfiles) parts.push(`${mergedProfiles} profile${mergedProfiles !== 1 ? "s" : ""} merged`);
-      if (addedOnly) parts.push(`${addedOnly} project${addedOnly !== 1 ? "s" : ""} added`);
-      if (mergedProjects) parts.push(`${mergedProjects} project${mergedProjects !== 1 ? "s" : ""} merged`);
+      if (addedOnly) parts.push(`${addedOnly} roadmap${addedOnly !== 1 ? "s" : ""} added`);
+      if (mergedRoadmaps) parts.push(`${mergedRoadmaps} roadmap${mergedRoadmaps !== 1 ? "s" : ""} merged`);
       const detail = parts.length ? parts.join(", ") + "." : "No new data.";
       const msg = `Imported from JSON. ${detail}`;
       setTimeout(() => showToast(msg), 0);
@@ -5934,19 +6250,19 @@ function handleImportCsvFile(file) {
         window.alert("No valid data found in CSV file.");
         return;
       }
-      const { addedProfiles, mergedProfiles, addedProjects, mergedProjects } = mergeImportedProfiles(importedProfiles);
+      const { addedProfiles, mergedProfiles, addedRoadmaps, mergedRoadmaps } = mergeImportedProfiles(importedProfiles);
       if (!state.activeProfileId && state.profiles.length) {
         state.activeProfileId = resolveFallbackActiveProfileId();
       }
       saveState();
       renderProfiles();
-      renderProjects();
-      const addedOnly = addedProjects - mergedProjects;
+      renderRoadmaps();
+      const addedOnly = addedRoadmaps - mergedRoadmaps;
       const parts = [];
       if (addedProfiles) parts.push(`${addedProfiles} profile${addedProfiles !== 1 ? "s" : ""} added`);
       if (mergedProfiles) parts.push(`${mergedProfiles} profile${mergedProfiles !== 1 ? "s" : ""} merged`);
-      if (addedOnly) parts.push(`${addedOnly} project${addedOnly !== 1 ? "s" : ""} added`);
-      if (mergedProjects) parts.push(`${mergedProjects} project${mergedProjects !== 1 ? "s" : ""} merged`);
+      if (addedOnly) parts.push(`${addedOnly} roadmap${addedOnly !== 1 ? "s" : ""} added`);
+      if (mergedRoadmaps) parts.push(`${mergedRoadmaps} roadmap${mergedRoadmaps !== 1 ? "s" : ""} merged`);
       const detail = parts.length ? parts.join(", ") + "." : "No new data.";
       const msg = `Imported from CSV. ${detail}`;
       setTimeout(() => showToast(msg), 0);
@@ -5985,23 +6301,23 @@ function buildProfilesFromCsvRows(header, rows) {
         name: profileName,
         team: profileTeam || "",
         createdAt: profileCreatedAt || new Date().toISOString(),
-        projects: []
+        roadmaps: []
       });
     }
 
     const profile = byProfileKey.get(key);
 
-    const projectTitle = (cells[colIndex.projectTitle] ?? "").toString().trim();
-    const projectIdCell = (cells[colIndex.projectId] ?? "").toString().trim();
-    const anyProjectField = projectTitle || projectIdCell;
-    if (!anyProjectField) return;
+    const roadmapTitle = (cells[colIndex.roadmapTitle] ?? "").toString().trim();
+    const roadmapIdCell = (cells[colIndex.roadmapId] ?? "").toString().trim();
+    const anyRoadmapField = roadmapTitle || roadmapIdCell;
+    if (!anyRoadmapField) return;
 
-    const project = {
-      id: projectIdCell || generateId("project"),
-      createdAt: (cells[colIndex.projectCreatedAt] ?? "").toString().trim() || new Date().toISOString(),
-      modifiedAt: (cells[colIndex.projectModifiedAt] ?? "").toString().trim() || undefined,
-      title: projectTitle || "Imported project",
-      description: (cells[colIndex.projectDescription] ?? "").toString(),
+    const roadmap = {
+      id: roadmapIdCell || generateId("roadmap"),
+      createdAt: (cells[colIndex.roadmapCreatedAt] ?? "").toString().trim() || new Date().toISOString(),
+      modifiedAt: (cells[colIndex.roadmapModifiedAt] ?? "").toString().trim() || undefined,
+      title: roadmapTitle || "Imported roadmap",
+      description: (cells[colIndex.roadmapDescription] ?? "").toString(),
       reachValue: toNumberOrNull(cells[colIndex.reachValue]),
       reachDescription: (cells[colIndex.reachDescription] ?? "").toString(),
       impactValue: toNumberOrNull(cells[colIndex.impactValue]),
@@ -6018,44 +6334,44 @@ function buildProfilesFromCsvRows(header, rows) {
         if (!raw) return {};
         try { return JSON.parse(raw); } catch (_) { return {}; }
       })(),
-      projectType: (cells[colIndex.projectType] ?? "").toString().trim() || null,
-      projectStatus: (cells[colIndex.projectStatus] ?? "").toString().trim() || null,
+      roadmapType: (cells[colIndex.roadmapType] ?? "").toString().trim() || null,
+      roadmapStatus: (cells[colIndex.roadmapStatus] ?? "").toString().trim() || null,
       tshirtSize: (cells[colIndex.tshirtSize] ?? "").toString().trim() || null,
-      projectPeriod: (cells[colIndex.projectPeriod] ?? "").toString().trim().toUpperCase() || null,
+      roadmapPeriod: (cells[colIndex.roadmapPeriod] ?? "").toString().trim().toUpperCase() || null,
       moscowCategory: (cells[colIndex.moscowCategory] ?? "").toString().trim() || null,
       kanoFunctionality: normalizeKanoAxisLevel(cells[colIndex.kanoFunctionality]),
       kanoSatisfaction: normalizeKanoAxisLevel(cells[colIndex.kanoSatisfaction]),
       countries: normalizeCountryNames((cells[colIndex.countries] ?? "").toString().split("|").map((c) => c.trim()).filter((c) => c !== "")),
-      labels: normalizeProjectLabels(
-        (cells[colIndex.projectLabels] ?? "")
+      labels: normalizeRoadmapLabels(
+        (cells[colIndex.roadmapLabels] ?? "")
           .toString()
           .split("|")
           .map((label) => label.trim())
           .filter((label) => label !== "")
       ),
       links: (() => {
-        const raw = (cells[colIndex.projectLinks] ?? "").toString().trim();
+        const raw = (cells[colIndex.roadmapLinks] ?? "").toString().trim();
         if (!raw) return [];
         try {
           const parsed = JSON.parse(raw);
-          return normalizeProjectLinks(Array.isArray(parsed) ? parsed : []);
+          return normalizeRoadmapLinks(Array.isArray(parsed) ? parsed : []);
         } catch (_) {
           return [];
         }
       })(),
       tasks: (() => {
-        const raw = (cells[colIndex.projectTasks] ?? "").toString().trim();
+        const raw = (cells[colIndex.roadmapTasks] ?? "").toString().trim();
         if (!raw) return [];
         try {
           const parsed = JSON.parse(raw);
-          return normalizeProjectTasks(Array.isArray(parsed) ? parsed : []);
+          return normalizeRoadmapTasks(Array.isArray(parsed) ? parsed : []);
         } catch (_) {
           return [];
         }
       })()
     };
-    project.riceScore = calculateRiceScore(project);
-    profile.projects.push(project);
+    roadmap.riceScore = calculateRiceScore(roadmap);
+    profile.roadmaps.push(roadmap);
   });
 
   return Array.from(byProfileKey.values());
@@ -6065,70 +6381,70 @@ function normalizeImportedProfile(profile) {
   if (!profile || typeof profile !== "object") return null;
   const base = normalizeLoadedProfile({
     ...profile,
-    projects: Array.isArray(profile.projects) ? profile.projects : []
+    roadmaps: Array.isArray(profile.roadmaps) ? profile.roadmaps : []
   });
   if (!base) return null;
   if (!base.name || base.name === "Unnamed profile") {
     base.name = String(profile.name || "Imported profile");
   }
-  const normalizedProjects = (Array.isArray(profile.projects) ? profile.projects : [])
-    .map(normalizeImportedProject)
+  const normalizedRoadmaps = (Array.isArray(profile.roadmaps) ? profile.roadmaps : [])
+    .map(normalizeImportedRoadmap)
     .filter(Boolean);
-  base.projects = normalizedProjects;
+  base.roadmaps = normalizedRoadmaps;
   return base;
 }
 
-function normalizeImportedProject(project) {
-  if (!project || typeof project !== "object") return null;
+function normalizeImportedRoadmap(roadmap) {
+  if (!roadmap || typeof roadmap !== "object") return null;
   const now = new Date().toISOString();
-  const id = typeof project.id === "string" && project.id.trim() ? project.id.trim() : generateId("project");
-  const createdAt = project.createdAt || now;
-  const modifiedAt = project.modifiedAt || createdAt;
-  const reachValue = toNumberOrNull(project.reachValue);
-  const impactValue = toNumberOrNull(project.impactValue);
-  const confidenceValue = toNumberOrNull(project.confidenceValue);
-  const effortValue = toNumberOrNull(project.effortValue);
-  const financialImpactValue = toNumberOrNull(project.financialImpactValue);
-  const financialImpactFramework = normalizeFinancialFramework(project.financialImpactFramework);
+  const id = typeof roadmap.id === "string" && roadmap.id.trim() ? roadmap.id.trim() : generateId("roadmap");
+  const createdAt = roadmap.createdAt || now;
+  const modifiedAt = roadmap.modifiedAt || createdAt;
+  const reachValue = toNumberOrNull(roadmap.reachValue);
+  const impactValue = toNumberOrNull(roadmap.impactValue);
+  const confidenceValue = toNumberOrNull(roadmap.confidenceValue);
+  const effortValue = toNumberOrNull(roadmap.effortValue);
+  const financialImpactValue = toNumberOrNull(roadmap.financialImpactValue);
+  const financialImpactFramework = normalizeFinancialFramework(roadmap.financialImpactFramework);
   const financialImpactInputs = sanitizeFinancialImpactInputs(
     financialImpactFramework,
-    project.financialImpactInputs && typeof project.financialImpactInputs === "object"
-      ? project.financialImpactInputs
+    roadmap.financialImpactInputs && typeof roadmap.financialImpactInputs === "object"
+      ? roadmap.financialImpactInputs
       : {}
   );
-  const periodRaw = project.projectPeriod != null ? String(project.projectPeriod).trim() : "";
-  const projectPeriod = periodRaw ? periodRaw.toUpperCase() : null;
+  const periodRaw = coalesceLegacyRoadmapStringField(roadmap, "roadmapPeriod", "projectPeriod") || "";
+  const roadmapPeriod = periodRaw ? periodRaw.toUpperCase() : null;
   const normalizedFinancialValue = computeFrameworkFinancialImpact(financialImpactFramework, financialImpactInputs, financialImpactValue);
   const normalized = {
     id,
     createdAt,
     modifiedAt,
-    title: String(project.title || "Imported project"),
-    description: String(project.description || ""),
-    reachDescription: String(project.reachDescription || ""),
+    title: String(roadmap.title || "Imported roadmap"),
+    description: String(roadmap.description || ""),
+    reachDescription: String(roadmap.reachDescription || ""),
     reachValue: Number.isFinite(reachValue) ? reachValue : 0,
-    impactDescription: String(project.impactDescription || ""),
+    impactDescription: String(roadmap.impactDescription || ""),
     impactValue: Number.isFinite(impactValue) ? impactValue : 1,
-    confidenceDescription: String(project.confidenceDescription || ""),
+    confidenceDescription: String(roadmap.confidenceDescription || ""),
     confidenceValue: Number.isFinite(confidenceValue) ? confidenceValue : 50,
-    effortDescription: String(project.effortDescription || ""),
+    effortDescription: String(roadmap.effortDescription || ""),
     effortValue: Number.isFinite(effortValue) && effortValue > 0 ? effortValue : 1,
     financialImpactValue: Number.isFinite(normalizedFinancialValue) ? normalizedFinancialValue : null,
-    financialImpactCurrency: normalizeCurrency(project.financialImpactCurrency),
+    financialImpactCurrency: normalizeCurrency(roadmap.financialImpactCurrency),
     financialImpactFramework,
     financialImpactInputs,
-    projectType: (project.projectType != null && String(project.projectType).trim() !== "") ? String(project.projectType).trim() : null,
-    projectStatus: (project.projectStatus != null && String(project.projectStatus).trim() !== "") ? String(project.projectStatus).trim() : null,
-    tshirtSize: (project.tshirtSize != null && String(project.tshirtSize).trim() !== "") ? String(project.tshirtSize).trim() : null,
-    projectPeriod,
-    moscowCategory: (project.moscowCategory != null && String(project.moscowCategory).trim() !== "" && typeof moscowList !== "undefined" && moscowList.includes(project.moscowCategory)) ? String(project.moscowCategory).trim() : null,
-    kanoFunctionality: normalizeKanoAxisLevel(project.kanoFunctionality),
-    kanoSatisfaction: normalizeKanoAxisLevel(project.kanoSatisfaction),
-    countries: normalizeCountryNames(Array.isArray(project.countries) ? project.countries : []),
-    labels: normalizeProjectLabels(project.labels),
-    links: normalizeProjectLinks(project.links),
-    tasks: normalizeProjectTasks(project.tasks),
-    raci: normalizeProjectRaci(project.raci)
+    roadmapType: coalesceLegacyRoadmapStringField(roadmap, "roadmapType", "projectType"),
+    roadmapStatus: coalesceLegacyRoadmapStringField(roadmap, "roadmapStatus", "projectStatus"),
+    tshirtSize: (roadmap.tshirtSize != null && String(roadmap.tshirtSize).trim() !== "") ? String(roadmap.tshirtSize).trim() : null,
+    roadmapPeriod,
+    moscowCategory: (roadmap.moscowCategory != null && String(roadmap.moscowCategory).trim() !== "" && typeof moscowList !== "undefined" && moscowList.includes(roadmap.moscowCategory)) ? String(roadmap.moscowCategory).trim() : null,
+    kanoFunctionality: normalizeKanoAxisLevel(roadmap.kanoFunctionality),
+    kanoSatisfaction: normalizeKanoAxisLevel(roadmap.kanoSatisfaction),
+    countries: normalizeCountryNames(Array.isArray(roadmap.countries) ? roadmap.countries : []),
+    labels: normalizeRoadmapLabels(roadmap.labels),
+    links: normalizeRoadmapLinks(roadmap.links),
+    tasks: normalizeRoadmapTasks(roadmap.tasks),
+    raci: normalizeRoadmapRaci(roadmap.raci)
   };
   normalized.riceScore = calculateRiceScore(normalized);
   return normalized;
@@ -6182,9 +6498,9 @@ function syncFilterEuRegionCheckbox(changedCheckbox) {
   }
 }
 
-function getSelectedFilterProjectPeriods() {
-  if (!elements.filterProjectPeriodList) return [];
-  const checkboxes = elements.filterProjectPeriodList.querySelectorAll("input[type=\"checkbox\"]");
+function getSelectedFilterRoadmapPeriods() {
+  if (!elements.filterRoadmapPeriodList) return [];
+  const checkboxes = elements.filterRoadmapPeriodList.querySelectorAll("input[type=\"checkbox\"]");
   const values = Array.from(checkboxes)
     .filter((cb) => cb.checked)
     .map((cb) => cb.value.toString().toUpperCase());
@@ -6201,10 +6517,10 @@ function filterFilterCountriesBySearchTerm() {
   });
 }
 
-function filterFilterProjectPeriodsBySearchTerm() {
-  if (!elements.filterProjectPeriodList || !elements.filterProjectPeriodSearch) return;
-  const term = (elements.filterProjectPeriodSearch.value || "").trim().toLowerCase();
-  const options = elements.filterProjectPeriodList.querySelectorAll(".filter-country-option");
+function filterFilterRoadmapPeriodsBySearchTerm() {
+  if (!elements.filterRoadmapPeriodList || !elements.filterRoadmapPeriodSearch) return;
+  const term = (elements.filterRoadmapPeriodSearch.value || "").trim().toLowerCase();
+  const options = elements.filterRoadmapPeriodList.querySelectorAll(".filter-country-option");
   options.forEach((opt) => {
     const period = (opt.dataset.period || "").toLowerCase();
     opt.style.display = !term || period.includes(term) ? "" : "none";
@@ -6241,10 +6557,10 @@ function updateFilterCountriesSummary() {
   }
 }
 
-function updateFilterProjectPeriodsSummary() {
-  if (!elements.filterProjectPeriodSummary) return;
-  const container = elements.filterProjectPeriodSummary;
-  const selected = getSelectedFilterProjectPeriods();
+function updateFilterRoadmapPeriodsSummary() {
+  if (!elements.filterRoadmapPeriodSummary) return;
+  const container = elements.filterRoadmapPeriodSummary;
+  const selected = getSelectedFilterRoadmapPeriods();
   container.innerHTML = "";
 
   if (!selected.length) {
@@ -6279,7 +6595,7 @@ function renderCountriesControls(countries) {
   list.forEach((country) => addCountryRow(country));
 }
 
-function populateProjectCountrySelect(select, selectedCountry) {
+function populateRoadmapCountrySelect(select, selectedCountry) {
   select.innerHTML = "";
   const emptyOpt = document.createElement("option");
   emptyOpt.value = "";
@@ -6313,8 +6629,8 @@ function addCountryRow(selectedCountry) {
   row.className = "country-row";
 
   const select = document.createElement("select");
-  select.setAttribute("aria-label", "Project country");
-  populateProjectCountrySelect(select, selectedCountry);
+  select.setAttribute("aria-label", "Roadmap country");
+  populateRoadmapCountrySelect(select, selectedCountry);
 
   const removeBtn = document.createElement("button");
   removeBtn.type = "button";
@@ -6326,8 +6642,8 @@ function addCountryRow(selectedCountry) {
   elements.countriesContainer.appendChild(row);
 }
 
-function applyEuRegionToProjectCountries() {
-  if (!elements.countriesContainer || projectModalMode === "view") return;
+function applyEuRegionToRoadmapCountries() {
+  if (!elements.countriesContainer || roadmapModalMode === "view") return;
   const current = getCountriesFromControlsRaw();
   const withoutEu = current.filter((c) => !isEuRegionOption(c));
   const merged = normalizeCountryNames([...withoutEu, COUNTRY_OPTION_EU]);
@@ -6347,26 +6663,26 @@ function getCountriesFromControls() {
   return normalizeCountryNames(getCountriesFromControlsRaw());
 }
 
-/** True when the project has at least one saved hyperlink. */
-function projectHasLinks(project) {
-  return normalizeProjectLinks(project && project.links).length > 0;
+/** True when the roadmap has at least one saved hyperlink. */
+function roadmapHasLinks(roadmap) {
+  return normalizeRoadmapLinks(roadmap && roadmap.links).length > 0;
 }
 
-/** True when the project has at least one saved label. */
-function projectHasLabels(project) {
-  return normalizeProjectLabels(project && project.labels).length > 0;
+/** True when the roadmap has at least one saved label. */
+function roadmapHasLabels(roadmap) {
+  return normalizeRoadmapLabels(roadmap && roadmap.labels).length > 0;
 }
 
-/** Substring match against any project label (case-insensitive). */
-function projectMatchesLabelFilter(project, labelQuery) {
+/** Substring match against any roadmap label (case-insensitive). */
+function roadmapMatchesLabelFilter(roadmap, labelQuery) {
   const query = (labelQuery || "").trim().toLowerCase();
   if (!query) return true;
-  const labels = normalizeProjectLabels(project && project.labels);
+  const labels = normalizeRoadmapLabels(roadmap && roadmap.labels);
   return labels.some((label) => label.toLowerCase().includes(query));
 }
 
-/** Deduplicated, trimmed project labels (each may contain spaces). */
-function normalizeProjectLabels(raw) {
+/** Deduplicated, trimmed roadmap labels (each may contain spaces). */
+function normalizeRoadmapLabels(raw) {
   if (!Array.isArray(raw)) {
     if (typeof raw === "string" && raw.trim()) {
       const parts = raw
@@ -6398,8 +6714,8 @@ function normalizeProjectLabels(raw) {
   return out;
 }
 
-/** Normalizes a user-entered URL for project links (http/https only). */
-function normalizeProjectLinkUrl(url) {
+/** Normalizes a user-entered URL for roadmap links (http/https only). */
+function normalizeRoadmapLinkUrl(url) {
   const trimmed = String(url || "").trim();
   if (!trimmed) return null;
   let candidate = trimmed;
@@ -6416,7 +6732,7 @@ function normalizeProjectLinkUrl(url) {
 }
 
 /** Short hostname (+ path) for link preview in view mode. */
-function formatProjectLinkPreviewUrl(url) {
+function formatRoadmapLinkPreviewUrl(url) {
   try {
     const parsed = new URL(url);
     const path = parsed.pathname && parsed.pathname !== "/" ? parsed.pathname : "";
@@ -6426,16 +6742,16 @@ function formatProjectLinkPreviewUrl(url) {
   }
 }
 
-/** Deduplicated named hyperlinks on a project. */
-function normalizeProjectLinks(raw) {
+/** Deduplicated named hyperlinks on a roadmap. */
+function normalizeRoadmapLinks(raw) {
   if (!Array.isArray(raw)) return [];
   const out = [];
   const seen = new Set();
   raw.forEach((item) => {
     if (typeof item === "string") {
-      const url = normalizeProjectLinkUrl(item);
+      const url = normalizeRoadmapLinkUrl(item);
       if (!url) return;
-      const label = formatProjectLinkPreviewUrl(url) || url;
+      const label = formatRoadmapLinkPreviewUrl(url) || url;
       const key = label + "\0" + url;
       if (seen.has(key)) return;
       seen.add(key);
@@ -6452,7 +6768,7 @@ function normalizeProjectLinks(raw) {
             ? item.name
             : item.title || ""
     ).trim();
-    const url = normalizeProjectLinkUrl(item.url || item.href || item.link || "");
+    const url = normalizeRoadmapLinkUrl(item.url || item.href || item.link || "");
     if (!label || !url) return;
     const key = label + "\0" + url;
     if (seen.has(key)) return;
@@ -6462,67 +6778,67 @@ function normalizeProjectLinks(raw) {
   return out;
 }
 
-function renderProjectLabelsControls(labels, { readonly = false } = {}) {
-  if (!elements.projectLabelsContainer) return;
-  elements.projectLabelsContainer.innerHTML = "";
-  const normalized = normalizeProjectLabels(labels);
+function renderRoadmapLabelsControls(labels, { readonly = false } = {}) {
+  if (!elements.roadmapLabelsContainer) return;
+  elements.roadmapLabelsContainer.innerHTML = "";
+  const normalized = normalizeRoadmapLabels(labels);
   if (readonly) {
     const wrap = document.createElement("div");
-    wrap.className = "project-labels-readonly";
+    wrap.className = "roadmap-labels-readonly";
     if (!normalized.length) {
       const hint = document.createElement("p");
-      hint.className = "project-field-empty-hint";
+      hint.className = "roadmap-field-empty-hint";
       hint.textContent = "No labels added";
-      elements.projectLabelsContainer.appendChild(hint);
+      elements.roadmapLabelsContainer.appendChild(hint);
       return;
     }
     normalized.forEach((label) => {
       const chip = document.createElement("span");
-      chip.className = "project-label-chip";
+      chip.className = "roadmap-label-chip";
       chip.textContent = label;
       wrap.appendChild(chip);
     });
-    elements.projectLabelsContainer.appendChild(wrap);
+    elements.roadmapLabelsContainer.appendChild(wrap);
     return;
   }
   const list = normalized.length ? normalized : [""];
-  list.forEach((label) => addProjectLabelRow(label));
+  list.forEach((label) => addRoadmapLabelRow(label));
 }
 
-function addProjectLabelRow(value) {
-  if (!elements.projectLabelsContainer) return;
+function addRoadmapLabelRow(value) {
+  if (!elements.roadmapLabelsContainer) return;
   const row = document.createElement("div");
-  row.className = "project-label-row";
+  row.className = "roadmap-label-row";
   const input = document.createElement("input");
   input.type = "text";
-  input.className = "project-label-input";
+  input.className = "roadmap-label-input";
   input.placeholder = "e.g. Q3 growth bet, Platform";
   input.setAttribute("aria-label", "Label text");
   input.value = value || "";
   const removeBtn = document.createElement("button");
   removeBtn.type = "button";
-  removeBtn.className = "project-label-remove-btn";
+  removeBtn.className = "roadmap-label-remove-btn";
   removeBtn.textContent = "×";
   removeBtn.setAttribute("aria-label", "Remove label");
   row.appendChild(input);
   row.appendChild(removeBtn);
-  elements.projectLabelsContainer.appendChild(row);
+  elements.roadmapLabelsContainer.appendChild(row);
 }
 
-function getProjectLabelsFromControls() {
-  if (!elements.projectLabelsContainer) return [];
-  const inputs = elements.projectLabelsContainer.querySelectorAll(".project-label-row input");
+function getRoadmapLabelsFromControls() {
+  if (!elements.roadmapLabelsContainer) return [];
+  const inputs = elements.roadmapLabelsContainer.querySelectorAll(".roadmap-label-row input");
   const values = Array.from(inputs)
     .map((input) => (input.value || "").trim())
     .filter((value) => value);
-  return normalizeProjectLabels(values);
+  return normalizeRoadmapLabels(values);
 }
 
-function ensureProjectLinkRowHeader() {
-  if (!elements.projectLinksContainer) return;
-  if (elements.projectLinksContainer.querySelector(".project-link-row-header")) return;
+function ensureRoadmapLinkRowHeader() {
+  if (!elements.roadmapLinksContainer) return;
+  if (elements.roadmapLinksContainer.querySelector(".roadmap-link-row-header")) return;
   const header = document.createElement("div");
-  header.className = "project-link-row-header";
+  header.className = "roadmap-link-row-header";
   header.setAttribute("aria-hidden", "true");
   const colLabel = document.createElement("span");
   colLabel.textContent = "Display text";
@@ -6532,45 +6848,45 @@ function ensureProjectLinkRowHeader() {
   header.appendChild(colLabel);
   header.appendChild(colUrl);
   header.appendChild(colAction);
-  elements.projectLinksContainer.appendChild(header);
+  elements.roadmapLinksContainer.appendChild(header);
 }
 
-function renderProjectLinksControls(links, { readonly = false } = {}) {
-  if (!elements.projectLinksContainer) return;
-  elements.projectLinksContainer.innerHTML = "";
-  const normalized = normalizeProjectLinks(links);
+function renderRoadmapLinksControls(links, { readonly = false } = {}) {
+  if (!elements.roadmapLinksContainer) return;
+  elements.roadmapLinksContainer.innerHTML = "";
+  const normalized = normalizeRoadmapLinks(links);
   if (readonly) {
     if (!normalized.length) {
       const hint = document.createElement("p");
-      hint.className = "project-field-empty-hint";
+      hint.className = "roadmap-field-empty-hint";
       hint.textContent = "No links added";
-      elements.projectLinksContainer.appendChild(hint);
+      elements.roadmapLinksContainer.appendChild(hint);
       return;
     }
     const wrap = document.createElement("div");
-    wrap.className = "project-links-readonly";
+    wrap.className = "roadmap-links-readonly";
     normalized.forEach((link) => {
       const card = document.createElement("div");
-      card.className = "project-link-card";
+      card.className = "roadmap-link-card";
 
       const icon = document.createElement("span");
-      icon.className = "project-link-card__icon";
+      icon.className = "roadmap-link-card__icon";
       icon.setAttribute("aria-hidden", "true");
       icon.textContent = "↗";
 
       const body = document.createElement("div");
-      body.className = "project-link-card__body";
+      body.className = "roadmap-link-card__body";
 
       const anchor = document.createElement("a");
-      anchor.className = "project-link-card__title";
+      anchor.className = "roadmap-link-card__title";
       anchor.href = link.url;
       anchor.textContent = link.label;
       anchor.target = "_blank";
       anchor.rel = "noopener noreferrer";
 
       const urlPreview = document.createElement("span");
-      urlPreview.className = "project-link-card__url";
-      urlPreview.textContent = formatProjectLinkPreviewUrl(link.url);
+      urlPreview.className = "roadmap-link-card__url";
+      urlPreview.textContent = formatRoadmapLinkPreviewUrl(link.url);
 
       body.appendChild(anchor);
       body.appendChild(urlPreview);
@@ -6578,40 +6894,40 @@ function renderProjectLinksControls(links, { readonly = false } = {}) {
       card.appendChild(body);
       wrap.appendChild(card);
     });
-    elements.projectLinksContainer.appendChild(wrap);
+    elements.roadmapLinksContainer.appendChild(wrap);
     return;
   }
-  ensureProjectLinkRowHeader();
+  ensureRoadmapLinkRowHeader();
   const list = normalized.length ? normalized : [{ label: "", url: "" }];
-  list.forEach((link) => addProjectLinkRow(link));
+  list.forEach((link) => addRoadmapLinkRow(link));
 }
 
-function addProjectLinkRow(link) {
-  if (!elements.projectLinksContainer) return;
-  ensureProjectLinkRowHeader();
+function addRoadmapLinkRow(link) {
+  if (!elements.roadmapLinksContainer) return;
+  ensureRoadmapLinkRowHeader();
   const row = document.createElement("div");
-  row.className = "project-link-row";
+  row.className = "roadmap-link-row";
 
   const fields = document.createElement("div");
-  fields.className = "project-link-row__fields";
+  fields.className = "roadmap-link-row__fields";
 
   const labelInput = document.createElement("input");
   labelInput.type = "text";
-  labelInput.className = "project-link-label-input";
+  labelInput.className = "roadmap-link-label-input";
   labelInput.placeholder = "e.g. Product spec";
   labelInput.setAttribute("aria-label", "Link display text");
   labelInput.value = (link && link.label) || "";
 
   const urlInput = document.createElement("input");
   urlInput.type = "url";
-  urlInput.className = "project-link-url-input";
+  urlInput.className = "roadmap-link-url-input";
   urlInput.placeholder = "https://example.com/doc";
   urlInput.setAttribute("aria-label", "Link URL");
   urlInput.value = (link && link.url) || "";
 
   const removeBtn = document.createElement("button");
   removeBtn.type = "button";
-  removeBtn.className = "project-link-remove-btn";
+  removeBtn.className = "roadmap-link-remove-btn";
   removeBtn.textContent = "×";
   removeBtn.setAttribute("aria-label", "Remove link");
 
@@ -6619,36 +6935,36 @@ function addProjectLinkRow(link) {
   fields.appendChild(urlInput);
   row.appendChild(fields);
   row.appendChild(removeBtn);
-  elements.projectLinksContainer.appendChild(row);
+  elements.roadmapLinksContainer.appendChild(row);
 }
 
-function getProjectLinksFromControls() {
-  if (!elements.projectLinksContainer) return { links: [], error: null };
-  const rows = elements.projectLinksContainer.querySelectorAll(".project-link-row");
+function getRoadmapLinksFromControls() {
+  if (!elements.roadmapLinksContainer) return { links: [], error: null };
+  const rows = elements.roadmapLinksContainer.querySelectorAll(".roadmap-link-row");
   const links = [];
   for (const row of rows) {
-    const label = (row.querySelector(".project-link-label-input")?.value || "").trim();
-    const urlRaw = (row.querySelector(".project-link-url-input")?.value || "").trim();
+    const label = (row.querySelector(".roadmap-link-label-input")?.value || "").trim();
+    const urlRaw = (row.querySelector(".roadmap-link-url-input")?.value || "").trim();
     if (!label && !urlRaw) continue;
     if (!label || !urlRaw) {
       return { links: [], error: "Each link needs both display text and a URL." };
     }
-    const url = normalizeProjectLinkUrl(urlRaw);
+    const url = normalizeRoadmapLinkUrl(urlRaw);
     if (!url) {
       return { links: [], error: `Invalid link URL: ${urlRaw}` };
     }
     links.push({ label, url });
   }
-  return { links: normalizeProjectLinks(links), error: null };
+  return { links: normalizeRoadmapLinks(links), error: null };
 }
 
-function getProjectTaskStatusOptions() {
-  return typeof projectStatusList !== "undefined" && Array.isArray(projectStatusList)
-    ? projectStatusList.slice()
+function getRoadmapTaskStatusOptions() {
+  return typeof roadmapStatusList !== "undefined" && Array.isArray(roadmapStatusList)
+    ? roadmapStatusList.slice()
     : ["Not Started", "In Progress", "On Hold", "Done", "Cancelled"];
 }
 
-const PROJECT_TASK_PROGRESS_STATUSES = [
+const ROADMAP_TASK_PROGRESS_STATUSES = [
   "Not Started",
   "In Progress",
   "On Hold",
@@ -6656,7 +6972,7 @@ const PROJECT_TASK_PROGRESS_STATUSES = [
   "Cancelled"
 ];
 
-function getProjectTaskStatusSlug(status) {
+function getRoadmapTaskStatusSlug(status) {
   return String(status || "")
     .trim()
     .toLowerCase()
@@ -6664,30 +6980,30 @@ function getProjectTaskStatusSlug(status) {
     .replace(/\s+/g, "-");
 }
 
-function getProjectTasksSnapshotForProgress() {
-  const container = elements.projectTasksContainer;
+function getRoadmapTasksSnapshotForProgress() {
+  const container = elements.roadmapTasksContainer;
   if (!container) return [];
 
-  const cards = container.querySelectorAll(".project-task-card");
+  const cards = container.querySelectorAll(".roadmap-task-card");
   if (cards.length) {
     return Array.from(cards)
       .map((card) => ({
-        name: (card.querySelector(".project-task-card__name")?.textContent || "").trim(),
-        status: card.querySelector(".project-task-card__status")?.dataset.status || "Not Started"
+        name: (card.querySelector(".roadmap-task-card__name")?.textContent || "").trim(),
+        status: card.querySelector(".roadmap-task-card__status")?.dataset.status || "Not Started"
       }))
       .filter((task) => task.name);
   }
 
-  const rows = container.querySelectorAll(".project-task-row");
+  const rows = container.querySelectorAll(".roadmap-task-row");
   if (rows.length) {
     const tasks = [];
     rows.forEach((row) => {
-      const name = (row.querySelector(".project-task-name-input")?.value || "").trim();
-      const statusRaw = row.querySelector(".project-task-status-select")?.value || "";
+      const name = (row.querySelector(".roadmap-task-name-input")?.value || "").trim();
+      const statusRaw = row.querySelector(".roadmap-task-status-select")?.value || "";
       if (!name) return;
       tasks.push({
         name,
-        status: normalizeProjectTaskStatus(statusRaw)
+        status: normalizeRoadmapTaskStatus(statusRaw)
       });
     });
     return tasks;
@@ -6696,23 +7012,23 @@ function getProjectTasksSnapshotForProgress() {
   return [];
 }
 
-function shouldShowProjectTasksProgress(detailsEl, breakdown) {
+function shouldShowRoadmapTasksProgress(detailsEl, breakdown) {
   if (!detailsEl || !breakdown.total) return false;
-  if (projectModalMode === "view") return !detailsEl.open;
+  if (roadmapModalMode === "view") return !detailsEl.open;
   return true;
 }
 
-function computeProjectTaskStatusBreakdown(tasks) {
-  const normalized = normalizeProjectTasks(Array.isArray(tasks) ? tasks : []);
+function computeRoadmapTaskStatusBreakdown(tasks) {
+  const normalized = normalizeRoadmapTasks(Array.isArray(tasks) ? tasks : []);
   const total = normalized.length;
-  const counts = Object.fromEntries(PROJECT_TASK_PROGRESS_STATUSES.map((status) => [status, 0]));
+  const counts = Object.fromEntries(ROADMAP_TASK_PROGRESS_STATUSES.map((status) => [status, 0]));
 
   normalized.forEach((task) => {
-    const status = normalizeProjectTaskStatus(task.status);
+    const status = normalizeRoadmapTaskStatus(task.status);
     if (counts[status] != null) counts[status] += 1;
   });
 
-  const segments = PROJECT_TASK_PROGRESS_STATUSES.map((status) => ({
+  const segments = ROADMAP_TASK_PROGRESS_STATUSES.map((status) => ({
     status,
     count: counts[status] || 0
   })).filter((segment) => segment.count > 0);
@@ -6744,60 +7060,60 @@ function computeProjectTaskStatusBreakdown(tasks) {
   return { total, segments: withPct };
 }
 
-function buildProjectTaskProgressSummaryLabel(breakdown) {
+function buildRoadmapTaskProgressSummaryLabel(breakdown) {
   if (!breakdown.total) return "No tasks yet";
   const parts = breakdown.segments.map((segment) => `${segment.status} ${segment.pct}%`);
   return `Task progress: ${parts.join(", ")}`;
 }
 
-function formatProjectTaskProgressSegmentCount(count) {
+function formatRoadmapTaskProgressSegmentCount(count) {
   const value = Number(count) || 0;
   return value === 1 ? "1 task" : `${value} tasks`;
 }
 
-function buildProjectTaskProgressSegmentTooltip(segment) {
-  const taskLabel = formatProjectTaskProgressSegmentCount(segment.count);
+function buildRoadmapTaskProgressSegmentTooltip(segment) {
+  const taskLabel = formatRoadmapTaskProgressSegmentCount(segment.count);
   return {
     title: segment.status,
     body: `${taskLabel} · ${segment.pct}% of total`
   };
 }
 
-function appendProjectTaskProgressSegmentTooltip(segmentEl, segment) {
-  const tooltipCopy = buildProjectTaskProgressSegmentTooltip(segment);
+function appendRoadmapTaskProgressSegmentTooltip(segmentEl, segment) {
+  const tooltipCopy = buildRoadmapTaskProgressSegmentTooltip(segment);
   const tooltipEl = document.createElement("span");
-  tooltipEl.className = "project-tasks-progress-segment-tooltip";
+  tooltipEl.className = "roadmap-tasks-progress-segment-tooltip";
   tooltipEl.setAttribute("role", "tooltip");
 
   const titleEl = document.createElement("span");
-  titleEl.className = "project-tasks-progress-segment-tooltip-title";
+  titleEl.className = "roadmap-tasks-progress-segment-tooltip-title";
   titleEl.textContent = tooltipCopy.title;
 
   const bodyEl = document.createElement("span");
-  bodyEl.className = "project-tasks-progress-segment-tooltip-body";
+  bodyEl.className = "roadmap-tasks-progress-segment-tooltip-body";
   bodyEl.textContent = tooltipCopy.body;
 
   tooltipEl.appendChild(titleEl);
   tooltipEl.appendChild(bodyEl);
   segmentEl.appendChild(tooltipEl);
 
-  const ariaLabel = `${tooltipCopy.title}: ${formatProjectTaskProgressSegmentCount(segment.count)}`;
+  const ariaLabel = `${tooltipCopy.title}: ${formatRoadmapTaskProgressSegmentCount(segment.count)}`;
   segmentEl.setAttribute("aria-label", ariaLabel);
   segmentEl.setAttribute("tabindex", "0");
 }
 
-function renderProjectTaskProgressSummary(detailsEl, breakdown) {
+function renderRoadmapTaskProgressSummary(detailsEl, breakdown) {
   if (!detailsEl) return;
-  const progressWrap = detailsEl.querySelector(".project-tasks-progress");
-  const barEl = detailsEl.querySelector(".project-tasks-progress-bar");
-  const legendEl = detailsEl.querySelector(".project-tasks-progress-legend");
-  const countEl = detailsEl.querySelector(".project-tasks-summary-count");
+  const progressWrap = detailsEl.querySelector(".roadmap-tasks-progress");
+  const barEl = detailsEl.querySelector(".roadmap-tasks-progress-bar");
+  const legendEl = detailsEl.querySelector(".roadmap-tasks-progress-legend");
+  const countEl = detailsEl.querySelector(".roadmap-tasks-summary-count");
   if (!progressWrap || !barEl || !legendEl) return;
 
-  const showProgress = shouldShowProjectTasksProgress(detailsEl, breakdown);
+  const showProgress = shouldShowRoadmapTasksProgress(detailsEl, breakdown);
   progressWrap.hidden = !showProgress;
   progressWrap.setAttribute("aria-hidden", showProgress ? "false" : "true");
-  detailsEl.classList.toggle("project-tasks-disclosure--progress-visible", showProgress);
+  detailsEl.classList.toggle("roadmap-tasks-disclosure--progress-visible", showProgress);
 
   if (countEl) {
     countEl.textContent = breakdown.total ? `${breakdown.total} task${breakdown.total === 1 ? "" : "s"}` : "";
@@ -6812,112 +7128,112 @@ function renderProjectTaskProgressSummary(detailsEl, breakdown) {
     return;
   }
 
-  barEl.setAttribute("aria-label", buildProjectTaskProgressSummaryLabel(breakdown));
+  barEl.setAttribute("aria-label", buildRoadmapTaskProgressSummaryLabel(breakdown));
 
   legendEl.style.gridTemplateColumns = `repeat(${breakdown.segments.length}, minmax(0, 1fr))`;
 
   breakdown.segments.forEach((segment) => {
     const segmentEl = document.createElement("span");
-    segmentEl.className = "project-tasks-progress-segment";
+    segmentEl.className = "roadmap-tasks-progress-segment";
     segmentEl.dataset.status = segment.status;
     segmentEl.style.flexBasis = `${segment.pct}%`;
     segmentEl.style.width = `${segment.pct}%`;
-    appendProjectTaskProgressSegmentTooltip(segmentEl, segment);
+    appendRoadmapTaskProgressSegmentTooltip(segmentEl, segment);
     barEl.appendChild(segmentEl);
 
     const legendItem = document.createElement("span");
-    legendItem.className = "project-tasks-progress-legend-item";
+    legendItem.className = "roadmap-tasks-progress-legend-item";
     legendItem.dataset.status = segment.status;
-    legendItem.innerHTML = `<span class="project-tasks-progress-legend-dot" aria-hidden="true"></span><span class="project-tasks-progress-legend-copy">${segment.status} <strong>${segment.pct}%</strong></span>`;
+    legendItem.innerHTML = `<span class="roadmap-tasks-progress-legend-dot" aria-hidden="true"></span><span class="roadmap-tasks-progress-legend-copy">${segment.status} <strong>${segment.pct}%</strong></span>`;
     legendEl.appendChild(legendItem);
   });
 }
 
-function syncProjectTasksDisclosureAria(detailsEl) {
+function syncRoadmapTasksDisclosureAria(detailsEl) {
   if (!detailsEl) return;
   const summary = detailsEl.querySelector("summary");
   if (!summary) return;
-  const titleEl = summary.querySelector(".project-tasks-summary-title");
+  const titleEl = summary.querySelector(".roadmap-tasks-summary-title");
   const name = titleEl ? titleEl.textContent.trim() : "Tasks";
   summary.setAttribute("aria-expanded", detailsEl.open ? "true" : "false");
   summary.setAttribute("aria-label", detailsEl.open ? `Collapse ${name}` : `Expand ${name}`);
 }
 
-function syncProjectTasksDisclosure({ resetCollapsed = false } = {}) {
+function syncRoadmapTasksDisclosure({ resetCollapsed = false } = {}) {
   const wrap =
-    document.querySelector("[data-project-tasks-collapsible]") || elements.projectTasksCollapsibleWrap;
+    document.querySelector("[data-roadmap-tasks-collapsible]") || elements.roadmapTasksCollapsibleWrap;
   if (!wrap) return;
-  const detailsEl = wrap.querySelector(".project-tasks-disclosure");
+  const detailsEl = wrap.querySelector(".roadmap-tasks-disclosure");
   if (!detailsEl) return;
 
   if (resetCollapsed) {
     detailsEl.open = false;
   }
 
-  const breakdown = computeProjectTaskStatusBreakdown(getProjectTasksSnapshotForProgress());
-  detailsEl.classList.toggle("project-tasks-disclosure--has-tasks", breakdown.total > 0);
-  renderProjectTaskProgressSummary(detailsEl, breakdown);
-  syncProjectTasksDisclosureAria(detailsEl);
+  const breakdown = computeRoadmapTaskStatusBreakdown(getRoadmapTasksSnapshotForProgress());
+  detailsEl.classList.toggle("roadmap-tasks-disclosure--has-tasks", breakdown.total > 0);
+  renderRoadmapTaskProgressSummary(detailsEl, breakdown);
+  syncRoadmapTasksDisclosureAria(detailsEl);
 }
 
-function scheduleProjectTasksDisclosureSync() {
-  if (projectTasksDisclosureSyncFrame != null) {
-    cancelAnimationFrame(projectTasksDisclosureSyncFrame);
+function scheduleRoadmapTasksDisclosureSync() {
+  if (roadmapTasksDisclosureSyncFrame != null) {
+    cancelAnimationFrame(roadmapTasksDisclosureSyncFrame);
   }
-  projectTasksDisclosureSyncFrame = requestAnimationFrame(() => {
-    projectTasksDisclosureSyncFrame = null;
-    syncProjectTasksDisclosure();
+  roadmapTasksDisclosureSyncFrame = requestAnimationFrame(() => {
+    roadmapTasksDisclosureSyncFrame = null;
+    syncRoadmapTasksDisclosure();
   });
 }
 
-let projectTasksDisclosureSyncFrame = null;
+let roadmapTasksDisclosureSyncFrame = null;
 
-function wrapProjectTasksField(wrap) {
+function wrapRoadmapTasksField(wrap) {
   if (!wrap || wrap.dataset.tasksDisclosureWrapped === "1") return;
-  if (!wrap.hasAttribute("data-project-tasks-collapsible")) return;
+  if (!wrap.hasAttribute("data-roadmap-tasks-collapsible")) return;
 
   const labelEl = wrap.querySelector(":scope > label") || wrap.querySelector("label");
   if (!labelEl) return;
 
   const titleText = getOptionalFieldSummaryText(labelEl) || "Tasks";
-  const hintEl = wrap.querySelector(":scope > .project-dynamic-field-hint");
+  const hintEl = wrap.querySelector(":scope > .roadmap-dynamic-field-hint");
   const subtitle = hintEl ? hintEl.textContent.trim() : "";
 
   const details = document.createElement("details");
-  details.className = "project-tasks-disclosure project-optional-disclosure";
+  details.className = "roadmap-tasks-disclosure roadmap-optional-disclosure";
   details.open = false;
 
   const summary = document.createElement("summary");
-  summary.className = "project-tasks-disclosure-summary project-optional-field-summary";
+  summary.className = "roadmap-tasks-disclosure-summary roadmap-optional-field-summary";
 
   const row = document.createElement("div");
-  row.className = "project-optional-summary-row project-tasks-summary-row";
+  row.className = "roadmap-optional-summary-row roadmap-tasks-summary-row";
 
   const lead = document.createElement("span");
-  lead.className = "project-optional-summary-lead project-tasks-summary-lead";
+  lead.className = "roadmap-optional-summary-lead roadmap-tasks-summary-lead";
   lead.setAttribute("aria-hidden", "true");
 
   const copy = document.createElement("div");
-  copy.className = "project-optional-summary-copy";
+  copy.className = "roadmap-optional-summary-copy";
 
   const titleSpan = document.createElement("span");
-  titleSpan.className = "project-optional-field-summary-title project-tasks-summary-title";
+  titleSpan.className = "roadmap-optional-field-summary-title roadmap-tasks-summary-title";
   titleSpan.textContent = titleText;
   copy.appendChild(titleSpan);
 
   if (subtitle) {
     const subtitleSpan = document.createElement("span");
-    subtitleSpan.className = "project-optional-field-summary-subtitle project-tasks-summary-subtitle";
+    subtitleSpan.className = "roadmap-optional-field-summary-subtitle roadmap-tasks-summary-subtitle";
     subtitleSpan.textContent = subtitle.length > 72 ? `${subtitle.slice(0, 69)}…` : subtitle;
     copy.appendChild(subtitleSpan);
   }
 
   const countBadge = document.createElement("span");
-  countBadge.className = "project-tasks-summary-count";
+  countBadge.className = "roadmap-tasks-summary-count";
   countBadge.hidden = true;
 
   const chevron = document.createElement("span");
-  chevron.className = "project-optional-summary-chevron";
+  chevron.className = "roadmap-optional-summary-chevron";
   chevron.setAttribute("aria-hidden", "true");
 
   row.appendChild(lead);
@@ -6926,16 +7242,16 @@ function wrapProjectTasksField(wrap) {
   row.appendChild(chevron);
 
   const progressWrap = document.createElement("div");
-  progressWrap.className = "project-tasks-progress";
+  progressWrap.className = "roadmap-tasks-progress";
   progressWrap.hidden = true;
   progressWrap.setAttribute("aria-hidden", "true");
 
   const barEl = document.createElement("div");
-  barEl.className = "project-tasks-progress-bar";
+  barEl.className = "roadmap-tasks-progress-bar";
   barEl.setAttribute("role", "img");
 
   const legendEl = document.createElement("div");
-  legendEl.className = "project-tasks-progress-legend";
+  legendEl.className = "roadmap-tasks-progress-legend";
 
   progressWrap.appendChild(barEl);
   progressWrap.appendChild(legendEl);
@@ -6944,7 +7260,7 @@ function wrapProjectTasksField(wrap) {
   summary.appendChild(progressWrap);
 
   const body = document.createElement("div");
-  body.className = "project-tasks-disclosure-body project-optional-field-body";
+  body.className = "roadmap-tasks-disclosure-body roadmap-optional-field-body";
 
   Array.from(wrap.childNodes).forEach((child) => {
     if (child === labelEl) return;
@@ -6958,14 +7274,14 @@ function wrapProjectTasksField(wrap) {
   wrap.dataset.tasksDisclosureWrapped = "1";
 }
 
-function ensureProjectTasksDisclosure() {
-  const wrap = document.querySelector("#projectForm [data-project-tasks-collapsible]");
+function ensureRoadmapTasksDisclosure() {
+  const wrap = document.querySelector("#roadmapForm [data-roadmap-tasks-collapsible]");
   if (!wrap) return;
   try {
-    wrapProjectTasksField(wrap);
-    syncProjectTasksDisclosure({ resetCollapsed: true });
+    wrapRoadmapTasksField(wrap);
+    syncRoadmapTasksDisclosure({ resetCollapsed: true });
   } catch (err) {
-    console.error("Project tasks disclosure failed to initialize:", err);
+    console.error("Roadmap tasks disclosure failed to initialize:", err);
   }
 }
 
@@ -6984,7 +7300,7 @@ const RACI_MATRIX_ROLE_SHORT = {
   informed: "I"
 };
 
-function getEmptyProjectRaci() {
+function getEmptyRoadmapRaci() {
   return {
     responsible: [],
     accountable: [],
@@ -7013,7 +7329,7 @@ function normalizeRaciEntries(entries) {
   return out;
 }
 
-function normalizeProjectRaci(raci) {
+function normalizeRoadmapRaci(raci) {
   const source = raci && typeof raci === "object" ? raci : {};
   return {
     responsible: normalizeRaciEntries(source.responsible),
@@ -7023,9 +7339,9 @@ function normalizeProjectRaci(raci) {
   };
 }
 
-function getProjectRaciContainer(role) {
-  if (!elements.projectRaciSection) return null;
-  return elements.projectRaciSection.querySelector(`.project-raci-list[data-raci-role="${role}"]`);
+function getRoadmapRaciContainer(role) {
+  if (!elements.roadmapRaciSection) return null;
+  return elements.roadmapRaciSection.querySelector(`.roadmap-raci-list[data-raci-role="${role}"]`);
 }
 
 function getPersonDisplayInitials(name) {
@@ -7038,9 +7354,9 @@ function getPersonDisplayInitials(name) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-function buildProjectRaciDomainSelect(selectedDomain) {
+function buildRoadmapRaciDomainSelect(selectedDomain) {
   const select = document.createElement("select");
-  select.className = "project-raci-domain-select";
+  select.className = "roadmap-raci-domain-select";
   select.setAttribute("aria-label", "Business or Tech");
   RACI_DOMAIN_OPTIONS.forEach((domain) => {
     const option = document.createElement("option");
@@ -7052,11 +7368,11 @@ function buildProjectRaciDomainSelect(selectedDomain) {
   return select;
 }
 
-function ensureProjectRaciRowHeader(container) {
+function ensureRoadmapRaciRowHeader(container) {
   if (!container) return;
-  if (container.querySelector(".project-raci-row-header")) return;
+  if (container.querySelector(".roadmap-raci-row-header")) return;
   const header = document.createElement("div");
-  header.className = "project-raci-row-header";
+  header.className = "roadmap-raci-row-header";
   header.setAttribute("aria-hidden", "true");
   const colName = document.createElement("span");
   colName.textContent = "Name";
@@ -7069,41 +7385,41 @@ function ensureProjectRaciRowHeader(container) {
   container.appendChild(header);
 }
 
-function renderProjectRaciRoleControls(role, entries, { readonly = false } = {}) {
-  const container = getProjectRaciContainer(role);
+function renderRoadmapRaciRoleControls(role, entries, { readonly = false } = {}) {
+  const container = getRoadmapRaciContainer(role);
   if (!container) return;
   container.innerHTML = "";
   const normalized = normalizeRaciEntries(entries);
   if (readonly) {
     if (!normalized.length) {
       const hint = document.createElement("p");
-      hint.className = "project-field-empty-hint";
+      hint.className = "roadmap-field-empty-hint";
       hint.textContent = "No entries added";
       container.appendChild(hint);
       return;
     }
     const wrap = document.createElement("div");
-    wrap.className = "project-raci-readonly";
+    wrap.className = "roadmap-raci-readonly";
     wrap.setAttribute("role", "list");
     normalized.forEach((entry) => {
       const row = document.createElement("article");
-      row.className = "project-raci-card";
+      row.className = "roadmap-raci-card";
       row.setAttribute("role", "listitem");
 
       const avatar = document.createElement("span");
-      avatar.className = "project-raci-card__avatar";
+      avatar.className = "roadmap-raci-card__avatar";
       avatar.setAttribute("aria-hidden", "true");
       avatar.textContent = getPersonDisplayInitials(entry.name);
 
       const body = document.createElement("div");
-      body.className = "project-raci-card__body";
+      body.className = "roadmap-raci-card__body";
 
       const nameEl = document.createElement("span");
-      nameEl.className = "project-raci-card__name";
+      nameEl.className = "roadmap-raci-card__name";
       nameEl.textContent = entry.name;
 
       const domainEl = document.createElement("span");
-      domainEl.className = "project-raci-card__domain";
+      domainEl.className = "roadmap-raci-card__domain";
       domainEl.dataset.domain = entry.domain;
       domainEl.textContent = entry.domain;
 
@@ -7116,40 +7432,40 @@ function renderProjectRaciRoleControls(role, entries, { readonly = false } = {})
     container.appendChild(wrap);
     return;
   }
-  ensureProjectRaciRowHeader(container);
+  ensureRoadmapRaciRowHeader(container);
   const list = normalized.length ? normalized : [{ name: "", domain: "Business" }];
-  list.forEach((entry) => addProjectRaciRow(role, entry));
+  list.forEach((entry) => addRoadmapRaciRow(role, entry));
 }
 
-function renderProjectRaciControls(raci, { readonly = false } = {}) {
-  const normalized = normalizeProjectRaci(raci);
+function renderRoadmapRaciControls(raci, { readonly = false } = {}) {
+  const normalized = normalizeRoadmapRaci(raci);
   RACI_ROLES.forEach((role) => {
-    renderProjectRaciRoleControls(role, normalized[role], { readonly });
+    renderRoadmapRaciRoleControls(role, normalized[role], { readonly });
   });
 }
 
-function addProjectRaciRow(role, entry) {
-  const container = getProjectRaciContainer(role);
+function addRoadmapRaciRow(role, entry) {
+  const container = getRoadmapRaciContainer(role);
   if (!container) return;
-  ensureProjectRaciRowHeader(container);
+  ensureRoadmapRaciRowHeader(container);
   const row = document.createElement("div");
-  row.className = "project-raci-row";
+  row.className = "roadmap-raci-row";
 
   const fields = document.createElement("div");
-  fields.className = "project-raci-row__fields";
+  fields.className = "roadmap-raci-row__fields";
 
   const nameInput = document.createElement("input");
   nameInput.type = "text";
-  nameInput.className = "project-raci-name-input";
+  nameInput.className = "roadmap-raci-name-input";
   nameInput.placeholder = "e.g. Jane Doe, Platform team";
   nameInput.setAttribute("aria-label", "RACI entry name");
   nameInput.value = (entry && entry.name) || "";
 
-  const domainSelect = buildProjectRaciDomainSelect(entry && entry.domain);
+  const domainSelect = buildRoadmapRaciDomainSelect(entry && entry.domain);
 
   const removeBtn = document.createElement("button");
   removeBtn.type = "button";
-  removeBtn.className = "project-raci-remove-btn";
+  removeBtn.className = "roadmap-raci-remove-btn";
   removeBtn.textContent = "×";
   removeBtn.setAttribute("aria-label", "Remove entry");
 
@@ -7160,15 +7476,15 @@ function addProjectRaciRow(role, entry) {
   container.appendChild(row);
 }
 
-function getProjectRaciFromControls() {
-  const raci = getEmptyProjectRaci();
+function getRoadmapRaciFromControls() {
+  const raci = getEmptyRoadmapRaci();
   RACI_ROLES.forEach((role) => {
-    const container = getProjectRaciContainer(role);
+    const container = getRoadmapRaciContainer(role);
     if (!container) return;
-    const rows = container.querySelectorAll(".project-raci-row");
+    const rows = container.querySelectorAll(".roadmap-raci-row");
     rows.forEach((row) => {
-      const name = (row.querySelector(".project-raci-name-input")?.value || "").trim();
-      const domainRaw = row.querySelector(".project-raci-domain-select")?.value || "";
+      const name = (row.querySelector(".roadmap-raci-name-input")?.value || "").trim();
+      const domainRaw = row.querySelector(".roadmap-raci-domain-select")?.value || "";
       if (!name) return;
       raci[role].push({
         name,
@@ -7177,11 +7493,11 @@ function getProjectRaciFromControls() {
     });
     raci[role] = normalizeRaciEntries(raci[role]);
   });
-  return normalizeProjectRaci(raci);
+  return normalizeRoadmapRaci(raci);
 }
 
-function getRaciEntriesForMatrixDomain(project, role, domain) {
-  const raci = normalizeProjectRaci(project && project.raci);
+function getRaciEntriesForMatrixDomain(roadmap, role, domain) {
+  const raci = normalizeRoadmapRaci(roadmap && roadmap.raci);
   const needle = normalizeRaciDomain(domain);
   return raci[role].filter((entry) => entry.domain === needle);
 }
@@ -7199,22 +7515,22 @@ function syncRaciMatrixDomainToggle(domain) {
 }
 
 function renderRaciMatrixEmptyMessage(message) {
-  if (!elements.projectsRaciMatrixTable) return;
-  elements.projectsRaciMatrixTable.innerHTML = "";
-  elements.projectsRaciMatrixTable.className = "raci-matrix-board-host raci-matrix-board-host--empty";
+  if (!elements.roadmapsRaciMatrixTable) return;
+  elements.roadmapsRaciMatrixTable.innerHTML = "";
+  elements.roadmapsRaciMatrixTable.className = "raci-matrix-board-host raci-matrix-board-host--empty";
   const empty = document.createElement("p");
   empty.className = "raci-matrix-empty";
   empty.textContent = message;
-  elements.projectsRaciMatrixTable.appendChild(empty);
+  elements.roadmapsRaciMatrixTable.appendChild(empty);
 }
 
-function buildRaciMatrixProjectLink(project) {
+function buildRaciMatrixRoadmapLink(roadmap) {
   const titleBtn = document.createElement("button");
   titleBtn.type = "button";
-  titleBtn.className = "raci-matrix-project-link";
-  titleBtn.textContent = project.title || "Untitled project";
-  titleBtn.setAttribute("data-action", "viewProject");
-  titleBtn.setAttribute("data-id", project.id);
+  titleBtn.className = "raci-matrix-roadmap-link";
+  titleBtn.textContent = roadmap.title || "Untitled roadmap";
+  titleBtn.setAttribute("data-action", "viewRoadmap");
+  titleBtn.setAttribute("data-id", roadmap.id);
   return titleBtn;
 }
 
@@ -7298,14 +7614,14 @@ function buildRaciMatrixTooltipWrap(entries, role, contentNode) {
   return wrap;
 }
 
-function buildRaciMatrixCardRoleValue(entries, role, projectId) {
+function buildRaciMatrixCardRoleValue(entries, role, roadmapId) {
   const body = document.createElement("div");
   body.className = "raci-matrix-card__role-body";
 
   const value = document.createElement("div");
   value.className = "raci-matrix-card__role-value raci-matrix-role-value";
   value.dataset.raciRole = role;
-  value.id = `raci-card-${projectId}-${role}-assignees`;
+  value.id = `raci-card-${roadmapId}-${role}-assignees`;
 
   if (!entries.length) {
     const empty = document.createElement("span");
@@ -7425,30 +7741,30 @@ function buildRaciMatrixColumnHead(role) {
   return wrap;
 }
 
-function buildRaciMatrixDesktopProjectCell(project) {
+function buildRaciMatrixDesktopRoadmapCell(roadmap) {
   const wrap = document.createElement("div");
-  wrap.className = "raci-matrix-grid__project";
+  wrap.className = "raci-matrix-grid__roadmap";
 
-  if (isSuperAdminModeActive() && project.ownerProfileName) {
-    const ownerStrip = buildProjectOwnerIdentityElement(project, {
+  if (isSuperAdminModeActive() && roadmap.ownerProfileName) {
+    const ownerStrip = buildRoadmapOwnerIdentityElement(roadmap, {
       variant: "raci-grid",
       showTeam: false,
       showScopeHint: true
     });
     if (ownerStrip) {
-      wrap.classList.add("raci-matrix-grid__project--has-owner");
+      wrap.classList.add("raci-matrix-grid__roadmap--has-owner");
       wrap.appendChild(ownerStrip);
     }
   }
 
-  const titleBtn = buildRaciMatrixProjectLink(project);
-  titleBtn.classList.add("raci-matrix-grid__project-link");
+  const titleBtn = buildRaciMatrixRoadmapLink(roadmap);
+  titleBtn.classList.add("raci-matrix-grid__roadmap-link");
   wrap.appendChild(titleBtn);
 
   return wrap;
 }
 
-function buildRaciMatrixDesktopGrid(projects, domain) {
+function buildRaciMatrixDesktopGrid(roadmaps, domain) {
   const panel = document.createElement("div");
   panel.className = "raci-matrix-table-panel";
 
@@ -7461,11 +7777,11 @@ function buildRaciMatrixDesktopGrid(projects, domain) {
   headerRow.className = "raci-matrix-grid__row raci-matrix-grid__row--head";
   headerRow.setAttribute("role", "row");
 
-  const projectHead = document.createElement("div");
-  projectHead.className = "raci-matrix-grid__cell raci-matrix-grid__cell--project";
-  projectHead.setAttribute("role", "columnheader");
-  projectHead.textContent = "Project";
-  headerRow.appendChild(projectHead);
+  const roadmapHead = document.createElement("div");
+  roadmapHead.className = "raci-matrix-grid__cell raci-matrix-grid__cell--roadmap";
+  roadmapHead.setAttribute("role", "columnheader");
+  roadmapHead.textContent = "Roadmap";
+  headerRow.appendChild(roadmapHead);
 
   RACI_ROLES.forEach((role) => {
     const headCell = document.createElement("div");
@@ -7478,25 +7794,25 @@ function buildRaciMatrixDesktopGrid(projects, domain) {
   });
   grid.appendChild(headerRow);
 
-  projects.forEach((project) => {
+  roadmaps.forEach((roadmap) => {
     const row = document.createElement("div");
     row.className = "raci-matrix-grid__row";
     row.setAttribute("role", "row");
     if (
       isSuperAdminModeActive() &&
-      project.ownerProfileId &&
-      project.ownerProfileId !== state.activeProfileId
+      roadmap.ownerProfileId &&
+      roadmap.ownerProfileId !== state.activeProfileId
     ) {
       row.classList.add("raci-matrix-grid__row--external-profile");
     }
 
-    const projectCell = document.createElement("div");
-    projectCell.className = "raci-matrix-grid__cell raci-matrix-grid__cell--project";
-    projectCell.setAttribute("role", "rowheader");
-    projectCell.appendChild(buildRaciMatrixDesktopProjectCell(project));
-    row.appendChild(projectCell);
+    const roadmapCell = document.createElement("div");
+    roadmapCell.className = "raci-matrix-grid__cell raci-matrix-grid__cell--roadmap";
+    roadmapCell.setAttribute("role", "rowheader");
+    roadmapCell.appendChild(buildRaciMatrixDesktopRoadmapCell(roadmap));
+    row.appendChild(roadmapCell);
 
-    const raci = normalizeProjectRaci(project.raci);
+    const raci = normalizeRoadmapRaci(roadmap.raci);
     RACI_ROLES.forEach((role) => {
       const roleCell = document.createElement("div");
       roleCell.className = "raci-matrix-grid__cell raci-matrix-grid__cell--role";
@@ -7514,31 +7830,31 @@ function buildRaciMatrixDesktopGrid(projects, domain) {
   return panel;
 }
 
-function buildRaciMatrixCards(projects, domain) {
+function buildRaciMatrixCards(roadmaps, domain) {
   const cards = document.createElement("div");
   cards.className = "raci-matrix-cards";
   cards.setAttribute("role", "list");
-  cards.setAttribute("aria-label", `RACI project cards (${domain} perspective)`);
+  cards.setAttribute("aria-label", `RACI roadmap cards (${domain} perspective)`);
 
-  projects.forEach((project) => {
+  roadmaps.forEach((roadmap) => {
     const card = document.createElement("article");
     card.className = "raci-matrix-card";
     card.setAttribute("role", "listitem");
     if (
       isSuperAdminModeActive() &&
-      project.ownerProfileId &&
-      project.ownerProfileId !== state.activeProfileId
+      roadmap.ownerProfileId &&
+      roadmap.ownerProfileId !== state.activeProfileId
     ) {
       card.classList.add("raci-matrix-card--external-profile");
     }
 
     const header = document.createElement("header");
     header.className = "raci-matrix-card__header";
-    header.appendChild(buildRaciMatrixProjectLink(project));
+    header.appendChild(buildRaciMatrixRoadmapLink(roadmap));
 
     const roles = document.createElement("div");
     roles.className = "raci-matrix-card__roles";
-    const raci = normalizeProjectRaci(project.raci);
+    const raci = normalizeRoadmapRaci(roadmap.raci);
     RACI_ROLES.forEach((role) => {
       const roleRow = document.createElement("div");
       roleRow.className = "raci-matrix-card__role";
@@ -7561,11 +7877,11 @@ function buildRaciMatrixCards(projects, domain) {
       if (entries.length > 1) {
         roleRow.classList.add("raci-matrix-card__role--expandable", "raci-matrix-card__role--collapsed");
       }
-      roleRow.appendChild(buildRaciMatrixCardRoleValue(entries, role, project.id));
+      roleRow.appendChild(buildRaciMatrixCardRoleValue(entries, role, roadmap.id));
       roles.appendChild(roleRow);
     });
 
-    const ownerStrip = buildPortfolioCardOwnerStrip(project);
+    const ownerStrip = buildPortfolioCardOwnerStrip(roadmap);
     if (ownerStrip) {
       card.classList.add("raci-matrix-card--has-owner");
       card.appendChild(ownerStrip);
@@ -7579,7 +7895,7 @@ function buildRaciMatrixCards(projects, domain) {
 }
 
 function renderRaciMatrix() {
-  if (!elements.projectsRaciMatrixTable) return;
+  if (!elements.roadmapsRaciMatrixTable) return;
   const domain = normalizeRaciDomain(state.raciMatrixDomain);
   syncRaciMatrixDomainToggle(domain);
 
@@ -7593,36 +7909,968 @@ function renderRaciMatrix() {
     return;
   }
 
-  const baseProjects = getPortfolioProjectsBaseList();
-  const projects = sortProjects(applyFilters(baseProjects));
-  if (!projects.length) {
+  const baseRoadmaps = getPortfolioRoadmapsBaseList();
+  const roadmaps = sortRoadmaps(applyFilters(baseRoadmaps));
+  if (!roadmaps.length) {
     renderRaciMatrixEmptyMessage(
       isSuperAdminModeActive()
-        ? "No projects match the current filters across all profiles."
-        : "No projects match the current filters."
+        ? "No roadmaps match the current filters across all profiles."
+        : "No roadmaps match the current filters."
     );
     return;
   }
 
   const board = document.createElement("div");
   board.className = "raci-matrix-board";
-  board.appendChild(buildRaciMatrixDesktopGrid(projects, domain));
-  board.appendChild(buildRaciMatrixCards(projects, domain));
+  board.appendChild(buildRaciMatrixDesktopGrid(roadmaps, domain));
+  board.appendChild(buildRaciMatrixCards(roadmaps, domain));
 
-  elements.projectsRaciMatrixTable.className = "raci-matrix-board-host";
-  elements.projectsRaciMatrixTable.innerHTML = "";
-  elements.projectsRaciMatrixTable.appendChild(board);
+  elements.roadmapsRaciMatrixTable.className = "raci-matrix-board-host";
+  elements.roadmapsRaciMatrixTable.innerHTML = "";
+  elements.roadmapsRaciMatrixTable.appendChild(board);
 }
 
-function renderNonTableProjectsView() {
-  if (state.projectsView === "board" && elements.scrumBoardContainer) {
+function renderNonTableRoadmapsView() {
+  if (state.roadmapsView === "board" && elements.scrumBoardContainer) {
     renderScrumBoard();
-  } else if (state.projectsView === "moscow" && elements.moscowBoardContainer) {
+  } else if (state.roadmapsView === "moscow" && elements.moscowBoardContainer) {
     renderMoscowBoard();
-  } else if (state.projectsView === "map" && elements.projectsMapContainer) {
-    renderProjectsMap();
-  } else if (state.projectsView === "raci" && elements.projectsRaciMatrixTable) {
+  } else if (state.roadmapsView === "map" && elements.roadmapsMapContainer) {
+    renderRoadmapsMap();
+  } else if (state.roadmapsView === "raci" && elements.roadmapsRaciMatrixTable) {
     renderRaciMatrix();
+  } else if (state.roadmapsView === "kano" && elements.portfolioKanoMatrix) {
+    renderKanoPortfolioMatrix();
+  }
+}
+
+function roadmapHasKanoPosition(roadmap) {
+  const f = normalizeKanoAxisLevel(roadmap && roadmap.kanoFunctionality);
+  const s = normalizeKanoAxisLevel(roadmap && roadmap.kanoSatisfaction);
+  return f != null && s != null;
+}
+
+function truncatePortfolioKanoLabel(text, maxLen = 22) {
+  const value = String(text || "").trim();
+  if (!value) return "Untitled";
+  if (value.length <= maxLen) return value;
+  return `${value.slice(0, maxLen - 1)}…`;
+}
+
+function ensurePortfolioKanoLegend() {
+  const legend = elements.portfolioKanoLegend;
+  if (!legend || legend.dataset.kanoLegendReady === "1") return;
+  if (typeof kanoCategoryLegend === "undefined" || !Array.isArray(kanoCategoryLegend)) return;
+  legend.dataset.kanoLegendReady = "1";
+  legend.innerHTML = "";
+  kanoCategoryLegend.forEach((entry) => {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = `portfolio-kano-legend__item portfolio-kano-legend__item--${entry.id}`;
+    item.dataset.kanoZone = entry.id;
+    item.setAttribute("aria-pressed", "false");
+    item.title = entry.description || entry.label;
+
+    const code = document.createElement("span");
+    code.className = "portfolio-kano-legend__code";
+    code.textContent =
+      entry.categoryCode && entry.hintCode ? `${entry.categoryCode}-${entry.hintCode}` : entry.compactLabel || entry.label.slice(0, 1);
+
+    const copy = document.createElement("span");
+    copy.className = "portfolio-kano-legend__copy";
+    const label = document.createElement("span");
+    label.className = "portfolio-kano-legend__label";
+    label.textContent = entry.label;
+    const hint = document.createElement("span");
+    hint.className = "portfolio-kano-legend__hint";
+    hint.textContent = entry.hint || entry.compactLabel || "";
+    copy.appendChild(label);
+    copy.appendChild(hint);
+
+    const count = document.createElement("span");
+    count.className = "portfolio-kano-legend__count";
+    count.dataset.kanoLegendCount = entry.id;
+    count.textContent = "0";
+
+    item.appendChild(code);
+    item.appendChild(copy);
+    item.appendChild(count);
+    item.setAttribute(
+      "aria-label",
+      `${entry.label}${entry.hint ? `, ${entry.hint}` : ""}, 0 roadmaps`
+    );
+    legend.appendChild(item);
+  });
+  initPortfolioKanoLegendFilter();
+}
+
+function updatePortfolioKanoLegendCounts(positionedRoadmaps) {
+  if (!elements.portfolioKanoLegend) return;
+  const counts = {};
+  positionedRoadmaps.forEach((roadmap) => {
+    const f = normalizeKanoAxisLevel(roadmap.kanoFunctionality);
+    const s = normalizeKanoAxisLevel(roadmap.kanoSatisfaction);
+    const zoneId = getKanoCellZoneId(f, s);
+    counts[zoneId] = (counts[zoneId] || 0) + 1;
+  });
+  elements.portfolioKanoLegend.querySelectorAll("[data-kano-legend-count]").forEach((el) => {
+    const zone = el.getAttribute("data-kano-legend-count");
+    const count = counts[zone] || 0;
+    el.textContent = String(count);
+    const item = el.closest(".portfolio-kano-legend__item");
+    if (item) {
+      const entry = kanoCategoryLegend.find((e) => e.id === zone);
+      if (entry) {
+        item.setAttribute(
+          "aria-label",
+          `${entry.label}${entry.hint ? `, ${entry.hint}` : ""}, ${count} roadmap${count === 1 ? "" : "s"}`
+        );
+      }
+    }
+  });
+}
+
+let portfolioKanoLegendFilter = null;
+let portfolioKanoPointerDrag = null;
+let portfolioKanoDropHighlightCell = null;
+let portfolioKanoSuppressNextTileClick = false;
+const PORTFOLIO_KANO_CELL_DRAG_OVER = "portfolio-kano-matrix-cell--drag-over";
+const PORTFOLIO_KANO_DRAG_THRESHOLD_PX = 6;
+
+function initPortfolioKanoLegendFilter() {
+  if (!elements.portfolioKanoLegend || elements.portfolioKanoLegend.dataset.filterReady === "1") return;
+  elements.portfolioKanoLegend.dataset.filterReady = "1";
+  elements.portfolioKanoLegend.addEventListener("click", (event) => {
+    const btn = event.target.closest(".portfolio-kano-legend__item");
+    if (!btn) return;
+    const zone = btn.getAttribute("data-kano-zone");
+    portfolioKanoLegendFilter = portfolioKanoLegendFilter === zone ? null : zone;
+    syncPortfolioKanoLegendFilter();
+  });
+}
+
+function syncPortfolioKanoLegendFilter() {
+  if (elements.portfolioKanoLegend) {
+    elements.portfolioKanoLegend.querySelectorAll(".portfolio-kano-legend__item").forEach((item) => {
+      const active = portfolioKanoLegendFilter === item.getAttribute("data-kano-zone");
+      item.classList.toggle("portfolio-kano-legend__item--active", active);
+      item.setAttribute("aria-pressed", String(active));
+    });
+  }
+  const host = elements.portfolioKanoMatrix;
+  if (!host) return;
+  host.classList.toggle("portfolio-kano-matrix-host--filtered", !!portfolioKanoLegendFilter);
+  host.querySelectorAll(".portfolio-kano-matrix-cell").forEach((cell) => {
+    const match = !portfolioKanoLegendFilter || cell.dataset.kanoZone === portfolioKanoLegendFilter;
+    cell.classList.toggle("portfolio-kano-matrix-cell--dimmed", !match);
+  });
+  host.querySelectorAll(".portfolio-kano-matrix-tile").forEach((tile) => {
+    const match =
+      !portfolioKanoLegendFilter ||
+      Array.from(tile.classList).some((cls) => cls === `portfolio-kano-matrix-tile--${portfolioKanoLegendFilter}`);
+    tile.classList.toggle("portfolio-kano-matrix-tile--dimmed", !match);
+  });
+  const listHost = elements.portfolioKanoPositionedList;
+  if (listHost) {
+    listHost.classList.toggle("portfolio-kano-positioned-list--filtered", !!portfolioKanoLegendFilter);
+    listHost.querySelectorAll(".portfolio-kano-compact-group").forEach((group) => {
+      const match = !portfolioKanoLegendFilter || group.dataset.kanoZone === portfolioKanoLegendFilter;
+      group.classList.toggle("portfolio-kano-compact-group--dimmed", !match);
+    });
+    listHost.querySelectorAll(".portfolio-kano-compact-card").forEach((card) => {
+      const match = !portfolioKanoLegendFilter || card.dataset.kanoZone === portfolioKanoLegendFilter;
+      card.classList.toggle("portfolio-kano-compact-card--dimmed", !match);
+    });
+  }
+}
+
+function ensurePortfolioKanoMatrixMounted() {
+  const host = elements.portfolioKanoMatrix;
+  if (!host || host.dataset.kanoVersion === "6") return;
+  if (typeof kanoFunctionalityLevels === "undefined" || typeof kanoSatisfactionLevels === "undefined") {
+    return;
+  }
+
+  host.dataset.kanoVersion = "6";
+  host.innerHTML = "";
+
+  const shell = document.createElement("div");
+  shell.className = "portfolio-kano-matrix-shell";
+
+  const band = document.createElement("div");
+  band.className = "portfolio-kano-matrix-band";
+  band.setAttribute("aria-hidden", "true");
+  const bandY = document.createElement("span");
+  bandY.className = "portfolio-kano-matrix-band__item portfolio-kano-matrix-band__item--y";
+  bandY.textContent = "Satisfaction";
+  const bandX = document.createElement("span");
+  bandX.className = "portfolio-kano-matrix-band__item portfolio-kano-matrix-band__item--x";
+  bandX.textContent = "Functionality";
+  band.appendChild(bandY);
+  band.appendChild(bandX);
+  shell.appendChild(band);
+
+  const wrap = document.createElement("div");
+  wrap.className = "portfolio-kano-matrix-wrap";
+
+  const corner = document.createElement("div");
+  corner.className = "portfolio-kano-matrix-corner";
+  const yTitle = document.createElement("span");
+  yTitle.className = "portfolio-kano-axis-title portfolio-kano-axis-title--y";
+  yTitle.textContent = "Satisfaction";
+  corner.appendChild(yTitle);
+  wrap.appendChild(corner);
+
+  const appendPortfolioAxisLabel = (axis, level, meta) => {
+    const label = document.createElement("span");
+    label.className = `portfolio-kano-axis-label portfolio-kano-axis-label--${axis}`;
+    label.dataset.level = String(level);
+    const full = document.createElement("span");
+    full.className = "portfolio-kano-axis-label__full";
+    full.textContent = meta ? meta.shortLabel : String(level);
+    const micro = document.createElement("span");
+    micro.className = "portfolio-kano-axis-label__micro";
+    micro.textContent = String(level);
+    micro.setAttribute("aria-hidden", "true");
+    label.appendChild(full);
+    label.appendChild(micro);
+    if (meta && meta.description) label.title = `${meta.label || meta.shortLabel}: ${meta.description}`;
+    wrap.appendChild(label);
+  };
+
+  for (let s = 5; s >= 1; s -= 1) {
+    appendPortfolioAxisLabel("y", s, getKanoLevelMeta(kanoSatisfactionLevels, s));
+  }
+
+  const grid = document.createElement("div");
+  grid.className = "portfolio-kano-matrix-grid";
+  grid.setAttribute("role", "grid");
+  grid.setAttribute("aria-label", "Portfolio KANO matrix");
+
+  for (let s = 5; s >= 1; s -= 1) {
+    for (let f = 1; f <= 5; f += 1) {
+      const zoneId = getKanoCellZoneId(f, s);
+      const category =
+        typeof getKanoCategoryFromPosition === "function" ? getKanoCategoryFromPosition(f, s) : null;
+      const cell = document.createElement("div");
+      cell.className = `portfolio-kano-matrix-cell portfolio-kano-matrix-cell--zone-${zoneId}`;
+      cell.dataset.functionality = String(f);
+      cell.dataset.satisfaction = String(s);
+      cell.dataset.kanoZone = zoneId;
+      cell.style.gridColumn = String(f + 1);
+      cell.style.gridRow = String(7 - s);
+      cell.setAttribute("role", "gridcell");
+      cell.title = category ? category.label : "";
+
+      const glyphWrap = document.createElement("div");
+      glyphWrap.className = "portfolio-kano-matrix-cell__glyph-wrap";
+      glyphWrap.appendChild(buildRoadmapKanoCellGlyph(zoneId));
+      cell.appendChild(glyphWrap);
+
+      const countBadge = document.createElement("span");
+      countBadge.className = "portfolio-kano-matrix-cell__count";
+      countBadge.hidden = true;
+      countBadge.setAttribute("aria-hidden", "true");
+      cell.appendChild(countBadge);
+
+      const roadmapsWrap = document.createElement("div");
+      roadmapsWrap.className = "portfolio-kano-matrix-cell__roadmaps";
+      cell.appendChild(roadmapsWrap);
+      grid.appendChild(cell);
+    }
+  }
+
+  wrap.appendChild(grid);
+
+  for (let f = 1; f <= 5; f += 1) {
+    appendPortfolioAxisLabel("x", f, getKanoLevelMeta(kanoFunctionalityLevels, f));
+  }
+
+  const xTitle = document.createElement("span");
+  xTitle.className = "portfolio-kano-axis-title portfolio-kano-axis-title--x";
+  xTitle.textContent = "Functionality";
+  wrap.appendChild(xTitle);
+
+  shell.appendChild(wrap);
+  host.appendChild(shell);
+  initPortfolioKanoMatrixDragDrop();
+}
+
+function setRoadmapKanoPosition(roadmapId, functionality, satisfaction) {
+  if (!requireWritableActiveProfile("Move KANO position")) return false;
+  if (!getUnlockedActiveProfile()) return false;
+  const f = normalizeKanoAxisLevel(functionality);
+  const s = normalizeKanoAxisLevel(satisfaction);
+  if (f == null || s == null) return false;
+
+  const located = findRoadmapWithOwner(roadmapId);
+  const roadmap = located.roadmap;
+  if (!roadmap) return false;
+
+  const currentF = normalizeKanoAxisLevel(roadmap.kanoFunctionality);
+  const currentS = normalizeKanoAxisLevel(roadmap.kanoSatisfaction);
+  if (currentF === f && currentS === s) return false;
+
+  roadmap.kanoFunctionality = f;
+  roadmap.kanoSatisfaction = s;
+  roadmap.modifiedAt = new Date().toISOString();
+  saveState();
+  renderKanoPortfolioMatrix();
+  renderRoadmaps();
+  return true;
+}
+
+function setPortfolioKanoDropCell(cell) {
+  if (cell === portfolioKanoDropHighlightCell) return;
+  if (portfolioKanoDropHighlightCell) {
+    portfolioKanoDropHighlightCell.classList.remove(PORTFOLIO_KANO_CELL_DRAG_OVER);
+  }
+  portfolioKanoDropHighlightCell = cell;
+  if (cell) cell.classList.add(PORTFOLIO_KANO_CELL_DRAG_OVER);
+}
+
+function resolvePortfolioKanoCellAt(clientX, clientY) {
+  const preview = portfolioKanoPointerDrag && portfolioKanoPointerDrag.preview;
+  if (preview) preview.style.visibility = "hidden";
+  const target = document.elementFromPoint(clientX, clientY);
+  if (preview) preview.style.visibility = "visible";
+  return target && target.closest ? target.closest(".portfolio-kano-matrix-cell") : null;
+}
+
+function activatePortfolioKanoPointerDrag() {
+  const session = portfolioKanoPointerDrag;
+  if (!session || session.active) return;
+  session.active = true;
+
+  const { tile } = session;
+  const rect = tile.getBoundingClientRect();
+  const host = elements.portfolioKanoMatrix;
+
+  tile.classList.add("portfolio-kano-matrix-tile--drag-source");
+  if (host) host.classList.add("portfolio-kano-matrix-host--dragging");
+  document.documentElement.classList.add("portfolio-kano-drag-active");
+
+  const preview = document.createElement("div");
+  preview.className = "portfolio-kano-drag-preview portfolio-kano-matrix-tile";
+  tile.classList.forEach((cls) => {
+    if (cls.startsWith("portfolio-kano-matrix-tile--") && cls !== "portfolio-kano-matrix-tile--drag-source") {
+      preview.classList.add(cls);
+    }
+  });
+
+  const stripe = document.createElement("span");
+  stripe.className = "portfolio-kano-matrix-tile__stripe";
+  stripe.setAttribute("aria-hidden", "true");
+  const titleEl = document.createElement("span");
+  titleEl.className = "portfolio-kano-matrix-tile__title";
+  titleEl.textContent = tile.querySelector(".portfolio-kano-matrix-tile__title")?.textContent || "";
+  preview.appendChild(stripe);
+  preview.appendChild(titleEl);
+  preview.style.width = `${Math.round(rect.width)}px`;
+  document.body.appendChild(preview);
+  session.preview = preview;
+  movePortfolioKanoPointerDrag(session.startX, session.startY);
+}
+
+function movePortfolioKanoPointerDrag(clientX, clientY) {
+  const session = portfolioKanoPointerDrag;
+  if (!session || !session.preview) return;
+  session.preview.style.transform = `translate3d(${Math.round(clientX - session.offsetX)}px, ${Math.round(clientY - session.offsetY)}px, 0)`;
+  setPortfolioKanoDropCell(resolvePortfolioKanoCellAt(clientX, clientY));
+}
+
+function cleanupPortfolioKanoPointerDrag() {
+  const session = portfolioKanoPointerDrag;
+  if (session && session.tile) {
+    session.tile.classList.remove("portfolio-kano-matrix-tile--drag-source");
+  }
+  if (session && session.preview && session.preview.parentNode) {
+    session.preview.parentNode.removeChild(session.preview);
+  }
+  const host = elements.portfolioKanoMatrix;
+  if (host) host.classList.remove("portfolio-kano-matrix-host--dragging");
+  document.documentElement.classList.remove("portfolio-kano-drag-active");
+  setPortfolioKanoDropCell(null);
+}
+
+function teardownPortfolioKanoPointerListeners() {
+  window.removeEventListener("pointermove", onPortfolioKanoPointerMove);
+  window.removeEventListener("pointerup", onPortfolioKanoPointerUp);
+  window.removeEventListener("pointercancel", onPortfolioKanoPointerUp);
+  window.removeEventListener("keydown", onPortfolioKanoPointerEscape);
+}
+
+function onPortfolioKanoPointerMove(event) {
+  if (!portfolioKanoPointerDrag || portfolioKanoPointerDrag.pointerId !== event.pointerId) return;
+
+  if (!portfolioKanoPointerDrag.active) {
+    const dx = event.clientX - portfolioKanoPointerDrag.startX;
+    const dy = event.clientY - portfolioKanoPointerDrag.startY;
+    if (Math.hypot(dx, dy) < PORTFOLIO_KANO_DRAG_THRESHOLD_PX) return;
+    activatePortfolioKanoPointerDrag();
+  }
+
+  event.preventDefault();
+  movePortfolioKanoPointerDrag(event.clientX, event.clientY);
+}
+
+function onPortfolioKanoPointerUp(event) {
+  if (!portfolioKanoPointerDrag || portfolioKanoPointerDrag.pointerId !== event.pointerId) return;
+
+  const wasActive = portfolioKanoPointerDrag.active;
+  if (wasActive) {
+    event.preventDefault();
+    event.stopPropagation();
+    const cell = resolvePortfolioKanoCellAt(event.clientX, event.clientY);
+    const moved =
+      cell &&
+      setRoadmapKanoPosition(
+        portfolioKanoPointerDrag.roadmapId,
+        cell.dataset.functionality,
+        cell.dataset.satisfaction
+      );
+    if (moved || wasActive) {
+      portfolioKanoSuppressNextTileClick = true;
+      window.setTimeout(() => {
+        portfolioKanoSuppressNextTileClick = false;
+      }, 120);
+    }
+    cleanupPortfolioKanoPointerDrag();
+  }
+
+  teardownPortfolioKanoPointerListeners();
+  portfolioKanoPointerDrag = null;
+}
+
+function onPortfolioKanoPointerEscape(event) {
+  if (event.key !== "Escape" || !portfolioKanoPointerDrag || !portfolioKanoPointerDrag.active) return;
+  cleanupPortfolioKanoPointerDrag();
+  teardownPortfolioKanoPointerListeners();
+  portfolioKanoPointerDrag = null;
+}
+
+function initPortfolioKanoMatrixDragDrop() {
+  const host = elements.portfolioKanoMatrix;
+  if (!host || host.dataset.dragReady === "1") return;
+  host.dataset.dragReady = "1";
+
+  host.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) return;
+    const tile = event.target.closest(".portfolio-kano-matrix-tile[data-kano-draggable='true']");
+    if (!tile || isActiveDemoProfile()) return;
+
+    const rect = tile.getBoundingClientRect();
+    portfolioKanoPointerDrag = {
+      tile,
+      roadmapId: tile.getAttribute("data-id"),
+      startX: event.clientX,
+      startY: event.clientY,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top,
+      active: false,
+      preview: null,
+      pointerId: event.pointerId
+    };
+
+    window.addEventListener("pointermove", onPortfolioKanoPointerMove, { passive: false });
+    window.addEventListener("pointerup", onPortfolioKanoPointerUp);
+    window.addEventListener("pointercancel", onPortfolioKanoPointerUp);
+    window.addEventListener("keydown", onPortfolioKanoPointerEscape);
+  });
+}
+
+function buildPortfolioKanoMatrixTile(roadmap) {
+  const demoReadOnly = isActiveDemoProfile();
+  const tile = document.createElement("div");
+  tile.className = "portfolio-kano-matrix-tile";
+  tile.setAttribute("role", "button");
+  tile.tabIndex = 0;
+  tile.setAttribute("data-action", "viewRoadmap");
+  tile.setAttribute("data-id", roadmap.id);
+  tile.setAttribute("data-roadmap-id", roadmap.id);
+  if (!demoReadOnly) {
+    tile.dataset.kanoDraggable = "true";
+  }
+  const title = roadmap.title || "Untitled roadmap";
+  const category = getKanoCategoryFromPosition(roadmap.kanoFunctionality, roadmap.kanoSatisfaction);
+  if (category && category.id) {
+    tile.classList.add(`portfolio-kano-matrix-tile--${category.id}`);
+  }
+
+  const stripe = document.createElement("span");
+  stripe.className = "portfolio-kano-matrix-tile__stripe";
+  stripe.setAttribute("aria-hidden", "true");
+
+  const titleEl = document.createElement("span");
+  titleEl.className = "portfolio-kano-matrix-tile__title";
+  titleEl.textContent = truncatePortfolioKanoLabel(title, 32);
+
+  tile.appendChild(stripe);
+  tile.appendChild(titleEl);
+  const dragHint = demoReadOnly ? "" : " Drag to another cell to update KANO scores.";
+  tile.title = `${title}${dragHint}`;
+  if (
+    isSuperAdminModeActive() &&
+    roadmap.ownerProfileName &&
+    roadmap.ownerProfileId !== state.activeProfileId
+  ) {
+    tile.title = `${title} · ${roadmap.ownerProfileName}.${dragHint}`;
+  }
+  const categorySuffix = category && category.label ? `, ${category.label}` : "";
+  tile.setAttribute(
+    "aria-label",
+    demoReadOnly
+      ? `${title}${categorySuffix}. Open roadmap.`
+      : `${title}${categorySuffix}. Drag to reposition on the matrix, or activate to open roadmap.`
+  );
+  return tile;
+}
+
+function buildPortfolioKanoAxisSelect(roadmapId, axis, value, { disabled = false } = {}) {
+  const levels = axis === "functionality" ? kanoFunctionalityLevels : kanoSatisfactionLevels;
+  const select = document.createElement("select");
+  select.className = "portfolio-kano-compact-card__select";
+  select.setAttribute("data-action", "setRoadmapKanoAxis");
+  select.setAttribute("data-kano-axis", axis);
+  select.setAttribute("data-roadmap-id", roadmapId);
+  select.setAttribute(
+    "aria-label",
+    axis === "functionality" ? "Functionality level" : "Satisfaction level"
+  );
+  if (disabled) select.disabled = true;
+  levels.forEach((meta) => {
+    const option = document.createElement("option");
+    option.value = String(meta.level);
+    option.textContent = meta.shortLabel || meta.label;
+    if (meta.description) option.title = meta.description;
+    select.appendChild(option);
+  });
+  const normalized = normalizeKanoAxisLevel(value);
+  select.value = String(normalized != null ? normalized : 1);
+  return select;
+}
+
+function buildPortfolioKanoCompactCard(roadmap) {
+  const demoReadOnly = isActiveDemoProfile();
+  const f = normalizeKanoAxisLevel(roadmap.kanoFunctionality);
+  const s = normalizeKanoAxisLevel(roadmap.kanoSatisfaction);
+  const zoneId = getKanoCellZoneId(f, s);
+  const category = getKanoCategoryFromPosition(f, s);
+
+  const card = document.createElement("article");
+  card.className = `portfolio-kano-compact-card portfolio-kano-compact-card--${zoneId}`;
+  card.dataset.kanoZone = zoneId;
+  card.setAttribute("role", "listitem");
+
+  const shell = document.createElement("div");
+  shell.className = "portfolio-kano-compact-card__shell";
+
+  const accent = document.createElement("span");
+  accent.className = "portfolio-kano-compact-card__accent";
+  accent.setAttribute("aria-hidden", "true");
+  shell.appendChild(accent);
+
+  const body = document.createElement("div");
+  body.className = "portfolio-kano-compact-card__body";
+
+  const openBtn = document.createElement("button");
+  openBtn.type = "button";
+  openBtn.className = "portfolio-kano-compact-card__open";
+  openBtn.setAttribute("data-action", "viewRoadmap");
+  openBtn.setAttribute("data-id", roadmap.id);
+
+  const title = roadmap.title || "Untitled roadmap";
+  const titleEl = document.createElement("span");
+  titleEl.className = "portfolio-kano-compact-card__title";
+  titleEl.textContent = title;
+
+  const openMeta = document.createElement("span");
+  openMeta.className = "portfolio-kano-compact-card__open-meta";
+
+  const badge = document.createElement("span");
+  badge.className = "portfolio-kano-compact-card__badge";
+  badge.textContent = `F${f} · S${s}`;
+
+  const chevron = document.createElement("span");
+  chevron.className = "portfolio-kano-compact-card__chevron";
+  chevron.setAttribute("aria-hidden", "true");
+  chevron.textContent = "›";
+
+  openMeta.appendChild(badge);
+  openMeta.appendChild(chevron);
+  openBtn.appendChild(titleEl);
+  openBtn.appendChild(openMeta);
+  body.appendChild(openBtn);
+
+  const scores = document.createElement("div");
+  scores.className = "portfolio-kano-compact-card__scores";
+
+  const fField = document.createElement("label");
+  fField.className = "portfolio-kano-compact-card__field portfolio-kano-compact-card__field--functionality";
+  const fLabel = document.createElement("span");
+  fLabel.className = "portfolio-kano-compact-card__field-label";
+  fLabel.textContent = "Function";
+  fField.appendChild(fLabel);
+  fField.appendChild(buildPortfolioKanoAxisSelect(roadmap.id, "functionality", f, { disabled: demoReadOnly }));
+
+  const sField = document.createElement("label");
+  sField.className = "portfolio-kano-compact-card__field portfolio-kano-compact-card__field--satisfaction";
+  const sLabel = document.createElement("span");
+  sLabel.className = "portfolio-kano-compact-card__field-label";
+  sLabel.textContent = "Satisfaction";
+  sField.appendChild(sLabel);
+  sField.appendChild(buildPortfolioKanoAxisSelect(roadmap.id, "satisfaction", s, { disabled: demoReadOnly }));
+
+  scores.appendChild(fField);
+  scores.appendChild(sField);
+  body.appendChild(scores);
+
+  if (
+    isSuperAdminModeActive() &&
+    roadmap.ownerProfileName &&
+    roadmap.ownerProfileId !== state.activeProfileId
+  ) {
+    const meta = document.createElement("p");
+    meta.className = "portfolio-kano-compact-card__meta";
+    meta.textContent = roadmap.ownerProfileName;
+    body.appendChild(meta);
+  }
+
+  shell.appendChild(body);
+  card.appendChild(shell);
+  const categorySuffix = category && category.label ? `, ${category.label}` : "";
+  openBtn.title = `${title}${categorySuffix}`;
+  openBtn.setAttribute("aria-label", `${title}${categorySuffix}. Open roadmap.`);
+  return card;
+}
+
+function renderPortfolioKanoPositionedList(positioned) {
+  const listHost = elements.portfolioKanoPositionedList;
+  if (!listHost) return;
+  listHost.innerHTML = "";
+
+  const byZone = new Map();
+  positioned.forEach((roadmap) => {
+    const f = normalizeKanoAxisLevel(roadmap.kanoFunctionality);
+    const s = normalizeKanoAxisLevel(roadmap.kanoSatisfaction);
+    const zoneId = getKanoCellZoneId(f, s);
+    if (!byZone.has(zoneId)) byZone.set(zoneId, []);
+    byZone.get(zoneId).push(roadmap);
+  });
+
+  if (typeof kanoCategoryLegend === "undefined") return;
+
+  kanoCategoryLegend.forEach((entry) => {
+    const roadmaps = byZone.get(entry.id);
+    if (!roadmaps || !roadmaps.length) return;
+
+    const group = document.createElement("section");
+    group.className = `portfolio-kano-compact-group portfolio-kano-compact-group--${entry.id}`;
+    group.dataset.kanoZone = entry.id;
+
+    const header = document.createElement("header");
+    header.className = "portfolio-kano-compact-group__header";
+
+    const code = document.createElement("span");
+    code.className = "portfolio-kano-compact-group__code";
+    code.textContent = `${entry.categoryCode}-${entry.hintCode}`;
+
+    const copy = document.createElement("div");
+    copy.className = "portfolio-kano-compact-group__copy";
+    const titleEl = document.createElement("h5");
+    titleEl.className = "portfolio-kano-compact-group__title";
+    titleEl.textContent = entry.label;
+    const hintEl = document.createElement("p");
+    hintEl.className = "portfolio-kano-compact-group__hint";
+    hintEl.textContent = entry.hint;
+    copy.appendChild(titleEl);
+    copy.appendChild(hintEl);
+
+    const countEl = document.createElement("span");
+    countEl.className = "portfolio-kano-compact-group__count";
+    countEl.textContent = String(roadmaps.length);
+
+    header.appendChild(code);
+    header.appendChild(copy);
+    header.appendChild(countEl);
+    group.appendChild(header);
+
+    const cardsWrap = document.createElement("div");
+    cardsWrap.className = "portfolio-kano-compact-group__cards";
+    roadmaps.forEach((roadmap) => {
+      cardsWrap.appendChild(buildPortfolioKanoCompactCard(roadmap));
+    });
+    group.appendChild(cardsWrap);
+    listHost.appendChild(group);
+  });
+}
+
+function buildPortfolioKanoMatrixChip(roadmap) {
+  return buildPortfolioKanoMatrixTile(roadmap);
+}
+
+function buildPortfolioKanoUnpositionedCard(roadmap) {
+  const card = document.createElement("article");
+  card.className = "portfolio-kano-card";
+  card.setAttribute("role", "listitem");
+
+  const shell = document.createElement("div");
+  shell.className = "portfolio-kano-card__shell";
+
+  const content = document.createElement("div");
+  content.className = "portfolio-kano-card__content";
+
+  const title = roadmap.title || "Untitled roadmap";
+  const titleEl = document.createElement("h5");
+  titleEl.className = "portfolio-kano-card__title";
+  titleEl.textContent = title;
+
+  const metaParts = [];
+  const statusVal = roadmap.roadmapStatus || roadmap.status;
+  if (statusVal) metaParts.push(String(statusVal));
+  if (roadmap.moscowCategory) metaParts.push(String(roadmap.moscowCategory));
+  if (
+    isSuperAdminModeActive() &&
+    roadmap.ownerProfileName &&
+    roadmap.ownerProfileId !== state.activeProfileId
+  ) {
+    metaParts.push(roadmap.ownerProfileName);
+  }
+
+  content.appendChild(titleEl);
+  if (metaParts.length) {
+    const meta = document.createElement("p");
+    meta.className = "portfolio-kano-card__meta";
+    meta.textContent = metaParts.join(" · ");
+    content.appendChild(meta);
+  }
+
+  const setBtn = document.createElement("button");
+  setBtn.type = "button";
+  setBtn.className = "portfolio-kano-card__set-btn";
+  setBtn.setAttribute("data-action", "setRoadmapKano");
+  setBtn.setAttribute("data-id", roadmap.id);
+  setBtn.textContent = "Set KANO scores";
+  setBtn.setAttribute("aria-label", `Set KANO scores for ${title}`);
+
+  shell.appendChild(content);
+  shell.appendChild(setBtn);
+  card.appendChild(shell);
+  return card;
+}
+
+function normalizeKanoPortfolioPanel(panel) {
+  return panel === "unpositioned" ? "unpositioned" : "positioned";
+}
+
+function syncPortfolioKanoPanelToggle(panel) {
+  const normalized = normalizeKanoPortfolioPanel(panel);
+  if (elements.portfolioKanoPanelToggle) {
+    elements.portfolioKanoPanelToggle.dataset.activePanel = normalized;
+    elements.portfolioKanoPanelToggle.querySelectorAll(".portfolio-kano-panel-toggle__btn").forEach((btn) => {
+      const active = btn.getAttribute("data-kano-panel") === normalized;
+      btn.classList.toggle("portfolio-kano-panel-toggle__btn--active", active);
+      btn.setAttribute("aria-selected", String(active));
+    });
+  }
+}
+
+function updatePortfolioKanoPanelToggleCounts(positionedCount, unpositionedCount) {
+  if (!elements.portfolioKanoPanelToggle) return;
+  elements.portfolioKanoPanelToggle.querySelectorAll("[data-kano-panel-count]").forEach((el) => {
+    const key = el.getAttribute("data-kano-panel-count");
+    const count = key === "unpositioned" ? unpositionedCount : positionedCount;
+    el.textContent = String(count);
+  });
+  elements.portfolioKanoPanelToggle.querySelectorAll(".portfolio-kano-panel-toggle__btn").forEach((btn) => {
+    const panel = btn.getAttribute("data-kano-panel");
+    const count = panel === "unpositioned" ? unpositionedCount : positionedCount;
+    btn.disabled = count === 0;
+    btn.setAttribute("aria-disabled", String(count === 0));
+  });
+}
+
+function syncPortfolioKanoPanelVisibility(panel, { positionedCount, unpositionedCount } = {}) {
+  const normalized = normalizeKanoPortfolioPanel(panel);
+  const showPositioned = normalized === "positioned";
+  const showUnpositioned = normalized === "unpositioned";
+  if (elements.portfolioKanoPositionedPanel) {
+    elements.portfolioKanoPositionedPanel.hidden = !showPositioned;
+  }
+  if (elements.portfolioKanoUnpositionedPanel) {
+    elements.portfolioKanoUnpositionedPanel.hidden = !showUnpositioned;
+  }
+  if (elements.portfolioKanoPositionedEmpty) {
+    elements.portfolioKanoPositionedEmpty.hidden = !(showPositioned && positionedCount === 0);
+  }
+  const positionedHeader = elements.portfolioKanoPositionedPanel
+    ? elements.portfolioKanoPositionedPanel.querySelector(".portfolio-kano-positioned__header")
+    : null;
+  if (positionedHeader) {
+    positionedHeader.hidden = showPositioned && positionedCount === 0;
+  }
+  if (elements.portfolioKanoMatrix) {
+    elements.portfolioKanoMatrix.hidden = showPositioned && positionedCount === 0;
+  }
+  if (elements.portfolioKanoPositionedList) {
+    elements.portfolioKanoPositionedList.hidden = showPositioned && positionedCount === 0;
+  }
+  if (elements.portfolioKanoUnpositionedEmpty) {
+    elements.portfolioKanoUnpositionedEmpty.hidden = !(showUnpositioned && unpositionedCount === 0);
+  }
+  if (elements.portfolioKanoUnpositionedList) {
+    elements.portfolioKanoUnpositionedList.hidden = showUnpositioned && unpositionedCount === 0;
+  }
+  const unpositionedHeader = elements.portfolioKanoUnpositionedPanel
+    ? elements.portfolioKanoUnpositionedPanel.querySelector(".portfolio-kano-unpositioned__header")
+    : null;
+  if (unpositionedHeader) {
+    unpositionedHeader.hidden = showUnpositioned && unpositionedCount === 0;
+  }
+}
+
+function initPortfolioKanoPanelToggle() {
+  if (!elements.portfolioKanoPanelToggle) return;
+  syncPortfolioKanoPanelToggle(state.kanoPortfolioPanel);
+  elements.portfolioKanoPanelToggle.addEventListener("click", (event) => {
+    const btn = event.target.closest(".portfolio-kano-panel-toggle__btn");
+    if (!btn || btn.disabled) return;
+    const next = normalizeKanoPortfolioPanel(btn.getAttribute("data-kano-panel"));
+    if (state.kanoPortfolioPanel === next) return;
+    state.kanoPortfolioPanel = next;
+    saveState();
+    syncPortfolioKanoPanelToggle(next);
+    if (state.roadmapsView === "kano") renderKanoPortfolioMatrix();
+  });
+}
+
+function renderKanoPortfolioEmptyMessage(message) {
+  if (elements.portfolioKanoMatrix) {
+    elements.portfolioKanoMatrix.innerHTML = "";
+    const empty = document.createElement("p");
+    empty.className = "portfolio-kano-empty";
+    empty.textContent = message;
+    elements.portfolioKanoMatrix.appendChild(empty);
+  }
+  if (elements.portfolioKanoPositionedPanel) {
+    elements.portfolioKanoPositionedPanel.hidden = false;
+  }
+  if (elements.portfolioKanoUnpositionedPanel) {
+    elements.portfolioKanoUnpositionedPanel.hidden = true;
+  }
+  if (elements.portfolioKanoPositionedEmpty) {
+    elements.portfolioKanoPositionedEmpty.hidden = true;
+  }
+  if (elements.portfolioKanoUnpositionedEmpty) {
+    elements.portfolioKanoUnpositionedEmpty.hidden = true;
+  }
+  if (elements.portfolioKanoUnpositionedList) {
+    elements.portfolioKanoUnpositionedList.innerHTML = "";
+  }
+  if (elements.portfolioKanoPositionedList) {
+    elements.portfolioKanoPositionedList.innerHTML = "";
+  }
+  updatePortfolioKanoPanelToggleCounts(0, 0);
+}
+
+function renderKanoPortfolioMatrix() {
+  ensurePortfolioKanoLegend();
+  ensurePortfolioKanoMatrixMounted();
+
+  const activeProfile = getActiveProfile();
+  if (!activeProfile) {
+    renderKanoPortfolioEmptyMessage("Create or select a profile to view the KANO model.");
+    return;
+  }
+  if (!isProfileUnlocked(activeProfile.id)) {
+    renderKanoPortfolioEmptyMessage("Unlock this profile to view the KANO model.");
+    return;
+  }
+
+  const baseRoadmaps = getPortfolioRoadmapsBaseList();
+  const roadmaps = sortRoadmaps(applyFilters(baseRoadmaps));
+  if (!roadmaps.length) {
+    renderKanoPortfolioEmptyMessage(
+      isSuperAdminModeActive()
+        ? "No roadmaps match the current filters across all profiles."
+        : "No roadmaps match the current filters."
+    );
+    return;
+  }
+
+  const positioned = [];
+  const unpositioned = [];
+  roadmaps.forEach((roadmap) => {
+    if (roadmapHasKanoPosition(roadmap)) positioned.push(roadmap);
+    else unpositioned.push(roadmap);
+  });
+
+  updatePortfolioKanoPanelToggleCounts(positioned.length, unpositioned.length);
+
+  let activePanel = normalizeKanoPortfolioPanel(state.kanoPortfolioPanel);
+  if (activePanel === "positioned" && positioned.length === 0 && unpositioned.length > 0) {
+    activePanel = "unpositioned";
+    state.kanoPortfolioPanel = activePanel;
+    saveState();
+  } else if (activePanel === "unpositioned" && unpositioned.length === 0 && positioned.length > 0) {
+    activePanel = "positioned";
+    state.kanoPortfolioPanel = activePanel;
+    saveState();
+  }
+  syncPortfolioKanoPanelToggle(activePanel);
+  syncPortfolioKanoPanelVisibility(activePanel, {
+    positionedCount: positioned.length,
+    unpositionedCount: unpositioned.length
+  });
+
+  const host = elements.portfolioKanoMatrix;
+  if (!host || host.dataset.kanoVersion !== "6") {
+    renderKanoPortfolioEmptyMessage("KANO matrix could not be initialized.");
+    return;
+  }
+
+  host.querySelectorAll(".portfolio-kano-matrix-cell__roadmaps").forEach((wrap) => {
+    wrap.innerHTML = "";
+  });
+  host.querySelectorAll(".portfolio-kano-matrix-cell__count").forEach((badge) => {
+    badge.hidden = true;
+    badge.textContent = "";
+  });
+
+  const cellRoadmapCounts = new Map();
+  positioned.forEach((roadmap) => {
+    const f = normalizeKanoAxisLevel(roadmap.kanoFunctionality);
+    const s = normalizeKanoAxisLevel(roadmap.kanoSatisfaction);
+    const cellKey = `${f}-${s}`;
+    cellRoadmapCounts.set(cellKey, (cellRoadmapCounts.get(cellKey) || 0) + 1);
+    const cell = host.querySelector(
+      `.portfolio-kano-matrix-cell[data-functionality="${f}"][data-satisfaction="${s}"] .portfolio-kano-matrix-cell__roadmaps`
+    );
+    if (!cell) return;
+    cell.appendChild(buildPortfolioKanoMatrixTile(roadmap));
+  });
+
+  cellRoadmapCounts.forEach((count, key) => {
+    if (count <= 1) return;
+    const [f, s] = key.split("-");
+    const badge = host.querySelector(
+      `.portfolio-kano-matrix-cell[data-functionality="${f}"][data-satisfaction="${s}"] .portfolio-kano-matrix-cell__count`
+    );
+    if (badge) {
+      badge.hidden = false;
+      badge.textContent = String(count);
+    }
+  });
+
+  updatePortfolioKanoLegendCounts(positioned);
+  syncPortfolioKanoLegendFilter();
+  renderPortfolioKanoPositionedList(positioned);
+
+  if (elements.portfolioKanoUnpositionedList) {
+    elements.portfolioKanoUnpositionedList.innerHTML = "";
+    unpositioned.forEach((roadmap) => {
+      elements.portfolioKanoUnpositionedList.appendChild(buildPortfolioKanoUnpositionedCard(roadmap));
+    });
   }
 }
 
@@ -7637,17 +8885,17 @@ function initRaciMatrixDomainToggle() {
     state.raciMatrixDomain = next;
     saveState();
     syncRaciMatrixDomainToggle(next);
-    if (state.projectsView === "raci") renderRaciMatrix();
+    if (state.roadmapsView === "raci") renderRaciMatrix();
   });
 }
 
-function normalizeProjectTaskStatus(status) {
+function normalizeRoadmapTaskStatus(status) {
   const value = String(status || "").trim();
-  const options = getProjectTaskStatusOptions();
+  const options = getRoadmapTaskStatusOptions();
   return options.includes(value) ? value : "Not Started";
 }
 
-function normalizeProjectTasks(tasks) {
+function normalizeRoadmapTasks(tasks) {
   if (!Array.isArray(tasks)) return [];
   const out = [];
   tasks.forEach((task) => {
@@ -7656,31 +8904,31 @@ function normalizeProjectTasks(tasks) {
     if (!name) return;
     out.push({
       name,
-      status: normalizeProjectTaskStatus(task.status)
+      status: normalizeRoadmapTaskStatus(task.status)
     });
   });
   return out;
 }
 
-function buildProjectTaskStatusSelect(selectedStatus) {
+function buildRoadmapTaskStatusSelect(selectedStatus) {
   const select = document.createElement("select");
-  select.className = "project-task-status-select";
+  select.className = "roadmap-task-status-select";
   select.setAttribute("aria-label", "Task status");
-  getProjectTaskStatusOptions().forEach((status) => {
+  getRoadmapTaskStatusOptions().forEach((status) => {
     const option = document.createElement("option");
     option.value = status;
     option.textContent = status;
     select.appendChild(option);
   });
-  select.value = normalizeProjectTaskStatus(selectedStatus);
+  select.value = normalizeRoadmapTaskStatus(selectedStatus);
   return select;
 }
 
-function ensureProjectTaskRowHeader() {
-  if (!elements.projectTasksContainer) return;
-  if (elements.projectTasksContainer.querySelector(".project-task-row-header")) return;
+function ensureRoadmapTaskRowHeader() {
+  if (!elements.roadmapTasksContainer) return;
+  if (elements.roadmapTasksContainer.querySelector(".roadmap-task-row-header")) return;
   const header = document.createElement("div");
-  header.className = "project-task-row-header";
+  header.className = "roadmap-task-row-header";
   header.setAttribute("aria-hidden", "true");
   const colName = document.createElement("span");
   colName.textContent = "Task";
@@ -7690,43 +8938,43 @@ function ensureProjectTaskRowHeader() {
   header.appendChild(colName);
   header.appendChild(colStatus);
   header.appendChild(colAction);
-  elements.projectTasksContainer.appendChild(header);
+  elements.roadmapTasksContainer.appendChild(header);
 }
 
-function renderProjectTasksControls(tasks, { readonly = false } = {}) {
-  if (!elements.projectTasksContainer) return;
-  elements.projectTasksContainer.innerHTML = "";
-  const normalized = normalizeProjectTasks(tasks);
+function renderRoadmapTasksControls(tasks, { readonly = false } = {}) {
+  if (!elements.roadmapTasksContainer) return;
+  elements.roadmapTasksContainer.innerHTML = "";
+  const normalized = normalizeRoadmapTasks(tasks);
   if (readonly) {
     if (!normalized.length) {
       const hint = document.createElement("p");
-      hint.className = "project-field-empty-hint";
+      hint.className = "roadmap-field-empty-hint";
       hint.textContent = "No tasks added";
-      elements.projectTasksContainer.appendChild(hint);
+      elements.roadmapTasksContainer.appendChild(hint);
       return;
     }
     const wrap = document.createElement("div");
-    wrap.className = "project-tasks-readonly";
+    wrap.className = "roadmap-tasks-readonly";
     wrap.setAttribute("role", "list");
     normalized.forEach((task) => {
       const row = document.createElement("article");
-      row.className = "project-task-card";
+      row.className = "roadmap-task-card";
       row.setAttribute("role", "listitem");
 
       const main = document.createElement("div");
-      main.className = "project-task-card__main";
+      main.className = "roadmap-task-card__main";
 
       const statusDot = document.createElement("span");
-      statusDot.className = "project-task-card__status-dot";
+      statusDot.className = "roadmap-task-card__status-dot";
       statusDot.dataset.status = task.status;
       statusDot.setAttribute("aria-hidden", "true");
 
       const nameEl = document.createElement("span");
-      nameEl.className = "project-task-card__name";
+      nameEl.className = "roadmap-task-card__name";
       nameEl.textContent = task.name;
 
       const statusEl = document.createElement("span");
-      statusEl.className = "project-task-card__status";
+      statusEl.className = "roadmap-task-card__status";
       statusEl.dataset.status = task.status;
       statusEl.textContent = task.status;
 
@@ -7736,37 +8984,37 @@ function renderProjectTasksControls(tasks, { readonly = false } = {}) {
       row.appendChild(statusEl);
       wrap.appendChild(row);
     });
-    elements.projectTasksContainer.appendChild(wrap);
-    syncProjectTasksDisclosure();
+    elements.roadmapTasksContainer.appendChild(wrap);
+    syncRoadmapTasksDisclosure();
     return;
   }
-  ensureProjectTaskRowHeader();
+  ensureRoadmapTaskRowHeader();
   const list = normalized.length ? normalized : [{ name: "", status: "Not Started" }];
-  list.forEach((task) => addProjectTaskRow(task));
-  syncProjectTasksDisclosure();
+  list.forEach((task) => addRoadmapTaskRow(task));
+  syncRoadmapTasksDisclosure();
 }
 
-function addProjectTaskRow(task) {
-  if (!elements.projectTasksContainer) return;
-  ensureProjectTaskRowHeader();
+function addRoadmapTaskRow(task) {
+  if (!elements.roadmapTasksContainer) return;
+  ensureRoadmapTaskRowHeader();
   const row = document.createElement("div");
-  row.className = "project-task-row";
+  row.className = "roadmap-task-row";
 
   const fields = document.createElement("div");
-  fields.className = "project-task-row__fields";
+  fields.className = "roadmap-task-row__fields";
 
   const nameInput = document.createElement("input");
   nameInput.type = "text";
-  nameInput.className = "project-task-name-input";
+  nameInput.className = "roadmap-task-name-input";
   nameInput.placeholder = "e.g. Draft PRD, Build MVP";
   nameInput.setAttribute("aria-label", "Task name");
   nameInput.value = (task && task.name) || "";
 
-  const statusSelect = buildProjectTaskStatusSelect(task && task.status);
+  const statusSelect = buildRoadmapTaskStatusSelect(task && task.status);
 
   const removeBtn = document.createElement("button");
   removeBtn.type = "button";
-  removeBtn.className = "project-task-remove-btn";
+  removeBtn.className = "roadmap-task-remove-btn";
   removeBtn.textContent = "×";
   removeBtn.setAttribute("aria-label", "Remove task");
 
@@ -7774,32 +9022,35 @@ function addProjectTaskRow(task) {
   fields.appendChild(statusSelect);
   row.appendChild(fields);
   row.appendChild(removeBtn);
-  elements.projectTasksContainer.appendChild(row);
-  scheduleProjectTasksDisclosureSync();
+  elements.roadmapTasksContainer.appendChild(row);
+  scheduleRoadmapTasksDisclosureSync();
 }
 
-function getProjectTasksFromControls() {
-  if (!elements.projectTasksContainer) return [];
-  const rows = elements.projectTasksContainer.querySelectorAll(".project-task-row");
+function getRoadmapTasksFromControls() {
+  if (!elements.roadmapTasksContainer) return [];
+  const rows = elements.roadmapTasksContainer.querySelectorAll(".roadmap-task-row");
   const tasks = [];
   rows.forEach((row) => {
-    const name = (row.querySelector(".project-task-name-input")?.value || "").trim();
-    const statusRaw = row.querySelector(".project-task-status-select")?.value || "";
+    const name = (row.querySelector(".roadmap-task-name-input")?.value || "").trim();
+    const statusRaw = row.querySelector(".roadmap-task-status-select")?.value || "";
     if (!name) return;
     tasks.push({
       name,
-      status: normalizeProjectTaskStatus(statusRaw)
+      status: normalizeRoadmapTaskStatus(statusRaw)
     });
   });
-  return normalizeProjectTasks(tasks);
+  return normalizeRoadmapTasks(tasks);
 }
 
 /** Preserves password hashes, drag order maps, and forward-compatible profile fields on load. */
 function normalizeLoadedProfile(raw) {
   if (!raw || typeof raw !== "object") return null;
-  const projects = Array.isArray(raw.projects)
-    ? raw.projects.map(normalizeLoadedProject).filter(Boolean)
-    : [];
+  const rawRoadmaps = Array.isArray(raw.roadmaps)
+    ? raw.roadmaps
+    : Array.isArray(raw.projects)
+      ? raw.projects
+      : [];
+  const roadmaps = rawRoadmaps.map(normalizeLoadedRoadmap).filter(Boolean);
   const boardOrder = raw.boardOrder && typeof raw.boardOrder === "object" ? raw.boardOrder : {};
   const moscowOrder = raw.moscowOrder && typeof raw.moscowOrder === "object" ? raw.moscowOrder : {};
   const profile = Object.assign({}, raw, {
@@ -7807,7 +9058,7 @@ function normalizeLoadedProfile(raw) {
     name: String(raw.name || "Unnamed profile"),
     team: String(raw.team || ""),
     createdAt: raw.createdAt || new Date().toISOString(),
-    projects,
+    roadmaps,
     boardOrder,
     moscowOrder
   });
@@ -7822,22 +9073,23 @@ function normalizeLoadedProfile(raw) {
   return profile;
 }
 
-function serializeProjectForStorage(project) {
-  if (!project || typeof project !== "object") return project;
-  return Object.assign({}, project, {
-    labels: normalizeProjectLabels(project.labels),
-    links: normalizeProjectLinks(project.links),
-    tasks: normalizeProjectTasks(project.tasks),
-    raci: normalizeProjectRaci(project.raci)
+function serializeRoadmapForStorage(roadmap) {
+  if (!roadmap || typeof roadmap !== "object") return roadmap;
+  return Object.assign({}, roadmap, {
+    labels: normalizeRoadmapLabels(roadmap.labels),
+    links: normalizeRoadmapLinks(roadmap.links),
+    tasks: normalizeRoadmapTasks(roadmap.tasks),
+    raci: normalizeRoadmapRaci(roadmap.raci)
   });
 }
 
 function serializeProfileForStorage(profile) {
   if (!profile || typeof profile !== "object") return profile;
   const serialized = Object.assign({}, profile);
-  serialized.projects = Array.isArray(profile.projects)
-    ? profile.projects.map(serializeProjectForStorage)
+  serialized.roadmaps = Array.isArray(profile.roadmaps)
+    ? profile.roadmaps.map(serializeRoadmapForStorage)
     : [];
+  delete serialized.projects;
   return serialized;
 }
 
@@ -7882,17 +9134,22 @@ function applyPersistedWorkspaceUiState(parsed) {
   if (parsed.sortDirection === "asc" || parsed.sortDirection === "desc") {
     state.sortDirection = parsed.sortDirection;
   }
+  const savedRoadmapsView = parsed.roadmapsView || parsed.projectsView;
   if (
-    parsed.projectsView === "table" ||
-    parsed.projectsView === "board" ||
-    parsed.projectsView === "moscow" ||
-    parsed.projectsView === "map" ||
-    parsed.projectsView === "raci"
+    savedRoadmapsView === "table" ||
+    savedRoadmapsView === "board" ||
+    savedRoadmapsView === "moscow" ||
+    savedRoadmapsView === "map" ||
+    savedRoadmapsView === "raci" ||
+    savedRoadmapsView === "kano"
   ) {
-    state.projectsView = parsed.projectsView;
+    state.roadmapsView = savedRoadmapsView;
   }
   if (RACI_DOMAIN_OPTIONS.includes(parsed.raciMatrixDomain)) {
     state.raciMatrixDomain = parsed.raciMatrixDomain;
+  }
+  if (parsed.kanoPortfolioPanel === "positioned" || parsed.kanoPortfolioPanel === "unpositioned") {
+    state.kanoPortfolioPanel = parsed.kanoPortfolioPanel;
   }
   if (typeof parsed.tableSortByRice === "boolean") {
     state.tableSortByRice = parsed.tableSortByRice;
@@ -7991,63 +9248,70 @@ function applyStatePayload(parsed) {
   }
 }
 
-/** Ensures a project loaded from localStorage has required fields so RICE and render don't break. */
-function normalizeLoadedProject(project) {
-  if (!project || typeof project !== "object") return null;
+function coalesceLegacyRoadmapStringField(roadmap, nextKey, legacyKey) {
+  const nextVal = roadmap[nextKey] != null ? String(roadmap[nextKey]).trim() : "";
+  if (nextVal) return nextVal;
+  const legacyVal = roadmap[legacyKey] != null ? String(roadmap[legacyKey]).trim() : "";
+  return legacyVal || null;
+}
+
+/** Ensures a roadmap loaded from localStorage has required fields so RICE and render don't break. */
+function normalizeLoadedRoadmap(roadmap) {
+  if (!roadmap || typeof roadmap !== "object") return null;
   const now = new Date().toISOString();
-  const id = typeof project.id === "string" && project.id.trim() ? project.id.trim() : generateId("project");
-  const createdAt = project.createdAt || now;
-  const modifiedAt = project.modifiedAt || createdAt;
-  const reachValue = toNumberOrNull(project.reachValue);
-  const impactValue = toNumberOrNull(project.impactValue);
-  const confidenceValue = toNumberOrNull(project.confidenceValue);
-  const effortValue = toNumberOrNull(project.effortValue);
-  const periodRaw = project.projectPeriod != null ? String(project.projectPeriod).trim() : "";
-  const projectPeriod = periodRaw ? periodRaw.toUpperCase() : null;
-  const financialImpactFramework = normalizeFinancialFramework(project.financialImpactFramework);
+  const id = typeof roadmap.id === "string" && roadmap.id.trim() ? roadmap.id.trim() : generateId("roadmap");
+  const createdAt = roadmap.createdAt || now;
+  const modifiedAt = roadmap.modifiedAt || createdAt;
+  const reachValue = toNumberOrNull(roadmap.reachValue);
+  const impactValue = toNumberOrNull(roadmap.impactValue);
+  const confidenceValue = toNumberOrNull(roadmap.confidenceValue);
+  const effortValue = toNumberOrNull(roadmap.effortValue);
+  const periodRaw = coalesceLegacyRoadmapStringField(roadmap, "roadmapPeriod", "projectPeriod") || "";
+  const roadmapPeriod = periodRaw ? periodRaw.toUpperCase() : null;
+  const financialImpactFramework = normalizeFinancialFramework(roadmap.financialImpactFramework);
   const financialImpactInputs = sanitizeFinancialImpactInputs(
     financialImpactFramework,
-    project.financialImpactInputs && typeof project.financialImpactInputs === "object"
-      ? project.financialImpactInputs
+    roadmap.financialImpactInputs && typeof roadmap.financialImpactInputs === "object"
+      ? roadmap.financialImpactInputs
       : {}
   );
   const normalizedFinancialValue = computeFrameworkFinancialImpact(
     financialImpactFramework,
     financialImpactInputs,
-    Number.isFinite(toNumberOrNull(project.financialImpactValue)) ? Number(project.financialImpactValue) : null
+    Number.isFinite(toNumberOrNull(roadmap.financialImpactValue)) ? Number(roadmap.financialImpactValue) : null
   );
   const normalized = {
     id,
     createdAt,
     modifiedAt,
-    title: String(project.title || "Untitled project"),
-    description: String(project.description || ""),
-    reachDescription: String(project.reachDescription || ""),
+    title: String(roadmap.title || "Untitled roadmap"),
+    description: String(roadmap.description || ""),
+    reachDescription: String(roadmap.reachDescription || ""),
     reachValue: Number.isFinite(reachValue) ? reachValue : 0,
-    impactDescription: String(project.impactDescription || ""),
+    impactDescription: String(roadmap.impactDescription || ""),
     impactValue: Number.isFinite(impactValue) ? impactValue : 1,
-    confidenceDescription: String(project.confidenceDescription || ""),
+    confidenceDescription: String(roadmap.confidenceDescription || ""),
     confidenceValue: Number.isFinite(confidenceValue) ? confidenceValue : 50,
-    effortDescription: String(project.effortDescription || ""),
+    effortDescription: String(roadmap.effortDescription || ""),
     effortValue: Number.isFinite(effortValue) && effortValue > 0 ? effortValue : 1,
     financialImpactValue: Number.isFinite(normalizedFinancialValue) ? normalizedFinancialValue : null,
-    financialImpactCurrency: normalizeCurrency(project.financialImpactCurrency),
+    financialImpactCurrency: normalizeCurrency(roadmap.financialImpactCurrency),
     financialImpactFramework,
     financialImpactInputs,
-    projectType: (project.projectType != null && String(project.projectType).trim() !== "") ? String(project.projectType).trim() : null,
-    projectStatus: (project.projectStatus != null && String(project.projectStatus).trim() !== "") ? String(project.projectStatus).trim() : null,
-    tshirtSize: (project.tshirtSize != null && String(project.tshirtSize).trim() !== "") ? String(project.tshirtSize).trim() : null,
-    projectPeriod,
-    moscowCategory: (project.moscowCategory != null && String(project.moscowCategory).trim() !== "" && typeof moscowList !== "undefined" && moscowList.includes(project.moscowCategory)) ? String(project.moscowCategory).trim() : null,
-    kanoFunctionality: normalizeKanoAxisLevel(project.kanoFunctionality),
-    kanoSatisfaction: normalizeKanoAxisLevel(project.kanoSatisfaction),
-    countries: normalizeCountryNames(Array.isArray(project.countries) ? project.countries : []),
-    labels: normalizeProjectLabels(project.labels),
-    links: normalizeProjectLinks(project.links),
-    tasks: normalizeProjectTasks(project.tasks),
-    raci: normalizeProjectRaci(project.raci)
+    roadmapType: coalesceLegacyRoadmapStringField(roadmap, "roadmapType", "projectType"),
+    roadmapStatus: coalesceLegacyRoadmapStringField(roadmap, "roadmapStatus", "projectStatus"),
+    tshirtSize: (roadmap.tshirtSize != null && String(roadmap.tshirtSize).trim() !== "") ? String(roadmap.tshirtSize).trim() : null,
+    roadmapPeriod,
+    moscowCategory: (roadmap.moscowCategory != null && String(roadmap.moscowCategory).trim() !== "" && typeof moscowList !== "undefined" && moscowList.includes(roadmap.moscowCategory)) ? String(roadmap.moscowCategory).trim() : null,
+    kanoFunctionality: normalizeKanoAxisLevel(roadmap.kanoFunctionality),
+    kanoSatisfaction: normalizeKanoAxisLevel(roadmap.kanoSatisfaction),
+    countries: normalizeCountryNames(Array.isArray(roadmap.countries) ? roadmap.countries : []),
+    labels: normalizeRoadmapLabels(roadmap.labels),
+    links: normalizeRoadmapLinks(roadmap.links),
+    tasks: normalizeRoadmapTasks(roadmap.tasks),
+    raci: normalizeRoadmapRaci(roadmap.raci)
   };
-  return Object.assign({}, project, normalized);
+  return Object.assign({}, roadmap, normalized);
 }
 
 function saveState(options) {
@@ -8062,6 +9326,77 @@ function saveState(options) {
   } catch (err) {
     console.error("Failed to persist state", err);
   }
+}
+
+function isLocalDevEnvironment() {
+  if (typeof AppStorage !== "undefined" && typeof AppStorage.isOfflineDevOrigin === "function") {
+    return AppStorage.isOfflineDevOrigin();
+  }
+  const host = (window.location.hostname || "").toLowerCase();
+  return host === "localhost" || host === "127.0.0.1" || host === "[::1]";
+}
+
+function consumeDevSeedResetParam() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has("resetDevSeed")) return false;
+    params.delete("resetDevSeed");
+    const qs = params.toString();
+    const next = window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash;
+    window.history.replaceState({}, "", next);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function workspacePayloadHasRoadmaps(payload) {
+  if (!payload || !Array.isArray(payload.profiles)) return false;
+  return payload.profiles.some((profile) => Array.isArray(profile.roadmaps) && profile.roadmaps.length > 0);
+}
+
+function getInMemoryRoadmapCount() {
+  return state.profiles.reduce(
+    (total, profile) => total + (Array.isArray(profile.roadmaps) ? profile.roadmaps.length : 0),
+    0
+  );
+}
+
+/** Seeds sample portfolio data on localhost when the workspace cache is empty. */
+function ensureDevWorkspaceSeed() {
+  if (!isLocalDevEnvironment()) return false;
+  if (typeof buildDevSeedWorkspacePayload !== "function") return false;
+  if (typeof AppStorage !== "undefined" && AppStorage.isCloudActive && AppStorage.isCloudActive()) {
+    return false;
+  }
+
+  const forceReset = consumeDevSeedResetParam();
+  if (forceReset) {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (err) {
+      console.warn("Could not clear local workspace cache for dev seed reset", err);
+    }
+  }
+
+  if (!forceReset) {
+    if (getInMemoryRoadmapCount() > 0) return false;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (workspacePayloadHasRoadmaps(parsed)) return false;
+      }
+    } catch {
+      /* fall through to seed */
+    }
+  }
+
+  const seed = buildDevSeedWorkspacePayload();
+  applyStatePayload(seed);
+  saveState();
+  console.info("Dev workspace seeded with sample roadmaps. Add ?resetDevSeed=1 to reload samples.");
+  return true;
 }
 
 function ensureDefaultProfile() {
@@ -8082,7 +9417,7 @@ function ensureDefaultProfile() {
       name: getDefaultActiveProfileName(),
       team: "",
       createdAt: now,
-      projects: []
+      roadmaps: []
     };
     state.profiles.push(profile);
     state.activeProfileId = profile.id;
@@ -8108,7 +9443,7 @@ function isProfileUnlocked(profileId) {
   return unlockedProfileIds.has(profileId);
 }
 
-/** Active profile only when unlocked — use for any project/portfolio data access. */
+/** Active profile only when unlocked — use for any roadmap/portfolio data access. */
 function getUnlockedActiveProfile() {
   const profile = getActiveProfile();
   if (!profile) return null;
@@ -8145,7 +9480,7 @@ function updateProfileLockedBanner() {
   }
   if (locked && elements.profileLockedBannerText) {
     elements.profileLockedBannerText.textContent =
-      "Enter your password below to access projects, filters, and all portfolio views.";
+      "Enter your password below to access roadmaps, filters, and all portfolio views.";
   }
   if (locked) {
     showProfileLockedInlineError("");
@@ -8193,7 +9528,7 @@ async function addProfile(name, team, password) {
     name,
     team: (team || "").trim(),
     createdAt: now,
-    projects: []
+    roadmaps: []
   };
   const pwd = (password || "").trim();
   if (pwd) {
@@ -8203,11 +9538,11 @@ async function addProfile(name, team, password) {
   state.activeProfileId = profile.id;
   saveState();
   renderProfiles();
-  renderProjects();
+  renderRoadmaps();
   if (pwd && !isProfileUnlocked(profile.id)) {
     pendingUnlockAction = { type: "activate", profileId: profile.id };
     openProfileUnlockModal(profile.id);
-    showToast("Profile created. Enter the password to access projects.");
+    showToast("Profile created. Enter the password to access roadmaps.");
   }
 }
 
@@ -8222,7 +9557,7 @@ function setActiveProfile(profileId) {
   renderProfiles();
   clearFilters();
   syncSuperAdminChrome();
-  renderProjects();
+  renderRoadmaps();
   if (!isProfileUnlocked(profileId)) {
     pendingUnlockAction = { type: "activate", profileId };
     if (isCompactProfilesLayout()) {
@@ -8239,7 +9574,7 @@ function getActiveProfile() {
   return state.profiles.find((p) => p.id === state.activeProfileId) || null;
 }
 
-// --- Render (profiles list, projects table) ---
+// --- Render (profiles list, roadmaps table) ---
 function getProfileIconSvg(iconName) {
   const icons = {
     view: "<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M15 12a3 3 0 11-6 0 3 3 0 016 0z'/><path d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'/></svg>",
@@ -8272,12 +9607,12 @@ function getTooltipRoot() {
   if (host && !host.hidden) return host;
   const pseudo = typeof Fullscreen !== "undefined" && Fullscreen.getPseudoFullscreenElement
     ? Fullscreen.getPseudoFullscreenElement()
-    : document.querySelector(".projects-view.view-pseudo-fullscreen");
+    : document.querySelector(".roadmaps-view.view-pseudo-fullscreen");
   return document.fullscreenElement || document.webkitFullscreenElement || pseudo || document.body;
 }
 
 function invalidateMapSizeAfterFullscreenExit() {
-  const map = elements.projectsMapContainer && elements.projectsMapContainer._leafletMap;
+  const map = elements.roadmapsMapContainer && elements.roadmapsMapContainer._leafletMap;
   if (!map) return;
   map.invalidateSize();
   requestAnimationFrame(() => map.invalidateSize());
@@ -8285,43 +9620,49 @@ function invalidateMapSizeAfterFullscreenExit() {
   setTimeout(() => map.invalidateSize(), 320);
 }
 
-function syncProjectsViewVisibility() {
-  if (!elements.projectsTableView || !elements.projectsBoardView) return;
-  const view = state.projectsView;
+function syncRoadmapsViewVisibility() {
+  if (!elements.roadmapsTableView || !elements.roadmapsBoardView) return;
+  const view = state.roadmapsView;
   const showTable = view === "table";
   const showBoard = view === "board";
   const showMoscow = view === "moscow";
   const showMap = view === "map";
   const showRaci = view === "raci";
+  const showKano = view === "kano";
 
-  elements.projectsTableView.style.display = showTable ? "flex" : "none";
-  elements.projectsBoardView.style.display = showBoard ? "flex" : "none";
-  elements.projectsBoardView.setAttribute("aria-hidden", String(!showBoard));
-  if (elements.projectsMoscowView) {
-    elements.projectsMoscowView.style.display = showMoscow ? "flex" : "none";
-    elements.projectsMoscowView.setAttribute("aria-hidden", String(!showMoscow));
+  elements.roadmapsTableView.style.display = showTable ? "flex" : "none";
+  elements.roadmapsBoardView.style.display = showBoard ? "flex" : "none";
+  elements.roadmapsBoardView.setAttribute("aria-hidden", String(!showBoard));
+  if (elements.roadmapsMoscowView) {
+    elements.roadmapsMoscowView.style.display = showMoscow ? "flex" : "none";
+    elements.roadmapsMoscowView.setAttribute("aria-hidden", String(!showMoscow));
   }
-  if (elements.projectsMapView) {
-    elements.projectsMapView.style.display = showMap ? "flex" : "none";
-    elements.projectsMapView.setAttribute("aria-hidden", String(!showMap));
+  if (elements.roadmapsMapView) {
+    elements.roadmapsMapView.style.display = showMap ? "flex" : "none";
+    elements.roadmapsMapView.setAttribute("aria-hidden", String(!showMap));
   }
-  if (elements.projectsRaciView) {
-    elements.projectsRaciView.style.display = showRaci ? "flex" : "none";
-    elements.projectsRaciView.setAttribute("aria-hidden", String(!showRaci));
+  if (elements.roadmapsRaciView) {
+    elements.roadmapsRaciView.style.display = showRaci ? "flex" : "none";
+    elements.roadmapsRaciView.setAttribute("aria-hidden", String(!showRaci));
+  }
+  if (elements.roadmapsKanoView) {
+    elements.roadmapsKanoView.style.display = showKano ? "flex" : "none";
+    elements.roadmapsKanoView.setAttribute("aria-hidden", String(!showKano));
   }
 }
 
-function getActiveProjectsViewRoot() {
-  if (state.projectsView === "table") return elements.projectsTableView;
-  if (state.projectsView === "board") return elements.projectsBoardView;
-  if (state.projectsView === "moscow") return elements.projectsMoscowView;
-  if (state.projectsView === "map") return elements.projectsMapView;
-  if (state.projectsView === "raci") return elements.projectsRaciView;
+function getActiveRoadmapsViewRoot() {
+  if (state.roadmapsView === "table") return elements.roadmapsTableView;
+  if (state.roadmapsView === "board") return elements.roadmapsBoardView;
+  if (state.roadmapsView === "moscow") return elements.roadmapsMoscowView;
+  if (state.roadmapsView === "map") return elements.roadmapsMapView;
+  if (state.roadmapsView === "raci") return elements.roadmapsRaciView;
+  if (state.roadmapsView === "kano") return elements.roadmapsKanoView;
   return null;
 }
 
 function resetActiveViewShellLayout() {
-  const viewRoot = getActiveProjectsViewRoot();
+  const viewRoot = getActiveRoadmapsViewRoot();
   if (!viewRoot) return;
 
   const presentationProps = [
@@ -8337,7 +9678,7 @@ function resetActiveViewShellLayout() {
 
   resetNode(viewRoot);
   viewRoot.querySelectorAll(
-    ".view-toolbar, .view-toolbar__row, .projects-map-container, .projects-map-legend, .scrum-board, .moscow-grid, .table-wrapper"
+    ".view-toolbar, .view-toolbar__row, .roadmaps-map-container, .roadmaps-map-legend, .scrum-board, .moscow-grid, .table-wrapper"
   ).forEach(resetNode);
 
   const toolbar = viewRoot.querySelector(".view-toolbar");
@@ -8360,7 +9701,7 @@ function resetPortfolioScrollAfterFullscreen() {
 }
 
 function getActiveViewToolbar() {
-  const root = getActiveProjectsViewRoot();
+  const root = getActiveRoadmapsViewRoot();
   return root ? root.querySelector(".view-toolbar") : null;
 }
 
@@ -8380,11 +9721,11 @@ function scrollActiveViewToolbarIntoView() {
 function refreshCompactFullscreenEnter() {
   if (!document.documentElement.classList.contains("pseudo-view-fullscreen")) return;
 
-  if (state.projectsView === "moscow") {
+  if (state.roadmapsView === "moscow") {
     syncMoscowCompactNav();
   }
 
-  if (state.projectsView === "map") {
+  if (state.roadmapsView === "map") {
     invalidateMapSizeAfterFullscreenExit();
   }
 
@@ -8407,11 +9748,11 @@ function refreshWorkspaceAfterFullscreenExit() {
   returnTooltipsToOwner();
   hideCellTypeTooltips();
   resetActiveViewShellLayout();
-  syncProjectsViewVisibility();
+  syncRoadmapsViewVisibility();
   syncPortfolioViewTabState();
   updateBulkSelectionActions();
 
-  const view = state.projectsView;
+  const view = state.roadmapsView;
   if (view === "moscow") {
     syncMoscowCompactNav();
   }
@@ -8536,7 +9877,7 @@ function syncCompactTooltipBackdrop(tooltip) {
 }
 
 const TABLE_VIEW_TOOLTIP_TRIGGER_SELECTOR =
-  ".cell-type-icon-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip, .projects-table-card__status-pill, .projects-table-card__chip--more, .raci-matrix-with-tooltip";
+  ".cell-type-icon-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip, .roadmaps-table-card__status-pill, .roadmaps-table-card__chip--more, .raci-matrix-with-tooltip";
 
 function findTableViewTooltipTrigger(target) {
   if (!target || !(target instanceof Element)) return null;
@@ -8547,7 +9888,7 @@ function isTableCardActionControl(target) {
   return !!(
     target &&
     target.closest(
-      ".project-action-btn, .project-select-checkbox, .country-remove-btn, .country-row select, .country-row button"
+      ".roadmap-action-btn, .roadmap-select-checkbox, .country-remove-btn, .country-row select, .country-row button"
     )
   );
 }
@@ -8576,7 +9917,7 @@ function finalizeTooltipViewportPosition(tooltip, anchorRect) {
     tooltip.classList.add("cell-type-tooltip--below");
     const gap = 2;
     let top = anchorRect.bottom + gap;
-    const maxHeightCap = tooltip.classList.contains("cell-type-tooltip--project-details")
+    const maxHeightCap = tooltip.classList.contains("cell-type-tooltip--roadmap-details")
       ? Math.min(Math.floor(vh * 0.62), 420)
       : Math.min(Math.floor(vh * 0.55), 320);
     let maxHeight = Math.max(120, Math.min(maxHeightCap, vh - margin - top));
@@ -8622,7 +9963,7 @@ function positionProfileTooltip(wrap, anchorPoint) {
   document.body.classList.remove("cell-type-tooltip-hidden");
 
   let rect;
-  if (wrap.classList.contains("project-field-tooltip-wrap")) {
+  if (wrap.classList.contains("roadmap-field-tooltip-wrap")) {
     const control = wrap.querySelector("input, select, textarea");
     rect = control ? control.getBoundingClientRect() : wrap.getBoundingClientRect();
   } else {
@@ -8663,7 +10004,7 @@ function positionProfileTooltip(wrap, anchorPoint) {
     tooltip.style.top = (rect.top - 8) + "px";
   }
 
-  if (wrap.classList.contains("project-field-tooltip-wrap")) {
+  if (wrap.classList.contains("roadmap-field-tooltip-wrap")) {
     tooltip.classList.add("cell-type-tooltip--field");
   } else {
     tooltip.classList.remove("cell-type-tooltip--field");
@@ -8700,7 +10041,7 @@ function handleCompactTableTooltipClick(e) {
   if (isTableCardActionControl(e.target)) return;
 
   const wrap = findTableViewTooltipTrigger(e.target);
-  if (!wrap || !wrap.closest(".projects-table-card")) {
+  if (!wrap || !wrap.closest(".roadmaps-table-card")) {
     if (activeTooltipWrap) hideCellTypeTooltips();
     return;
   }
@@ -8725,19 +10066,19 @@ function handleCompactTooltipDismissPointerDown(e) {
   hideCellTypeTooltips();
 }
 
-/** Sync primary project actions (toolbar + mobile FAB). */
+/** Sync primary roadmap actions (toolbar + mobile FAB). */
 function syncPortfolioActionButtons() {
   const profile = getActiveProfile();
   const locked = profile ? !isProfileUnlocked(profile.id) : true;
   const demoReadOnly = isActiveDemoProfile();
   const disabled = !profile || locked || demoReadOnly;
-  if (elements.addProjectBtn) {
-    elements.addProjectBtn.disabled = disabled;
-    elements.addProjectBtn.title = demoReadOnly ? DEMO_READ_ONLY_ACTION_TITLE : "";
+  if (elements.addRoadmapBtn) {
+    elements.addRoadmapBtn.disabled = disabled;
+    elements.addRoadmapBtn.title = demoReadOnly ? DEMO_READ_ONLY_ACTION_TITLE : "";
   }
-  if (elements.portfolioFabAddProject) {
-    elements.portfolioFabAddProject.disabled = disabled;
-    elements.portfolioFabAddProject.title = demoReadOnly ? DEMO_READ_ONLY_ACTION_TITLE : "";
+  if (elements.portfolioFabAddRoadmap) {
+    elements.portfolioFabAddRoadmap.disabled = disabled;
+    elements.portfolioFabAddRoadmap.title = demoReadOnly ? DEMO_READ_ONLY_ACTION_TITLE : "";
   }
 }
 
@@ -8751,7 +10092,7 @@ function initPortfolioFiltersDrawer() {
   drawer.addEventListener("toggle", () => {
     if (!drawer.open) {
       closeFilterCountriesPopup();
-      closeFilterProjectPeriodPopup();
+      closeFilterRoadmapPeriodPopup();
       if (elements.filtersAdvanced) {
         elements.filtersAdvanced.classList.remove("visible");
         syncCompactFilterButtonLabels();
@@ -8778,9 +10119,9 @@ function syncPortfolioFiltersDrawerState() {
 function initPortfolioWorkspace() {
   initPortfolioFiltersDrawer();
 
-  if (elements.portfolioFabAddProject && elements.addProjectBtn) {
-    elements.portfolioFabAddProject.addEventListener("click", () => {
-      if (!elements.addProjectBtn.disabled) elements.addProjectBtn.click();
+  if (elements.portfolioFabAddRoadmap && elements.addRoadmapBtn) {
+    elements.portfolioFabAddRoadmap.addEventListener("click", () => {
+      if (!elements.addRoadmapBtn.disabled) elements.addRoadmapBtn.click();
     });
   }
 
@@ -8817,13 +10158,13 @@ function markOverlayCloseImmediate(el) {
 }
 
 const BLOCKING_MODAL_OVERLAY_IDS = new Set([
-  "projectModal",
+  "roadmapModal",
   "profileViewModal",
   "profileEditModal",
   "profileDeleteModal",
   "profileUnlockModal",
-  "projectDeleteModal",
-  "projectBulkTransferModal",
+  "roadmapDeleteModal",
+  "roadmapBulkTransferModal",
   "exportFormatModal",
   "importFormatModal",
   "exportUnlockModal",
@@ -8832,13 +10173,13 @@ const BLOCKING_MODAL_OVERLAY_IDS = new Set([
 
 function getBlockingModalCandidates() {
   return [
-    ["projectModal", elements.projectModal],
+    ["roadmapModal", elements.roadmapModal],
     ["profileViewModal", elements.profileViewModal],
     ["profileEditModal", elements.profileEditModal],
     ["profileDeleteModal", elements.profileDeleteModal],
     ["profileUnlockModal", elements.profileUnlockModal],
-    ["projectDeleteModal", elements.projectDeleteModal],
-    ["projectBulkTransferModal", elements.projectBulkTransferModal],
+    ["roadmapDeleteModal", elements.roadmapDeleteModal],
+    ["roadmapBulkTransferModal", elements.roadmapBulkTransferModal],
     ["exportFormatModal", elements.exportFormatModal],
     ["importFormatModal", elements.importFormatModal],
     ["exportUnlockModal", elements.exportUnlockModal],
@@ -8888,8 +10229,8 @@ function isBlockingModalOpen(el) {
   return !!(el && el.classList.contains("active"));
 }
 
-function isProjectModalOpen() {
-  return isBlockingModalOpen(elements.projectModal);
+function isRoadmapModalOpen() {
+  return isBlockingModalOpen(elements.roadmapModal);
 }
 
 function syncBlockingModalOpenClass() {
@@ -8917,8 +10258,8 @@ function closeTopBlockingModal() {
   const id = getActiveBlockingModalOverlayId();
   if (!id) return false;
   switch (id) {
-    case "projectModal":
-      closeProjectModal();
+    case "roadmapModal":
+      closeRoadmapModal();
       break;
     case "profileViewModal":
       closeProfileViewModal();
@@ -8932,11 +10273,11 @@ function closeTopBlockingModal() {
     case "profileUnlockModal":
       closeProfileUnlockModal();
       break;
-    case "projectDeleteModal":
-      closeProjectDeleteModal();
+    case "roadmapDeleteModal":
+      closeRoadmapDeleteModal();
       break;
-    case "projectBulkTransferModal":
-      closeProjectBulkTransferModal();
+    case "roadmapBulkTransferModal":
+      closeRoadmapBulkTransferModal();
       break;
     case "exportFormatModal":
       closeExportFormatModal();
@@ -9018,8 +10359,8 @@ function closeFilterCountriesPopup() {
   if (container) container.classList.remove("open");
 }
 
-function closeFilterProjectPeriodPopup() {
-  const container = elements.filterProjectPeriodToggle?.closest(".filter-countries");
+function closeFilterRoadmapPeriodPopup() {
+  const container = elements.filterRoadmapPeriodToggle?.closest(".filter-countries");
   if (container) container.classList.remove("open");
 }
 
@@ -9033,15 +10374,15 @@ function registerAppOverlays() {
   OverlayManager.register("mapMetricPicker", closeMapMetricPickerDropdown);
   OverlayManager.register("appHeaderMenu", closeAppHeaderMenu);
   OverlayManager.register("filterCountries", closeFilterCountriesPopup);
-  OverlayManager.register("filterProjectPeriod", closeFilterProjectPeriodPopup);
+  OverlayManager.register("filterRoadmapPeriod", closeFilterRoadmapPeriodPopup);
   OverlayManager.register("boardStatusColumns", closeScrumBoardStatusColumnsPopup);
-  OverlayManager.register("projectModal", closeNow(closeProjectModal));
+  OverlayManager.register("roadmapModal", closeNow(closeRoadmapModal));
   OverlayManager.register("profileViewModal", closeNow(closeProfileViewModal));
   OverlayManager.register("profileEditModal", closeNow(closeProfileEditModal));
   OverlayManager.register("profileDeleteModal", closeNow(closeProfileDeleteModal));
   OverlayManager.register("profileUnlockModal", closeNow(closeProfileUnlockModal));
-  OverlayManager.register("projectDeleteModal", closeNow(closeProjectDeleteModal));
-  OverlayManager.register("projectBulkTransferModal", closeNow(closeProjectBulkTransferModal));
+  OverlayManager.register("roadmapDeleteModal", closeNow(closeRoadmapDeleteModal));
+  OverlayManager.register("roadmapBulkTransferModal", closeNow(closeRoadmapBulkTransferModal));
   OverlayManager.register("exportFormatModal", closeNow(closeExportFormatModal));
   OverlayManager.register("importFormatModal", closeNow(closeImportFormatModal));
   OverlayManager.register("exportUnlockModal", closeNow(closeExportUnlockModal));
@@ -9062,6 +10403,39 @@ function updateProfilesShellSummary(activeProfile, profileCount) {
   }
 }
 
+function buildPortfolioHeaderSubtitle(activeProfile) {
+  if (!activeProfile) return "";
+  const locked = !isProfileUnlocked(activeProfile.id);
+  if (locked) return "Enter the profile password to view and manage roadmaps.";
+
+  const team = (activeProfile.team || "").trim();
+  const roadmapCount = Array.isArray(activeProfile.roadmaps) ? activeProfile.roadmaps.length : 0;
+  const roadmapLabel = roadmapCount === 1 ? "1 roadmap" : `${roadmapCount} roadmaps`;
+
+  if (team && roadmapCount > 0) return `${team} · ${roadmapLabel}`;
+  if (team) return team;
+  if (roadmapCount > 0) return roadmapLabel;
+  return "Ready to prioritize roadmaps";
+}
+
+function syncPortfolioCommandIdentity(activeProfile) {
+  const avatar = elements.portfolioCommandAvatar || $("portfolioCommandAvatar");
+  const identity = elements.portfolioIdentity || $("portfolioIdentity");
+  if (!avatar) return;
+
+  if (!activeProfile) {
+    avatar.textContent = "?";
+    avatar.classList.add("portfolio-identity__avatar--empty");
+    if (identity) identity.classList.remove("portfolio-identity--locked");
+    return;
+  }
+
+  avatar.textContent = getProfileInitials(activeProfile.name);
+  avatar.classList.remove("portfolio-identity__avatar--empty");
+  const locked = !isProfileUnlocked(activeProfile.id);
+  if (identity) identity.classList.toggle("portfolio-identity--locked", locked);
+}
+
 function updatePortfolioHeaderSubtitle(text, { hideWhenEmpty = true, hideWhenSameAsTitle = false, title = "" } = {}) {
   const el = elements.activeProfileSubtitleText || $("activeProfileSubtitleText");
   if (!el) return;
@@ -9070,8 +10444,7 @@ function updatePortfolioHeaderSubtitle(text, { hideWhenEmpty = true, hideWhenSam
   const titleNorm = (title || "").trim().toLowerCase();
   const shouldHide =
     (hideWhenEmpty && !normalized) ||
-    (hideWhenSameAsTitle && normalized.toLowerCase() === titleNorm) ||
-    (isCompactProfilesLayout() && normalized === "Profile ready for prioritization.");
+    (hideWhenSameAsTitle && normalized.toLowerCase() === titleNorm);
 
   if (shouldHide) {
     el.textContent = "";
@@ -9084,11 +10457,193 @@ function updatePortfolioHeaderSubtitle(text, { hideWhenEmpty = true, hideWhenSam
   }
 }
 
+/** Map is always listed last in view tabs and the More menu, even when new views are added. */
+const PORTFOLIO_VIEW_TAB_PIN_TO_END = "map";
+
+/** Preferred order for portfolio views. Do not include {@link PORTFOLIO_VIEW_TAB_PIN_TO_END} — it is appended last. */
+const PORTFOLIO_VIEW_TAB_ORDER = ["table", "board", "moscow", "raci", "kano"];
+
+function getPortfolioViewTabOrder() {
+  const pin = PORTFOLIO_VIEW_TAB_PIN_TO_END;
+  const ordered = PORTFOLIO_VIEW_TAB_ORDER.filter(
+    (view) => view !== pin && Boolean(getPortfolioViewTabButton(view))
+  );
+  if (getPortfolioViewTabButton(pin)) ordered.push(pin);
+  return ordered;
+}
+
+function isPortfolioViewTab(view) {
+  return getPortfolioViewTabOrder().includes(view);
+}
+let portfolioViewTabsLayoutFrame = 0;
+let portfolioViewTabsOverflowBound = false;
+let portfolioViewTabsLayoutLock = false;
+
+function getPortfolioViewTabNav() {
+  return document.querySelector(".portfolio-view-tabs");
+}
+
+function getPortfolioViewTabButton(view) {
+  const map = {
+    table: elements.roadmapsViewTableBtn,
+    board: elements.roadmapsViewBoardBtn,
+    moscow: elements.roadmapsViewMoscowBtn,
+    map: elements.roadmapsViewMapBtn,
+    raci: elements.roadmapsViewRaciBtn,
+    kano: elements.roadmapsViewKanoBtn
+  };
+  return map[view] || null;
+}
+
+function setPortfolioViewTabButtonSlot(btn, slot) {
+  if (!btn) return;
+  btn.setAttribute("role", slot === "track" ? "tab" : "menuitem");
+}
+
+function closePortfolioViewTabsMenu() {
+  const nav = getPortfolioViewTabNav();
+  if (!nav) return;
+  const menu = elements.portfolioViewTabsMoreMenu || $("portfolioViewTabsMoreMenu");
+  const moreBtn = elements.portfolioViewTabsMoreBtn || $("portfolioViewTabsMoreBtn");
+  nav.classList.remove("portfolio-view-tabs--overflow-open");
+  if (menu) menu.hidden = true;
+  if (moreBtn) moreBtn.setAttribute("aria-expanded", "false");
+}
+
+function syncPortfolioViewTabsMoreState() {
+  const nav = getPortfolioViewTabNav();
+  const menu = elements.portfolioViewTabsMoreMenu || $("portfolioViewTabsMoreMenu");
+  const moreBtn = elements.portfolioViewTabsMoreBtn || $("portfolioViewTabsMoreBtn");
+  if (!nav || !menu || !moreBtn) return;
+
+  const activeView = state.roadmapsView;
+
+  moreBtn.classList.remove("view-toggle-btn--active", "portfolio-view-tabs-more-btn--active");
+  moreBtn.removeAttribute("aria-selected");
+
+  const labelEl = moreBtn.querySelector(".portfolio-view-tabs-more-label");
+  if (labelEl) labelEl.textContent = "More";
+
+  const menuLabels = Array.from(menu.querySelectorAll(".view-tab-text"))
+    .map((node) => node.textContent.trim())
+    .filter(Boolean);
+  moreBtn.title = menuLabels.length ? `More views: ${menuLabels.join(", ")}` : "";
+
+  menu.querySelectorAll(".view-toggle-btn[data-view]").forEach((btn) => {
+    const isActive = btn.dataset.view === activeView;
+    btn.classList.toggle("view-toggle-btn--active", isActive);
+    btn.setAttribute("aria-selected", String(isActive));
+  });
+}
+
+function applyPortfolioViewTabsDuo(track, menu, overflowWrap, nav) {
+  const activeView = isPortfolioViewTab(state.roadmapsView)
+    ? state.roadmapsView
+    : "table";
+
+  nav.dataset.viewTabsMode = "duo";
+  nav.classList.add("portfolio-view-tabs--has-overflow", "portfolio-view-tabs--duo");
+  overflowWrap.hidden = false;
+  closePortfolioViewTabsMenu();
+
+  track.replaceChildren();
+  menu.replaceChildren();
+
+  const activeBtn = getPortfolioViewTabButton(activeView);
+  if (activeBtn) {
+    setPortfolioViewTabButtonSlot(activeBtn, "track");
+    track.appendChild(activeBtn);
+  }
+
+  getPortfolioViewTabOrder().forEach((view) => {
+    if (view === activeView) return;
+    const btn = getPortfolioViewTabButton(view);
+    if (btn) {
+      setPortfolioViewTabButtonSlot(btn, "menu");
+      menu.appendChild(btn);
+    }
+  });
+}
+
+function layoutPortfolioViewTabs() {
+  if (portfolioViewTabsLayoutLock) return;
+
+  const nav = getPortfolioViewTabNav();
+  const track = nav?.querySelector(".portfolio-view-tabs-track");
+  const menu = elements.portfolioViewTabsMoreMenu || $("portfolioViewTabsMoreMenu");
+  const overflowWrap = nav?.querySelector(".portfolio-view-tabs-overflow");
+  if (!nav || !track || !menu || !overflowWrap) return;
+
+  portfolioViewTabsLayoutLock = true;
+  try {
+    applyPortfolioViewTabsDuo(track, menu, overflowWrap, nav);
+    syncPortfolioViewTabsMoreState();
+  } finally {
+    portfolioViewTabsLayoutLock = false;
+  }
+}
+
+function schedulePortfolioViewTabsLayout() {
+  if (portfolioViewTabsLayoutFrame) cancelAnimationFrame(portfolioViewTabsLayoutFrame);
+  portfolioViewTabsLayoutFrame = requestAnimationFrame(() => {
+    portfolioViewTabsLayoutFrame = 0;
+    layoutPortfolioViewTabs();
+  });
+}
+
+function initPortfolioViewTabsOverflow() {
+  const nav = getPortfolioViewTabNav();
+  const menu = elements.portfolioViewTabsMoreMenu || $("portfolioViewTabsMoreMenu");
+  const moreBtn = elements.portfolioViewTabsMoreBtn || $("portfolioViewTabsMoreBtn");
+  if (!nav || !menu || !moreBtn || portfolioViewTabsOverflowBound) return;
+  portfolioViewTabsOverflowBound = true;
+
+  moreBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const willOpen = menu.hidden;
+    if (willOpen) {
+      menu.hidden = false;
+      nav.classList.add("portfolio-view-tabs--overflow-open");
+      moreBtn.setAttribute("aria-expanded", "true");
+    } else {
+      closePortfolioViewTabsMenu();
+    }
+  });
+
+  menu.addEventListener(
+    "click",
+    (event) => {
+      const btn = event.target.closest(".view-toggle-btn[data-view]");
+      if (!btn || !menu.contains(btn)) return;
+      closePortfolioViewTabsMenu();
+    },
+    true
+  );
+
+  document.addEventListener("click", (event) => {
+    if (!nav.classList.contains("portfolio-view-tabs--overflow-open")) return;
+    if (nav.contains(event.target)) return;
+    closePortfolioViewTabsMenu();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && nav.classList.contains("portfolio-view-tabs--overflow-open")) {
+      closePortfolioViewTabsMenu();
+      moreBtn.focus();
+    }
+  });
+
+  window.addEventListener("resize", () => schedulePortfolioViewTabsLayout());
+  layoutPortfolioViewTabs();
+}
+
 function scrollActivePortfolioViewTabIntoView() {
-  const tabs = document.querySelector(".portfolio-view-tabs");
+  const tabs = document.querySelector(".portfolio-view-tabs-track") || document.querySelector(".portfolio-view-tabs");
   if (!tabs) return;
   if (tabs.scrollWidth <= tabs.clientWidth + 2) return;
-  const active = tabs.querySelector(".view-toggle-btn--active, .view-toggle-btn[aria-selected='true']");
+  const active =
+    tabs.querySelector(".view-toggle-btn--active, .view-toggle-btn[aria-selected='true']") ||
+    document.querySelector(".portfolio-view-tabs-more-btn.view-toggle-btn--active");
   if (active && typeof active.scrollIntoView === "function") {
     requestAnimationFrame(() => {
       active.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
@@ -9097,27 +10652,24 @@ function scrollActivePortfolioViewTabIntoView() {
 }
 
 function blurPortfolioViewTabs() {
-  const tabs = [
-    elements.projectsViewTableBtn,
-    elements.projectsViewBoardBtn,
-    elements.projectsViewMoscowBtn,
-    elements.projectsViewMapBtn
-  ].filter(Boolean);
-  tabs.forEach((btn) => {
-    btn.classList.remove("view-toggle-btn--pressed");
-    btn.removeAttribute("title");
-    if (document.activeElement === btn) btn.blur();
-  });
+  getPortfolioViewTabOrder().map((view) => getPortfolioViewTabButton(view))
+    .filter(Boolean)
+    .forEach((btn) => {
+      btn.classList.remove("view-toggle-btn--pressed");
+      btn.removeAttribute("title");
+      if (document.activeElement === btn) btn.blur();
+    });
 }
 
 function syncPortfolioViewTabState(view) {
-  const activeView = view || state.projectsView;
+  const activeView = view || state.roadmapsView;
   const tabMap = [
-    [elements.projectsViewTableBtn, "table"],
-    [elements.projectsViewBoardBtn, "board"],
-    [elements.projectsViewMoscowBtn, "moscow"],
-    [elements.projectsViewMapBtn, "map"],
-    [elements.projectsViewRaciBtn, "raci"]
+    [elements.roadmapsViewTableBtn, "table"],
+    [elements.roadmapsViewBoardBtn, "board"],
+    [elements.roadmapsViewMoscowBtn, "moscow"],
+    [elements.roadmapsViewMapBtn, "map"],
+    [elements.roadmapsViewRaciBtn, "raci"],
+    [elements.roadmapsViewKanoBtn, "kano"]
   ];
 
   tabMap.forEach(([btn, name]) => {
@@ -9129,6 +10681,7 @@ function syncPortfolioViewTabState(view) {
     btn.removeAttribute("title");
     if (!isActive && document.activeElement === btn) btn.blur();
   });
+  layoutPortfolioViewTabs();
 }
 
 function getSortedProfiles() {
@@ -9812,10 +11365,10 @@ function renderProfiles() {
       summary.appendChild(teamSpan);
     }
 
-    const projectCount = Array.isArray(profile.projects) ? profile.projects.length : 0;
+    const roadmapCount = Array.isArray(profile.roadmaps) ? profile.roadmaps.length : 0;
     const countSpan = document.createElement("span");
     countSpan.className = "profile-item-count";
-    countSpan.textContent = projectCount === 1 ? "1 project" : `${projectCount} projects`;
+    countSpan.textContent = roadmapCount === 1 ? "1 roadmap" : `${roadmapCount} roadmaps`;
     summary.appendChild(countSpan);
 
     body.appendChild(summary);
@@ -9865,7 +11418,7 @@ function renderProfiles() {
       "danger",
       "Delete",
       demoProfileCard ? "Delete profile (disabled)" : "Delete profile",
-      demoProfileCard ? DEMO_READ_ONLY_ACTION_TITLE : "Remove this profile and all its projects permanently",
+      demoProfileCard ? DEMO_READ_ONLY_ACTION_TITLE : "Remove this profile and all its roadmaps permanently",
       getProfileIconSvg("trash"),
       (event) => {
         event.stopPropagation();
@@ -9890,6 +11443,7 @@ function renderProfiles() {
   renderProfilePicker();
 
   if (!activeProfile) {
+    syncPortfolioCommandIdentity(null);
     elements.activeProfileTitleText.textContent = "No profile selected";
     if (typeof Fullscreen !== "undefined" && typeof Fullscreen.syncChromeContext === "function") {
       Fullscreen.syncChromeContext();
@@ -9897,31 +11451,29 @@ function renderProfiles() {
     updatePortfolioHeaderSubtitle(
       isCompactProfilesLayout()
         ? "Use the profile picker above or Manage to add workspaces."
-        : "Create or select a profile to start adding projects."
+        : "Create or select a profile to start adding roadmaps."
     );
-    elements.projectsHeaderBadges.innerHTML = "";
+    elements.roadmapsHeaderBadges.innerHTML = "";
     updateBulkSelectionActions();
     syncPortfolioActionButtons();
     return;
   }
 
+  syncPortfolioCommandIdentity(activeProfile);
   elements.activeProfileTitleText.textContent = activeProfile.name;
   if (typeof Fullscreen !== "undefined" && typeof Fullscreen.syncChromeContext === "function") {
     Fullscreen.syncChromeContext();
   }
-  const teamLabel = (activeProfile.team || "").trim();
   const locked = !isProfileUnlocked(activeProfile.id);
   const demoReadOnly = isActiveDemoProfile();
-  updatePortfolioHeaderSubtitle(
-    locked
-      ? "Enter the profile password to view and manage projects."
-      : teamLabel || "Profile ready for prioritization.",
-    { hideWhenSameAsTitle: true, title: activeProfile.name }
-  );
+  updatePortfolioHeaderSubtitle(buildPortfolioHeaderSubtitle(activeProfile), {
+    hideWhenSameAsTitle: true,
+    title: activeProfile.name
+  });
 
-  if (elements.projectsHeaderBadges) {
-    elements.projectsHeaderBadges.innerHTML = demoReadOnly && !locked
-      ? '<span class="portfolio-demo-badge" title="Browse only — add, edit, and delete are disabled">Read-only demo</span>'
+  if (elements.roadmapsHeaderBadges) {
+    elements.roadmapsHeaderBadges.innerHTML = demoReadOnly && !locked
+      ? '<span class="portfolio-demo-badge portfolio-status-badge" title="Browse only — add, edit, and delete are disabled">Demo</span>'
       : "";
   }
   syncPortfolioActionButtons();
@@ -9930,14 +11482,20 @@ function renderProfiles() {
   updateProfileLockedBanner();
 }
 
-function renderProjects() {
+function renderRoadmaps() {
   const activeProfile = getActiveProfile();
   const demoReadOnly = isActiveDemoProfile();
   syncDemoReadOnlyChrome();
   syncSuperAdminChrome();
-  elements.projectsTableBody.innerHTML = "";
-  if (elements.projectsTableCardsList) {
-    elements.projectsTableCardsList.innerHTML = "";
+  if (activeProfile && elements.activeProfileSubtitleText) {
+    updatePortfolioHeaderSubtitle(buildPortfolioHeaderSubtitle(activeProfile), {
+      hideWhenSameAsTitle: true,
+      title: activeProfile.name
+    });
+  }
+  elements.roadmapsTableBody.innerHTML = "";
+  if (elements.roadmapsTableCardsList) {
+    elements.roadmapsTableCardsList.innerHTML = "";
   }
   updateProfileLockedBanner();
 
@@ -9946,105 +11504,105 @@ function renderProjects() {
   }
 
   if (!activeProfile) {
-    renderProjectsTableEmptyMessage("Create or select a profile to start adding projects.");
+    renderRoadmapsTableEmptyMessage("Create or select a profile to start adding roadmaps.");
     updateBulkSelectionActions();
-    renderNonTableProjectsView();
+    renderNonTableRoadmapsView();
     return;
   }
 
   if (!isProfileUnlocked(activeProfile.id)) {
-    renderProjectsTableEmptyMessage(
+    renderRoadmapsTableEmptyMessage(
       "This profile is locked. Enter your password in the banner above to unlock."
     );
     updateBulkSelectionActions();
     syncPortfolioActionButtons();
-    if (elements.selectAllProjects) elements.selectAllProjects.checked = false;
-    renderNonTableProjectsView();
+    if (elements.selectAllRoadmaps) elements.selectAllRoadmaps.checked = false;
+    renderNonTableRoadmapsView();
     return;
   }
 
-  const baseProjects = getPortfolioProjectsBaseList();
+  const baseRoadmaps = getPortfolioRoadmapsBaseList();
 
-  baseProjects.forEach((p) => {
+  baseRoadmaps.forEach((p) => {
     p.riceScore = calculateRiceScore(p);
   });
 
-  initFilterProjectPeriodOptions(baseProjects);
+  initFilterRoadmapPeriodOptions(baseRoadmaps);
 
-  let projects = applyFilters(baseProjects);
-  projects = sortProjects(projects);
+  let roadmaps = applyFilters(baseRoadmaps);
+  roadmaps = sortRoadmaps(roadmaps);
 
-  if (!projects.length) {
-    renderProjectsTableEmptyMessage(
+  if (!roadmaps.length) {
+    renderRoadmapsTableEmptyMessage(
       isSuperAdminModeActive()
-        ? "No projects match the current filters across all profiles. Adjust filters or add a new project."
-        : "No projects match the current filters. Adjust filters or add a new project."
+        ? "No roadmaps match the current filters across all profiles. Adjust filters or add a new roadmap."
+        : "No roadmaps match the current filters. Adjust filters or add a new roadmap."
     );
     updateBulkSelectionActions();
-    elements.selectAllProjects.checked = false;
-    renderNonTableProjectsView();
+    elements.selectAllRoadmaps.checked = false;
+    renderNonTableRoadmapsView();
     return;
   }
 
   const useCompactTableCards = isTableCompactLayout();
 
   if (useCompactTableCards) {
-    renderProjectsTableCards(projects, demoReadOnly);
+    renderRoadmapsTableCards(roadmaps, demoReadOnly);
     syncHeaderCheckbox();
     updateBulkSelectionActions();
     updateSortIndicators();
-    if (state.projectsView === "table" && projects.some((p) => p.financialImpactValue != null && p.financialImpactValue !== "")) {
+    if (state.roadmapsView === "table" && roadmaps.some((p) => p.financialImpactValue != null && p.financialImpactValue !== "")) {
       if (Object.keys(state.exchangeRatesToEUR || {}).length === 0) {
-        ExchangeRates.ensure().then(() => renderProjects()).catch(() => {});
+        ExchangeRates.ensure().then(() => renderRoadmaps()).catch(() => {});
       }
     }
-    renderNonTableProjectsView();
+    renderNonTableRoadmapsView();
     return;
   }
 
   const rows = document.createDocumentFragment();
-  projects.forEach((project) => {
+  roadmaps.forEach((roadmap) => {
     const tr = document.createElement("tr");
     if (
       isSuperAdminModeActive() &&
-      project.ownerProfileId &&
-      project.ownerProfileId !== state.activeProfileId
+      roadmap.ownerProfileId &&
+      roadmap.ownerProfileId !== state.activeProfileId
     ) {
-      tr.classList.add("projects-table-row--external-profile");
+      tr.classList.add("roadmaps-table-row--external-profile");
     }
 
     const tdSelect = document.createElement("td");
     const cb = document.createElement("input");
     cb.type = "checkbox";
-    cb.className = "checkbox-input project-select-checkbox";
-    cb.setAttribute("data-id", project.id);
-    cb.setAttribute("aria-label", `Select ${project.title || "project"}`);
+    cb.className = "checkbox-input roadmap-select-checkbox";
+    cb.setAttribute("data-id", roadmap.id);
+    cb.setAttribute("aria-label", `Select ${roadmap.title || "roadmap"}`);
     if (demoReadOnly) {
       cb.disabled = true;
       cb.title = DEMO_READ_ONLY_ACTION_TITLE;
     }
     tdSelect.appendChild(cb);
-    stampProjectsTableCol(tdSelect, "select");
+    stampRoadmapsTableCol(tdSelect, "select");
     tr.appendChild(tdSelect);
 
     const tdTitle = document.createElement("td");
-    stampProjectsTableCol(tdTitle, "title");
-    const countries = Array.isArray(project.countries) ? project.countries : [];
+    stampRoadmapsTableCol(tdTitle, "title");
+    const countries = Array.isArray(roadmap.countries) ? roadmap.countries : [];
     const titleBlock = document.createElement("div");
     titleBlock.className = "cell-title-block";
-    const projectDesc = project.description || "";
+    const roadmapDesc = roadmap.description || "";
     const titleDiv = document.createElement("div");
     titleDiv.className = "cell-title";
-    titleDiv.textContent = project.title || "";
-    if (projectDesc) {
+    titleDiv.textContent = roadmap.title || "";
+    if (roadmapDesc) {
       const descWrap = document.createElement("span");
       descWrap.className = "cell-desc-with-tooltip";
-      descWrap.setAttribute("aria-label", "Project name; hover for description");
+      descWrap.setAttribute("aria-label", "Roadmap name; hover for description");
       descWrap.appendChild(titleDiv);
       descWrap.appendChild(
-        buildProjectDetailsTooltip({
+        buildRoadmapDetailsTooltip({
           titleLabel: "Description",
-          rawDescription: projectDesc
+          rawDescription: roadmapDesc
         })
       );
       titleBlock.appendChild(descWrap);
@@ -10052,8 +11610,8 @@ function renderProjects() {
       titleBlock.appendChild(titleDiv);
     }
     if (countries.length) {
-      const normalizedCountries = normalizeProjectCountriesList(countries);
-      const isEuRegion = projectCountriesRepresentEuRegion(normalizedCountries);
+      const normalizedCountries = normalizeRoadmapCountriesList(countries);
+      const isEuRegion = roadmapCountriesRepresentEuRegion(normalizedCountries);
       const countriesWrap = document.createElement("span");
       countriesWrap.className = "cell-countries-with-tooltip";
       countriesWrap.setAttribute(
@@ -10090,18 +11648,18 @@ function renderProjects() {
     }
     tdTitle.appendChild(titleBlock);
     tr.appendChild(tdTitle);
-    tr.appendChild(buildProjectOwnerTableCell(project));
+    tr.appendChild(buildRoadmapOwnerTableCell(roadmap));
 
     const tdType = document.createElement("td");
-    stampProjectsTableCol(tdType, "type");
-    if (project.projectType) {
-      const meta = projectTypeIcons && projectTypeIcons[project.projectType];
+    stampRoadmapsTableCol(tdType, "type");
+    if (roadmap.roadmapType) {
+      const meta = roadmapTypeIcons && roadmapTypeIcons[roadmap.roadmapType];
       const wrapper = document.createElement("span");
       wrapper.className = "cell-type-icon-wrap cell-type-pill";
-      wrapper.dataset.type = project.projectType;
+      wrapper.dataset.type = roadmap.roadmapType;
       wrapper.dataset.iconKind = "type";
       wrapper.setAttribute("role", "img");
-      wrapper.setAttribute("aria-label", project.projectType);
+      wrapper.setAttribute("aria-label", roadmap.roadmapType);
       if (meta && meta.svg) {
         wrapper.innerHTML = meta.svg;
         if (meta.tooltipTitle != null || meta.tooltipBody != null) {
@@ -10128,7 +11686,7 @@ function renderProjects() {
           wrapper.appendChild(tooltipEl);
         }
       } else {
-        wrapper.textContent = project.projectType;
+        wrapper.textContent = roadmap.roadmapType;
       }
       tdType.appendChild(wrapper);
     } else {
@@ -10137,15 +11695,15 @@ function renderProjects() {
     tr.appendChild(tdType);
 
     const tdStatus = document.createElement("td");
-    stampProjectsTableCol(tdStatus, "status");
-    if (project.projectStatus) {
-      const meta = projectStatusIcons && projectStatusIcons[project.projectStatus];
+    stampRoadmapsTableCol(tdStatus, "status");
+    if (roadmap.roadmapStatus) {
+      const meta = roadmapStatusIcons && roadmapStatusIcons[roadmap.roadmapStatus];
       const wrapper = document.createElement("span");
       wrapper.className = "cell-type-icon-wrap cell-type-pill cell-status-icon-wrap";
-      wrapper.dataset.status = project.projectStatus;
+      wrapper.dataset.status = roadmap.roadmapStatus;
       wrapper.dataset.iconKind = "status";
       wrapper.setAttribute("role", "img");
-      wrapper.setAttribute("aria-label", project.projectStatus);
+      wrapper.setAttribute("aria-label", roadmap.roadmapStatus);
       if (meta && meta.svg) {
         wrapper.innerHTML = meta.svg;
         if (meta.tooltipTitle != null || meta.tooltipBody != null) {
@@ -10172,7 +11730,7 @@ function renderProjects() {
           wrapper.appendChild(tooltipEl);
         }
       } else {
-        wrapper.textContent = project.projectStatus;
+        wrapper.textContent = roadmap.roadmapStatus;
       }
       tdStatus.appendChild(wrapper);
     } else {
@@ -10181,8 +11739,8 @@ function renderProjects() {
     tr.appendChild(tdStatus);
 
     const tdFramework = document.createElement("td");
-    stampProjectsTableCol(tdFramework, "framework");
-    const frameworkKey = normalizeFinancialFramework(project.financialImpactFramework);
+    stampRoadmapsTableCol(tdFramework, "framework");
+    const frameworkKey = normalizeFinancialFramework(roadmap.financialImpactFramework);
     const frameworkMeta = FINANCIAL_FRAMEWORK_ICONS[frameworkKey];
     if (frameworkMeta && frameworkMeta.svg) {
       const wrapper = document.createElement("span");
@@ -10216,13 +11774,13 @@ function renderProjects() {
     tr.appendChild(tdFramework);
 
     const tdPeriod = document.createElement("td");
-    stampProjectsTableCol(tdPeriod, "period");
-    const periodValue = project.projectPeriod || "";
-    if (periodValue && typeof projectPeriodTooltip !== "undefined") {
-      const meta = projectPeriodTooltip;
+    stampRoadmapsTableCol(tdPeriod, "period");
+    const periodValue = roadmap.roadmapPeriod || "";
+    if (periodValue && typeof roadmapPeriodTooltip !== "undefined") {
+      const meta = roadmapPeriodTooltip;
       const wrap = document.createElement("span");
       wrap.className = "cell-period-with-tooltip";
-      wrap.setAttribute("aria-label", `Project period: ${periodValue}`);
+      wrap.setAttribute("aria-label", `Roadmap period: ${periodValue}`);
       const textSpan = document.createElement("span");
       textSpan.className = "cell-meta cell-period-text";
       textSpan.textContent = periodValue;
@@ -10267,15 +11825,15 @@ function renderProjects() {
     tr.appendChild(tdPeriod);
 
     const tdTshirtSize = document.createElement("td");
-    stampProjectsTableCol(tdTshirtSize, "size");
-    if (project.tshirtSize) {
-      const meta = tshirtSizeTooltips && tshirtSizeTooltips[project.tshirtSize];
+    stampRoadmapsTableCol(tdTshirtSize, "size");
+    if (roadmap.tshirtSize) {
+      const meta = tshirtSizeTooltips && tshirtSizeTooltips[roadmap.tshirtSize];
       const wrap = document.createElement("span");
       wrap.className = "cell-tshirt-with-tooltip";
-      wrap.setAttribute("aria-label", `T-shirt size: ${project.tshirtSize}`);
+      wrap.setAttribute("aria-label", `T-shirt size: ${roadmap.tshirtSize}`);
       const textSpan = document.createElement("span");
       textSpan.className = "cell-meta cell-tshirt-size-text";
-      textSpan.textContent = project.tshirtSize;
+      textSpan.textContent = roadmap.tshirtSize;
       wrap.appendChild(textSpan);
       if (meta && (meta.tooltipTitle != null || meta.tooltipBody != null)) {
         const tooltipEl = document.createElement("div");
@@ -10308,16 +11866,16 @@ function renderProjects() {
 
     const tdMoscow = document.createElement("td");
     tdMoscow.className = "cell-moscow";
-    stampProjectsTableCol(tdMoscow, "moscow");
-    const moscowSlug = moscowTablePillSlug(project.moscowCategory);
-    if (project.moscowCategory && typeof moscowTooltips !== "undefined" && moscowTooltips[project.moscowCategory]) {
-      const meta = moscowTooltips[project.moscowCategory];
+    stampRoadmapsTableCol(tdMoscow, "moscow");
+    const moscowSlug = moscowTablePillSlug(roadmap.moscowCategory);
+    if (roadmap.moscowCategory && typeof moscowTooltips !== "undefined" && moscowTooltips[roadmap.moscowCategory]) {
+      const meta = moscowTooltips[roadmap.moscowCategory];
       const wrap = document.createElement("span");
       wrap.className = "cell-moscow-with-tooltip";
-      wrap.setAttribute("aria-label", `MOSCOW: ${project.moscowCategory}`);
+      wrap.setAttribute("aria-label", `MOSCOW: ${roadmap.moscowCategory}`);
       const textSpan = document.createElement("span");
       textSpan.className = `cell-meta cell-moscow-text moscow-pill moscow-pill--${moscowSlug}`;
-      textSpan.textContent = moscowTableShortLabel(project.moscowCategory);
+      textSpan.textContent = moscowTableShortLabel(roadmap.moscowCategory);
       wrap.appendChild(textSpan);
       if (meta.tooltipTitle != null || meta.tooltipBody != null) {
         const tooltipEl = document.createElement("div");
@@ -10343,10 +11901,10 @@ function renderProjects() {
         wrap.appendChild(tooltipEl);
       }
       tdMoscow.appendChild(wrap);
-    } else if (project.moscowCategory) {
+    } else if (roadmap.moscowCategory) {
       const pill = document.createElement("span");
       pill.className = `cell-meta moscow-pill moscow-pill--${moscowSlug}`;
-      pill.textContent = moscowTableShortLabel(project.moscowCategory);
+      pill.textContent = moscowTableShortLabel(roadmap.moscowCategory);
       tdMoscow.appendChild(pill);
     } else {
       const empty = document.createElement("span");
@@ -10357,18 +11915,18 @@ function renderProjects() {
     tr.appendChild(tdMoscow);
 
     const tdRice = document.createElement("td");
-    const riceScore = calculateRiceScore(project);
+    const riceScore = calculateRiceScore(roadmap);
     tdRice.className = "cell-rice";
-    stampProjectsTableCol(tdRice, "rice");
+    stampRoadmapsTableCol(tdRice, "rice");
 
-    const reachVal = project.reachValue != null ? String(project.reachValue) : "—";
-    const impactVal = project.impactValue != null ? String(project.impactValue) : "—";
-    const confidenceVal = project.confidenceValue != null ? String(project.confidenceValue) : "—";
-    const effortVal = project.effortValue != null ? String(project.effortValue) : "—";
-    const reachNum = Number(project.reachValue);
-    const impactNum = Number(project.impactValue);
-    const confidenceNum = Number(project.confidenceValue);
-    const effortNum = Number(project.effortValue);
+    const reachVal = roadmap.reachValue != null ? String(roadmap.reachValue) : "—";
+    const impactVal = roadmap.impactValue != null ? String(roadmap.impactValue) : "—";
+    const confidenceVal = roadmap.confidenceValue != null ? String(roadmap.confidenceValue) : "—";
+    const effortVal = roadmap.effortValue != null ? String(roadmap.effortValue) : "—";
+    const reachNum = Number(roadmap.reachValue);
+    const impactNum = Number(roadmap.impactValue);
+    const confidenceNum = Number(roadmap.confidenceValue);
+    const effortNum = Number(roadmap.effortValue);
     const confidenceDecimal = Number.isFinite(confidenceNum) ? confidenceNum / 100 : null;
     const formulaLine =
       Number.isFinite(reachNum) &&
@@ -10423,11 +11981,11 @@ function renderProjects() {
     tr.appendChild(tdRice);
 
     const tdFinancial = document.createElement("td");
-    stampProjectsTableCol(tdFinancial, "financial");
-    if (project.financialImpactValue != null && project.financialImpactValue !== "") {
-      const raw = project.financialImpactValue;
+    stampRoadmapsTableCol(tdFinancial, "financial");
+    if (roadmap.financialImpactValue != null && roadmap.financialImpactValue !== "") {
+      const raw = roadmap.financialImpactValue;
       const amount = Number.isFinite(raw) ? raw : (typeof raw === "string" ? parseFloat(raw) : 0);
-      const currency = (project.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
+      const currency = (roadmap.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
       const amountEur = typeof ExchangeRates !== "undefined" && typeof ExchangeRates.convertToEUR === "function" ? ExchangeRates.convertToEUR(amount, currency) : amount;
       const hasEurRate = typeof ExchangeRates !== "undefined" && typeof ExchangeRates.hasRate === "function" ? ExchangeRates.hasRate(currency) : true;
       const shortOriginal = typeof formatFinancialShort === "function"
@@ -10474,13 +12032,13 @@ function renderProjects() {
     tr.appendChild(tdFinancial);
 
     const tdCreated = document.createElement("td");
-    stampProjectsTableCol(tdCreated, "created");
+    stampRoadmapsTableCol(tdCreated, "created");
     const createdWrap = document.createElement("span");
     createdWrap.className = "cell-date-with-tooltip";
     createdWrap.setAttribute("aria-label", "Created date; hover for last modified");
     const createdText = document.createElement("span");
     createdText.className = "cell-meta cell-created-date-text";
-    createdText.textContent = formatDateTime(project.createdAt);
+    createdText.textContent = formatDateTime(roadmap.createdAt);
     createdWrap.appendChild(createdText);
     const modifiedTooltip = document.createElement("div");
     modifiedTooltip.className = "cell-type-tooltip";
@@ -10492,7 +12050,7 @@ function renderProjects() {
     const modifiedBody = document.createElement("div");
     modifiedBody.className = "cell-type-tooltip-body";
     const modifiedP = document.createElement("p");
-    modifiedP.textContent = formatDateTime(project.modifiedAt || project.createdAt);
+    modifiedP.textContent = formatDateTime(roadmap.modifiedAt || roadmap.createdAt);
     modifiedBody.appendChild(modifiedP);
     modifiedTooltip.appendChild(modifiedBody);
     createdWrap.appendChild(modifiedTooltip);
@@ -10501,25 +12059,25 @@ function renderProjects() {
 
     const tdActions = document.createElement("td");
     tdActions.className = "cell-actions-cell";
-    stampProjectsTableCol(tdActions, "actions");
+    stampRoadmapsTableCol(tdActions, "actions");
 
     const actionsWrap = document.createElement("div");
-    actionsWrap.className = "cell-actions cell-actions--project project-row-actions";
+    actionsWrap.className = "cell-actions cell-actions--roadmap roadmap-row-actions";
 
     const viewBtn = document.createElement("button");
     viewBtn.type = "button";
-    viewBtn.setAttribute("data-id", project.id);
-    setProjectTableActionButton(viewBtn, "view", "View");
+    viewBtn.setAttribute("data-id", roadmap.id);
+    setRoadmapTableActionButton(viewBtn, "view", "View");
 
     const editBtn = document.createElement("button");
     editBtn.type = "button";
-    editBtn.setAttribute("data-id", project.id);
-    setProjectTableActionButton(editBtn, "edit", "Edit", { disabled: demoReadOnly });
+    editBtn.setAttribute("data-id", roadmap.id);
+    setRoadmapTableActionButton(editBtn, "edit", "Edit", { disabled: demoReadOnly });
 
     const deleteBtn = document.createElement("button");
     deleteBtn.type = "button";
-    deleteBtn.setAttribute("data-id", project.id);
-    setProjectTableActionButton(deleteBtn, "delete", "Delete", { disabled: demoReadOnly });
+    deleteBtn.setAttribute("data-id", roadmap.id);
+    setRoadmapTableActionButton(deleteBtn, "delete", "Delete", { disabled: demoReadOnly });
 
     actionsWrap.appendChild(viewBtn);
     actionsWrap.appendChild(editBtn);
@@ -10530,47 +12088,53 @@ function renderProjects() {
     rows.appendChild(tr);
   });
 
-  elements.projectsTableBody.appendChild(rows);
+  elements.roadmapsTableBody.appendChild(rows);
   syncHeaderCheckbox();
   updateBulkSelectionActions();
   updateSortIndicators();
-  if (state.projectsView === "table" && projects.some((p) => p.financialImpactValue != null && p.financialImpactValue !== "")) {
+  if (state.roadmapsView === "table" && roadmaps.some((p) => p.financialImpactValue != null && p.financialImpactValue !== "")) {
     if (Object.keys(state.exchangeRatesToEUR || {}).length === 0) {
-      ExchangeRates.ensure().then(() => renderProjects()).catch(() => {});
+      ExchangeRates.ensure().then(() => renderRoadmaps()).catch(() => {});
     }
   }
-  renderNonTableProjectsView();
+  renderNonTableRoadmapsView();
 }
 
-function switchProjectsView(view) {
-  state.projectsView = view;
+function switchRoadmapsView(view) {
+  closePortfolioViewTabsMenu();
+  state.roadmapsView = view;
   saveState();
-  if (!elements.projectsTableView || !elements.projectsBoardView) return;
+  if (!elements.roadmapsTableView || !elements.roadmapsBoardView) return;
 
   const showTable = view === "table";
   const showBoard = view === "board";
   const showMoscow = view === "moscow";
   const showMap = view === "map";
   const showRaci = view === "raci";
+  const showKano = view === "kano";
 
-  elements.projectsTableView.style.display = showTable ? "" : "none";
-  elements.projectsBoardView.style.display = showBoard ? "flex" : "none";
-  elements.projectsBoardView.setAttribute("aria-hidden", String(!showBoard));
-  if (elements.projectsMoscowView) {
-    elements.projectsMoscowView.style.display = showMoscow ? "flex" : "none";
-    elements.projectsMoscowView.setAttribute("aria-hidden", String(!showMoscow));
+  elements.roadmapsTableView.style.display = showTable ? "" : "none";
+  elements.roadmapsBoardView.style.display = showBoard ? "flex" : "none";
+  elements.roadmapsBoardView.setAttribute("aria-hidden", String(!showBoard));
+  if (elements.roadmapsMoscowView) {
+    elements.roadmapsMoscowView.style.display = showMoscow ? "flex" : "none";
+    elements.roadmapsMoscowView.setAttribute("aria-hidden", String(!showMoscow));
   }
-  if (elements.projectsMapView) {
-    elements.projectsMapView.style.display = showMap ? "flex" : "none";
-    elements.projectsMapView.setAttribute("aria-hidden", String(!showMap));
+  if (elements.roadmapsMapView) {
+    elements.roadmapsMapView.style.display = showMap ? "flex" : "none";
+    elements.roadmapsMapView.setAttribute("aria-hidden", String(!showMap));
   }
-  if (elements.projectsRaciView) {
-    elements.projectsRaciView.style.display = showRaci ? "flex" : "none";
-    elements.projectsRaciView.setAttribute("aria-hidden", String(!showRaci));
+  if (elements.roadmapsRaciView) {
+    elements.roadmapsRaciView.style.display = showRaci ? "flex" : "none";
+    elements.roadmapsRaciView.setAttribute("aria-hidden", String(!showRaci));
+  }
+  if (elements.roadmapsKanoView) {
+    elements.roadmapsKanoView.style.display = showKano ? "flex" : "none";
+    elements.roadmapsKanoView.setAttribute("aria-hidden", String(!showKano));
   }
 
   if (!showTable) {
-    clearProjectSelection();
+    clearRoadmapSelection();
   }
 
   if (typeof Fullscreen !== "undefined" && !Fullscreen.isViewFullscreen()) {
@@ -10582,25 +12146,25 @@ function switchProjectsView(view) {
   syncPortfolioViewTabState(view);
   scrollActivePortfolioViewTabIntoView();
   blurPortfolioViewTabs();
-  renderProjects();
+  renderRoadmaps();
   updateBulkSelectionActions();
   if (showMap) {
     requestAnimationFrame(() => {
-      if (state.projectsView !== "map" || !elements.projectsMapContainer) return;
+      if (state.roadmapsView !== "map" || !elements.roadmapsMapContainer) return;
       invalidateMapSizeAfterFullscreenExit();
     });
   }
   syncMoscowCompactNav();
 }
 
-/** Returns a map of ISO 2-letter country code -> number of projects that target that country (active profile, filtered). */
-function getProjectCountByCountryCode() {
-  const baseProjects = getPortfolioProjectsBaseList();
-  if (!baseProjects.length) return {};
-  initFilterProjectPeriodOptions(baseProjects);
-  const projects = applyFilters(baseProjects);
+/** Returns a map of ISO 2-letter country code -> number of roadmaps that target that country (active profile, filtered). */
+function getRoadmapCountByCountryCode() {
+  const baseRoadmaps = getPortfolioRoadmapsBaseList();
+  if (!baseRoadmaps.length) return {};
+  initFilterRoadmapPeriodOptions(baseRoadmaps);
+  const roadmaps = applyFilters(baseRoadmaps);
   const countByCode = {};
-  projects.forEach((p) => {
+  roadmaps.forEach((p) => {
     const countries = Array.isArray(p.countries) ? p.countries : [];
     countries.forEach((name) => {
       const code = typeof countryCodeByName !== "undefined" ? countryCodeByName[name] : null;
@@ -10612,14 +12176,14 @@ function getProjectCountByCountryCode() {
   return countByCode;
 }
 
-/** ISO 2-letter country code -> filtered projects (super admin map tooltips). */
-function getFilteredProjectsGroupedByCountryCode() {
-  const baseProjects = getPortfolioProjectsBaseList();
-  if (!baseProjects.length) return {};
-  initFilterProjectPeriodOptions(baseProjects);
-  const projects = applyFilters(baseProjects);
+/** ISO 2-letter country code -> filtered roadmaps (super admin map tooltips). */
+function getFilteredRoadmapsGroupedByCountryCode() {
+  const baseRoadmaps = getPortfolioRoadmapsBaseList();
+  if (!baseRoadmaps.length) return {};
+  initFilterRoadmapPeriodOptions(baseRoadmaps);
+  const roadmaps = applyFilters(baseRoadmaps);
   const byCode = {};
-  projects.forEach((p) => {
+  roadmaps.forEach((p) => {
     const countries = Array.isArray(p.countries) ? p.countries : [];
     countries.forEach((name) => {
       const code = typeof countryCodeByName !== "undefined" ? countryCodeByName[name] : null;
@@ -10631,17 +12195,17 @@ function getFilteredProjectsGroupedByCountryCode() {
   return byCode;
 }
 
-/** Returns a map of ISO 2-letter country code -> sum of RICE scores for projects that target that country (active profile, filtered). */
+/** Returns a map of ISO 2-letter country code -> sum of RICE scores for roadmaps that target that country (active profile, filtered). */
 function getCountryRiceByCode() {
-  const baseProjects = getPortfolioProjectsBaseList();
-  if (!baseProjects.length) return {};
-  baseProjects.forEach((p) => {
+  const baseRoadmaps = getPortfolioRoadmapsBaseList();
+  if (!baseRoadmaps.length) return {};
+  baseRoadmaps.forEach((p) => {
     p.riceScore = typeof calculateRiceScore === "function" ? calculateRiceScore(p) : 0;
   });
-  initFilterProjectPeriodOptions(baseProjects);
-  const projects = applyFilters(baseProjects);
+  initFilterRoadmapPeriodOptions(baseRoadmaps);
+  const roadmaps = applyFilters(baseRoadmaps);
   const riceByCode = {};
-  projects.forEach((p) => {
+  roadmaps.forEach((p) => {
     const countries = Array.isArray(p.countries) ? p.countries : [];
     const score = Number.isFinite(p.riceScore) ? p.riceScore : 0;
     countries.forEach((name) => {
@@ -10656,12 +12220,12 @@ function getCountryRiceByCode() {
 
 /** Returns a map of ISO 2-letter country code -> total financial impact in EUR (active profile, filtered). All amounts are converted to EUR using the latest exchange rates from the API; amounts in currencies without a rate are excluded. */
 function getCountryFinancialImpactByCode() {
-  const baseProjects = getPortfolioProjectsBaseList();
-  if (!baseProjects.length) return {};
-  initFilterProjectPeriodOptions(baseProjects);
-  const projects = applyFilters(baseProjects);
+  const baseRoadmaps = getPortfolioRoadmapsBaseList();
+  if (!baseRoadmaps.length) return {};
+  initFilterRoadmapPeriodOptions(baseRoadmaps);
+  const roadmaps = applyFilters(baseRoadmaps);
   const impactByCode = {};
-  projects.forEach((p) => {
+  roadmaps.forEach((p) => {
     const raw = p.financialImpactValue;
     const amount = Number.isFinite(raw) ? raw : (typeof raw === "string" ? parseFloat(raw) : 0);
     if (!Number.isFinite(amount) || amount <= 0) return;
@@ -10677,10 +12241,10 @@ function getCountryFinancialImpactByCode() {
   return impactByCode;
 }
 
-/** ISO code -> mean RICE score among projects targeting that country (filtered, active profile). */
+/** ISO code -> mean RICE score among roadmaps targeting that country (filtered, active profile). */
 function getCountryAverageRiceByCode() {
   const riceByCode = getCountryRiceByCode();
-  const countByCode = getProjectCountByCountryCode();
+  const countByCode = getRoadmapCountByCountryCode();
   const avgByCode = {};
   Object.keys(countByCode).forEach((code) => {
     const count = countByCode[code] || 0;
@@ -10689,10 +12253,10 @@ function getCountryAverageRiceByCode() {
   return avgByCode;
 }
 
-/** ISO code -> mean financial impact in EUR among projects targeting that country (filtered, active profile). */
+/** ISO code -> mean financial impact in EUR among roadmaps targeting that country (filtered, active profile). */
 function getCountryAverageFinancialImpactByCode() {
   const totalByCode = getCountryFinancialImpactByCode();
-  const countByCode = getProjectCountByCountryCode();
+  const countByCode = getRoadmapCountByCountryCode();
   const avgByCode = {};
   Object.keys(countByCode).forEach((code) => {
     const count = countByCode[code] || 0;
@@ -10710,12 +12274,12 @@ function mapMetricUsesExchangeRates(metric) {
 }
 
 function getMapMetricValuesByCode(metric) {
-  const current = isValidMapMetric(metric) ? metric : "projects";
+  const current = isValidMapMetric(metric) ? metric : "roadmaps";
   if (current === "rice") return getCountryRiceByCode();
   if (current === "riceAvg") return getCountryAverageRiceByCode();
   if (current === "financial") return getCountryFinancialImpactByCode();
   if (current === "financialAvg") return getCountryAverageFinancialImpactByCode();
-  return getProjectCountByCountryCode();
+  return getRoadmapCountByCountryCode();
 }
 
 function getWeightedMapMetricAverage(valueByCode, countByCode) {
@@ -10730,19 +12294,19 @@ function getWeightedMapMetricAverage(valueByCode, countByCode) {
   return totalLinks > 0 ? weightedSum / totalLinks : 0;
 }
 
-const PROJECTS_MAP_GEOJSON_URL = "https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_110m_admin_0_countries.geojson";
+const ROADMAPS_MAP_GEOJSON_URL = "https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_110m_admin_0_countries.geojson";
 
-let projectsMapLeafletRetryTimer = null;
+let roadmapsMapLeafletRetryTimer = null;
 
 function isLeafletMapLibraryReady() {
   return typeof L !== "undefined" && L && typeof L.map === "function";
 }
 
 /** Tear down Leaflet instance and clear the map host (avoids stale _leafletMap after innerHTML swaps). */
-function destroyProjectsMapInstance() {
-  if (!elements.projectsMapContainer) return;
+function destroyRoadmapsMapInstance() {
+  if (!elements.roadmapsMapContainer) return;
   closeAllMapCountryTooltips();
-  const host = elements.projectsMapContainer;
+  const host = elements.roadmapsMapContainer;
   if (host._leafletMap) {
     try {
       host._leafletMap.remove();
@@ -10756,20 +12320,20 @@ function destroyProjectsMapInstance() {
   mapCountrySharedTooltip = null;
 }
 
-function setProjectsMapEmptyMessage(message) {
-  if (!elements.projectsMapContainer) return;
-  destroyProjectsMapInstance();
+function setRoadmapsMapEmptyMessage(message) {
+  if (!elements.roadmapsMapContainer) return;
+  destroyRoadmapsMapInstance();
   const safe =
     typeof escapeHtml === "function" ? escapeHtml(message) : String(message || "");
-  elements.projectsMapContainer.innerHTML = `<div class="projects-map-empty">${safe}</div>`;
+  elements.roadmapsMapContainer.innerHTML = `<div class="roadmaps-map-empty">${safe}</div>`;
 }
 
-function scheduleRenderProjectsMapWhenLeafletReady() {
-  if (projectsMapLeafletRetryTimer) return;
-  projectsMapLeafletRetryTimer = setTimeout(() => {
-    projectsMapLeafletRetryTimer = null;
-    if (state.projectsView === "map" && elements.projectsMapContainer) {
-      renderProjectsMap();
+function scheduleRenderRoadmapsMapWhenLeafletReady() {
+  if (roadmapsMapLeafletRetryTimer) return;
+  roadmapsMapLeafletRetryTimer = setTimeout(() => {
+    roadmapsMapLeafletRetryTimer = null;
+    if (state.roadmapsView === "map" && elements.roadmapsMapContainer) {
+      renderRoadmapsMap();
     }
   }, 300);
 }
@@ -10788,7 +12352,7 @@ function getMapCountryTooltipMetricBlock(metric, value, count, options = {}) {
     };
   }
 
-  const projectNote = hasProfileBreakdown
+  const roadmapNote = hasProfileBreakdown
     ? ""
     : count === 1
       ? "1 assignment in this country"
@@ -10799,7 +12363,7 @@ function getMapCountryTooltipMetricBlock(metric, value, count, options = {}) {
     return {
       valueText: riceText,
       unit: "total RICE",
-      footnote: hasProfileBreakdown ? "" : projectNote,
+      footnote: hasProfileBreakdown ? "" : roadmapNote,
       empty: false
     };
   }
@@ -10808,7 +12372,7 @@ function getMapCountryTooltipMetricBlock(metric, value, count, options = {}) {
     return {
       valueText: riceText,
       unit: "avg RICE",
-      footnote: hasProfileBreakdown ? "" : projectNote,
+      footnote: hasProfileBreakdown ? "" : roadmapNote,
       empty: false
     };
   }
@@ -10818,7 +12382,7 @@ function getMapCountryTooltipMetricBlock(metric, value, count, options = {}) {
     return {
       valueText: eur,
       unit: "total impact",
-      footnote: hasProfileBreakdown ? "" : projectNote,
+      footnote: hasProfileBreakdown ? "" : roadmapNote,
       empty: false
     };
   }
@@ -10828,15 +12392,15 @@ function getMapCountryTooltipMetricBlock(metric, value, count, options = {}) {
     return {
       valueText: eur,
       unit: "avg impact",
-      footnote: hasProfileBreakdown ? "" : projectNote,
+      footnote: hasProfileBreakdown ? "" : roadmapNote,
       empty: false
     };
   }
 
   return {
     valueText: String(count),
-    unit: count === 1 ? "project" : "projects",
-    footnote: hasProfileBreakdown ? "" : projectNote,
+    unit: count === 1 ? "roadmap" : "roadmaps",
+    footnote: hasProfileBreakdown ? "" : roadmapNote,
     empty: false
   };
 }
@@ -10869,13 +12433,13 @@ function getMapCountryStatsForLayer(layer, countByCode, valueByCode) {
 const MAP_COUNTRY_PROFILE_BREAKDOWN_MAX = 10;
 
 /** Per-profile metric for one country (workspace-wide mode only; see GUARDRAILS §7). */
-function getMapCountryProfileBreakdown(countryCode, metric, projectsInCountry) {
-  if (!countryCode || !Array.isArray(projectsInCountry) || !projectsInCountry.length) {
+function getMapCountryProfileBreakdown(countryCode, metric, roadmapsInCountry) {
+  if (!countryCode || !Array.isArray(roadmapsInCountry) || !roadmapsInCountry.length) {
     return [];
   }
 
   const byProfile = new Map();
-  projectsInCountry.forEach((p) => {
+  roadmapsInCountry.forEach((p) => {
     const profileId = (p.ownerProfileId || p.ownerProfileName || "unknown").toString();
     const profileName = (p.ownerProfileName || "Unnamed profile").trim() || "Unnamed profile";
     if (!byProfile.has(profileId)) {
@@ -10912,7 +12476,7 @@ function getMapCountryProfileBreakdown(countryCode, metric, projectsInCountry) {
     }
   });
 
-  const metricKey = isValidMapMetric(metric) ? metric : "projects";
+  const metricKey = isValidMapMetric(metric) ? metric : "roadmaps";
 
   return Array.from(byProfile.values())
     .map((row) => {
@@ -10945,7 +12509,7 @@ function getMapCountryProfileBreakdown(countryCode, metric, projectsInCountry) {
         linkCount: row.linkCount
       };
     })
-    .filter((row) => metricKey === "projects" || row.sortValue > 0 || row.linkCount > 0)
+    .filter((row) => metricKey === "roadmaps" || row.sortValue > 0 || row.linkCount > 0)
     .sort((a, b) => b.sortValue - a.sortValue);
 }
 
@@ -11047,7 +12611,7 @@ function buildMapCountryTooltipHtml(options) {
 }
 
 function buildMapCountryTooltipHtmlForLayer(layer) {
-  const host = elements.projectsMapContainer;
+  const host = elements.roadmapsMapContainer;
   const data = host && host._mapCountryLayerData;
   const meta = layer && layer._mapCountryTooltipMeta;
   if (!data || !meta) return "";
@@ -11056,9 +12620,9 @@ function buildMapCountryTooltipHtmlForLayer(layer) {
   const countryCode = stats.code || meta.countryCode;
 
   let profileBreakdown = "";
-  if (data.showProfileBreakdown && countryCode && data.projectsByCountryCode) {
-    const projectsInCountry = data.projectsByCountryCode[countryCode] || [];
-    const breakdownRows = getMapCountryProfileBreakdown(countryCode, data.metric, projectsInCountry);
+  if (data.showProfileBreakdown && countryCode && data.roadmapsByCountryCode) {
+    const roadmapsInCountry = data.roadmapsByCountryCode[countryCode] || [];
+    const breakdownRows = getMapCountryProfileBreakdown(countryCode, data.metric, roadmapsInCountry);
     profileBreakdown = buildMapCountryProfileBreakdownHtml(breakdownRows, data.metric);
   }
 
@@ -11085,11 +12649,11 @@ const MAP_COUNTRY_HOVER_STYLE = {
 };
 
 function getMapGeoJsonLayer() {
-  return elements.projectsMapContainer && elements.projectsMapContainer._geoLayer;
+  return elements.roadmapsMapContainer && elements.roadmapsMapContainer._geoLayer;
 }
 
-function getProjectsLeafletMap() {
-  return elements.projectsMapContainer && elements.projectsMapContainer._leafletMap;
+function getRoadmapsLeafletMap() {
+  return elements.roadmapsMapContainer && elements.roadmapsMapContainer._leafletMap;
 }
 
 /** One shared Leaflet tooltip for all countries (prevents stacked per-layer tooltips). */
@@ -11321,7 +12885,7 @@ function setMapCountryHoverHighlight(layer) {
 }
 
 function openMapCountryTooltip(layer, eventLatLng) {
-  const map = getProjectsLeafletMap();
+  const map = getRoadmapsLeafletMap();
   if (!layer || !map) return;
 
   const html = buildMapCountryTooltipHtmlForLayer(layer);
@@ -11335,7 +12899,7 @@ function openMapCountryTooltip(layer, eventLatLng) {
     mapCountrySharedTooltip.remove();
   }
 
-  const host = elements.projectsMapContainer;
+  const host = elements.roadmapsMapContainer;
   const layerData = host && host._mapCountryLayerData;
   const hasProfileBreakdown = Boolean(layerData && layerData.showProfileBreakdown);
   const estHeight = estimateMapCountryTooltipHeightPx(hasProfileBreakdown, 4);
@@ -11387,8 +12951,8 @@ function attachMapCountryLayerHover(layer, geoLayer) {
 }
 
 function ensureMapCountryTooltipMapListeners(map) {
-  if (!map || !elements.projectsMapContainer) return;
-  const host = elements.projectsMapContainer;
+  if (!map || !elements.roadmapsMapContainer) return;
+  const host = elements.roadmapsMapContainer;
   if (host._mapCountryTooltipListenersBound) return;
   host._mapCountryTooltipListenersBound = true;
 
@@ -11432,7 +12996,7 @@ function getCountryCodeFromFeature(feature) {
 }
 
 function getCurrentMapMetric() {
-  return isValidMapMetric(state.mapMetric) ? state.mapMetric : "projects";
+  return isValidMapMetric(state.mapMetric) ? state.mapMetric : "roadmaps";
 }
 
 function getMapMetricOption(metricId) {
@@ -11593,7 +13157,7 @@ function setMapMetric(metric) {
   state.mapMetric = metric;
   saveState();
   syncMapMetricPickerUI();
-  if (state.projectsView === "map" && elements.projectsMapContainer) renderProjectsMap();
+  if (state.roadmapsView === "map" && elements.roadmapsMapContainer) renderRoadmapsMap();
 }
 
 function initMapMetricPicker() {
@@ -11675,49 +13239,49 @@ function initMapMetricPicker() {
   });
 }
 
-function renderProjectsMap() {
-  if (!elements.projectsMapContainer) return;
+function renderRoadmapsMap() {
+  if (!elements.roadmapsMapContainer) return;
 
   if (!isLeafletMapLibraryReady()) {
-    setProjectsMapEmptyMessage("Loading map library…");
-    if (elements.projectsMapLegend) {
-      elements.projectsMapLegend.textContent = "";
+    setRoadmapsMapEmptyMessage("Loading map library…");
+    if (elements.roadmapsMapLegend) {
+      elements.roadmapsMapLegend.textContent = "";
     }
-    scheduleRenderProjectsMapWhenLeafletReady();
+    scheduleRenderRoadmapsMapWhenLeafletReady();
     return;
   }
 
   const activeProfile = getActiveProfile();
   const unlockedProfile = getUnlockedActiveProfile();
 
-  if (elements.projectsMapLegend) {
-    elements.projectsMapLegend.innerHTML = "";
-    elements.projectsMapLegend.textContent = "Loading map…";
+  if (elements.roadmapsMapLegend) {
+    elements.roadmapsMapLegend.innerHTML = "";
+    elements.roadmapsMapLegend.textContent = "Loading map…";
   }
 
   if (!activeProfile) {
-    setProjectsMapEmptyMessage("Select a profile to see the map.");
+    setRoadmapsMapEmptyMessage("Select a profile to see the map.");
     return;
   }
 
   if (!unlockedProfile) {
-    setProjectsMapEmptyMessage("Unlock this profile to use the map view.");
-    if (elements.projectsMapLegend) {
-      elements.projectsMapLegend.textContent = "";
+    setRoadmapsMapEmptyMessage("Unlock this profile to use the map view.");
+    if (elements.roadmapsMapLegend) {
+      elements.roadmapsMapLegend.textContent = "";
     }
     return;
   }
 
   syncMapMetricPickerUI();
 
-  const countByCode = getProjectCountByCountryCode();
-  const scopedProjects = (() => {
-    const base = getPortfolioProjectsBaseList();
+  const countByCode = getRoadmapCountByCountryCode();
+  const scopedRoadmaps = (() => {
+    const base = getPortfolioRoadmapsBaseList();
     if (!base.length) return [];
-    initFilterProjectPeriodOptions(base);
+    initFilterRoadmapPeriodOptions(base);
     return applyFilters(base);
   })();
-  const uniqueProjectCount = scopedProjects.length;
+  const uniqueRoadmapCount = scopedRoadmaps.length;
 
   function formatEur(num) {
     const short = typeof formatFinancialShort === "function" ? formatFinancialShort(Number(num)) : String(Number(num).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }));
@@ -11727,50 +13291,50 @@ function renderProjectsMap() {
   function renderMapWithValueByCode(valueByCode) {
     const values = Object.values(valueByCode);
     const maxValue = values.length ? Math.max(...values) : 0;
-    const totalProjectHits = Object.values(countByCode).reduce((a, b) => a + b, 0);
+    const totalRoadmapHits = Object.values(countByCode).reduce((a, b) => a + b, 0);
     const numCountries = Object.keys(valueByCode).length;
 
-    if (elements.projectsMapLegend) {
+    if (elements.roadmapsMapLegend) {
       const metric = getCurrentMapMetric();
       if (metric === "rice") {
         const totalRice = Object.values(valueByCode).reduce((a, b) => a + b, 0);
-        elements.projectsMapLegend.textContent = totalRice > 0
+        elements.roadmapsMapLegend.textContent = totalRice > 0
           ? `RICE score per country (sum) — total RICE ${typeof formatRice === "function" ? formatRice(totalRice) : totalRice} across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"}`
-          : "RICE score per country. Add countries to projects to see RICE on the map.";
+          : "RICE score per country. Add countries to roadmaps to see RICE on the map.";
       } else if (metric === "riceAvg") {
         const meanRice = getWeightedMapMetricAverage(valueByCode, countByCode);
-        elements.projectsMapLegend.textContent = meanRice > 0
+        elements.roadmapsMapLegend.textContent = meanRice > 0
           ? `Average RICE score per country — mean ${typeof formatRice === "function" ? formatRice(meanRice) : meanRice} across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"}`
-          : "Average RICE score per country. Add countries and RICE inputs to projects to see values on the map.";
+          : "Average RICE score per country. Add countries and RICE inputs to roadmaps to see values on the map.";
       } else if (metric === "financial") {
         const totalEur = Object.values(valueByCode).reduce((a, b) => a + b, 0);
-        elements.projectsMapLegend.textContent = totalEur > 0
+        elements.roadmapsMapLegend.textContent = totalEur > 0
           ? `Total financial impact (EUR) per country — ${formatEur(totalEur)} across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"} (rates refreshed daily)`
-          : "Total financial impact (EUR) per country. Add countries and financial impact to projects to see values on the map.";
+          : "Total financial impact (EUR) per country. Add countries and financial impact to roadmaps to see values on the map.";
       } else if (metric === "financialAvg") {
         const meanEur = getWeightedMapMetricAverage(valueByCode, countByCode);
-        elements.projectsMapLegend.textContent = meanEur > 0
+        elements.roadmapsMapLegend.textContent = meanEur > 0
           ? `Average financial impact (EUR) per country — ${formatEur(meanEur)} mean across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"} (rates refreshed daily)`
-          : "Average financial impact (EUR) per country. Add countries and financial impact to projects to see values on the map.";
+          : "Average financial impact (EUR) per country. Add countries and financial impact to roadmaps to see values on the map.";
       } else {
-        elements.projectsMapLegend.textContent = totalProjectHits > 0
-          ? `Projects per country — ${uniqueProjectCount} project${uniqueProjectCount !== 1 ? "s" : ""} in scope, ${totalProjectHits} country assignment${totalProjectHits !== 1 ? "s" : ""} across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"}`
-          : "Projects per country. Add countries to projects to see them on the map.";
+        elements.roadmapsMapLegend.textContent = totalRoadmapHits > 0
+          ? `Roadmaps per country — ${uniqueRoadmapCount} roadmap${uniqueRoadmapCount !== 1 ? "s" : ""} in scope, ${totalRoadmapHits} country assignment${totalRoadmapHits !== 1 ? "s" : ""} across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"}`
+          : "Roadmaps per country. Add countries to roadmaps to see them on the map.";
       }
     }
 
-    const host = elements.projectsMapContainer;
+    const host = elements.roadmapsMapContainer;
     const workspaceWide = isSuperAdminModeActive();
     host._mapCountryLayerData = {
       countByCode,
       valueByCode,
       metric: getCurrentMapMetric(),
-      uniqueProjectCount,
+      uniqueRoadmapCount,
       showProfileBreakdown: workspaceWide,
-      projectsByCountryCode: workspaceWide ? getFilteredProjectsGroupedByCountryCode() : null
+      roadmapsByCountryCode: workspaceWide ? getFilteredRoadmapsGroupedByCountryCode() : null
     };
     if (!host._leafletMap || !host.isConnected || !host.querySelector(".leaflet-container")) {
-      destroyProjectsMapInstance();
+      destroyRoadmapsMapInstance();
       host.innerHTML = "";
       const map = L.map(host, { center: [20, 0], zoom: 2, zoomControl: true });
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -11781,9 +13345,9 @@ function renderProjectsMap() {
     }
     const map = host._leafletMap;
     ensureMapCountryTooltipMapListeners(map);
-    if (elements.projectsMapContainer._geoLayer) {
-      map.removeLayer(elements.projectsMapContainer._geoLayer);
-      elements.projectsMapContainer._geoLayer = null;
+    if (elements.roadmapsMapContainer._geoLayer) {
+      map.removeLayer(elements.roadmapsMapContainer._geoLayer);
+      elements.roadmapsMapContainer._geoLayer = null;
     }
 
     function getColor(val) {
@@ -11828,7 +13392,7 @@ function renderProjectsMap() {
       });
     }
 
-    fetch(PROJECTS_MAP_GEOJSON_URL)
+    fetch(ROADMAPS_MAP_GEOJSON_URL)
       .then((res) => {
         if (!res.ok) throw new Error("Map data unavailable");
         return res.json();
@@ -11838,25 +13402,25 @@ function renderProjectsMap() {
         const layer = L.geoJSON(geojson, { style, onEachFeature });
         layer.eachLayer((l) => attachMapCountryLayerHover(l, layer));
         layer.addTo(map);
-        elements.projectsMapContainer._geoLayer = layer;
+        elements.roadmapsMapContainer._geoLayer = layer;
         map.invalidateSize();
         invalidateMapSizeAfterFullscreenExit();
       })
       .catch(() => {
-        setProjectsMapEmptyMessage("Could not load map data. Check your connection.");
+        setRoadmapsMapEmptyMessage("Could not load map data. Check your connection.");
       });
   }
 
   const metric = getCurrentMapMetric();
   if (mapMetricUsesExchangeRates(metric)) {
-    if (elements.projectsMapLegend) elements.projectsMapLegend.textContent = "Loading exchange rates…";
+    if (elements.roadmapsMapLegend) elements.roadmapsMapLegend.textContent = "Loading exchange rates…";
     ExchangeRates.ensure()
       .then(() => {
         renderMapWithValueByCode(getMapMetricValuesByCode(metric));
       })
       .catch(() => {
-        if (elements.projectsMapLegend) {
-          elements.projectsMapLegend.textContent = "Exchange rates unavailable; showing amounts in EUR only where applicable.";
+        if (elements.roadmapsMapLegend) {
+          elements.roadmapsMapLegend.textContent = "Exchange rates unavailable; showing amounts in EUR only where applicable.";
         }
         renderMapWithValueByCode(getMapMetricValuesByCode(metric));
       });
@@ -11864,17 +13428,17 @@ function renderProjectsMap() {
   }
 
   renderMapWithValueByCode(getMapMetricValuesByCode(metric));
-  if (state.projectsView === "map") {
+  if (state.roadmapsView === "map") {
     requestAnimationFrame(() => invalidateMapSizeAfterFullscreenExit());
   }
 }
 
-function getProjectFinancialImpactEurShort(project) {
-  if (!project || project.financialImpactValue == null || project.financialImpactValue === "") return null;
-  const raw = project.financialImpactValue;
+function getRoadmapFinancialImpactEurShort(roadmap) {
+  if (!roadmap || roadmap.financialImpactValue == null || roadmap.financialImpactValue === "") return null;
+  const raw = roadmap.financialImpactValue;
   const amount = Number.isFinite(raw) ? raw : Number(raw);
   if (!Number.isFinite(amount)) return null;
-  const currency = (project.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
+  const currency = (roadmap.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
   const amountEur = typeof ExchangeRates !== "undefined" && typeof ExchangeRates.convertToEUR === "function"
     ? ExchangeRates.convertToEUR(amount, currency)
     : (currency === "EUR" ? amount : NaN);
@@ -11916,7 +13480,7 @@ function buildCardMetaTooltipWrap(text, ariaLabel, title, bodyLines, className) 
   return wrap;
 }
 
-/** Project type or financial-framework icon pill for Scrum/MoSCoW board cards. */
+/** Roadmap type or financial-framework icon pill for Scrum/MoSCoW board cards. */
 function buildBoardCardMetricIconWrap(options) {
   const { svg, label, tooltipTitle, tooltipBody, iconKind, dataAttributes } = options;
   if (!svg && !label) return null;
@@ -11964,22 +13528,22 @@ function buildBoardCardMetricIconWrap(options) {
   return wrap;
 }
 
-function buildBoardCardProjectTypeIcon(project) {
-  if (!project || !project.projectType) return null;
-  const typeMeta = projectTypeIcons && projectTypeIcons[project.projectType];
+function buildBoardCardRoadmapTypeIcon(roadmap) {
+  if (!roadmap || !roadmap.roadmapType) return null;
+  const typeMeta = roadmapTypeIcons && roadmapTypeIcons[roadmap.roadmapType];
   return buildBoardCardMetricIconWrap({
     svg: typeMeta && typeMeta.svg,
-    label: project.projectType,
+    label: roadmap.roadmapType,
     tooltipTitle: typeMeta && typeMeta.tooltipTitle,
     tooltipBody: typeMeta && typeMeta.tooltipBody,
     iconKind: "type",
-    dataAttributes: { type: project.projectType }
+    dataAttributes: { type: roadmap.roadmapType }
   });
 }
 
-function buildBoardCardFrameworkIcon(project) {
-  if (!project) return null;
-  const frameworkKey = normalizeFinancialFramework(project.financialImpactFramework);
+function buildBoardCardFrameworkIcon(roadmap) {
+  if (!roadmap) return null;
+  const frameworkKey = normalizeFinancialFramework(roadmap.financialImpactFramework);
   const frameworkMeta = FINANCIAL_FRAMEWORK_ICONS[frameworkKey];
   if (!frameworkMeta || !frameworkMeta.svg) return null;
   return buildBoardCardMetricIconWrap({
@@ -11993,37 +13557,37 @@ function buildBoardCardFrameworkIcon(project) {
 }
 
 /** Single horizontal row: type icon, framework icon, RICE, t-shirt, financial impact. */
-function buildBoardCardMetricsRow(project, boardPrefix, options = {}) {
+function buildBoardCardMetricsRow(roadmap, boardPrefix, options = {}) {
   const hideTypeIcon = !!(options && options.hideTypeIcon);
   const hideFrameworkIcon = !!(options && options.hideFrameworkIcon);
   const row = document.createElement("div");
   row.className = `${boardPrefix}-metrics board-card-metrics-row`;
 
   if (!hideTypeIcon) {
-    const typeIcon = buildBoardCardProjectTypeIcon(project);
+    const typeIcon = buildBoardCardRoadmapTypeIcon(roadmap);
     if (typeIcon) row.appendChild(typeIcon);
   }
 
   if (!hideFrameworkIcon) {
-    const frameworkIcon = buildBoardCardFrameworkIcon(project);
+    const frameworkIcon = buildBoardCardFrameworkIcon(roadmap);
     if (frameworkIcon) row.appendChild(frameworkIcon);
   }
 
-  const riceValue = project.riceScore != null ? project.riceScore : calculateRiceScore(project);
+  const riceValue = roadmap.riceScore != null ? roadmap.riceScore : calculateRiceScore(roadmap);
   const riceLabel = "RICE " + formatRice(riceValue);
-  const reachVal = project.reachValue != null ? String(project.reachValue) : "—";
-  const impactVal = project.impactValue != null ? String(project.impactValue) : "—";
-  const confidenceVal = project.confidenceValue != null ? String(project.confidenceValue) : "—";
-  const effortVal = project.effortValue != null ? String(project.effortValue) : "—";
-  const confidenceNum = Number(project.confidenceValue);
+  const reachVal = roadmap.reachValue != null ? String(roadmap.reachValue) : "—";
+  const impactVal = roadmap.impactValue != null ? String(roadmap.impactValue) : "—";
+  const confidenceVal = roadmap.confidenceValue != null ? String(roadmap.confidenceValue) : "—";
+  const effortVal = roadmap.effortValue != null ? String(roadmap.effortValue) : "—";
+  const confidenceNum = Number(roadmap.confidenceValue);
   const confidenceDecimal = Number.isFinite(confidenceNum) ? confidenceNum / 100 : null;
   const formulaLine =
-    Number.isFinite(Number(project.reachValue)) &&
-    Number.isFinite(Number(project.impactValue)) &&
+    Number.isFinite(Number(roadmap.reachValue)) &&
+    Number.isFinite(Number(roadmap.impactValue)) &&
     Number.isFinite(confidenceDecimal) &&
-    Number.isFinite(Number(project.effortValue)) &&
-    Number(project.effortValue) > 0
-      ? `[${Number(project.reachValue)} × ${Number(project.impactValue)} × ${confidenceDecimal.toFixed(2)}] ÷ ${Number(project.effortValue)} = ${formatRice(riceValue)}`
+    Number.isFinite(Number(roadmap.effortValue)) &&
+    Number(roadmap.effortValue) > 0
+      ? `[${Number(roadmap.reachValue)} × ${Number(roadmap.impactValue)} × ${confidenceDecimal.toFixed(2)}] ÷ ${Number(roadmap.effortValue)} = ${formatRice(riceValue)}`
       : "Not enough inputs to compute full formula.";
 
   row.appendChild(
@@ -12043,25 +13607,25 @@ function buildBoardCardMetricsRow(project, boardPrefix, options = {}) {
     )
   );
 
-  if (project.tshirtSize) {
+  if (roadmap.tshirtSize) {
     const sizeTooltip =
-      typeof tshirtSizeTooltips !== "undefined" ? tshirtSizeTooltips[project.tshirtSize] : null;
+      typeof tshirtSizeTooltips !== "undefined" ? tshirtSizeTooltips[roadmap.tshirtSize] : null;
     row.appendChild(
       buildCardMetaTooltipWrap(
-        project.tshirtSize,
-        `Project size ${project.tshirtSize}`,
-        (sizeTooltip && sizeTooltip.tooltipTitle) || "Project size",
-        [(sizeTooltip && sizeTooltip.tooltipBody) || project.tshirtSize],
+        roadmap.tshirtSize,
+        `Roadmap size ${roadmap.tshirtSize}`,
+        (sizeTooltip && sizeTooltip.tooltipTitle) || "Roadmap size",
+        [(sizeTooltip && sizeTooltip.tooltipBody) || roadmap.tshirtSize],
         `${boardPrefix}-size card-meta-with-tooltip`
       )
     );
   }
 
-  const financialShort = getProjectFinancialImpactEurShort(project);
+  const financialShort = getRoadmapFinancialImpactEurShort(roadmap);
   if (financialShort) {
-    const raw = project.financialImpactValue;
+    const raw = roadmap.financialImpactValue;
     const amount = Number.isFinite(raw) ? raw : Number(raw);
-    const currency = (project.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
+    const currency = (roadmap.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
     const shortOriginal =
       Number.isFinite(amount) && typeof formatFinancialShort === "function"
         ? formatFinancialShort(amount)
@@ -12099,20 +13663,20 @@ function buildTshirtSizeTooltipWrap(tshirtSize, extraClass) {
   return wrap;
 }
 
-function buildProjectTableCardTshirtMetric(project) {
+function buildRoadmapTableCardTshirtMetric(roadmap) {
   const metric = document.createElement("div");
-  metric.className = "projects-table-card__metric projects-table-card__metric--size";
+  metric.className = "roadmaps-table-card__metric roadmaps-table-card__metric--size";
   const sizeLabel = document.createElement("span");
-  sizeLabel.className = "projects-table-card__metric-label";
+  sizeLabel.className = "roadmaps-table-card__metric-label";
   sizeLabel.textContent = "Size";
   metric.appendChild(sizeLabel);
-  if (project.tshirtSize) {
+  if (roadmap.tshirtSize) {
     metric.appendChild(
-      buildTshirtSizeTooltipWrap(project.tshirtSize, "projects-table-card__metric-value")
+      buildTshirtSizeTooltipWrap(roadmap.tshirtSize, "roadmaps-table-card__metric-value")
     );
   } else {
     const sizeVal = document.createElement("span");
-    sizeVal.className = "projects-table-card__metric-value";
+    sizeVal.className = "roadmaps-table-card__metric-value";
     sizeVal.textContent = "—";
     metric.appendChild(sizeVal);
   }
@@ -12145,17 +13709,17 @@ function appendIconMetaTooltip(wrap, meta) {
   wrap.appendChild(tooltipEl);
 }
 
-function buildProjectTableCardRiceMetric(project) {
-  const riceScore = project.riceScore != null ? project.riceScore : calculateRiceScore(project);
-  const reachVal = project.reachValue != null && project.reachValue !== "" ? project.reachValue : "—";
-  const impactVal = project.impactValue != null && project.impactValue !== "" ? project.impactValue : "—";
+function buildRoadmapTableCardRiceMetric(roadmap) {
+  const riceScore = roadmap.riceScore != null ? roadmap.riceScore : calculateRiceScore(roadmap);
+  const reachVal = roadmap.reachValue != null && roadmap.reachValue !== "" ? roadmap.reachValue : "—";
+  const impactVal = roadmap.impactValue != null && roadmap.impactValue !== "" ? roadmap.impactValue : "—";
   const confidenceVal =
-    project.confidenceValue != null && project.confidenceValue !== "" ? project.confidenceValue : "—";
-  const effortVal = project.effortValue != null && project.effortValue !== "" ? project.effortValue : "—";
-  const reachNum = Number(project.reachValue);
-  const impactNum = Number(project.impactValue);
-  const confidenceNum = Number(project.confidenceValue);
-  const effortNum = Number(project.effortValue);
+    roadmap.confidenceValue != null && roadmap.confidenceValue !== "" ? roadmap.confidenceValue : "—";
+  const effortVal = roadmap.effortValue != null && roadmap.effortValue !== "" ? roadmap.effortValue : "—";
+  const reachNum = Number(roadmap.reachValue);
+  const impactNum = Number(roadmap.impactValue);
+  const confidenceNum = Number(roadmap.confidenceValue);
+  const effortNum = Number(roadmap.effortValue);
   const confidenceDecimal = Number.isFinite(confidenceNum) ? confidenceNum / 100 : null;
   const formulaLine =
     Number.isFinite(reachNum) &&
@@ -12167,15 +13731,15 @@ function buildProjectTableCardRiceMetric(project) {
       : "Not enough inputs to compute full formula.";
 
   const metric = document.createElement("div");
-  metric.className = "projects-table-card__metric projects-table-card__metric--rice";
+  metric.className = "roadmaps-table-card__metric roadmaps-table-card__metric--rice";
 
   const riceLabel = document.createElement("span");
-  riceLabel.className = "projects-table-card__metric-label";
+  riceLabel.className = "roadmaps-table-card__metric-label";
   riceLabel.textContent = "RICE";
   metric.appendChild(riceLabel);
 
   const riceWrap = document.createElement("span");
-  riceWrap.className = "cell-rice-with-tooltip projects-table-card__metric-value";
+  riceWrap.className = "cell-rice-with-tooltip roadmaps-table-card__metric-value";
   riceWrap.setAttribute("tabindex", "0");
   riceWrap.setAttribute(
     "aria-label",
@@ -12214,27 +13778,27 @@ function buildProjectTableCardRiceMetric(project) {
   return metric;
 }
 
-function buildProjectTableCardFinancialMetric(project) {
-  const financialShort = getProjectFinancialImpactEurShort(project) || "—";
+function buildRoadmapTableCardFinancialMetric(roadmap) {
+  const financialShort = getRoadmapFinancialImpactEurShort(roadmap) || "—";
   const metric = document.createElement("div");
-  metric.className = "projects-table-card__metric projects-table-card__metric--financial";
+  metric.className = "roadmaps-table-card__metric roadmaps-table-card__metric--financial";
 
   const finLabel = document.createElement("span");
-  finLabel.className = "projects-table-card__metric-label";
+  finLabel.className = "roadmaps-table-card__metric-label";
   finLabel.textContent = "Impact";
   metric.appendChild(finLabel);
 
-  if (project.financialImpactValue == null || project.financialImpactValue === "") {
+  if (roadmap.financialImpactValue == null || roadmap.financialImpactValue === "") {
     const finVal = document.createElement("span");
-    finVal.className = "projects-table-card__metric-value";
+    finVal.className = "roadmaps-table-card__metric-value";
     finVal.textContent = financialShort;
     metric.appendChild(finVal);
     return metric;
   }
 
-  const raw = project.financialImpactValue;
+  const raw = roadmap.financialImpactValue;
   const amount = Number.isFinite(raw) ? raw : Number(raw);
-  const currency = (project.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
+  const currency = (roadmap.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
   const amountEur =
     typeof ExchangeRates !== "undefined" && typeof ExchangeRates.convertToEUR === "function"
       ? ExchangeRates.convertToEUR(amount, currency)
@@ -12249,7 +13813,7 @@ function buildProjectTableCardFinancialMetric(project) {
       : String(Number(amount).toLocaleString(undefined, { maximumFractionDigits: 2 }));
 
   const finWrap = document.createElement("span");
-  finWrap.className = "cell-financial-with-tooltip projects-table-card__metric-value";
+  finWrap.className = "cell-financial-with-tooltip roadmaps-table-card__metric-value";
   finWrap.setAttribute("tabindex", "0");
   const finText = document.createElement("span");
   finText.className = "cell-financial-text";
@@ -12283,12 +13847,12 @@ function buildProjectTableCardFinancialMetric(project) {
   return metric;
 }
 
-function buildCardTitleTooltipElement(titleClassName, project) {
-  const titleText = (project && project.title ? String(project.title) : "Untitled");
-  const statusText = (project && project.projectStatus ? String(project.projectStatus) : "Not set");
+function buildCardTitleTooltipElement(titleClassName, roadmap) {
+  const titleText = (roadmap && roadmap.title ? String(roadmap.title) : "Untitled");
+  const statusText = (roadmap && roadmap.roadmapStatus ? String(roadmap.roadmapStatus) : "Not set");
   const rawDescription =
-    project && (project.description != null || project.projectDescription != null)
-      ? String(project.description != null ? project.description : project.projectDescription)
+    roadmap && (roadmap.description != null || roadmap.roadmapDescription != null)
+      ? String(roadmap.description != null ? roadmap.description : roadmap.roadmapDescription)
       : "";
 
   const wrap = document.createElement("div");
@@ -12301,8 +13865,8 @@ function buildCardTitleTooltipElement(titleClassName, project) {
   wrap.appendChild(textSpan);
 
   wrap.appendChild(
-    buildProjectDetailsTooltip({
-      titleLabel: "Project details",
+    buildRoadmapDetailsTooltip({
+      titleLabel: "Roadmap details",
       statusText,
       rawDescription
     })
@@ -12390,7 +13954,7 @@ function syncCompactFiltersChrome() {
 
 function syncTableGroupByControlsForLayout() {
   const compact = isTableCompactLayout();
-  const bar = elements.projectsTableGroupBar;
+  const bar = elements.roadmapsTableGroupBar;
   const select = elements.tableGroupBySelect;
   if (bar) {
     bar.hidden = !compact;
@@ -12424,7 +13988,7 @@ function initTableGroupByControls() {
       const next = elements.tableGroupBySelect.value;
       state.tableGroupBy = validIds.includes(next) ? next : "none";
       saveState();
-      if (state.projectsView === "table") renderProjects();
+      if (state.roadmapsView === "table") renderRoadmaps();
     });
   }
   elements.tableGroupBySelect.value = state.tableGroupBy;
@@ -12435,25 +13999,25 @@ function getTableGroupByUnsetKey() {
   return "__unset__";
 }
 
-function getTableGroupByValue(project, groupBy) {
-  if (!project || !groupBy || groupBy === "none") return getTableGroupByUnsetKey();
+function getTableGroupByValue(roadmap, groupBy) {
+  if (!roadmap || !groupBy || groupBy === "none") return getTableGroupByUnsetKey();
   switch (groupBy) {
-    case "projectStatus":
-      return (project.projectStatus || "").toString().trim() || getTableGroupByUnsetKey();
+    case "roadmapStatus":
+      return (roadmap.roadmapStatus || "").toString().trim() || getTableGroupByUnsetKey();
     case "moscowCategory":
-      return (project.moscowCategory || "").toString().trim() || getTableGroupByUnsetKey();
+      return (roadmap.moscowCategory || "").toString().trim() || getTableGroupByUnsetKey();
     case "tshirtSize":
-      return (project.tshirtSize || "").toString().trim() || getTableGroupByUnsetKey();
-    case "projectType":
-      return (project.projectType || "").toString().trim() || getTableGroupByUnsetKey();
+      return (roadmap.tshirtSize || "").toString().trim() || getTableGroupByUnsetKey();
+    case "roadmapType":
+      return (roadmap.roadmapType || "").toString().trim() || getTableGroupByUnsetKey();
     case "financialImpactFramework":
-      return normalizeFinancialFramework(project.financialImpactFramework) || getTableGroupByUnsetKey();
+      return normalizeFinancialFramework(roadmap.financialImpactFramework) || getTableGroupByUnsetKey();
     case "financialImpactCurrency": {
-      const cur = (project.financialImpactCurrency || "").toString().trim().toUpperCase();
+      const cur = (roadmap.financialImpactCurrency || "").toString().trim().toUpperCase();
       return cur || getTableGroupByUnsetKey();
     }
     case "ownerProfileName":
-      return (project.ownerProfileName || "").toString().trim() || getTableGroupByUnsetKey();
+      return (roadmap.ownerProfileName || "").toString().trim() || getTableGroupByUnsetKey();
     default:
       return getTableGroupByUnsetKey();
   }
@@ -12482,8 +14046,8 @@ function sortTableGroupKeys(keys, groupBy) {
     return list.includes(unset) ? without.concat(unset) : without;
   };
 
-  if (groupBy === "projectStatus" && typeof projectStatusList !== "undefined") {
-    const order = projectStatusList.slice();
+  if (groupBy === "roadmapStatus" && typeof roadmapStatusList !== "undefined") {
+    const order = roadmapStatusList.slice();
     return moveUnsetLast(
       list.sort((a, b) => {
         const ia = order.indexOf(a);
@@ -12530,16 +14094,16 @@ function sortTableGroupKeys(keys, groupBy) {
   );
 }
 
-function updateTableGroupBySummary(projectCount, groupBy) {
+function updateTableGroupBySummary(roadmapCount, groupBy) {
   if (!elements.tableGroupBySummary || !isTableCompactLayout()) return;
-  const count = Number(projectCount) || 0;
+  const count = Number(roadmapCount) || 0;
   if (!groupBy || groupBy === "none") {
     elements.tableGroupBySummary.textContent =
-      count === 1 ? "1 project" : `${count} projects`;
+      count === 1 ? "1 roadmap" : `${count} roadmaps`;
     return;
   }
-  const groupEls = elements.projectsTableCardsList
-    ? elements.projectsTableCardsList.querySelectorAll(".projects-table-card-group")
+  const groupEls = elements.roadmapsTableCardsList
+    ? elements.roadmapsTableCardsList.querySelectorAll(".roadmaps-table-card-group")
     : [];
   const groupCount = groupEls.length;
   const opt = typeof TABLE_GROUP_BY_OPTIONS !== "undefined"
@@ -12548,45 +14112,45 @@ function updateTableGroupBySummary(projectCount, groupBy) {
   const label = opt ? opt.label.toLowerCase() : "category";
   elements.tableGroupBySummary.textContent =
     count === 1
-      ? `1 project · ${groupCount} ${label} group`
-      : `${count} projects · ${groupCount} ${label} groups`;
+      ? `1 roadmap · ${groupCount} ${label} group`
+      : `${count} roadmaps · ${groupCount} ${label} groups`;
 }
 
-function syncProjectTableCardSelectionStyles() {
-  if (!elements.projectsTableCardsList) return;
-  elements.projectsTableCardsList.querySelectorAll(".projects-table-card").forEach((card) => {
-    const cb = card.querySelector(".project-select-checkbox");
-    card.classList.toggle("projects-table-card--selected", !!(cb && cb.checked));
+function syncRoadmapTableCardSelectionStyles() {
+  if (!elements.roadmapsTableCardsList) return;
+  elements.roadmapsTableCardsList.querySelectorAll(".roadmaps-table-card").forEach((card) => {
+    const cb = card.querySelector(".roadmap-select-checkbox");
+    card.classList.toggle("roadmaps-table-card--selected", !!(cb && cb.checked));
   });
 }
 
-function renderProjectsTableEmptyMessage(message) {
+function renderRoadmapsTableEmptyMessage(message) {
   const text = message || "";
-  const colspan = getProjectsTableColSpan();
-  if (elements.projectsTableBody) {
+  const colspan = getRoadmapsTableColSpan();
+  if (elements.roadmapsTableBody) {
     if (isTableCompactLayout()) {
-      elements.projectsTableBody.innerHTML = "";
+      elements.roadmapsTableBody.innerHTML = "";
     } else {
-      elements.projectsTableBody.innerHTML = `
-      <tr class="projects-table-empty-row">
-        <td colspan="${colspan}" class="empty-state projects-table-col--empty">
-          <div class="projects-table-empty-state__content" role="status">${escapeHtml(text)}</div>
+      elements.roadmapsTableBody.innerHTML = `
+      <tr class="roadmaps-table-empty-row">
+        <td colspan="${colspan}" class="empty-state roadmaps-table-col--empty">
+          <div class="roadmaps-table-empty-state__content" role="status">${escapeHtml(text)}</div>
         </td>
       </tr>
     `;
     }
   }
-  if (elements.projectsTableCardsList) {
-    elements.projectsTableCardsList.innerHTML = `<p class="projects-table-cards-empty empty-state" role="status">${text}</p>`;
+  if (elements.roadmapsTableCardsList) {
+    elements.roadmapsTableCardsList.innerHTML = `<p class="roadmaps-table-cards-empty empty-state" role="status">${text}</p>`;
   }
 }
 
-function getProjectSelectCheckboxes() {
-  if (isTableCompactLayout() && elements.projectsTableCardsList) {
-    return elements.projectsTableCardsList.querySelectorAll(".project-select-checkbox");
+function getRoadmapSelectCheckboxes() {
+  if (isTableCompactLayout() && elements.roadmapsTableCardsList) {
+    return elements.roadmapsTableCardsList.querySelectorAll(".roadmap-select-checkbox");
   }
-  if (elements.projectsTableBody) {
-    return elements.projectsTableBody.querySelectorAll(".project-select-checkbox");
+  if (elements.roadmapsTableBody) {
+    return elements.roadmapsTableBody.querySelectorAll(".roadmap-select-checkbox");
   }
   return [];
 }
@@ -12598,11 +14162,11 @@ function truncateTableCardText(text, maxLen) {
   return raw.slice(0, Math.max(0, maxLen - 1)).trimEnd() + "…";
 }
 
-function appendProjectTableCardTitleIcon(iconsWrap, options) {
+function appendRoadmapTableCardTitleIcon(iconsWrap, options) {
   const { svg, ariaLabel, extraClass, iconKind, fallbackText, meta } = options;
   if (!ariaLabel) return;
   const wrap = document.createElement("span");
-  wrap.className = `projects-table-card__title-icon cell-type-icon-wrap cell-type-pill${extraClass ? " " + extraClass : ""}`;
+  wrap.className = `roadmaps-table-card__title-icon cell-type-icon-wrap cell-type-pill${extraClass ? " " + extraClass : ""}`;
   if (iconKind) wrap.dataset.iconKind = iconKind;
   wrap.setAttribute("role", "img");
   wrap.setAttribute("aria-label", ariaLabel);
@@ -12620,61 +14184,61 @@ function appendProjectTableCardTitleIcon(iconsWrap, options) {
 
 const TABLE_CARD_MAX_BADGES = 3;
 
-function buildProjectTableCardBadges(project, groupBy) {
+function buildRoadmapTableCardBadges(roadmap, groupBy) {
   const badges = document.createElement("div");
-  badges.className = "projects-table-card__badges";
+  badges.className = "roadmaps-table-card__badges";
   const candidates = [];
 
-  if (project.projectStatus && groupBy !== "projectStatus") {
-    const statusMeta = projectStatusIcons && projectStatusIcons[project.projectStatus];
+  if (roadmap.roadmapStatus && groupBy !== "roadmapStatus") {
+    const statusMeta = roadmapStatusIcons && roadmapStatusIcons[roadmap.roadmapStatus];
     const statusPill = document.createElement("span");
-    statusPill.className = "projects-table-card__status-pill";
-    statusPill.setAttribute("aria-label", project.projectStatus);
+    statusPill.className = "roadmaps-table-card__status-pill";
+    statusPill.setAttribute("aria-label", roadmap.roadmapStatus);
     if (statusMeta && statusMeta.svg) {
       statusPill.innerHTML =
         statusMeta.svg +
-        '<span class="projects-table-card__status-label">' +
-        escapeHtml(project.projectStatus) +
+        '<span class="roadmaps-table-card__status-label">' +
+        escapeHtml(roadmap.roadmapStatus) +
         "</span>";
     } else {
-      statusPill.textContent = project.projectStatus;
+      statusPill.textContent = roadmap.roadmapStatus;
     }
     statusPill.setAttribute("tabindex", "0");
     appendIconMetaTooltip(statusPill, statusMeta);
-    candidates.push({ priority: 1, label: project.projectStatus, el: statusPill });
+    candidates.push({ priority: 1, label: roadmap.roadmapStatus, el: statusPill });
   }
 
-  if (project.moscowCategory && groupBy !== "moscowCategory") {
-    const moscowSlug = moscowTablePillSlug(project.moscowCategory);
+  if (roadmap.moscowCategory && groupBy !== "moscowCategory") {
+    const moscowSlug = moscowTablePillSlug(roadmap.moscowCategory);
     const moscowChip = document.createElement("span");
-    moscowChip.className = `projects-table-card__chip projects-table-card__chip--moscow moscow-pill moscow-pill--${moscowSlug} cell-moscow-with-tooltip`;
-    moscowChip.textContent = moscowTableShortLabel(project.moscowCategory);
+    moscowChip.className = `roadmaps-table-card__chip roadmaps-table-card__chip--moscow moscow-pill moscow-pill--${moscowSlug} cell-moscow-with-tooltip`;
+    moscowChip.textContent = moscowTableShortLabel(roadmap.moscowCategory);
     moscowChip.setAttribute("tabindex", "0");
-    if (typeof moscowTooltips !== "undefined" && moscowTooltips[project.moscowCategory]) {
-      appendIconMetaTooltip(moscowChip, moscowTooltips[project.moscowCategory]);
+    if (typeof moscowTooltips !== "undefined" && moscowTooltips[roadmap.moscowCategory]) {
+      appendIconMetaTooltip(moscowChip, moscowTooltips[roadmap.moscowCategory]);
     }
-    candidates.push({ priority: 2, label: project.moscowCategory, el: moscowChip });
+    candidates.push({ priority: 2, label: roadmap.moscowCategory, el: moscowChip });
   }
 
-  if (project.projectType && groupBy !== "projectType") {
+  if (roadmap.roadmapType && groupBy !== "roadmapType") {
     const typeChip = document.createElement("span");
-    typeChip.className = "projects-table-card__chip projects-table-card__chip--type";
-    typeChip.textContent = project.projectType;
-    candidates.push({ priority: 3, label: project.projectType, el: typeChip });
+    typeChip.className = "roadmaps-table-card__chip roadmaps-table-card__chip--type";
+    typeChip.textContent = roadmap.roadmapType;
+    candidates.push({ priority: 3, label: roadmap.roadmapType, el: typeChip });
   }
 
-  if (project.financialImpactCurrency && groupBy !== "financialImpactCurrency") {
+  if (roadmap.financialImpactCurrency && groupBy !== "financialImpactCurrency") {
     const curChip = document.createElement("span");
-    curChip.className = "projects-table-card__chip projects-table-card__chip--currency";
-    curChip.textContent = String(project.financialImpactCurrency).trim().toUpperCase();
+    curChip.className = "roadmaps-table-card__chip roadmaps-table-card__chip--currency";
+    curChip.textContent = String(roadmap.financialImpactCurrency).trim().toUpperCase();
     candidates.push({ priority: 4, label: curChip.textContent, el: curChip });
   }
 
-  if (project.projectPeriod) {
+  if (roadmap.roadmapPeriod) {
     const periodChip = document.createElement("span");
-    periodChip.className = "projects-table-card__chip projects-table-card__chip--period";
-    periodChip.textContent = project.projectPeriod;
-    candidates.push({ priority: 5, label: project.projectPeriod, el: periodChip });
+    periodChip.className = "roadmaps-table-card__chip roadmaps-table-card__chip--period";
+    periodChip.textContent = roadmap.roadmapPeriod;
+    candidates.push({ priority: 5, label: roadmap.roadmapPeriod, el: periodChip });
   }
 
   candidates.sort((a, b) => a.priority - b.priority);
@@ -12695,7 +14259,7 @@ function buildProjectTableCardBadges(project, groupBy) {
       "More attributes: " + hiddenLabels.join(", "),
       "More attributes",
       hiddenLabels,
-      "projects-table-card__chip projects-table-card__chip--more card-meta-with-tooltip"
+      "roadmaps-table-card__chip roadmaps-table-card__chip--more card-meta-with-tooltip"
     );
     badges.appendChild(moreChip);
   }
@@ -12705,13 +14269,13 @@ function buildProjectTableCardBadges(project, groupBy) {
 
 const COUNTRIES_TOOLTIP_SCROLL_THRESHOLD = 4;
 
-function normalizeProjectCountriesList(countries) {
+function normalizeRoadmapCountriesList(countries) {
   return normalizeCountryNames(Array.isArray(countries) ? countries : []);
 }
 
-/** True when the project targets every EU member state (e.g. after choosing EU in the form). */
-function projectCountriesRepresentEuRegion(countries) {
-  const list = normalizeProjectCountriesList(countries);
+/** True when the roadmap targets every EU member state (e.g. after choosing EU in the form). */
+function roadmapCountriesRepresentEuRegion(countries) {
+  const list = normalizeRoadmapCountriesList(countries);
   if (
     typeof EU_MEMBER_COUNTRIES === "undefined" ||
     !EU_MEMBER_COUNTRIES.length ||
@@ -12728,15 +14292,15 @@ function getEuRegionFlagEmoji() {
 }
 
 function getCountriesTooltipTitle(countries) {
-  const list = normalizeProjectCountriesList(countries);
-  if (projectCountriesRepresentEuRegion(list)) {
+  const list = normalizeRoadmapCountriesList(countries);
+  if (roadmapCountriesRepresentEuRegion(list)) {
     return `European Union (${list.length} countries)`;
   }
   return list.length > 1 ? `Target countries (${list.length})` : "Target country";
 }
 
 function buildCountriesListTooltip(countries) {
-  const list = normalizeProjectCountriesList(countries);
+  const list = normalizeRoadmapCountriesList(countries);
   const tooltipEl = document.createElement("div");
   tooltipEl.className = "cell-type-tooltip cell-type-tooltip--wide";
   if (list.length > COUNTRIES_TOOLTIP_SCROLL_THRESHOLD) {
@@ -12776,11 +14340,11 @@ function buildCountriesListTooltip(countries) {
   return tooltipEl;
 }
 
-function buildProjectTableCardCountriesRow(countries) {
-  const normalizedCountries = normalizeProjectCountriesList(countries);
-  const isEuRegion = projectCountriesRepresentEuRegion(normalizedCountries);
+function buildRoadmapTableCardCountriesRow(countries) {
+  const normalizedCountries = normalizeRoadmapCountriesList(countries);
+  const isEuRegion = roadmapCountriesRepresentEuRegion(normalizedCountries);
   const row = document.createElement("div");
-  row.className = "projects-table-card__countries-row cell-countries-with-tooltip";
+  row.className = "roadmaps-table-card__countries-row cell-countries-with-tooltip";
   row.setAttribute(
     "aria-label",
     isEuRegion ? "European Union; tap for member countries" : "Target countries; tap for full list"
@@ -12790,14 +14354,14 @@ function buildProjectTableCardCountriesRow(countries) {
 
   if (isEuRegion) {
     const chip = document.createElement("span");
-    chip.className = "projects-table-card__country-chip projects-table-card__country-chip--eu";
+    chip.className = "roadmaps-table-card__country-chip roadmaps-table-card__country-chip--eu";
     const flagEl = document.createElement("span");
-    flagEl.className = "projects-table-card__country-flag";
+    flagEl.className = "roadmaps-table-card__country-flag";
     flagEl.setAttribute("aria-hidden", "true");
     flagEl.textContent = getEuRegionFlagEmoji();
     chip.appendChild(flagEl);
     const labelEl = document.createElement("span");
-    labelEl.className = "projects-table-card__country-code";
+    labelEl.className = "roadmaps-table-card__country-code";
     labelEl.textContent = "EU";
     chip.appendChild(labelEl);
     row.appendChild(chip);
@@ -12812,24 +14376,24 @@ function buildProjectTableCardCountriesRow(countries) {
           : "";
       const flag = code && typeof countryCodeToFlag === "function" ? countryCodeToFlag(code) : "";
       const chip = document.createElement("span");
-      chip.className = "projects-table-card__country-chip";
+      chip.className = "roadmaps-table-card__country-chip";
       chip.title = code ? `${name} (${code})` : String(name);
       if (flag) {
         const flagEl = document.createElement("span");
-        flagEl.className = "projects-table-card__country-flag";
+        flagEl.className = "roadmaps-table-card__country-flag";
         flagEl.setAttribute("aria-hidden", "true");
         flagEl.textContent = flag;
         chip.appendChild(flagEl);
       }
       const labelEl = document.createElement("span");
-      labelEl.className = "projects-table-card__country-code";
+      labelEl.className = "roadmaps-table-card__country-code";
       labelEl.textContent = code || String(name);
       chip.appendChild(labelEl);
       row.appendChild(chip);
     });
     if (moreCount > 0) {
       const moreChip = document.createElement("span");
-      moreChip.className = "projects-table-card__country-chip projects-table-card__country-chip--more";
+      moreChip.className = "roadmaps-table-card__country-chip roadmaps-table-card__country-chip--more";
       moreChip.textContent = "+" + moreCount;
       moreChip.title = normalizedCountries.slice(maxToShow).join(", ");
       row.appendChild(moreChip);
@@ -12841,24 +14405,24 @@ function buildProjectTableCardCountriesRow(countries) {
   return row;
 }
 
-function buildProjectTableCard(project, demoReadOnly, options = {}) {
+function buildRoadmapTableCard(roadmap, demoReadOnly, options = {}) {
   const groupBy = options.groupBy || "none";
   const card = document.createElement("article");
-  card.className = "projects-table-card portfolio-board-card--structured";
+  card.className = "roadmaps-table-card portfolio-board-card--structured";
   card.setAttribute("role", "listitem");
-  card.dataset.projectId = project.id;
-  const statusLabel = (project.projectStatus || "Not Started").toString().trim();
+  card.dataset.roadmapId = roadmap.id;
+  const statusLabel = (roadmap.roadmapStatus || "Not Started").toString().trim();
   card.setAttribute("data-status", statusLabel);
   if (
     isSuperAdminModeActive() &&
-    project.ownerProfileId &&
-    project.ownerProfileId !== state.activeProfileId
+    roadmap.ownerProfileId &&
+    roadmap.ownerProfileId !== state.activeProfileId
   ) {
-    card.classList.add("projects-table-card--external-profile");
+    card.classList.add("roadmaps-table-card--external-profile");
   }
 
-  if (isSuperAdminModeActive() && project.ownerProfileName) {
-    const ownerStrip = buildProjectOwnerIdentityElement(project, {
+  if (isSuperAdminModeActive() && roadmap.ownerProfileName) {
+    const ownerStrip = buildRoadmapOwnerIdentityElement(roadmap, {
       variant: "card-strip",
       showTeam: true,
       showScopeHint: true
@@ -12867,15 +14431,15 @@ function buildProjectTableCard(project, demoReadOnly, options = {}) {
   }
 
   const head = document.createElement("div");
-  head.className = "projects-table-card__head";
+  head.className = "roadmaps-table-card__head";
 
   const selectWrap = document.createElement("div");
-  selectWrap.className = "projects-table-card__select";
+  selectWrap.className = "roadmaps-table-card__select";
   const cb = document.createElement("input");
   cb.type = "checkbox";
-  cb.className = "checkbox-input project-select-checkbox";
-  cb.setAttribute("data-id", project.id);
-  cb.setAttribute("aria-label", `Select ${project.title || "project"}`);
+  cb.className = "checkbox-input roadmap-select-checkbox";
+  cb.setAttribute("data-id", roadmap.id);
+  cb.setAttribute("aria-label", `Select ${roadmap.title || "roadmap"}`);
   if (demoReadOnly) {
     cb.disabled = true;
     cb.title = DEMO_READ_ONLY_ACTION_TITLE;
@@ -12883,40 +14447,40 @@ function buildProjectTableCard(project, demoReadOnly, options = {}) {
   selectWrap.appendChild(cb);
   head.appendChild(selectWrap);
 
-  head.appendChild(buildProjectTableCardBadges(project, groupBy));
+  head.appendChild(buildRoadmapTableCardBadges(roadmap, groupBy));
   card.appendChild(head);
 
   const body = document.createElement("div");
-  body.className = "projects-table-card__body portfolio-card-body";
+  body.className = "roadmaps-table-card__body portfolio-card-body";
 
   const titleRow = document.createElement("div");
   titleRow.className =
-    "projects-table-card__title-row board-card-section board-card-section--title";
-  titleRow.appendChild(buildCardTitleTooltipElement("projects-table-card__title", project));
+    "roadmaps-table-card__title-row board-card-section board-card-section--title";
+  titleRow.appendChild(buildCardTitleTooltipElement("roadmaps-table-card__title", roadmap));
   body.appendChild(titleRow);
 
-  const description = project.description
-    ? richDescriptionToPlainText(project.description).trim()
+  const description = roadmap.description
+    ? richDescriptionToPlainText(roadmap.description).trim()
     : "";
   if (description) {
     const descEl = document.createElement("p");
-    descEl.className = "projects-table-card__desc";
+    descEl.className = "roadmaps-table-card__desc";
     descEl.textContent = truncateTableCardText(description, 140);
     body.appendChild(descEl);
   }
 
-  const metrics = buildBoardCardMetricsRow(project, "projects-table-card", {
-    hideTypeIcon: groupBy === "projectType",
+  const metrics = buildBoardCardMetricsRow(roadmap, "roadmaps-table-card", {
+    hideTypeIcon: groupBy === "roadmapType",
     hideFrameworkIcon: groupBy === "financialImpactFramework"
   });
   metrics.classList.add("board-card-section", "board-card-section--metrics");
   body.appendChild(metrics);
 
-  const countries = Array.isArray(project.countries) ? project.countries : [];
+  const countries = Array.isArray(roadmap.countries) ? roadmap.countries : [];
   if (countries.length) {
     const metaRow = document.createElement("div");
-    metaRow.className = "projects-table-card__meta-row";
-    metaRow.appendChild(buildProjectTableCardCountriesRow(countries));
+    metaRow.className = "roadmaps-table-card__meta-row";
+    metaRow.appendChild(buildRoadmapTableCardCountriesRow(countries));
     body.appendChild(metaRow);
   }
 
@@ -12924,22 +14488,22 @@ function buildProjectTableCard(project, demoReadOnly, options = {}) {
 
   const actions = document.createElement("div");
   actions.className =
-    "projects-table-card__actions portfolio-card-footer board-card-section board-card-section--footer";
+    "roadmaps-table-card__actions portfolio-card-footer board-card-section board-card-section--footer";
 
   const viewBtn = document.createElement("button");
   viewBtn.type = "button";
-  viewBtn.setAttribute("data-id", project.id);
-  setProjectTableActionButton(viewBtn, "view", "View");
+  viewBtn.setAttribute("data-id", roadmap.id);
+  setRoadmapTableActionButton(viewBtn, "view", "View");
 
   const editBtn = document.createElement("button");
   editBtn.type = "button";
-  editBtn.setAttribute("data-id", project.id);
-  setProjectTableActionButton(editBtn, "edit", "Edit", { disabled: demoReadOnly });
+  editBtn.setAttribute("data-id", roadmap.id);
+  setRoadmapTableActionButton(editBtn, "edit", "Edit", { disabled: demoReadOnly });
 
   const deleteBtn = document.createElement("button");
   deleteBtn.type = "button";
-  deleteBtn.setAttribute("data-id", project.id);
-  setProjectTableActionButton(deleteBtn, "delete", "Delete", { disabled: demoReadOnly });
+  deleteBtn.setAttribute("data-id", roadmap.id);
+  setRoadmapTableActionButton(deleteBtn, "delete", "Delete", { disabled: demoReadOnly });
 
   actions.appendChild(viewBtn);
   actions.appendChild(editBtn);
@@ -12949,44 +14513,44 @@ function buildProjectTableCard(project, demoReadOnly, options = {}) {
   return card;
 }
 
-function renderProjectsTableCards(projects, demoReadOnly) {
-  if (!elements.projectsTableCardsList) return;
-  elements.projectsTableCardsList.innerHTML = "";
+function renderRoadmapsTableCards(roadmaps, demoReadOnly) {
+  if (!elements.roadmapsTableCardsList) return;
+  elements.roadmapsTableCardsList.innerHTML = "";
   const groupBy = state.tableGroupBy || "none";
   const fragment = document.createDocumentFragment();
 
   if (groupBy === "none") {
-    projects.forEach((project) => {
-      fragment.appendChild(buildProjectTableCard(project, demoReadOnly, { groupBy: "none" }));
+    roadmaps.forEach((roadmap) => {
+      fragment.appendChild(buildRoadmapTableCard(roadmap, demoReadOnly, { groupBy: "none" }));
     });
   } else {
     const buckets = new Map();
-    projects.forEach((project) => {
-      const key = getTableGroupByValue(project, groupBy);
+    roadmaps.forEach((roadmap) => {
+      const key = getTableGroupByValue(roadmap, groupBy);
       if (!buckets.has(key)) buckets.set(key, []);
-      buckets.get(key).push(project);
+      buckets.get(key).push(roadmap);
     });
     const keys = sortTableGroupKeys(Array.from(buckets.keys()), groupBy);
     keys.forEach((key) => {
       const section = document.createElement("section");
-      section.className = "projects-table-card-group";
+      section.className = "roadmaps-table-card-group";
       section.dataset.groupBy = groupBy;
       section.dataset.groupKey = key;
 
       const header = document.createElement("header");
-      header.className = "projects-table-card-group__header";
+      header.className = "roadmaps-table-card-group__header";
 
       const title = document.createElement("h4");
-      title.className = "projects-table-card-group__title";
+      title.className = "roadmaps-table-card-group__title";
       title.textContent = getTableGroupDisplayLabel(key, groupBy);
 
       const count = document.createElement("span");
-      count.className = "projects-table-card-group__count";
-      const groupProjects = buckets.get(key) || [];
-      count.textContent = String(groupProjects.length);
+      count.className = "roadmaps-table-card-group__count";
+      const groupRoadmaps = buckets.get(key) || [];
+      count.textContent = String(groupRoadmaps.length);
       count.setAttribute(
         "aria-label",
-        groupProjects.length === 1 ? "1 project" : `${groupProjects.length} projects`
+        groupRoadmaps.length === 1 ? "1 roadmap" : `${groupRoadmaps.length} roadmaps`
       );
 
       header.appendChild(title);
@@ -12994,36 +14558,36 @@ function renderProjectsTableCards(projects, demoReadOnly) {
       section.appendChild(header);
 
       const list = document.createElement("div");
-      list.className = "projects-table-card-group__list";
+      list.className = "roadmaps-table-card-group__list";
       list.setAttribute("role", "group");
       list.setAttribute("aria-label", getTableGroupDisplayLabel(key, groupBy));
-      groupProjects.forEach((project) => {
-        list.appendChild(buildProjectTableCard(project, demoReadOnly, { groupBy }));
+      groupRoadmaps.forEach((roadmap) => {
+        list.appendChild(buildRoadmapTableCard(roadmap, demoReadOnly, { groupBy }));
       });
       section.appendChild(list);
       fragment.appendChild(section);
     });
   }
 
-  elements.projectsTableCardsList.appendChild(fragment);
+  elements.roadmapsTableCardsList.appendChild(fragment);
   if (elements.tableGroupBySelect && elements.tableGroupBySelect.value !== groupBy) {
     elements.tableGroupBySelect.value = groupBy;
   }
-  updateTableGroupBySummary(projects.length, groupBy);
-  syncProjectTableCardSelectionStyles();
+  updateTableGroupBySummary(roadmaps.length, groupBy);
+  syncRoadmapTableCardSelectionStyles();
   if (typeof BoardCardInteraction !== "undefined") {
-    BoardCardInteraction.bindContainer(elements.projectsTableCardsList);
+    BoardCardInteraction.bindContainer(elements.roadmapsTableCardsList);
   }
 }
 
-function getAllProjectStatuses() {
-  return typeof projectStatusList !== "undefined" && Array.isArray(projectStatusList)
-    ? projectStatusList.slice()
+function getAllRoadmapStatuses() {
+  return typeof roadmapStatusList !== "undefined" && Array.isArray(roadmapStatusList)
+    ? roadmapStatusList.slice()
     : ["Not Started", "In Progress", "On Hold", "Done", "Cancelled"];
 }
 
 function normalizeScrumBoardVisibleStatuses(raw) {
-  const all = getAllProjectStatuses();
+  const all = getAllRoadmapStatuses();
   if (!Array.isArray(raw)) return all;
   const ordered = [];
   all.forEach((status) => {
@@ -13047,7 +14611,7 @@ function initScrumBoardStatusColumnsOptions() {
   if (!elements.scrumBoardStatusColumnsList) return;
   elements.scrumBoardStatusColumnsList.innerHTML = "";
   const visible = new Set(getScrumBoardVisibleStatuses());
-  getAllProjectStatuses().forEach((status, index) => {
+  getAllRoadmapStatuses().forEach((status, index) => {
     const row = document.createElement("div");
     row.className = "filter-country-option scrum-board-status-option";
     row.dataset.status = status;
@@ -13061,10 +14625,10 @@ function initScrumBoardStatusColumnsOptions() {
     const label = document.createElement("label");
     label.className = "scrum-board-status-option-label";
     label.setAttribute("for", cb.id);
-    if (typeof projectStatusIcons !== "undefined" && projectStatusIcons[status]) {
+    if (typeof roadmapStatusIcons !== "undefined" && roadmapStatusIcons[status]) {
       const iconWrap = document.createElement("span");
       iconWrap.className = "scrum-board-status-option-icon";
-      iconWrap.innerHTML = projectStatusIcons[status].svg;
+      iconWrap.innerHTML = roadmapStatusIcons[status].svg;
       label.appendChild(iconWrap);
     }
     const text = document.createElement("span");
@@ -13100,7 +14664,7 @@ function readScrumBoardStatusColumnsFromUi() {
 function updateScrumBoardStatusColumnsSummary() {
   if (!elements.scrumBoardStatusColumnsSummary) return;
   const visible = getScrumBoardVisibleStatuses();
-  const all = getAllProjectStatuses();
+  const all = getAllRoadmapStatuses();
   if (visible.length === all.length) {
     elements.scrumBoardStatusColumnsSummary.textContent = "All statuses";
     return;
@@ -13145,26 +14709,26 @@ function renderScrumBoard() {
     return;
   }
 
-  const baseProjects = getPortfolioProjectsBaseList();
-  baseProjects.forEach((p) => {
+  const baseRoadmaps = getPortfolioRoadmapsBaseList();
+  baseRoadmaps.forEach((p) => {
     p.riceScore = calculateRiceScore(p);
   });
-  initFilterProjectPeriodOptions(baseProjects);
-  const projects = applyFilters(baseProjects);
+  initFilterRoadmapPeriodOptions(baseRoadmaps);
+  const roadmaps = applyFilters(baseRoadmaps);
 
   const byStatus = {};
-  projectStatusList.forEach((status) => {
+  roadmapStatusList.forEach((status) => {
     byStatus[status] = [];
   });
-  projects.forEach((p) => {
-    const status = (p.projectStatus || "Not Started").toString().trim();
+  roadmaps.forEach((p) => {
+    const status = (p.roadmapStatus || "Not Started").toString().trim();
     if (!byStatus[status]) byStatus[status] = [];
     byStatus[status].push(p);
   });
 
   if (!state.scrumBoardSortByRice && activeProfile) {
     activeProfile.boardOrder = activeProfile.boardOrder || {};
-    projectStatusList.forEach((status) => {
+    roadmapStatusList.forEach((status) => {
       const list = byStatus[status] || [];
       const orderIds = activeProfile.boardOrder[status];
       if (orderIds && Array.isArray(orderIds) && orderIds.length > 0) {
@@ -13182,7 +14746,7 @@ function renderScrumBoard() {
     });
   }
 
-  projectStatusList.forEach((status) => {
+  roadmapStatusList.forEach((status) => {
     const list = byStatus[status] || [];
     if (state.scrumBoardSortByRice) {
       list.sort((a, b) => {
@@ -13217,39 +14781,39 @@ function renderScrumBoard() {
     cardsContainer.className = "scrum-board-column-cards";
 
     const listForStatus = byStatus[status] || [];
-    (listForStatus).forEach((project, index) => {
+    (listForStatus).forEach((roadmap, index) => {
       const card = document.createElement("div");
       card.className = "scrum-board-card";
       card.setAttribute("draggable", demoReadOnly ? "false" : "true");
-      card.setAttribute("data-project-id", project.id);
+      card.setAttribute("data-roadmap-id", roadmap.id);
       card.setAttribute(
         "aria-label",
         demoReadOnly
-          ? "Project: " + (project.title || "Untitled") + ". View only."
-          : "Project: " + (project.title || "Untitled") + ". Drag to change status. View, Edit, Delete."
+          ? "Roadmap: " + (roadmap.title || "Untitled") + ". View only."
+          : "Roadmap: " + (roadmap.title || "Untitled") + ". Drag to change status. View, Edit, Delete."
       );
       if (
         isSuperAdminModeActive() &&
-        project.ownerProfileId &&
-        project.ownerProfileId !== state.activeProfileId
+        roadmap.ownerProfileId &&
+        roadmap.ownerProfileId !== state.activeProfileId
       ) {
         card.classList.add("portfolio-board-card--external-profile");
       }
-      prependPortfolioCardOwnerStrip(card, project);
+      prependPortfolioCardOwnerStrip(card, roadmap);
 
       const titleRow = document.createElement("div");
       titleRow.className = "scrum-board-card-title-row";
-      const titleEl = buildCardTitleTooltipElement("scrum-board-card-title", project);
+      const titleEl = buildCardTitleTooltipElement("scrum-board-card-title", roadmap);
       titleRow.appendChild(titleEl);
 
       const meta = document.createElement("div");
       meta.className = "scrum-board-card-meta";
-      meta.appendChild(buildBoardCardMetricsRow(project, "scrum-board-card"));
+      meta.appendChild(buildBoardCardMetricsRow(roadmap, "scrum-board-card"));
       appendPortfolioCardBody(card, titleRow, meta);
 
-      const cardStatus = (project.projectStatus || "Not Started").toString().trim();
+      const cardStatus = (roadmap.roadmapStatus || "Not Started").toString().trim();
       const moveEl = isCompactPortfolioLayout()
-        ? buildBoardCardMoveSelect(project, cardStatus, { disabled: demoReadOnly })
+        ? buildBoardCardMoveSelect(roadmap, cardStatus, { disabled: demoReadOnly })
         : null;
 
       const actions = document.createElement("div");
@@ -13260,29 +14824,29 @@ function renderScrumBoard() {
       const upBtn = document.createElement("button");
       upBtn.type = "button";
       upBtn.className = "scrum-board-card-btn scrum-board-card-btn--order";
-      upBtn.setAttribute("data-project-id", project.id);
+      upBtn.setAttribute("data-roadmap-id", roadmap.id);
       upBtn.setAttribute("data-status", status);
-      upBtn.setAttribute("aria-label", "Move project up in column");
+      upBtn.setAttribute("aria-label", "Move roadmap up in column");
       upBtn.title = "Move up";
       upBtn.innerHTML = "↑";
       upBtn.disabled = orderDisabled || isFirst;
       const downBtn = document.createElement("button");
       downBtn.type = "button";
       downBtn.className = "scrum-board-card-btn scrum-board-card-btn--order";
-      downBtn.setAttribute("data-project-id", project.id);
+      downBtn.setAttribute("data-roadmap-id", roadmap.id);
       downBtn.setAttribute("data-status", status);
-      downBtn.setAttribute("aria-label", "Move project down in column");
+      downBtn.setAttribute("aria-label", "Move roadmap down in column");
       downBtn.title = "Move down";
       downBtn.innerHTML = "↓";
       downBtn.disabled = orderDisabled || isLast;
       if (!demoReadOnly) {
         upBtn.addEventListener("click", (e) => {
           e.stopPropagation();
-          moveBoardProjectUp(project.id, status);
+          moveBoardRoadmapUp(roadmap.id, status);
         });
         downBtn.addEventListener("click", (e) => {
           e.stopPropagation();
-          moveBoardProjectDown(project.id, status);
+          moveBoardRoadmapDown(roadmap.id, status);
         });
       } else {
         upBtn.title = DEMO_READ_ONLY_ACTION_TITLE;
@@ -13295,17 +14859,17 @@ function renderScrumBoard() {
       const viewBtn = document.createElement("button");
       viewBtn.type = "button";
       viewBtn.className = "scrum-board-card-btn scrum-board-card-btn--view";
-      viewBtn.setAttribute("data-project-id", project.id);
+      viewBtn.setAttribute("data-roadmap-id", roadmap.id);
       setPortfolioCardActionButton(viewBtn, "view", "View");
       const editBtn = document.createElement("button");
       editBtn.type = "button";
       editBtn.className = "scrum-board-card-btn scrum-board-card-btn--edit";
-      editBtn.setAttribute("data-project-id", project.id);
+      editBtn.setAttribute("data-roadmap-id", roadmap.id);
       setPortfolioCardActionButton(editBtn, "edit", "Edit");
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
       deleteBtn.className = "scrum-board-card-btn scrum-board-card-btn--delete";
-      deleteBtn.setAttribute("data-project-id", project.id);
+      deleteBtn.setAttribute("data-roadmap-id", roadmap.id);
       setPortfolioCardActionButton(deleteBtn, "delete", "Delete");
       if (demoReadOnly) {
         editBtn.disabled = true;
@@ -13315,16 +14879,16 @@ function renderScrumBoard() {
       }
       viewBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        openProjectModal("view", project.id);
+        openRoadmapModal("view", roadmap.id);
       });
       if (!demoReadOnly) {
         editBtn.addEventListener("click", (e) => {
           e.stopPropagation();
-          openProjectModal("edit", project.id);
+          openRoadmapModal("edit", roadmap.id);
         });
         deleteBtn.addEventListener("click", (e) => {
           e.stopPropagation();
-          handleSingleDelete(project.id);
+          handleSingleDelete(roadmap.id);
         });
       }
       actions.appendChild(viewBtn);
@@ -13375,7 +14939,7 @@ function bindScrumBoardDragAndDrop() {
   const columns = elements.scrumBoardContainer.querySelectorAll(".scrum-board-column");
 
   let draggedCard = null;
-  let draggedProjectId = null;
+  let draggedRoadmapId = null;
   let dropColumn = null;
   let dropIndex = 0;
 
@@ -13396,7 +14960,7 @@ function bindScrumBoardDragAndDrop() {
         return;
       }
       draggedCard = card;
-      draggedProjectId = card.getAttribute("data-project-id");
+      draggedRoadmapId = card.getAttribute("data-roadmap-id");
       if (typeof BoardCardInteraction !== "undefined") BoardCardInteraction.clearPressed();
       BoardDrag.begin(card, e, {
         draggingClass: "scrum-board-card--dragging",
@@ -13404,14 +14968,14 @@ function bindScrumBoardDragAndDrop() {
         createLegacyGhost: createDragGhost
       });
       e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData("text/plain", draggedProjectId);
-      e.dataTransfer.setData("application/x-project-id", draggedProjectId);
+      e.dataTransfer.setData("text/plain", draggedRoadmapId);
+      e.dataTransfer.setData("application/x-roadmap-id", draggedRoadmapId);
     });
 
     card.addEventListener("dragend", () => {
       BoardDrag.end();
       draggedCard = null;
-      draggedProjectId = null;
+      draggedRoadmapId = null;
       dropColumn = null;
     });
   });
@@ -13421,7 +14985,7 @@ function bindScrumBoardDragAndDrop() {
       e.preventDefault();
       e.dataTransfer.dropEffect = "move";
       BoardDrag.movePointer(e.clientX, e.clientY);
-      if (!draggedProjectId) return;
+      if (!draggedRoadmapId) return;
       dropColumn = column;
       BoardDrag.setColumnHighlight(column, true);
       const cardsContainer = column.querySelector(".scrum-board-column-cards");
@@ -13439,49 +15003,49 @@ function bindScrumBoardDragAndDrop() {
       e.preventDefault();
       BoardDrag.setColumnHighlight(column, false);
       BoardDrag.clearIndicator();
-      if (!draggedProjectId) return;
-      if (!requireWritableActiveProfile("Move project")) return;
+      if (!draggedRoadmapId) return;
+      if (!requireWritableActiveProfile("Move roadmap")) return;
       const newStatus = column.getAttribute("data-status");
       if (!getUnlockedActiveProfile()) return;
-      const located = findProjectWithOwner(draggedProjectId);
+      const located = findRoadmapWithOwner(draggedRoadmapId);
       const ownerProfile = located.profile;
-      const project = located.project;
-      if (!ownerProfile || !project) return;
-      const currentStatus = (project.projectStatus || "Not Started").toString().trim();
+      const roadmap = located.roadmap;
+      if (!ownerProfile || !roadmap) return;
+      const currentStatus = (roadmap.roadmapStatus || "Not Started").toString().trim();
 
       if (currentStatus === newStatus) {
         if (!state.scrumBoardSortByRice && dropColumn) {
           const cardsContainer = dropColumn.querySelector(".scrum-board-column-cards");
           const columnCards = cardsContainer ? Array.from(cardsContainer.querySelectorAll(".scrum-board-card")) : [];
           const orderWithoutDragged = columnCards
-            .map((c) => c.getAttribute("data-project-id"))
-            .filter((id) => id !== draggedProjectId);
+            .map((c) => c.getAttribute("data-roadmap-id"))
+            .filter((id) => id !== draggedRoadmapId);
           const idx = Math.min(dropIndex, orderWithoutDragged.length);
           const newOrder = orderWithoutDragged.slice();
-          newOrder.splice(idx, 0, draggedProjectId);
+          newOrder.splice(idx, 0, draggedRoadmapId);
           ownerProfile.boardOrder = ownerProfile.boardOrder || {};
           ownerProfile.boardOrder[newStatus] = newOrder;
           saveState();
           renderScrumBoard();
-          renderProjects();
+          renderRoadmaps();
         }
         return;
       }
 
-      project.projectStatus = newStatus;
-      project.modifiedAt = new Date().toISOString();
+      roadmap.roadmapStatus = newStatus;
+      roadmap.modifiedAt = new Date().toISOString();
 
       if (!state.scrumBoardSortByRice && dropColumn) {
         const cardsContainer = dropColumn.querySelector(".scrum-board-column-cards");
         const columnCards = cardsContainer ? Array.from(cardsContainer.querySelectorAll(".scrum-board-card")) : [];
-        const currentIds = columnCards.map((c) => c.getAttribute("data-project-id"));
+        const currentIds = columnCards.map((c) => c.getAttribute("data-roadmap-id"));
         const idx = Math.min(dropIndex, currentIds.length);
         const newOrder = currentIds.slice();
-        newOrder.splice(idx, 0, draggedProjectId);
+        newOrder.splice(idx, 0, draggedRoadmapId);
         ownerProfile.boardOrder = ownerProfile.boardOrder || {};
         if (Array.isArray(ownerProfile.boardOrder[currentStatus])) {
           ownerProfile.boardOrder[currentStatus] = ownerProfile.boardOrder[currentStatus].filter(
-            (id) => id !== draggedProjectId
+            (id) => id !== draggedRoadmapId
           );
         }
         ownerProfile.boardOrder[newStatus] = newOrder;
@@ -13489,19 +15053,19 @@ function bindScrumBoardDragAndDrop() {
 
       saveState();
       renderScrumBoard();
-      renderProjects();
+      renderRoadmaps();
     });
   });
 }
 
 function getBoardOrderedList(profile, status) {
   const base = isSuperAdminModeActive()
-    ? getPortfolioProjectsBaseList()
-    : profile.projects.map((p) => attachProjectOwnerMeta(p, profile));
+    ? getPortfolioRoadmapsBaseList()
+    : profile.roadmaps.map((p) => attachRoadmapOwnerMeta(p, profile));
   base.forEach((p) => { p.riceScore = p.riceScore != null ? p.riceScore : calculateRiceScore(p); });
-  initFilterProjectPeriodOptions(base);
+  initFilterRoadmapPeriodOptions(base);
   const filtered = applyFilters(base);
-  const list = filtered.filter((p) => (p.projectStatus || "Not Started").toString().trim() === status);
+  const list = filtered.filter((p) => (p.roadmapStatus || "Not Started").toString().trim() === status);
   if (state.scrumBoardSortByRice) {
     list.sort((a, b) => {
       const scoreA = a.riceScore != null ? a.riceScore : calculateRiceScore(a);
@@ -13527,58 +15091,58 @@ function getBoardOrderedList(profile, status) {
   return list;
 }
 
-function moveBoardProjectUp(projectId, status) {
-  if (!requireWritableActiveProfile("Reorder project")) return;
+function moveBoardRoadmapUp(roadmapId, status) {
+  if (!requireWritableActiveProfile("Reorder roadmap")) return;
   const sessionProfile = getUnlockedActiveProfile();
   if (!sessionProfile) return;
-  const ownerProfile = findProjectOwnerProfile(projectId) || sessionProfile;
+  const ownerProfile = findRoadmapOwnerProfile(roadmapId) || sessionProfile;
   const list = getBoardOrderedList(sessionProfile, status);
-  const idx = list.findIndex((p) => p.id === projectId);
+  const idx = list.findIndex((p) => p.id === roadmapId);
   if (idx <= 0) return;
   ownerProfile.boardOrder = ownerProfile.boardOrder || {};
   if (!Array.isArray(ownerProfile.boardOrder[status]) || ownerProfile.boardOrder[status].length !== list.length) {
     ownerProfile.boardOrder[status] = list.filter((p) => p.ownerProfileId === ownerProfile.id).map((p) => p.id);
   }
   const orderIds = ownerProfile.boardOrder[status];
-  const i = orderIds.indexOf(projectId);
+  const i = orderIds.indexOf(roadmapId);
   if (i <= 0) return;
   [orderIds[i - 1], orderIds[i]] = [orderIds[i], orderIds[i - 1]];
   state.scrumBoardSortByRice = false;
   if (elements.scrumBoardSortByRiceToggle) elements.scrumBoardSortByRiceToggle.checked = false;
   saveState();
   renderScrumBoard();
-  renderProjects();
+  renderRoadmaps();
 }
 
-function moveBoardProjectDown(projectId, status) {
-  if (!requireWritableActiveProfile("Reorder project")) return;
+function moveBoardRoadmapDown(roadmapId, status) {
+  if (!requireWritableActiveProfile("Reorder roadmap")) return;
   const sessionProfile = getUnlockedActiveProfile();
   if (!sessionProfile) return;
-  const ownerProfile = findProjectOwnerProfile(projectId) || sessionProfile;
+  const ownerProfile = findRoadmapOwnerProfile(roadmapId) || sessionProfile;
   const list = getBoardOrderedList(sessionProfile, status);
-  const idx = list.findIndex((p) => p.id === projectId);
+  const idx = list.findIndex((p) => p.id === roadmapId);
   if (idx < 0 || idx >= list.length - 1) return;
   ownerProfile.boardOrder = ownerProfile.boardOrder || {};
   if (!Array.isArray(ownerProfile.boardOrder[status]) || ownerProfile.boardOrder[status].length !== list.length) {
     ownerProfile.boardOrder[status] = list.filter((p) => p.ownerProfileId === ownerProfile.id).map((p) => p.id);
   }
   const orderIds = ownerProfile.boardOrder[status];
-  const i = orderIds.indexOf(projectId);
+  const i = orderIds.indexOf(roadmapId);
   if (i < 0 || i >= orderIds.length - 1) return;
   [orderIds[i], orderIds[i + 1]] = [orderIds[i + 1], orderIds[i]];
   state.scrumBoardSortByRice = false;
   if (elements.scrumBoardSortByRiceToggle) elements.scrumBoardSortByRiceToggle.checked = false;
   saveState();
   renderScrumBoard();
-  renderProjects();
+  renderRoadmaps();
 }
 
 function getMoscowOrderedList(profile, quadrant) {
   const base = isSuperAdminModeActive()
-    ? getPortfolioProjectsBaseList()
-    : profile.projects.map((p) => attachProjectOwnerMeta(p, profile));
+    ? getPortfolioRoadmapsBaseList()
+    : profile.roadmaps.map((p) => attachRoadmapOwnerMeta(p, profile));
   base.forEach((p) => { p.riceScore = p.riceScore != null ? p.riceScore : calculateRiceScore(p); });
-  initFilterProjectPeriodOptions(base);
+  initFilterRoadmapPeriodOptions(base);
   const filtered = applyFilters(base);
   const list = filtered.filter((p) => {
     const m = (p.moscowCategory != null && String(p.moscowCategory).trim() !== "" && typeof moscowList !== "undefined" && moscowList.includes(p.moscowCategory))
@@ -13613,50 +15177,50 @@ function getMoscowOrderedList(profile, quadrant) {
 
 let moscowCompactNavObserver = null;
 
-function setProjectMoscowCategory(projectId, newMoscow) {
-  if (!requireWritableActiveProfile("Move project")) return false;
+function setRoadmapMoscowCategory(roadmapId, newMoscow) {
+  if (!requireWritableActiveProfile("Move roadmap")) return false;
   if (!getUnlockedActiveProfile() || !newMoscow) return false;
-  const located = findProjectWithOwner(projectId);
+  const located = findRoadmapWithOwner(roadmapId);
   const ownerProfile = located.profile;
-  const project = located.project;
-  if (!ownerProfile || !project || project.moscowCategory === newMoscow) return false;
-  project.moscowCategory = newMoscow;
-  project.modifiedAt = new Date().toISOString();
+  const roadmap = located.roadmap;
+  if (!ownerProfile || !roadmap || roadmap.moscowCategory === newMoscow) return false;
+  roadmap.moscowCategory = newMoscow;
+  roadmap.modifiedAt = new Date().toISOString();
   saveState();
   renderMoscowBoard();
-  renderProjects();
+  renderRoadmaps();
   return true;
 }
 
-function setProjectBoardStatus(projectId, newStatus) {
-  if (!requireWritableActiveProfile("Move project")) return false;
+function setRoadmapBoardStatus(roadmapId, newStatus) {
+  if (!requireWritableActiveProfile("Move roadmap")) return false;
   if (!getUnlockedActiveProfile() || !newStatus) return false;
-  if (typeof projectStatusList === "undefined" || !projectStatusList.includes(newStatus)) return false;
-  const located = findProjectWithOwner(projectId);
+  if (typeof roadmapStatusList === "undefined" || !roadmapStatusList.includes(newStatus)) return false;
+  const located = findRoadmapWithOwner(roadmapId);
   const ownerProfile = located.profile;
-  const project = located.project;
-  if (!ownerProfile || !project) return false;
-  const currentStatus = (project.projectStatus || "Not Started").toString().trim();
+  const roadmap = located.roadmap;
+  if (!ownerProfile || !roadmap) return false;
+  const currentStatus = (roadmap.roadmapStatus || "Not Started").toString().trim();
   if (currentStatus === newStatus) return false;
 
-  project.projectStatus = newStatus;
-  project.modifiedAt = new Date().toISOString();
+  roadmap.roadmapStatus = newStatus;
+  roadmap.modifiedAt = new Date().toISOString();
 
   if (!state.scrumBoardSortByRice) {
     ownerProfile.boardOrder = ownerProfile.boardOrder || {};
     if (Array.isArray(ownerProfile.boardOrder[currentStatus])) {
-      ownerProfile.boardOrder[currentStatus] = ownerProfile.boardOrder[currentStatus].filter((id) => id !== projectId);
+      ownerProfile.boardOrder[currentStatus] = ownerProfile.boardOrder[currentStatus].filter((id) => id !== roadmapId);
     }
     const nextOrder = Array.isArray(ownerProfile.boardOrder[newStatus])
-      ? ownerProfile.boardOrder[newStatus].filter((id) => id !== projectId)
+      ? ownerProfile.boardOrder[newStatus].filter((id) => id !== roadmapId)
       : [];
-    nextOrder.push(projectId);
+    nextOrder.push(roadmapId);
     ownerProfile.boardOrder[newStatus] = nextOrder;
   }
 
   saveState();
   renderScrumBoard();
-  renderProjects();
+  renderRoadmaps();
   return true;
 }
 
@@ -13665,20 +15229,20 @@ function isCompactPortfolioLayout() {
 }
 
 /** Table-style owner stripe (scrum / MoSCoW board cards, all layouts). */
-function buildPortfolioCardOwnerStrip(project) {
+function buildPortfolioCardOwnerStrip(roadmap) {
   if (!isSuperAdminModeActive()) return null;
-  const name = (project.ownerProfileName || "").trim();
+  const name = (roadmap.ownerProfileName || "").trim();
   if (!name) return null;
-  return buildProjectOwnerIdentityElement(project, {
+  return buildRoadmapOwnerIdentityElement(roadmap, {
     variant: "card-strip",
     showTeam: true,
     showScopeHint: true
   });
 }
 
-function prependPortfolioCardOwnerStrip(card, project) {
+function prependPortfolioCardOwnerStrip(card, roadmap) {
   if (!isSuperAdminModeActive()) return;
-  const strip = buildPortfolioCardOwnerStrip(project);
+  const strip = buildPortfolioCardOwnerStrip(roadmap);
   if (strip) {
     card.classList.add("portfolio-board-card--has-owner-strip");
     card.insertBefore(strip, card.firstChild);
@@ -13741,15 +15305,15 @@ function appendPortfolioCardFooter(card, moveEl, actionsEl) {
   card.appendChild(footer);
 }
 
-function buildPortfolioCardMoveSelect(project, currentValue, config) {
+function buildPortfolioCardMoveSelect(roadmap, currentValue, config) {
   const wrap = document.createElement("div");
   wrap.className = "portfolio-card-move";
   const label = document.createElement("label");
   label.className = "portfolio-card-move-label";
   label.textContent = config.label || "Move to";
-  label.setAttribute("for", config.idPrefix + "-" + project.id);
+  label.setAttribute("for", config.idPrefix + "-" + roadmap.id);
   const select = document.createElement("select");
-  select.id = config.idPrefix + "-" + project.id;
+  select.id = config.idPrefix + "-" + roadmap.id;
   select.className = "portfolio-card-move-select";
   select.setAttribute("aria-label", config.ariaLabel);
   config.values.forEach((value) => {
@@ -13769,7 +15333,7 @@ function buildPortfolioCardMoveSelect(project, currentValue, config) {
       e.stopPropagation();
       const next = select.value;
       if (next !== currentValue) {
-        config.onSelect(project.id, next);
+        config.onSelect(roadmap.id, next);
       }
     });
   }
@@ -13778,25 +15342,25 @@ function buildPortfolioCardMoveSelect(project, currentValue, config) {
   return wrap;
 }
 
-function buildMoscowCardMoveSelect(project, currentMoscow, { disabled = false } = {}) {
-  return buildPortfolioCardMoveSelect(project, currentMoscow, {
+function buildMoscowCardMoveSelect(roadmap, currentMoscow, { disabled = false } = {}) {
+  return buildPortfolioCardMoveSelect(roadmap, currentMoscow, {
     idPrefix: "moscowMove",
     label: "MoSCoW category",
-    ariaLabel: "Move project to another MoSCoW category",
+    ariaLabel: "Move roadmap to another MoSCoW category",
     values: moscowList,
-    onSelect: (projectId, value) => setProjectMoscowCategory(projectId, value),
+    onSelect: (roadmapId, value) => setRoadmapMoscowCategory(roadmapId, value),
     disabled,
   });
 }
 
-function buildBoardCardMoveSelect(project, currentStatus, { disabled = false } = {}) {
-  const statuses = typeof projectStatusList !== "undefined" ? projectStatusList.slice() : [];
-  return buildPortfolioCardMoveSelect(project, currentStatus, {
+function buildBoardCardMoveSelect(roadmap, currentStatus, { disabled = false } = {}) {
+  const statuses = typeof roadmapStatusList !== "undefined" ? roadmapStatusList.slice() : [];
+  return buildPortfolioCardMoveSelect(roadmap, currentStatus, {
     idPrefix: "boardMove",
     label: "Status",
-    ariaLabel: "Move project to another board column",
+    ariaLabel: "Move roadmap to another board column",
     values: statuses,
-    onSelect: (projectId, value) => setProjectBoardStatus(projectId, value),
+    onSelect: (roadmapId, value) => setRoadmapBoardStatus(roadmapId, value),
     disabled,
   });
 }
@@ -13810,10 +15374,10 @@ const PORTFOLIO_CARD_ACTION_ICONS = {
     '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
 };
 
-const PROJECT_TABLE_ACTION_MAP = {
-  view: "viewProject",
-  edit: "editProject",
-  delete: "deleteProject",
+const ROADMAP_TABLE_ACTION_MAP = {
+  view: "viewRoadmap",
+  edit: "editRoadmap",
+  delete: "deleteRoadmap",
 };
 
 const MOSCOW_TABLE_SHORT_LABELS = {
@@ -13840,31 +15404,31 @@ function moscowTablePillSlug(category) {
   return MOSCOW_TABLE_PILL_SLUGS[category] || "unset";
 }
 
-function setProjectTableActionButton(btn, kind, label, { disabled = false, title = "" } = {}) {
-  const action = PROJECT_TABLE_ACTION_MAP[kind] || kind;
-  btn.className = `project-action-btn project-action-btn--${kind} project-action-btn--icon-only`;
+function setRoadmapTableActionButton(btn, kind, label, { disabled = false, title = "" } = {}) {
+  const action = ROADMAP_TABLE_ACTION_MAP[kind] || kind;
+  btn.className = `roadmap-action-btn roadmap-action-btn--${kind} roadmap-action-btn--icon-only`;
   btn.dataset.action = action;
   btn.setAttribute("aria-label", label);
   btn.title = disabled ? title || DEMO_READ_ONLY_ACTION_TITLE : title || label;
   btn.disabled = disabled;
   const icon = PORTFOLIO_CARD_ACTION_ICONS[kind] || "";
   btn.innerHTML =
-    '<span class="project-action-btn__icon">' +
+    '<span class="roadmap-action-btn__icon">' +
     icon +
-    '</span><span class="project-action-btn__label">' +
+    '</span><span class="roadmap-action-btn__label">' +
     label +
     "</span>";
 }
 
 function setPortfolioCardActionButton(btn, kind, label) {
-  btn.classList.add("project-action-btn", `project-action-btn--${kind}`, "portfolio-card-action-btn");
+  btn.classList.add("roadmap-action-btn", `roadmap-action-btn--${kind}`, "portfolio-card-action-btn");
   btn.setAttribute("aria-label", label);
   btn.title = label;
   const icon = PORTFOLIO_CARD_ACTION_ICONS[kind] || "";
   btn.innerHTML =
-    '<span class="portfolio-card-action-icon project-action-btn__icon">' +
+    '<span class="portfolio-card-action-icon roadmap-action-btn__icon">' +
     icon +
-    '</span><span class="portfolio-card-action-text project-action-btn__label">' +
+    '</span><span class="portfolio-card-action-text roadmap-action-btn__label">' +
     label +
     "</span>";
 }
@@ -13882,7 +15446,7 @@ function syncMoscowCompactNav() {
   if (!nav || !elements.moscowBoardContainer) return;
 
   const isCompact = document.documentElement.classList.contains("is-compact-layout");
-  const showNav = isCompact && state.projectsView === "moscow";
+  const showNav = isCompact && state.roadmapsView === "moscow";
   const columns = elements.moscowBoardContainer.querySelectorAll(".moscow-board-column");
 
   if (!showNav || !columns.length) {
@@ -13929,7 +15493,7 @@ function syncMoscowCompactNav() {
     pill.setAttribute("aria-selected", index === 0 ? "true" : "false");
     pill.setAttribute("data-moscow", moscow);
     pill.setAttribute("aria-controls", "moscow-col-" + index);
-    pill.setAttribute("aria-label", getMoscowDisplayName(moscow) + ", " + count + " projects");
+    pill.setAttribute("aria-label", getMoscowDisplayName(moscow) + ", " + count + " roadmaps");
 
     const main = document.createElement("span");
     main.className = "moscow-compact-nav__pill-main";
@@ -13945,7 +15509,7 @@ function syncMoscowCompactNav() {
     const countBadge = document.createElement("span");
     countBadge.className = "moscow-compact-nav__count";
     countBadge.textContent = count;
-    countBadge.setAttribute("aria-label", count + " projects");
+    countBadge.setAttribute("aria-label", count + " roadmaps");
 
     main.appendChild(abbr);
     main.appendChild(label);
@@ -13971,7 +15535,7 @@ function syncMoscowCompactNav() {
   const hint = document.createElement("p");
   hint.className = "moscow-compact-nav__hint";
   hint.textContent = document.documentElement.classList.contains("is-phone-layout")
-    ? "Tap a quadrant, then swipe the board below for projects"
+    ? "Tap a quadrant, then swipe the board below for roadmaps"
     : "Tap a quadrant to scroll the board to that column";
   nav.appendChild(hint);
 
@@ -14021,50 +15585,50 @@ function bindMoscowCompactNavScrollSync(track, columns) {
   }
 }
 
-function moveMoscowProjectUp(projectId, quadrant) {
-  if (!requireWritableActiveProfile("Reorder project")) return;
+function moveMoscowRoadmapUp(roadmapId, quadrant) {
+  if (!requireWritableActiveProfile("Reorder roadmap")) return;
   const sessionProfile = getUnlockedActiveProfile();
   if (!sessionProfile) return;
-  const ownerProfile = findProjectOwnerProfile(projectId) || sessionProfile;
+  const ownerProfile = findRoadmapOwnerProfile(roadmapId) || sessionProfile;
   const list = getMoscowOrderedList(sessionProfile, quadrant);
-  const idx = list.findIndex((p) => p.id === projectId);
+  const idx = list.findIndex((p) => p.id === roadmapId);
   if (idx <= 0) return;
   ownerProfile.moscowOrder = ownerProfile.moscowOrder || {};
   if (!Array.isArray(ownerProfile.moscowOrder[quadrant]) || ownerProfile.moscowOrder[quadrant].length !== list.length) {
     ownerProfile.moscowOrder[quadrant] = list.filter((p) => p.ownerProfileId === ownerProfile.id).map((p) => p.id);
   }
   const orderIds = ownerProfile.moscowOrder[quadrant];
-  const i = orderIds.indexOf(projectId);
+  const i = orderIds.indexOf(roadmapId);
   if (i <= 0) return;
   [orderIds[i - 1], orderIds[i]] = [orderIds[i], orderIds[i - 1]];
   state.moscowSortByRice = false;
   if (elements.moscowSortByRiceToggle) elements.moscowSortByRiceToggle.checked = false;
   saveState();
   renderMoscowBoard();
-  renderProjects();
+  renderRoadmaps();
 }
 
-function moveMoscowProjectDown(projectId, quadrant) {
-  if (!requireWritableActiveProfile("Reorder project")) return;
+function moveMoscowRoadmapDown(roadmapId, quadrant) {
+  if (!requireWritableActiveProfile("Reorder roadmap")) return;
   const sessionProfile = getUnlockedActiveProfile();
   if (!sessionProfile) return;
-  const ownerProfile = findProjectOwnerProfile(projectId) || sessionProfile;
+  const ownerProfile = findRoadmapOwnerProfile(roadmapId) || sessionProfile;
   const list = getMoscowOrderedList(sessionProfile, quadrant);
-  const idx = list.findIndex((p) => p.id === projectId);
+  const idx = list.findIndex((p) => p.id === roadmapId);
   if (idx < 0 || idx >= list.length - 1) return;
   ownerProfile.moscowOrder = ownerProfile.moscowOrder || {};
   if (!Array.isArray(ownerProfile.moscowOrder[quadrant]) || ownerProfile.moscowOrder[quadrant].length !== list.length) {
     ownerProfile.moscowOrder[quadrant] = list.filter((p) => p.ownerProfileId === ownerProfile.id).map((p) => p.id);
   }
   const orderIds = ownerProfile.moscowOrder[quadrant];
-  const i = orderIds.indexOf(projectId);
+  const i = orderIds.indexOf(roadmapId);
   if (i < 0 || i >= orderIds.length - 1) return;
   [orderIds[i], orderIds[i + 1]] = [orderIds[i + 1], orderIds[i]];
   state.moscowSortByRice = false;
   if (elements.moscowSortByRiceToggle) elements.moscowSortByRiceToggle.checked = false;
   saveState();
   renderMoscowBoard();
-  renderProjects();
+  renderRoadmaps();
 }
 
 function renderMoscowBoard() {
@@ -14092,18 +15656,18 @@ function renderMoscowBoard() {
     return;
   }
 
-  const baseProjects = getPortfolioProjectsBaseList();
-  baseProjects.forEach((p) => {
+  const baseRoadmaps = getPortfolioRoadmapsBaseList();
+  baseRoadmaps.forEach((p) => {
     p.riceScore = calculateRiceScore(p);
   });
-  initFilterProjectPeriodOptions(baseProjects);
-  const projects = applyFilters(baseProjects);
+  initFilterRoadmapPeriodOptions(baseRoadmaps);
+  const roadmaps = applyFilters(baseRoadmaps);
 
   const byMoscow = {};
   moscowList.forEach((m) => {
     byMoscow[m] = [];
   });
-  projects.forEach((p) => {
+  roadmaps.forEach((p) => {
     const moscow = (p.moscowCategory != null && String(p.moscowCategory).trim() !== "" && moscowList.includes(p.moscowCategory))
       ? p.moscowCategory
       : "Could have";
@@ -14179,38 +15743,38 @@ function renderMoscowBoard() {
     cardsContainer.className = "moscow-board-column-cards";
     cardsContainer.addEventListener("scroll", () => hideCellTypeTooltips(), { passive: true });
 
-    (byMoscow[moscow] || []).forEach((project, index) => {
+    (byMoscow[moscow] || []).forEach((roadmap, index) => {
       const card = document.createElement("div");
       card.className = "moscow-board-card";
       card.setAttribute("draggable", demoReadOnly ? "false" : "true");
-      card.setAttribute("data-project-id", project.id);
+      card.setAttribute("data-roadmap-id", roadmap.id);
       card.setAttribute(
         "aria-label",
         demoReadOnly
-          ? "Project: " + (project.title || "Untitled") + ". View only."
-          : "Project: " + (project.title || "Untitled") + ". Drag to change MOSCOW category. View, Edit, Delete."
+          ? "Roadmap: " + (roadmap.title || "Untitled") + ". View only."
+          : "Roadmap: " + (roadmap.title || "Untitled") + ". Drag to change MOSCOW category. View, Edit, Delete."
       );
       if (
         isSuperAdminModeActive() &&
-        project.ownerProfileId &&
-        project.ownerProfileId !== state.activeProfileId
+        roadmap.ownerProfileId &&
+        roadmap.ownerProfileId !== state.activeProfileId
       ) {
         card.classList.add("portfolio-board-card--external-profile");
       }
-      prependPortfolioCardOwnerStrip(card, project);
+      prependPortfolioCardOwnerStrip(card, roadmap);
 
       const titleRow = document.createElement("div");
       titleRow.className = "moscow-board-card-title-row";
-      const titleEl = buildCardTitleTooltipElement("moscow-board-card-title", project);
+      const titleEl = buildCardTitleTooltipElement("moscow-board-card-title", roadmap);
       titleRow.appendChild(titleEl);
 
       const meta = document.createElement("div");
       meta.className = "moscow-board-card-meta";
-      meta.appendChild(buildBoardCardMetricsRow(project, "moscow-board-card"));
+      meta.appendChild(buildBoardCardMetricsRow(roadmap, "moscow-board-card"));
       appendPortfolioCardBody(card, titleRow, meta);
 
       const moveEl = isCompactPortfolioLayout()
-        ? buildMoscowCardMoveSelect(project, moscow, { disabled: demoReadOnly })
+        ? buildMoscowCardMoveSelect(roadmap, moscow, { disabled: demoReadOnly })
         : null;
 
       const actions = document.createElement("div");
@@ -14223,9 +15787,9 @@ function renderMoscowBoard() {
       upBtn.type = "button";
       upBtn.className = "moscow-board-card-btn moscow-board-card-btn--order";
       upBtn.setAttribute("data-action", "moscowMoveUp");
-      upBtn.setAttribute("data-project-id", project.id);
+      upBtn.setAttribute("data-roadmap-id", roadmap.id);
       upBtn.setAttribute("data-moscow", moscow);
-      upBtn.setAttribute("aria-label", "Move project up in quadrant");
+      upBtn.setAttribute("aria-label", "Move roadmap up in quadrant");
       upBtn.title = "Move up";
       upBtn.innerHTML = "↑";
       upBtn.disabled = orderDisabled || isFirst;
@@ -14233,20 +15797,20 @@ function renderMoscowBoard() {
       downBtn.type = "button";
       downBtn.className = "moscow-board-card-btn moscow-board-card-btn--order";
       downBtn.setAttribute("data-action", "moscowMoveDown");
-      downBtn.setAttribute("data-project-id", project.id);
+      downBtn.setAttribute("data-roadmap-id", roadmap.id);
       downBtn.setAttribute("data-moscow", moscow);
-      downBtn.setAttribute("aria-label", "Move project down in quadrant");
+      downBtn.setAttribute("aria-label", "Move roadmap down in quadrant");
       downBtn.title = "Move down";
       downBtn.innerHTML = "↓";
       downBtn.disabled = orderDisabled || isLast;
       if (!demoReadOnly) {
         upBtn.addEventListener("click", (e) => {
           e.stopPropagation();
-          moveMoscowProjectUp(project.id, moscow);
+          moveMoscowRoadmapUp(roadmap.id, moscow);
         });
         downBtn.addEventListener("click", (e) => {
           e.stopPropagation();
-          moveMoscowProjectDown(project.id, moscow);
+          moveMoscowRoadmapDown(roadmap.id, moscow);
         });
       } else {
         upBtn.title = DEMO_READ_ONLY_ACTION_TITLE;
@@ -14259,17 +15823,17 @@ function renderMoscowBoard() {
       const viewBtn = document.createElement("button");
       viewBtn.type = "button";
       viewBtn.className = "moscow-board-card-btn moscow-board-card-btn--view";
-      viewBtn.setAttribute("data-project-id", project.id);
+      viewBtn.setAttribute("data-roadmap-id", roadmap.id);
       setPortfolioCardActionButton(viewBtn, "view", "View");
       const editBtn = document.createElement("button");
       editBtn.type = "button";
       editBtn.className = "moscow-board-card-btn moscow-board-card-btn--edit";
-      editBtn.setAttribute("data-project-id", project.id);
+      editBtn.setAttribute("data-roadmap-id", roadmap.id);
       setPortfolioCardActionButton(editBtn, "edit", "Edit");
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
       deleteBtn.className = "moscow-board-card-btn moscow-board-card-btn--delete";
-      deleteBtn.setAttribute("data-project-id", project.id);
+      deleteBtn.setAttribute("data-roadmap-id", roadmap.id);
       setPortfolioCardActionButton(deleteBtn, "delete", "Delete");
       if (demoReadOnly) {
         editBtn.disabled = true;
@@ -14279,17 +15843,17 @@ function renderMoscowBoard() {
       }
       viewBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        openProjectModal("view", project.id);
+        openRoadmapModal("view", roadmap.id);
       });
       actions.appendChild(viewBtn);
       if (!demoReadOnly) {
         editBtn.addEventListener("click", (e) => {
           e.stopPropagation();
-          openProjectModal("edit", project.id);
+          openRoadmapModal("edit", roadmap.id);
         });
         deleteBtn.addEventListener("click", (e) => {
           e.stopPropagation();
-          handleSingleDelete(project.id);
+          handleSingleDelete(roadmap.id);
         });
       }
       actions.appendChild(editBtn);
@@ -14317,7 +15881,7 @@ function bindMoscowBoardDragAndDrop() {
   const columns = elements.moscowBoardContainer.querySelectorAll(".moscow-board-column");
 
   let draggedCard = null;
-  let draggedProjectId = null;
+  let draggedRoadmapId = null;
   let dropColumn = null;
 
   elements.moscowBoardContainer.addEventListener("dragover", (e) => {
@@ -14337,7 +15901,7 @@ function bindMoscowBoardDragAndDrop() {
         return;
       }
       draggedCard = card;
-      draggedProjectId = card.getAttribute("data-project-id");
+      draggedRoadmapId = card.getAttribute("data-roadmap-id");
       if (typeof BoardCardInteraction !== "undefined") BoardCardInteraction.clearPressed();
       BoardDrag.begin(card, e, {
         draggingClass: "moscow-board-card--dragging",
@@ -14345,14 +15909,14 @@ function bindMoscowBoardDragAndDrop() {
         createLegacyGhost: createDragGhost
       });
       e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData("text/plain", draggedProjectId);
-      e.dataTransfer.setData("application/x-project-id", draggedProjectId);
+      e.dataTransfer.setData("text/plain", draggedRoadmapId);
+      e.dataTransfer.setData("application/x-roadmap-id", draggedRoadmapId);
     });
 
     card.addEventListener("dragend", () => {
       BoardDrag.end();
       draggedCard = null;
-      draggedProjectId = null;
+      draggedRoadmapId = null;
       dropColumn = null;
     });
   });
@@ -14362,7 +15926,7 @@ function bindMoscowBoardDragAndDrop() {
       e.preventDefault();
       e.dataTransfer.dropEffect = "move";
       BoardDrag.movePointer(e.clientX, e.clientY);
-      if (!draggedProjectId) return;
+      if (!draggedRoadmapId) return;
       dropColumn = column;
       BoardDrag.setColumnHighlight(column, true);
       const cardsContainer = column.querySelector(".moscow-board-column-cards");
@@ -14381,29 +15945,29 @@ function bindMoscowBoardDragAndDrop() {
       BoardDrag.setColumnHighlight(column, false);
       BoardDrag.clearIndicator();
       BoardDrag.clearColumnHighlights(elements.moscowBoardContainer);
-      if (!draggedProjectId) return;
+      if (!draggedRoadmapId) return;
       const targetColumn = dropColumn || column.closest(".moscow-board-column");
       if (!targetColumn) return;
       const newMoscow = targetColumn.getAttribute("data-moscow");
-      setProjectMoscowCategory(draggedProjectId, newMoscow);
+      setRoadmapMoscowCategory(draggedRoadmapId, newMoscow);
     });
   });
 
   elements.moscowBoardContainer.addEventListener("drop", (e) => {
-    if (!dropColumn || !draggedProjectId) return;
+    if (!dropColumn || !draggedRoadmapId) return;
     if (e.target.closest(".moscow-board-column")) return;
     e.preventDefault();
     e.stopPropagation();
     BoardDrag.clearColumnHighlights(elements.moscowBoardContainer);
     BoardDrag.clearIndicator();
     const newMoscow = dropColumn.getAttribute("data-moscow");
-    setProjectMoscowCategory(draggedProjectId, newMoscow);
+    setRoadmapMoscowCategory(draggedRoadmapId, newMoscow);
   }, true);
 }
 
-function applyFilters(projects) {
+function applyFilters(roadmaps) {
   const titleQuery = (elements.filterTitle.value || "").trim().toLowerCase();
-  const selectedPeriodsFilter = getSelectedFilterProjectPeriods();
+  const selectedPeriodsFilter = getSelectedFilterRoadmapPeriods();
   const impactFilter = elements.filterImpact.value;
   const effortFilter = elements.filterEffort.value;
   const currencyFilter = elements.filterCurrency.value;
@@ -14411,7 +15975,7 @@ function applyFilters(projects) {
   const statusFilter = elements.filterStatus ? elements.filterStatus.value : "";
   const tshirtFilter = elements.filterTshirtSize ? elements.filterTshirtSize.value : "";
   const moscowFilter = elements.filterMoscow ? elements.filterMoscow.value : "";
-  const projectTypeFilter = elements.filterProjectType.value;
+  const roadmapTypeFilter = elements.filterRoadmapType.value;
   const selectedCountriesFilter = getSelectedFilterCountries();
   const labelQuery = elements.filterLabel ? (elements.filterLabel.value || "").trim().toLowerCase() : "";
   const labelsFilter = elements.filterLabels ? elements.filterLabels.value : "";
@@ -14421,15 +15985,15 @@ function applyFilters(projects) {
       ? (elements.filterOwnerProfile.value || "").trim()
       : "";
 
-  return projects.filter((p) => {
+  return roadmaps.filter((p) => {
     if (titleQuery) {
       const title = (p.title || "").toLowerCase();
       if (!title.includes(titleQuery)) return false;
     }
 
     if (selectedPeriodsFilter.length) {
-      const projectPeriod = (p.projectPeriod || "").toString().trim().toUpperCase();
-      if (!projectPeriod || !selectedPeriodsFilter.includes(projectPeriod)) return false;
+      const roadmapPeriod = (p.roadmapPeriod || "").toString().trim().toUpperCase();
+      if (!roadmapPeriod || !selectedPeriodsFilter.includes(roadmapPeriod)) return false;
     }
 
     if (impactFilter) {
@@ -14445,20 +16009,20 @@ function applyFilters(projects) {
     }
 
     if (frameworkFilter) {
-      const projectFramework = normalizeFinancialFramework(p.financialImpactFramework);
-      if (projectFramework !== frameworkFilter) return false;
+      const roadmapFramework = normalizeFinancialFramework(p.financialImpactFramework);
+      if (roadmapFramework !== frameworkFilter) return false;
     }
 
     if (statusFilter) {
-      if ((p.projectStatus || "") !== statusFilter) return false;
+      if ((p.roadmapStatus || "") !== statusFilter) return false;
     }
 
     if (tshirtFilter) {
-      const projectSize = (p.tshirtSize || "").toString().trim();
+      const roadmapSize = (p.tshirtSize || "").toString().trim();
       if (tshirtFilter === "__none__") {
-        if (projectSize !== "") return false;
+        if (roadmapSize !== "") return false;
       } else {
-        if (projectSize !== tshirtFilter) return false;
+        if (roadmapSize !== tshirtFilter) return false;
       }
     }
 
@@ -14466,12 +16030,12 @@ function applyFilters(projects) {
       if ((p.moscowCategory || "") !== moscowFilter) return false;
     }
 
-    if (projectTypeFilter) {
-      const projectType = (p.projectType || "").toString().trim();
-      if (projectTypeFilter === "__none__") {
-        if (projectType !== "") return false;
+    if (roadmapTypeFilter) {
+      const roadmapType = (p.roadmapType || "").toString().trim();
+      if (roadmapTypeFilter === "__none__") {
+        if (roadmapType !== "") return false;
       } else {
-        if (projectType !== projectTypeFilter) return false;
+        if (roadmapType !== roadmapTypeFilter) return false;
       }
     }
 
@@ -14481,21 +16045,21 @@ function applyFilters(projects) {
       if (!hasMatch) return false;
     }
 
-    if (labelQuery && !projectMatchesLabelFilter(p, labelQuery)) {
+    if (labelQuery && !roadmapMatchesLabelFilter(p, labelQuery)) {
       return false;
     }
 
-    if (labelsFilter === "with" && !projectHasLabels(p)) {
+    if (labelsFilter === "with" && !roadmapHasLabels(p)) {
       return false;
     }
-    if (labelsFilter === "without" && projectHasLabels(p)) {
+    if (labelsFilter === "without" && roadmapHasLabels(p)) {
       return false;
     }
 
-    if (linksFilter === "with" && !projectHasLinks(p)) {
+    if (linksFilter === "with" && !roadmapHasLinks(p)) {
       return false;
     }
-    if (linksFilter === "without" && projectHasLinks(p)) {
+    if (linksFilter === "without" && roadmapHasLinks(p)) {
       return false;
     }
 
@@ -14507,9 +16071,9 @@ function applyFilters(projects) {
   });
 }
 
-function sortProjects(projects) {
+function sortRoadmaps(roadmaps) {
   if (state.tableSortByRice) {
-    return projects.slice().sort((a, b) => {
+    return roadmaps.slice().sort((a, b) => {
       const scoreA = a.riceScore != null ? a.riceScore : calculateRiceScore(a);
       const scoreB = b.riceScore != null ? b.riceScore : calculateRiceScore(b);
       if (scoreA === scoreB) {
@@ -14522,12 +16086,12 @@ function sortProjects(projects) {
   const field = state.sortField || "createdAt";
   const direction = state.sortDirection === "asc" ? 1 : -1;
 
-  return projects.slice().sort((a, b) => {
+  return roadmaps.slice().sort((a, b) => {
     if (
       field === "title" ||
       field === "ownerProfileName" ||
-      field === "projectType" ||
-      field === "projectStatus" ||
+      field === "roadmapType" ||
+      field === "roadmapStatus" ||
       field === "financialImpactFramework" ||
       field === "tshirtSize" ||
       field === "financialImpactCurrency" ||
@@ -14582,7 +16146,7 @@ function toggleSort(field) {
   }
   saveState();
   updateSortIndicators();
-  renderProjects();
+  renderRoadmaps();
 }
 
 function updateSortIndicators() {
@@ -14611,7 +16175,7 @@ function clearFilters() {
   elements.filterEffort.value = "";
   elements.filterCurrency.value = "";
   if (elements.filterFinancialFramework) elements.filterFinancialFramework.value = "";
-  elements.filterProjectType.value = "";
+  elements.filterRoadmapType.value = "";
   if (elements.filterStatus) elements.filterStatus.value = "";
   if (elements.filterTshirtSize) elements.filterTshirtSize.value = "";
   if (elements.filterMoscow) elements.filterMoscow.value = "";
@@ -14619,11 +16183,11 @@ function clearFilters() {
   if (elements.filterLabels) elements.filterLabels.value = "";
   if (elements.filterLinks) elements.filterLinks.value = "";
   if (elements.filterOwnerProfile) elements.filterOwnerProfile.value = "";
-  if (elements.filterProjectPeriodSearch) {
-    elements.filterProjectPeriodSearch.value = "";
+  if (elements.filterRoadmapPeriodSearch) {
+    elements.filterRoadmapPeriodSearch.value = "";
   }
-  if (elements.filterProjectPeriodList) {
-    const checkboxes = elements.filterProjectPeriodList.querySelectorAll("input[type=\"checkbox\"]");
+  if (elements.filterRoadmapPeriodList) {
+    const checkboxes = elements.filterRoadmapPeriodList.querySelectorAll("input[type=\"checkbox\"]");
     checkboxes.forEach((cb) => {
       cb.checked = false;
     });
@@ -14639,7 +16203,7 @@ function clearFilters() {
     filterFilterCountriesBySearchTerm();
   }
   updateFiltersActivePill();
-  updateFilterProjectPeriodsSummary();
+  updateFilterRoadmapPeriodsSummary();
   updateFilterCountriesSummary();
 }
 
@@ -14651,27 +16215,27 @@ function isTableCompactLayout() {
 }
 
 function getTableSelectionCount() {
-  return Array.from(getProjectSelectCheckboxes()).filter((cb) => cb.checked).length;
+  return Array.from(getRoadmapSelectCheckboxes()).filter((cb) => cb.checked).length;
 }
 
-function syncProjectTableSelection() {
+function syncRoadmapTableSelection() {
   syncHeaderCheckbox();
   updateBulkSelectionActions();
-  syncProjectTableCardSelectionStyles();
+  syncRoadmapTableCardSelectionStyles();
 }
 
-function clearProjectSelection() {
-  getProjectSelectCheckboxes().forEach((cb) => {
+function clearRoadmapSelection() {
+  getRoadmapSelectCheckboxes().forEach((cb) => {
     cb.checked = false;
   });
-  if (elements.selectAllProjects) elements.selectAllProjects.checked = false;
-  syncProjectTableSelection();
+  if (elements.selectAllRoadmaps) elements.selectAllRoadmaps.checked = false;
+  syncRoadmapTableSelection();
 }
 
 function updateBulkSelectionActions() {
   const count = getTableSelectionCount();
   const anyChecked = count > 0;
-  const inTableView = state.projectsView === "table";
+  const inTableView = state.roadmapsView === "table";
   const isCompactTable = isTableCompactLayout();
   const superAdmin = isSuperAdminModeActive();
   const demoLocked = isActiveDemoProfile();
@@ -14722,110 +16286,110 @@ function updateBulkSelectionActions() {
 }
 
 function syncHeaderCheckbox() {
-  if (!elements.selectAllProjects) return;
-  const checkboxes = getProjectSelectCheckboxes();
+  if (!elements.selectAllRoadmaps) return;
+  const checkboxes = getRoadmapSelectCheckboxes();
   if (!checkboxes.length) {
-    elements.selectAllProjects.checked = false;
+    elements.selectAllRoadmaps.checked = false;
     return;
   }
   const allChecked = Array.from(checkboxes).every((cb) => cb.checked);
-  elements.selectAllProjects.checked = allChecked;
+  elements.selectAllRoadmaps.checked = allChecked;
 }
 
 function handleBulkDelete() {
-  if (state.projectsView !== "table") return;
+  if (state.roadmapsView !== "table") return;
   if (!requireWritableActiveProfile("Bulk delete")) return;
-  if (!getUnlockedActiveProfile() || !elements.projectDeleteModal) return;
-  const ids = getSelectedProjectIdsFromTable();
+  if (!getUnlockedActiveProfile() || !elements.roadmapDeleteModal) return;
+  const ids = getSelectedRoadmapIdsFromTable();
   if (!ids.length) return;
 
-  activateBlockingModal(elements.projectDeleteModal, "projectDeleteModal");
-  elements.projectDeleteModal.setAttribute("data-delete-mode", "bulk");
-  elements.projectDeleteModal.setAttribute("data-project-ids", ids.join(","));
+  activateBlockingModal(elements.roadmapDeleteModal, "roadmapDeleteModal");
+  elements.roadmapDeleteModal.setAttribute("data-delete-mode", "bulk");
+  elements.roadmapDeleteModal.setAttribute("data-roadmap-ids", ids.join(","));
 
-  if (elements.projectDeleteNameLabel) {
-    elements.projectDeleteNameLabel.textContent = `${ids.length} project${ids.length === 1 ? "" : "s"} selected`;
+  if (elements.roadmapDeleteNameLabel) {
+    elements.roadmapDeleteNameLabel.textContent = `${ids.length} roadmap${ids.length === 1 ? "" : "s"} selected`;
   }
-  if (elements.projectDeleteWarningText) {
-    elements.projectDeleteWarningText.textContent = isSuperAdminModeActive()
-      ? "This will permanently remove the selected projects from their owner profiles. This action cannot be undone."
-      : "This will permanently remove the selected projects from this profile. This action cannot be undone.";
+  if (elements.roadmapDeleteWarningText) {
+    elements.roadmapDeleteWarningText.textContent = isSuperAdminModeActive()
+      ? "This will permanently remove the selected roadmaps from their owner profiles. This action cannot be undone."
+      : "This will permanently remove the selected roadmaps from this profile. This action cannot be undone.";
   }
 
-  if (elements.projectDeleteConfirmBtn) {
-    elements.projectDeleteConfirmBtn.onclick = () => {
-      const mode = elements.projectDeleteModal.getAttribute("data-delete-mode") || "single";
+  if (elements.roadmapDeleteConfirmBtn) {
+    elements.roadmapDeleteConfirmBtn.onclick = () => {
+      const mode = elements.roadmapDeleteModal.getAttribute("data-delete-mode") || "single";
       if (mode === "bulk") {
-        const idsAttr = elements.projectDeleteModal.getAttribute("data-project-ids") || "";
+        const idsAttr = elements.roadmapDeleteModal.getAttribute("data-roadmap-ids") || "";
         const idList = idsAttr ? idsAttr.split(",").filter(Boolean) : [];
         if (!idList.length) {
-          closeProjectDeleteModal();
+          closeRoadmapDeleteModal();
           return;
         }
-        const count = removeProjectsByIds(idList);
+        const count = removeRoadmapsByIds(idList);
         saveState();
-        renderProjects();
-        closeProjectDeleteModal();
-        showToast(count === 1 ? "Project deleted successfully." : count + " projects deleted successfully.");
+        renderRoadmaps();
+        closeRoadmapDeleteModal();
+        showToast(count === 1 ? "Roadmap deleted successfully." : count + " roadmaps deleted successfully.");
       }
     };
   }
 
-  if (elements.projectDeleteCancelBtn) {
-    elements.projectDeleteCancelBtn.onclick = () => {
-      closeProjectDeleteModal();
+  if (elements.roadmapDeleteCancelBtn) {
+    elements.roadmapDeleteCancelBtn.onclick = () => {
+      closeRoadmapDeleteModal();
     };
   }
 }
 
-function closeProjectBulkTransferModal({ immediate = false } = {}) {
-  if (!elements.projectBulkTransferModal) return;
-  deactivateBlockingModal(elements.projectBulkTransferModal, { immediate });
-  elements.projectBulkTransferModal.removeAttribute("data-transfer-mode");
-  elements.projectBulkTransferModal.removeAttribute("data-project-ids");
+function closeRoadmapBulkTransferModal({ immediate = false } = {}) {
+  if (!elements.roadmapBulkTransferModal) return;
+  deactivateBlockingModal(elements.roadmapBulkTransferModal, { immediate });
+  elements.roadmapBulkTransferModal.removeAttribute("data-transfer-mode");
+  elements.roadmapBulkTransferModal.removeAttribute("data-roadmap-ids");
 }
 
-function handleBulkProjectTransfer(mode) {
-  if (state.projectsView !== "table") return;
+function handleBulkRoadmapTransfer(mode) {
+  if (state.roadmapsView !== "table") return;
   if (!isSuperAdminModeActive()) return;
-  const actionLabel = mode === "move" ? "Move projects" : "Duplicate projects";
+  const actionLabel = mode === "move" ? "Move roadmaps" : "Duplicate roadmaps";
   if (!requireWritableActiveProfile(actionLabel)) return;
-  if (!getUnlockedActiveProfile() || !elements.projectBulkTransferModal) return;
+  if (!getUnlockedActiveProfile() || !elements.roadmapBulkTransferModal) return;
 
-  const ids = getSelectedProjectIdsFromTable();
+  const ids = getSelectedRoadmapIdsFromTable();
   if (!ids.length) return;
 
-  activateBlockingModal(elements.projectBulkTransferModal, "projectBulkTransferModal");
-  elements.projectBulkTransferModal.setAttribute("data-transfer-mode", mode);
-  elements.projectBulkTransferModal.setAttribute("data-project-ids", ids.join(","));
+  activateBlockingModal(elements.roadmapBulkTransferModal, "roadmapBulkTransferModal");
+  elements.roadmapBulkTransferModal.setAttribute("data-transfer-mode", mode);
+  elements.roadmapBulkTransferModal.setAttribute("data-roadmap-ids", ids.join(","));
 
-  const countLabel = `${ids.length} project${ids.length === 1 ? "" : "s"} selected`;
-  if (elements.projectBulkTransferModalTitle) {
-    elements.projectBulkTransferModalTitle.textContent =
-      mode === "move" ? "Move projects to another profile" : "Duplicate projects to another profile";
+  const countLabel = `${ids.length} roadmap${ids.length === 1 ? "" : "s"} selected`;
+  if (elements.roadmapBulkTransferModalTitle) {
+    elements.roadmapBulkTransferModalTitle.textContent =
+      mode === "move" ? "Move roadmaps to another profile" : "Duplicate roadmaps to another profile";
   }
-  if (elements.projectBulkTransferCountLabel) {
-    elements.projectBulkTransferCountLabel.textContent = countLabel;
+  if (elements.roadmapBulkTransferCountLabel) {
+    elements.roadmapBulkTransferCountLabel.textContent = countLabel;
   }
-  if (elements.projectBulkTransferHelpText) {
-    elements.projectBulkTransferHelpText.textContent =
+  if (elements.roadmapBulkTransferHelpText) {
+    elements.roadmapBulkTransferHelpText.textContent =
       mode === "move"
-        ? "Projects will be removed from their current owner profiles and added to the profile you choose below."
-        : "Copies of the selected projects will be created in the profile you choose below. Original projects stay unchanged.";
+        ? "Roadmaps will be removed from their current owner profiles and added to the profile you choose below."
+        : "Copies of the selected roadmaps will be created in the profile you choose below. Original roadmaps stay unchanged.";
   }
-  if (elements.projectBulkTransferConfirmBtn) {
-    elements.projectBulkTransferConfirmBtn.textContent = mode === "move" ? "Move projects" : "Duplicate projects";
+  if (elements.roadmapBulkTransferConfirmBtn) {
+    elements.roadmapBulkTransferConfirmBtn.textContent = mode === "move" ? "Move roadmaps" : "Duplicate roadmaps";
   }
 
   populateBulkTransferTargetProfileSelect(state.activeProfileId);
 
-  if (elements.projectBulkTransferConfirmBtn) {
-    elements.projectBulkTransferConfirmBtn.onclick = () => {
-      const transferMode = elements.projectBulkTransferModal.getAttribute("data-transfer-mode") || "duplicate";
-      const idsAttr = elements.projectBulkTransferModal.getAttribute("data-project-ids") || "";
+  if (elements.roadmapBulkTransferConfirmBtn) {
+    elements.roadmapBulkTransferConfirmBtn.onclick = () => {
+      const transferMode = elements.roadmapBulkTransferModal.getAttribute("data-transfer-mode") || "duplicate";
+      const idsAttr = elements.roadmapBulkTransferModal.getAttribute("data-roadmap-ids") || "";
       const idList = idsAttr ? idsAttr.split(",").filter(Boolean) : [];
-      const targetProfileId = elements.projectBulkTransferTargetProfile
-        ? (elements.projectBulkTransferTargetProfile.value || "").trim()
+      const targetProfileId = elements.roadmapBulkTransferTargetProfile
+        ? (elements.roadmapBulkTransferTargetProfile.value || "").trim()
         : "";
       const targetProfile = findProfileById(targetProfileId);
       if (!idList.length || !targetProfile) {
@@ -14835,53 +16399,53 @@ function handleBulkProjectTransfer(mode) {
 
       let count = 0;
       if (transferMode === "move") {
-        count = moveProjectsToProfile(idList, targetProfileId);
+        count = moveRoadmapsToProfile(idList, targetProfileId);
         if (!count) {
-          showToast("No projects moved. Choose a different profile than the current owner.");
+          showToast("No roadmaps moved. Choose a different profile than the current owner.");
           return;
         }
       } else {
-        count = duplicateProjectsToProfile(idList, targetProfileId);
+        count = duplicateRoadmapsToProfile(idList, targetProfileId);
         if (!count) {
-          showToast("Could not duplicate the selected projects.");
+          showToast("Could not duplicate the selected roadmaps.");
           return;
         }
       }
 
       saveState({ flush: true });
-      clearProjectSelection();
-      renderProjects();
-      closeProjectBulkTransferModal();
+      clearRoadmapSelection();
+      renderRoadmaps();
+      closeRoadmapBulkTransferModal();
       const profileName = targetProfile.name || "Unnamed profile";
       if (transferMode === "move") {
         showToast(
           count === 1
-            ? `Project moved to profile “${profileName}”.`
-            : `${count} projects moved to profile “${profileName}”.`
+            ? `Roadmap moved to profile “${profileName}”.`
+            : `${count} roadmaps moved to profile “${profileName}”.`
         );
       } else {
         showToast(
           count === 1
-            ? `Project duplicated into profile “${profileName}”.`
-            : `${count} projects duplicated into profile “${profileName}”.`
+            ? `Roadmap duplicated into profile “${profileName}”.`
+            : `${count} roadmaps duplicated into profile “${profileName}”.`
         );
       }
     };
   }
 
-  if (elements.projectBulkTransferCancelBtn) {
-    elements.projectBulkTransferCancelBtn.onclick = () => {
-      closeProjectBulkTransferModal();
+  if (elements.roadmapBulkTransferCancelBtn) {
+    elements.roadmapBulkTransferCancelBtn.onclick = () => {
+      closeRoadmapBulkTransferModal();
     };
   }
 }
 
-function closeProjectDeleteModal({ immediate = false } = {}) {
-  if (!elements.projectDeleteModal) return;
-  deactivateBlockingModal(elements.projectDeleteModal, { immediate });
-  elements.projectDeleteModal.removeAttribute("data-project-id");
-  elements.projectDeleteModal.removeAttribute("data-project-ids");
-  elements.projectDeleteModal.removeAttribute("data-delete-mode");
+function closeRoadmapDeleteModal({ immediate = false } = {}) {
+  if (!elements.roadmapDeleteModal) return;
+  deactivateBlockingModal(elements.roadmapDeleteModal, { immediate });
+  elements.roadmapDeleteModal.removeAttribute("data-roadmap-id");
+  elements.roadmapDeleteModal.removeAttribute("data-roadmap-ids");
+  elements.roadmapDeleteModal.removeAttribute("data-delete-mode");
 }
 
 function closeProfileDeleteModal({ immediate = false } = {}) {
@@ -14973,7 +16537,7 @@ async function completeProfileUnlockSuccess(profileId) {
     saveState();
   }
   renderProfiles();
-  renderProjects();
+  renderRoadmaps();
   if (action && action.type === "edit") {
     openProfileEditModal(profileId);
   } else if (action && action.type === "view") {
@@ -15155,12 +16719,12 @@ function formatProfileViewFinancialEur(value) {
   return `€${short}`;
 }
 
-function getProjectFinancialImpactEurAmount(project) {
-  if (!project || project.financialImpactValue == null || project.financialImpactValue === "") return null;
-  const raw = project.financialImpactValue;
+function getRoadmapFinancialImpactEurAmount(roadmap) {
+  if (!roadmap || roadmap.financialImpactValue == null || roadmap.financialImpactValue === "") return null;
+  const raw = roadmap.financialImpactValue;
   const amount = Number.isFinite(raw) ? raw : Number(raw);
   if (!Number.isFinite(amount)) return null;
-  const currency = (project.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
+  const currency = (roadmap.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
   if (typeof ExchangeRates !== "undefined" && typeof ExchangeRates.convertToEUR === "function") {
     const amountEur = ExchangeRates.convertToEUR(amount, currency);
     return Number.isFinite(amountEur) ? amountEur : null;
@@ -15168,7 +16732,7 @@ function getProjectFinancialImpactEurAmount(project) {
   return currency === "EUR" ? amount : null;
 }
 
-function renderProfileViewFinancialStats(projects) {
+function renderProfileViewFinancialStats(roadmaps) {
   const container = elements.profileViewFinancialStats;
   const note = elements.profileViewFinancialNote;
   if (!container) return;
@@ -15185,9 +16749,9 @@ function renderProfileViewFinancialStats(projects) {
   const render = () => {
     const amounts = [];
     let skippedCount = 0;
-    projects.forEach((p) => {
+    roadmaps.forEach((p) => {
       if (p.financialImpactValue == null || p.financialImpactValue === "") return;
-      const eur = getProjectFinancialImpactEurAmount(p);
+      const eur = getRoadmapFinancialImpactEurAmount(p);
       if (Number.isFinite(eur)) {
         amounts.push(eur);
       } else {
@@ -15200,8 +16764,8 @@ function renderProfileViewFinancialStats(projects) {
         note.hidden = false;
         note.textContent =
           skippedCount === 1
-            ? "1 project with a non-EUR amount could not be converted. Exchange rates refresh daily."
-            : `${skippedCount} projects with non-EUR amounts could not be converted. Exchange rates refresh daily.`;
+            ? "1 roadmap with a non-EUR amount could not be converted. Exchange rates refresh daily."
+            : `${skippedCount} roadmaps with non-EUR amounts could not be converted. Exchange rates refresh daily.`;
       } else {
         note.hidden = true;
         note.textContent = "";
@@ -15210,7 +16774,7 @@ function renderProfileViewFinancialStats(projects) {
 
     renderProfileViewStatsGrid(container, amounts, {
       formatValue: formatProfileViewFinancialEur,
-      emptyMessage: "No financial impact yet. Add financial impact to projects."
+      emptyMessage: "No financial impact yet. Add financial impact to roadmaps."
     });
   };
 
@@ -15298,12 +16862,12 @@ function getProfileViewFrameworkChipTitle(frameworkKey) {
 
 const PROFILE_VIEW_NO_COUNTRIES_KEY = "No countries";
 
-function buildProfileViewCountryCounts(projects) {
+function buildProfileViewCountryCounts(roadmaps) {
   const counts = {};
-  const list = Array.isArray(projects) ? projects : [];
-  list.forEach((project) => {
+  const list = Array.isArray(roadmaps) ? roadmaps : [];
+  list.forEach((roadmap) => {
     const countries = normalizeCountryNames(
-      Array.isArray(project.countries) ? project.countries : []
+      Array.isArray(roadmap.countries) ? roadmap.countries : []
     );
     if (!countries.length) {
       counts[PROFILE_VIEW_NO_COUNTRIES_KEY] = (counts[PROFILE_VIEW_NO_COUNTRIES_KEY] || 0) + 1;
@@ -15330,32 +16894,32 @@ function getProfileViewCountryChipLabel(countryName) {
 
 function getProfileViewCountryChipTitle(countryName) {
   if (countryName === PROFILE_VIEW_NO_COUNTRIES_KEY) {
-    return "Projects without any target country set";
+    return "Roadmaps without any target country set";
   }
   const code =
     typeof countryCodeByName !== "undefined" && countryCodeByName[countryName]
       ? countryCodeByName[countryName]
       : "";
-  if (code) return `${countryName} (${code}) — projects targeting this country`;
-  return `${countryName} — projects targeting this country`;
+  if (code) return `${countryName} (${code}) — roadmaps targeting this country`;
+  return `${countryName} — roadmaps targeting this country`;
 }
 
 const PROFILE_VIEW_NO_CURRENCY_KEY = "Not set";
 
-function getProfileViewProjectCurrencyKey(project) {
-  const currency = normalizeCurrency(project && project.financialImpactCurrency);
+function getProfileViewRoadmapCurrencyKey(roadmap) {
+  const currency = normalizeCurrency(roadmap && roadmap.financialImpactCurrency);
   return currency ? currency.toUpperCase() : PROFILE_VIEW_NO_CURRENCY_KEY;
 }
 
-function buildProfileViewCurrencyData(projects) {
+function buildProfileViewCurrencyData(roadmaps) {
   const counts = {};
   const totals = {};
-  const list = Array.isArray(projects) ? projects : [];
-  list.forEach((project) => {
-    const key = getProfileViewProjectCurrencyKey(project);
+  const list = Array.isArray(roadmaps) ? roadmaps : [];
+  list.forEach((roadmap) => {
+    const key = getProfileViewRoadmapCurrencyKey(roadmap);
     counts[key] = (counts[key] || 0) + 1;
-    if (project.financialImpactValue == null || project.financialImpactValue === "") return;
-    const amount = Number(project.financialImpactValue);
+    if (roadmap.financialImpactValue == null || roadmap.financialImpactValue === "") return;
+    const amount = Number(roadmap.financialImpactValue);
     if (!Number.isFinite(amount)) return;
     totals[key] = (totals[key] || 0) + amount;
   });
@@ -15392,15 +16956,15 @@ function getProfileViewCurrencyChipLabel(currencyKey) {
 }
 
 function getProfileViewCurrencyChipTitle(currencyKey, count, total) {
-  const projectsLabel = `${count} project${count === 1 ? "" : "s"}`;
+  const roadmapsLabel = `${count} roadmap${count === 1 ? "" : "s"}`;
   if (currencyKey === PROFILE_VIEW_NO_CURRENCY_KEY) {
-    let title = `Projects without a currency set — ${projectsLabel}`;
+    let title = `Roadmaps without a currency set — ${roadmapsLabel}`;
     if (Number.isFinite(total) && total !== 0) {
       title += `, total impact ${typeof formatFinancialShort === "function" ? formatFinancialShort(total) : total} (no currency)`;
     }
     return title;
   }
-  let title = `Projects with original currency ${currencyKey} — ${projectsLabel}`;
+  let title = `Roadmaps with original currency ${currencyKey} — ${roadmapsLabel}`;
   if (Number.isFinite(total) && total !== 0) {
     const formatted =
       typeof formatOriginalCurrencyAmount === "function"
@@ -15449,7 +17013,7 @@ function formatProfileViewCurrencyEurLine(total, currencyKey) {
   return { text: "EUR conversion unavailable", variant: "unavailable" };
 }
 
-function renderProfileViewCurrencyTotals(container, note, projects) {
+function renderProfileViewCurrencyTotals(container, note, roadmaps) {
   if (!container) return;
 
   const showLoading = () => {
@@ -15463,7 +17027,7 @@ function renderProfileViewCurrencyTotals(container, note, projects) {
 
   const render = () => {
     container.innerHTML = "";
-    const { counts, totals } = buildProfileViewCurrencyData(projects);
+    const { counts, totals } = buildProfileViewCurrencyData(roadmaps);
     const sortOrder = buildProfileViewCurrencySortOrder(counts, totals);
     const entries = sortOrder.filter(
       (key) => key !== PROFILE_VIEW_NO_CURRENCY_KEY && Number.isFinite(totals[key]) && totals[key] !== 0
@@ -15506,7 +17070,7 @@ function renderProfileViewCurrencyTotals(container, note, projects) {
 
       const countEl = document.createElement("span");
       countEl.className = "profile-view-currency-card-count";
-      countEl.textContent = `${count} project${count === 1 ? "" : "s"}`;
+      countEl.textContent = `${count} roadmap${count === 1 ? "" : "s"}`;
 
       head.appendChild(labelEl);
       head.appendChild(countEl);
@@ -15573,11 +17137,11 @@ function renderProfileViewCurrencyTotals(container, note, projects) {
       if (unavailableConversions > 0) {
         note.textContent =
           unavailableConversions === 1
-            ? "Totals use each project's stored amount in its original currency. EUR equivalents use the app's latest exchange rates; 1 currency could not be converted."
-            : `Totals use each project's stored amount in its original currency. EUR equivalents use the app's latest exchange rates; ${unavailableConversions} currencies could not be converted.`;
+            ? "Totals use each roadmap's stored amount in its original currency. EUR equivalents use the app's latest exchange rates; 1 currency could not be converted."
+            : `Totals use each roadmap's stored amount in its original currency. EUR equivalents use the app's latest exchange rates; ${unavailableConversions} currencies could not be converted.`;
       } else {
         note.textContent =
-          "Totals use each project's stored amount in its original currency. EUR equivalents below use the app's latest exchange rates (refreshed daily).";
+          "Totals use each roadmap's stored amount in its original currency. EUR equivalents below use the app's latest exchange rates (refreshed daily).";
       }
     }
   };
@@ -15598,8 +17162,8 @@ function syncProfileViewCurrencyDetails({ resetCollapsed = false } = {}) {
   if (summary) summary.setAttribute("aria-expanded", details.open ? "true" : "false");
 }
 
-function syncProjectModalFooterMetaDetails({ resetCollapsed = false } = {}) {
-  const details = elements.projectModalFooterMetaDetails;
+function syncRoadmapModalFooterMetaDetails({ resetCollapsed = false } = {}) {
+  const details = elements.roadmapModalFooterMetaDetails;
   if (!details) return;
   const isCompact = isCompactLayoutViewport();
   if (!isCompact) {
@@ -15607,7 +17171,7 @@ function syncProjectModalFooterMetaDetails({ resetCollapsed = false } = {}) {
   } else if (resetCollapsed) {
     details.open = false;
   }
-  const summary = details.querySelector(".project-modal-footer-meta-summary");
+  const summary = details.querySelector(".roadmap-modal-footer-meta-summary");
   if (summary) summary.setAttribute("aria-expanded", details.open ? "true" : "false");
 }
 
@@ -15630,15 +17194,15 @@ function openProfileViewModal(profileId) {
     elements.profileViewTeam.classList.toggle("profile-view-team--empty", !teamText);
   }
 
-  const projects = Array.isArray(profile.projects) ? profile.projects.slice() : [];
-  const totalProjects = projects.length;
+  const roadmaps = Array.isArray(profile.roadmaps) ? profile.roadmaps.slice() : [];
+  const totalRoadmaps = roadmaps.length;
 
-  if (elements.profileViewTotalProjects) {
-    elements.profileViewTotalProjects.textContent = String(totalProjects);
+  if (elements.profileViewTotalRoadmaps) {
+    elements.profileViewTotalRoadmaps.textContent = String(totalRoadmaps);
   }
 
   const uniqueCountries = new Set();
-  projects.forEach((p) => {
+  roadmaps.forEach((p) => {
     const list = Array.isArray(p.countries) ? p.countries : [];
     list.forEach((c) => {
       if (c != null && String(c).trim() !== "") uniqueCountries.add(String(c).trim());
@@ -15654,10 +17218,10 @@ function openProfileViewModal(profileId) {
   const moscowCounts = {};
   const frameworkCounts = {};
   const riceScores = [];
-  projects.forEach((p) => {
-    const statusKey = (p.projectStatus || "Not set").toString();
+  roadmaps.forEach((p) => {
+    const statusKey = (p.roadmapStatus || "Not set").toString();
     statusCounts[statusKey] = (statusCounts[statusKey] || 0) + 1;
-    const typeKey = (p.projectType || "Not set").toString();
+    const typeKey = (p.roadmapType || "Not set").toString();
     typeCounts[typeKey] = (typeCounts[typeKey] || 0) + 1;
     const tshirtKey = (p.tshirtSize || "Not set").toString();
     tshirtCounts[tshirtKey] = (tshirtCounts[tshirtKey] || 0) + 1;
@@ -15683,14 +17247,14 @@ function openProfileViewModal(profileId) {
   });
   renderProfileViewBreakdownChips(
     elements.profileViewByCountry,
-    buildProfileViewCountryCounts(projects),
+    buildProfileViewCountryCounts(roadmaps),
     {
       labelFor: (key) => getProfileViewCountryChipLabel(key),
       titleFor: (key) => getProfileViewCountryChipTitle(key),
     }
   );
 
-  const currencyData = buildProfileViewCurrencyData(projects);
+  const currencyData = buildProfileViewCurrencyData(roadmaps);
   renderProfileViewBreakdownChips(elements.profileViewByCurrency, currencyData.counts, {
     sortOrder: buildProfileViewCurrencySortOrder(currencyData.counts, currencyData.totals),
     labelFor: (key) => getProfileViewCurrencyChipLabel(key),
@@ -15704,17 +17268,17 @@ function openProfileViewModal(profileId) {
   renderProfileViewCurrencyTotals(
     elements.profileViewCurrencyTotals,
     elements.profileViewCurrencyNote,
-    projects
+    roadmaps
   );
 
   syncProfileViewCurrencyDetails({ resetCollapsed: true });
 
   renderProfileViewStatsGrid(elements.profileViewRiceStats, riceScores, {
     formatValue: formatRice,
-    emptyMessage: "No RICE scores yet. Add reach, impact, confidence, and effort to projects."
+    emptyMessage: "No RICE scores yet. Add reach, impact, confidence, and effort to roadmaps."
   });
 
-  renderProfileViewFinancialStats(projects);
+  renderProfileViewFinancialStats(roadmaps);
 }
 
 function closeProfileViewModal({ immediate = false } = {}) {
@@ -15843,7 +17407,7 @@ async function handleProfileEditSave() {
   profile.team = team;
   saveState();
   renderProfiles();
-  renderProjects();
+  renderRoadmaps();
   closeProfileEditModal();
   showToast("Profile updated successfully.");
 }
@@ -15857,22 +17421,22 @@ function deleteProfile(profileId) {
     return;
   }
   activateBlockingModal(elements.profileDeleteModal, "profileDeleteModal");
-  const projectCount = profile.projects ? profile.projects.length : 0;
+  const roadmapCount = profile.roadmaps ? profile.roadmaps.length : 0;
 
   elements.profileDeleteModal.setAttribute("data-profile-id", profileId);
   if (elements.profileDeleteNameLabel) {
     elements.profileDeleteNameLabel.textContent = profile.name || "Untitled profile";
   }
   if (elements.profileDeleteSummaryLabel) {
-    if (projectCount > 0) {
-      elements.profileDeleteSummaryLabel.textContent = ` • ${projectCount} project${projectCount === 1 ? "" : "s"} attached`;
+    if (roadmapCount > 0) {
+      elements.profileDeleteSummaryLabel.textContent = ` • ${roadmapCount} roadmap${roadmapCount === 1 ? "" : "s"} attached`;
     } else {
-      elements.profileDeleteSummaryLabel.textContent = " • No projects yet";
+      elements.profileDeleteSummaryLabel.textContent = " • No roadmaps yet";
     }
   }
   if (elements.profileDeleteWarningText) {
     elements.profileDeleteWarningText.textContent =
-      "This will permanently remove this profile and all of its projects from this browser. This action cannot be undone.";
+      "This will permanently remove this profile and all of its roadmaps from this browser. This action cannot be undone.";
   }
 
   const needsPassword = isProfilePasswordProtected(profile);
@@ -15910,7 +17474,7 @@ function deleteProfile(profileId) {
           }
           saveState();
           renderProfiles();
-          renderProjects();
+          renderRoadmaps();
           showToast("Profile deleted successfully.");
         }
         closeProfileDeleteModal();
@@ -15953,148 +17517,148 @@ function deleteProfile(profileId) {
   }
 }
 
-function handleSingleDelete(projectId) {
+function handleSingleDelete(roadmapId) {
   if (!requireWritableActiveProfile("Delete")) return;
-  if (!getActiveProfile() || !elements.projectDeleteModal) return;
+  if (!getActiveProfile() || !elements.roadmapDeleteModal) return;
 
-  const located = findProjectWithOwner(projectId);
+  const located = findRoadmapWithOwner(roadmapId);
   const ownerProfile = located.profile;
-  const project = located.project;
-  if (!ownerProfile || !project) return;
+  const roadmap = located.roadmap;
+  if (!ownerProfile || !roadmap) return;
 
-  activateBlockingModal(elements.projectDeleteModal, "projectDeleteModal");
-  elements.projectDeleteModal.setAttribute("data-delete-mode", "single");
-  elements.projectDeleteModal.setAttribute("data-project-id", projectId);
-  elements.projectDeleteModal.removeAttribute("data-project-ids");
-  if (elements.projectDeleteNameLabel) {
-    elements.projectDeleteNameLabel.textContent = project.title || "Untitled project";
+  activateBlockingModal(elements.roadmapDeleteModal, "roadmapDeleteModal");
+  elements.roadmapDeleteModal.setAttribute("data-delete-mode", "single");
+  elements.roadmapDeleteModal.setAttribute("data-roadmap-id", roadmapId);
+  elements.roadmapDeleteModal.removeAttribute("data-roadmap-ids");
+  if (elements.roadmapDeleteNameLabel) {
+    elements.roadmapDeleteNameLabel.textContent = roadmap.title || "Untitled roadmap";
   }
-  if (elements.projectDeleteWarningText) {
+  if (elements.roadmapDeleteWarningText) {
     const ownerNote = isSuperAdminModeActive()
       ? ` from profile “${ownerProfile.name || "Unnamed"}”`
       : " from this profile";
-    elements.projectDeleteWarningText.textContent =
-      `This will permanently remove this project${ownerNote}. This action cannot be undone.`;
+    elements.roadmapDeleteWarningText.textContent =
+      `This will permanently remove this roadmap${ownerNote}. This action cannot be undone.`;
   }
 
-  if (elements.projectDeleteConfirmBtn) {
-    elements.projectDeleteConfirmBtn.onclick = () => {
-      const mode = elements.projectDeleteModal.getAttribute("data-delete-mode") || "single";
+  if (elements.roadmapDeleteConfirmBtn) {
+    elements.roadmapDeleteConfirmBtn.onclick = () => {
+      const mode = elements.roadmapDeleteModal.getAttribute("data-delete-mode") || "single";
       if (mode === "single") {
-        const id = elements.projectDeleteModal.getAttribute("data-project-id");
-        if (!id || !removeProjectById(id)) {
-          closeProjectDeleteModal();
+        const id = elements.roadmapDeleteModal.getAttribute("data-roadmap-id");
+        if (!id || !removeRoadmapById(id)) {
+          closeRoadmapDeleteModal();
           return;
         }
         saveState();
-        renderProjects();
-        closeProjectDeleteModal();
-        showToast("Project deleted successfully.");
+        renderRoadmaps();
+        closeRoadmapDeleteModal();
+        showToast("Roadmap deleted successfully.");
       }
     };
   }
 
-  if (elements.projectDeleteCancelBtn) {
-    elements.projectDeleteCancelBtn.onclick = () => {
-      closeProjectDeleteModal();
+  if (elements.roadmapDeleteCancelBtn) {
+    elements.roadmapDeleteCancelBtn.onclick = () => {
+      closeRoadmapDeleteModal();
     };
   }
 }
 
-function openProjectModal(mode, projectId) {
+function openRoadmapModal(mode, roadmapId, options = {}) {
   const isEdit = mode === "edit";
   const isView = mode === "view";
-  if (!isView && !requireWritableActiveProfile(isEdit ? "Edit" : "Add project")) return;
-  projectModalMode = mode;
-  editingProjectId = isEdit ? projectId : null;
-  elements.projectFormError.style.display = "none";
-  elements.projectFormError.textContent = "";
+  if (!isView && !requireWritableActiveProfile(isEdit ? "Edit" : "Add roadmap")) return;
+  roadmapModalMode = mode;
+  editingRoadmapId = isEdit ? roadmapId : null;
+  elements.roadmapFormError.style.display = "none";
+  elements.roadmapFormError.textContent = "";
 
   const activeProfile = getActiveProfile();
   if (!activeProfile) return;
   if (!isProfileUnlocked(activeProfile.id)) {
     pendingUnlockAction = { type: "activate", profileId: activeProfile.id };
     openProfileUnlockModal(activeProfile.id);
-    showToast("Unlock this profile to add or edit projects.");
+    showToast("Unlock this profile to add or edit roadmaps.");
     return;
   }
 
-  let project = null;
+  let roadmap = null;
   let ownerProfile = activeProfile;
   if (isEdit || isView) {
-    const located = findProjectWithOwner(projectId);
+    const located = findRoadmapWithOwner(roadmapId);
     ownerProfile = located.profile || activeProfile;
-    project = located.project;
+    roadmap = located.roadmap;
   }
 
-  const showOwnerPicker = !isView && isSuperAdminModeActive() && elements.projectOwnerProfileWrap;
-  if (elements.projectOwnerProfileWrap) {
-    elements.projectOwnerProfileWrap.hidden = !showOwnerPicker;
+  const showOwnerPicker = !isView && isSuperAdminModeActive() && elements.roadmapOwnerProfileWrap;
+  if (elements.roadmapOwnerProfileWrap) {
+    elements.roadmapOwnerProfileWrap.hidden = !showOwnerPicker;
   }
   if (showOwnerPicker) {
-    populateProjectOwnerProfileSelect(ownerProfile ? ownerProfile.id : state.activeProfileId);
+    populateRoadmapOwnerProfileSelect(ownerProfile ? ownerProfile.id : state.activeProfileId);
   }
 
-  if (project) {
+  if (roadmap) {
     const ownerSuffix =
       isSuperAdminModeActive() && ownerProfile && ownerProfile.id !== activeProfile.id
         ? ` · ${ownerProfile.name}`
         : "";
-    elements.projectModalTitle.textContent = (isView ? "View project" : "Edit project") + ownerSuffix;
-    elements.projectTitle.value = project.title || "";
-    setRichDescriptionValue("projectDescription", project.description || "");
-    setRichDescriptionValue("reachDescription", project.reachDescription || "");
-    elements.reachValue.value = project.reachValue != null ? project.reachValue : "";
-    setRichDescriptionValue("impactDescription", project.impactDescription || "");
-    elements.impactValue.value = project.impactValue != null ? String(project.impactValue) : "";
-    setRichDescriptionValue("confidenceDescription", project.confidenceDescription || "");
-    elements.confidenceValue.value = project.confidenceValue != null ? project.confidenceValue : "";
-    setRichDescriptionValue("effortDescription", project.effortDescription || "");
-    elements.effortValue.value = project.effortValue != null ? String(project.effortValue) : "";
-    elements.financialImpactValue.value = project.financialImpactValue != null ? project.financialImpactValue : "";
-    const framework = normalizeFinancialFramework(project.financialImpactFramework);
+    elements.roadmapModalTitle.textContent = (isView ? "View roadmap" : "Edit roadmap") + ownerSuffix;
+    elements.roadmapTitle.value = roadmap.title || "";
+    setRichDescriptionValue("roadmapDescription", roadmap.description || "");
+    setRichDescriptionValue("reachDescription", roadmap.reachDescription || "");
+    elements.reachValue.value = roadmap.reachValue != null ? roadmap.reachValue : "";
+    setRichDescriptionValue("impactDescription", roadmap.impactDescription || "");
+    elements.impactValue.value = roadmap.impactValue != null ? String(roadmap.impactValue) : "";
+    setRichDescriptionValue("confidenceDescription", roadmap.confidenceDescription || "");
+    elements.confidenceValue.value = roadmap.confidenceValue != null ? roadmap.confidenceValue : "";
+    setRichDescriptionValue("effortDescription", roadmap.effortDescription || "");
+    elements.effortValue.value = roadmap.effortValue != null ? String(roadmap.effortValue) : "";
+    elements.financialImpactValue.value = roadmap.financialImpactValue != null ? roadmap.financialImpactValue : "";
+    const framework = normalizeFinancialFramework(roadmap.financialImpactFramework);
     if (elements.financialFramework) elements.financialFramework.value = framework;
     if (elements.financialFramework) elements.financialFramework.dataset.lastFramework = framework;
-    setFinancialInputsToForm(project.financialImpactInputs || {});
+    setFinancialInputsToForm(roadmap.financialImpactInputs || {});
     toggleFinancialFrameworkFields(framework);
-    ensureCurrencyOption(elements.projectCurrency, project.financialImpactCurrency);
-    const currencyVal = project.financialImpactCurrency ? String(project.financialImpactCurrency).trim() : "";
+    ensureCurrencyOption(elements.roadmapCurrency, roadmap.financialImpactCurrency);
+    const currencyVal = roadmap.financialImpactCurrency ? String(roadmap.financialImpactCurrency).trim() : "";
     if (currencyVal) {
-      const opt = Array.from(elements.projectCurrency.options).find(
+      const opt = Array.from(elements.roadmapCurrency.options).find(
         (o) => (o.value || "").toUpperCase() === currencyVal.toUpperCase()
       );
-      if (opt) elements.projectCurrency.value = opt.value;
+      if (opt) elements.roadmapCurrency.value = opt.value;
     } else {
-      elements.projectCurrency.value = "";
+      elements.roadmapCurrency.value = "";
     }
-    elements.projectType.value = project.projectType || "";
-    elements.projectStatus.value = project.projectStatus || "";
-    elements.projectTshirtSize.value = project.tshirtSize || "";
-    elements.projectPeriod.value = project.projectPeriod || "";
-    elements.projectMoscow.value = project.moscowCategory || "";
-    setProjectKanoSelection(project.kanoFunctionality, project.kanoSatisfaction, { readonly: isView });
-    renderCountriesControls(Array.isArray(project.countries) ? project.countries : []);
-    renderProjectLabelsControls(project.labels, { readonly: isView });
-    renderProjectLinksControls(project.links, { readonly: isView });
-    renderProjectTasksControls(project.tasks, { readonly: isView });
-    renderProjectRaciControls(project.raci, { readonly: isView });
+    elements.roadmapType.value = roadmap.roadmapType || "";
+    elements.roadmapStatus.value = roadmap.roadmapStatus || "";
+    elements.roadmapTshirtSize.value = roadmap.tshirtSize || "";
+    elements.roadmapPeriod.value = roadmap.roadmapPeriod || "";
+    elements.roadmapMoscow.value = roadmap.moscowCategory || "";
+    setRoadmapKanoSelection(roadmap.kanoFunctionality, roadmap.kanoSatisfaction, { readonly: isView });
+    renderCountriesControls(Array.isArray(roadmap.countries) ? roadmap.countries : []);
+    renderRoadmapLabelsControls(roadmap.labels, { readonly: isView });
+    renderRoadmapLinksControls(roadmap.links, { readonly: isView });
+    renderRoadmapTasksControls(roadmap.tasks, { readonly: isView });
+    renderRoadmapRaciControls(roadmap.raci, { readonly: isView });
 
-    if (elements.projectMetaId) {
-      elements.projectMetaId.textContent = project.id || "—";
+    if (elements.roadmapMetaId) {
+      elements.roadmapMetaId.textContent = roadmap.id || "—";
     }
-    elements.projectMetaCreated.textContent = formatDateTime(project.createdAt);
-    elements.projectMetaModified.textContent = formatDateTime(project.modifiedAt || project.createdAt);
-    elements.projectMetaRice.textContent = formatRice(calculateRiceScore(project));
-    elements.projectFormSubmitBtn.textContent = isView ? "Close" : "Update project";
+    elements.roadmapMetaCreated.textContent = formatDateTime(roadmap.createdAt);
+    elements.roadmapMetaModified.textContent = formatDateTime(roadmap.modifiedAt || roadmap.createdAt);
+    elements.roadmapMetaRice.textContent = formatRice(calculateRiceScore(roadmap));
+    elements.roadmapFormSubmitBtn.textContent = isView ? "Close" : "Update roadmap";
   } else {
-    elements.projectModalTitle.textContent = isSuperAdminModeActive()
-      ? "New project (choose owner profile)"
-      : "New project";
+    elements.roadmapModalTitle.textContent = isSuperAdminModeActive()
+      ? "New roadmap (choose owner profile)"
+      : "New roadmap";
     if (showOwnerPicker) {
-      populateProjectOwnerProfileSelect(state.activeProfileId);
+      populateRoadmapOwnerProfileSelect(state.activeProfileId);
     }
-    elements.projectTitle.value = "";
-    setRichDescriptionValue("projectDescription", "");
+    elements.roadmapTitle.value = "";
+    setRichDescriptionValue("roadmapDescription", "");
     setRichDescriptionValue("reachDescription", "");
     elements.reachValue.value = "";
     setRichDescriptionValue("impactDescription", "");
@@ -16108,44 +17672,47 @@ function openProjectModal(mode, projectId) {
     if (elements.financialFramework) elements.financialFramework.dataset.lastFramework = FINANCIAL_FRAMEWORK_DEFAULT;
     setFinancialInputsToForm({});
     toggleFinancialFrameworkFields(FINANCIAL_FRAMEWORK_DEFAULT);
-    elements.projectCurrency.value = "";
-    elements.projectType.value = "";
-    elements.projectStatus.value = "";
-    elements.projectTshirtSize.value = "";
-    elements.projectPeriod.value = "";
-    elements.projectMoscow.value = "";
-    setProjectKanoSelection(null, null, { readonly: false });
+    elements.roadmapCurrency.value = "";
+    elements.roadmapType.value = "";
+    elements.roadmapStatus.value = "";
+    elements.roadmapTshirtSize.value = "";
+    elements.roadmapPeriod.value = "";
+    elements.roadmapMoscow.value = "";
+    setRoadmapKanoSelection(null, null, { readonly: false });
     renderCountriesControls([]);
-    renderProjectLabelsControls([]);
-    renderProjectLinksControls([]);
-    renderProjectTasksControls([]);
-    renderProjectRaciControls(getEmptyProjectRaci());
+    renderRoadmapLabelsControls([]);
+    renderRoadmapLinksControls([]);
+    renderRoadmapTasksControls([]);
+    renderRoadmapRaciControls(getEmptyRoadmapRaci());
 
     const now = new Date();
     const nowIso = now.toISOString();
-    if (elements.projectMetaId) {
-      elements.projectMetaId.textContent = "Will be generated on save";
+    if (elements.roadmapMetaId) {
+      elements.roadmapMetaId.textContent = "Will be generated on save";
     }
-    elements.projectMetaCreated.textContent = formatDateTime(nowIso);
-    elements.projectMetaModified.textContent = formatDateTime(nowIso);
-    elements.projectMetaRice.textContent = "—";
-    elements.projectFormSubmitBtn.textContent = "Save project";
+    elements.roadmapMetaCreated.textContent = formatDateTime(nowIso);
+    elements.roadmapMetaModified.textContent = formatDateTime(nowIso);
+    elements.roadmapMetaRice.textContent = "—";
+    elements.roadmapFormSubmitBtn.textContent = "Save roadmap";
   }
 
   updateModalRicePreview();
-  resetProjectModalSectionNav();
-  syncProjectOptionalDisclosures({ resetCollapsed: true });
-  syncProjectTasksDisclosure({ resetCollapsed: true });
-  syncProjectModalFooterMetaDetails({ resetCollapsed: true });
-  activateBlockingModal(elements.projectModal, "projectModal");
-  elements.projectModal.classList.toggle("project-modal--view", isView);
-  if (!isView) {
-    elements.projectTitle.focus();
+  resetRoadmapModalSectionNav();
+  syncRoadmapOptionalDisclosures({
+    resetCollapsed: true,
+    forceOpenSectionIds: options.scrollToSection ? [options.scrollToSection] : []
+  });
+  syncRoadmapTasksDisclosure({ resetCollapsed: true });
+  syncRoadmapModalFooterMetaDetails({ resetCollapsed: true });
+  activateBlockingModal(elements.roadmapModal, "roadmapModal");
+  elements.roadmapModal.classList.toggle("roadmap-modal--view", isView);
+  if (!isView && !options.scrollToSection) {
+    elements.roadmapTitle.focus();
   }
 
   setRichDescriptionFieldsReadonly(isView);
 
-  const inputs = elements.projectForm.querySelectorAll("input, textarea, select");
+  const inputs = elements.roadmapForm.querySelectorAll("input, textarea, select");
   inputs.forEach((el) => {
     if (isView) {
       el.setAttribute("disabled", "disabled");
@@ -16157,24 +17724,24 @@ function openProjectModal(mode, projectId) {
   if (elements.addCountryBtn) {
     elements.addCountryBtn.style.display = isView ? "none" : "";
   }
-  if (elements.addProjectLabelBtn) {
-    elements.addProjectLabelBtn.style.display = isView ? "none" : "";
+  if (elements.addRoadmapLabelBtn) {
+    elements.addRoadmapLabelBtn.style.display = isView ? "none" : "";
   }
-  if (elements.addProjectLinkBtn) {
-    elements.addProjectLinkBtn.style.display = isView ? "none" : "";
+  if (elements.addRoadmapLinkBtn) {
+    elements.addRoadmapLinkBtn.style.display = isView ? "none" : "";
   }
-  if (elements.addProjectTaskBtn) {
-    elements.addProjectTaskBtn.style.display = isView ? "none" : "";
+  if (elements.addRoadmapTaskBtn) {
+    elements.addRoadmapTaskBtn.style.display = isView ? "none" : "";
   }
-  if (elements.projectRaciSection) {
-    elements.projectRaciSection.querySelectorAll(".project-raci-add-btn").forEach((btn) => {
+  if (elements.roadmapRaciSection) {
+    elements.roadmapRaciSection.querySelectorAll(".roadmap-raci-add-btn").forEach((btn) => {
       btn.style.display = isView ? "none" : "";
     });
-    elements.projectRaciSection.querySelectorAll(".project-raci-remove-btn").forEach((btn) => {
+    elements.roadmapRaciSection.querySelectorAll(".roadmap-raci-remove-btn").forEach((btn) => {
       btn.style.display = isView ? "none" : "";
     });
   }
-  elements.projectForm.querySelectorAll(".project-dynamic-field-hint").forEach((hint) => {
+  elements.roadmapForm.querySelectorAll(".roadmap-dynamic-field-hint").forEach((hint) => {
     hint.style.display = isView ? "none" : "";
   });
   if (elements.countriesContainer) {
@@ -16184,25 +17751,38 @@ function openProjectModal(mode, projectId) {
     });
   }
 
-  if (elements.projectFormCancelBtn) {
-    elements.projectFormCancelBtn.style.display = isView ? "none" : "";
+  if (elements.roadmapFormCancelBtn) {
+    elements.roadmapFormCancelBtn.style.display = isView ? "none" : "";
   }
-  if (elements.projectOwnerProfile) {
-    elements.projectOwnerProfile.disabled = isView;
+  if (elements.roadmapOwnerProfile) {
+    elements.roadmapOwnerProfile.disabled = isView;
+  }
+
+  if (options.scrollToSection) {
+    forceRoadmapModalSectionOpen(options.scrollToSection);
+    window.setTimeout(() => {
+      navigateRoadmapModalToSection(options.scrollToSection, {
+        focusSelector:
+          options.focusSelector ||
+          (options.scrollToSection === "roadmapModalSectionKano" && !isView
+            ? "#roadmapKanoFunctionalitySelect"
+            : null)
+      });
+    }, 80);
   }
 }
 
-function closeProjectModal({ immediate = false } = {}) {
+function closeRoadmapModal({ immediate = false } = {}) {
   hideCellTypeTooltips();
-  deactivateBlockingModal(elements.projectModal, { immediate });
-  if (elements.projectModal) {
-    elements.projectModal.classList.remove("project-modal--view");
+  deactivateBlockingModal(elements.roadmapModal, { immediate });
+  if (elements.roadmapModal) {
+    elements.roadmapModal.classList.remove("roadmap-modal--view");
   }
   setRichDescriptionFieldsReadonly(false);
-  editingProjectId = null;
+  editingRoadmapId = null;
 }
 
-function projectFormHasFinancialInput(raw) {
+function roadmapFormHasFinancialInput(raw) {
   if (raw.financialImpactValue != null && Number.isFinite(raw.financialImpactValue)) return true;
   if (raw.financialImpactCurrency) return true;
   const inputs = raw.financialImpactInputs && typeof raw.financialImpactInputs === "object" ? raw.financialImpactInputs : {};
@@ -16212,31 +17792,31 @@ function projectFormHasFinancialInput(raw) {
   });
 }
 
-function handleProjectFormSubmit(e) {
+function handleRoadmapFormSubmit(e) {
   e.preventDefault();
-  elements.projectFormError.style.display = "none";
-  elements.projectFormError.textContent = "";
+  elements.roadmapFormError.style.display = "none";
+  elements.roadmapFormError.textContent = "";
 
-  if (elements.projectFormSubmitBtn.textContent === "Close") {
-    closeProjectModal();
+  if (elements.roadmapFormSubmitBtn.textContent === "Close") {
+    closeRoadmapModal();
     return;
   }
 
-  if (!requireWritableActiveProfile("Save project")) return;
+  if (!requireWritableActiveProfile("Save roadmap")) return;
 
   if (!getUnlockedActiveProfile()) {
-    showToast("Unlock this profile to save projects.");
+    showToast("Unlock this profile to save roadmaps.");
     return;
   }
 
-  let period = (elements.projectPeriod.value || "").trim();
+  let period = (elements.roadmapPeriod.value || "").trim();
   if (period) {
     period = period.toUpperCase();
   }
 
   const raw = {
-    title: (elements.projectTitle.value || "").trim(),
-    description: getRichDescriptionValue("projectDescription"),
+    title: (elements.roadmapTitle.value || "").trim(),
+    description: getRichDescriptionValue("roadmapDescription"),
     reachDescription: getRichDescriptionValue("reachDescription"),
     reachValue: elements.reachValue.value !== "" ? Number(elements.reachValue.value) : null,
     impactDescription: getRichDescriptionValue("impactDescription"),
@@ -16246,31 +17826,31 @@ function handleProjectFormSubmit(e) {
     effortDescription: getRichDescriptionValue("effortDescription"),
     effortValue: elements.effortValue.value !== "" ? Number(elements.effortValue.value) : null,
     financialImpactValue: elements.financialImpactValue.value !== "" ? Number(elements.financialImpactValue.value) : null,
-    financialImpactCurrency: normalizeCurrency(elements.projectCurrency.value),
+    financialImpactCurrency: normalizeCurrency(elements.roadmapCurrency.value),
     financialImpactFramework: normalizeFinancialFramework(elements.financialFramework && elements.financialFramework.value),
     financialImpactInputs: sanitizeFinancialImpactInputs(
       normalizeFinancialFramework(elements.financialFramework && elements.financialFramework.value),
       mergeFinancialImpactInputsForCompute()
     ),
-    projectType: (elements.projectType.value || "").trim() || null,
-    projectStatus: (elements.projectStatus.value || "").trim() || null,
-    tshirtSize: (elements.projectTshirtSize.value || "").trim() || null,
-    projectPeriod: period,
-    moscowCategory: (elements.projectMoscow && elements.projectMoscow.value)
-      ? (elements.projectMoscow.value || "").trim() || null
+    roadmapType: (elements.roadmapType.value || "").trim() || null,
+    roadmapStatus: (elements.roadmapStatus.value || "").trim() || null,
+    tshirtSize: (elements.roadmapTshirtSize.value || "").trim() || null,
+    roadmapPeriod: period,
+    moscowCategory: (elements.roadmapMoscow && elements.roadmapMoscow.value)
+      ? (elements.roadmapMoscow.value || "").trim() || null
       : null,
-    kanoFunctionality: getProjectKanoFromControls().kanoFunctionality,
-    kanoSatisfaction: getProjectKanoFromControls().kanoSatisfaction,
+    kanoFunctionality: getRoadmapKanoFromControls().kanoFunctionality,
+    kanoSatisfaction: getRoadmapKanoFromControls().kanoSatisfaction,
     countries: getCountriesFromControls(),
-    labels: getProjectLabelsFromControls(),
-    tasks: getProjectTasksFromControls(),
-    raci: getProjectRaciFromControls()
+    labels: getRoadmapLabelsFromControls(),
+    tasks: getRoadmapTasksFromControls(),
+    raci: getRoadmapRaciFromControls()
   };
 
-  const linkResult = getProjectLinksFromControls();
+  const linkResult = getRoadmapLinksFromControls();
   if (linkResult.error) {
-    elements.projectFormError.textContent = linkResult.error;
-    elements.projectFormError.style.display = "block";
+    elements.roadmapFormError.textContent = linkResult.error;
+    elements.roadmapFormError.style.display = "block";
     return;
   }
   raw.links = linkResult.links;
@@ -16284,13 +17864,13 @@ function handleProjectFormSubmit(e) {
   if (
     raw.financialImpactFramework !== FINANCIAL_FRAMEWORK_DEFAULT &&
     !Number.isFinite(raw.financialImpactValue) &&
-    projectFormHasFinancialInput(raw)
+    roadmapFormHasFinancialInput(raw)
   ) {
-    elements.projectFormError.textContent = getFinancialFrameworkValidationMessage(
+    elements.roadmapFormError.textContent = getFinancialFrameworkValidationMessage(
       raw.financialImpactFramework,
       raw.financialImpactInputs
     );
-    elements.projectFormError.style.display = "block";
+    elements.roadmapFormError.style.display = "block";
     return;
   }
 
@@ -16298,70 +17878,70 @@ function handleProjectFormSubmit(e) {
     raw.financialImpactValue = null;
   }
 
-  const validationError = validateProjectInput(raw);
+  const validationError = validateRoadmapInput(raw);
   if (validationError) {
-    elements.projectFormError.textContent = validationError;
-    elements.projectFormError.style.display = "block";
-    if (validationError === "Project title is required.") {
-      elements.projectTitle?.focus();
-    } else if (validationError === "Project description is required.") {
-      const surface = getRichDescriptionSurface("projectDescription");
+    elements.roadmapFormError.textContent = validationError;
+    elements.roadmapFormError.style.display = "block";
+    if (validationError === "Roadmap title is required.") {
+      elements.roadmapTitle?.focus();
+    } else if (validationError === "Roadmap description is required.") {
+      const surface = getRichDescriptionSurface("roadmapDescription");
       if (surface) surface.focus();
     }
     return;
   }
 
-  if (editingProjectId) {
-    const located = findProjectWithOwner(editingProjectId);
+  if (editingRoadmapId) {
+    const located = findRoadmapWithOwner(editingRoadmapId);
     const ownerProfile = located.profile;
-    const project = located.project;
-    if (!ownerProfile || !project) return;
-    project.title = raw.title;
-    project.description = raw.description;
-    project.reachDescription = raw.reachDescription;
-    project.reachValue = raw.reachValue;
-    project.impactDescription = raw.impactDescription;
-    project.impactValue = raw.impactValue;
-    project.confidenceDescription = raw.confidenceDescription;
-    project.confidenceValue = raw.confidenceValue;
-    project.effortDescription = raw.effortDescription;
-    project.effortValue = raw.effortValue;
-    project.financialImpactValue = raw.financialImpactValue;
-    project.financialImpactCurrency = raw.financialImpactCurrency;
-    project.financialImpactFramework = raw.financialImpactFramework;
-    project.financialImpactInputs = raw.financialImpactInputs;
-    project.projectType = raw.projectType || null;
-    project.projectStatus = raw.projectStatus || null;
-    project.tshirtSize = raw.tshirtSize || null;
-    project.projectPeriod = raw.projectPeriod || null;
-    project.moscowCategory = raw.moscowCategory || null;
-    project.kanoFunctionality = raw.kanoFunctionality != null ? raw.kanoFunctionality : null;
-    project.kanoSatisfaction = raw.kanoSatisfaction != null ? raw.kanoSatisfaction : null;
-    project.countries = Array.isArray(raw.countries) ? raw.countries : [];
-    project.labels = normalizeProjectLabels(raw.labels);
-    project.links = normalizeProjectLinks(raw.links);
-    project.tasks = normalizeProjectTasks(raw.tasks);
-    project.raci = normalizeProjectRaci(raw.raci);
-    project.modifiedAt = new Date().toISOString();
-    project.riceScore = calculateRiceScore(project);
+    const roadmap = located.roadmap;
+    if (!ownerProfile || !roadmap) return;
+    roadmap.title = raw.title;
+    roadmap.description = raw.description;
+    roadmap.reachDescription = raw.reachDescription;
+    roadmap.reachValue = raw.reachValue;
+    roadmap.impactDescription = raw.impactDescription;
+    roadmap.impactValue = raw.impactValue;
+    roadmap.confidenceDescription = raw.confidenceDescription;
+    roadmap.confidenceValue = raw.confidenceValue;
+    roadmap.effortDescription = raw.effortDescription;
+    roadmap.effortValue = raw.effortValue;
+    roadmap.financialImpactValue = raw.financialImpactValue;
+    roadmap.financialImpactCurrency = raw.financialImpactCurrency;
+    roadmap.financialImpactFramework = raw.financialImpactFramework;
+    roadmap.financialImpactInputs = raw.financialImpactInputs;
+    roadmap.roadmapType = raw.roadmapType || null;
+    roadmap.roadmapStatus = raw.roadmapStatus || null;
+    roadmap.tshirtSize = raw.tshirtSize || null;
+    roadmap.roadmapPeriod = raw.roadmapPeriod || null;
+    roadmap.moscowCategory = raw.moscowCategory || null;
+    roadmap.kanoFunctionality = raw.kanoFunctionality != null ? raw.kanoFunctionality : null;
+    roadmap.kanoSatisfaction = raw.kanoSatisfaction != null ? raw.kanoSatisfaction : null;
+    roadmap.countries = Array.isArray(raw.countries) ? raw.countries : [];
+    roadmap.labels = normalizeRoadmapLabels(raw.labels);
+    roadmap.links = normalizeRoadmapLinks(raw.links);
+    roadmap.tasks = normalizeRoadmapTasks(raw.tasks);
+    roadmap.raci = normalizeRoadmapRaci(raw.raci);
+    roadmap.modifiedAt = new Date().toISOString();
+    roadmap.riceScore = calculateRiceScore(roadmap);
     saveState({ flush: true });
-    closeProjectModal();
-    renderProjects();
+    closeRoadmapModal();
+    renderRoadmaps();
     showToast(
       isSuperAdminModeActive() && ownerProfile.id !== state.activeProfileId
-        ? `Project updated in profile “${ownerProfile.name || "Unnamed"}”.`
-        : "Project updated successfully."
+        ? `Roadmap updated in profile “${ownerProfile.name || "Unnamed"}”.`
+        : "Roadmap updated successfully."
     );
     return;
   } else {
-    const targetProfile = getTargetProfileForProjectCreate();
-    if (!targetProfile || !Array.isArray(targetProfile.projects)) {
-      showToast("Choose a valid owner profile for this project.");
+    const targetProfile = getTargetProfileForRoadmapCreate();
+    if (!targetProfile || !Array.isArray(targetProfile.roadmaps)) {
+      showToast("Choose a valid owner profile for this roadmap.");
       return;
     }
     const now = new Date().toISOString();
-    const project = {
-      id: generateId("project"),
+    const roadmap = {
+      id: generateId("roadmap"),
       createdAt: now,
       modifiedAt: now,
       title: raw.title,
@@ -16378,28 +17958,28 @@ function handleProjectFormSubmit(e) {
       financialImpactCurrency: raw.financialImpactCurrency,
       financialImpactFramework: raw.financialImpactFramework,
       financialImpactInputs: raw.financialImpactInputs,
-      projectType: raw.projectType || null,
-      projectStatus: raw.projectStatus || null,
+      roadmapType: raw.roadmapType || null,
+      roadmapStatus: raw.roadmapStatus || null,
       tshirtSize: raw.tshirtSize || null,
-      projectPeriod: raw.projectPeriod || null,
+      roadmapPeriod: raw.roadmapPeriod || null,
       moscowCategory: raw.moscowCategory || null,
       kanoFunctionality: raw.kanoFunctionality != null ? raw.kanoFunctionality : null,
       kanoSatisfaction: raw.kanoSatisfaction != null ? raw.kanoSatisfaction : null,
       countries: Array.isArray(raw.countries) ? raw.countries : [],
-      labels: normalizeProjectLabels(raw.labels),
-      links: normalizeProjectLinks(raw.links),
-      tasks: normalizeProjectTasks(raw.tasks),
-      raci: normalizeProjectRaci(raw.raci)
+      labels: normalizeRoadmapLabels(raw.labels),
+      links: normalizeRoadmapLinks(raw.links),
+      tasks: normalizeRoadmapTasks(raw.tasks),
+      raci: normalizeRoadmapRaci(raw.raci)
     };
-    project.riceScore = calculateRiceScore(project);
-    targetProfile.projects.unshift(project);
+    roadmap.riceScore = calculateRiceScore(roadmap);
+    targetProfile.roadmaps.unshift(roadmap);
     saveState({ flush: true });
-    closeProjectModal();
-    renderProjects();
+    closeRoadmapModal();
+    renderRoadmaps();
     showToast(
       isSuperAdminModeActive() && targetProfile.id !== state.activeProfileId
-        ? `Project created in profile “${targetProfile.name || "Unnamed"}”.`
-        : "Project created successfully."
+        ? `Roadmap created in profile “${targetProfile.name || "Unnamed"}”.`
+        : "Roadmap created successfully."
     );
   }
 }
@@ -16412,7 +17992,7 @@ function updateModalRicePreview() {
     effortValue: elements.effortValue.value !== "" ? Number(elements.effortValue.value) : null
   };
   const rice = calculateRiceScore(temp);
-  elements.projectMetaRice.textContent = Number.isFinite(rice) && rice > 0 ? formatRice(rice) : "—";
+  elements.roadmapMetaRice.textContent = Number.isFinite(rice) && rice > 0 ? formatRice(rice) : "—";
 
   const rawAmount = elements.financialImpactValue && elements.financialImpactValue.value !== "" ? Number(elements.financialImpactValue.value) : null;
   const framework = normalizeFinancialFramework(elements.financialFramework && elements.financialFramework.value);
@@ -16433,11 +18013,11 @@ function updateModalRicePreview() {
       ? Number(computedAmount).toLocaleString("en-US", { useGrouping: false, maximumFractionDigits: 6 })
       : "";
   }
-  const currency = (elements.projectCurrency && elements.projectCurrency.value || "").toString().trim().toUpperCase() || "";
+  const currency = (elements.roadmapCurrency && elements.roadmapCurrency.value || "").toString().trim().toUpperCase() || "";
   const hasAmount = Number.isFinite(computedAmount);
   const hasCurrency = currency.length === 3;
 
-  if (elements.projectMetaFinancialEur) {
+  if (elements.roadmapMetaFinancialEur) {
     if (hasAmount && hasCurrency) {
       const amountEur = typeof ExchangeRates !== "undefined" && typeof ExchangeRates.convertToEUR === "function"
         ? ExchangeRates.convertToEUR(computedAmount, currency)
@@ -16446,16 +18026,16 @@ function updateModalRicePreview() {
         const short = typeof formatFinancialShort === "function"
           ? formatFinancialShort(amountEur)
           : String(Number(amountEur).toLocaleString(undefined, { maximumFractionDigits: 2 }));
-        elements.projectMetaFinancialEur.textContent = "€" + short;
+        elements.roadmapMetaFinancialEur.textContent = "€" + short;
       } else {
-        elements.projectMetaFinancialEur.textContent = "— (rate unavailable)";
+        elements.roadmapMetaFinancialEur.textContent = "— (rate unavailable)";
       }
     } else {
-      elements.projectMetaFinancialEur.textContent = "—";
+      elements.roadmapMetaFinancialEur.textContent = "—";
     }
   }
 
-  if (elements.projectMetaExchangeRate) {
+  if (elements.roadmapMetaExchangeRate) {
     if (hasCurrency && currency !== "EUR") {
       const rates = state.exchangeRatesToEUR || {};
       const rate = rates[currency];
@@ -16463,17 +18043,17 @@ function updateModalRicePreview() {
         // Stored rate is EUR per 1 local currency; convert for UI to "1 EUR = X local currency".
         const localPerEur = rate > 0 ? 1 / Number(rate) : NaN;
         if (Number.isFinite(localPerEur)) {
-          elements.projectMetaExchangeRate.textContent = `1 EUR = ${Number(localPerEur).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
+          elements.roadmapMetaExchangeRate.textContent = `1 EUR = ${Number(localPerEur).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
         } else {
-          elements.projectMetaExchangeRate.textContent = "— (rate unavailable)";
+          elements.roadmapMetaExchangeRate.textContent = "— (rate unavailable)";
         }
       } else {
-        elements.projectMetaExchangeRate.textContent = "— (rate unavailable)";
+        elements.roadmapMetaExchangeRate.textContent = "— (rate unavailable)";
       }
     } else if (hasCurrency && currency === "EUR") {
-      elements.projectMetaExchangeRate.textContent = "1 EUR = 1.00 EUR";
+      elements.roadmapMetaExchangeRate.textContent = "1 EUR = 1.00 EUR";
     } else {
-      elements.projectMetaExchangeRate.textContent = "—";
+      elements.roadmapMetaExchangeRate.textContent = "—";
     }
   }
 }

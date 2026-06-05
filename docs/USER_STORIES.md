@@ -4,7 +4,7 @@
 |-------|-------|
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
-| **Last updated** | 2026-05-31 |
+| **Last updated** | 2026-05-28 |
 | **Compact breakpoint** | ≤ **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) |
 
 **Purpose:** Epics and user-story contracts with **Given / When / Then** acceptance criteria, including edge cases and error handling.
@@ -35,7 +35,7 @@ Each story includes:
    - **Given** the user enters a valid profile name  
    - **When** the user creates the profile  
    - **Then** the profile appears in the list  
-   - **And** the user can add projects to it.
+   - **And** the user can add roadmaps to it.
 
 2. **Optional team**  
    - **Given** team is left empty  
@@ -63,13 +63,13 @@ Each story includes:
    - **Given** the user selects a profile  
    - **When** it becomes active  
    - **Then** `activeProfileId` updates  
-   - **And** table, board, MoSCoW, and map refresh.
+   - **And** table, board, MoSCoW, map, RACI, and KANO views refresh.
 
 2. **Locked profile**  
    - **Given** the profile is password-protected and locked  
    - **When** it is active  
    - **Then** the locked banner shows  
-   - **And** project data does not render in any view.
+   - **And** roadmap data does not render in any view.
 
 **Error / edge handling**
 
@@ -79,7 +79,7 @@ Each story includes:
 
 ---
 
-## Epic B — Project prioritization
+## Epic B — Roadmap prioritization
 
 ### US-B1 — Enter RICE fields and see computed score
 
@@ -91,7 +91,7 @@ Each story includes:
 
 1. **Compute score**  
    - **Given** valid Reach, Impact, Confidence, Effort  
-   - **When** the user saves the project  
+   - **When** the user saves the roadmap  
    - **Then** RICE = `(R × I × C) ÷ E`  
    - **And** the score appears in table and sortable views.
 
@@ -138,7 +138,7 @@ Each story includes:
 
 1. **Framework compute**  
    - **Given** the user selects a non-custom framework and valid inputs  
-   - **When** the project saves  
+   - **When** the roadmap saves  
    - **Then** `financialImpactValue` is computed per framework rules.
 
 2. **Framework switch**  
@@ -158,7 +158,7 @@ Each story includes:
 **Acceptance criteria**
 
 1. **View toggle**  
-   - **Given** an unlocked profile with projects  
+   - **Given** an unlocked profile with roadmaps  
    - **When** the user selects a view tab  
    - **Then** only that view is visible  
    - **And** filters continue to apply.
@@ -182,12 +182,12 @@ Each story includes:
 1. **Export JSON**  
    - **Given** exportable profiles (unlocked or unprotected)  
    - **When** the user exports JSON  
-   - **Then** a file downloads with profiles, projects, and preferences.
+   - **Then** a file downloads with profiles, roadmaps, and preferences.
 
 2. **Import merge**  
    - **Given** a valid JSON export  
    - **When** the user imports  
-   - **Then** profiles/projects merge by id without wiping unrelated data.
+   - **Then** profiles/roadmaps merge by id without wiping unrelated data.
 
 **Error / edge handling**
 
@@ -206,15 +206,15 @@ Each story includes:
 ### US-F2 — Standardized modal field tooltips
 
 - **Persona:** Product Manager  
-- **Goal:** Self-explanatory project form.
+- **Goal:** Self-explanatory roadmap form.
 
 **Acceptance criteria**
 
-- **Given** the project modal is open  
+- **Given** the roadmap modal is open  
 - **When** the user focuses supported fields  
 - **Then** standardized tooltip guidance is available (native or injected fallback).
 
-### US-F3 — Project footer metadata
+### US-F3 — Roadmap footer metadata
 
 - **Persona:** Product Manager  
 - **Goal:** Audit ID, dates, RICE, and financial context.
@@ -223,14 +223,14 @@ Each story includes:
 
 1. **Desktop footer**  
    - **Given** viewport &gt; 1400px  
-   - **When** the project modal is open  
-   - **Then** footer metadata (`Project details`) is expanded and shows ID, timestamps, RICE, financial/EUR context.
+   - **When** the roadmap modal is open  
+   - **Then** footer metadata (`Roadmap details`) is expanded and shows ID, timestamps, RICE, financial/EUR context.
 
 2. **Compact footer**  
    - **Given** viewport ≤ 1400px  
    - **When** the modal opens  
    - **Then** metadata is in a `<details>` block collapsed by default  
-   - **And** the user can expand **Project details**.
+   - **And** the user can expand **Roadmap details**.
 
 ---
 
@@ -296,21 +296,21 @@ Each story includes:
 **Acceptance criteria**
 
 1. **Selection bar**  
-   - **Given** ≥1 project selected on compact table cards  
+   - **Given** ≥1 roadmap selected on compact table cards  
    - **When** selection changes  
    - **Then** the floating selection bar shows bulk delete.
 
 2. **FAB**  
    - **Given** compact layout  
    - **When** the portfolio workspace is visible  
-   - **Then** FAB creates a new project.
+   - **Then** FAB creates a new roadmap.
 
 ---
 
 ### US-G4 — Fullscreen preserves compact layouts
 
 - **Persona:** Stakeholder  
-- **Goal:** Present on projector or tablet.
+- **Goal:** Present on roadmapor or tablet.
 
 **Acceptance criteria**
 
@@ -326,8 +326,8 @@ Each story includes:
 ### US-H1 — Title autocomplete
 
 - **Persona:** Product Manager  
-- **Goal:** Find projects quickly by title.  
-- **Preconditions:** Active scope has projects with titles.
+- **Goal:** Find roadmaps quickly by title.  
+- **Preconditions:** Active scope has roadmaps with titles.
 
 **Acceptance criteria**
 
@@ -340,7 +340,7 @@ Each story includes:
 2. **Apply filter**  
    - **Given** a title query (typed or selected)  
    - **When** filters run  
-   - **Then** only projects whose title contains the query (case-insensitive) remain in table, board, MoSCoW, and map.
+   - **Then** only roadmaps whose title contains the query (case-insensitive) remain in table, board, MoSCoW, and map.
 
 **Error / edge handling**
 
@@ -365,7 +365,7 @@ Each story includes:
 2. **Apply filter**  
    - **Given** a label query  
    - **When** filters run  
-   - **Then** projects with at least one label containing the query remain.
+   - **Then** roadmaps with at least one label containing the query remain.
 
 ---
 
@@ -376,7 +376,7 @@ Each story includes:
 
 **Acceptance criteria**
 
-| Selection | **Given** projects A (no labels), B (has labels) | **When** filter applies | **Then** |
+| Selection | **Given** roadmaps A (no labels), B (has labels) | **When** filter applies | **Then** |
 |-----------|--------------------------------------------------|-------------------------|----------|
 | Any (empty) | — | filters run | A and B both eligible (subject to other filters) |
 | With labels | — | `filterLabels` = with | Only B |
@@ -404,8 +404,8 @@ Each story includes:
 | Selection | **When** filter applies | **Then** |
 |-----------|-------------------------|----------|
 | Any | — | No link-count constraint |
-| With links | `filterLinks` = with | Projects with ≥1 link |
-| Without links | `filterLinks` = without | Projects with zero links |
+| With links | `filterLinks` = with | Roadmaps with ≥1 link |
+| Without links | `filterLinks` = without | Roadmaps with zero links |
 
 - **Given** links filter active  
 - **When** filters apply to all views  
@@ -425,7 +425,7 @@ Each story includes:
 1. **Column classes**  
    - **Given** desktop table view  
    - **When** the table renders  
-   - **Then** each column uses `projects-table-col--*` on `<col>`, `<th>`, and `<td>`  
+   - **Then** each column uses `roadmaps-table-col--*` on `<col>`, `<th>`, and `<td>`  
    - **And** widths match `table-revamp-modern.css`.
 
 2. **Optional owner column**  
@@ -440,15 +440,15 @@ Each story includes:
 ### US-I2 — Compact table card list
 
 - **Persona:** Mobile / field PM  
-- **Goal:** Read and act on projects without horizontal scroll.  
+- **Goal:** Read and act on roadmaps without horizontal scroll.  
 - **Preconditions:** ≤1400px; table view.
 
 **Acceptance criteria**
 
 1. **Card layout**  
    - **Given** compact layout and table view  
-   - **When** projects render  
-   - **Then** each project is a card (not a 12-column grid row)  
+   - **When** roadmaps render  
+   - **Then** each roadmap is a card (not a 12-column grid row)  
    - **And** card shows status, MoSCoW, period, title, description excerpt, RICE, financial impact, size, framework, countries, and actions.
 
 2. **Badge strip**  
@@ -466,14 +466,14 @@ Each story includes:
 ### US-I3 — Table group-by on compact cards
 
 - **Persona:** Product Manager  
-- **Goal:** Review projects in logical sections on tablet.
+- **Goal:** Review roadmaps in logical sections on tablet.
 
 **Acceptance criteria**
 
 1. **Control**  
    - **Given** compact table view  
    - **When** the user opens **Group by**  
-   - **Then** options include: No grouping; Owner profile (§7 only); Status; MoSCoW; T-shirt size; Financial framework; Project type; Currency.
+   - **Then** options include: No grouping; Owner profile (§7 only); Status; MoSCoW; T-shirt size; Financial framework; Roadmap type; Currency.
 
 2. **Persist**  
    - **Given** the user selects a group-by option  
@@ -483,11 +483,11 @@ Each story includes:
 3. **Summary**  
    - **Given** a group is rendered  
    - **When** the section header displays  
-   - **Then** `#tableGroupBySummary` announces group label and project count.
+   - **Then** `#tableGroupBySummary` announces group label and roadmap count.
 
 **Error / edge handling**
 
-- **Given** group-by value with zero projects  
+- **Given** group-by value with zero roadmaps  
 - **When** rendering  
 - **Then** empty group is omitted or shows zero-count without errors.
 
@@ -610,7 +610,7 @@ Each story includes:
 
 - **Given** compact layout and board view  
 - **When** the user uses **Move to** on a card  
-- **Then** project status updates and the card moves to the correct column/stack.
+- **Then** roadmap status updates and the card moves to the correct column/stack.
 
 ---
 
@@ -621,13 +621,13 @@ Policy and eligibility: **[GUARDRAILS.md §7](GUARDRAILS.md)** only.
 ### US-M1 — Cross-profile read with owner context
 
 - **Persona:** Trust profile operator  
-- **Goal:** See all workspace projects with clear ownership.
+- **Goal:** See all workspace roadmaps with clear ownership.
 
 **Acceptance criteria**
 
 - **Given** mode active per §7  
 - **When** portfolio views render  
-- **Then** projects from all profiles appear with owner metadata  
+- **Then** roadmaps from all profiles appear with owner metadata  
 - **And** owner chips/stripes show on table cards, board cards, MoSCoW cards, and map tooltips.
 
 ---
@@ -635,13 +635,13 @@ Policy and eligibility: **[GUARDRAILS.md §7](GUARDRAILS.md)** only.
 ### US-M2 — Writes persist to owner profile
 
 - **Persona:** Trust profile operator  
-- **Goal:** Edit without re-homing projects.
+- **Goal:** Edit without re-homing roadmaps.
 
 **Acceptance criteria**
 
-- **Given** mode active and user edits another profile’s project  
+- **Given** mode active and user edits another profile’s roadmap  
 - **When** save completes  
-- **Then** changes persist on that project’s owner profile  
+- **Then** changes persist on that roadmap’s owner profile  
 - **And** user messaging states owner profile context.
 
 ---
@@ -655,21 +655,21 @@ Policy and eligibility: **[GUARDRAILS.md §7](GUARDRAILS.md)** only.
 
 - **Given** mode was active  
 - **When** the user turns mode off  
-- **Then** views immediately show only the active profile’s projects  
+- **Then** views immediately show only the active profile’s roadmaps  
 - **And** owner-only filters and columns hide.
 
 ---
 
 ## Epic N — Rich-text descriptions
 
-### US-N1 — Format project and RICE narratives
+### US-N1 — Format roadmap and RICE narratives
 
 - **Persona:** Product Manager  
 - **Goal:** Write readable descriptions without leaving the app.
 
 **Acceptance criteria**
 
-- **Given** the user creates or edits a project  
+- **Given** the user creates or edits a roadmap  
 - **When** they use bold, lists, or alignment on description fields  
 - **Then** formatting is saved as sanitized HTML  
 - **And** view mode shows formatted text without the editing toolbar.
@@ -682,16 +682,16 @@ Policy and eligibility: **[GUARDRAILS.md §7](GUARDRAILS.md)** only.
 
 ---
 
-## Epic O — Project tasks
+## Epic O — Roadmap tasks
 
-### US-O1 — Track tasks with status on a project
+### US-O1 — Track tasks with status on a roadmap
 
 - **Persona:** Delivery Lead  
 - **Goal:** Break work into trackable items under an initiative.
 
 **Acceptance criteria**
 
-- **Given** the user adds task rows in the project modal  
+- **Given** the user adds task rows in the roadmap modal  
 - **When** they save  
 - **Then** `tasks[]` persists with name and status  
 - **And** view mode shows read-only task rows with status badges.
@@ -708,7 +708,7 @@ Policy and eligibility: **[GUARDRAILS.md §7](GUARDRAILS.md)** only.
 **Acceptance criteria**
 
 - **Given** cloud sync is active  
-- **When** the user saves labels and links on a project  
+- **When** the user saves labels and links on a roadmap  
 - **Then** an immediate cloud flush runs  
 - **And** after reload (or another device pull) labels and links are unchanged.
 
@@ -716,7 +716,7 @@ Policy and eligibility: **[GUARDRAILS.md §7](GUARDRAILS.md)** only.
 
 ## Epic Q — Bulk transfer (privileged workspace mode)
 
-### US-Q1 — Duplicate selected projects to another profile
+### US-Q1 — Duplicate selected roadmaps to another profile
 
 - **Persona:** Trust profile operator  
 - **Goal:** Clone initiatives into another portfolio.
@@ -728,7 +728,7 @@ Policy and eligibility: **[GUARDRAILS.md §7](GUARDRAILS.md)** only.
 - **Then** copies are created with new IDs and “(copy)” title suffix  
 - **And** originals remain in source profiles.
 
-### US-Q2 — Move selected projects to another profile
+### US-Q2 — Move selected roadmaps to another profile
 
 - **Persona:** Trust profile operator  
 - **Goal:** Re-home initiatives to the correct owner profile.
@@ -737,11 +737,99 @@ Policy and eligibility: **[GUARDRAILS.md §7](GUARDRAILS.md)** only.
 
 - **Given** workspace-wide mode and table multi-select  
 - **When** the user chooses Move and a target profile  
-- **Then** projects are removed from source profiles and added to the target  
+- **Then** roadmaps are removed from source profiles and added to the target  
 - **And** board/MoSCoW order arrays on sources are cleaned.
+
+---
+
+## Epic R — RACI accountability matrix
+
+### US-R1 — Assign RACI roles on a roadmap
+
+- **Persona:** Product Manager  
+- **Goal:** Document who is Responsible, Accountable, Consulted, and Informed per initiative.  
+- **Preconditions:** Profile unlocked; roadmap exists or is being created.
+
+**Acceptance criteria**
+
+1. **Add RACI entries**  
+   - **Given** the user opens the RACI section in the roadmap modal  
+   - **When** they add names with Business or Tech domain  
+   - **Then** entries persist on save and reload.
+
+2. **Domain filter in matrix view**  
+   - **Given** roadmaps have RACI data  
+   - **When** the user switches Business ↔ Tech in the RACI view  
+   - **Then** the matrix re-renders showing only entries for that domain.
+
+**Error / edge handling**
+
+- **Given** an empty name field  
+- **When** the user saves  
+- **Then** blank rows are stripped by `normalizeRoadmapRaci`.
+
+---
+
+### US-R2 — Review RACI matrix in workshops
+
+- **Persona:** Delivery Lead, Stakeholder  
+- **Goal:** See accountability at portfolio level without opening each roadmap.
+
+**Acceptance criteria**
+
+- **Given** filtered roadmaps with RACI assignments  
+- **When** the user opens the RACI view on desktop  
+- **Then** a five-column matrix lists Responsible, Accountable, Consulted, Informed per roadmap.  
+- **And** on compact layout, each roadmap appears as a card with role sections.
+
+---
+
+## Epic S — KANO portfolio matrix
+
+### US-S1 — Score roadmap on KANO axes
+
+- **Persona:** Product Manager  
+- **Goal:** Classify initiatives by functionality depth and customer satisfaction response.
+
+**Acceptance criteria**
+
+1. **Set scores in modal**  
+   - **Given** the roadmap KANO section  
+   - **When** the user selects functionality (1–5) and satisfaction (1–5)  
+   - **Then** scores persist and the roadmap appears in the **Positioned** KANO panel.
+
+2. **Category legend**  
+   - **Given** both axes are set  
+   - **When** the user views the modal KANO matrix  
+   - **Then** the category (Attractive, One-dimensional, Must-be, etc.) is shown per `kanoCategoryLegend`.
+
+**Error / edge handling**
+
+- **Given** only one axis is set  
+- **When** the user saves  
+- **Then** the roadmap remains in **Not positioned** until both axes are valid integers 1–5.
+
+---
+
+### US-S2 — Explore portfolio KANO map
+
+- **Persona:** Portfolio Stakeholder  
+- **Goal:** See which roadmaps are delighters vs must-haves at portfolio level.
+
+**Acceptance criteria**
+
+- **Given** roadmaps with KANO scores  
+- **When** the user opens the KANO view with **Positioned** selected  
+- **Then** the portfolio matrix groups roadmaps by category.  
+- **And** **Not positioned** lists roadmaps missing scores with a **Set KANO scores** action.
 
 ---
 
 ## Traceability
 
 Map story IDs to [PRD.md](PRD.md) FR IDs and [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md) during release review.
+
+| Epic | PRD |
+|------|-----|
+| R | FR-2.10, FR-5.6 |
+| S | FR-2.11, FR-5.7 |

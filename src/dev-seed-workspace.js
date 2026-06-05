@@ -1,0 +1,196 @@
+/**
+ * Sample workspace for local dev when no persisted data exists (localhost / 127.0.0.1).
+ * Loaded before app.js; provides buildDevSeedWorkspacePayload().
+ */
+const DEV_SEED_WORKSPACE_VERSION = "20260605";
+
+function buildDevSeedWorkspacePayload() {
+  const now = new Date().toISOString();
+  const profileId = "dev_profile_test";
+  const roadmaps = [
+    {
+      id: "dev_proj_checkout",
+      createdAt: now,
+      modifiedAt: now,
+      title: "Mobile checkout redesign",
+      description: "Streamline payment flow and reduce cart abandonment on mobile.",
+      reachValue: 120000,
+      impactValue: 3,
+      confidenceValue: 80,
+      effortValue: 6,
+      roadmapType: "Feature",
+      roadmapStatus: "In Progress",
+      moscowCategory: "Must have",
+      tshirtSize: "L",
+      roadmapPeriod: "2026-Q2",
+      kanoFunctionality: 4,
+      kanoSatisfaction: 5,
+      countries: ["United States", "United Kingdom"],
+      labels: ["Growth", "Mobile"],
+      financialImpactFramework: "clv",
+      financialImpactCurrency: "USD",
+      financialImpactValue: 2400000
+    },
+    {
+      id: "dev_proj_api_limits",
+      createdAt: now,
+      modifiedAt: now,
+      title: "Public API rate limiting",
+      description: "Protect platform stability with tiered rate limits for partners.",
+      reachValue: 45000,
+      impactValue: 2,
+      confidenceValue: 90,
+      effortValue: 3,
+      roadmapType: "Platform",
+      roadmapStatus: "Done",
+      moscowCategory: "Must have",
+      tshirtSize: "M",
+      roadmapPeriod: "2026-Q1",
+      kanoFunctionality: 3,
+      kanoSatisfaction: 3,
+      countries: ["Germany"],
+      labels: ["Platform", "Reliability"]
+    },
+    {
+      id: "dev_proj_analytics",
+      createdAt: now,
+      modifiedAt: now,
+      title: "Portfolio analytics dashboard",
+      description: "Executive view of RICE scores, MoSCoW mix, and delivery status.",
+      reachValue: 8000,
+      impactValue: 3,
+      confidenceValue: 70,
+      effortValue: 5,
+      roadmapType: "Feature",
+      roadmapStatus: "In Progress",
+      moscowCategory: "Should have",
+      tshirtSize: "L",
+      roadmapPeriod: "2026-Q2",
+      kanoFunctionality: 5,
+      kanoSatisfaction: 4,
+      countries: ["France", "Netherlands"],
+      labels: ["Insights"]
+    },
+    {
+      id: "dev_proj_dark_mode",
+      createdAt: now,
+      modifiedAt: now,
+      title: "Dark mode theme",
+      description: "Accessible dark palette across portfolio and roadmap modals.",
+      reachValue: 25000,
+      impactValue: 1,
+      confidenceValue: 85,
+      effortValue: 4,
+      roadmapType: "Feature",
+      roadmapStatus: "Not Started",
+      moscowCategory: "Should have",
+      tshirtSize: "M",
+      roadmapPeriod: "2026-Q3",
+      countries: ["Canada"],
+      labels: ["UX"]
+    },
+    {
+      id: "dev_proj_sso",
+      createdAt: now,
+      modifiedAt: now,
+      title: "Enterprise SSO (SAML)",
+      description: "Single sign-on for enterprise customers via SAML 2.0.",
+      reachValue: 1200,
+      impactValue: 3,
+      confidenceValue: 60,
+      effortValue: 8,
+      roadmapType: "Platform",
+      roadmapStatus: "On Hold",
+      moscowCategory: "Could have",
+      tshirtSize: "XL",
+      roadmapPeriod: "2026-Q4",
+      countries: ["United States"],
+      labels: ["Enterprise", "Security"]
+    },
+    {
+      id: "dev_proj_ai_recs",
+      createdAt: now,
+      modifiedAt: now,
+      title: "AI prioritisation suggestions",
+      description: "Suggest MoSCoW and RICE adjustments from historical delivery data.",
+      reachValue: 5000,
+      impactValue: 2,
+      confidenceValue: 45,
+      effortValue: 13,
+      roadmapType: "Feature",
+      roadmapStatus: "Not Started",
+      moscowCategory: "Could have",
+      tshirtSize: "XL",
+      roadmapPeriod: "2026-Q4",
+      kanoFunctionality: 5,
+      kanoSatisfaction: 5,
+      labels: ["AI", "Experiment"]
+    },
+    {
+      id: "dev_proj_perf",
+      createdAt: now,
+      modifiedAt: now,
+      title: "Board view performance pass",
+      description: "Reduce re-render cost when dragging cards on large portfolios.",
+      reachValue: 15000,
+      impactValue: 2,
+      confidenceValue: 75,
+      effortValue: 2,
+      roadmapType: "Tech debt",
+      roadmapStatus: "In Progress",
+      moscowCategory: "Must have",
+      tshirtSize: "S",
+      roadmapPeriod: "2026-Q2",
+      kanoFunctionality: 2,
+      kanoSatisfaction: 2,
+      labels: ["Performance"]
+    },
+    {
+      id: "dev_proj_legacy_export",
+      createdAt: now,
+      modifiedAt: now,
+      title: "Legacy CSV export v1",
+      description: "Deprecated export format — superseded by JSON backup.",
+      reachValue: 200,
+      impactValue: 0.5,
+      confidenceValue: 95,
+      effortValue: 1,
+      roadmapType: "Maintenance",
+      roadmapStatus: "Cancelled",
+      moscowCategory: "Won't have",
+      tshirtSize: "XS",
+      roadmapPeriod: "2025-Q4",
+      labels: ["Deprecated"]
+    }
+  ];
+
+  return {
+    profiles: [
+      {
+        id: profileId,
+        name: typeof DEMO_PROFILE_NAME !== "undefined" ? DEMO_PROFILE_NAME : "Test",
+        team: "Product",
+        createdAt: now,
+        roadmaps,
+        boardOrder: {},
+        moscowOrder: {}
+      }
+    ],
+    activeProfileId: profileId,
+    sortField: "riceScore",
+    sortDirection: "desc",
+    roadmapsView: "table",
+    tableSortByRice: true,
+    tableGroupBy: "none",
+    scrumBoardSortByRice: true,
+    moscowSortByRice: true,
+    mapMetric: "roadmaps",
+    raciMatrixDomain: "Business",
+    kanoPortfolioPanel: "positioned",
+    _storageMeta: {
+      updatedAt: now,
+      clientId: "dev_seed",
+      devSeedVersion: DEV_SEED_WORKSPACE_VERSION
+    }
+  };
+}

@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-05-31 |
+| **Last updated** | 2026-05-28 |
 | **Measurement** | Local-first — no default telemetry; manual QA + optional instrumentation |
 
 ---
@@ -11,22 +11,24 @@
 
 | Metric ID | Metric | Definition | Formula | Target |
 |-----------|--------|------------|---------|--------|
-| PM-01 | Prioritization completeness | Share of projects with valid RICE + status + MoSCoW | `valid_prioritized_projects / total_projects` | ≥ 90% |
-| PM-02 | Framework adoption | Projects using structured (non-custom) frameworks | `non_custom_framework_projects / total_projects` | ≥ 50% |
-| PM-03 | Workflow throughput | Net project activity per planning cycle | `created + updated + status_moved` | +20% QoQ |
+| PM-01 | Prioritization completeness | Share of roadmaps with valid RICE + status + MoSCoW | `valid_prioritized_roadmaps / total_roadmaps` | ≥ 90% |
+| PM-02 | Framework adoption | Roadmaps using structured (non-custom) frameworks | `non_custom_framework_roadmaps / total_roadmaps` | ≥ 50% |
+| PM-03 | Workflow throughput | Net roadmap activity per planning cycle | `created + updated + status_moved` | +20% QoQ |
 | PM-04 | Map utility | Sessions using map for review | `map_view_sessions / total_sessions` | ≥ 25% |
 | PM-05 | Export reliability | Successful exports | `successful_exports / export_attempts` | ≥ 99% |
 | PM-06 | **Activation** | New workspaces that reach “first valuable state” within 7 days | `activated_workspaces_7d / new_workspaces` | ≥ 60% |
 | PM-07 | **Engagement** | Active workspaces with ≥1 meaningful edit in 14 days | `active_workspaces_14d / total_workspaces` | ≥ 40% |
 | PM-08 | **Retention proxy** | Workspaces returning after 30 days with ≥1 session | `returning_workspaces_30d / workspaces_30d_ago` | ≥ 35% |
+| PM-11 | **RACI coverage** | Roadmaps with ≥1 RACI role populated | `roadmaps_with_raci / total_roadmaps` | ≥ 50% |
+| PM-12 | **KANO positioning** | Roadmaps with both KANO axes set (1–5) | `kano_positioned_roadmaps / total_roadmaps` | ≥ 40% |
 
 ### PM-06 Activation — operational definition
 
 A workspace is **activated** when **all** are true within 7 days of first open:
 
 1. ≥1 profile created or selected  
-2. ≥3 projects with valid RICE (finite score)  
-3. User opened ≥2 distinct views (e.g. Table + Board or MoSCoW)
+2. ≥3 roadmaps with valid RICE (finite score)  
+3. User opened ≥2 distinct views (e.g. Table + Board, MoSCoW, RACI, or KANO)
 
 `activated_workspaces_7d / new_workspaces`
 
@@ -34,15 +36,15 @@ A workspace is **activated** when **all** are true within 7 days of first open:
 
 An **active workspace** in a 14-day window has:
 
-- ≥1 project create or update, **or**
+- ≥1 roadmap create or update, **or**
 - ≥5 filter applications (any filter change that triggers `applyFilters`), **or**
 - ≥1 export attempt
 
-`active_workspaces_14d / total_workspaces` (denominator: workspaces with ≥1 project)
+`active_workspaces_14d / total_workspaces` (denominator: workspaces with ≥1 roadmap)
 
 ### PM-08 Retention proxy — operational definition
 
-Among workspaces that had ≥3 projects 30 days ago, count those with ≥1 session (any view navigation + save) in the last 7 days.
+Among workspaces that had ≥3 roadmaps 30 days ago, count those with ≥1 session (any view navigation + save) in the last 7 days.
 
 `returning_workspaces_30d / workspaces_30d_ago`
 
@@ -55,7 +57,7 @@ Among workspaces that had ≥3 projects 30 days ago, count those with ≥1 sessi
 | UX-01 | RICE explainability | Tooltip opens on RICE surfaces | `rice_tooltip_opens / table_or_board_sessions` | Upward trend |
 | UX-02 | Validation friction | Validation errors per save | `validation_errors / submit_attempts` | ≤ 0.3 |
 | UX-03 | Table scanability | Critical header/column overflow defects | QA defect count | 0 critical |
-| UX-04 | Time-to-decision | Median time open modal → saved project | median seconds (sampled) | Downward trend |
+| UX-04 | Time-to-decision | Median time open modal → saved roadmap | median seconds (sampled) | Downward trend |
 | UX-05 | Tooltip exclusivity | Overlapping tooltips | `multi_tooltip_incidents / tooltip_sessions` | 0 |
 | UX-06 | Modal guidance coverage | Fields with standardized tooltip | `fields_with_tooltip / total_modal_fields` | 100% |
 | UX-07 | Compact layout usability | Critical horizontal overflow on board/MoSCoW at compact widths | `overflow_defects / compact_qa_sessions` | 0 critical |
@@ -77,7 +79,7 @@ Among workspaces that had ≥3 projects 30 days ago, count those with ≥1 sessi
 | ENG-04 | Render responsiveness | Table rerender after filter/sort | p95 latency (ms) | ≤ 300 |
 | ENG-05 | Cloud sync success | Debounced PUT without user-visible failure | `successful_cloud_saves / cloud_save_attempts` | ≥ 99% |
 | ENG-06 | Metadata round-trip | Labels/links unchanged after save + reload (cloud) | `metadata_match_after_reload / metadata_save_attempts` | ≥ 99% |
-| PM-09 | Rich metadata usage | Projects with labels, links, or tasks | `projects_with_metadata / total_projects` | ≥ 40% |
+| PM-09 | Rich metadata usage | Roadmaps with labels, links, or tasks | `roadmaps_with_metadata / total_roadmaps` | ≥ 40% |
 
 ---
 
@@ -117,6 +119,15 @@ Among workspaces that had ≥3 projects 30 days ago, count those with ≥1 sessi
 | KR4.3 | UX-09 filter features | ≥ 30% sessions |
 | KR4.4 | Footer + FAB discoverability | Pass compact usability checklist |
 
+### Objective 6 — Portfolio governance (RACI & KANO)
+
+| Key result | Metric | Target |
+|------------|--------|--------|
+| KR6.1 | PM-11 RACI coverage | ≥ 50% |
+| KR6.2 | PM-12 KANO positioning | ≥ 40% |
+| KR6.3 | RACI view adoption | ≥ 20% of portfolio sessions open RACI tab |
+| KR6.4 | KANO view adoption | ≥ 15% of portfolio sessions open KANO tab |
+
 ### Objective 5 — Grow meaningful product usage (activation & return)
 
 | Key result | Metric | Target |
@@ -134,7 +145,7 @@ Among workspaces that had ≥3 projects 30 days ago, count those with ≥1 sessi
 |---------|---------|
 | Weekly | ENG-01, ENG-02, ENG-05 |
 | Bi-weekly | UX-01–UX-10 |
-| Monthly | PM-01–PM-08, OKR health |
+| Monthly | PM-01–PM-12, OKR health |
 | Quarterly | Target recalibration, persona validation |
 
 ---
@@ -149,11 +160,13 @@ The app does not stream telemetry by default. Collect metrics via:
 
 ### Core definitions (summary)
 
-- **Valid prioritized project (PM-01):** Valid RICE bounds, finite score, valid `projectStatus` and `moscowCategory` from enums.  
+- **Valid prioritized roadmap (PM-01):** Valid RICE bounds, finite score, valid `roadmapStatus` and `moscowCategory` from enums.  
 - **Non-custom framework (PM-02):** `financialImpactFramework` ∈ `clv`, `nps`, `risk`, `headcount`, `operational`.  
-- **Status moved (PM-03):** `projectStatus` change that moves card between board columns.  
+- **Status moved (PM-03):** `roadmapStatus` change that moves card between board columns.  
 - **Map session (PM-04):** Navigate to Map + layer renders or defined empty state.  
 - **Successful export (PM-05):** Download starts without error after Export click.  
+- **Roadmap with RACI (PM-11):** At least one of `raci.responsible`, `accountable`, `consulted`, `informed` has a non-empty entry after normalization.  
+- **KANO positioned (PM-12):** Both `kanoFunctionality` and `kanoSatisfaction` are integers 1–5.  
 
 ### UX collection notes
 

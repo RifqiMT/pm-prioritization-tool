@@ -76,10 +76,10 @@
 
   /* View toolbars — not separate rounded cards */
   html.is-compact-layout .view-toolbar,
-  html.is-compact-layout .projects-table-toolbar.view-toolbar,
+  html.is-compact-layout .roadmaps-table-toolbar.view-toolbar,
   html.is-compact-layout .scrum-board-toolbar.view-toolbar,
   html.is-compact-layout .moscow-view-header.view-toolbar,
-  html.is-compact-layout .projects-map-toolbar.view-toolbar,
+  html.is-compact-layout .roadmaps-map-toolbar.view-toolbar,
   html.is-compact-layout .workspace-panel--v2 .view-toolbar,
   html.is-compact-layout .workspace-view-toolbar.view-toolbar {
     border-radius: 0 !important;
@@ -99,9 +99,9 @@
 
   /* Table / board / map — flush inside workspace (no inner box) */
   html.is-compact-layout .workspace-panel--v2 .table-wrapper--modern,
-  html.is-compact-layout .workspace-panel--v2 .projects-map-container,
+  html.is-compact-layout .workspace-panel--v2 .roadmaps-map-container,
   html.is-compact-layout .workspace-panel--v2 .scrum-board,
-  html.is-compact-layout .workspace-panel .projects-map-container,
+  html.is-compact-layout .workspace-panel .roadmaps-map-container,
   html.is-compact-layout .workspace-panel .moscow-grid {
     border-radius: 0 !important;
     box-shadow: none !important;
@@ -115,7 +115,7 @@
   }
 
   /* Board columns — list rows, not rounded pods */
-  html.is-compact-layout .projects-view--board .scrum-board-column {
+  html.is-compact-layout .roadmaps-view--board .scrum-board-column {
     border-radius: 0 !important;
     box-shadow: none !important;
     border: none !important;
@@ -123,26 +123,26 @@
     background: var(--flow-surface) !important;
   }
 
-  html.is-compact-layout .projects-view--board .scrum-board-column:last-child {
+  html.is-compact-layout .roadmaps-view--board .scrum-board-column:last-child {
     border-bottom: none !important;
   }
 
-  html.is-compact-layout .projects-view--board .scrum-board-column-header {
+  html.is-compact-layout .roadmaps-view--board .scrum-board-column-header {
     border-radius: 0 !important;
     background: var(--flow-surface-soft) !important;
     border-bottom: 1px solid var(--flow-divider) !important;
   }
 
-  html.is-compact-layout .projects-view--board .scrum-board-card,
+  html.is-compact-layout .roadmaps-view--board .scrum-board-card,
   html.is-compact-layout .moscow-board-card,
-  html.is-compact-layout .projects-view--moscow .moscow-board-card {
+  html.is-compact-layout .roadmaps-view--moscow .moscow-board-card {
     border-radius: var(--flow-radius-control) !important;
     box-shadow: none !important;
     border: 1px solid rgba(231, 201, 120, 0.38) !important;
   }
 
   /* MoSCoW — flat stack */
-  html.is-compact-layout .projects-view--moscow .moscow-grid,
+  html.is-compact-layout .roadmaps-view--moscow .moscow-grid,
   html.is-compact-layout .view-in-fullscreen-host .moscow-grid {
     border-radius: 0 !important;
     box-shadow: none !important;
@@ -240,10 +240,10 @@
   }
 
   html.is-desktop-layout .workspace-panel--v2 .view-toolbar,
-  html.is-desktop-layout .workspace-panel--v2 .projects-table-toolbar.view-toolbar,
+  html.is-desktop-layout .workspace-panel--v2 .roadmaps-table-toolbar.view-toolbar,
   html.is-desktop-layout .workspace-panel--v2 .scrum-board-toolbar.view-toolbar,
   html.is-desktop-layout .workspace-panel--v2 .moscow-view-header.view-toolbar,
-  html.is-desktop-layout .workspace-panel--v2 .projects-map-toolbar.view-toolbar,
+  html.is-desktop-layout .workspace-panel--v2 .roadmaps-map-toolbar.view-toolbar,
   html.is-desktop-layout .view-toolbar {
     border-radius: 0 !important;
     box-shadow: none !important;
@@ -261,7 +261,7 @@
   }
 
   html.is-desktop-layout .workspace-panel--v2 .table-wrapper--modern,
-  html.is-desktop-layout .workspace-panel--v2 .projects-map-container,
+  html.is-desktop-layout .workspace-panel--v2 .roadmaps-map-container,
   html.is-desktop-layout .workspace-panel--v2 .scrum-board,
   html.is-desktop-layout .workspace-panel .moscow-grid {
     border-radius: 0 !important;
@@ -270,7 +270,7 @@
     border-top: 1px solid var(--flow-divider) !important;
   }
 
-  html.is-desktop-layout .projects-view--board .scrum-board-column,
+  html.is-desktop-layout .roadmaps-view--board .scrum-board-column,
   html.is-desktop-layout .moscow-board-column.moscow-grid-cell {
     border-radius: 0 !important;
     box-shadow: none !important;
@@ -334,15 +334,15 @@
 }
 
 .view-toolbar,
-.projects-table-toolbar.view-toolbar,
+.roadmaps-table-toolbar.view-toolbar,
 .scrum-board-toolbar.view-toolbar,
 .moscow-view-header.view-toolbar,
-.projects-map-toolbar.view-toolbar {
+.roadmaps-map-toolbar.view-toolbar {
   background-image: none !important;
 }
 
 .moscow-grid,
-.projects-view--moscow .moscow-grid {
+.roadmaps-view--moscow .moscow-grid {
   box-shadow: none !important;
 }
 
@@ -383,19 +383,19 @@
 }
 
 /* ── Map view: Leaflet fills shell; no dead space below map ── */
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage:has(#projectsMapView[aria-hidden="false"]) {
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage:has(#roadmapsMapView[aria-hidden="false"]) {
   flex: 0 0 auto !important;
   height: auto !important;
   min-height: 0 !important;
   align-self: start !important;
 }
 
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .workspace-panel--v2:has(#projectsMapView[aria-hidden="false"]) {
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .workspace-panel--v2:has(#roadmapsMapView[aria-hidden="false"]) {
   min-height: 0 !important;
   height: auto !important;
 }
 
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-view--map {
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--map {
   flex: 0 0 auto !important;
   min-height: 0 !important;
   height: auto !important;
@@ -404,7 +404,7 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-view--map 
   gap: 0.35rem !important;
 }
 
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-map-container {
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-map-container {
   position: relative !important;
   display: block !important;
   flex: 0 0 auto !important;
@@ -416,7 +416,7 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-map-contai
   overflow: hidden !important;
 }
 
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-map-container .leaflet-container {
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-map-container .leaflet-container {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;

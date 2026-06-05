@@ -8,7 +8,7 @@
 |---|---|
 | **Production** | [pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app) |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui190` (cache-bust all CSS/JS) |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui192` (cache-bust all CSS/JS) |
 | **Docs hub** | [docs/README.md](docs/README.md) |
 
 > Do not use `pm-prioritization-tool.vercel.app` — that hostname serves a legacy React app. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
@@ -17,7 +17,7 @@
 
 ## Product overview
 
-The Product Management Prioritization Tool helps product teams **capture initiatives**, **score priority**, **estimate value**, and **communicate roadmaps** in the browser. Each **profile** is an isolated portfolio (team, product, or owner). Projects are scored with **RICE**, classified with **MoSCoW**, and optionally valued with **six financial frameworks**. Data can remain **local** (browser cache + export) or sync to **MongoDB** on Vercel when configured.
+The Product Management Prioritization Tool helps product teams **capture initiatives**, **score priority**, **estimate value**, and **communicate roadmaps** in the browser. Each **profile** is an isolated portfolio (team, product, or owner). Roadmaps are scored with **RICE**, classified with **MoSCoW**, and optionally valued with **six financial frameworks**. Data can remain **local** (browser cache + export) or sync to **MongoDB** on Vercel when configured.
 
 ### Core capabilities
 
@@ -27,7 +27,7 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 | **RICE** | `(Reach × Impact × Confidence) ÷ Effort` with explainable tooltips |
 | **MoSCoW** | Must Have / Should Have / Could Have / Won't Have quadrants |
 | **Financial frameworks** | Custom, CLV, NPS, Risk, Headcount, Operational |
-| **Views** | Table, Scrum board, MoSCoW board, world map (Leaflet) |
+| **Views** | Table, Scrum board, MoSCoW, world map (Leaflet), RACI matrix, KANO portfolio matrix |
 | **Filters** | Search, quick filters, advanced filters (including labels and links) |
 | **Portability** | JSON full backup + CSV export; merge import |
 | **Responsive UI** | Desktop (>1400px); unified phone/tablet UI (≤1400px) |
@@ -54,23 +54,23 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 - Session unlock in `sessionStorage` (cleared on tab close / refresh)  
 - **Demo profile** (`Test`) is read-only when active  
 
-### Projects
+### Roadmaps
 
 - Full CRUD via modal (create, edit, read-only view) with section navigation  
-- **Rich-text descriptions** on project and RICE fields (sanitized HTML; plain text in CSV export)  
+- **Rich-text descriptions** on roadmap and RICE fields (sanitized HTML; plain text in CSV export)  
 - RICE validation and live score calculation  
-- Metadata: type, status, MoSCoW, quarter (`YYYY-Qn`), countries, t-shirt size, **labels**, **links**, **tasks** (name + status)  
+- Metadata: type, status, MoSCoW, quarter (`YYYY-Qn`), countries, t-shirt size, **labels**, **links**, **tasks**, **RACI** assignments, **KANO** scores (functionality × satisfaction)  
 - Six financial frameworks with computed impact  
 - Bulk delete in table (toolbar on desktop; **floating selection bar** on compact)  
 - **Bulk duplicate / move** across profiles when privileged workspace mode is active (see [docs/GUARDRAILS.md](docs/GUARDRAILS.md) §7)  
-- Stable **project ID** in modal footer metadata  
+- Stable **roadmap ID** in modal footer metadata  
 
 ### Filters
 
 | Tier | Controls |
 |------|----------|
 | **Search** | Title (with autocomplete), label (with autocomplete) |
-| **Quick** | Project type, countries (multi + EU shortcut), project period |
+| **Quick** | Roadmap type, countries (multi + EU shortcut), roadmap period |
 | **Advanced** | Impact, effort, currency, framework, status, t-shirt, MoSCoW, links (any / with / without), labels (any / with / without) |
 
 Active filter count appears in the portfolio filters badge. Reset restores defaults.
@@ -79,10 +79,12 @@ Active filter count appears in the portfolio filters badge. Reset restores defau
 
 | View | Desktop (>1400px) | Compact (≤1400px) |
 |------|-------------------|---------------------|
-| **Table** | Sortable grid; semantic column layout; bulk delete in toolbar | Card list with grouping; FAB for new project; selection bar for bulk delete |
+| **Table** | Sortable grid; semantic column layout; bulk delete in toolbar | Card list with grouping; FAB for new roadmap; selection bar for bulk delete |
 | **Board** | Horizontal status columns; drag-and-drop | Single-column stack per status; **Move to** dropdown; owner stripe when workspace-wide mode active (see [GUARDRAILS.md](docs/GUARDRAILS.md) §7) |
 | **MoSCoW** | 2×2 quadrant grid; full category names in headers | 2×2 **Jump to quadrant** nav + single-column quadrants |
 | **Map** | Leaflet choropleth | Metric pills: count, RICE sum/avg, financial EUR sum/avg |
+| **RACI** | 5-column matrix (Responsible, Accountable, Consulted, Informed) | Business/Tech perspective toggle; compact card-per-roadmap layout |
+| **KANO** | Portfolio matrix (functionality × satisfaction) | Positioned / Not positioned panels; drag tiles on desktop; score in roadmap modal |
 | **Fullscreen** | Per-view expand | Same compact layouts inside fullscreen host |
 
 ### Data transfer
@@ -124,10 +126,11 @@ pm-prioritization-tool/
 │   ├── constants.js        # Enums, tooltips, APP_ASSET_VERSION
 │   ├── rice.js             # RICE formula + validation
 │   ├── utils.js            # Formatting, CSV, IDs, flags
+│   ├── dev-seed-workspace.js  # Localhost sample workspace (gated)
 │   └── modules/            # storage, profile-security, exchange-rates, fullscreen, overlay-manager,
 │                           # description-format, rich-text-editor, board-drag, board-card-interaction
 ├── api/                    # health.js, config.js, state.js + _lib (Vercel)
-├── scripts/                # verify-deployment, test:storage, test:metadata
+├── scripts/                # verify-deployment, test:storage, test:metadata, test:persistence
 ├── docs/                   # Product documentation suite
 ├── vercel.json
 └── package.json
@@ -149,7 +152,7 @@ pm-prioritization-tool/
 | `moscow-compact.css` | MoSCoW compact layout |
 | `board-compact.css` | Board compact layout |
 | `table-compact.css` | Table compact toolbar |
-| `project-actions-modern.css` | Card/table action buttons |
+| `roadmap-actions-modern.css` | Card/table action buttons |
 | `fullscreen-modern.css` | Fullscreen host |
 | `fullscreen-compact.css` | Fullscreen + compact |
 | `views-density.css` | Density helpers |
@@ -160,11 +163,12 @@ pm-prioritization-tool/
 | `table-compact-cards.css` | Compact table card list |
 | `super-admin-modern.css` | Workspace-wide mode UI (see GUARDRAILS §7) |
 | `rich-text-editor.css` | Rich-text toolbar and fields |
-| `project-details-tooltip.css` | Description tooltips on cards |
+| `roadmap-details-tooltip.css` | Description tooltips on cards |
 | `map-tooltip-modern.css` | Map country tooltips |
 | `board-drag.css` / `board-card-interaction.css` | Board interactions |
 | `filters-compact-bar.css` | Compact filters drawer bar |
 | `view-toolbars-compact-row.css` | Single-row compact toolbars |
+| `portfolio-kano-modern.css` | KANO portfolio matrix and cards |
 | `app-footer.css` | Site footer |
 
 ### Layout breakpoint
@@ -197,8 +201,8 @@ npm run verify:production
 ### First-use checklist
 
 1. Create a **profile** (optionally set a password).  
-2. **Add projects** with RICE and optional financial framework.  
-3. Use **Table / Board / MoSCoW / Map** to plan and present.  
+2. **Add roadmaps** with RICE and optional financial framework.  
+3. Use **Table / Board / MoSCoW / Map / RACI / KANO** to plan and present.  
 4. **Export JSON** regularly as backup (especially when using cloud sync).  
 
 ---
@@ -252,4 +256,4 @@ UNLICENSED (private). See `package.json`.
 - GitHub: [RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool)  
 - Article: [Effort–impact confusion to clear-cut priorities](https://rifqi-tjahyono.com/%f0%9f%93%8a-effort-impact-confusion-to-clear-cut-priorities-replace-tab-hopping-with-visual-roadmap-sanity-%f0%9f%a7%ad%e2%9c%a8/)
 
-**Documentation last comprehensively audited:** 2026-05-31 (baseline `20260528-ui190`).
+**Documentation last comprehensively audited:** 2026-05-28 (baseline `20260528-ui192`).

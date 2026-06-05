@@ -1,7 +1,7 @@
 /**
  * Product Management Prioritization Tool - Application constants
  * Central place for storage key, currency list, country list, and ISO country codes.
- * Used by the app for dropdowns, display (e.g. country codes in project list), and persistence.
+ * Used by the app for dropdowns, display (e.g. country codes in roadmap list), and persistence.
  *
  * NOTE: This file is loaded as a classic <script>, not as an ES module.
  * All top-level consts become globals that the rest of the app can read.
@@ -9,7 +9,7 @@
 const STORAGE_KEY = "rice_prioritizer_v1";
 
 /** Bump when shipping client changes so browsers fetch fresh JS (Vercel caches /src with long TTL). */
-const APP_ASSET_VERSION = "20260528-ui190";
+const APP_ASSET_VERSION = "20260528-ui192";
 
 /**
  * Viewports at or below this width use the unified phone/tablet UI
@@ -36,7 +36,7 @@ const PRODUCTION_APP_ORIGIN = "https://pm-prioritization-tool-six.vercel.app";
 /** Hostnames that serve a different app; users should open PRODUCTION_APP_ORIGIN instead. */
 const LEGACY_WRONG_HOSTNAMES = ["pm-prioritization-tool.vercel.app"];
 
-const projectStatusList = [
+const roadmapStatusList = [
   "Not Started",
   "In Progress",
   "On Hold",
@@ -45,10 +45,10 @@ const projectStatusList = [
 ];
 
 /**
- * Project status display: icon and tooltip for the table column (same style as project type).
- * Keys must match projectStatusList values.
+ * Roadmap status display: icon and tooltip for the table column (same style as roadmap type).
+ * Keys must match roadmapStatusList values.
  */
-const projectStatusIcons = {
+const roadmapStatusIcons = {
   "Not Started": {
     tooltipTitle: "Not Started",
     tooltipBody: "Work has not begun yet.",
@@ -80,7 +80,7 @@ const tshirtSizeList = ["XS", "S", "M", "L", "XL"];
 
 /**
  * MOSCOW prioritization: Must have, Should have, Could have, Won't have (this time).
- * Used in the MOSCOW view and project metadata.
+ * Used in the MOSCOW view and roadmap metadata.
  */
 const moscowList = [
   "Must have",
@@ -89,15 +89,15 @@ const moscowList = [
   "Won't have"
 ];
 
-/** Table view (compact card list): group projects by attribute. */
+/** Table view (compact card list): group roadmaps by attribute. */
 const TABLE_GROUP_BY_OPTIONS = [
   { id: "none", label: "No grouping" },
   { id: "ownerProfileName", label: "Owner profile" },
-  { id: "projectStatus", label: "Status" },
+  { id: "roadmapStatus", label: "Status" },
   { id: "moscowCategory", label: "MoSCoW" },
   { id: "tshirtSize", label: "T-shirt size" },
   { id: "financialImpactFramework", label: "Financial framework" },
-  { id: "projectType", label: "Project type" },
+  { id: "roadmapType", label: "Roadmap type" },
   { id: "financialImpactCurrency", label: "Currency" }
 ];
 
@@ -139,7 +139,7 @@ const moscowDisplayNames = {
 };
 
 /**
- * KANO model axes for the project modal matrix (5 levels each).
+ * KANO model axes for the roadmap modal matrix (5 levels each).
  * X-axis: functionality depth; Y-axis: customer satisfaction response.
  */
 const kanoFunctionalityLevels = [
@@ -158,37 +158,67 @@ const kanoSatisfactionLevels = [
   { level: 5, label: "Delighted", shortLabel: "V. high", description: "Strong positive emotional response." }
 ];
 
-/** Legend entries for the project modal KANO matrix. */
+/** Legend entries for the roadmap modal KANO matrix. */
 const kanoCategoryLegend = [
   {
     id: "attractive",
     label: "Attractive",
     hint: "Delighter",
-    description: "Low functionality, high satisfaction."
+    compactLabel: "Delight",
+    categoryCode: "A",
+    hintCode: "D",
+    description:
+      "This position suggests a delighter. Users are highly satisfied even though functionality is still limited, which can signal unexpected value or a feature that stands out.",
+    detail:
+      "Delighters are features people do not expect but enjoy when they appear. They are usually not required for the product to work, yet they create strong positive feelings and can help differentiate your offer. Use this zone to identify ideas worth promoting when you want to surprise customers and build emotional loyalty."
   },
   {
     id: "one-dimensional",
     label: "One-dimensional",
     hint: "Performance",
-    description: "More functionality drives more satisfaction."
+    compactLabel: "Perform",
+    categoryCode: "O",
+    hintCode: "P",
+    description:
+      "This position reflects a performance driver. As functionality improves, satisfaction tends to rise as well, so users likely judge this area on how capably the product delivers.",
+    detail:
+      "One-dimensional features behave like performance drivers. The more you deliver, the more satisfied users typically become, and falling short is often noticed quickly. Prioritize steady, visible improvement in this zone when customers compare you on quality, speed, or depth of capability."
   },
   {
     id: "must-be",
     label: "Must-be",
     hint: "Baseline",
-    description: "Expected capability at this level."
+    compactLabel: "Baseline",
+    categoryCode: "M",
+    hintCode: "B",
+    description:
+      "This position reflects baseline expectations. Customers assume this level of capability should exist; meeting it mainly prevents frustration rather than creating excitement.",
+    detail:
+      "Must-be features are table stakes. People expect them, notice immediately when they are missing, and rarely celebrate when they are present. Focus on reliable delivery here to avoid dissatisfaction, reduce support burden, and protect trust before investing in standout enhancements elsewhere."
   },
   {
     id: "reverse",
     label: "Reverse",
     hint: "Simplify",
-    description: "High functionality, low satisfaction."
+    compactLabel: "Simplify",
+    categoryCode: "R",
+    hintCode: "S",
+    description:
+      "This position suggests a simplify opportunity. Functionality is relatively high while satisfaction is low, which can mean the experience feels too complex or unnecessary.",
+    detail:
+      "Reverse features can backfire. Adding more capability may confuse, frustrate, or feel redundant, so satisfaction can fall even as functionality grows. Treat this zone as a signal to streamline workflows, remove clutter, or reconsider whether the feature still earns its place in the product."
   },
   {
     id: "indifferent",
     label: "Indifferent",
     hint: "Neutral",
-    description: "Low impact on satisfaction."
+    compactLabel: "Neutral",
+    categoryCode: "I",
+    hintCode: "N",
+    description:
+      "This position is largely neutral. At this functionality level, satisfaction is barely affected, so users may not feel a meaningful difference either way.",
+    detail:
+      "Indifferent features neither delight nor frustrate most users. They may still support internal or operational needs, but they rarely change how customers feel about the product. Deprioritize extra polish here unless the feature clearly supports a strategic goal, compliance requirement, or dependency for something more important."
   }
 ];
 
@@ -203,48 +233,53 @@ function getKanoCategoryFromPosition(functionality, satisfaction) {
     return {
       id: "attractive",
       label: "Attractive",
-      description: "Low functionality yet high satisfaction — a potential delighter."
+      description:
+        "Your selection sits in the delighter zone. Satisfaction is high relative to functionality, which often marks an unexpected strength or a feature that delivers more emotional value than its scope suggests."
     };
   }
   if (f >= 4 && s >= 4) {
     return {
       id: "one-dimensional",
       label: "One-dimensional",
-      description: "Higher functionality correlates with higher satisfaction."
+      description:
+        "Your selection sits in the performance zone. Stronger functionality aligns with stronger satisfaction, so users are likely to reward further improvement in this area."
     };
   }
   if (f >= 3 && s >= 3 && s <= 4) {
     return {
       id: "must-be",
       label: "Must-be",
-      description: "Expected capability; satisfaction tracks baseline delivery."
+      description:
+        "Your selection sits in the baseline zone. Customers expect this level of capability, so reliable delivery here mainly prevents disappointment rather than creating delight."
     };
   }
   if (f >= 4 && s <= 2) {
     return {
       id: "reverse",
       label: "Reverse",
-      description: "High functionality with low satisfaction — may need simplification."
+      description:
+        "Your selection sits in the simplify zone. Functionality is high while satisfaction is low, which may indicate over-engineering, friction, or features that should be streamlined."
     };
   }
   return {
     id: "indifferent",
     label: "Indifferent",
-    description: "Low impact on satisfaction at this functionality level."
+    description:
+      "Your selection sits in the neutral zone. At this functionality level, satisfaction is largely unchanged, so additional investment here is unlikely to shift how users feel."
   };
 }
 
 /**
- * Project period tooltip for the table column (same style as project type / MOSCOW).
+ * Roadmap period tooltip for the table column (same style as roadmap type / MOSCOW).
  * tooltipTitle: column label; tooltipBodyDescription: static description. Interpretation (e.g. "2026-Q1 = Jan–Mar 2026") is appended in app.js when a value is present.
  */
-const projectPeriodTooltip = {
-  tooltipTitle: "Project period",
-  tooltipBodyDescription: "Planning quarter for this project (YYYY-Qn). Used for filtering and roadmap views.\n\nQ1 = Jan - Mar\nQ2 = Apr - Jun\nQ3 = Jul - Sep\nQ4 = Oct - Dec"
+const roadmapPeriodTooltip = {
+  tooltipTitle: "Roadmap period",
+  tooltipBodyDescription: "Planning quarter for this roadmap (YYYY-Qn). Used for filtering and roadmap views.\n\nQ1 = Jan - Mar\nQ2 = Apr - Jun\nQ3 = Jul - Sep\nQ4 = Oct - Dec"
 };
 
 /**
- * T-shirt size tooltips for the table column (same style as project type/status).
+ * T-shirt size tooltips for the table column (same style as roadmap type/status).
  * Duration in sprints aligns with the practical guide for modern product teams
  * (see https://rifqi-tjahyono.com/story-points-demystified-a-practical-guide-for-modern-product-teams/).
  * T-shirt sizing is used for high-level estimation (e.g. discovery, roadmap, epics).
@@ -273,11 +308,11 @@ const tshirtSizeTooltips = {
 };
 
 /**
- * Project type display: icon (SVG string) and tooltip for the table column.
- * Keys must match the project type values used in the app.
+ * Roadmap type display: icon (SVG string) and tooltip for the table column.
+ * Keys must match the roadmap type values used in the app.
  * tooltipTitle: short label; tooltipBody: brief, human-friendly description (use \n for line breaks).
  */
-const projectTypeIcons = {
+const roadmapTypeIcons = {
   "New Product": {
     tooltipTitle: "New Product",
     tooltipBody: "Brand new product or feature for users or the market.",
@@ -321,7 +356,7 @@ const WORKSPACE_PERSISTED_STATE_KEYS = [
   "activeProfileId",
   "sortField",
   "sortDirection",
-  "projectsView",
+  "roadmapsView",
   "tableSortByRice",
   "tableGroupBy",
   "scrumBoardSortByRice",
@@ -329,6 +364,7 @@ const WORKSPACE_PERSISTED_STATE_KEYS = [
   "moscowSortByRice",
   "mapMetric",
   "raciMatrixDomain",
+  "kanoPortfolioPanel",
   "exchangeRatesToEUR",
   "exchangeRatesDate",
   "exchangeRatesLastSource",

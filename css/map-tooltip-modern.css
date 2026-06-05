@@ -1,6 +1,6 @@
 /**
  * Map view — country hover tooltips (Leaflet)
- * Warm workspace palette; scrollable project list; responsive width.
+ * Warm workspace palette; scrollable roadmap list; responsive width.
  */
 
 .leaflet-tooltip.map-country-tooltip-host {
@@ -355,7 +355,7 @@
   color: var(--map-tip-gold);
 }
 
-.map-country-tooltip__projects {
+.map-country-tooltip__roadmaps {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -368,7 +368,7 @@
   gap: 0.35rem;
 }
 
-.map-country-tooltip__project {
+.map-country-tooltip__roadmap {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -378,7 +378,7 @@
   border: 1px solid rgba(231, 201, 120, 0.35);
 }
 
-.map-country-tooltip__project-title {
+.map-country-tooltip__roadmap-title {
   font-weight: 600;
   font-size: 0.8rem;
   color: var(--map-tip-text);
@@ -386,7 +386,7 @@
   word-break: break-word;
 }
 
-.map-country-tooltip__project-chips {
+.map-country-tooltip__roadmap-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
@@ -470,7 +470,7 @@
     font-size: 1.25rem;
   }
 
-  .map-country-tooltip__projects {
+  .map-country-tooltip__roadmaps {
     max-height: min(9.5rem, 32vh);
   }
 }

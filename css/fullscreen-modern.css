@@ -183,7 +183,7 @@ html.pseudo-view-fullscreen .view-fullscreen-host:not([hidden]) {
   background: #fff;
 }
 
-.view-fullscreen-stage > .projects-view.view-in-fullscreen-host {
+.view-fullscreen-stage > .roadmaps-view.view-in-fullscreen-host {
   flex: 1 1 auto;
   min-height: 0;
   width: 100% !important;
@@ -208,7 +208,7 @@ html.pseudo-view-fullscreen .view-fullscreen-host:not([hidden]) {
 }
 
 .view-in-fullscreen-host .view-fullscreen-btn,
-.view-in-fullscreen-host .projects-map-fullscreen-btn {
+.view-in-fullscreen-host .roadmaps-map-fullscreen-btn {
   display: none !important;
 }
 
@@ -248,7 +248,7 @@ html:not(.is-compact-layout) .view-in-fullscreen-host .moscow-grid {
   overflow: auto;
 }
 
-.view-in-fullscreen-host .projects-map-container {
+.view-in-fullscreen-host .roadmaps-map-container {
   flex: 1 1 auto;
   min-height: 0 !important;
   max-height: none !important;
@@ -256,7 +256,7 @@ html:not(.is-compact-layout) .view-in-fullscreen-host .moscow-grid {
   overflow: hidden;
 }
 
-.view-in-fullscreen-host .projects-map-legend {
+.view-in-fullscreen-host .roadmaps-map-legend {
   flex: 0 0 auto;
 }
 
@@ -286,7 +286,7 @@ html:not(.is-compact-layout) .view-in-fullscreen-host .moscow-grid {
   padding: 0.45rem 1rem;
 }
 
-.view-fullscreen-host--desktop .view-fullscreen-stage > .projects-view.view-in-fullscreen-host {
+.view-fullscreen-host--desktop .view-fullscreen-stage > .roadmaps-view.view-in-fullscreen-host {
   padding: 0.85rem 1.35rem 1.15rem !important;
 }
 
@@ -318,8 +318,9 @@ html:not(.is-compact-layout) .view-in-fullscreen-host .moscow-grid {
   grid-row: 1;
   width: 100%;
   min-width: 0;
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.18rem;
 }
 
 .view-fullscreen-host--compact .view-fullscreen-actions {
@@ -336,7 +337,7 @@ html:not(.is-compact-layout) .view-in-fullscreen-host .moscow-grid {
   font-size: 0.68rem;
 }
 
-.view-fullscreen-host--compact .view-fullscreen-stage > .projects-view.view-in-fullscreen-host {
+.view-fullscreen-host--compact .view-fullscreen-stage > .roadmaps-view.view-in-fullscreen-host {
   padding: 0.45rem 0.6rem 0.65rem !important;
 }
 

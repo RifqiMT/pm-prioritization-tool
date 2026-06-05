@@ -21,24 +21,24 @@
 }
 
 /* ── View stage containers ────────────────────────────────── */
-.workspace-panel .projects-view,
+.workspace-panel .roadmaps-view,
 .workspace-panel--v2 .portfolio-view,
-.workspace-panel--v2 .projects-view,
-.workspace-panel .projects-view--moscow,
-.workspace-panel .projects-view--map,
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view,
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--table,
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--board,
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--moscow,
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .projects-view--map {
+.workspace-panel--v2 .roadmaps-view,
+.workspace-panel .roadmaps-view--moscow,
+.workspace-panel .roadmaps-view--map,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--table,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--board,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--moscow,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--map {
   padding: 0 0.45rem 0.45rem !important;
   gap: 0.35rem !important;
 }
 
 /* ── View toolbars (Table / Board / MoSCoW / Map) ─────────── */
 .view-toolbar,
-.projects-table-toolbar.view-toolbar,
-.projects-map-toolbar.view-toolbar,
+.roadmaps-table-toolbar.view-toolbar,
+.roadmaps-map-toolbar.view-toolbar,
 .scrum-board-toolbar.view-toolbar,
 .moscow-view-header.view-toolbar {
   padding: 0.4rem 0.5rem !important;
@@ -67,7 +67,7 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .pr
   margin-bottom: 0.3rem !important;
 }
 
-.workspace-panel .projects-map-toolbar {
+.workspace-panel .roadmaps-map-toolbar {
   padding: 0.3rem 0 0.2rem !important;
 }
 
@@ -90,25 +90,25 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .pr
 }
 
 /* ── Board ────────────────────────────────────────────────── */
-.projects-view--board .scrum-board {
+.roadmaps-view--board .scrum-board {
   padding: 0.15rem 0 0.3rem !important;
   gap: 0.5rem !important;
 }
 
-.projects-view--board .scrum-board-column-header {
+.roadmaps-view--board .scrum-board-column-header {
   padding: 0.45rem 0.5rem !important;
 }
 
-.projects-view--board .scrum-board-column-cards {
+.roadmaps-view--board .scrum-board-column-cards {
   padding: 0.3rem !important;
   gap: 0.35rem !important;
 }
 
-.projects-view--board .scrum-board-card {
+.roadmaps-view--board .scrum-board-card {
   padding: 0.45rem 0.5rem !important;
 }
 
-.projects-view--board .scrum-board-empty {
+.roadmaps-view--board .scrum-board-empty {
   padding: 0.75rem 0.5rem !important;
 }
 
@@ -142,13 +142,13 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .pr
 }
 
 /* ── Map ──────────────────────────────────────────────────── */
-.projects-map-legend {
+.roadmaps-map-legend {
   margin-bottom: 0.3rem !important;
   font-size: 0.8rem !important;
 }
 
-.workspace-panel--v2 .projects-map-container,
-.workspace-panel .projects-map-container {
+.workspace-panel--v2 .roadmaps-map-container,
+.workspace-panel .roadmaps-map-container {
   position: relative !important;
   flex: 0 0 auto !important;
   width: 100% !important;
@@ -158,8 +158,8 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .pr
   max-height: min(42vh, 480px) !important;
 }
 
-.workspace-panel--v2 .projects-map-container .leaflet-container,
-.workspace-panel .projects-map-container .leaflet-container {
+.workspace-panel--v2 .roadmaps-map-container .leaflet-container,
+.workspace-panel .roadmaps-map-container .leaflet-container {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
@@ -192,11 +192,11 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .pr
   }
 
   html.is-compact-layout .workspace-panel--v2 .portfolio-view,
-  html.is-compact-layout .workspace-panel--v2 .projects-view,
-  html.is-compact-layout .workspace-panel .projects-view--table,
-  html.is-compact-layout .workspace-panel .projects-view--board,
-  html.is-compact-layout .workspace-panel .projects-view--moscow,
-  html.is-compact-layout .workspace-panel .projects-view--map {
+  html.is-compact-layout .workspace-panel--v2 .roadmaps-view,
+  html.is-compact-layout .workspace-panel .roadmaps-view--table,
+  html.is-compact-layout .workspace-panel .roadmaps-view--board,
+  html.is-compact-layout .workspace-panel .roadmaps-view--moscow,
+  html.is-compact-layout .workspace-panel .roadmaps-view--map {
     padding: 0 0.25rem 0.3rem !important;
     gap: 0.25rem !important;
   }
@@ -225,11 +225,11 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .pr
     padding: 0.34rem 0.28rem !important;
   }
 
-  html.is-compact-layout .projects-view--board .scrum-board-column-header {
+  html.is-compact-layout .roadmaps-view--board .scrum-board-column-header {
     padding: 0.38rem 0.42rem !important;
   }
 
-  html.is-compact-layout .projects-view--board .scrum-board-column-cards {
+  html.is-compact-layout .roadmaps-view--board .scrum-board-column-cards {
     padding: var(--pcard-space-3, 0.75rem) !important;
     gap: var(--pcard-space-3, 0.75rem) !important;
   }
@@ -239,7 +239,7 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .pr
     gap: var(--pcard-space-3, 0.75rem) !important;
   }
 
-  html.is-compact-layout .projects-map-legend {
+  html.is-compact-layout .roadmaps-map-legend {
     margin-bottom: 0.2rem !important;
   }
 

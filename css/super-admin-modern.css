@@ -90,10 +90,10 @@ html.is-super-admin-mode {
 
 /* ── Header badge & toggle refresh ─────────────────────── */
 html.is-super-admin-mode .portfolio-super-admin-badge {
-  color: var(--sa-accent-strong);
-  background: var(--sa-accent-soft);
-  border-color: var(--sa-accent-muted);
-  box-shadow: 0 1px 4px rgba(79, 70, 229, 0.08);
+  color: #5b21b6;
+  background: rgba(237, 233, 254, 0.95);
+  border-color: rgba(139, 92, 246, 0.45);
+  box-shadow: none;
 }
 
 html.is-super-admin-mode .super-admin-toggle {
@@ -111,7 +111,7 @@ html.is-super-admin-mode .super-admin-toggle__label {
 }
 
 /* ── Owner identity chip (shared) ────────────────────────── */
-.project-owner-identity {
+.roadmap-owner-identity {
   --owner-avatar-size: 1.65rem;
   display: inline-flex;
   align-items: center;
@@ -120,7 +120,7 @@ html.is-super-admin-mode .super-admin-toggle__label {
   max-width: 100%;
 }
 
-.project-owner-identity__avatar {
+.roadmap-owner-identity__avatar {
   flex: 0 0 auto;
   width: var(--owner-avatar-size);
   height: var(--owner-avatar-size);
@@ -135,14 +135,14 @@ html.is-super-admin-mode .super-admin-toggle__label {
   box-shadow: 0 2px 6px rgba(30, 41, 59, 0.18);
 }
 
-.project-owner-identity__copy {
+.roadmap-owner-identity__copy {
   display: flex;
   flex-direction: column;
   gap: 0.05rem;
   min-width: 0;
 }
 
-.project-owner-identity__name {
+.roadmap-owner-identity__name {
   font-size: 0.74rem;
   font-weight: 700;
   line-height: 1.2;
@@ -152,7 +152,7 @@ html.is-super-admin-mode .super-admin-toggle__label {
   text-overflow: ellipsis;
 }
 
-.project-owner-identity__team {
+.roadmap-owner-identity__team {
   font-size: 0.64rem;
   font-weight: 600;
   line-height: 1.2;
@@ -162,7 +162,7 @@ html.is-super-admin-mode .super-admin-toggle__label {
   text-overflow: ellipsis;
 }
 
-.project-owner-identity__scope {
+.roadmap-owner-identity__scope {
   flex: 0 0 auto;
   margin-left: 0.15rem;
   padding: 0.1rem 0.38rem;
@@ -176,43 +176,43 @@ html.is-super-admin-mode .super-admin-toggle__label {
   border: 1px solid #ddd6fe;
 }
 
-.project-owner-identity__empty {
+.roadmap-owner-identity__empty {
   color: #94a3b8;
   font-size: 0.85rem;
 }
 
 /* Table cell variant */
-.project-owner-identity--table {
+.roadmap-owner-identity--table {
   width: 100%;
   padding: 0.2rem 0.15rem;
   justify-content: flex-start;
 }
 
-html.is-super-admin-mode .table-wrapper.projects-table-shell .projects-table-col--owner {
+html.is-super-admin-mode .table-wrapper.roadmaps-table-shell .roadmaps-table-col--owner {
   width: 132px !important;
   min-width: 132px !important;
   max-width: 132px !important;
 }
 
-html.is-super-admin-mode .table-wrapper--modern.projects-table-shell thead .projects-table-col--owner {
+html.is-super-admin-mode .table-wrapper--modern.roadmaps-table-shell thead .roadmaps-table-col--owner {
   background: linear-gradient(180deg, #4338ca 0%, #4f46e5 100%) !important;
 }
 
-html.is-super-admin-mode .table-wrapper--modern.projects-table-shell tbody .projects-table-col--owner {
+html.is-super-admin-mode .table-wrapper--modern.roadmaps-table-shell tbody .roadmaps-table-col--owner {
   background: rgba(238, 242, 255, 0.35) !important;
   border-left: 1px solid rgba(199, 210, 254, 0.55) !important;
   border-right: 1px solid rgba(199, 210, 254, 0.35) !important;
 }
 
-html.is-super-admin-mode .table-wrapper--modern.projects-table-shell tbody tr:hover .projects-table-col--owner {
+html.is-super-admin-mode .table-wrapper--modern.roadmaps-table-shell tbody tr:hover .roadmaps-table-col--owner {
   background: rgba(224, 231, 255, 0.55) !important;
 }
 
-html.is-super-admin-mode .table-wrapper--modern.projects-table-shell tbody tr.projects-table-row--external-profile td {
+html.is-super-admin-mode .table-wrapper--modern.roadmaps-table-shell tbody tr.roadmaps-table-row--external-profile td {
   box-shadow: inset 3px 0 0 rgba(99, 102, 241, 0.55);
 }
 
-html.is-super-admin-mode .table-wrapper--modern.projects-table-shell table.projects-data-table.projects-data-table--owner-col {
+html.is-super-admin-mode .table-wrapper--modern.roadmaps-table-shell table.roadmaps-data-table.roadmaps-data-table--owner-col {
   min-width: 1448px !important;
 }
 
@@ -233,7 +233,7 @@ html.is-super-admin-mode .moscow-board-card-title-row {
 }
 
 /* Owner stripe (table cards + scrum / MoSCoW board cards) */
-.project-owner-identity--card-strip {
+.roadmap-owner-identity--card-strip {
   display: flex;
   align-items: center;
   gap: 0.55rem;
@@ -244,35 +244,35 @@ html.is-super-admin-mode .moscow-board-card-title-row {
   box-shadow: inset 4px 0 0 #6366f1;
 }
 
-.project-owner-identity--card-strip.project-owner-identity--current {
+.roadmap-owner-identity--card-strip.roadmap-owner-identity--current {
   background: linear-gradient(90deg, rgba(236, 253, 245, 0.98) 0%, rgba(255, 255, 255, 0.98) 72%);
   border-bottom-color: rgba(167, 243, 208, 0.55);
   box-shadow: inset 4px 0 0 #10b981;
 }
 
-.project-owner-identity--card-strip .project-owner-identity__avatar {
+.roadmap-owner-identity--card-strip .roadmap-owner-identity__avatar {
   --owner-avatar-size: 1.85rem;
   border-radius: 11px;
 }
 
-.project-owner-identity--card-strip .project-owner-identity__name {
+.roadmap-owner-identity--card-strip .roadmap-owner-identity__name {
   font-size: 0.8rem;
   font-weight: 700;
   color: #0f172a;
 }
 
-.project-owner-identity--card-strip .project-owner-identity__team {
+.roadmap-owner-identity--card-strip .roadmap-owner-identity__team {
   font-size: 0.72rem;
   color: #64748b;
 }
 
-.project-owner-identity--card-strip .project-owner-identity__scope {
+.roadmap-owner-identity--card-strip .roadmap-owner-identity__scope {
   margin-left: auto;
   flex-shrink: 0;
 }
 
-/* RACI desktop grid — owner strip fused to project title cell */
-.project-owner-identity--raci-grid {
+/* RACI desktop grid — owner strip fused to roadmap title cell */
+.roadmap-owner-identity--raci-grid {
   display: flex;
   align-items: center;
   gap: 0.42rem;
@@ -284,24 +284,24 @@ html.is-super-admin-mode .moscow-board-card-title-row {
   box-shadow: inset 3px 0 0 #6366f1;
 }
 
-.project-owner-identity--raci-grid.project-owner-identity--current {
+.roadmap-owner-identity--raci-grid.roadmap-owner-identity--current {
   background: linear-gradient(90deg, rgba(236, 253, 245, 0.98) 0%, rgba(255, 253, 251, 0.99) 78%);
   border-bottom-color: rgba(167, 243, 208, 0.52);
   box-shadow: inset 3px 0 0 #10b981;
 }
 
-.project-owner-identity--raci-grid .project-owner-identity__avatar {
+.roadmap-owner-identity--raci-grid .roadmap-owner-identity__avatar {
   --owner-avatar-size: 1.42rem;
   border-radius: 8px;
 }
 
-.project-owner-identity--raci-grid .project-owner-identity__name {
+.roadmap-owner-identity--raci-grid .roadmap-owner-identity__name {
   font-size: 0.72rem;
   font-weight: 700;
   color: #0f172a;
 }
 
-.project-owner-identity--raci-grid .project-owner-identity__scope {
+.roadmap-owner-identity--raci-grid .roadmap-owner-identity__scope {
   margin-left: auto;
   flex-shrink: 0;
   font-size: 0.56rem;
@@ -312,7 +312,7 @@ html.is-super-admin-mode .raci-matrix-grid__row--external-profile {
   background: rgba(238, 242, 255, 0.32);
 }
 
-html.is-super-admin-mode .raci-matrix-grid__row--external-profile .raci-matrix-grid__cell--project {
+html.is-super-admin-mode .raci-matrix-grid__row--external-profile .raci-matrix-grid__cell--roadmap {
   background: rgba(238, 242, 255, 0.32);
 }
 
@@ -322,7 +322,7 @@ html.is-super-admin-mode .raci-matrix-grid__row:not(.raci-matrix-grid__row--head
 
 html.is-super-admin-mode
   .raci-matrix-grid__row:not(.raci-matrix-grid__row--head):hover
-  .raci-matrix-grid__cell--project {
+  .raci-matrix-grid__cell--roadmap {
   background: rgba(224, 231, 255, 0.38);
 }
 
@@ -334,7 +334,7 @@ html.is-super-admin-mode .raci-matrix-card.raci-matrix-card--has-owner {
   gap: 0;
 }
 
-html.is-super-admin-mode .raci-matrix-card.raci-matrix-card--has-owner > .project-owner-identity--card-strip {
+html.is-super-admin-mode .raci-matrix-card.raci-matrix-card--has-owner > .roadmap-owner-identity--card-strip {
   flex-shrink: 0;
   border-radius: 0;
   margin: 0;
@@ -346,7 +346,7 @@ html.is-compact-layout html.is-super-admin-mode .raci-matrix-card--external-prof
     0 10px 24px rgba(79, 70, 229, 0.1);
 }
 
-/* Scrum / MoSCoW — stripe flush on top of card (matches projects table card) */
+/* Scrum / MoSCoW — stripe flush on top of card (matches roadmaps table card) */
 html.is-super-admin-mode .scrum-board-card.portfolio-board-card--has-owner-strip,
 html.is-super-admin-mode .moscow-board-card.portfolio-board-card--has-owner-strip {
   display: flex;
@@ -356,8 +356,8 @@ html.is-super-admin-mode .moscow-board-card.portfolio-board-card--has-owner-stri
   gap: 0;
 }
 
-html.is-super-admin-mode .scrum-board-card.portfolio-board-card--has-owner-strip > .project-owner-identity--card-strip,
-html.is-super-admin-mode .moscow-board-card.portfolio-board-card--has-owner-strip > .project-owner-identity--card-strip {
+html.is-super-admin-mode .scrum-board-card.portfolio-board-card--has-owner-strip > .roadmap-owner-identity--card-strip,
+html.is-super-admin-mode .moscow-board-card.portfolio-board-card--has-owner-strip > .roadmap-owner-identity--card-strip {
   flex-shrink: 0;
   border-radius: 0;
   margin: 0;
@@ -382,18 +382,18 @@ html.is-super-admin-mode .portfolio-board-card--external-profile {
     0 8px 22px rgba(79, 70, 229, 0.1);
 }
 
-html.is-compact-layout html.is-super-admin-mode .projects-table-card--external-profile {
+html.is-compact-layout html.is-super-admin-mode .roadmaps-table-card--external-profile {
   box-shadow:
     0 0 0 1px rgba(99, 102, 241, 0.22),
     0 10px 24px rgba(79, 70, 229, 0.1);
 }
 
-html.is-compact-layout html.is-super-admin-mode .projects-table-card__chip--owner {
+html.is-compact-layout html.is-super-admin-mode .roadmaps-table-card__chip--owner {
   display: none;
 }
 
 /* Legacy pill fallback (hidden when identity is used) */
-html.is-super-admin-mode .project-owner-profile-pill:not(.project-owner-identity) {
+html.is-super-admin-mode .roadmap-owner-profile-pill:not(.roadmap-owner-identity) {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -411,7 +411,7 @@ html.is-super-admin-mode .project-owner-profile-pill:not(.project-owner-identity
     animation: super-admin-banner-in 0.28s ease-out;
   }
 
-  html.is-super-admin-mode .project-owner-identity--card-strip {
+  html.is-super-admin-mode .roadmap-owner-identity--card-strip {
     animation: super-admin-strip-in 0.22s ease-out;
   }
 }
@@ -440,7 +440,7 @@ html.is-super-admin-mode .project-owner-profile-pill:not(.project-owner-identity
 
 @media (prefers-reduced-motion: reduce) {
   html.is-super-admin-mode .super-admin-mode-banner,
-  html.is-super-admin-mode .project-owner-identity--card-strip {
+  html.is-super-admin-mode .roadmap-owner-identity--card-strip {
     animation: none;
   }
 }

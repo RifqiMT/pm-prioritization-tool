@@ -5,9 +5,9 @@ const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
 const {
-  normalizeProjectTasks,
+  normalizeRoadmapTasks,
   normalizeWorkspacePayload
-} = require("../api/_lib/project-metadata");
+} = require("../api/_lib/roadmap-metadata");
 
 const constantsSrc = fs.readFileSync(
   path.join(__dirname, "../src/constants.js"),
@@ -30,7 +30,7 @@ const requiredKeys = [
   "activeProfileId",
   "sortField",
   "sortDirection",
-  "projectsView",
+  "roadmapsView",
   "tableSortByRice",
   "tableGroupBy",
   "scrumBoardSortByRice",
@@ -57,16 +57,16 @@ assert.ok(
   "normalizeLoadedProfile must persist moscowOrder"
 );
 
-function mergeLoadedProject(project) {
+function mergeLoadedRoadmap(roadmap) {
   const normalized = {
-    id: project.id || "p1",
-    title: String(project.title || "Untitled"),
-    customMeta: project.customMeta
+    id: roadmap.id || "p1",
+    title: String(roadmap.title || "Untitled"),
+    customMeta: roadmap.customMeta
   };
-  return Object.assign({}, project, normalized);
+  return Object.assign({}, roadmap, normalized);
 }
 
-const merged = mergeLoadedProject({
+const merged = mergeLoadedRoadmap({
   id: "p1",
   title: "Alpha",
   customMeta: { tier: "A" },
@@ -78,7 +78,7 @@ assert.strictEqual(merged.reachValue, 10);
 function mergeLoadedProfile(raw) {
   const profile = Object.assign({}, raw, {
     id: raw.id,
-    projects: raw.projects || [],
+    roadmaps: raw.roadmaps || [],
     boardOrder: raw.boardOrder || {},
     moscowOrder: raw.moscowOrder || {}
   });
@@ -96,7 +96,7 @@ assert.deepStrictEqual(profile.moscowOrder, { "Must Have": ["p1"] });
 assert.strictEqual(profile.futureField, true);
 
 assert.deepStrictEqual(
-  normalizeProjectTasks([{ title: "Ship", status: "In Progress" }, { name: "", status: "Done" }]),
+  normalizeRoadmapTasks([{ title: "Ship", status: "In Progress" }, { name: "", status: "Done" }]),
   [{ name: "Ship", status: "In Progress" }]
 );
 
@@ -104,13 +104,13 @@ const workspace = normalizeWorkspacePayload({
   profiles: [
     {
       id: "prof1",
-      projects: [{ id: "p1", tasks: [{ name: "Task A", status: "Done" }] }]
+      roadmaps: [{ id: "p1", tasks: [{ name: "Task A", status: "Done" }] }]
     }
   ],
   scrumBoardVisibleStatuses: ["In Progress", "Done"],
   tableGroupBy: "none"
 });
-assert.strictEqual(workspace.profiles[0].projects[0].tasks[0].name, "Task A");
+assert.strictEqual(workspace.profiles[0].roadmaps[0].tasks[0].name, "Task A");
 assert.deepStrictEqual(workspace.scrumBoardVisibleStatuses, ["In Progress", "Done"]);
 
 console.log("OK: persistence keys and round-trip tests passed");

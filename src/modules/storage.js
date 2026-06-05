@@ -166,6 +166,14 @@ const AppStorage = (function () {
     return payload.profiles.length;
   }
 
+  function countRoadmaps(payload) {
+    if (!payload || !Array.isArray(payload.profiles)) return 0;
+    return payload.profiles.reduce((total, profile) => {
+      const len = profile && Array.isArray(profile.roadmaps) ? profile.roadmaps.length : 0;
+      return total + len;
+    }, 0);
+  }
+
   function readLocalPayload() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -243,6 +251,8 @@ const AppStorage = (function () {
       : 0;
     const remoteCount = countProfiles(remotePayload);
     const localCount = countProfiles(localPayload);
+    const remoteRoadmaps = countRoadmaps(remotePayload);
+    const localRoadmaps = countRoadmaps(localPayload);
 
     const remoteEmpty = isEmptyPayload(remotePayload);
     const localEmpty = isEmptyPayload(localPayload);
@@ -252,6 +262,22 @@ const AppStorage = (function () {
     }
 
     if (!remoteEmpty && !localEmpty) {
+      if (localRoadmaps > remoteRoadmaps) {
+        return {
+          payload: localPayload,
+          source: "local",
+          pushToCloud: true,
+          remoteUpdatedAt: remoteDocAt
+        };
+      }
+      if (remoteRoadmaps > localRoadmaps && remoteCount >= localCount) {
+        return {
+          payload: remotePayload,
+          source: "remote",
+          pushToCloud: false,
+          remoteUpdatedAt: remoteDocAt || null
+        };
+      }
       if (remoteCount > localCount) {
         return {
           payload: remotePayload,
@@ -630,7 +656,13 @@ const AppStorage = (function () {
       const remoteCount = countProfiles(remote.payload);
       const localCount =
         typeof getProfileCountFn === "function" ? getProfileCountFn() : countProfiles(readLocalPayload());
-      if (remoteCount > localCount && !isEmptyPayload(remote.payload)) {
+      const remoteRoadmaps = countRoadmaps(remote.payload);
+      const localPayload = readLocalPayload();
+      const localRoadmaps = countRoadmaps(localPayload);
+      if (
+        (remoteCount > localCount || remoteRoadmaps > localRoadmaps) &&
+        !isEmptyPayload(remote.payload)
+      ) {
         commitLoadedPayload(remote.payload, "remote", remote.updatedAt || null);
         notifyCloudDataRefreshed({
           profileCount: remoteCount,
@@ -864,7 +896,7 @@ const AppStorage = (function () {
     if (!config || config.storage !== "mongodb") {
       if (configResult && configResult.apiIssue === "html_response") {
         throw new Error(
-          "This URL is not running the PM Prioritization Tool API (got HTML). Re-link the Vercel project to github.com/RifqiMT/pm-prioritization-tool."
+          "This URL is not running the PM Prioritization Tool API (got HTML). Re-link the Vercel roadmap to github.com/RifqiMT/pm-prioritization-tool."
         );
       }
       throw new Error(
@@ -960,6 +992,7 @@ const AppStorage = (function () {
     isCloudActive,
     shouldSeedDefaultProfile,
     isRemoteWorkspacePopulated,
+    isOfflineDevOrigin,
     getApiSecret,
     setApiSecret
   };

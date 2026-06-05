@@ -40,7 +40,7 @@ html.is-desktop-layout .board-drag-preview {
 /* Source card placeholder while dragging */
 html.is-desktop-layout .scrum-board-card.scrum-board-card--dragging,
 html.is-desktop-layout .moscow-board-card.moscow-board-card--dragging,
-html.is-desktop-layout .projects-view--board .scrum-board-card.scrum-board-card--dragging {
+html.is-desktop-layout .roadmaps-view--board .scrum-board-card.scrum-board-card--dragging {
   opacity: 0.32 !important;
   transform: none !important;
   border-style: dashed !important;

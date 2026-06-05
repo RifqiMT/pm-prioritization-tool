@@ -4,7 +4,7 @@ Target users for the Product Management Prioritization Tool.
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-05-31 |
+| **Last updated** | 2026-05-28 |
 | **Layout baseline** | Compact UI at viewport ≤ **1400px** |
 
 ## How to use personas
@@ -22,8 +22,8 @@ Target users for the Product Management Prioritization Tool.
 |-----------|--------|
 | **Role** | Roadmap owner across teams or products |
 | **Goals** | Explainable prioritization; consistent RICE; MoSCoW alignment; portable backups; fast filtering by period, country, labels, and links |
-| **Pain points** | Scores scattered in spreadsheets; inconsistent rubrics; low trust in “gut feel” confidence; hard to find projects missing labels or documentation links |
-| **Key workflows** | Create profiles → add projects with RICE/MoSCoW, rich-text descriptions, labels, links, and tasks → use title/label autocomplete in filters → group compact table cards by MoSCoW or status → export JSON before planning milestones → present MoSCoW with **Must Have** / **Should Have** naming in workshops |
+| **Pain points** | Scores scattered in spreadsheets; inconsistent rubrics; low trust in “gut feel” confidence; hard to find roadmaps missing labels or documentation links |
+| **Key workflows** | Create profiles → add roadmaps with RICE/MoSCoW, rich-text descriptions, labels, links, and tasks → use title/label autocomplete in filters → group compact table cards by MoSCoW or status → export JSON before planning milestones → present MoSCoW with **Must Have** / **Should Have** naming in workshops |
 | **Device usage** | **Desktop** (>1400px) for deep table editing and multi-column sorts; **iPad / phone** (≤1400px) for between-meeting reviews via compact card table and MoSCoW nav pills |
 | **Success** | Stakeholders accept rankings because inputs, formulas, and filters are visible and reproducible |
 
@@ -49,7 +49,7 @@ Target users for the Product Management Prioritization Tool.
 | **Role** | Reviews and challenges prioritization (often read-only) |
 | **Goals** | Transparency; guardrails against misleading financial certainty; credible MoSCoW narrative |
 | **Pain points** | “Black box” scores; no audit trail for value assumptions; jargon-heavy quadrant labels |
-| **Key workflows** | Read-only project view; MoSCoW quadrants with full category names; map and table summaries; export snapshots; footer article link for product context |
+| **Key workflows** | Read-only roadmap view; MoSCoW quadrants with full category names; map and table summaries; export snapshots; footer article link for product context |
 | **Device usage** | Large monitor in review meetings; occasional phone check of ranked list via compact cards |
 | **Success** | Can question a ranking using visible inputs and **Must Have** vs **Could Have** intent, not ad-hoc spreadsheets |
 
@@ -68,14 +68,27 @@ Target users for the Product Management Prioritization Tool.
 
 ---
 
-## 5) Mobile / field PM (secondary)
+## 5) Governance / RACI coordinator (secondary)
+
+| Dimension | Detail |
+|-----------|--------|
+| **Role** | Ensures clear accountability across initiatives |
+| **Goals** | Single matrix view of Responsible / Accountable / Consulted / Informed; Business vs Tech lens |
+| **Pain points** | RACI buried in slide decks; no link from matrix back to roadmap detail |
+| **Key workflows** | Enter RACI in roadmap modal → review **RACI matrix** view with domain toggle → filter portfolio before workshop |
+| **Device usage** | Desktop for full matrix; compact cards on tablet for stand-up walkthrough |
+| **Success** | Stakeholders can answer “who is accountable?” without opening each roadmap individually |
+
+---
+
+## 6) Mobile / field PM (secondary)
 
 | Dimension | Detail |
 |-----------|--------|
 | **Role** | Reviews backlog between meetings on phone or tablet |
 | **Goals** | Read rankings and move cards without horizontal scrolling; discover maintainer resources from footer |
 | **Pain points** | Cramped grids; unreadable modal footers; desktop-only bulk actions |
-| **Key workflows** | MoSCoW compact **Jump to quadrant** pills; board **Move to**; table card list with FAB + selection bar; collapsible **Project details** in modal footer |
+| **Key workflows** | MoSCoW compact **Jump to quadrant** pills; board **Move to**; table card list with FAB + selection bar; collapsible **Roadmap details** in modal footer |
 | **Device usage** | Primarily ≤1400px (phone and tablet, including iPad landscape) |
 | **Success** | Full planning views usable at 375px width without sideways scroll on board or MoSCoW |
 
@@ -92,6 +105,8 @@ Target users for the Product Management Prioritization Tool.
 | Board + unified card UI | Delivery Lead, Mobile PM |
 | Table semantic columns + compact cards + group-by | PM Primary, Delivery Lead, Geo/Finance PM |
 | Map + FX normalization | Geo/Finance PM |
+| RACI matrix (accountability workshops) | PM Primary, Delivery Lead, Stakeholder |
+| KANO portfolio matrix (value classification) | PM Primary, Stakeholder |
 | Export / import | All |
 | Compact layout (≤1400px) | PM Primary, Delivery Lead, Mobile PM |
 | Site footer (GitHub, article) | Stakeholder, Mobile PM |

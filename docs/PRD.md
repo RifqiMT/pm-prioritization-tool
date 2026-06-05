@@ -5,15 +5,15 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Status** | Implemented (local-first static app) |
-| **Last updated** | 2026-05-31 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui190` |
+| **Last updated** | 2026-05-28 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui192` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
 
 ## 1. Executive summary
 
-A browser-based portfolio workspace for product teams to capture initiatives, score priority with **RICE**, classify delivery intent with **MoSCoW**, estimate value through **financial frameworks**, and communicate via **Table**, **Board**, **MoSCoW**, and **Map** views. Data persists in the browser (`localStorage` cache) with optional **MongoDB cloud sync** on Vercel, plus JSON/CSV export/import. Optional **profile passwords** protect sensitive portfolios.
+A browser-based portfolio workspace for product teams to capture initiatives, score priority with **RICE**, classify delivery intent with **MoSCoW**, estimate value through **financial frameworks**, and communicate via **Table**, **Board**, **MoSCoW**, **Map**, **RACI**, and **KANO** views. Data persists in the browser (`localStorage` cache) with optional **MongoDB cloud sync** on Vercel, plus JSON/CSV export/import. Optional **profile passwords** protect sensitive portfolios.
 
 **Responsive UI:** Desktop layout when viewport width is **> 1400px**; tablets, phones, iPad landscape, split-screen, and narrow laptop windows use a **unified compact phone UI** at **≤ 1400px** (`html.is-compact-layout` + `html.is-phone-layout`).
 
@@ -26,7 +26,7 @@ A browser-based portfolio workspace for product teams to capture initiatives, sc
 | G-1 | Standardize prioritization with explainable RICE |
 | G-2 | Support multi-portfolio planning via profiles |
 | G-3 | Enable financial planning lenses without accounting complexity |
-| G-4 | Provide meeting-ready views (table, board, quadrant, geo map) |
+| G-4 | Provide meeting-ready views (table, board, MoSCoW, map, RACI, KANO) |
 | G-5 | Allow backup and merge via export/import |
 | G-6 | Protect sensitive portfolios with optional passwords |
 | G-7 | Support touch-first planning on tablets and phones without horizontal scroll |
@@ -54,25 +54,27 @@ See [USER_PERSONAS.md](USER_PERSONAS.md).
 |----|-------------|------------|
 | FR-1.1 | Create profile (name, optional team) | Profile appears in list |
 | FR-1.2 | Edit profile (name, team, password) | Changes persist after refresh |
-| FR-1.3 | Delete profile (password if protected) | Profile and projects removed |
+| FR-1.3 | Delete profile (password if protected) | Profile and roadmaps removed |
 | FR-1.4 | Activate profile | Portfolio workspace shows selection |
 | FR-1.5 | Search profiles | Filters by name/team |
 | FR-1.6 | Optional password on create | Hash stored; profile locked until unlock |
 | FR-1.7 | Compact profile picker | At ≤1400px: picker + bottom-sheet profile list |
 
-### FR-2 Projects
+### FR-2 Roadmaps
 
 | ID | Requirement | Acceptance |
 |----|-------------|------------|
-| FR-2.1 | CRUD projects | Modal create/edit; view read-only |
+| FR-2.1 | CRUD roadmaps | Modal create/edit; view read-only |
 | FR-2.2 | RICE inputs with validation | See FR-3 |
-| FR-2.3 | Metadata: type, status, MoSCoW, period, countries, t-shirt, labels, links, tasks | Saved on project; normalized on load/save |
+| FR-2.3 | Metadata: type, status, MoSCoW, period, countries, t-shirt, labels, links, tasks | Saved on roadmap; normalized on load/save |
 | FR-2.4 | Bulk delete (table) | Confirmation; selection respected (toolbar desktop; selection bar compact) |
-| FR-2.5 | Project ID in modal footer | Stable id visible in footer metadata |
+| FR-2.5 | Roadmap ID in modal footer | Stable id visible in footer metadata |
 | FR-2.6 | Modal footer disclosure (compact) | At ≤1400px: metadata in `<details>` collapsed by default; desktop forces open |
-| FR-2.7 | Rich-text descriptions | Project + RICE description fields; sanitized HTML; view mode read-only without toolbar |
-| FR-2.8 | Project tasks | Optional task list with name + status per task; CSV import/export |
-| FR-2.9 | Labels/links cloud persistence | Canonical format on serialize; immediate cloud flush on project save; server normalize on API write |
+| FR-2.7 | Rich-text descriptions | Roadmap + RICE description fields; sanitized HTML; view mode read-only without toolbar |
+| FR-2.8 | Roadmap tasks | Optional task list with name + status per task; CSV import/export |
+| FR-2.9 | Labels/links cloud persistence | Canonical format on serialize; immediate cloud flush on roadmap save; server normalize on API write |
+| FR-2.10 | RACI assignments | Optional `raci` object with `responsible`, `accountable`, `consulted`, `informed` arrays; each entry has `name` + `domain` (`Business` or `Tech`); normalized on load/save |
+| FR-2.11 | KANO scores | Optional `kanoFunctionality` and `kanoSatisfaction` (integers 1–5); drive portfolio KANO matrix placement |
 
 ### FR-3 RICE
 
@@ -102,24 +104,26 @@ See [USER_PERSONAS.md](USER_PERSONAS.md).
 | ID | View | Requirement |
 |----|------|-------------|
 | FR-5.1 | Table (desktop) | Sortable grid; semantic column classes; bulk select in toolbar |
-| FR-5.2 | Table (compact) | Card list (`table-compact-cards.css`); FAB for new project; selection bar for bulk delete; optional **Group by** |
+| FR-5.2 | Table (compact) | Card list (`table-compact-cards.css`); FAB for new roadmap; selection bar for bulk delete; optional **Group by** |
 | FR-5.3 | Board | Columns by status; DnD order (desktop); **Move to** on compact; RICE sort toggle; unified card chrome across breakpoints |
 | FR-5.4 | MoSCoW | Desktop: 2×2 grid with display names **Must Have**, **Should Have**, **Could Have**, **Won't Have**; compact: 2×2 nav pills + single-column quadrants; optional RICE sort |
 | FR-5.5 | Map | Leaflet choropleth; metric: count / RICE / EUR |
-| FR-5.6 | All | Fullscreen mode (compact layouts preserved in fullscreen host) |
-| FR-5.7 | Locked profile | No project data in any view |
-| FR-5.8 | Compact layout | ≤1400px: unified phone UI; no horizontal scroll on board/MoSCoW; table uses card list |
+| FR-5.6 | RACI | Desktop: 5-column matrix per filtered roadmaps; **Business** / **Tech** perspective toggle; compact: one card per roadmap |
+| FR-5.7 | KANO | Portfolio matrix (functionality × satisfaction); **Positioned** / **Not positioned** panels; drag tiles on desktop; open roadmap KANO section from cards |
+| FR-5.8 | All | Fullscreen mode (compact layouts preserved in fullscreen host) |
+| FR-5.9 | Locked profile | No roadmap data in any view |
+| FR-5.10 | Compact layout | ≤1400px: unified phone UI; no horizontal scroll on board/MoSCoW; table uses card list |
 
 #### FR-5.1 Semantic table columns (desktop)
 
-Desktop table uses `<col>` and cell classes `projects-table-col--*` so column widths stay aligned when optional columns enter the DOM:
+Desktop table uses `<col>` and cell classes `roadmaps-table-col--*` so column widths stay aligned when optional columns enter the DOM:
 
 | Class suffix | Column |
 |--------------|--------|
 | `select` | Bulk checkbox |
-| `title` | Project title |
+| `title` | Roadmap title |
 | `owner` | Owner profile (privileged workspace mode only; see FR-10) |
-| `type` | Project type icon |
+| `type` | Roadmap type icon |
 | `status` | Status icon |
 | `framework` | Financial framework |
 | `period` | Planning period |
@@ -138,8 +142,8 @@ Widths are enforced in `table-revamp-modern.css` via matching `colgroup` / heade
 |----|-------------|------------|
 | FR-5.2.1 | Group-by control | `#tableGroupBySelect` lists options from `TABLE_GROUP_BY_OPTIONS` |
 | FR-5.2.2 | Persist preference | `state.tableGroupBy` saved in workspace payload |
-| FR-5.2.3 | Summary | `#tableGroupBySummary` announces group name and project count (live region) |
-| FR-5.2.4 | Options | No grouping; Owner profile; Status; MoSCoW; T-shirt size; Financial framework; Project type; Currency |
+| FR-5.2.3 | Summary | `#tableGroupBySummary` announces group name and roadmap count (live region) |
+| FR-5.2.4 | Options | No grouping; Owner profile; Status; MoSCoW; T-shirt size; Financial framework; Roadmap type; Currency |
 
 Owner profile grouping is available when privileged workspace mode is active (see FR-10).
 
@@ -157,14 +161,14 @@ Filters apply to **table, board, MoSCoW, and map** (portfolio-wide slice).
 
 | ID | Requirement | Acceptance |
 |----|-------------|------------|
-| FR-6.1.1 | Title search | Substring match on project title |
+| FR-6.1.1 | Title search | Substring match on roadmap title |
 | FR-6.1.2 | Title autocomplete | Suggestions from active scope titles; keyboard navigable listbox; max 12 matches |
-| FR-6.1.3 | Label search | Substring match on any project label |
+| FR-6.1.3 | Label search | Substring match on any roadmap label |
 | FR-6.1.4 | Label autocomplete | Suggestions from distinct labels in scope; same UX as title |
 
 #### FR-6.2 Quick filters
 
-Type, countries, project period (`YYYY-Qn`).
+Type, countries, roadmap period (`YYYY-Qn`).
 
 #### FR-6.3 Advanced filters
 
@@ -175,7 +179,7 @@ Impact, effort, currency, framework, status, t-shirt, MoSCoW, financial range, *
 | Value | Behavior |
 |-------|----------|
 | *(empty)* | **Any** — no label-count constraint |
-| `with` | At least one label on the project |
+| `with` | At least one label on the roadmap |
 | `without` | Zero labels |
 
 Works together with label search (both must pass).
@@ -185,7 +189,7 @@ Works together with label search (both must pass).
 | Value | Behavior |
 |-------|----------|
 | *(empty)* | **Any** |
-| `with` | Project has one or more links |
+| `with` | Roadmap has one or more links |
 | `without` | No links |
 
 #### FR-6.6 Active filter summary
@@ -205,10 +209,10 @@ Manual refresh; rates cached in state; EUR conversion for table/map financial di
 | ID | Requirement | Acceptance |
 |----|-------------|------------|
 | FR-8.1 | Export JSON | Download file with exportable profiles only |
-| FR-8.2 | Export CSV | One row per project |
+| FR-8.2 | Export CSV | One row per roadmap |
 | FR-8.3 | Export password gate | Locked profiles omitted unless verified per profile |
-| FR-8.4 | Import JSON | Merge profiles/projects by id |
-| FR-8.5 | Import CSV | Merge project rows |
+| FR-8.4 | Import JSON | Merge profiles/roadmaps by id |
+| FR-8.5 | Import CSV | Merge roadmap rows |
 | FR-8.6 | UI parity | Import/export modals share design system |
 
 ### FR-9 UX / accessibility
@@ -230,12 +234,12 @@ Cross-profile read/write behavior, eligibility, UI placement, and safety rules a
 | ID | Requirement | Acceptance |
 |----|-------------|------------|
 | FR-10.1 | Activation | Only when trust profile is active, unlocked, and mode toggle is on |
-| FR-10.2 | Read scope | All projects in workspace with owner metadata |
-| FR-10.3 | Write scope | Changes persist to each project’s owner profile |
+| FR-10.2 | Read scope | All roadmaps in workspace with owner metadata |
+| FR-10.3 | Write scope | Changes persist to each roadmap’s owner profile |
 | FR-10.4 | Table | Profile column + sort; owner advanced filter; group-by owner profile |
 | FR-10.5 | Cards | Owner attribution on table compact cards, board cards, MoSCoW cards, map tooltips |
 | FR-10.6 | Deactivation | Turning mode off restores single-profile scope immediately |
-| FR-10.7 | Bulk duplicate / move | Table multi-select can duplicate or move projects to a chosen target profile via modal |
+| FR-10.7 | Bulk duplicate / move | Table multi-select can duplicate or move roadmaps to a chosen target profile via modal |
 
 Do not duplicate §7 policy detail here; update GUARDRAILS when behavior changes.
 
@@ -245,7 +249,7 @@ Do not duplicate §7 policy detail here; update GUARDRAILS when behavior changes
 
 | ID | Category | Requirement |
 |----|----------|-------------|
-| NFR-1 | Performance | Usable with hundreds of projects per profile on modern browsers |
+| NFR-1 | Performance | Usable with hundreds of roadmaps per profile on modern browsers |
 | NFR-2 | Security | Passwords hashed (PBKDF2); never plaintext in storage |
 | NFR-3 | Privacy | No telemetry requirement; data in browser cache by default; optional cloud document on Vercel |
 | NFR-4 | Deploy | Static hosting; CSP in `vercel.json` |

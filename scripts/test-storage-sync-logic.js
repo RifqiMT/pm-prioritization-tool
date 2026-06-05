@@ -30,6 +30,14 @@ function countProfiles(payload) {
   return payload.profiles.length;
 }
 
+function countRoadmaps(payload) {
+  if (!payload || !Array.isArray(payload.profiles)) return 0;
+  return payload.profiles.reduce((total, profile) => {
+    const len = profile && Array.isArray(profile.roadmaps) ? profile.roadmaps.length : 0;
+    return total + len;
+  }, 0);
+}
+
 function resolvePayloadForLoad(remoteBody, localPayload, localMeta) {
   const remotePayload =
     remoteBody && remoteBody.payload ? remoteBody.payload : null;
@@ -44,11 +52,19 @@ function resolvePayloadForLoad(remoteBody, localPayload, localMeta) {
     : 0;
   const remoteCount = countProfiles(remotePayload);
   const localCount = countProfiles(localPayload);
+  const remoteRoadmaps = countRoadmaps(remotePayload);
+  const localRoadmaps = countRoadmaps(localPayload);
 
   const remoteEmpty = isEmptyPayload(remotePayload);
   const localEmpty = isEmptyPayload(localPayload);
 
   if (!remoteEmpty && !localEmpty) {
+    if (localRoadmaps > remoteRoadmaps) {
+      return { source: "local", pushToCloud: true };
+    }
+    if (remoteRoadmaps > localRoadmaps && remoteCount >= localCount) {
+      return { source: "remote", pushToCloud: false };
+    }
     if (remoteCount > localCount) {
       return { source: "remote", pushToCloud: false };
     }
@@ -71,13 +87,13 @@ function resolvePayloadForLoad(remoteBody, localPayload, localMeta) {
 const remoteNewer = resolvePayloadForLoad(
   {
     payload: {
-      profiles: [{ id: "r1", name: "Remote", projects: [] }],
+      profiles: [{ id: "r1", name: "Remote", roadmaps: [] }],
       _storageMeta: { updatedAt: "2026-05-26T16:00:00.000Z" }
     },
     updatedAt: "2026-05-26T16:00:00.000Z"
   },
   {
-    profiles: [{ id: "l1", name: "Local", projects: [] }],
+    profiles: [{ id: "l1", name: "Local", roadmaps: [] }],
     _storageMeta: { updatedAt: "2026-05-26T10:00:00.000Z" }
   },
   {}
@@ -89,8 +105,8 @@ const localNewer = resolvePayloadForLoad(
   {
     payload: {
       profiles: [
-        { id: "r1", name: "Remote", projects: [] },
-        { id: "r2", name: "Remote 2", projects: [] }
+        { id: "r1", name: "Remote", roadmaps: [] },
+        { id: "r2", name: "Remote 2", roadmaps: [] }
       ],
       _storageMeta: { updatedAt: "2026-05-26T10:00:00.000Z" }
     },
@@ -98,9 +114,9 @@ const localNewer = resolvePayloadForLoad(
   },
   {
     profiles: [
-      { id: "l1", name: "Local", projects: [] },
-      { id: "l2", projects: [] },
-      { id: "l3", projects: [] }
+      { id: "l1", name: "Local", roadmaps: [] },
+      { id: "l2", roadmaps: [] },
+      { id: "l3", roadmaps: [] }
     ],
     _storageMeta: { updatedAt: "2026-05-26T18:00:00.000Z" }
   },
@@ -113,7 +129,7 @@ assert.strictEqual(localNewer.source, "local");
 assert.strictEqual(localNewer.pushToCloud, true);
 
 const migrateLocal = resolvePayloadForLoad({ payload: null, updatedAt: null }, {
-  profiles: [{ id: "l1", name: "Local", projects: [] }]
+  profiles: [{ id: "l1", name: "Local", roadmaps: [] }]
 }, {});
 assert.strictEqual(migrateLocal.source, "local");
 assert.strictEqual(migrateLocal.pushToCloud, true);
@@ -122,22 +138,48 @@ const remoteRicher = resolvePayloadForLoad(
   {
     payload: {
       profiles: [
-        { id: "r1", projects: [] },
-        { id: "r2", projects: [] },
-        { id: "r3", projects: [] }
+        { id: "r1", roadmaps: [] },
+        { id: "r2", roadmaps: [] },
+        { id: "r3", roadmaps: [] }
       ],
       _storageMeta: { updatedAt: "2026-05-26T10:00:00.000Z" }
     },
     updatedAt: "2026-05-26T10:00:00.000Z"
   },
   {
-    profiles: [{ id: "l1", name: "Local", projects: [] }],
+    profiles: [{ id: "l1", name: "Local", roadmaps: [] }],
     _storageMeta: { updatedAt: "2026-05-26T18:00:00.000Z" }
   },
   { updatedAt: "2026-05-26T18:00:00.000Z", lastLocalModifiedAt: "2026-05-26T18:00:00.000Z" }
 );
 assert.strictEqual(remoteRicher.source, "remote");
 assert.strictEqual(remoteRicher.pushToCloud, false);
+
+const localMoreRoadmaps = resolvePayloadForLoad(
+  {
+    payload: {
+      profiles: [{ id: "r1", name: "Remote", roadmaps: [] }],
+      _storageMeta: { updatedAt: "2026-06-05T12:00:00.000Z" }
+    },
+    updatedAt: "2026-06-05T12:00:00.000Z"
+  },
+  {
+    profiles: [
+      {
+        id: "l1",
+        name: "Local",
+        roadmaps: [{ id: "p1" }, { id: "p2" }, { id: "p3" }]
+      }
+    ],
+    _storageMeta: { updatedAt: "2026-05-26T09:00:00.000Z" }
+  },
+  {
+    lastLocalModifiedAt: "2026-05-26T09:00:00.000Z",
+    lastRemoteAppliedAt: "2026-06-05T12:00:00.000Z"
+  }
+);
+assert.strictEqual(localMoreRoadmaps.source, "local");
+assert.strictEqual(localMoreRoadmaps.pushToCloud, true);
 
 function stripLegacyWorkspaceFields(payload) {
   const LEGACY_WORKSPACE_FIELDS = ["boardHiddenStatuses"];
@@ -155,7 +197,7 @@ function stripLegacyWorkspaceFields(payload) {
 }
 
 const legacyPayload = {
-  profiles: [{ id: "p1", name: "Demo", projects: [] }],
+  profiles: [{ id: "p1", name: "Demo", roadmaps: [] }],
   boardHiddenStatuses: ["Cancelled"],
   sortField: "riceScore"
 };

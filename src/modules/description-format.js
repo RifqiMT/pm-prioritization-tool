@@ -1,5 +1,5 @@
 /**
- * Rich-text formatting for project descriptions in tooltips and editor.
+ * Rich-text formatting for roadmap descriptions in tooltips and editor.
  * Handles plain text (paragraphs, bullets, numbering) and sanitized HTML.
  */
 
@@ -301,13 +301,13 @@ function appendRichDescriptionContent(containerEl, rawDescription, options) {
   const plain = descriptionToPlainText(html);
   if (!plain) {
     const empty = document.createElement("p");
-    empty.className = "project-details-tooltip__empty";
+    empty.className = "roadmap-details-tooltip__empty";
     empty.textContent = emptyText;
     containerEl.appendChild(empty);
     return;
   }
   const rich = document.createElement("div");
-  rich.className = "project-details-tooltip__rich";
+  rich.className = "roadmap-details-tooltip__rich";
   rich.innerHTML = html;
   containerEl.appendChild(rich);
 }
@@ -323,7 +323,7 @@ function appendFormattedDescriptionContent(containerEl, rawDescription, options)
 
   if (!blocks.length) {
     const empty = document.createElement("p");
-    empty.className = "project-details-tooltip__empty";
+    empty.className = "roadmap-details-tooltip__empty";
     empty.textContent = emptyText;
     containerEl.appendChild(empty);
     return;
@@ -332,7 +332,7 @@ function appendFormattedDescriptionContent(containerEl, rawDescription, options)
   blocks.forEach((block) => {
     if (block.type === "heading") {
       const heading = document.createElement("h4");
-      heading.className = "project-details-tooltip__heading";
+      heading.className = "roadmap-details-tooltip__heading";
       heading.textContent = block.text;
       containerEl.appendChild(heading);
       return;
@@ -340,7 +340,7 @@ function appendFormattedDescriptionContent(containerEl, rawDescription, options)
 
     if (block.type === "paragraph") {
       const paragraph = document.createElement("p");
-      paragraph.className = "project-details-tooltip__paragraph";
+      paragraph.className = "roadmap-details-tooltip__paragraph";
       paragraph.textContent = block.text;
       containerEl.appendChild(paragraph);
       return;
@@ -348,7 +348,7 @@ function appendFormattedDescriptionContent(containerEl, rawDescription, options)
 
     if (block.type === "ul" || block.type === "ol") {
       const list = document.createElement(block.type === "ol" ? "ol" : "ul");
-      list.className = "project-details-tooltip__list";
+      list.className = "roadmap-details-tooltip__list";
       block.items.forEach((item) => {
         const li = document.createElement("li");
         li.textContent = item;
@@ -359,15 +359,15 @@ function appendFormattedDescriptionContent(containerEl, rawDescription, options)
   });
 }
 
-function buildProjectDetailsTooltip(options) {
-  const titleLabel = (options && options.titleLabel) || "Project details";
+function buildRoadmapDetailsTooltip(options) {
+  const titleLabel = (options && options.titleLabel) || "Roadmap details";
   const statusText = options && options.statusText ? String(options.statusText) : "";
   const rawDescription =
     options && options.rawDescription != null ? options.rawDescription : "";
 
   const tooltipEl = document.createElement("div");
   tooltipEl.className =
-    "cell-type-tooltip cell-type-tooltip--wide cell-type-tooltip--project-details";
+    "cell-type-tooltip cell-type-tooltip--wide cell-type-tooltip--roadmap-details";
   if (shouldDescriptionTooltipScroll(rawDescription)) {
     tooltipEl.classList.add("cell-type-tooltip--scroll");
   }
@@ -379,20 +379,20 @@ function buildProjectDetailsTooltip(options) {
   tooltipEl.appendChild(titleEl);
 
   const bodyEl = document.createElement("div");
-  bodyEl.className = "cell-type-tooltip-body project-details-tooltip__body";
+  bodyEl.className = "cell-type-tooltip-body roadmap-details-tooltip__body";
 
   if (statusText) {
     const meta = document.createElement("div");
-    meta.className = "project-details-tooltip__meta";
+    meta.className = "roadmap-details-tooltip__meta";
     const badge = document.createElement("span");
-    badge.className = "project-details-tooltip__status";
+    badge.className = "roadmap-details-tooltip__status";
     badge.textContent = statusText;
     meta.appendChild(badge);
     bodyEl.appendChild(meta);
   }
 
   const content = document.createElement("div");
-  content.className = "project-details-tooltip__content";
+  content.className = "roadmap-details-tooltip__content";
   appendFormattedDescriptionContent(content, rawDescription);
   bodyEl.appendChild(content);
 

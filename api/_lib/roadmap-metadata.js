@@ -1,9 +1,9 @@
 /**
- * Server-side normalization for project labels/links before MongoDB persist.
+ * Server-side normalization for roadmap labels/links before MongoDB persist.
  * Mirrors client rules in src/app.js so legacy or partial payloads still round-trip.
  */
 
-function normalizeProjectLabels(raw) {
+function normalizeRoadmapLabels(raw) {
   if (!Array.isArray(raw)) {
     if (typeof raw === "string" && raw.trim()) {
       const parts = raw
@@ -33,7 +33,7 @@ function normalizeProjectLabels(raw) {
   return out;
 }
 
-function normalizeProjectLinkUrl(url) {
+function normalizeRoadmapLinkUrl(url) {
   const trimmed = String(url || "").trim();
   if (!trimmed) return null;
   let candidate = trimmed;
@@ -59,13 +59,13 @@ function linkPreviewLabel(url) {
   }
 }
 
-function normalizeProjectLinks(raw) {
+function normalizeRoadmapLinks(raw) {
   if (!Array.isArray(raw)) return [];
   const out = [];
   const seen = new Set();
   raw.forEach((item) => {
     if (typeof item === "string") {
-      const url = normalizeProjectLinkUrl(item);
+      const url = normalizeRoadmapLinkUrl(item);
       if (!url) return;
       const label = linkPreviewLabel(url) || url;
       const key = label + "\0" + url;
@@ -84,7 +84,7 @@ function normalizeProjectLinks(raw) {
             ? item.name
             : item.title || ""
     ).trim();
-    const url = normalizeProjectLinkUrl(item.url || item.href || item.link || "");
+    const url = normalizeRoadmapLinkUrl(item.url || item.href || item.link || "");
     if (!label || !url) return;
     const key = label + "\0" + url;
     if (seen.has(key)) return;
@@ -117,7 +117,7 @@ function normalizeRaciEntries(entries) {
   return out;
 }
 
-function normalizeProjectRaci(raci) {
+function normalizeRoadmapRaci(raci) {
   const source = raci && typeof raci === "object" ? raci : {};
   return {
     responsible: normalizeRaciEntries(source.responsible),
@@ -127,7 +127,7 @@ function normalizeProjectRaci(raci) {
   };
 }
 
-const PROJECT_TASK_STATUSES = [
+const ROADMAP_TASK_STATUSES = [
   "Not Started",
   "In Progress",
   "On Hold",
@@ -135,12 +135,12 @@ const PROJECT_TASK_STATUSES = [
   "Cancelled"
 ];
 
-function normalizeProjectTaskStatus(status) {
+function normalizeRoadmapTaskStatus(status) {
   const value = String(status || "").trim();
-  return PROJECT_TASK_STATUSES.includes(value) ? value : "Not Started";
+  return ROADMAP_TASK_STATUSES.includes(value) ? value : "Not Started";
 }
 
-function normalizeProjectTasks(raw) {
+function normalizeRoadmapTasks(raw) {
   if (!Array.isArray(raw)) return [];
   const out = [];
   raw.forEach((task) => {
@@ -149,7 +149,7 @@ function normalizeProjectTasks(raw) {
     if (!name) return;
     out.push({
       name,
-      status: normalizeProjectTaskStatus(task.status)
+      status: normalizeRoadmapTaskStatus(task.status)
     });
   });
   return out;
@@ -162,15 +162,15 @@ function normalizeKanoAxisLevel(value) {
   return n;
 }
 
-function normalizeProjectForStorage(project) {
-  if (!project || typeof project !== "object") return project;
-  return Object.assign({}, project, {
-    labels: normalizeProjectLabels(project.labels),
-    links: normalizeProjectLinks(project.links),
-    tasks: normalizeProjectTasks(project.tasks),
-    raci: normalizeProjectRaci(project.raci),
-    kanoFunctionality: normalizeKanoAxisLevel(project.kanoFunctionality),
-    kanoSatisfaction: normalizeKanoAxisLevel(project.kanoSatisfaction)
+function normalizeRoadmapForStorage(roadmap) {
+  if (!roadmap || typeof roadmap !== "object") return roadmap;
+  return Object.assign({}, roadmap, {
+    labels: normalizeRoadmapLabels(roadmap.labels),
+    links: normalizeRoadmapLinks(roadmap.links),
+    tasks: normalizeRoadmapTasks(roadmap.tasks),
+    raci: normalizeRoadmapRaci(roadmap.raci),
+    kanoFunctionality: normalizeKanoAxisLevel(roadmap.kanoFunctionality),
+    kanoSatisfaction: normalizeKanoAxisLevel(roadmap.kanoSatisfaction)
   });
 }
 
@@ -179,8 +179,14 @@ function normalizeProfilesPayload(profiles) {
   return profiles.map((profile) => {
     if (!profile || typeof profile !== "object") return profile;
     const next = Object.assign({}, profile);
-    if (Array.isArray(profile.projects)) {
-      next.projects = profile.projects.map(normalizeProjectForStorage);
+    const roadmapsSource = Array.isArray(profile.roadmaps)
+      ? profile.roadmaps
+      : Array.isArray(profile.projects)
+        ? profile.projects
+        : null;
+    if (roadmapsSource) {
+      next.roadmaps = roadmapsSource.map(normalizeRoadmapForStorage);
+      delete next.projects;
     }
     return next;
   });
@@ -199,9 +205,9 @@ function normalizeWorkspacePayload(payload) {
 
 module.exports = {
   normalizeWorkspacePayload,
-  normalizeProjectLabels,
-  normalizeProjectLinks,
-  normalizeProjectTasks,
-  normalizeProjectRaci,
+  normalizeRoadmapLabels,
+  normalizeRoadmapLinks,
+  normalizeRoadmapTasks,
+  normalizeRoadmapRaci,
   normalizeKanoAxisLevel
 };

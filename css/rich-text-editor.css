@@ -81,8 +81,8 @@
 
 /* Reset global primary button styles inside toolbar */
 .rich-text-editor__toolbar .rich-text-editor__btn,
-#projectModal .rich-text-editor__toolbar .rich-text-editor__btn,
-#projectModal .rich-text-editor__toolbar button.rich-text-editor__btn {
+#roadmapModal .rich-text-editor__toolbar .rich-text-editor__btn,
+#roadmapModal .rich-text-editor__toolbar button.rich-text-editor__btn {
   all: unset;
   box-sizing: border-box;
   display: inline-flex;
@@ -113,7 +113,7 @@
 }
 
 .rich-text-editor__toolbar .rich-text-editor__btn:hover:not(:disabled),
-#projectModal .rich-text-editor__toolbar .rich-text-editor__btn:hover:not(:disabled) {
+#roadmapModal .rich-text-editor__toolbar .rich-text-editor__btn:hover:not(:disabled) {
   background: var(--rte-btn-hover-bg) !important;
   border-color: rgba(202, 138, 4, 0.22);
   color: #44403c !important;
@@ -122,26 +122,26 @@
 }
 
 .rich-text-editor__toolbar .rich-text-editor__btn:active:not(:disabled),
-#projectModal .rich-text-editor__toolbar .rich-text-editor__btn:active:not(:disabled) {
+#roadmapModal .rich-text-editor__toolbar .rich-text-editor__btn:active:not(:disabled) {
   transform: scale(0.96) !important;
   box-shadow: none !important;
 }
 
 .rich-text-editor__toolbar .rich-text-editor__btn:focus-visible,
-#projectModal .rich-text-editor__toolbar .rich-text-editor__btn:focus-visible {
+#roadmapModal .rich-text-editor__toolbar .rich-text-editor__btn:focus-visible {
   outline: 2px solid rgba(220, 38, 38, 0.42);
   outline-offset: 1px;
 }
 
 .rich-text-editor__toolbar .rich-text-editor__btn--active,
-#projectModal .rich-text-editor__toolbar .rich-text-editor__btn--active {
+#roadmapModal .rich-text-editor__toolbar .rich-text-editor__btn--active {
   background: var(--rte-btn-active-bg) !important;
   border-color: rgba(234, 88, 12, 0.28);
   color: var(--rte-btn-active-color) !important;
 }
 
 .rich-text-editor__toolbar .rich-text-editor__btn:disabled,
-#projectModal .rich-text-editor__toolbar .rich-text-editor__btn:disabled {
+#roadmapModal .rich-text-editor__toolbar .rich-text-editor__btn:disabled {
   opacity: 0.42;
   cursor: not-allowed;
   transform: none !important;
@@ -203,12 +203,12 @@
 .rich-text-editor--readonly .rich-text-editor__toolbar,
 .rich-text-editor__toolbar.rich-text-editor__toolbar--hidden,
 .rich-text-editor__toolbar[hidden],
-#projectModal.project-modal--view .rich-text-editor__toolbar {
+#roadmapModal.roadmap-modal--view .rich-text-editor__toolbar {
   display: none !important;
 }
 
 .rich-text-editor--readonly .rich-text-editor__surface,
-#projectModal.project-modal--view .rich-text-editor__surface {
+#roadmapModal.roadmap-modal--view .rich-text-editor__surface {
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
 }
@@ -269,8 +269,8 @@
   width: 100%;
 }
 
-#projectModal .project-field-tooltip-wrap .rich-text-editor-host,
-#projectModal .project-field-tooltip-wrap .rich-text-editor {
+#roadmapModal .roadmap-field-tooltip-wrap .rich-text-editor-host,
+#roadmapModal .roadmap-field-tooltip-wrap .rich-text-editor {
   width: 100%;
 }
 
@@ -285,7 +285,7 @@
   }
 
   .rich-text-editor__toolbar .rich-text-editor__btn,
-  #projectModal .rich-text-editor__toolbar .rich-text-editor__btn {
+  #roadmapModal .rich-text-editor__toolbar .rich-text-editor__btn {
     width: 1.85rem;
     height: 1.85rem;
   }

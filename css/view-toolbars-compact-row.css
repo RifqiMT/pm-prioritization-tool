@@ -4,10 +4,10 @@
  */
 
 @media (max-width: 1400px) {
-  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-view--table .projects-table-toolbar.view-toolbar,
-  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-view--board .scrum-board-toolbar.view-toolbar,
-  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-view--moscow .moscow-view-header.view-toolbar,
-  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .projects-view--map .projects-map-toolbar.view-toolbar {
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--table .roadmaps-table-toolbar.view-toolbar,
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--board .scrum-board-toolbar.view-toolbar,
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--moscow .moscow-view-header.view-toolbar,
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--map .roadmaps-map-toolbar.view-toolbar {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
@@ -81,7 +81,7 @@
   }
 
   /* Table — group by selector (compact phones/tablets only) */
-  html.is-compact-layout .view-toolbar--table .projects-table-group-bar--compact-only.view-toolbar__compact-selector {
+  html.is-compact-layout .view-toolbar--table .roadmaps-table-group-bar--compact-only.view-toolbar__compact-selector {
     display: flex !important;
     visibility: visible !important;
     width: auto !important;
@@ -98,18 +98,18 @@
     box-shadow: none !important;
   }
 
-  html.is-compact-layout .view-toolbar--table .projects-table-group-label {
+  html.is-compact-layout .view-toolbar--table .roadmaps-table-group-label {
     flex: 0 0 auto !important;
     margin: 0 !important;
   }
 
-  html.is-compact-layout .view-toolbar--table .projects-table-group-control-wrap {
+  html.is-compact-layout .view-toolbar--table .roadmaps-table-group-control-wrap {
     flex: 1 1 auto !important;
     min-width: 0 !important;
     max-width: none !important;
   }
 
-  html.is-compact-layout .view-toolbar--table .projects-table-group-select {
+  html.is-compact-layout .view-toolbar--table .roadmaps-table-group-select {
     width: 100% !important;
     min-height: 40px !important;
     padding: 0.35rem 1.75rem 0.35rem 0.55rem !important;
@@ -119,7 +119,7 @@
     background: #fff !important;
   }
 
-  html.is-compact-layout .view-toolbar--table .projects-table-group-summary {
+  html.is-compact-layout .view-toolbar--table .roadmaps-table-group-summary {
     flex: 0 0 auto !important;
     margin: 0 !important;
     padding-left: 0.15rem !important;
@@ -171,7 +171,7 @@
   }
 
   html.is-compact-layout .view-toolbar--map .view-toolbar__metric--map .view-toolbar__field-label,
-  html.is-compact-layout .view-toolbar--map .projects-map-metric-label {
+  html.is-compact-layout .view-toolbar--map .roadmaps-map-metric-label {
     flex: 0 0 auto !important;
     white-space: nowrap !important;
     font-size: 0.62rem !important;
@@ -254,8 +254,8 @@
 }
 
 /* Desktop: group-by selector is compact-only (phones/tablets) */
-html.is-desktop-layout .view-toolbar--table .projects-table-group-bar,
-html.is-desktop-layout .projects-table-group-bar--compact-only {
+html.is-desktop-layout .view-toolbar--table .roadmaps-table-group-bar,
+html.is-desktop-layout .roadmaps-table-group-bar--compact-only {
   display: none !important;
   visibility: hidden !important;
   width: 0 !important;
@@ -279,8 +279,8 @@ html.is-desktop-layout .projects-table-group-bar--compact-only {
 
 @media (max-width: 360px) {
   html.is-compact-layout .view-toolbar--board .scrum-board-status-filter .view-toolbar__field-label,
-  html.is-compact-layout .view-toolbar--table .projects-table-group-label__text,
-  html.is-compact-layout .view-toolbar--map .projects-map-metric-label {
+  html.is-compact-layout .view-toolbar--table .roadmaps-table-group-label__text,
+  html.is-compact-layout .view-toolbar--map .roadmaps-map-metric-label {
     position: absolute !important;
     width: 1px !important;
     height: 1px !important;

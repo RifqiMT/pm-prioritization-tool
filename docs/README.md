@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Maintainer** | Product Team |
-| **Last audited** | 2026-05-31 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui190` |
+| **Last audited** | 2026-05-28 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui192` |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
 
 This folder is the **single source of product truth** for engineering, design, product management, and stakeholders. Documents are maintained against the **current** implementation in `index.html`, `css/`, `src/`, and `api/`.
@@ -65,12 +65,12 @@ This folder is the **single source of product truth** for engineering, design, p
 
 ---
 
-## Source code map (audited 2026-05-31)
+## Source code map (audited 2026-05-28)
 
 ```
 pm-prioritization-tool/
-├── index.html                      # Shell, modals, filters, four views, footer
-├── css/                            # 30 layered stylesheets (see DESIGN_GUIDELINES.md §4)
+├── index.html                      # Shell, modals, filters, six views, footer
+├── css/                            # 31 layered stylesheets (see DESIGN_GUIDELINES.md §4)
 │   ├── main.css                    # Base tokens, global buttons, status/framework pills
 │   ├── workspace-modern.css        # Workspace panel, table, board columns
 │   ├── header-modern.css           # App header, compact actions menu
@@ -87,14 +87,15 @@ pm-prioritization-tool/
 │   ├── table-compact-cards.css     # Compact table card list + grouping
 │   ├── table-rows-modern.css       # Desktop table rows
 │   ├── table-revamp-modern.css     # Semantic column layout
-│   ├── project-actions-modern.css  # View / Edit / Delete actions
-│   ├── project-details-tooltip.css # Card/table description tooltips
+│   ├── roadmap-actions-modern.css  # View / Edit / Delete actions
+│   ├── roadmap-details-tooltip.css # Card/table description tooltips
 │   ├── rich-text-editor.css        # Rich-text toolbar + fields
 │   ├── super-admin-modern.css      # Workspace-wide mode (GUARDRAILS §7)
 │   ├── map-tooltip-modern.css      # Map hover / pinned tooltips
 │   ├── board-drag.css              # Board DnD visuals
 │   ├── board-card-interaction.css  # Card press feedback
 │   ├── filters-compact-bar.css     # Filters drawer compact bar
+│   ├── portfolio-kano-modern.css   # KANO portfolio matrix + cards
 │   ├── portfolio-cards-compact.css # Board/MoSCoW card shells
 │   ├── fullscreen-modern.css       # Fullscreen host
 │   ├── fullscreen-compact.css      # Fullscreen + compact
@@ -106,6 +107,7 @@ pm-prioritization-tool/
 │   ├── constants.js                # Enums, tooltips, APP_ASSET_VERSION
 │   ├── rice.js                     # RICE formula + validation
 │   ├── utils.js                    # Format, CSV, IDs, legacy field strip
+│   ├── dev-seed-workspace.js       # Localhost sample data (gated in app.js)
 │   └── modules/
 │       ├── storage.js              # localStorage + MongoDB sync
 │       ├── profile-security.js     # PBKDF2 profile passwords
@@ -124,11 +126,12 @@ pm-prioritization-tool/
 │       ├── auth.js                 # Bearer PM_API_SECRET
 │       ├── mongo.js                # Mongo client
 │       ├── http.js                 # JSON helpers
-│       └── project-metadata.js     # Server-side labels/links normalize
+│       └── roadmap-metadata.js     # Server-side labels/links normalize
 ├── scripts/
 │   ├── verify-deployment.js        # Production smoke test
 │   ├── test-storage-sync-logic.js  # npm run test:storage
-│   ├── test-project-metadata.js    # npm run test:metadata
+│   ├── test-roadmap-metadata.js    # npm run test:metadata
+│   ├── test-persistence-keys.js    # npm run test:persistence
 │   └── disable-vercel-deployment-protection.sh
 ├── .github/workflows/              # ci.yml, vercel-production.yml, fix-vercel-protection.yml
 ├── docs/                           # This documentation suite

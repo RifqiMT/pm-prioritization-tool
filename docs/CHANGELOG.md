@@ -27,38 +27,59 @@ When updating this file after a change:
 
 ## [Unreleased]
 
-### Data — Workspace persistence registry and round-trip fixes — 2026-06-03 — Product Team — Impact: user-visible
+### Docs — Full product documentation standard audit — 2026-05-28 — Product Team — Impact: documentation
+
+- Re-audited entire repository against `APP_ASSET_VERSION` = `20260528-ui192` and **Roadmap** terminology (legacy `projects` migration documented).
+- Expanded RACI and KANO coverage across PRD, personas, user stories (Epics R–S), variables (§8.11–8.13), metrics/OKRs (PM-11/12, Objective 6), design guidelines, and traceability matrix.
+- Confirmed six planning views, 31 CSS layers, `roadmap-metadata.js`, and `WORKSPACE_PERSISTED_STATE_KEYS` registry in architecture and tech guidelines.
+
+### Docs — Codebase and documentation sync audit — 2026-05-28 — Product Team — Impact: documentation
+
+- Aligned all docs with current implementation: six views (Table, Board, MoSCoW, Map, RACI, KANO), 31 CSS layers, `roadmap-metadata.js`, legacy `projects` migration.
+- Documented RACI and KANO variables, PRD requirements FR-2.10/2.11 and FR-5.6/5.7, `WORKSPACE_PERSISTED_STATE_KEYS` registry.
+- Unified `index.html` cache-bust query strings to `APP_ASSET_VERSION` = `20260528-ui192`.
+- Removed one-time `scripts/rename-project-to-roadmap.js` migration utility.
+
+### Terminology — Project → Roadmap across app and docs — 2026-05-31 — Product Team — Impact: user-visible
+
+- Renamed all product-facing **Project / Projects** terminology to **Roadmap / Roadmaps** (UI labels, modals, filters, views, CSS classes, JS identifiers, API module names, and documentation).
+- Persistence key `profile.projects` migrated to `profile.roadmaps` on load and save; legacy `projects` and `projectsView` keys still accepted on import.
+- Renamed files: `roadmap-metadata.js`, `roadmap-actions-modern.css`, `roadmap-details-tooltip.css`, `test-roadmap-metadata.js`.
+- Vercel infrastructure names (`VERCEL_PROJECT_ID`, `/v9/projects`) preserved in deployment scripts and workflows.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui192`.
+
+### Data — Workspace persistence registry and round-trip fixes — 2026-05-28 — Product Team — Impact: user-visible
 
 - Added `WORKSPACE_PERSISTED_STATE_KEYS` in `constants.js` so new UI state fields are saved to `localStorage` and Vercel MongoDB via one registry.
-- Fixed `moscowOrder` dropped on reload; profile/project loaders now merge unknown fields forward-compatibly.
+- Fixed `moscowOrder` dropped on reload; profile/roadmap loaders now merge unknown fields forward-compatibly.
 - Cloud API normalizes `tasks[]` on write (aligned with labels/links/raci).
 - Added `npm run test:persistence` for key-registry and round-trip checks.
 
 ### Docs — Full documentation audit (product standard) — 2026-05-31 — Product Team — Impact: documentation
 
-- Re-audited repository against `APP_ASSET_VERSION` = `20260528-ui190`.
+- Re-audited repository against `APP_ASSET_VERSION` = `20260528-ui192`.
 - Updated README, documentation hub, PRD, product documentation, personas, user stories, variables (with relationship charts), metrics/OKRs, design guidelines, traceability matrix, guardrails, architecture, and tech guidelines.
-- Documented rich-text descriptions, project tasks, labels/links cloud persistence, bulk duplicate/move, and complete source/CSS/module map.
+- Documented rich-text descriptions, roadmap tasks, labels/links cloud persistence, bulk duplicate/move, and complete source/CSS/module map.
 
-### Fix — Project labels and links persist to MongoDB (prod) — 2026-05-31 — Product Team — Impact: user-visible
+### Fix — Roadmap labels and links persist to MongoDB (prod) — 2026-05-31 — Product Team — Impact: user-visible
 
 - Canonicalize labels/links on every workspace save and MongoDB write; accept legacy link field names (`name`, `href`, `text`) and string URL arrays.
-- Flush cloud sync immediately after project create/edit so background pulls do not overwrite unsaved label/link changes.
+- Flush cloud sync immediately after roadmap create/edit so background pulls do not overwrite unsaved label/link changes.
 - Skip automatic cloud pull while local edits are pending or newer than the last applied remote snapshot.
 - Server-side normalization in `api/state` before MongoDB upsert.
 - GitHub `fix-vercel-protection` workflow no longer fails when Vercel secrets are missing (skips with notice).
-- Cache bust: `APP_ASSET_VERSION` = `20260528-ui190`.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui192`.
 
 ### Feature — Bulk duplicate and move across profiles — 2026-05-28 — Product Team — Impact: user-visible
 
 - When workspace-wide mode is active, table multi-select shows **Duplicate selected** and **Move selected** (desktop toolbar and compact selection bar).
-- Duplicate creates copies in a chosen target profile; move re-homes selected projects to another profile and cleans board/MoSCoW order references.
+- Duplicate creates copies in a chosen target profile; move re-homes selected roadmaps to another profile and cleans board/MoSCoW order references.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui189`.
 
-### Feature — Project tasks with status — 2026-05-28 — Product Team — Impact: user-visible
+### Feature — Roadmap tasks with status — 2026-05-28 — Product Team — Impact: user-visible
 
-- Add optional Tasks list in project create, edit, and view modals (task name + status dropdown using project status values).
-- Persist tasks in project data, CSV export/import (JSON column), and storage normalization.
+- Add optional Tasks list in roadmap create, edit, and view modals (task name + status dropdown using roadmap status values).
+- Persist tasks in roadmap data, CSV export/import (JSON column), and storage normalization.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui188`.
 
 ### UX — Rich-text editor redesign + all description fields — 2026-05-28 — Product Team — Impact: user-visible
@@ -68,13 +89,13 @@ When updating this file after a change:
 - Shared mount pattern for all description editors; CSV export strips HTML from every description field.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui187`.
 
-### UX — Rich-text project description editor — 2026-05-28 — Product Team — Impact: user-visible
+### UX — Rich-text roadmap description editor — 2026-05-28 — Product Team — Impact: user-visible
 
-- Project create/edit description field supports Word-like formatting: bold, italic, underline, alignment, bullet and numbered lists.
+- Roadmap create/edit description field supports Word-like formatting: bold, italic, underline, alignment, bullet and numbered lists.
 - Stored as sanitized HTML; legacy plain-text descriptions still render; CSV export uses plain-text fallback.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui186`.
 
-### UX — Project details tooltip rich formatting — 2026-05-28 — Product Team — Impact: user-visible
+### UX — Roadmap details tooltip rich formatting — 2026-05-28 — Product Team — Impact: user-visible
 
 - Description tooltips parse paragraphs, bullets, numbering, and section headers; scrollable wide layout for long content.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui185`.
@@ -139,7 +160,7 @@ When updating this file after a change:
 - View, Edit, and Delete stay on a single row on phones/tablets (table card footer no longer inherits the board two-row grid).
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui172`.
 
-### UX — Compact table project cards aligned with board cards — 2026-05-28 — Product Team — Impact: user-visible
+### UX — Compact table roadmap cards aligned with board cards — 2026-05-28 — Product Team — Impact: user-visible
 
 - Phones/tablets (≤1400px) table view cards use the same metrics row (type, framework, RICE, size, financial), structured sections, and hover/press feedback as Scrum/MoSCoW cards (no card resize).
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui171`.
@@ -157,7 +178,7 @@ When updating this file after a change:
 
 ### Feature — Board view status column filter — 2026-05-28 — Product Team — Impact: user-visible
 
-- Board toolbar multi-select **Status columns** toggles which project statuses appear as Scrum columns (persisted in workspace state; at least one column required).
+- Board toolbar multi-select **Status columns** toggles which roadmap statuses appear as Scrum columns (persisted in workspace state; at least one column required).
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui168`.
 
 ### Fix — Desktop Scrum board column width — 2026-05-28 — Product Team — Impact: user-visible
@@ -179,7 +200,7 @@ When updating this file after a change:
 
 ### UI — Scrum/MoSCoW card metrics in one row — 2026-05-28 — Product Team — Impact: user-visible
 
-- Project type icon, financial framework icon, RICE, t-shirt size, and financial impact share one horizontal metrics row on all breakpoints (desktop, tablet, phone).
+- Roadmap type icon, financial framework icon, RICE, t-shirt size, and financial impact share one horizontal metrics row on all breakpoints (desktop, tablet, phone).
 - Shared `buildBoardCardMetricsRow` helper; horizontal scroll on very narrow cards instead of stacking.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui164`.
 
@@ -195,7 +216,7 @@ When updating this file after a change:
 
 ### UI — Simplified map country tooltips — 2026-05-28 — Product Team — Impact: user-visible
 
-- Cleaner layout: country header, inline stat (`13 projects`), short footnote only when no profile list.
+- Cleaner layout: country header, inline stat (`13 roadmaps`), short footnote only when no profile list.
 - Profile breakdown is a simple name/value list (no nested cards); values use neutral workspace colors.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui161`.
 
@@ -209,7 +230,7 @@ When updating this file after a change:
 
 - Map hover tooltip always shows the aggregated value for the toolbar metric (Count, RICE, EUR, etc.), not only in workspace-wide mode.
 - Tooltip values are rebuilt on each hover from live filtered data; improved ISO code matching for country stats.
-- Legend distinguishes **projects in scope** vs **country assignments** (multi-country projects count once per country on the map).
+- Legend distinguishes **roadmaps in scope** vs **country assignments** (multi-country roadmaps count once per country on the map).
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui159`.
 
 ### Fix — Map hover tooltip position and stuck country outlines — 2026-05-28 — Product Team — Impact: user-visible
@@ -221,14 +242,14 @@ When updating this file after a change:
 
 ### UI — Map tooltip simplified (aggregated only in workspace-wide mode) — 2026-05-28 — Product Team — Impact: user-visible
 
-- Map hover tooltip: country name + flag only by default; no project lists, progress bars, footers, or click-to-pin panel.
+- Map hover tooltip: country name + flag only by default; no roadmap lists, progress bars, footers, or click-to-pin panel.
 - When workspace-wide mode is on (GUARDRAILS §7), tooltip adds aggregated value for the selected map metric (Count, RICE, EUR, etc.).
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui157`.
 
 ### UI — Map hover tooltips pass-through + click-to-pin details — 2026-05-28 — Product Team — Impact: user-visible
 
-- Hover preview tooltip uses `pointer-events: none` so countries under the card remain hoverable; compact summary only (metric + project count).
-- Click a country to pin the full project list in a corner panel (`#projectsMapDetailPanel`); click again or click the map to close.
+- Hover preview tooltip uses `pointer-events: none` so countries under the card remain hoverable; compact summary only (metric + roadmap count).
+- Click a country to pin the full roadmap list in a corner panel (`#roadmapsMapDetailPanel`); click again or click the map to close.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui156`.
 
 ### Fix — Map tooltips single-open policy — 2026-05-28 — Product Team — Impact: user-visible
@@ -239,14 +260,14 @@ When updating this file after a change:
 
 ### UI — Map country tooltips revamp — 2026-05-28 — Product Team — Impact: user-visible
 
-- Replaced plain-text Leaflet tooltips with structured cards: country header (flag, name, ISO code, metric badge), hero metric value, relative intensity bar, scrollable project list (RICE, EUR, status, MoSCoW chips; owner when workspace-wide mode is on).
+- Replaced plain-text Leaflet tooltips with structured cards: country header (flag, name, ISO code, metric badge), hero metric value, relative intensity bar, scrollable roadmap list (RICE, EUR, status, MoSCoW chips; owner when workspace-wide mode is on).
 - Sticky, interactive, auto-positioned tooltips; gold border highlight on country hover.
 - New `css/map-tooltip-modern.css`; cache bust `APP_ASSET_VERSION` = `20260528-ui154`.
 
 ### Fix — Map view stuck on “Unlock this profile” — 2026-05-28 — Product Team — Impact: user-visible
 
 - Map view no longer leaves a stale unlock message after the profile is unlocked: Leaflet instances are torn down when showing empty states, and the map is recreated when the host DOM was replaced.
-- Locked-profile portfolio rendering delegates to `renderProjectsMap()` / board / MoSCoW renderers instead of swapping map HTML without clearing `_leafletMap`.
+- Locked-profile portfolio rendering delegates to `renderRoadmapsMap()` / board / MoSCoW renderers instead of swapping map HTML without clearing `_leafletMap`.
 - If Leaflet is still loading, the map retries instead of failing silently.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui153`.
 
@@ -256,12 +277,12 @@ When updating this file after a change:
 - Aligned layout breakpoint documentation to **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) across PRD, architecture, tech guidelines, variables, and design guidelines.
 - Traceability matrix expanded for FR-5.2 group-by, FR-5.4 MoSCoW display names, FR-6 labels/links filters, FR-9.6–9.7, and FR-10 (cross-references GUARDRAILS §7).
 - Variables dictionary: `tableGroupBy`, filter extensions, layout constants, filter pipeline and privileged-mode charts (neutral naming; policy in GUARDRAILS §7 only).
-- Asset baseline documented: `APP_ASSET_VERSION` = `20260528-ui190`.
+- Asset baseline documented: `APP_ASSET_VERSION` = `20260528-ui192`.
 
 ### UI — Site footer GitHub & article links — 2026-05-28 — Product Team — Impact: user-visible
 
 - Footer icon row: GitHub repo and prioritization article links alongside LinkedIn and website.
-- Cache bust: `APP_ASSET_VERSION` = `20260528-ui190`.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui192`.
 
 ### UI — Compact profile bar controls on one row — 2026-05-28 — Product Team — Impact: user-visible
 
@@ -280,7 +301,7 @@ When updating this file after a change:
 
 ### UI — Desktop board cards match compact curvature — 2026-05-28 — Product Team — Impact: user-visible
 
-- Scrum & MoSCoW desktop project cards use the same 12px radius, border, surface gradient, and shadow as tablet/phone cards.
+- Scrum & MoSCoW desktop roadmap cards use the same 12px radius, border, surface gradient, and shadow as tablet/phone cards.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui147`.
 
 ### UI — Desktop board card actions single row — 2026-05-28 — Product Team — Impact: user-visible
@@ -290,7 +311,7 @@ When updating this file after a change:
 
 ### UI — Board cards owner stripe (all layouts) — 2026-05-28 — Product Team — Impact: user-visible
 
-- Scrum & MoSCoW cards: owner attribution stripe on top of title on desktop, tablet, and phone when workspace-wide mode is active (matches projects table card).
+- Scrum & MoSCoW cards: owner attribution stripe on top of title on desktop, tablet, and phone when workspace-wide mode is active (matches roadmaps table card).
 - Removed desktop-only owner pill below title on board cards.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui145`.
 
@@ -301,7 +322,7 @@ When updating this file after a change:
 
 ### Fix — Desktop table layout stable across filters — 2026-05-28 — Product Team — Impact: user-visible
 
-- Projects table column widths use semantic column classes (fixes misalignment when Profile column is in the DOM but hidden).
+- Roadmaps table column widths use semantic column classes (fixes misalignment when Profile column is in the DOM but hidden).
 - Empty filter results keep the same header grid and empty-state styling on desktop.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui141`.
 
@@ -318,30 +339,30 @@ When updating this file after a change:
 - Filters reorganized: **Search** row (title + label), **Quick filters** (type, countries, period), **Advanced** (impact, effort, currency, framework, status, T-shirt, MOSCOW, links).
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui137`.
 
-### Feature — Workspace-wide project management (trust-holder profile) — 2026-05-28 — Product Team — Impact: user-visible
+### Feature — Workspace-wide roadmap management (trust-holder profile) — 2026-05-28 — Product Team — Impact: user-visible
 
-- Trust-holder profile can enable workspace-wide mode: view/add/edit/delete projects across all profiles (see [GUARDRAILS.md](GUARDRAILS.md) §7).
-- Projects remain owned by their home profile; table shows a **Profile** column; create flow includes owner profile selector.
+- Trust-holder profile can enable workspace-wide mode: view/add/edit/delete roadmaps across all profiles (see [GUARDRAILS.md](GUARDRAILS.md) §7).
+- Roadmaps remain owned by their home profile; table shows a **Profile** column; create flow includes owner profile selector.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui136`.
 
 ### UI — Filter autocomplete (title & label) — 2026-05-28 — Product Team — Impact: user-visible
 
-- Project **title** and **label** filters use responsive combobox suggestions from the active profile (keyboard navigation, match highlighting).
+- Roadmap **title** and **label** filters use responsive combobox suggestions from the active profile (keyboard navigation, match highlighting).
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui135`.
 
 ### Feature — Advanced filters: label & links — 2026-05-28 — Product Team — Impact: user-visible
 
-- **Label:** text filter in advanced filters; matches any project label (substring, case-insensitive).
-- **Links:** filter projects with link(s), without links, or any.
+- **Label:** text filter in advanced filters; matches any roadmap label (substring, case-insensitive).
+- **Links:** filter roadmaps with link(s), without links, or any.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui134`.
 
-### UI — Project labels & links readability — 2026-05-28 — Product Team — Impact: user-visible
+### UI — Roadmap labels & links readability — 2026-05-28 — Product Team — Impact: user-visible
 
-- Restyle labels/links for the project modal light theme: high-contrast chips, link cards with title + URL preview, field hints, and bordered input panel.
+- Restyle labels/links for the roadmap modal light theme: high-contrast chips, link cards with title + URL preview, field hints, and bordered input panel.
 - Edit mode: column headers for link rows; warm-themed remove/add controls matching other modal fields.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui133`.
 
-### Feature — Project labels and links — 2026-05-28 — Product Team — Impact: user-visible
+### Feature — Roadmap labels and links — 2026-05-28 — Product Team — Impact: user-visible
 
 - **Labels:** optional multi-value tags in create/edit/view (each label may contain multiple words).
 - **Links:** optional named hyperlinks (display text + URL); view mode shows clickable anchors; CSV/JSON import-export supported.
@@ -353,9 +374,9 @@ When updating this file after a change:
 - Wheel events scroll inside the tooltip instead of closing it or scrolling the table underneath.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui131`.
 
-### UI — EU region badge in project table/countries row — 2026-05-28 — Product Team — Impact: user-visible
+### UI — EU region badge in roadmap table/countries row — 2026-05-28 — Product Team — Impact: user-visible
 
-- When a project targets all EU member states, the summary shows **🇪🇺 EU** (desktop badge + compact card chip) instead of `AT, BE, BG +24 more`.
+- When a roadmap targets all EU member states, the summary shows **🇪🇺 EU** (desktop badge + compact card chip) instead of `AT, BE, BG +24 more`.
 - Full member list remains in the tooltip only.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui130`.
 
@@ -381,43 +402,43 @@ When updating this file after a change:
 
 ### UI — Compact cards: drop duplicate T-shirt badge — 2026-05-28 — Product Team — Impact: user-visible
 
-- Phones/tablets: removed T-shirt size from the top badge row on project cards (still shown in the **Size** metric with tooltip).
+- Phones/tablets: removed T-shirt size from the top badge row on roadmap cards (still shown in the **Size** metric with tooltip).
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui126`.
 
 ### Fix — Compact table cards: T-shirt size tooltip — 2026-05-28 — Product Team — Impact: user-visible
 
-- T-shirt size badge and **Size** metric on project cards now include `cell-tshirt-with-tooltip` (tap for sprint guidance from `tshirtSizeTooltips`).
+- T-shirt size badge and **Size** metric on roadmap cards now include `cell-tshirt-with-tooltip` (tap for sprint guidance from `tshirtSizeTooltips`).
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui125`.
 
 ### Fix — Compact table view tooltips (phones/tablets) — 2026-05-28 — Product Team — Impact: user-visible
 
-- Tooltips on project cards now work on touch: **tap to show/hide**, tap outside to dismiss, keyboard focus support.
+- Tooltips on roadmap cards now work on touch: **tap to show/hide**, tap outside to dismiss, keyboard focus support.
 - Added structured tooltips to card title, status, MoSCoW, type/framework icons, RICE, financial impact, countries row, and +N overflow badge.
 - Improved tooltip positioning (viewport clamping, wide layout for long content).
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui124`.
 
-### UI — Compact project cards: badge row capped at three — 2026-05-28 — Product Team — Impact: user-visible
+### UI — Compact roadmap cards: badge row capped at three — 2026-05-28 — Product Team — Impact: user-visible
 
-- Phones/tablets: project card badge strip stays on **one row** with at most **3** pills (Status → MoSCoW → Size priority); extra attributes collapse to a **+N** chip with tooltip.
+- Phones/tablets: roadmap card badge strip stays on **one row** with at most **3** pills (Status → MoSCoW → Size priority); extra attributes collapse to a **+N** chip with tooltip.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui123`.
 
-### UI — Compact project cards: three metrics only — 2026-05-28 — Product Team — Impact: user-visible
+### UI — Compact roadmap cards: three metrics only — 2026-05-28 — Product Team — Impact: user-visible
 
-- Phones/tablets: project card metrics show **RICE**, **Impact**, and **Size** only (max 3); **Created** date removed.
+- Phones/tablets: roadmap card metrics show **RICE**, **Impact**, and **Size** only (max 3); **Created** date removed.
 - Metrics grid fixed to three equal columns on compact layout.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui122`.
 
 ### Feature — EU target countries shortcut — 2026-05-28 — Product Team — Impact: user-visible
 
-- Added **EU** option to target countries in project create, view, and edit; selecting it auto-fills all **27 EU member states**.
-- CSV import and saved projects with `EU` expand to member countries on load.
+- Added **EU** option to target countries in roadmap create, view, and edit; selecting it auto-fills all **27 EU member states**.
+- CSV import and saved roadmaps with `EU` expand to member countries on load.
 - Country filter includes the same EU shortcut (checks all member countries).
 - Constants: `COUNTRY_OPTION_EU`, `EU_MEMBER_COUNTRIES` in `src/constants.js`.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui121`.
 
 ### UI — Compact table cards: type/framework icons & country flags — 2026-05-28 — Product Team — Impact: user-visible
 
-- On phones/tablets (compact layout), **financial framework** icon sits beside **project type** in the title row (not in the meta row below metrics).
+- On phones/tablets (compact layout), **financial framework** icon sits beside **roadmap type** in the title row (not in the meta row below metrics).
 - Target countries row shows **flag + ISO code** per country (e.g. 🇹🇼 TW) instead of code-only text.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui120`.
 
@@ -427,43 +448,43 @@ When updating this file after a change:
 - Profiles panel no longer stacks above the workspace in the compact range.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui119`.
 
-### UI — Projects table cards: polish + group by (phones/tablets) — 2026-05-28 — Product Team — Impact: user-visible
+### UI — Roadmaps table cards: polish + group by (phones/tablets) — 2026-05-28 — Product Team — Impact: user-visible
 
 - Refined compact table cards: clearer metrics, labeled action buttons, selected-state ring, sticky section headers when grouped.
-- Added **Group by** control (Status, MoSCoW, T-shirt size, Financial framework, Project type, Currency) with persisted preference and per-group project counts.
+- Added **Group by** control (Status, MoSCoW, T-shirt size, Financial framework, Roadmap type, Currency) with persisted preference and per-group roadmap counts.
 - Cards hide the attribute shown in the active group header to reduce repetition.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui118`.
 
-### UI — Projects table card list (phones/tablets) — 2026-05-28 — Product Team — Impact: user-visible
+### UI — Roadmaps table card list (phones/tablets) — 2026-05-28 — Product Team — Impact: user-visible
 
-- Table view on viewports ≤1024px now uses a **touch-friendly project card list** instead of a horizontally scrolled 12-column grid.
+- Table view on viewports ≤1024px now uses a **touch-friendly roadmap card list** instead of a horizontally scrolled 12-column grid.
 - Each card shows status, MOSCOW, period, title, description excerpt, RICE, financial impact, size, created date, framework, countries, and labeled View / Edit / Delete actions.
 - Selection, bulk delete bar, tooltips, and fullscreen mode work with the new card list; desktop keeps the full data table.
 - Removed map-only `aspect-ratio` constraint from the table wrapper on compact layouts.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui117`.
 
-### UI — Project modal footer meta on desktop — 2026-05-28 — Product Team — Impact: user-visible
+### UI — Roadmap modal footer meta on desktop — 2026-05-28 — Product Team — Impact: user-visible
 
-- Fixed empty desktop footer: project metadata cards were hidden because `<details>` stayed closed; desktop now forces `details.open = true` and re-syncs when resizing across the 1024px breakpoint.
+- Fixed empty desktop footer: roadmap metadata cards were hidden because `<details>` stayed closed; desktop now forces `details.open = true` and re-syncs when resizing across the 1024px breakpoint.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui116`.
 
-### UI — Project modal footer actions row (phones/tablets) — 2026-05-28 — Product Team — Impact: user-visible
+### UI — Roadmap modal footer actions row (phones/tablets) — 2026-05-28 — Product Team — Impact: user-visible
 
 - Cancel and Save (or a single Close in view mode) stay **side by side in one row** on all phone and tablet widths; removed the ≤520px rule that stacked them vertically.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui115`.
 
-### UI — Project modal footer meta collapsible (phones/tablets) — 2026-05-28 — Product Team — Impact: user-visible
+### UI — Roadmap modal footer meta collapsible (phones/tablets) — 2026-05-28 — Product Team — Impact: user-visible
 
-- Project modal footer metadata (Project ID, dates, financial EUR, exchange rate, RICE) is wrapped in a `<details>` disclosure on viewports ≤1024px, **collapsed by default** to save vertical space; tap **Project details** to expand.
+- Roadmap modal footer metadata (Roadmap ID, dates, financial EUR, exchange rate, RICE) is wrapped in a `<details>` disclosure on viewports ≤1024px, **collapsed by default** to save vertical space; tap **Roadmap details** to expand.
 - Desktop (>1024px) continues to show both meta cards without a toggle.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui115`.
 
-### UI — Project modal touch scroll (phones/tablets) — 2026-05-28 — Product Team — Impact: user-visible
+### UI — Roadmap modal touch scroll (phones/tablets) — 2026-05-28 — Product Team — Impact: user-visible
 
-- Fixed project create/view/edit modal scrolling on touch devices by completing the flex height chain through `#projectForm` so `#projectModalScrollRegion` has a bounded height and `overflow-y: auto` can scroll.
+- Fixed roadmap create/view/edit modal scrolling on touch devices by completing the flex height chain through `#roadmapForm` so `#roadmapModalScrollRegion` has a bounded height and `overflow-y: auto` can scroll.
 - Footer bar is pinned with flex layout instead of `position: sticky`, which prevented overlap when content could not scroll.
 - Removed conflicting `height: 100%` override at ≤920px that broke the full-viewport panel sizing from the ≤1024px rules.
-- Footer polish (phones/tablets): meta cards are easier to scan (right-aligned values, monospaced + ellipsis for Project ID), and actions sit on a clean second row on compact layouts.
+- Footer polish (phones/tablets): meta cards are easier to scan (right-aligned values, monospaced + ellipsis for Roadmap ID), and actions sit on a clean second row on compact layouts.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui113`.
 
 ### Code — Legacy workspace field migration — 2026-05-27 — Product Team — Impact: internal
@@ -480,15 +501,15 @@ When updating this file after a change:
 - Dropped unused DOM element caches in `cacheElements()` (`scrumBoardLegend`, `importCsvFileInput`, popup wrappers never read in JS).
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui113`.
 
-### UI — Project modal footer meta (tablet/phone) — 2026-05-28 — Product Team — Impact: user-visible
+### UI — Roadmap modal footer meta (tablet/phone) — 2026-05-28 — Product Team — Impact: user-visible
 
-- Project modal footer metadata cards use a **2-column grid** on tablets/phones for faster scanning.
+- Roadmap modal footer metadata cards use a **2-column grid** on tablets/phones for faster scanning.
 - Cards only stack to a single column on very narrow screens.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui113`.
 
-### UI — Project modal max height (phones/tablets) — 2026-05-28 — Product Team — Impact: user-visible
+### UI — Roadmap modal max height (phones/tablets) — 2026-05-28 — Product Team — Impact: user-visible
 
-- Project modal now uses **near full-screen height** on phones and tablets (iOS + Android) to show more project context.
+- Roadmap modal now uses **near full-screen height** on phones and tablets (iOS + Android) to show more roadmap context.
 - Content scrolls within the modal; footer remains accessible.
 - Safe-area padding is respected on iOS notch devices.
 - Cache bust: `APP_ASSET_VERSION` = `20260528-ui113`.
@@ -497,7 +518,7 @@ When updating this file after a change:
 
 - Modernized table layout to prevent header/row overlaps and cramped columns, especially the Actions cell.
 - Actions render as an icon-only horizontal toolbar inside the Actions cell (stable alignment across breakpoints).
-- Additional layout layers loaded: `table-revamp-modern.css`, `table-rows-modern.css`, `project-actions-modern.css`, `layout-flow.css`, `views-density.css`, `portfolio-cards-compact.css`.
+- Additional layout layers loaded: `table-revamp-modern.css`, `table-rows-modern.css`, `roadmap-actions-modern.css`, `layout-flow.css`, `views-density.css`, `portfolio-cards-compact.css`.
 
 ### UI — Profile original-currency breakdown with EUR equivalents — 2026-05-27 — Product Team — Impact: user-visible
 
@@ -515,7 +536,7 @@ When updating this file after a change:
 - **Breakpoint model:** `html.is-compact-layout` and `html.is-phone-layout` for viewport ≤1024px; desktop remains >1024px (`initCompactLayoutClass()` in `src/app.js`).
 - **MoSCoW:** `moscow-compact.css` — 2×2 navigator pills, single-column quadrant stack, no horizontal board scroll; compact nav sync via `syncMoscowCompactNav()` and `IntersectionObserver`.
 - **Board:** `board-compact.css` — single-column status stacks; card **Move to** dropdown for status changes.
-- **Table:** `table-compact.css` — phone-style toolbar, floating **selection bar** for bulk delete, FAB for new project.
+- **Table:** `table-compact.css` — phone-style toolbar, floating **selection bar** for bulk delete, FAB for new roadmap.
 - **Fullscreen:** `fullscreen-compact.css` — body-level host; board/MoSCoW/table match workspace compact layouts inside fullscreen.
 - **Chrome:** `compact-modern.css` — icon-only portfolio tabs, short header title, hidden toolbar labels on compact.
 - **Footer:** `app-footer.css` — centered one-row attribution (credit, LinkedIn, website).
@@ -632,21 +653,21 @@ Major release: local-first portfolio workspace with profile security, modern res
 
 - `profile-security.js`: PBKDF2-SHA256 password hashing; never store plaintext passwords.
 - `loadState()` persists `passwordSalt` / `passwordHash` after refresh.
-- Board, MoSCoW, and Map no longer leak project data when profile is locked.
+- Board, MoSCoW, and Map no longer leak roadmap data when profile is locked.
 - Session unlock resets on tab close/refresh; inline unlock on locked banner.
 - Delete protected profile requires correct password.
 
 ### Data — Import / export — 2026-05-26 — Product Team — Impact: user-visible
 
-- JSON export includes workspace preferences; CSV is flat project rows.
-- Import merges profiles/projects by ID without duplicate corruption for same IDs.
+- JSON export includes workspace preferences; CSV is flat roadmap rows.
+- Import merges profiles/roadmaps by ID without duplicate corruption for same IDs.
 
 ### Product — Explainability & filters — 2026-05-26 — Product Team — Impact: user-visible
 
 - Single visible tooltip app-wide; standardized modal field tooltips.
 - RICE tooltip: abbreviations, formula, calculation line.
 - Table **Framework** column + advanced **Framework** filter naming.
-- Project modal footer: Project ID, timestamps, RICE, financial/EUR context.
+- Roadmap modal footer: Roadmap ID, timestamps, RICE, financial/EUR context.
 - Board/MoSCoW card tooltips: status + description.
 
 ### Infra — Vercel deployment — 2026-05-26 — Product Team — Impact: developer + ops
@@ -660,7 +681,7 @@ Major release: local-first portfolio workspace with profile security, modern res
 
 Earlier iterations introduced core RICE scoring, multi-view planning (table/board/MoSCoW/map), financial frameworks, and JSON/CSV portability. Detailed history before 2026-05-26 was consolidated into **2.0.0** during the documentation audit.
 
-For archaeology, refer to git history on `main` and agent transcripts cited in project README.
+For archaeology, refer to git history on `main` and agent transcripts cited in roadmap README.
 
 ---
 

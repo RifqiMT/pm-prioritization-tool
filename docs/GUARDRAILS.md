@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-05-31 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui190` |
+| **Last updated** | 2026-05-28 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui192` |
 
 ## 1. Business Guardrails
 
@@ -41,7 +41,7 @@
 - Keep canonical country normalization during import and rendering.
 - Preserve deterministic mapping between framework inputs and computed outputs.
 - Prevent duplicate entity insertion on import merge paths.
-- Preserve stable project identifiers and show them in modal metadata for auditability.
+- Preserve stable roadmap identifiers and show them in modal metadata for auditability.
 
 ## 5. Delivery Guardrails
 
@@ -70,7 +70,7 @@
 ### 6.3 Import merge behavior constraints
 - Import must merge by stable IDs:
   - profile merge: by `profile.id`
-  - project merge: by `project.id` within a profile
+  - roadmap merge: by `roadmap.id` within a profile
 - Import must not create duplicate corruption:
   - repeated imports of the same file should converge (no duplicate insertion for the same IDs).
 - Import must handle invalid input safely:
@@ -109,20 +109,20 @@
 
 - Persisted flag: `state.superAdminMode` (boolean in workspace payload / `saveState`).
 - Active only when: trust profile is active, toggle is on, profile is unlocked → `isSuperAdminModeActive()`.
-- **Read scope:** portfolio views list **all projects in the workspace** (every profile), with owner metadata attached (`ownerProfileId`, `ownerProfileName`).
-- **Write scope:** create, edit, and delete apply to each project’s **home (owner) profile**, not by re-homing projects to the active session profile — except **bulk move**, which explicitly transfers selected projects to a chosen target profile (super admin table selection only).
-- **Bulk transfer (table selection):** when mode is active, multi-select in table view exposes **Duplicate selected** and **Move selected**. Duplicate deep-copies projects into a target profile (new IDs, “(copy)” title suffix). Move removes projects from source profiles and adds them to the target profile; board/MoSCoW order arrays on source profiles are cleaned.
+- **Read scope:** portfolio views list **all roadmaps in the workspace** (every profile), with owner metadata attached (`ownerProfileId`, `ownerProfileName`).
+- **Write scope:** create, edit, and delete apply to each roadmap’s **home (owner) profile**, not by re-homing roadmaps to the active session profile — except **bulk move**, which explicitly transfers selected roadmaps to a chosen target profile (super admin table selection only).
+- **Bulk transfer (table selection):** when mode is active, multi-select in table view exposes **Duplicate selected** and **Move selected**. Duplicate deep-copies roadmaps into a target profile (new IDs, “(copy)” title suffix). Move removes roadmaps from source profiles and adds them to the target profile; board/MoSCoW order arrays on source profiles are cleaned.
 - **UI when active** (`html.is-super-admin-mode`):
   - Workspace banner and header badge (“Super admin · all profiles”).
   - Table **Profile** column + sort; optional **Owner profile** advanced filter and table group-by **Owner profile**.
   - Owner identity chips / card strips on table cards, Scrum/MoSCoW cards, and map tooltips (including **per-profile breakdown** of the selected map metric for each country).
-  - Project modal **Owner profile** selector on create; warnings when editing/deleting another profile’s project.
+  - Roadmap modal **Owner profile** selector on create; warnings when editing/deleting another profile’s roadmap.
 - **UI placement:** desktop → `#superAdminToggleDesktopSlot` in portfolio command bar; phones/tablets (≤1400px) → `#superAdminToggleMobileSlot` in the profile picker bar on the **same row** as the picker.
 
 ### 7.3 Super Admin UX and safety guardrails
 
 - Never show owner-only filters, Profile column, or cross-profile owner strips unless Super Admin mode is active.
-- Cross-profile rows/cards must remain visually distinct from the active profile’s own projects (e.g. external-profile highlight).
+- Cross-profile rows/cards must remain visually distinct from the active profile’s own roadmaps (e.g. external-profile highlight).
 - Toast and modal copy must state that changes persist in the **owner profile**.
 - Turning Super Admin off must restore single-profile scope immediately (re-render table, board, MoSCoW, map).
 - Do not log or export the trust-profile label token; treat `WORKSPACE_TRUST_PROFILE_LABEL` as an implementation detail.

@@ -3,9 +3,9 @@
  * Global: BoardCardInteraction
  */
 const BoardCardInteraction = (function () {
-  const CARD_SELECTOR = ".scrum-board-card, .moscow-board-card, .projects-table-card";
+  const CARD_SELECTOR = ".scrum-board-card, .moscow-board-card, .roadmaps-table-card";
   const SKIP_SELECTOR =
-    ".scrum-board-card-actions, .moscow-board-card-actions, .projects-table-card__select, .projects-table-card__actions, .portfolio-card-move, .portfolio-card-move-select, button, a, input, select, textarea, label, .project-field-tooltip-wrap, .cell-type-icon-wrap, .scrum-board-card-type-wrap, .board-card-metric-icon, .projects-table-card__status-pill, .projects-table-card__chip, .projects-table-card__chip--more, .card-meta-with-tooltip, .card-title-with-tooltip, .cell-rice-with-tooltip, .cell-financial-with-tooltip, .cell-tshirt-with-tooltip, .cell-countries-with-tooltip, .cell-moscow-with-tooltip";
+    ".scrum-board-card-actions, .moscow-board-card-actions, .roadmaps-table-card__select, .roadmaps-table-card__actions, .portfolio-card-move, .portfolio-card-move-select, button, a, input, select, textarea, label, .roadmap-field-tooltip-wrap, .cell-type-icon-wrap, .scrum-board-card-type-wrap, .board-card-metric-icon, .roadmaps-table-card__status-pill, .roadmaps-table-card__chip, .roadmaps-table-card__chip--more, .card-meta-with-tooltip, .card-title-with-tooltip, .cell-rice-with-tooltip, .cell-financial-with-tooltip, .cell-tshirt-with-tooltip, .cell-countries-with-tooltip, .cell-moscow-with-tooltip";
 
   /** @type {HTMLElement | null} */
   let pressedCard = null;

@@ -5,14 +5,14 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Document owner** | Product Team |
-| **Last audited** | 2026-05-31 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui190` |
+| **Last audited** | 2026-05-28 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui192` |
 
 ---
 
 ## 1. Product overview
 
-The **Product Management Prioritization Tool** is a browser-based workspace for product teams to capture initiatives, score priority with **RICE**, classify delivery intent with **MoSCoW**, estimate value through **financial frameworks**, and communicate plans through **Table**, **Board**, **MoSCoW**, and **Map** views.
+The **Product Management Prioritization Tool** is a browser-based workspace for product teams to capture initiatives, score priority with **RICE**, classify delivery intent with **MoSCoW**, estimate value through **financial frameworks**, and communicate plans through **Table**, **Board**, **MoSCoW**, **Map**, **RACI**, and **KANO** views.
 
 The application is a **static single-page app** (HTML, layered CSS, vanilla JavaScript) deployable to **Vercel**. When configured, workspace data syncs to **MongoDB Atlas** via serverless `/api` routes; the browser keeps a **local cache** and supports **JSON/CSV export** for backup and portability.
 
@@ -30,7 +30,7 @@ The application is a **static single-page app** (HTML, layered CSS, vanilla Java
 | **Explainable prioritization** | RICE inputs, formula, and computed score appear together in tooltips and sortable columns. |
 | **Portfolio separation** | Multiple **profiles** (teams, products, owners) with optional password protection. |
 | **Financial planning lenses** | Six frameworks without accounting-grade complexity. |
-| **Meeting-ready views** | Table for analysis, Board for workflow, MoSCoW for scope negotiation, Map for geography. |
+| **Meeting-ready views** | Table for analysis, Board for workflow, MoSCoW for scope negotiation, Map for geography, RACI for accountability, KANO for value classification. |
 | **Data ownership** | Cloud sync when enabled; export anytime; merge import for spreadsheets. |
 | **Works on any device** | Desktop above **1400px**; unified compact UI at **≤1400px** on tablets and phones. |
 | **Low operational cost** | No mandatory backend for local use; optional MongoDB on Vercel. |
@@ -48,18 +48,18 @@ The application is a **static single-page app** (HTML, layered CSS, vanilla Java
 - Locked profiles show unlock banner; portfolio views empty until unlock.
 - **Demo profile** (`Test`) is read-only when active.
 
-### 3.2 Projects
+### 3.2 Roadmaps
 
-- Full CRUD via modal (create, edit, read-only view) with section navigation (Project, RICE, Details, Financial).
+- Full CRUD via modal (create, edit, read-only view) with section navigation (Roadmap, RICE, MoSCoW, KANO, Meta, RACI, Financial, Details).
 - **RICE** with validation (`src/rice.js`).
-- **Rich-text descriptions** on project and all four RICE description fields (`RichTextEditor` in `src/modules/rich-text-editor.js`); stored as sanitized HTML; view mode hides toolbar; CSV export strips HTML to plain text.
+- **Rich-text descriptions** on roadmap and all four RICE description fields (`RichTextEditor` in `src/modules/rich-text-editor.js`); stored as sanitized HTML; view mode hides toolbar; CSV export strips HTML to plain text.
 - Metadata: type, status, MoSCoW, quarter (`YYYY-Qn`), countries (including **EU** region shortcut), t-shirt size, **labels**, **links**, **tasks**.
-- **Labels** — optional multi-value tags (multi-word allowed); normalized on save and cloud sync (`normalizeProjectLabels`).
+- **Labels** — optional multi-value tags (multi-word allowed); normalized on save and cloud sync (`normalizeRoadmapLabels`).
 - **Links** — optional named hyperlinks (`{ label, url }`); http/https only; legacy import shapes (`name`, `href`, string URLs) normalized on load.
-- **Tasks** — optional checklist items with name + status (uses `projectStatusList` values); persisted as `tasks[]`; CSV column `projectTasks` (JSON).
+- **Tasks** — optional checklist items with name + status (uses `roadmapStatusList` values); persisted as `tasks[]`; CSV column `roadmapTasks` (JSON).
 - **Bulk delete** in table (toolbar on desktop; floating **selection bar** on compact).
-- **Bulk duplicate** and **bulk move** to another profile when privileged workspace mode is active (see [GUARDRAILS.md](GUARDRAILS.md) §7) — `projectBulkTransferModal`.
-- Stable **project ID** and metadata in modal footer (collapsible on compact).
+- **Bulk duplicate** and **bulk move** to another profile when privileged workspace mode is active (see [GUARDRAILS.md](GUARDRAILS.md) §7) — `roadmapBulkTransferModal`.
+- Stable **roadmap ID** and metadata in modal footer (collapsible on compact).
 
 ### 3.3 Financial frameworks
 
@@ -81,7 +81,7 @@ Organized in the portfolio filters drawer:
 | Tier | Fields |
 |------|--------|
 | **Search** | Title (autocomplete), Label (autocomplete) |
-| **Quick** | Project type, Countries (multi-select + EU), Project period |
+| **Quick** | Roadmap type, Countries (multi-select + EU), Roadmap period |
 | **Advanced** | Impact, Effort, Currency, Framework, Status, T-shirt, MoSCoW, Links (any / with / without), Labels (any / with / without) |
 
 `applyFilters()` in `src/app.js` intersects all active criteria. Active count shown in filters badge; **Reset** clears filters.
@@ -94,13 +94,15 @@ Organized in the portfolio filters drawer:
 | **Board** | Horizontal status columns; drag-and-drop | Single-column stack; **Move to** status; curved cards |
 | **MoSCoW** | 2×2 grid; headers show **Must Have**, **Should Have**, **Could Have**, **Won't Have** with descriptions on one row | **Jump to quadrant** nav (2×2 pills); single-column quadrants |
 | **Map** | Leaflet choropleth | Metric pills (count, RICE, avg RICE, EUR, avg EUR) |
+| **RACI** | Matrix: Responsible, Accountable, Consulted, Informed | Business/Tech domain filter; tooltips on names; compact card stack |
+| **KANO** | Functionality × satisfaction portfolio map | Positioned vs not-positioned toggle; category legend; drag-and-drop reposition on desktop |
 | **Fullscreen** | Per-view expand | Body host; compact layouts preserved |
 
 ### 3.6 Table compact cards (≤1400px)
 
 When `html.is-compact-layout` and table view:
 
-- Projects render as **cards** instead of a horizontal grid (`table-compact-cards.css`).
+- Roadmaps render as **cards** instead of a horizontal grid (`table-compact-cards.css`).
 - **Group by**: none, status, MoSCoW, t-shirt, framework, type, currency, owner profile name (when workspace-wide mode active — see [GUARDRAILS.md](GUARDRAILS.md) §7).
 - Owner attribution stripe on cards when workspace-wide mode is on.
 
@@ -118,9 +120,10 @@ When `html.is-compact-layout` and table view:
 ### 3.9 Cloud storage (optional)
 
 - `AppStorage` (`src/modules/storage.js`): load/save workspace to MongoDB via `/api/state`.
-- Header status, Cloud modal (connect, pull, push, diagnostics); debounced sync (250ms) with **immediate flush** after project save.
+- Header status, Cloud modal (connect, pull, push, diagnostics); debounced sync (250ms) with **immediate flush** after roadmap save.
 - Background pull skipped while local edits are pending or newer than last applied remote snapshot (prevents overwriting labels/links).
-- Server normalizes labels/links on every MongoDB write (`api/_lib/project-metadata.js`).
+- Server normalizes labels/links/tasks/raci on every MongoDB write (`api/_lib/roadmap-metadata.js`).
+- Legacy JSON keys (`profile.projects`, `projectsView`, `projectType`, `projectStatus`, `projectPeriod`) migrate to roadmap equivalents on load; saves write only canonical keys.
 - Merge on load by document `updatedAt` and profile-count heuristics; local cache under `rice_prioritizer_v1`.
 
 ### 3.10 Site chrome
@@ -146,13 +149,13 @@ riceScore = (reachValue × impactValue × confidenceDecimal) ÷ effortValue
 | Confidence | 0–100 (percent) or 0–1 decimal |
 | Effort ≤ 0 | Score = 0 |
 
-Implementation: `src/rice.js` → `calculateRiceScore`, `validateProjectInput`.
+Implementation: `src/rice.js` → `calculateRiceScore`, `validateRoadmapInput`.
 
 ### 4.2 Filtering pipeline
 
 ```mermaid
 flowchart LR
-  ALL[Active profile projects] --> F1[Search: title + label]
+  ALL[Active profile roadmaps] --> F1[Search: title + label]
   F1 --> F2[Quick: type, countries, period]
   F2 --> F3[Advanced: impact, effort, currency, framework, status, tshirt, moscow, links, labels]
   F3 --> OUT[Filtered list for active view]
@@ -175,11 +178,27 @@ flowchart LR
 
 | `mapMetric` | Meaning |
 |-----------|---------|
-| `projects` | Project count per country |
+| `roadmaps` | Roadmap count per country |
 | `rice` | Sum of RICE per country |
 | `riceAvg` | Average RICE per country |
 | `financial` | Sum of financial impact (EUR) per country |
 | `financialAvg` | Average financial impact (EUR) per country |
+
+### 4.6 RACI accountability
+
+- Each roadmap stores `raci` with four arrays: `responsible`, `accountable`, `consulted`, `informed`.
+- Each entry: `{ name, domain }` where `domain` is `Business` or `Tech`.
+- **RACI view** (`renderRaciMatrix`): desktop shows a five-column matrix; compact shows one card per roadmap.
+- Workspace preference `raciMatrixDomain` filters which domain’s names appear in the matrix.
+- Normalized on load/save via `normalizeRoadmapRaci` (client and `api/_lib/roadmap-metadata.js`).
+
+### 4.7 KANO portfolio classification
+
+- Axes: `kanoFunctionality` and `kanoSatisfaction` (integers 1–5, or null if unset).
+- Level labels and category legend defined in `constants.js` (`kanoFunctionalityLevels`, `kanoSatisfactionLevels`, `kanoCategoryLegend`).
+- **KANO view** (`renderKanoPortfolioMatrix`): **Positioned** panel shows matrix + category grouping; **Not positioned** lists roadmaps missing either axis.
+- Desktop supports drag-and-drop between matrix cells to update scores; compact uses per-card score controls.
+- Workspace preference `kanoPortfolioPanel` persists active sub-panel (`positioned` | `unpositioned`).
 
 ---
 
@@ -189,9 +208,9 @@ See [ARCHITECTURE.md](ARCHITECTURE.md).
 
 | Layer | Technology |
 |-------|------------|
-| UI | `index.html`, 30 layered CSS files |
+| UI | `index.html`, 31 layered CSS files |
 | Logic | `src/app.js`, `src/rice.js`, `src/constants.js`, `src/utils.js` |
-| Modules | `storage`, `profile-security`, `exchange-rates`, `fullscreen`, `overlay-manager`, `description-format`, `rich-text-editor`, `board-drag`, `board-card-interaction` |
+| Modules | `storage`, `profile-security`, `exchange-rates`, `fullscreen`, `overlay-manager`, `description-format`, `rich-text-editor`, `board-drag`, `board-card-interaction`; dev seed: `dev-seed-workspace.js` (localhost only) |
 | API | `api/health.js`, `api/config.js`, `api/state.js` |
 | Database | MongoDB Atlas (optional) |
 | Map | Leaflet 1.9.4 (CDN) |
