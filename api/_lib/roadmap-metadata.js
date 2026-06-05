@@ -162,6 +162,19 @@ function normalizeKanoAxisLevel(value) {
   return n;
 }
 
+function normalizeRoadmapNote(raw) {
+  if (raw == null) return null;
+  const value = String(raw).trim();
+  if (!value) return null;
+  const plain = value
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!plain) return null;
+  return value;
+}
+
 function normalizeRoadmapForStorage(roadmap) {
   if (!roadmap || typeof roadmap !== "object") return roadmap;
   return Object.assign({}, roadmap, {
@@ -170,7 +183,8 @@ function normalizeRoadmapForStorage(roadmap) {
     tasks: normalizeRoadmapTasks(roadmap.tasks),
     raci: normalizeRoadmapRaci(roadmap.raci),
     kanoFunctionality: normalizeKanoAxisLevel(roadmap.kanoFunctionality),
-    kanoSatisfaction: normalizeKanoAxisLevel(roadmap.kanoSatisfaction)
+    kanoSatisfaction: normalizeKanoAxisLevel(roadmap.kanoSatisfaction),
+    note: normalizeRoadmapNote(roadmap.note)
   });
 }
 
@@ -209,5 +223,6 @@ module.exports = {
   normalizeRoadmapLinks,
   normalizeRoadmapTasks,
   normalizeRoadmapRaci,
-  normalizeKanoAxisLevel
+  normalizeKanoAxisLevel,
+  normalizeRoadmapNote
 };

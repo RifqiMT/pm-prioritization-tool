@@ -16,7 +16,9 @@
     "test:storage": "node scripts/test-storage-sync-logic.js",
     "test:metadata": "node scripts/test-roadmap-metadata.js",
     "test:persistence": "node scripts/test-persistence-keys.js",
-    "test": "npm run test:storage && npm run test:metadata && npm run test:persistence"
+    "test:byok": "node scripts/test-byok-encryption.js",
+    "test:byok-validate": "node scripts/test-byok-validate.js",
+    "test": "npm run test:storage && npm run test:metadata && npm run test:persistence && npm run test:byok && npm run test:byok-validate"
   },
   "keywords": [
     "product-management",

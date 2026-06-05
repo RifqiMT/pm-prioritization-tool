@@ -14,11 +14,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="css/main.css?v=20260528-ui192" rel="stylesheet" />
   <link href="css/workspace-modern.css?v=20260528-ui192" rel="stylesheet" />
-  <link href="css/header-modern.css?v=20260528-ui192" rel="stylesheet" />
+  <link href="css/header-modern.css?v=20260605-hdr-byok-v1" rel="stylesheet" />
   <link href="css/profiles-modern.css?v=20260528-ui192" rel="stylesheet" />
   <link href="css/portfolio-modern.css?v=20260528-ui192" rel="stylesheet" />
-  <link href="css/profile-modals-modern.css?v=20260528-ui192" rel="stylesheet" />
-  <link href="css/export-modals-modern.css?v=20260528-ui192" rel="stylesheet" />
+  <link href="css/profile-modals-modern.css?v=20260605-profile-view-v17" rel="stylesheet" />
+  <link href="css/export-modals-modern.css?v=20260605-data-transfer-v5" rel="stylesheet" />
+  <link href="css/byok-api-keys.css?v=20260605-byok-v12" rel="stylesheet" />
   <link href="css/view-toolbars-modern.css?v=20260528-ui192" rel="stylesheet" />
   <link href="css/compact-modern.css?v=20260528-ui192" rel="stylesheet" />
   <link href="css/moscow-compact.css?v=20260528-ui192" rel="stylesheet" />
@@ -40,8 +41,9 @@
   <link href="css/board-card-interaction.css?v=20260528-ui192" rel="stylesheet" />
   <link href="css/view-toolbars-compact-row.css?v=20260528-ui192" rel="stylesheet" />
   <link href="css/filters-compact-bar.css?v=20260528-ui192" rel="stylesheet" />
-  <link href="css/roadmap-details-tooltip.css?v=20260528-ui192" rel="stylesheet" />
-  <link href="css/rich-text-editor.css?v=20260528-ui192" rel="stylesheet" />
+  <link href="css/roadmap-details-tooltip.css?v=20260605-headings-v1" rel="stylesheet" />
+  <link href="css/rich-description-content.css?v=20260605-headings-v1" rel="stylesheet" />
+  <link href="css/rich-text-editor.css?v=20260605-rte-ui-v2" rel="stylesheet" />
   <link href="css/portfolio-kano-modern.css?v=20260528-ui192" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
@@ -135,6 +137,22 @@
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><polyline points="21 8 21 3 16 3"/><polyline points="3 16 3 21 8 21"/></svg>
             </span>
             <span class="app-header-action-title">FX Rates</span>
+          </button>
+          <button
+            type="button"
+            id="byokApiKeysBtn"
+            class="app-header-action-btn app-header-action-btn--byok"
+            aria-label="API Keys"
+            title="Store encrypted Groq &amp; Tavily API keys locally (BYOK)"
+          >
+            <span class="app-header-action-icon app-header-action-icon--byok" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+              <span class="byok-header-dot" id="byokHeaderDot" hidden aria-hidden="true"></span>
+            </span>
+            <span class="app-header-action-copy">
+              <span class="app-header-action-title">API Keys</span>
+              <span class="byok-header-meta" id="byokHeaderMeta">Not configured</span>
+            </span>
           </button>
         </div>
         <p id="exchangeRatesDateLabel" class="exchange-rates-date-label app-header-rates-footnote" aria-live="polite"></p>
@@ -1182,8 +1200,9 @@
 
   <!-- Export: verify passwords for protected profiles -->
   <div id="exportUnlockModal" class="modal-backdrop modal-backdrop--export" aria-hidden="true">
-    <div class="modal-panel modal-panel--export" role="dialog" aria-modal="true" aria-labelledby="exportUnlockModalTitle">
-      <header class="profile-modal-header">
+    <div class="modal-panel modal-panel--export data-transfer-modal" role="dialog" aria-modal="true" aria-labelledby="exportUnlockModalTitle" aria-describedby="exportUnlockModalSubtitle">
+      <div class="data-transfer-modal__handle" aria-hidden="true"></div>
+      <header class="profile-modal-header data-transfer-modal__header">
         <div class="profile-modal-header-main">
           <span class="profile-modal-mark profile-modal-mark--export" aria-hidden="true">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -1200,7 +1219,8 @@
         <div id="exportUnlockProfileList" class="export-unlock-list" role="list" aria-label="Protected profiles"></div>
         <p id="exportUnlockError" class="export-unlock-error" role="alert" hidden></p>
       </div>
-      <footer class="export-modal-footer">
+      <footer class="data-transfer-modal__footer export-modal-footer">
+        <button type="button" class="export-modal-btn export-modal-btn--ghost" id="exportUnlockCancelBtn">Cancel</button>
         <button type="button" class="export-modal-btn export-modal-btn--ghost" id="exportUnlockSkipBtn">Skip protected</button>
         <button type="button" class="export-modal-btn export-modal-btn--primary" id="exportUnlockConfirmBtn">Verify &amp; export</button>
       </footer>
@@ -1208,11 +1228,12 @@
   </div>
 
   <!-- Export format modal -->
-  <div id="exportFormatModal" class="modal-backdrop modal-backdrop--export" aria-hidden="true">
-    <div class="modal-panel modal-panel--export" role="dialog" aria-modal="true" aria-labelledby="exportFormatModalTitle">
-      <header class="profile-modal-header">
+  <div id="exportFormatModal" class="modal-backdrop modal-backdrop--export modal-backdrop--data-transfer" aria-hidden="true">
+    <div class="modal-panel modal-panel--data-transfer data-transfer-modal" role="dialog" aria-modal="true" aria-labelledby="exportFormatModalTitle" aria-describedby="exportFormatModalSubtitle">
+      <div class="data-transfer-modal__handle" aria-hidden="true"></div>
+      <header class="profile-modal-header data-transfer-modal__header">
         <div class="profile-modal-header-main">
-          <span class="profile-modal-mark profile-modal-mark--export-format" aria-hidden="true">
+          <span class="profile-modal-mark profile-modal-mark--data-transfer profile-modal-mark--data-transfer-export" aria-hidden="true">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
           </span>
           <div class="profile-modal-title-group">
@@ -1224,63 +1245,123 @@
         </div>
       </header>
       <div class="data-transfer-modal-body">
+        <div class="data-transfer-body-intro">
+          <p class="data-transfer-callout" id="exportFormatModalCallout">
+            <strong>Download your workspace.</strong> JSON is a full backup with profiles, roadmaps, and settings. CSV opens in Excel or Google Sheets.
+          </p>
+          <p class="data-transfer-hint" id="exportFormatModalHint">Pick one format or export both files at once.</p>
+        </div>
         <div class="data-transfer-format-options" role="group" aria-label="Export format">
-          <button type="button" class="data-transfer-format-option" id="exportAsJsonBtn">
-            <span class="data-transfer-format-option__icon" aria-hidden="true">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M10 13h4"/><path d="M10 17h4"/></svg>
+          <button type="button" class="data-transfer-format-option data-transfer-format-option--both" id="exportAsBothBtn">
+            <span class="data-transfer-format-option__head">
+              <span class="data-transfer-format-option__icon data-transfer-format-option__icon--both" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+              </span>
+              <span class="data-transfer-format-option__badge">Complete backup</span>
             </span>
-            <span class="data-transfer-format-option__label">JSON</span>
-            <span class="data-transfer-format-option__desc">Full backup — profiles, roadmaps, and settings</span>
+            <span class="data-transfer-format-option__label">JSON &amp; CSV</span>
+            <span class="data-transfer-format-option__desc">Download both files — full backup plus spreadsheet</span>
+            <span class="data-transfer-format-option__action" aria-hidden="true">
+              <span class="data-transfer-format-option__chevron">→</span>
+            </span>
           </button>
-          <button type="button" class="data-transfer-format-option" id="exportAsCsvBtn">
-            <span class="data-transfer-format-option__icon data-transfer-format-option__icon--csv" aria-hidden="true">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
+          <button type="button" class="data-transfer-format-option data-transfer-format-option--json" id="exportAsJsonBtn">
+            <span class="data-transfer-format-option__head">
+              <span class="data-transfer-format-option__icon data-transfer-format-option__icon--json" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M10 13h4"/><path d="M10 17h4"/></svg>
+              </span>
+              <span class="data-transfer-format-option__badge">Recommended</span>
             </span>
-            <span class="data-transfer-format-option__label">CSV</span>
-            <span class="data-transfer-format-option__desc">Spreadsheet — one row per roadmap</span>
+            <span class="data-transfer-format-option__label">JSON backup</span>
+            <span class="data-transfer-format-option__desc">Full backup — profiles, roadmaps, and settings</span>
+            <span class="data-transfer-format-option__action" aria-hidden="true">
+              <span class="data-transfer-format-option__chevron">→</span>
+            </span>
+          </button>
+          <button type="button" class="data-transfer-format-option data-transfer-format-option--csv" id="exportAsCsvBtn">
+            <span class="data-transfer-format-option__head">
+              <span class="data-transfer-format-option__icon data-transfer-format-option__icon--csv" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
+              </span>
+            </span>
+            <span class="data-transfer-format-option__label">CSV spreadsheet</span>
+            <span class="data-transfer-format-option__desc">One row per roadmap — open in Excel or Sheets</span>
+            <span class="data-transfer-format-option__action" aria-hidden="true">
+              <span class="data-transfer-format-option__chevron">→</span>
+            </span>
           </button>
         </div>
       </div>
+      <footer class="data-transfer-modal__footer">
+        <button type="button" class="data-transfer-modal__cancel" id="exportFormatModalCancelBtn">Cancel</button>
+        <p class="data-transfer-modal__dismiss-hint">Press Esc to close</p>
+      </footer>
     </div>
   </div>
 
   <!-- Import format modal -->
-  <div id="importFormatModal" class="modal-backdrop modal-backdrop--import" aria-hidden="true">
-    <div class="modal-panel modal-panel--import" role="dialog" aria-modal="true" aria-labelledby="importFormatModalTitle">
-      <header class="profile-modal-header">
+  <div id="importFormatModal" class="modal-backdrop modal-backdrop--import modal-backdrop--data-transfer" aria-hidden="true">
+    <div class="modal-panel modal-panel--data-transfer data-transfer-modal" role="dialog" aria-modal="true" aria-labelledby="importFormatModalTitle" aria-describedby="importFormatModalSubtitle">
+      <div class="data-transfer-modal__handle" aria-hidden="true"></div>
+      <header class="profile-modal-header data-transfer-modal__header">
         <div class="profile-modal-header-main">
-          <span class="profile-modal-mark profile-modal-mark--import-format" aria-hidden="true">
+          <span class="profile-modal-mark profile-modal-mark--data-transfer profile-modal-mark--data-transfer-import" aria-hidden="true">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
           </span>
           <div class="profile-modal-title-group">
             <h3 id="importFormatModalTitle" class="profile-modal-title">Import data</h3>
             <p class="profile-modal-subtitle" id="importFormatModalSubtitle">
-              Choose a format, then select a file from this device. New data is merged into your workspace.
+              Choose a JSON or CSV file from this device. The format is detected automatically and merged into your workspace.
             </p>
           </div>
         </div>
       </header>
       <div class="data-transfer-modal-body">
-        <p class="data-transfer-callout" id="importFormatModalCallout">
-          <strong>Merge, not replace.</strong> Matching profiles and roadmaps are updated; new ones are added. Your current data stays unless the file overwrites matching IDs.
-        </p>
-        <div class="data-transfer-format-options" role="group" aria-label="Import format">
-          <button type="button" class="data-transfer-format-option" id="importAsJsonBtn">
-            <span class="data-transfer-format-option__icon" aria-hidden="true">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M10 13h4"/><path d="M10 17h4"/></svg>
+        <div class="data-transfer-body-intro">
+          <p class="data-transfer-callout" id="importFormatModalCallout">
+            <strong>Merge, not replace.</strong> Matching profiles and roadmaps are updated; new ones are added. Your current data stays unless the file overwrites matching IDs.
+          </p>
+          <p class="data-transfer-hint" id="importFormatModalHint">Pick a file below — JSON and CSV are detected automatically.</p>
+        </div>
+        <div class="data-transfer-format-options" role="group" aria-label="Import actions">
+          <button type="button" class="data-transfer-format-option data-transfer-format-option--primary" id="importChooseFileBtn">
+            <span class="data-transfer-format-option__head">
+              <span class="data-transfer-format-option__icon data-transfer-format-option__icon--import" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+              </span>
+              <span class="data-transfer-format-option__badge">Auto-detect</span>
             </span>
-            <span class="data-transfer-format-option__label">JSON</span>
+            <span class="data-transfer-format-option__label">Choose file to import</span>
+            <span class="data-transfer-format-option__desc">Accepts .json or .csv from this device</span>
+            <span class="data-transfer-format-option__action" aria-hidden="true">
+              <span class="data-transfer-format-option__chevron">→</span>
+            </span>
+          </button>
+          <div class="data-transfer-format-option data-transfer-format-option--static data-transfer-format-option--json" role="note" aria-label="JSON import format">
+            <span class="data-transfer-format-option__head">
+              <span class="data-transfer-format-option__icon data-transfer-format-option__icon--json" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M10 13h4"/><path d="M10 17h4"/></svg>
+              </span>
+              <span class="data-transfer-format-option__badge">Full restore</span>
+            </span>
+            <span class="data-transfer-format-option__label">JSON backup</span>
             <span class="data-transfer-format-option__desc">Full backup from this app — profiles &amp; settings</span>
-          </button>
-          <button type="button" class="data-transfer-format-option" id="importAsCsvBtn">
-            <span class="data-transfer-format-option__icon data-transfer-format-option__icon--csv" aria-hidden="true">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
+          </div>
+          <div class="data-transfer-format-option data-transfer-format-option--static data-transfer-format-option--csv" role="note" aria-label="CSV import format">
+            <span class="data-transfer-format-option__head">
+              <span class="data-transfer-format-option__icon data-transfer-format-option__icon--csv" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
+              </span>
             </span>
-            <span class="data-transfer-format-option__label">CSV</span>
+            <span class="data-transfer-format-option__label">CSV spreadsheet</span>
             <span class="data-transfer-format-option__desc">Spreadsheet export — roadmaps by row</span>
-          </button>
+          </div>
         </div>
       </div>
+      <footer class="data-transfer-modal__footer">
+        <button type="button" class="data-transfer-modal__cancel" id="importFormatModalCancelBtn">Cancel</button>
+        <p class="data-transfer-modal__dismiss-hint">Press Esc to close</p>
+      </footer>
     </div>
   </div>
 
@@ -1294,9 +1375,6 @@
             Define reach, impact, confidence, effort, and optional financial upside.
           </p>
         </div>
-        <button type="button" class="btn-ghost modal-close-btn" id="roadmapModalCloseBtn">
-          Close
-        </button>
       </header>
 
       <form id="roadmapForm">
@@ -1339,6 +1417,24 @@
                   <div class="cell-type-tooltip">
                     <div class="cell-type-tooltip-title">Description</div>
                     <div class="cell-type-tooltip-body">A short summary for your team. Shown when someone hovers the roadmap name in the table. Formatting is optional.</div>
+                  </div>
+                </div>
+                <div class="roadmap-field-tooltip-wrap roadmap-meta-dynamic-field" data-optional-collapsible>
+                  <label id="roadmapNoteLabel" for="roadmapNote">Note</label>
+                  <p class="roadmap-dynamic-field-hint">Optional internal notes for this roadmap. Useful for context that does not belong in the description.</p>
+                  <div
+                    class="rich-text-editor-host"
+                    data-rich-text-editor
+                    data-surface-id="roadmapNote"
+                    data-toolbar-id="roadmapNoteToolbar"
+                    data-label-id="roadmapNoteLabel"
+                    data-placeholder="e.g. Waiting on legal review before Q3 kickoff."
+                    data-aria-label="Note formatting"
+                    data-size="compact"
+                  ></div>
+                  <div class="cell-type-tooltip">
+                    <div class="cell-type-tooltip-title">Note</div>
+                    <div class="cell-type-tooltip-body">Private-style notes for your team. Supports rich text formatting like the description fields.</div>
                   </div>
                 </div>
                 <div class="roadmap-field-tooltip-wrap roadmap-meta-dynamic-field" data-optional-collapsible>
@@ -2064,9 +2160,9 @@
   </div>
 
   <!-- Profile view modal -->
-  <div id="profileViewModal" class="modal-backdrop modal-backdrop--profile" aria-hidden="true">
-    <div class="modal-panel modal-panel--profile profile-view-modal" role="dialog" aria-modal="true" aria-labelledby="profileViewModalTitle">
-      <header class="profile-modal-header">
+  <div id="profileViewModal" class="modal-backdrop modal-backdrop--profile modal-backdrop--profile-view" aria-hidden="true">
+    <div class="modal-panel modal-panel--profile-view profile-view-modal" role="dialog" aria-modal="true" aria-labelledby="profileViewModalTitle">
+      <header class="profile-modal-header profile-view-modal-header">
         <div class="profile-modal-header-main">
           <span class="profile-modal-mark profile-modal-mark--view" aria-hidden="true">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
@@ -2076,92 +2172,133 @@
             <p id="profileViewModalSubtitle" class="profile-modal-subtitle">Summary of this profile and its roadmaps.</p>
           </div>
         </div>
-        <button type="button" class="profile-modal-close" id="profileViewCloseBtn" aria-label="Close dialog">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-        </button>
+        <div class="profile-view-header-filters">
+          <div id="profileViewOwnerFilterWrap" class="profile-view-header-filter-wrap profile-view-owner-filter-wrap" hidden>
+            <label for="profileViewOwnerFilter" class="profile-view-header-filter-label">Owner profile</label>
+            <select id="profileViewOwnerFilter" class="profile-view-header-filter" aria-label="Filter by owner profile">
+              <option value="">All owners</option>
+            </select>
+          </div>
+          <div id="profileViewPeriodFilterWrap" class="profile-view-header-filter-wrap">
+            <label for="profileViewPeriodFilter" class="profile-view-header-filter-label">Roadmap period</label>
+            <select id="profileViewPeriodFilter" class="profile-view-header-filter" aria-describedby="profileViewModalSubtitle">
+              <option value="">All periods</option>
+            </select>
+          </div>
+        </div>
       </header>
 
-      <div class="profile-modal-body profile-view-body">
-        <div class="profile-view-identity">
-          <span id="profileViewAvatar" class="profile-view-avatar" aria-hidden="true">—</span>
-          <div class="profile-view-identity-copy">
-            <h4 id="profileViewName" class="profile-view-name">—</h4>
-            <p id="profileViewTeamWrap" class="profile-view-team-wrap">
-              <span id="profileViewTeam" class="profile-view-team">—</span>
-            </p>
-          </div>
-        </div>
-
-        <div class="profile-view-kpi-grid" aria-label="Key metrics">
-          <div class="profile-view-kpi">
-            <span class="profile-view-kpi-label">Total roadmaps</span>
-            <span id="profileViewTotalRoadmaps" class="profile-view-kpi-value">—</span>
-          </div>
-          <div class="profile-view-kpi">
-            <span class="profile-view-kpi-label">Unique countries</span>
-            <span id="profileViewUniqueCountries" class="profile-view-kpi-value">—</span>
-          </div>
-        </div>
-
-        <section class="profile-view-section" aria-labelledby="profileViewSectionStatus">
-          <h4 id="profileViewSectionStatus" class="profile-view-section-title">By status</h4>
-          <div id="profileViewByStatus" class="profile-view-chips"></div>
-        </section>
-
-        <section class="profile-view-section" aria-labelledby="profileViewSectionType">
-          <h4 id="profileViewSectionType" class="profile-view-section-title">By roadmap type</h4>
-          <div id="profileViewByType" class="profile-view-chips"></div>
-        </section>
-
-        <section class="profile-view-section" aria-labelledby="profileViewSectionTshirt">
-          <h4 id="profileViewSectionTshirt" class="profile-view-section-title">By T-shirt size</h4>
-          <div id="profileViewByTshirt" class="profile-view-chips"></div>
-        </section>
-
-        <section class="profile-view-section" aria-labelledby="profileViewSectionMoscow">
-          <h4 id="profileViewSectionMoscow" class="profile-view-section-title">By MOSCOW distribution</h4>
-          <div id="profileViewByMoscow" class="profile-view-chips"></div>
-        </section>
-
-        <section class="profile-view-section" aria-labelledby="profileViewSectionFramework">
-          <h4 id="profileViewSectionFramework" class="profile-view-section-title">By financial framework</h4>
-          <div id="profileViewByFramework" class="profile-view-chips"></div>
-        </section>
-
-        <section class="profile-view-section" aria-labelledby="profileViewSectionCountry">
-          <h4 id="profileViewSectionCountry" class="profile-view-section-title">By target countries</h4>
-          <div id="profileViewByCountry" class="profile-view-chips"></div>
-        </section>
-
-        <section class="profile-view-section profile-view-section--currency" aria-labelledby="profileViewSectionCurrency">
-          <h4 id="profileViewSectionCurrency" class="profile-view-section-title">By original currency</h4>
-          <div id="profileViewByCurrency" class="profile-view-chips"></div>
-          <details class="profile-view-currency-details" id="profileViewCurrencyDetails">
-            <summary class="profile-view-currency-summary" aria-controls="profileViewCurrencyPanel">
-              <span class="profile-view-currency-summary-title">Original currency totals</span>
-              <span class="profile-view-currency-summary-hint">Tap to expand · amounts in each roadmap's native currency</span>
-            </summary>
-            <div class="profile-view-currency-panel" id="profileViewCurrencyPanel">
-              <p id="profileViewCurrencyNote" class="profile-view-section-note">Totals use each roadmap's stored amount in its original currency. EUR equivalents below use the app's latest exchange rates (refreshed daily).</p>
-              <div id="profileViewCurrencyTotals" class="profile-view-currency-grid"></div>
+      <div class="profile-view-shell">
+        <div class="profile-view-scroll">
+          <div class="profile-view-summary profile-view-hero" aria-label="Profile summary">
+            <div class="profile-view-hero-top">
+              <div class="profile-view-hero-profile">
+                <span id="profileViewAvatar" class="profile-view-avatar" aria-hidden="true">—</span>
+                <div class="profile-view-hero-profile-copy">
+                  <h4 id="profileViewName" class="profile-view-name">—</h4>
+                  <p id="profileViewTeamWrap" class="profile-view-team-wrap">
+                    <span id="profileViewTeam" class="profile-view-team">—</span>
+                  </p>
+                </div>
+              </div>
+              <div class="profile-view-hero-total" aria-label="Total roadmaps in this profile">
+                <span class="profile-view-hero-total-icon" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+                </span>
+                <div class="profile-view-hero-total-copy">
+                  <span id="profileViewTotalRoadmapsLabel" class="profile-view-hero-total-label">Total roadmaps</span>
+                  <span id="profileViewTotalRoadmaps" class="profile-view-hero-total-value">—</span>
+                </div>
+              </div>
             </div>
-          </details>
-        </section>
 
-        <section class="profile-view-section profile-view-section--rice" aria-labelledby="profileViewSectionRice">
-          <h4 id="profileViewSectionRice" class="profile-view-section-title">RICE score</h4>
-          <div id="profileViewRiceStats" class="profile-view-rice-grid"></div>
-        </section>
+            <div class="profile-view-hero-status">
+              <div class="profile-view-hero-status-head">
+                <p class="profile-view-hero-status-heading">Status overview</p>
+                <p id="profileViewStatusInsight" class="profile-view-hero-status-insight" hidden></p>
+              </div>
+              <div id="profileViewStatusStats" class="profile-view-status-stats" aria-live="polite"></div>
+            </div>
+          </div>
 
-        <section class="profile-view-section profile-view-section--rice" aria-labelledby="profileViewSectionFinancial">
-          <h4 id="profileViewSectionFinancial" class="profile-view-section-title">Financial impact (EUR)</h4>
-          <p id="profileViewFinancialNote" class="profile-view-section-note" hidden></p>
-          <div id="profileViewFinancialStats" class="profile-view-rice-grid"></div>
-        </section>
+          <div class="profile-view-dashboard">
+            <section class="profile-view-card" aria-labelledby="profileViewSectionType">
+              <h4 id="profileViewSectionType" class="profile-view-section-title">By roadmap type</h4>
+              <div id="profileViewByType" class="profile-view-chips"></div>
+            </section>
+
+            <section class="profile-view-card" aria-labelledby="profileViewSectionTshirt">
+              <h4 id="profileViewSectionTshirt" class="profile-view-section-title">By T-shirt size</h4>
+              <div id="profileViewByTshirt" class="profile-view-chips"></div>
+            </section>
+
+            <section class="profile-view-card" aria-labelledby="profileViewSectionMoscow">
+              <h4 id="profileViewSectionMoscow" class="profile-view-section-title">By MOSCOW distribution</h4>
+              <div id="profileViewByMoscow" class="profile-view-chips"></div>
+            </section>
+
+            <section class="profile-view-card" aria-labelledby="profileViewSectionKano">
+              <h4 id="profileViewSectionKano" class="profile-view-section-title">By KANO model</h4>
+              <div id="profileViewByKano" class="profile-view-chips"></div>
+            </section>
+
+            <section class="profile-view-card" aria-labelledby="profileViewSectionFramework">
+              <h4 id="profileViewSectionFramework" class="profile-view-section-title">By financial framework</h4>
+              <div id="profileViewByFramework" class="profile-view-chips"></div>
+            </section>
+
+            <section class="profile-view-card profile-view-card--wide profile-view-card--country" aria-labelledby="profileViewSectionCountry">
+              <details class="profile-view-expandable-details profile-view-country-details" id="profileViewCountryDetails">
+                <summary class="profile-view-expandable-summary profile-view-country-summary" aria-controls="profileViewCountryPanel">
+                  <span class="profile-view-country-summary-head">
+                    <span id="profileViewSectionCountry" class="profile-view-section-title">By target countries</span>
+                    <span id="profileViewCountryUniqueCount" class="profile-view-country-summary-count">—</span>
+                  </span>
+                  <span class="profile-view-expandable-summary-hint profile-view-country-summary-hint">Tap to expand · roadmaps per target country</span>
+                </summary>
+                <div class="profile-view-expandable-panel profile-view-country-panel" id="profileViewCountryPanel">
+                  <div id="profileViewByCountry" class="profile-view-chips profile-view-chips--column"></div>
+                </div>
+              </details>
+            </section>
+
+            <section class="profile-view-card profile-view-card--wide profile-view-card--currency" aria-labelledby="profileViewSectionCurrency">
+              <h4 id="profileViewSectionCurrency" class="profile-view-section-title">By original currency</h4>
+              <div id="profileViewByCurrency" class="profile-view-chips profile-view-chips--column"></div>
+              <details class="profile-view-currency-details" id="profileViewCurrencyDetails">
+                <summary class="profile-view-currency-summary" aria-controls="profileViewCurrencyPanel">
+                  <span class="profile-view-currency-summary-title">Original currency totals</span>
+                  <span class="profile-view-currency-summary-hint">Tap to expand · amounts in each roadmap's native currency</span>
+                </summary>
+                <div class="profile-view-currency-panel" id="profileViewCurrencyPanel">
+                  <p id="profileViewCurrencyNote" class="profile-view-section-note">Totals use each roadmap's stored amount in its original currency. EUR equivalents below use the app's latest exchange rates (refreshed daily).</p>
+                  <div id="profileViewCurrencyTotals" class="profile-view-currency-grid"></div>
+                </div>
+              </details>
+            </section>
+
+            <section class="profile-view-card profile-view-card--wide profile-view-card--metrics" aria-labelledby="profileViewSectionRice">
+              <div class="profile-view-metrics-split">
+                <div class="profile-view-metrics-block">
+                  <h4 id="profileViewSectionRice" class="profile-view-section-title">RICE score</h4>
+                  <div id="profileViewRiceStats" class="profile-view-rice-grid"></div>
+                </div>
+                <div class="profile-view-metrics-block">
+                  <h4 id="profileViewSectionFinancial" class="profile-view-section-title">Financial impact (EUR)</h4>
+                  <p id="profileViewFinancialNote" class="profile-view-section-note" hidden></p>
+                  <div id="profileViewFinancialStats" class="profile-view-rice-grid"></div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
       </div>
 
-      <footer class="profile-modal-footer">
-        <button type="button" class="profile-modal-btn profile-modal-btn--ghost profile-modal-btn--full" id="profileViewCloseBtnFooter">Close</button>
+      <footer class="profile-view-footer-bar">
+        <p class="profile-view-footer-hint">Press Esc to close</p>
+        <div class="profile-view-footer-actions">
+          <button type="button" class="btn-secondary" id="profileViewCloseBtnFooter">Close</button>
+        </div>
       </footer>
     </div>
   </div>
@@ -2179,9 +2316,6 @@
             <p id="profileEditModalSubtitle" class="profile-modal-subtitle">Update profile name, team, and password protection.</p>
           </div>
         </div>
-        <button type="button" class="profile-modal-close" id="profileEditCloseBtn" aria-label="Close dialog">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-        </button>
       </header>
 
       <div class="profile-modal-body">
@@ -2300,9 +2434,6 @@
             <span id="profileDeleteSummaryLabel"></span>
           </p>
         </div>
-        <button type="button" class="btn-ghost modal-close-btn" id="profileDeleteCancelTopBtn">
-          Cancel
-        </button>
       </header>
 
       <div class="modal-body">
@@ -2374,6 +2505,191 @@
     </div>
   </div>
 
+  <div id="byokApiKeysModal" class="modal-backdrop modal-backdrop--byok" aria-hidden="true">
+    <div class="modal-panel byok-modal" role="dialog" aria-modal="true" aria-labelledby="byokApiKeysModalTitle" aria-describedby="byokApiKeysModalSubtitle">
+      <header class="byok-modal-header">
+        <div class="byok-modal-header-main">
+          <span class="profile-modal-mark profile-modal-mark--byok" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+          </span>
+          <div class="profile-modal-title-group">
+            <h3 id="byokApiKeysModalTitle" class="profile-modal-title">API Keys</h3>
+            <p id="byokApiKeysModalSubtitle" class="profile-modal-subtitle">Bring your own Groq &amp; Tavily keys — encrypted locally, never synced to the cloud.</p>
+          </div>
+        </div>
+      </header>
+
+      <div class="byok-modal-shell">
+        <div class="byok-modal-scroll">
+          <div class="byok-top-bar">
+            <div class="byok-hero-panel" id="byokSummaryStrip">
+              <div class="byok-hero-head">
+                <div class="byok-hero-head__copy">
+                  <span class="byok-hero-eyebrow">Provider setup</span>
+                  <span class="byok-hero-value" id="byokSummaryCount">0 of 2 ready</span>
+                </div>
+                <span class="byok-hero-trust-pill">Encrypted on this device</span>
+              </div>
+              <div class="byok-progress" aria-hidden="true">
+                <div class="byok-progress__track">
+                  <div class="byok-progress__fill" id="byokProgressFill"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="byok-setup-guide" id="byokSetupGuide" aria-live="polite">
+              <div class="byok-setup-guide__head">
+                <span class="byok-setup-guide__badge" id="byokGuideBadge">Step 1 of 3</span>
+                <div class="byok-setup-guide__track" aria-hidden="true">
+                  <div class="byok-setup-guide__fill" id="byokGuideFill"></div>
+                </div>
+              </div>
+              <p class="byok-setup-guide__message" id="byokGuideMessage">Paste your API key from the provider console.</p>
+              <ol class="byok-setup-guide__checklist" id="byokWorkflowSteps" aria-label="Setup steps">
+                <li class="byok-setup-step byok-setup-step--active" data-step="paste">
+                  <span class="byok-setup-step__marker" aria-hidden="true">1</span>
+                  <span class="byok-setup-step__label">Paste key</span>
+                </li>
+                <li class="byok-setup-step" data-step="validate">
+                  <span class="byok-setup-step__marker" aria-hidden="true">2</span>
+                  <span class="byok-setup-step__label">Test connection</span>
+                </li>
+                <li class="byok-setup-step" data-step="save">
+                  <span class="byok-setup-step__marker" aria-hidden="true">3</span>
+                  <span class="byok-setup-step__label">Save locally</span>
+                </li>
+              </ol>
+            </div>
+          </div>
+
+        <div class="byok-provider-tabs" role="tablist" aria-label="Choose provider">
+          <button type="button" role="tab" id="byokTabGroq" class="byok-provider-tab byok-provider-tab--active" aria-controls="byokGroqCard" aria-selected="true" data-provider="groq">
+            <span class="byok-provider-tab__logo byok-provider-tab__logo--groq" aria-hidden="true">G</span>
+            <span class="byok-provider-tab__copy">
+              <span class="byok-provider-tab__label">Groq</span>
+              <span class="byok-provider-tab__hint">LLM inference</span>
+            </span>
+            <span class="byok-provider-tab__status" id="byokTabGroqDot" aria-hidden="true"></span>
+          </button>
+          <button type="button" role="tab" id="byokTabTavily" class="byok-provider-tab" aria-controls="byokTavilyCard" aria-selected="false" data-provider="tavily">
+            <span class="byok-provider-tab__logo byok-provider-tab__logo--tavily" aria-hidden="true">T</span>
+            <span class="byok-provider-tab__copy">
+              <span class="byok-provider-tab__label">Tavily</span>
+              <span class="byok-provider-tab__hint">Web search</span>
+            </span>
+            <span class="byok-provider-tab__status" id="byokTabTavilyDot" aria-hidden="true"></span>
+          </button>
+        </div>
+
+        <div class="byok-providers-grid" id="byokProvidersStack">
+        <section class="byok-provider-card byok-provider-card--active" id="byokGroqCard" role="tabpanel" aria-labelledby="byokTabGroq" data-provider="groq">
+          <header class="byok-provider-card__head">
+            <div class="byok-provider-brand">
+              <span class="byok-provider-logo byok-provider-logo--groq" aria-hidden="true">G</span>
+              <div>
+                <h4 id="byokGroqTitle" class="byok-provider-title">Groq</h4>
+                <p class="byok-provider-desc">Fast LLM inference for AI features in this workspace.</p>
+              </div>
+            </div>
+            <span class="byok-provider-chip" id="byokGroqChip">Not configured</span>
+          </header>
+          <div class="byok-provider-card__body">
+            <div class="byok-field-row">
+              <label class="byok-field-label" for="byokGroqKeyInput">API key</label>
+              <a class="byok-signup-link" href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">
+                Get key
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              </a>
+            </div>
+            <div class="byok-key-input-wrap profile-password-input-wrap">
+              <input type="password" id="byokGroqKeyInput" autocomplete="off" placeholder="gsk_…" spellcheck="false" aria-describedby="byokGroqKeyMeta byokGroqStatus" />
+              <button type="button" class="profile-password-toggle" data-target="byokGroqKeyInput" aria-label="Show API key">
+                <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+              </button>
+            </div>
+            <div class="byok-key-meta" id="byokGroqKeyMeta" hidden>
+              <span class="byok-key-meta__mask" id="byokGroqKeyMask"></span>
+              <span class="byok-key-meta__sep" aria-hidden="true">·</span>
+              <span class="byok-key-meta__count" id="byokGroqKeyCount"></span>
+              <span class="byok-key-meta__sep byok-key-meta__sep--saved" id="byokGroqSavedSep" hidden aria-hidden="true">·</span>
+              <span class="byok-key-meta__saved" id="byokGroqSavedAt" hidden></span>
+            </div>
+            <p id="byokGroqStatus" class="byok-provider-status" role="status" aria-live="polite" hidden></p>
+            <div class="byok-provider-actions" role="group" aria-label="Groq key actions">
+              <button type="button" class="byok-btn byok-btn--primary byok-btn--block" id="byokGroqValidateSaveBtn">
+                <span class="byok-btn__label">Save API key</span>
+              </button>
+              <div class="byok-actions-more">
+                <button type="button" class="byok-action-link" id="byokGroqValidateBtn">Test connection</button>
+                <button type="button" class="byok-action-link" id="byokGroqSaveBtn">Save without testing</button>
+                <button type="button" class="byok-action-link byok-action-link--danger byok-btn-clear" id="byokGroqClearBtn">Remove key</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="byok-provider-card" id="byokTavilyCard" role="tabpanel" aria-labelledby="byokTabTavily" data-provider="tavily">
+          <header class="byok-provider-card__head">
+            <div class="byok-provider-brand">
+              <span class="byok-provider-logo byok-provider-logo--tavily" aria-hidden="true">T</span>
+              <div>
+                <h4 id="byokTavilyTitle" class="byok-provider-title">Tavily</h4>
+                <p class="byok-provider-desc">Web search API for research and enrichment features.</p>
+              </div>
+            </div>
+            <span class="byok-provider-chip" id="byokTavilyChip">Not configured</span>
+          </header>
+          <div class="byok-provider-card__body">
+            <div class="byok-field-row">
+              <label class="byok-field-label" for="byokTavilyKeyInput">API key</label>
+              <a class="byok-signup-link" href="https://app.tavily.com/home" target="_blank" rel="noopener noreferrer">
+                Get key
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              </a>
+            </div>
+            <div class="byok-key-input-wrap profile-password-input-wrap">
+              <input type="password" id="byokTavilyKeyInput" autocomplete="off" placeholder="tvly-…" spellcheck="false" aria-describedby="byokTavilyKeyMeta byokTavilyStatus" />
+              <button type="button" class="profile-password-toggle" data-target="byokTavilyKeyInput" aria-label="Show API key">
+                <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+              </button>
+            </div>
+            <div class="byok-key-meta" id="byokTavilyKeyMeta" hidden>
+              <span class="byok-key-meta__mask" id="byokTavilyKeyMask"></span>
+              <span class="byok-key-meta__sep" aria-hidden="true">·</span>
+              <span class="byok-key-meta__count" id="byokTavilyKeyCount"></span>
+              <span class="byok-key-meta__sep byok-key-meta__sep--saved" id="byokTavilySavedSep" hidden aria-hidden="true">·</span>
+              <span class="byok-key-meta__saved" id="byokTavilySavedAt" hidden></span>
+            </div>
+            <p id="byokTavilyStatus" class="byok-provider-status" role="status" aria-live="polite" hidden></p>
+            <div class="byok-provider-actions" role="group" aria-label="Tavily key actions">
+              <button type="button" class="byok-btn byok-btn--primary byok-btn--block" id="byokTavilyValidateSaveBtn">
+                <span class="byok-btn__label">Save API key</span>
+              </button>
+              <div class="byok-actions-more">
+                <button type="button" class="byok-action-link" id="byokTavilyValidateBtn">Test connection</button>
+                <button type="button" class="byok-action-link" id="byokTavilySaveBtn">Save without testing</button>
+                <button type="button" class="byok-action-link byok-action-link--danger byok-btn-clear" id="byokTavilyClearBtn">Remove key</button>
+              </div>
+            </div>
+          </div>
+        </section>
+        </div>
+        </div>
+      </div>
+
+      <footer class="byok-modal-footer profile-view-footer-bar">
+        <p class="profile-view-footer-hint byok-footer-note">
+          Keys are encrypted on this device. Validation uses a one-time proxy — nothing is stored on our servers. Press Esc to close.
+        </p>
+        <div class="profile-view-footer-actions byok-modal-footer-actions">
+          <button type="button" class="profile-modal-btn profile-modal-btn--primary" id="byokApiKeysCancelBtn">Done</button>
+        </div>
+      </footer>
+    </div>
+  </div>
+
   <div id="cloudStorageModal" class="modal-backdrop cloud-storage-modal" aria-hidden="true">
     <div class="modal-panel profile-modal-panel" role="dialog" aria-modal="true" aria-labelledby="cloudStorageModalTitle">
       <header class="modal-header profile-modal-header">
@@ -2416,11 +2732,12 @@
   <script src="src/modules/overlay-manager.js?v=20260528-ui192"></script>
   <script src="src/modules/storage.js?v=20260528-ui192"></script>
   <script src="src/dev-seed-workspace.js?v=20260528-ui192"></script>
-  <script src="src/modules/description-format.js?v=20260528-ui192"></script>
-  <script src="src/modules/rich-text-editor.js?v=20260528-ui192"></script>
+  <script src="src/modules/description-format.js?v=20260605-headings-v1"></script>
+  <script src="src/modules/rich-text-editor.js?v=20260605-rte-ui-v2"></script>
   <script src="src/modules/board-drag.js?v=20260528-ui192"></script>
   <script src="src/modules/board-card-interaction.js?v=20260528-ui192"></script>
-  <script src="src/app.js?v=20260605-backdrop-fix"></script>
+  <script src="src/modules/byok-api-keys.js?v=20260605-byok-v12"></script>
+  <script src="src/app.js?v=20260605-byok-v1"></script>
 </body>
 </html>
 

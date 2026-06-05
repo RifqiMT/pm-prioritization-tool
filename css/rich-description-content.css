@@ -1,0 +1,117 @@
+/**
+ * Shared rich-description typography for editor, tooltips, and read-only previews.
+ */
+
+.rich-description-content {
+  --rdc-text: #431407;
+  --rdc-muted: #57534e;
+  --rdc-h2-size: 1.08rem;
+  --rdc-h3-size: 0.98rem;
+  --rdc-h2-color: #7c2d12;
+  --rdc-h3-color: #9a3412;
+  --rdc-heading-gap: 0.35rem;
+  color: var(--rdc-text);
+  word-break: break-word;
+}
+
+.roadmap-details-tooltip__rich.rich-description-content {
+  --rdc-h2-size: 0.95rem;
+  --rdc-h3-size: 0.88rem;
+  --rdc-heading-gap: 0.28rem;
+}
+
+.rich-description-content h2,
+.rich-description-content h3 {
+  margin: 0;
+  padding: 0;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: normal;
+}
+
+.rich-description-content h2 {
+  margin-top: var(--rdc-heading-gap);
+  font-size: var(--rdc-h2-size);
+  color: var(--rdc-h2-color);
+}
+
+.rich-description-content h3 {
+  margin-top: calc(var(--rdc-heading-gap) * 0.85);
+  font-size: var(--rdc-h3-size);
+  color: var(--rdc-h3-color);
+}
+
+.rich-description-content > :first-child,
+.rich-description-content h2:first-child,
+.rich-description-content h3:first-child {
+  margin-top: 0;
+}
+
+.rich-description-content h2 + h3 {
+  margin-top: calc(var(--rdc-heading-gap) * 0.55);
+}
+
+.rich-description-content h2 + p,
+.rich-description-content h3 + p,
+.rich-description-content h2 + ul,
+.rich-description-content h2 + ol,
+.rich-description-content h3 + ul,
+.rich-description-content h3 + ol {
+  margin-top: 0.22rem;
+}
+
+.rich-description-content p {
+  margin: 0 0 0.42rem;
+  line-height: 1.58;
+  white-space: normal;
+}
+
+.rich-description-content p:last-child {
+  margin-bottom: 0;
+}
+
+.rich-description-content strong,
+.rich-description-content b {
+  font-weight: 700;
+  color: inherit;
+}
+
+.rich-description-content em,
+.rich-description-content i {
+  font-style: italic;
+}
+
+.rich-description-content u {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rich-description-content s,
+.rich-description-content strike,
+.rich-description-content del {
+  text-decoration: line-through;
+}
+
+.rich-description-content mark,
+.rich-description-content span[style*="background"] {
+  background: #fef08a;
+  border-radius: 2px;
+  padding: 0 0.08em;
+}
+
+.rich-description-content blockquote {
+  margin: 0.35rem 0;
+  padding: 0.35rem 0.55rem;
+  border-left: 3px solid rgba(234, 88, 12, 0.45);
+  background: rgba(254, 243, 199, 0.35);
+  color: var(--rdc-muted);
+  font-style: italic;
+}
+
+.roadmap-details-tooltip__rich.rich-description-content blockquote {
+  margin-top: 0.18rem;
+  padding: 0.25rem 0.45rem;
+  border-left-width: 2px;
+}

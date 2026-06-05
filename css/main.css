@@ -4213,10 +4213,20 @@ tbody td {
   white-space: pre-wrap;
 }
 
+.cell-type-tooltip--wide .roadmap-details-tooltip__rich p {
+  white-space: normal;
+}
+
 .cell-type-tooltip--wide .cell-type-tooltip-body p + p {
   margin-top: 0.65rem;
   padding-top: 0.5rem;
   border-top: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.cell-type-tooltip--wide .roadmap-details-tooltip__rich p + p {
+  margin-top: 0.35rem;
+  padding-top: 0;
+  border-top: none;
 }
 
 /* Long country lists: capped height + scroll (desktop table + compact cards) */
@@ -4265,6 +4275,11 @@ tbody td {
   margin: 0;
   padding: 0.35rem 0;
   border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.cell-type-tooltip.cell-type-tooltip--scroll .roadmap-details-tooltip__rich p {
+  padding: 0;
+  border-bottom: none;
 }
 
 .cell-type-tooltip.cell-type-tooltip--scroll .cell-type-tooltip-body p:last-child {
@@ -4996,10 +5011,17 @@ html.blocking-modal-open .table-wrapper {
 #roadmapModal .roadmap-field-tooltip-wrap:has(.rich-text-editor-host),
 #roadmapModal .roadmap-field-tooltip-wrap:has(.roadmap-dynamic-field-panel),
 #roadmapModal .roadmap-field-tooltip-wrap:has(.roadmap-optional-field-details) {
-  background: #fffdfb;
-  border: 1px solid rgba(202, 138, 4, 0.14);
-  border-radius: 11px;
-  padding: 0.5rem 0.58rem 0.58rem;
+  background: linear-gradient(180deg, #fffefb 0%, #fff9f0 100%);
+  border: 1px solid rgba(202, 138, 4, 0.16);
+  border-radius: 14px;
+  padding: 0.58rem 0.62rem 0.62rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+#roadmapModal .roadmap-field-tooltip-wrap:has(.rich-text-editor-host) .roadmap-dynamic-field-hint {
+  margin-bottom: 0.45rem;
+  color: #78716c;
+  line-height: 1.5;
 }
 
 #roadmapModal .roadmap-field-tooltip-wrap .cell-type-tooltip {

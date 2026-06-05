@@ -1684,6 +1684,12 @@ function roadmapOptionalFieldHasData(wrap) {
     if ((input.value || "").trim()) return true;
   }
 
+  const richHosts = body.querySelectorAll("[data-rich-text-editor]");
+  for (const host of richHosts) {
+    const fieldId = host.getAttribute("data-surface-id");
+    if (fieldId && richDescriptionToPlainText(getRichDescriptionValue(fieldId))) return true;
+  }
+
   const dynamicRows = body.querySelectorAll(
     ".roadmap-label-row, .roadmap-link-row, .roadmap-task-row, .roadmap-raci-row, .country-row"
   );
@@ -2779,6 +2785,33 @@ function closeCloudStorageModal({ immediate = false } = {}) {
   setCloudStorageModalError("");
 }
 
+function closeByokApiKeysModal({ immediate = false } = {}) {
+  const modal = elements.byokApiKeysModal || $("byokApiKeysModal");
+  if (!modal) return;
+  deactivateBlockingModal(modal, { immediate });
+  resetProfilePasswordToggles(modal);
+}
+
+function initByokApiKeysModal() {
+  if (typeof ByokApiKeys === "undefined") return;
+  const modal = elements.byokApiKeysModal || $("byokApiKeysModal");
+  if (!modal) return;
+
+  ByokApiKeys.initModal({
+    modal,
+    activateModal: () => {
+      activateBlockingModal(modal, "byokApiKeysModal");
+      bindProfilePasswordToggles(modal);
+      resetProfilePasswordToggles(modal);
+    },
+    deactivateModal: (options) => {
+      deactivateBlockingModal(modal, options || {});
+      resetProfilePasswordToggles(modal);
+    }
+  });
+  bindProfilePasswordToggles(modal);
+}
+
 function initCloudStorageModal() {
   const modal = elements.cloudStorageModal || $("cloudStorageModal");
   const cancelBtn = $("cloudStorageCancelBtn");
@@ -2924,6 +2957,7 @@ async function init() {
   initProfileModals();
   initPortfolioWorkspace();
   initCloudStorageModal();
+  initByokApiKeysModal();
   initBlockingModalGuards();
   registerAppOverlays();
 
@@ -3158,7 +3192,6 @@ function cacheElements() {
   elements.roadmapModal = $("roadmapModal");
   elements.roadmapModalTitle = $("roadmapModalTitle");
   elements.roadmapModalSubtitle = $("roadmapModalSubtitle");
-  elements.roadmapModalCloseBtn = $("roadmapModalCloseBtn");
   elements.roadmapForm = $("roadmapForm");
   elements.roadmapFormCancelBtn = $("roadmapFormCancelBtn");
   elements.roadmapFormSubmitBtn = $("roadmapFormSubmitBtn");
@@ -3308,7 +3341,6 @@ function cacheElements() {
   elements.profileDeleteNameLabel = $("profileDeleteNameLabel");
   elements.profileDeleteSummaryLabel = $("profileDeleteSummaryLabel");
   elements.profileDeleteWarningText = $("profileDeleteWarningText");
-  elements.profileDeleteCancelTopBtn = $("profileDeleteCancelTopBtn");
   elements.profileDeleteCancelBtn = $("profileDeleteCancelBtn");
   elements.profileDeleteConfirmBtn = $("profileDeleteConfirmBtn");
   elements.profileDeletePasswordWrap = $("profileDeletePasswordWrap");
@@ -3323,19 +3355,26 @@ function cacheElements() {
   elements.profileUnlockConfirmBtn = $("profileUnlockConfirmBtn");
 
   elements.profileViewModal = $("profileViewModal");
+  elements.profileViewOwnerFilterWrap = $("profileViewOwnerFilterWrap");
+  elements.profileViewOwnerFilter = $("profileViewOwnerFilter");
+  elements.profileViewPeriodFilterWrap = $("profileViewPeriodFilterWrap");
+  elements.profileViewPeriodFilter = $("profileViewPeriodFilter");
   elements.profileViewAvatar = $("profileViewAvatar");
   elements.profileViewName = $("profileViewName");
   elements.profileViewTeam = $("profileViewTeam");
-  elements.profileViewCloseBtn = $("profileViewCloseBtn");
   elements.profileViewCloseBtnFooter = $("profileViewCloseBtnFooter");
-  elements.profileViewUniqueCountries = $("profileViewUniqueCountries");
+  elements.profileViewStatusStats = $("profileViewStatusStats");
+  elements.profileViewStatusInsight = $("profileViewStatusInsight");
   elements.profileViewTotalRoadmaps = $("profileViewTotalRoadmaps");
-  elements.profileViewByStatus = $("profileViewByStatus");
+  elements.profileViewTotalRoadmapsLabel = $("profileViewTotalRoadmapsLabel");
   elements.profileViewByType = $("profileViewByType");
   elements.profileViewByTshirt = $("profileViewByTshirt");
   elements.profileViewByMoscow = $("profileViewByMoscow");
+  elements.profileViewByKano = $("profileViewByKano");
   elements.profileViewByFramework = $("profileViewByFramework");
   elements.profileViewByCountry = $("profileViewByCountry");
+  elements.profileViewCountryDetails = $("profileViewCountryDetails");
+  elements.profileViewCountryUniqueCount = $("profileViewCountryUniqueCount");
   elements.profileViewByCurrency = $("profileViewByCurrency");
   elements.profileViewCurrencyDetails = $("profileViewCurrencyDetails");
   elements.profileViewCurrencyTotals = $("profileViewCurrencyTotals");
@@ -3348,7 +3387,6 @@ function cacheElements() {
   elements.profileEditName = $("profileEditName");
   elements.profileEditTeam = $("profileEditTeam");
   elements.profileEditCancelBtn = $("profileEditCancelBtn");
-  elements.profileEditCloseBtn = $("profileEditCloseBtn");
   elements.profileEditSaveBtn = $("profileEditSaveBtn");
   elements.profileEditCurrentPasswordWrap = $("profileEditCurrentPasswordWrap");
   elements.profileEditCurrentPassword = $("profileEditCurrentPassword");
@@ -3366,18 +3404,24 @@ function cacheElements() {
 
   elements.exportFormatModal = $("exportFormatModal");
   elements.exportFormatModalSubtitle = $("exportFormatModalSubtitle");
+  elements.exportFormatModalHint = $("exportFormatModalHint");
   elements.exportUnlockModal = $("exportUnlockModal");
   elements.exportUnlockProfileList = $("exportUnlockProfileList");
   elements.exportUnlockError = $("exportUnlockError");
   elements.exportUnlockSkipBtn = $("exportUnlockSkipBtn");
+  elements.exportUnlockCancelBtn = $("exportUnlockCancelBtn");
   elements.exportUnlockConfirmBtn = $("exportUnlockConfirmBtn");
+  elements.exportFormatModalCancelBtn = $("exportFormatModalCancelBtn");
   elements.exportAsJsonBtn = $("exportAsJsonBtn");
   elements.exportAsCsvBtn = $("exportAsCsvBtn");
+  elements.exportAsBothBtn = $("exportAsBothBtn");
   elements.importFormatModal = $("importFormatModal");
   elements.importFormatModalSubtitle = $("importFormatModalSubtitle");
-  elements.importAsJsonBtn = $("importAsJsonBtn");
-  elements.importAsCsvBtn = $("importAsCsvBtn");
+  elements.importFormatModalHint = $("importFormatModalHint");
+  elements.importFormatModalCancelBtn = $("importFormatModalCancelBtn");
+  elements.importChooseFileBtn = $("importChooseFileBtn");
   elements.cloudStorageModal = $("cloudStorageModal");
+  elements.byokApiKeysModal = $("byokApiKeysModal");
 }
 
 function initCurrencyOptions() {
@@ -3888,6 +3932,7 @@ function attachEventListeners() {
   });
 
   initExportUnlockModal();
+  initDataTransferModalDismiss();
 
   if (elements.exportAsJsonBtn) {
     elements.exportAsJsonBtn.addEventListener("click", () => {
@@ -3901,23 +3946,16 @@ function attachEventListeners() {
       beginExport("csv");
     });
   }
-
-  if (elements.importAsJsonBtn) {
-    elements.importAsJsonBtn.addEventListener("click", () => {
-      if (!elements.importFileInput) return;
-      elements.importFileInput.value = "";
-      elements.importFileInput.click();
-      closeImportFormatModal();
+  if (elements.exportAsBothBtn) {
+    elements.exportAsBothBtn.addEventListener("click", () => {
+      closeExportFormatModal();
+      beginExport("both");
     });
   }
-  if (elements.importAsCsvBtn) {
-    elements.importAsCsvBtn.addEventListener("click", () => {
-      // Reuse the same hidden input, but treat CSV differently in the change handler.
-      if (!elements.importFileInput) return;
-      elements.importFileInput.value = "";
-      elements.importFileInput.setAttribute("data-import-kind", "csv");
-      elements.importFileInput.click();
-      closeImportFormatModal();
+
+  if (elements.importChooseFileBtn) {
+    elements.importChooseFileBtn.addEventListener("click", () => {
+      openImportFilePicker();
     });
   }
 
@@ -3928,12 +3966,27 @@ function attachEventListeners() {
   if (elements.profileViewCloseBtnFooter) {
     elements.profileViewCloseBtnFooter.addEventListener("click", () => closeProfileViewModal());
   }
-  if (elements.profileViewCloseBtn) {
-    elements.profileViewCloseBtn.addEventListener("click", () => closeProfileViewModal());
+  if (elements.profileViewPeriodFilter) {
+    elements.profileViewPeriodFilter.addEventListener("change", () => {
+      profileViewPeriodFilter = elements.profileViewPeriodFilter.value || "";
+      refreshProfileViewModal();
+    });
+  }
+  if (elements.profileViewOwnerFilter) {
+    elements.profileViewOwnerFilter.addEventListener("change", () => {
+      profileViewOwnerFilter = elements.profileViewOwnerFilter.value || "";
+      profileViewPeriodFilter = "";
+      refreshProfileViewModal();
+    });
   }
   if (elements.profileViewCurrencyDetails) {
     elements.profileViewCurrencyDetails.addEventListener("toggle", () => {
       syncProfileViewCurrencyDetails();
+    });
+  }
+  if (elements.profileViewCountryDetails) {
+    elements.profileViewCountryDetails.addEventListener("toggle", () => {
+      syncProfileViewCountryDetails();
     });
   }
   if (elements.roadmapModalFooterMetaDetails) {
@@ -4565,11 +4618,12 @@ function attachEventListeners() {
     });
   });
 
-  elements.roadmapModalCloseBtn.addEventListener("click", closeRoadmapModal);
-  elements.roadmapFormCancelBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    closeRoadmapModal();
-  });
+  if (elements.roadmapFormCancelBtn) {
+    elements.roadmapFormCancelBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeRoadmapModal();
+    });
+  }
 
   elements.roadmapForm.addEventListener("submit", handleRoadmapFormSubmit);
 
@@ -5357,6 +5411,10 @@ function syncSuperAdminChrome() {
   syncRoadmapsTableColumnLayout();
   syncSuperAdminModeBanner();
   updateBulkSelectionActions();
+  if (profileViewActiveProfileId && elements.profileViewModal?.classList.contains("active")) {
+    syncProfileViewOwnerFilterChrome();
+    refreshProfileViewModal();
+  }
 }
 
 function setSuperAdminMode(enabled) {
@@ -5629,27 +5687,52 @@ function getExportCounts(profiles) {
 }
 
 function updateExportFormatModalNotice() {
-  if (!elements.exportFormatModalSubtitle) return;
   const locked = getLockedProfilesForExport();
   const profileCount = state.profiles.length;
-  const base = `Choose a format to download your data (${profileCount} profile${profileCount !== 1 ? "s" : ""} in workspace).`;
-  if (locked.length === 0) {
-    elements.exportFormatModalSubtitle.textContent = base;
-    return;
+  const base = `Choose a format to download (${profileCount} profile${profileCount !== 1 ? "s" : ""} in workspace).`;
+  if (elements.exportFormatModalSubtitle) {
+    if (locked.length === 0) {
+      elements.exportFormatModalSubtitle.textContent = base;
+    } else {
+      elements.exportFormatModalSubtitle.textContent =
+        `${base} ${locked.length} protected profile${locked.length !== 1 ? "s" : ""} will ask for a password next.`;
+    }
   }
-  elements.exportFormatModalSubtitle.textContent =
-    `${base} ${locked.length} protected profile${locked.length !== 1 ? "s" : ""} will ask for a password next.`;
+  if (elements.exportFormatModalHint) {
+    elements.exportFormatModalHint.textContent = locked.length
+      ? "Verify passwords when prompted, then pick an export option below."
+      : "Pick one format or export both JSON and CSV files at once.";
+  }
 }
 
 function updateImportFormatModalNotice() {
-  if (!elements.importFormatModalSubtitle) return;
   const profileCount = state.profiles.length;
   const roadmapCount = state.profiles.reduce(
     (n, p) => n + (Array.isArray(p.roadmaps) ? p.roadmaps.length : 0),
     0
   );
-  elements.importFormatModalSubtitle.textContent =
-    `Choose a format, then pick a file. Merges into your workspace (${profileCount} profile${profileCount !== 1 ? "s" : ""}, ${roadmapCount} roadmap${roadmapCount !== 1 ? "s" : ""}).`;
+  if (elements.importFormatModalSubtitle) {
+    elements.importFormatModalSubtitle.textContent =
+      `Merge a file into your workspace (${profileCount} profile${profileCount !== 1 ? "s" : ""}, ${roadmapCount} roadmap${roadmapCount !== 1 ? "s" : ""}).`;
+  }
+  if (elements.importFormatModalHint) {
+    elements.importFormatModalHint.textContent =
+      "Choose a file below — JSON and CSV are detected automatically.";
+  }
+}
+
+function openImportFilePicker() {
+  if (!elements.importFileInput) return;
+  elements.importFileInput.removeAttribute("data-import-kind");
+  elements.importFileInput.value = "";
+  elements.importFileInput.click();
+  closeImportFormatModal();
+}
+
+function normalizeExportFormat(format) {
+  if (format === "csv") return "csv";
+  if (format === "both") return "both";
+  return "json";
 }
 
 function showExportUnlockError(message) {
@@ -5815,7 +5898,7 @@ async function verifyLockedProfilesForExport(lockedProfiles) {
 }
 
 function beginExport(format) {
-  pendingExportFormat = format === "csv" ? "csv" : "json";
+  pendingExportFormat = normalizeExportFormat(format);
   const locked = getLockedProfilesForExport();
   if (locked.length === 0) {
     executeExport(pendingExportFormat);
@@ -5837,6 +5920,7 @@ function buildExportResultMessage(profileCount, roadmapCount, excludedCount, fai
 }
 
 function executeExport(format, meta) {
+  const exportFormat = normalizeExportFormat(format);
   const profiles = getExportableProfiles();
   const excludedCount = state.profiles.length - profiles.length;
   const failedNames = (meta && meta.failedNames) || [];
@@ -5849,16 +5933,47 @@ function executeExport(format, meta) {
     return;
   }
 
+  const exportMeta = { excludedCount, failedNames };
+
   try {
-    if (format === "csv") {
-      handleExportCsv(profiles, { excludedCount, failedNames });
+    if (exportFormat === "both") {
+      executeExportBoth(profiles, exportMeta);
+    } else if (exportFormat === "csv") {
+      handleExportCsv(profiles, exportMeta);
     } else {
-      handleExportData(profiles, { excludedCount, failedNames });
+      handleExportData(profiles, exportMeta);
     }
   } finally {
     pendingExportFormat = null;
     closeExportUnlockModal();
   }
+}
+
+function executeExportBoth(profiles, exportMeta) {
+  handleExportData(profiles, { ...exportMeta, suppressToast: true });
+  window.setTimeout(() => {
+    try {
+      handleExportCsv(profiles, { ...exportMeta, suppressToast: true });
+      const { profileCount, roadmapCount } = getExportCounts(profiles);
+      const detail = buildExportResultMessage(profileCount, roadmapCount, exportMeta.excludedCount, exportMeta.failedNames);
+      const msg = `Exported JSON and CSV. ${detail.replace(/^Exported\s+/i, "")}`;
+      showToast(msg);
+    } catch (err) {
+      console.error("Combined CSV export failed", err);
+      window.alert("JSON exported, but CSV export failed. See console for details.");
+    }
+  }, 350);
+}
+
+function initDataTransferModalDismiss() {
+  bindDataTransferModalClose(elements.exportFormatModalCancelBtn, closeExportFormatModal);
+  bindDataTransferModalClose(elements.importFormatModalCancelBtn, closeImportFormatModal);
+  bindDataTransferModalClose(elements.exportUnlockCancelBtn, closeExportUnlockModal);
+}
+
+function bindDataTransferModalClose(button, closeFn) {
+  if (!button || typeof closeFn !== "function") return;
+  button.addEventListener("click", () => closeFn());
 }
 
 function initExportUnlockModal() {
@@ -5933,9 +6048,11 @@ function handleExportData(profilesForExport, exportMeta) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    const { profileCount, roadmapCount } = getExportCounts(profiles);
-    const msg = buildExportResultMessage(profileCount, roadmapCount, excludedCount, failedNames);
-    setTimeout(() => showToast(msg), 0);
+    if (!exportMeta || !exportMeta.suppressToast) {
+      const { profileCount, roadmapCount } = getExportCounts(profiles);
+      const msg = buildExportResultMessage(profileCount, roadmapCount, excludedCount, failedNames);
+      setTimeout(() => showToast(msg), 0);
+    }
   } catch (err) {
     console.error("Export failed", err);
     window.alert("Export failed. See console for details.");
@@ -5964,6 +6081,7 @@ function handleExportCsv(profilesForExport, exportMeta) {
       "roadmapId",
       "roadmapTitle",
       "roadmapDescription",
+      "roadmapNote",
       "roadmapCreatedAt",
       "roadmapModifiedAt",
       "reachValue",
@@ -6032,6 +6150,8 @@ function handleExportCsv(profilesForExport, exportMeta) {
           "",
           "",
           "",
+          "",
+          "",
           ""
         ];
         rows.push(emptyRow.join(","));
@@ -6051,6 +6171,7 @@ function handleExportCsv(profilesForExport, exportMeta) {
           escapeCsvCell(roadmap.id || ""),
           escapeCsvCell(roadmap.title || ""),
           escapeCsvCell(richDescriptionToPlainText(roadmap.description || "")),
+          escapeCsvCell(richDescriptionToPlainText(roadmap.note || "")),
           escapeCsvCell(roadmap.createdAt || ""),
           escapeCsvCell(roadmap.modifiedAt || ""),
           escapeCsvCell(roadmap.reachValue != null ? String(roadmap.reachValue) : ""),
@@ -6098,9 +6219,11 @@ function handleExportCsv(profilesForExport, exportMeta) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    const { profileCount, roadmapCount } = getExportCounts(profiles);
-    const msg = buildExportResultMessage(profileCount, roadmapCount, excludedCount, failedNames);
-    setTimeout(() => showToast(msg), 0);
+    if (!exportMeta || !exportMeta.suppressToast) {
+      const { profileCount, roadmapCount } = getExportCounts(profiles);
+      const msg = buildExportResultMessage(profileCount, roadmapCount, excludedCount, failedNames);
+      setTimeout(() => showToast(msg), 0);
+    }
   } catch (err) {
     console.error("CSV export failed", err);
     window.alert("CSV export failed. See console for details.");
@@ -6153,27 +6276,28 @@ function mergeImportedProfiles(importedProfiles) {
   return { addedProfiles, mergedProfiles, addedRoadmaps, mergedRoadmaps, skippedRoadmaps };
 }
 
-// Unified handler: decides between JSON and CSV based on the selected file and the data-import-kind flag.
+// Unified handler: auto-detects JSON vs CSV from file extension and MIME type.
 function handleUnifiedImportChange(event) {
   const input = event.target;
   const file = input.files && input.files[0];
   if (!file) return;
 
-  const explicitKind = input.getAttribute("data-import-kind");
-  // Reset the flag so the next import goes through auto-detection again.
   input.removeAttribute("data-import-kind");
 
-  const name = (file.name || "").toLowerCase();
-  const isCsv = explicitKind === "csv" || name.endsWith(".csv");
-
-  if (isCsv) {
+  if (isImportFileCsv(file)) {
     handleImportCsvFile(file);
   } else {
     handleImportJsonFile(file);
   }
 
-  // Always clear the input so the same file can be selected again later.
   input.value = "";
+}
+
+function isImportFileCsv(file) {
+  if (!file) return false;
+  const name = (file.name || "").toLowerCase();
+  const type = (file.type || "").toLowerCase();
+  return name.endsWith(".csv") || type === "text/csv" || type === "application/csv" || type === "application/vnd.ms-excel";
 }
 
 function handleImportJsonFile(file) {
@@ -6319,6 +6443,7 @@ function buildProfilesFromCsvRows(header, rows) {
       modifiedAt: (cells[colIndex.roadmapModifiedAt] ?? "").toString().trim() || undefined,
       title: roadmapTitle || "Imported roadmap",
       description: (cells[colIndex.roadmapDescription] ?? "").toString(),
+      note: normalizeRoadmapNote(cells[colIndex.roadmapNote]),
       reachValue: toNumberOrNull(cells[colIndex.reachValue]),
       reachDescription: (cells[colIndex.reachDescription] ?? "").toString(),
       impactValue: toNumberOrNull(cells[colIndex.impactValue]),
@@ -6422,6 +6547,7 @@ function normalizeImportedRoadmap(roadmap) {
     modifiedAt,
     title: String(roadmap.title || "Imported roadmap"),
     description: String(roadmap.description || ""),
+    note: normalizeRoadmapNote(roadmap.note),
     reachDescription: String(roadmap.reachDescription || ""),
     reachValue: Number.isFinite(reachValue) ? reachValue : 0,
     impactDescription: String(roadmap.impactDescription || ""),
@@ -6683,6 +6809,16 @@ function roadmapMatchesLabelFilter(roadmap, labelQuery) {
 }
 
 /** Deduplicated, trimmed roadmap labels (each may contain spaces). */
+function normalizeRoadmapNote(raw) {
+  if (raw == null) return null;
+  const value = String(raw).trim();
+  if (!value) return null;
+  if (typeof richDescriptionToPlainText === "function" && !richDescriptionToPlainText(value)) {
+    return null;
+  }
+  return value;
+}
+
 function normalizeRoadmapLabels(raw) {
   if (!Array.isArray(raw)) {
     if (typeof raw === "string" && raw.trim()) {
@@ -9080,7 +9216,8 @@ function serializeRoadmapForStorage(roadmap) {
     labels: normalizeRoadmapLabels(roadmap.labels),
     links: normalizeRoadmapLinks(roadmap.links),
     tasks: normalizeRoadmapTasks(roadmap.tasks),
-    raci: normalizeRoadmapRaci(roadmap.raci)
+    raci: normalizeRoadmapRaci(roadmap.raci),
+    note: normalizeRoadmapNote(roadmap.note)
   });
 }
 
@@ -9287,6 +9424,7 @@ function normalizeLoadedRoadmap(roadmap) {
     modifiedAt,
     title: String(roadmap.title || "Untitled roadmap"),
     description: String(roadmap.description || ""),
+    note: normalizeRoadmapNote(roadmap.note),
     reachDescription: String(roadmap.reachDescription || ""),
     reachValue: Number.isFinite(reachValue) ? reachValue : 0,
     impactDescription: String(roadmap.impactDescription || ""),
@@ -10137,13 +10275,9 @@ function initPortfolioWorkspace() {
   window.addEventListener("resize", () => updateBulkSelectionActions());
 }
 
-/** Profile modals: password visibility toggles, close control. */
+/** Profile modals: password visibility toggles. */
 function initProfileModals() {
   bindProfilePasswordToggles(document);
-
-  if (elements.profileEditCloseBtn) {
-    elements.profileEditCloseBtn.addEventListener("click", () => closeProfileEditModal());
-  }
 }
 
 function resetProfileEditPasswordFieldTypes() {
@@ -10177,7 +10311,8 @@ const BLOCKING_MODAL_OVERLAY_IDS = new Set([
   "exportFormatModal",
   "importFormatModal",
   "exportUnlockModal",
-  "cloudStorage"
+  "cloudStorage",
+  "byokApiKeysModal"
 ]);
 
 function getBlockingModalCandidates() {
@@ -10192,7 +10327,8 @@ function getBlockingModalCandidates() {
     ["exportFormatModal", elements.exportFormatModal],
     ["importFormatModal", elements.importFormatModal],
     ["exportUnlockModal", elements.exportUnlockModal],
-    ["cloudStorage", elements.cloudStorageModal]
+    ["cloudStorage", elements.cloudStorageModal],
+    ["byokApiKeysModal", elements.byokApiKeysModal]
   ];
 }
 
@@ -10300,6 +10436,9 @@ function closeTopBlockingModal() {
     case "cloudStorage":
       closeCloudStorageModal();
       break;
+    case "byokApiKeysModal":
+      closeByokApiKeysModal();
+      break;
     default:
       return false;
   }
@@ -10396,6 +10535,7 @@ function registerAppOverlays() {
   OverlayManager.register("importFormatModal", closeNow(closeImportFormatModal));
   OverlayManager.register("exportUnlockModal", closeNow(closeExportUnlockModal));
   OverlayManager.register("cloudStorage", closeNow(closeCloudStorageModal));
+  OverlayManager.register("byokApiKeysModal", closeNow(closeByokApiKeysModal));
   OverlayManager.register("filterAutocomplete", () => {});
 }
 
@@ -16931,6 +17071,207 @@ const PROFILE_VIEW_MOSCOW_SHORT_LABELS = {
   "Won't have": "Won't",
 };
 
+const PROFILE_VIEW_STATUS_SHORT_LABELS = {
+  "Not Started": "Not started",
+  "In Progress": "In progress",
+  "On Hold": "On hold",
+  Done: "Done",
+  Cancelled: "Cancelled",
+  "Not set": "Not set",
+};
+
+const PROFILE_VIEW_STATUS_COLORS = {
+  "Not Started": "#94a3b8",
+  "In Progress": "#3b82f6",
+  "On Hold": "#f59e0b",
+  Done: "#10b981",
+  Cancelled: "#ef4444",
+  "Not set": "#a8a29e",
+};
+
+function getProfileViewStatusColor(status) {
+  return PROFILE_VIEW_STATUS_COLORS[status] || PROFILE_VIEW_STATUS_COLORS["Not set"];
+}
+
+function formatProfileViewStatusPercent(count, total) {
+  if (!total || !Number.isFinite(count) || count <= 0) return "0%";
+  const pct = (count / total) * 100;
+  if (pct >= 10 || pct === 0 || Math.abs(pct - Math.round(pct)) < 0.05) {
+    return `${Math.round(pct)}%`;
+  }
+  return `${pct.toFixed(1)}%`;
+}
+
+function buildProfileViewStatusInsight(segments, totalRoadmaps) {
+  if (!segments.length || !totalRoadmaps) return "";
+  const top = segments.reduce((best, item) => (item.count > best.count ? item : best), segments[0]);
+  const roadmapWord = top.count === 1 ? "roadmap is" : "roadmaps are";
+  return `Most ${roadmapWord} ${top.displayStatus.toLowerCase()} (${top.count} of ${totalRoadmaps})`;
+}
+
+function renderProfileViewStatusStats(container, statusCounts, totalRoadmaps) {
+  if (!container) return;
+  container.innerHTML = "";
+  const insightEl = elements.profileViewStatusInsight;
+  if (insightEl) {
+    insightEl.hidden = true;
+    insightEl.textContent = "";
+  }
+
+  if (!totalRoadmaps) {
+    const empty = document.createElement("p");
+    empty.className = "profile-view-status-stats-empty";
+    empty.textContent = "Add roadmaps to this profile to see status distribution.";
+    container.appendChild(empty);
+    return;
+  }
+
+  const order =
+    typeof roadmapStatusList !== "undefined" && Array.isArray(roadmapStatusList)
+      ? roadmapStatusList.slice()
+      : [];
+  const keys = [];
+  order.forEach((status) => {
+    if ((statusCounts[status] || 0) > 0) keys.push(status);
+  });
+  Object.keys(statusCounts).forEach((key) => {
+    if ((statusCounts[key] || 0) > 0 && !keys.includes(key)) keys.push(key);
+  });
+
+  if (!keys.length) {
+    const empty = document.createElement("p");
+    empty.className = "profile-view-status-stats-empty";
+    empty.textContent = "No status data yet.";
+    container.appendChild(empty);
+    return;
+  }
+
+  const segments = keys.map((status) => {
+    const count = statusCounts[status] || 0;
+    const pctLabel = formatProfileViewStatusPercent(count, totalRoadmaps);
+    const displayStatus = PROFILE_VIEW_STATUS_SHORT_LABELS[status] || status;
+    return { status, count, pctLabel, displayStatus };
+  });
+
+  if (insightEl && segments.length) {
+    insightEl.textContent = buildProfileViewStatusInsight(segments, totalRoadmaps);
+    insightEl.hidden = false;
+  }
+
+  const overview = document.createElement("div");
+  overview.className = "profile-view-status-overview";
+
+  const bar = document.createElement("div");
+  bar.className = "profile-view-status-bar";
+  bar.setAttribute("role", "img");
+  bar.setAttribute(
+    "aria-label",
+    segments
+      .map(({ displayStatus, count, pctLabel }) => `${displayStatus}: ${count} roadmaps (${pctLabel})`)
+      .join(". ")
+  );
+
+  segments.forEach(({ status, count, pctLabel, displayStatus }) => {
+    const segment = document.createElement("span");
+    segment.className = "profile-view-status-bar-segment";
+    segment.dataset.status = status;
+    segment.style.flex = `${count} 1 0`;
+    segment.style.backgroundColor = getProfileViewStatusColor(status);
+    segment.setAttribute(
+      "title",
+      `${displayStatus}: ${count} roadmap${count === 1 ? "" : "s"} (${pctLabel})`
+    );
+    bar.appendChild(segment);
+  });
+
+  const grid = document.createElement("div");
+  grid.className = "profile-view-status-grid";
+  grid.setAttribute("role", "list");
+  grid.setAttribute("aria-label", "Roadmap counts by status");
+
+  segments.forEach(({ status, count, pctLabel, displayStatus }) => {
+    const item = document.createElement("div");
+    item.className = "profile-view-status-item";
+    item.dataset.status = status;
+    item.setAttribute("role", "listitem");
+    item.setAttribute(
+      "title",
+      `${displayStatus}: ${count} of ${totalRoadmaps} roadmaps (${pctLabel})`
+    );
+
+    const label = document.createElement("span");
+    label.className = "profile-view-status-item-label";
+    label.textContent = displayStatus;
+
+    const value = document.createElement("div");
+    value.className = "profile-view-status-item-value";
+
+    const countEl = document.createElement("span");
+    countEl.className = "profile-view-status-item-count";
+    countEl.textContent = String(count);
+
+    const pct = document.createElement("span");
+    pct.className = "profile-view-status-item-pct";
+    pct.textContent = pctLabel;
+
+    value.appendChild(countEl);
+    value.appendChild(pct);
+    item.appendChild(label);
+    item.appendChild(value);
+    grid.appendChild(item);
+  });
+
+  overview.appendChild(bar);
+  overview.appendChild(grid);
+  container.appendChild(overview);
+}
+
+function buildProfileViewKanoCounts(roadmaps) {
+  const counts = {};
+  const list = Array.isArray(roadmaps) ? roadmaps : [];
+  list.forEach((roadmap) => {
+    const key = !roadmapHasKanoPosition(roadmap)
+      ? TABLE_GROUP_BY_KANO_UNPOSITIONED_KEY
+      : getKanoCellZoneId(
+          normalizeKanoAxisLevel(roadmap.kanoFunctionality),
+          normalizeKanoAxisLevel(roadmap.kanoSatisfaction)
+        );
+    counts[key] = (counts[key] || 0) + 1;
+  });
+  return counts;
+}
+
+function getProfileViewKanoSortOrder() {
+  if (typeof kanoCategoryLegend === "undefined" || !Array.isArray(kanoCategoryLegend)) {
+    return [TABLE_GROUP_BY_KANO_UNPOSITIONED_KEY];
+  }
+  return kanoCategoryLegend.map((entry) => entry.id).concat(TABLE_GROUP_BY_KANO_UNPOSITIONED_KEY);
+}
+
+function getProfileViewKanoChipLabel(key) {
+  if (key === TABLE_GROUP_BY_KANO_UNPOSITIONED_KEY) return "Not positioned";
+  if (typeof kanoCategoryLegend !== "undefined") {
+    const entry = kanoCategoryLegend.find((item) => item.id === key);
+    if (entry) return entry.label;
+  }
+  return key;
+}
+
+function getProfileViewKanoChipTitle(key) {
+  if (key === TABLE_GROUP_BY_KANO_UNPOSITIONED_KEY) {
+    return "Roadmaps without functionality and satisfaction scores on the KANO matrix";
+  }
+  if (typeof kanoCategoryLegend !== "undefined") {
+    const entry = kanoCategoryLegend.find((item) => item.id === key);
+    if (entry) {
+      if (entry.description) return entry.description;
+      if (entry.hint) return `${entry.label} (${entry.hint})`;
+      return entry.label;
+    }
+  }
+  return getProfileViewKanoChipLabel(key);
+}
+
 function getProfileViewFrameworkChipLabel(frameworkKey) {
   const key = normalizeFinancialFramework(frameworkKey);
   const meta = FINANCIAL_FRAMEWORK_ICONS[key];
@@ -17250,6 +17591,14 @@ function syncProfileViewCurrencyDetails({ resetCollapsed = false } = {}) {
   if (summary) summary.setAttribute("aria-expanded", details.open ? "true" : "false");
 }
 
+function syncProfileViewCountryDetails({ resetCollapsed = false } = {}) {
+  const details = elements.profileViewCountryDetails;
+  if (!details) return;
+  if (resetCollapsed) details.open = false;
+  const summary = details.querySelector(".profile-view-country-summary");
+  if (summary) summary.setAttribute("aria-expanded", details.open ? "true" : "false");
+}
+
 function syncRoadmapModalFooterMetaDetails({ resetCollapsed = false } = {}) {
   const details = elements.roadmapModalFooterMetaDetails;
   if (!details) return;
@@ -17263,13 +17612,40 @@ function syncRoadmapModalFooterMetaDetails({ resetCollapsed = false } = {}) {
   if (summary) summary.setAttribute("aria-expanded", details.open ? "true" : "false");
 }
 
-function openProfileViewModal(profileId) {
-  const profile = state.profiles.find((p) => p.id === profileId);
-  if (!profile || !elements.profileViewModal) return;
-  if (!requireProfileUnlocked(profileId, "view")) return;
-  activateBlockingModal(elements.profileViewModal, "profileViewModal");
+let profileViewActiveProfileId = null;
+let profileViewPeriodFilter = "";
+let profileViewOwnerFilter = "";
 
-  const profileName = profile.name || "Untitled profile";
+function isProfileViewOwnerFilterEnabled() {
+  const active = getActiveProfile();
+  if (!active || !isActiveSuperAdminProfile()) return false;
+  return isProfileUnlocked(active.id);
+}
+
+function getProfileViewAllOwnerRoadmaps() {
+  const combined = [];
+  state.profiles.forEach((profile) => {
+    if (!Array.isArray(profile.roadmaps)) return;
+    profile.roadmaps.forEach((roadmap) => {
+      combined.push(attachRoadmapOwnerMeta(roadmap, profile));
+    });
+  });
+  return combined;
+}
+
+function getProfileViewDisplayProfile(contextProfile, ownerFilter) {
+  if (!contextProfile) return null;
+  if (isProfileViewOwnerFilterEnabled() && ownerFilter) {
+    return state.profiles.find((profile) => profile.id === ownerFilter) || contextProfile;
+  }
+  return contextProfile;
+}
+
+function syncProfileViewHeroIdentity(contextProfile, ownerFilter) {
+  const displayProfile = getProfileViewDisplayProfile(contextProfile, ownerFilter);
+  if (!displayProfile) return;
+
+  const profileName = displayProfile.name || "Untitled profile";
   if (elements.profileViewAvatar) {
     elements.profileViewAvatar.textContent = getProfileInitials(profileName);
   }
@@ -17277,16 +17653,228 @@ function openProfileViewModal(profileId) {
     elements.profileViewName.textContent = profileName;
   }
   if (elements.profileViewTeam) {
-    const teamText = (profile.team || "").trim();
+    const teamText = (displayProfile.team || "").trim();
     elements.profileViewTeam.textContent = teamText || "No team set";
     elements.profileViewTeam.classList.toggle("profile-view-team--empty", !teamText);
   }
+}
 
-  const roadmaps = Array.isArray(profile.roadmaps) ? profile.roadmaps.slice() : [];
+function syncProfileViewOwnerFilterChrome() {
+  const wrap = elements.profileViewOwnerFilterWrap;
+  const select = elements.profileViewOwnerFilter;
+  const enabled = isProfileViewOwnerFilterEnabled();
+  if (wrap) {
+    wrap.hidden = !enabled;
+    wrap.setAttribute("aria-hidden", enabled ? "false" : "true");
+  }
+  if (select) select.disabled = !enabled;
+}
+
+function getProfileViewOwnerFilterLabel(ownerFilter) {
+  if (!ownerFilter) return "All owners";
+  const profile = state.profiles.find((entry) => entry.id === ownerFilter);
+  if (!profile) return "Selected profile";
+  const team = (profile.team || "").trim();
+  return team ? `${profile.name || "Unnamed profile"} (${team})` : profile.name || "Unnamed profile";
+}
+
+function getProfileViewBaseRoadmaps(contextProfile, ownerFilter) {
+  if (!contextProfile) return [];
+
+  if (!isProfileViewOwnerFilterEnabled()) {
+    const list = Array.isArray(contextProfile.roadmaps) ? contextProfile.roadmaps : [];
+    return list.map((roadmap) => attachRoadmapOwnerMeta(roadmap, contextProfile));
+  }
+
+  if (!ownerFilter) {
+    return getProfileViewAllOwnerRoadmaps();
+  }
+
+  const ownerProfile = state.profiles.find((profile) => profile.id === ownerFilter);
+  if (!ownerProfile) return [];
+  const list = Array.isArray(ownerProfile.roadmaps) ? ownerProfile.roadmaps : [];
+  return list.map((roadmap) => attachRoadmapOwnerMeta(roadmap, ownerProfile));
+}
+
+function initProfileViewOwnerFilterOptions(defaultProfileId) {
+  const select = elements.profileViewOwnerFilter;
+  if (!select || !isProfileViewOwnerFilterEnabled()) return;
+
+  const previous = profileViewOwnerFilter || defaultProfileId || "";
+  select.innerHTML = "";
+
+  const allOption = document.createElement("option");
+  allOption.value = "";
+  allOption.textContent = "All owners";
+  select.appendChild(allOption);
+
+  getSortedProfiles().forEach((profile) => {
+    const option = document.createElement("option");
+    option.value = profile.id;
+    const team = (profile.team || "").trim();
+    option.textContent = team ? `${profile.name} (${team})` : profile.name || "Unnamed profile";
+    select.appendChild(option);
+  });
+
+  if (previous && Array.from(select.options).some((option) => option.value === previous)) {
+    select.value = previous;
+  } else if (defaultProfileId && Array.from(select.options).some((option) => option.value === defaultProfileId)) {
+    select.value = defaultProfileId;
+  } else {
+    select.value = "";
+  }
+
+  profileViewOwnerFilter = select.value || "";
+}
+
+function getProfileViewUniquePeriods(roadmaps) {
+  const periods = new Set();
+  (roadmaps || []).forEach((roadmap) => {
+    const raw =
+      roadmap.roadmapPeriod != null ? String(roadmap.roadmapPeriod).trim().toUpperCase() : "";
+    if (raw) periods.add(raw);
+  });
+  return Array.from(periods).sort();
+}
+
+function countProfileViewRoadmapsWithoutPeriod(roadmaps) {
+  return (roadmaps || []).filter(
+    (roadmap) =>
+      !(coalesceLegacyRoadmapStringField(roadmap, "roadmapPeriod", "projectPeriod") || "").trim()
+  ).length;
+}
+
+function filterProfileViewRoadmaps(roadmaps, periodFilter) {
+  const list = Array.isArray(roadmaps) ? roadmaps : [];
+  if (!periodFilter) return list.slice();
+  if (periodFilter === "__none__") {
+    return list.filter(
+      (roadmap) =>
+        !(coalesceLegacyRoadmapStringField(roadmap, "roadmapPeriod", "projectPeriod") || "").trim()
+    );
+  }
+  const target = periodFilter.toUpperCase();
+  return list.filter((roadmap) => {
+    const period = (roadmap.roadmapPeriod || "").toString().trim().toUpperCase();
+    return period === target;
+  });
+}
+
+function getProfileViewPeriodFilterLabel(periodFilter) {
+  if (!periodFilter) return "";
+  if (periodFilter === "__none__") return "No period";
+  return periodFilter;
+}
+
+function initProfileViewPeriodFilterOptions(roadmaps, selectedValue = "") {
+  const select = elements.profileViewPeriodFilter;
+  const wrap = elements.profileViewPeriodFilterWrap;
+  if (!select) return;
+
+  const allRoadmaps = Array.isArray(roadmaps) ? roadmaps : [];
+  const periods = getProfileViewUniquePeriods(allRoadmaps);
+  const noPeriodCount = countProfileViewRoadmapsWithoutPeriod(allRoadmaps);
+  const previous = selectedValue || profileViewPeriodFilter || "";
+
+  select.innerHTML = "";
+  const allOption = document.createElement("option");
+  allOption.value = "";
+  allOption.textContent = "All periods";
+  select.appendChild(allOption);
+
+  periods.forEach((period) => {
+    const option = document.createElement("option");
+    option.value = period;
+    option.textContent = period;
+    select.appendChild(option);
+  });
+
+  if (noPeriodCount > 0) {
+    const noneOption = document.createElement("option");
+    noneOption.value = "__none__";
+    noneOption.textContent = `No period (${noPeriodCount})`;
+    select.appendChild(noneOption);
+  }
+
+  if (previous && Array.from(select.options).some((option) => option.value === previous)) {
+    select.value = previous;
+  } else {
+    select.value = "";
+  }
+
+  profileViewPeriodFilter = select.value || "";
+  select.disabled = !allRoadmaps.length;
+  if (wrap) wrap.hidden = !allRoadmaps.length;
+}
+
+function buildProfileViewModalSubtitle(options = {}) {
+  const {
+    allRoadmapsCount = 0,
+    totalRoadmaps = 0,
+    ownerFilter = "",
+    periodFilter = "",
+  } = options;
+  const ownerFilterEnabled = isProfileViewOwnerFilterEnabled();
+
+  if (allRoadmapsCount === 0) {
+    if (ownerFilterEnabled && !ownerFilter) {
+      return "No roadmaps in the workspace yet.";
+    }
+    return "No roadmaps in this profile yet.";
+  }
+
+  if (totalRoadmaps === 0) {
+    if (periodFilter) {
+      return `No roadmaps in ${getProfileViewPeriodFilterLabel(periodFilter)} for the selected filters.`;
+    }
+    if (ownerFilterEnabled && ownerFilter) {
+      return `No roadmaps for ${getProfileViewOwnerFilterLabel(ownerFilter)}.`;
+    }
+    return "No roadmaps match the selected filters.";
+  }
+
+  const parts = [];
+  if (ownerFilterEnabled && !ownerFilter) {
+    parts.push(`${totalRoadmaps} roadmap${totalRoadmaps === 1 ? "" : "s"} across all owners`);
+  } else if (ownerFilterEnabled && ownerFilter) {
+    parts.push(`${totalRoadmaps} roadmap${totalRoadmaps === 1 ? "" : "s"} for ${getProfileViewOwnerFilterLabel(ownerFilter)}`);
+  } else {
+    parts.push(`${totalRoadmaps} roadmap${totalRoadmaps === 1 ? "" : "s"} in this profile`);
+  }
+
+  if (periodFilter === "__none__") {
+    parts.push("without a period set");
+  } else if (periodFilter) {
+    parts.push(`in ${periodFilter}`);
+  }
+
+  return `Showing ${parts.join(" ")}.`;
+}
+
+function renderProfileViewContent(contextProfile, roadmaps, options = {}) {
+  const allRoadmapsCount = options.allRoadmapsCount ?? roadmaps.length;
+  const periodFilter = options.periodFilter ?? "";
+  const ownerFilter = options.ownerFilter ?? "";
   const totalRoadmaps = roadmaps.length;
+
+  syncProfileViewHeroIdentity(contextProfile, ownerFilter);
+
+  const subtitleEl = $("profileViewModalSubtitle");
+  if (subtitleEl) {
+    subtitleEl.textContent = buildProfileViewModalSubtitle({
+      allRoadmapsCount,
+      totalRoadmaps,
+      ownerFilter,
+      periodFilter,
+    });
+  }
 
   if (elements.profileViewTotalRoadmaps) {
     elements.profileViewTotalRoadmaps.textContent = String(totalRoadmaps);
+  }
+  if (elements.profileViewTotalRoadmapsLabel) {
+    elements.profileViewTotalRoadmapsLabel.textContent =
+      totalRoadmaps === 1 ? "Total roadmap" : "Total roadmaps";
   }
 
   const uniqueCountries = new Set();
@@ -17296,8 +17884,14 @@ function openProfileViewModal(profileId) {
       if (c != null && String(c).trim() !== "") uniqueCountries.add(String(c).trim());
     });
   });
-  if (elements.profileViewUniqueCountries) {
-    elements.profileViewUniqueCountries.textContent = String(uniqueCountries.size);
+  if (elements.profileViewCountryUniqueCount) {
+    const uniqueCount = uniqueCountries.size;
+    elements.profileViewCountryUniqueCount.textContent =
+      uniqueCount === 1 ? "1 unique country" : `${uniqueCount} unique countries`;
+    elements.profileViewCountryUniqueCount.setAttribute(
+      "aria-label",
+      uniqueCount === 1 ? "1 unique country" : `${uniqueCount} unique countries`
+    );
   }
 
   const statusCounts = {};
@@ -17321,12 +17915,17 @@ function openProfileViewModal(profileId) {
     if (Number.isFinite(score)) riceScores.push(score);
   });
 
-  renderProfileViewBreakdownChips(elements.profileViewByStatus, statusCounts);
+  renderProfileViewStatusStats(elements.profileViewStatusStats, statusCounts, totalRoadmaps);
   renderProfileViewBreakdownChips(elements.profileViewByType, typeCounts);
   renderProfileViewBreakdownChips(elements.profileViewByTshirt, tshirtCounts);
   renderProfileViewBreakdownChips(elements.profileViewByMoscow, moscowCounts, {
     sortOrder: typeof moscowList !== "undefined" ? moscowList.slice() : [],
     labelFor: (key) => PROFILE_VIEW_MOSCOW_SHORT_LABELS[key] || key,
+  });
+  renderProfileViewBreakdownChips(elements.profileViewByKano, buildProfileViewKanoCounts(roadmaps), {
+    sortOrder: getProfileViewKanoSortOrder(),
+    labelFor: (key) => getProfileViewKanoChipLabel(key),
+    titleFor: (key) => getProfileViewKanoChipTitle(key),
   });
   renderProfileViewBreakdownChips(elements.profileViewByFramework, frameworkCounts, {
     sortOrder: FINANCIAL_FRAMEWORKS.slice(),
@@ -17359,8 +17958,6 @@ function openProfileViewModal(profileId) {
     roadmaps
   );
 
-  syncProfileViewCurrencyDetails({ resetCollapsed: true });
-
   renderProfileViewStatsGrid(elements.profileViewRiceStats, riceScores, {
     formatValue: formatRice,
     emptyMessage: "No RICE scores yet. Add reach, impact, confidence, and effort to roadmaps."
@@ -17369,8 +17966,55 @@ function openProfileViewModal(profileId) {
   renderProfileViewFinancialStats(roadmaps);
 }
 
+function refreshProfileViewModal() {
+  if (!profileViewActiveProfileId) return;
+  const contextProfile = state.profiles.find((profile) => profile.id === profileViewActiveProfileId);
+  if (!contextProfile) return;
+
+  syncProfileViewOwnerFilterChrome();
+  const baseRoadmaps = getProfileViewBaseRoadmaps(contextProfile, profileViewOwnerFilter);
+  initProfileViewPeriodFilterOptions(baseRoadmaps, profileViewPeriodFilter);
+  const roadmaps = filterProfileViewRoadmaps(baseRoadmaps, profileViewPeriodFilter);
+
+  renderProfileViewContent(contextProfile, roadmaps, {
+    allRoadmapsCount: baseRoadmaps.length,
+    periodFilter: profileViewPeriodFilter,
+    ownerFilter: profileViewOwnerFilter,
+  });
+}
+
+function openProfileViewModal(profileId) {
+  const profile = state.profiles.find((p) => p.id === profileId);
+  if (!profile || !elements.profileViewModal) return;
+  if (!requireProfileUnlocked(profileId, "view")) return;
+  activateBlockingModal(elements.profileViewModal, "profileViewModal");
+
+  profileViewActiveProfileId = profileId;
+  profileViewPeriodFilter = "";
+  profileViewOwnerFilter = isProfileViewOwnerFilterEnabled() ? profileId : "";
+
+  syncProfileViewOwnerFilterChrome();
+  initProfileViewOwnerFilterOptions(profileId);
+
+  const baseRoadmaps = getProfileViewBaseRoadmaps(profile, profileViewOwnerFilter);
+  initProfileViewPeriodFilterOptions(baseRoadmaps, "");
+  const roadmaps = filterProfileViewRoadmaps(baseRoadmaps, profileViewPeriodFilter);
+
+  renderProfileViewContent(profile, roadmaps, {
+    allRoadmapsCount: baseRoadmaps.length,
+    periodFilter: "",
+    ownerFilter: profileViewOwnerFilter,
+  });
+
+  syncProfileViewCurrencyDetails({ resetCollapsed: true });
+  syncProfileViewCountryDetails({ resetCollapsed: true });
+}
+
 function closeProfileViewModal({ immediate = false } = {}) {
   if (!elements.profileViewModal) return;
+  profileViewActiveProfileId = null;
+  profileViewPeriodFilter = "";
+  profileViewOwnerFilter = "";
   deactivateBlockingModal(elements.profileViewModal, { immediate });
 }
 
@@ -17593,11 +18237,6 @@ function deleteProfile(profileId) {
     };
   }
 
-  if (elements.profileDeleteCancelTopBtn) {
-    elements.profileDeleteCancelTopBtn.onclick = () => {
-      closeProfileDeleteModal();
-    };
-  }
   if (elements.profileDeleteCancelBtn) {
     elements.profileDeleteCancelBtn.onclick = () => {
       closeProfileDeleteModal();
@@ -17695,6 +18334,7 @@ function openRoadmapModal(mode, roadmapId, options = {}) {
     elements.roadmapModalTitle.textContent = (isView ? "View roadmap" : "Edit roadmap") + ownerSuffix;
     elements.roadmapTitle.value = roadmap.title || "";
     setRichDescriptionValue("roadmapDescription", roadmap.description || "");
+    setRichDescriptionValue("roadmapNote", roadmap.note || "");
     setRichDescriptionValue("reachDescription", roadmap.reachDescription || "");
     elements.reachValue.value = roadmap.reachValue != null ? roadmap.reachValue : "";
     setRichDescriptionValue("impactDescription", roadmap.impactDescription || "");
@@ -17747,6 +18387,7 @@ function openRoadmapModal(mode, roadmapId, options = {}) {
     }
     elements.roadmapTitle.value = "";
     setRichDescriptionValue("roadmapDescription", "");
+    setRichDescriptionValue("roadmapNote", "");
     setRichDescriptionValue("reachDescription", "");
     elements.reachValue.value = "";
     setRichDescriptionValue("impactDescription", "");
@@ -17905,6 +18546,7 @@ function handleRoadmapFormSubmit(e) {
   const raw = {
     title: (elements.roadmapTitle.value || "").trim(),
     description: getRichDescriptionValue("roadmapDescription"),
+    note: normalizeRoadmapNote(getRichDescriptionValue("roadmapNote")),
     reachDescription: getRichDescriptionValue("reachDescription"),
     reachValue: elements.reachValue.value !== "" ? Number(elements.reachValue.value) : null,
     impactDescription: getRichDescriptionValue("impactDescription"),
@@ -17986,6 +18628,7 @@ function handleRoadmapFormSubmit(e) {
     if (!ownerProfile || !roadmap) return;
     roadmap.title = raw.title;
     roadmap.description = raw.description;
+    roadmap.note = raw.note;
     roadmap.reachDescription = raw.reachDescription;
     roadmap.reachValue = raw.reachValue;
     roadmap.impactDescription = raw.impactDescription;
@@ -18034,6 +18677,7 @@ function handleRoadmapFormSubmit(e) {
       modifiedAt: now,
       title: raw.title,
       description: raw.description,
+      note: raw.note,
       reachDescription: raw.reachDescription,
       reachValue: raw.reachValue,
       impactDescription: raw.impactDescription,

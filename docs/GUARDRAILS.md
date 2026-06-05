@@ -27,6 +27,7 @@
 - Derived calculations (RICE/financial) must provide explanatory text.
 - Every create/edit modal variable field must provide standardized tooltip guidance.
 - Framework terminology must stay standardized as `Framework` in filter/table labels.
+- **No header × dismiss in modals:** dialogs close via labeled footer actions (Cancel, Done, Save, etc.), Esc, and backdrop where appropriate — never a top-right × icon (see [DESIGN_GUIDELINES.md](DESIGN_GUIDELINES.md) §5.12).
 
 ### 3.1 Compact layout (≤1400px)
 

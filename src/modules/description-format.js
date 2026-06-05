@@ -12,6 +12,15 @@ const DESCRIPTION_ALLOWED_TAGS = new Set([
   "EM",
   "I",
   "U",
+  "S",
+  "STRIKE",
+  "DEL",
+  "SUB",
+  "SUP",
+  "MARK",
+  "H2",
+  "H3",
+  "BLOCKQUOTE",
   "UL",
   "OL",
   "LI",
@@ -19,6 +28,48 @@ const DESCRIPTION_ALLOWED_TAGS = new Set([
 ]);
 
 const DESCRIPTION_ALLOWED_ALIGN = new Set(["left", "center", "right", "justify"]);
+
+const DESCRIPTION_ALLOWED_BULLET_STYLES = new Set([
+  "disc",
+  "circle",
+  "square",
+  "dash",
+  "check",
+  "arrow",
+  "diamond",
+  "star"
+]);
+
+const DESCRIPTION_DEFAULT_BULLET_STYLE = "disc";
+
+function isAllowedBulletStyle(value) {
+  return DESCRIPTION_ALLOWED_BULLET_STYLES.has(String(value || "").trim());
+}
+
+function isSafeDescriptionColor(value) {
+  const color = String(value || "").trim();
+  if (!color) return false;
+  if (/^#[0-9a-f]{3,8}$/i.test(color)) return true;
+  if (/^rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)$/i.test(color)) return true;
+  return /^rgba\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*(0|0?\.\d+|1(\.0)?)\s*\)$/i.test(color);
+}
+
+function applySafeDescriptionStyle(el, tag) {
+  const align = (el.style.textAlign || "").toLowerCase();
+  const color = el.style.color;
+  const backgroundColor = el.style.backgroundColor;
+  el.removeAttribute("style");
+  const blockTags = new Set(["P", "DIV", "LI", "H2", "H3", "BLOCKQUOTE"]);
+  if (DESCRIPTION_ALLOWED_ALIGN.has(align) && blockTags.has(tag)) {
+    el.style.textAlign = align;
+  }
+  if (isSafeDescriptionColor(color)) {
+    el.style.color = color.trim();
+  }
+  if (isSafeDescriptionColor(backgroundColor)) {
+    el.style.backgroundColor = backgroundColor.trim();
+  }
+}
 
 function escapeDescriptionHtml(text) {
   return String(text || "")
@@ -31,7 +82,7 @@ function escapeDescriptionHtml(text) {
 function isDescriptionHtml(raw) {
   const value = String(raw || "").trim();
   if (!value) return false;
-  return /<\s*(p|div|br|ul|ol|li|strong|b|em|i|u|span)\b/i.test(value);
+  return /<\s*(p|div|br|ul|ol|li|strong|b|em|i|u|s|strike|del|sub|sup|mark|h2|h3|blockquote|span)\b/i.test(value);
 }
 
 function sanitizeDescriptionHtml(html) {
@@ -70,22 +121,57 @@ function sanitizeDescriptionHtml(html) {
 
       [...el.attributes].forEach((attr) => {
         if (attr.name === "style") {
-          const align = (el.style.textAlign || "").toLowerCase();
-          el.removeAttribute("style");
-          if (DESCRIPTION_ALLOWED_ALIGN.has(align) && ["P", "DIV", "LI"].includes(tag)) {
-            el.style.textAlign = align;
-          }
+          applySafeDescriptionStyle(el, tag);
+        } else if (tag === "UL" && attr.name === "data-bullet-style" && isAllowedBulletStyle(attr.value)) {
+          /* keep safe list marker */
         } else {
           el.removeAttribute(attr.name);
         }
       });
     }
 
+    normalizeRichDescriptionStructure(root);
+
     return root.innerHTML.trim();
   } catch (err) {
     console.warn("sanitizeDescriptionHtml failed", err);
     return escapeDescriptionHtml(raw);
   }
+}
+
+function normalizeRichDescriptionStructure(root) {
+  if (!root) return;
+
+  root.querySelectorAll("h2, h3").forEach((heading) => {
+    heading.querySelectorAll(":scope > p, :scope > div").forEach((block) => {
+      while (block.firstChild) {
+        heading.insertBefore(block.firstChild, block);
+      }
+      block.remove();
+    });
+
+    [...heading.querySelectorAll("br")].forEach((br) => {
+      if (!br.nextSibling) br.remove();
+    });
+
+    if (!(heading.textContent || "").replace(/\u00a0/g, " ").trim()) {
+      heading.remove();
+    }
+  });
+
+  root.querySelectorAll("p").forEach((paragraph) => {
+    if (paragraph.children.length !== 1) return;
+    const child = paragraph.children[0];
+    const childTag = child.tagName;
+    if (childTag !== "STRONG" && childTag !== "B") return;
+    const paragraphText = (paragraph.textContent || "").replace(/\s+/g, " ").trim();
+    const childText = (child.textContent || "").replace(/\s+/g, " ").trim();
+    if (!paragraphText || paragraphText !== childText) return;
+
+    const heading = document.createElement("h2");
+    heading.textContent = childText;
+    paragraph.replaceWith(heading);
+  });
 }
 
 function plainTextToDescriptionHtml(raw) {
@@ -98,7 +184,7 @@ function plainTextToDescriptionHtml(raw) {
     const parts = [];
     blocks.forEach((block) => {
       if (block.type === "heading") {
-        parts.push(`<p><strong>${escapeDescriptionHtml(block.text)}</strong></p>`);
+        parts.push(`<h2>${escapeDescriptionHtml(block.text)}</h2>`);
       } else if (block.type === "paragraph") {
         parts.push(`<p>${escapeDescriptionHtml(block.text)}</p>`);
       } else if (block.type === "ul" || block.type === "ol") {
@@ -295,21 +381,27 @@ function shouldDescriptionTooltipScroll(raw) {
   return text.length > 260 || lineCount > 5 || parseDescriptionBlocks(text).length > 4;
 }
 
-function appendRichDescriptionContent(containerEl, rawDescription, options) {
+function appendRichDescriptionHost(containerEl, options) {
   const emptyText = (options && options.emptyText) || "No description provided.";
+  const host = document.createElement("div");
+  host.className = "roadmap-details-tooltip__rich rich-description-content";
+  containerEl.appendChild(host);
+  return { host, emptyText };
+}
+
+function appendRichDescriptionContent(containerEl, rawDescription, options) {
+  const { host, emptyText } = appendRichDescriptionHost(containerEl, options);
   const html = sanitizeDescriptionHtml(rawDescription);
   const plain = descriptionToPlainText(html);
   if (!plain) {
+    containerEl.removeChild(host);
     const empty = document.createElement("p");
     empty.className = "roadmap-details-tooltip__empty";
     empty.textContent = emptyText;
     containerEl.appendChild(empty);
     return;
   }
-  const rich = document.createElement("div");
-  rich.className = "roadmap-details-tooltip__rich";
-  rich.innerHTML = html;
-  containerEl.appendChild(rich);
+  host.innerHTML = html;
 }
 
 function appendFormattedDescriptionContent(containerEl, rawDescription, options) {
@@ -329,32 +421,31 @@ function appendFormattedDescriptionContent(containerEl, rawDescription, options)
     return;
   }
 
+  const { host } = appendRichDescriptionHost(containerEl, options);
+
   blocks.forEach((block) => {
     if (block.type === "heading") {
-      const heading = document.createElement("h4");
-      heading.className = "roadmap-details-tooltip__heading";
+      const heading = document.createElement("h2");
       heading.textContent = block.text;
-      containerEl.appendChild(heading);
+      host.appendChild(heading);
       return;
     }
 
     if (block.type === "paragraph") {
       const paragraph = document.createElement("p");
-      paragraph.className = "roadmap-details-tooltip__paragraph";
       paragraph.textContent = block.text;
-      containerEl.appendChild(paragraph);
+      host.appendChild(paragraph);
       return;
     }
 
     if (block.type === "ul" || block.type === "ol") {
       const list = document.createElement(block.type === "ol" ? "ol" : "ul");
-      list.className = "roadmap-details-tooltip__list";
       block.items.forEach((item) => {
         const li = document.createElement("li");
         li.textContent = item;
         list.appendChild(li);
       });
-      containerEl.appendChild(list);
+      host.appendChild(list);
     }
   });
 }

@@ -624,6 +624,67 @@
   }
 }
 
+/* ── API Keys header action (matches FX Rates row) ─────────── */
+.app-header-action-btn--byok {
+  align-items: center;
+}
+
+.app-header-action-btn--byok .app-header-action-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.08rem;
+  min-width: 0;
+}
+
+.byok-header-meta {
+  font-size: 0.68rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--hdr-text-soft) !important;
+}
+
+.app-header-action-btn--byok-partial .byok-header-meta {
+  color: #92400e !important;
+  font-weight: 600;
+}
+
+.app-header-action-btn--byok-ready .byok-header-meta {
+  color: #047857 !important;
+  font-weight: 600;
+}
+
+.app-header-action-icon--byok {
+  position: relative;
+}
+
+.byok-header-dot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #047857;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(4, 120, 87, 0.22);
+}
+
+.byok-header-dot--partial {
+  background: #d97706;
+  box-shadow: 0 0 0 1px rgba(217, 119, 6, 0.22);
+}
+
+@media (min-width: 960px) {
+  .app-header-action-btn--byok .app-header-action-title {
+    font-size: 0.78rem;
+  }
+
+  .byok-header-meta {
+    font-size: 0.64rem;
+  }
+}
+
 /* ── Wide: single-line header ────────────────────────────── */
 @media (min-width: 1180px) {
   .app-header--modern {

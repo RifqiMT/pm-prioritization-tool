@@ -239,6 +239,21 @@ Category badges use `categoryCode` (A/O/M/I/R) on compact cards; desktop matrix 
 
 - Single centered row: copyright, maintainer, icon links (LinkedIn, website, GitHub, article).
 
+### 5.12 Modal dismiss (no × buttons)
+
+**Do not** place header **×** (close icon) buttons in any modal dialog.
+
+| Use instead | Examples |
+|-------------|----------|
+| **Footer primary/secondary actions** | Done, Save, Cancel, Verify & export |
+| **Esc key** | Registered via `OverlayManager` / blocking modal stack |
+| **Backdrop click** | Where safe (non-destructive flows); roadmap modal uses guarded dismiss |
+| **Footer hint copy** | e.g. “Press Esc to close” on BYOK and data-transfer modals |
+
+**Rationale:** × controls are easy to miss on touch, duplicate footer actions, and clash with the warm modal header pattern (mark + title + subtitle only).
+
+**Enforcement:** `profile-modals-modern.css` hides `.profile-modal-close`, `.modal-close-btn`, `.data-transfer-modal__close`, and `.byok-modal__close` inside `.modal-backdrop`. New modals must follow footer + Esc — never reintroduce header dismiss icons.
+
 ---
 
 ## 6. Typography
@@ -279,6 +294,7 @@ Category badges use `categoryCode` (A/O/M/I/R) on compact cards; desktop matrix 
 |----|-------|
 | Use modern CSS layers for new UI | Add unscoped rules to `main.css` without override plan |
 | Match export/import modal patterns | Mix legacy `btn-secondary` bars with new cards |
+| Close modals via footer actions + Esc | Add header × / close-icon buttons in modals |
 | Keep financial EUR labeled as estimate | Present map totals as audited finance |
 | Test at 375px width | Rely on hover-only affordances on touch |
 

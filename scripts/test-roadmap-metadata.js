@@ -8,7 +8,8 @@ const {
   normalizeRoadmapLinks,
   normalizeRoadmapTasks,
   normalizeRoadmapRaci,
-  normalizeKanoAxisLevel
+  normalizeKanoAxisLevel,
+  normalizeRoadmapNote
 } = require("../api/_lib/roadmap-metadata");
 
 assert.deepStrictEqual(normalizeRoadmapLabels("alpha, beta | gamma"), [
@@ -61,6 +62,12 @@ assert.strictEqual(normalizeKanoAxisLevel("4"), 4);
 assert.strictEqual(normalizeKanoAxisLevel(0), null);
 assert.strictEqual(normalizeKanoAxisLevel(6), null);
 assert.strictEqual(normalizeKanoAxisLevel("x"), null);
+
+assert.strictEqual(normalizeRoadmapNote("  Internal context  "), "Internal context");
+assert.strictEqual(normalizeRoadmapNote("   "), null);
+assert.strictEqual(normalizeRoadmapNote(null), null);
+assert.strictEqual(normalizeRoadmapNote("<p></p>"), null);
+assert.strictEqual(normalizeRoadmapNote("<p><strong>Legal</strong> review</p>"), "<p><strong>Legal</strong> review</p>");
 
 const migrated = normalizeWorkspacePayload({
   profiles: [

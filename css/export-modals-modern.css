@@ -1,32 +1,42 @@
 /**
- * Export & import modals — shared format chooser, export unlock, responsive layout.
+ * Export & import modals — bottom-sheet on phones, centered dialog on wider screens.
  */
 
 .modal-backdrop--export,
-.modal-backdrop--import {
-  padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right))
-    max(0.75rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+.modal-backdrop--import,
+.modal-backdrop--data-transfer {
+  padding: max(0.5rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right))
+    max(0, env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
   align-items: flex-end;
 }
 
 @media (min-width: 540px) {
   .modal-backdrop--export,
-  .modal-backdrop--import {
+  .modal-backdrop--import,
+  .modal-backdrop--data-transfer {
+    padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right))
+      max(0.75rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
     align-items: center;
   }
 }
 
 .modal-backdrop--export.active,
-.modal-backdrop--import.active {
-  backdrop-filter: blur(6px);
-  background: rgba(63, 15, 25, 0.45) !important;
+.modal-backdrop--import.active,
+.modal-backdrop--data-transfer.active {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(63, 15, 25, 0.48) !important;
+  cursor: default;
 }
 
+/* ── Panel shell ─────────────────────────────────────────── */
 #exportUnlockModal .modal-panel,
 #exportFormatModal .modal-panel,
 #importFormatModal .modal-panel,
 .modal-panel--export,
-.modal-panel--import {
+.modal-panel--import,
+.modal-panel--data-transfer,
+.data-transfer-modal {
   --dt-bg: #ffffff;
   --dt-bg-soft: #fffdf8;
   --dt-border: rgba(231, 201, 120, 0.65);
@@ -34,19 +44,20 @@
   --dt-text-soft: #7a4b12;
   --dt-accent: #b91c1c;
   --dt-gold: #a16207;
-  --dt-radius: 18px;
-  --dt-shadow: 0 24px 48px rgba(127, 29, 29, 0.18);
+  --dt-green: #047857;
+  --dt-radius: 20px;
+  --dt-shadow: 0 -8px 40px rgba(63, 15, 25, 0.14), 0 24px 48px rgba(127, 29, 29, 0.16);
 
   display: flex !important;
   flex-direction: column !important;
-  max-width: min(480px, 100%) !important;
+  max-width: min(500px, 100%) !important;
   width: 100% !important;
-  max-height: min(92vh, 720px) !important;
+  max-height: min(92dvh, 720px) !important;
   margin: 0 auto !important;
   padding: 0 !important;
   border-radius: var(--dt-radius) var(--dt-radius) 0 0 !important;
   border: 1px solid var(--dt-border) !important;
-  background: linear-gradient(180deg, #fffdf8 0%, #ffffff 28%) !important;
+  background: linear-gradient(180deg, #fffdf8 0%, #ffffff 22%) !important;
   box-shadow: var(--dt-shadow) !important;
   color: var(--dt-text) !important;
   transform: none !important;
@@ -58,28 +69,85 @@
   #exportFormatModal .modal-panel,
   #importFormatModal .modal-panel,
   .modal-panel--export,
-  .modal-panel--import {
+  .modal-panel--import,
+  .modal-panel--data-transfer,
+  .data-transfer-modal {
     border-radius: var(--dt-radius) !important;
     max-height: min(88vh, 680px) !important;
+    box-shadow: 0 24px 56px rgba(127, 29, 29, 0.2) !important;
   }
 }
 
+@keyframes data-transfer-sheet-in {
+  from {
+    opacity: 0.85;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 539px) {
+  .modal-backdrop--export.active .data-transfer-modal,
+  .modal-backdrop--import.active .data-transfer-modal {
+    animation: data-transfer-sheet-in 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+}
+
+/* Drag handle — phones & tablets */
+.data-transfer-modal__handle {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  padding: 0.55rem 0 0.15rem;
+}
+
+.data-transfer-modal__handle::before {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(63, 15, 25, 0.16);
+}
+
+@media (min-width: 540px) {
+  .data-transfer-modal__handle {
+    display: none;
+  }
+}
+
+/* ── Header ──────────────────────────────────────────────── */
 #exportUnlockModal .profile-modal-header,
 #exportFormatModal .profile-modal-header,
-#importFormatModal .profile-modal-header {
-  padding: 1rem 1rem 0.85rem;
-  border-bottom: 1px solid var(--dt-border);
-  background: linear-gradient(180deg, #fffdf8, #fff);
+#importFormatModal .profile-modal-header,
+.data-transfer-modal__header {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 0.65rem !important;
+  padding: 0.35rem 1rem 0.85rem !important;
+  border-bottom: 1px solid var(--dt-border) !important;
+  background: linear-gradient(180deg, #fffdf8, #fff) !important;
+  flex-shrink: 0;
+}
+
+@media (min-width: 540px) {
+  #exportUnlockModal .profile-modal-header,
+  #exportFormatModal .profile-modal-header,
+  #importFormatModal .profile-modal-header,
+  .data-transfer-modal__header {
+    padding: 1rem 1rem 0.85rem !important;
+  }
 }
 
 #exportUnlockModal .profile-modal-title,
 #exportFormatModal .profile-modal-title,
-#importFormatModal .profile-modal-title,
-#exportUnlockModal .modal-title,
-#exportFormatModal .modal-title,
-#importFormatModal .modal-title {
+#importFormatModal .profile-modal-title {
   margin: 0 !important;
-  font-size: 1.05rem !important;
+  font-size: 1.08rem !important;
   font-weight: 700 !important;
   letter-spacing: -0.02em !important;
   text-transform: none !important;
@@ -89,11 +157,8 @@
 
 #exportUnlockModal .profile-modal-subtitle,
 #exportFormatModal .profile-modal-subtitle,
-#importFormatModal .profile-modal-subtitle,
-#exportUnlockModal .modal-subtitle,
-#exportFormatModal .modal-subtitle,
-#importFormatModal .modal-subtitle {
-  margin: 0.35rem 0 0 !important;
+#importFormatModal .profile-modal-subtitle {
+  margin: 0.3rem 0 0 !important;
   font-size: 0.8rem !important;
   line-height: 1.5 !important;
   color: var(--dt-text-soft) !important;
@@ -105,33 +170,94 @@
   background: linear-gradient(145deg, #b91c1c, #991b1b 55%, #a16207);
 }
 
+.profile-modal-mark--data-transfer,
 .profile-modal-mark--export-format,
 .profile-modal-mark--import-format {
-  background: linear-gradient(145deg, #a16207, #92400e);
+  background: linear-gradient(145deg, #b91c1c, #991b1b 55%, #a16207);
 }
 
-.profile-modal-mark--import-format {
-  background: linear-gradient(145deg, #059669, #047857 55%, #0d9488);
+.profile-modal-mark--data-transfer-import {
+  background: linear-gradient(145deg, #991b1b, #b91c1c 45%, #a16207);
 }
 
+/* ── Body intro (shared export + import) ─────────────────── */
+.data-transfer-body-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 0.85rem;
+}
+
+.data-transfer-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--dt-text-soft);
+}
+
+.data-transfer-callout {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--dt-text-soft);
+  background: linear-gradient(180deg, #fffbeb, #fffdf8);
+  border: 1px solid rgba(202, 138, 4, 0.28);
+  border-radius: 12px;
+}
+
+#exportUnlockModal .profile-modal-close,
+#exportFormatModal .profile-modal-close,
+#importFormatModal .profile-modal-close,
+.data-transfer-modal__close {
+  flex: 0 0 auto;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 1px solid var(--dt-border) !important;
+  border-radius: 11px !important;
+  background: #fff !important;
+  color: var(--dt-text-soft) !important;
+  box-shadow: 0 1px 3px rgba(63, 15, 25, 0.06) !important;
+  cursor: pointer;
+  padding: 0 !important;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.12s ease;
+}
+
+#exportUnlockModal .profile-modal-close:hover,
+#exportFormatModal .profile-modal-close:hover,
+#importFormatModal .profile-modal-close:hover,
+.data-transfer-modal__close:hover {
+  background: var(--dt-bg-soft) !important;
+  color: var(--dt-accent) !important;
+  border-color: rgba(185, 28, 28, 0.32) !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+#exportUnlockModal .profile-modal-close:active,
+#exportFormatModal .profile-modal-close:active,
+#importFormatModal .profile-modal-close:active,
+.data-transfer-modal__close:active {
+  transform: scale(0.96) !important;
+}
+
+/* ── Body ────────────────────────────────────────────────── */
 .data-transfer-modal-body,
 .export-modal-body {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0.85rem 1rem 1rem;
   -webkit-overflow-scrolling: touch;
-}
-
-.data-transfer-callout {
-  margin: 0 0 0.75rem;
-  padding: 0.6rem 0.7rem;
-  font-size: 0.78rem;
-  line-height: 1.45;
-  color: var(--dt-text-soft);
-  background: var(--dt-bg-soft);
-  border: 1px solid var(--dt-border);
-  border-radius: 10px;
 }
 
 .data-transfer-callout strong {
@@ -139,6 +265,78 @@
   font-weight: 600;
 }
 
+/* ── Footer ──────────────────────────────────────────────── */
+.data-transfer-modal__footer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  padding: 0.75rem 1rem max(0.85rem, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--dt-border);
+  background: linear-gradient(180deg, #fff, #fffdf8);
+}
+
+.data-transfer-modal__footer.export-modal-footer {
+  flex-direction: column-reverse;
+  gap: 0.45rem;
+}
+
+@media (min-width: 480px) {
+  .data-transfer-modal__footer.export-modal-footer {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+  }
+}
+
+.data-transfer-modal__cancel {
+  width: 100%;
+  min-height: 46px;
+  padding: 0.55rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--dt-border) !important;
+  background: #fff !important;
+  color: var(--dt-text-soft) !important;
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  filter: none !important;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.data-transfer-modal__cancel:hover {
+  background: var(--dt-bg-soft) !important;
+  color: var(--dt-text) !important;
+  border-color: rgba(185, 28, 28, 0.28) !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+.data-transfer-modal__dismiss-hint {
+  margin: 0;
+  text-align: center;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: #a8a29e;
+  letter-spacing: 0.01em;
+}
+
+@media (min-width: 540px) {
+  .data-transfer-modal__dismiss-hint {
+    display: none;
+  }
+}
+
+/* Export unlock list */
 .export-unlock-list {
   display: flex;
   flex-direction: column;
@@ -252,9 +450,6 @@
   flex-direction: column-reverse;
   flex-shrink: 0;
   gap: 0.45rem;
-  padding: 0.85rem 1rem max(0.85rem, env(safe-area-inset-bottom));
-  border-top: 1px solid var(--dt-border);
-  background: #fff;
 }
 
 @media (min-width: 480px) {
@@ -324,12 +519,12 @@
   }
 }
 
-/* Format chooser (export & import) */
+/* ── Format chooser cards ────────────────────────────────── */
 .data-transfer-format-options,
 .export-format-options {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.55rem;
+  gap: 0.6rem;
 }
 
 @media (min-width: 400px) {
@@ -339,46 +534,140 @@
   }
 }
 
+.data-transfer-format-option--both,
+.data-transfer-format-option--primary {
+  grid-column: 1 / -1;
+}
+
+.data-transfer-format-option__icon--both {
+  background: linear-gradient(145deg, rgba(185, 28, 28, 0.12), rgba(5, 150, 105, 0.14));
+  color: var(--dt-accent);
+}
+
+.data-transfer-format-option__icon--import {
+  background: linear-gradient(145deg, rgba(185, 28, 28, 0.12), rgba(161, 98, 7, 0.14));
+  color: var(--dt-accent);
+}
+
+.data-transfer-format-option--both .data-transfer-format-option__badge,
+.data-transfer-format-option--primary .data-transfer-format-option__badge {
+  color: #1d4ed8;
+  background: #eff6ff;
+  border-color: rgba(37, 99, 235, 0.24);
+}
+
+.data-transfer-format-option--static {
+  pointer-events: none;
+  cursor: default;
+  background: linear-gradient(180deg, #fffdf8, #fff) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+  opacity: 0.92;
+}
+
+.data-transfer-format-option--static:hover {
+  transform: none !important;
+  border-color: var(--dt-border) !important;
+  background: linear-gradient(180deg, #fffdf8, #fff) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+}
+
+.data-transfer-format-option--static .data-transfer-format-option__action {
+  display: none;
+}
+
 .data-transfer-format-option,
 .export-format-option {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.35rem;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto auto;
+  align-items: start;
+  gap: 0.15rem 0.35rem;
   min-height: 0;
-  padding: 0.85rem 0.9rem !important;
-  border-radius: 12px !important;
+  padding: 0.9rem 0.85rem !important;
+  border-radius: 14px !important;
   border: 1px solid var(--dt-border) !important;
   background: #fff !important;
   color: var(--dt-text) !important;
   text-align: left;
-  box-shadow: none !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 1px 3px rgba(63, 15, 25, 0.05) !important;
   transform: none !important;
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease,
-    box-shadow 0.15s ease;
+    border-color 0.16s ease,
+    background 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.12s ease;
+}
+
+.data-transfer-format-option__head {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-bottom: 0.15rem;
+}
+
+.data-transfer-format-option__badge {
+  flex: 0 0 auto;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #047857;
+  background: #ecfdf5;
+  border: 1px solid rgba(5, 150, 105, 0.22);
+}
+
+.data-transfer-format-option--csv .data-transfer-format-option__badge {
+  color: #92400e;
+  background: #fffbeb;
+  border-color: rgba(202, 138, 4, 0.28);
 }
 
 .data-transfer-format-option:hover,
 .export-format-option:hover {
   border-color: rgba(185, 28, 28, 0.35) !important;
   background: var(--dt-bg-soft) !important;
-  transform: none !important;
-  box-shadow: 0 2px 8px rgba(63, 15, 25, 0.06) !important;
+  transform: translateY(-1px) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 6px 16px rgba(63, 15, 25, 0.08) !important;
   filter: none !important;
+}
+
+.data-transfer-format-option:active,
+.export-format-option:active {
+  transform: scale(0.98) !important;
+}
+
+.data-transfer-format-option:focus-visible,
+.export-format-option:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px #fff,
+    0 0 0 4px rgba(185, 28, 28, 0.35) !important;
 }
 
 .data-transfer-format-option__icon,
 .export-format-option__icon {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   display: grid;
   place-items: center;
-  border-radius: 10px;
+  border-radius: 11px;
   background: rgba(185, 28, 28, 0.1);
   color: var(--dt-accent);
+}
+
+.data-transfer-format-option--json .data-transfer-format-option__icon,
+.data-transfer-format-option__icon--json {
+  background: linear-gradient(145deg, rgba(185, 28, 28, 0.12), rgba(161, 98, 7, 0.14));
 }
 
 .data-transfer-format-option__icon--csv,
@@ -389,20 +678,55 @@
 
 .data-transfer-format-option__label,
 .export-format-option__label {
+  grid-column: 1;
   font-size: 0.92rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   text-transform: none;
+  line-height: 1.25;
 }
 
 .data-transfer-format-option__desc,
 .export-format-option__desc {
+  grid-column: 1;
   font-size: 0.72rem;
   font-weight: 400;
   color: var(--dt-text-soft);
   line-height: 1.4;
   text-transform: none;
   letter-spacing: normal;
+}
+
+.data-transfer-format-option__action {
+  grid-column: 2;
+  grid-row: 2 / span 2;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.data-transfer-format-option__chevron {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--dt-accent);
+  background: rgba(185, 28, 28, 0.08);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.data-transfer-format-option:hover .data-transfer-format-option__chevron {
+  transform: translateX(2px);
+  background: rgba(185, 28, 28, 0.14);
+}
+
+.data-transfer-format-option--csv:hover .data-transfer-format-option__chevron {
+  color: var(--dt-gold);
+  background: rgba(161, 98, 7, 0.14);
 }
 
 /* Override global button bleed */
@@ -416,7 +740,15 @@
 @media (prefers-reduced-motion: reduce) {
   .export-modal-btn,
   .data-transfer-format-option,
-  .export-format-option {
+  .export-format-option,
+  .modal-backdrop--export.active .data-transfer-modal,
+  .modal-backdrop--import.active .data-transfer-modal {
+    animation: none;
     transition: none;
+  }
+
+  .data-transfer-format-option:hover,
+  .export-format-option:hover {
+    transform: none !important;
   }
 }
