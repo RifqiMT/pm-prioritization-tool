@@ -195,7 +195,7 @@ const RichTextEditor = (function () {
   function buildBulletStyleBarHtml() {
     const buttons = BULLET_STYLE_OPTIONS.map(buildBulletStyleButton).join("");
     return (
-      `<details class="rich-text-editor__bullet-details" data-bullet-style-bar open>` +
+      `<details class="rich-text-editor__bullet-details" data-bullet-style-bar>` +
       `<summary class="rich-text-editor__bullet-summary"><span class="rich-text-editor__bullet-summary-icon" aria-hidden="true">•</span>Bullet styles</summary>` +
       `<div class="rich-text-editor__bullet-bar" role="group" aria-label="Bullet style">${buttons}</div>` +
       `</details>`
@@ -656,7 +656,13 @@ const RichTextEditor = (function () {
     const editorEl = inst.surface.closest(".rich-text-editor");
     const bulletBar = editorEl ? editorEl.querySelector("[data-bullet-style-bar]") : null;
     if (bulletBar) {
-      bulletBar.classList.toggle("rich-text-editor__bullet-details--inactive", !bulletList);
+      const showBulletStyles = !!bulletList;
+      bulletBar.classList.toggle("rich-text-editor__bullet-details--inactive", !showBulletStyles);
+      if (showBulletStyles) {
+        bulletBar.setAttribute("open", "");
+      } else {
+        bulletBar.removeAttribute("open");
+      }
     }
     if (editorEl) {
       const activeFormats = getActiveFormatDescriptors(surfaceId);

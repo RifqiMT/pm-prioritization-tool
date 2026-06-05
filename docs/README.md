@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Maintainer** | Product Team |
-| **Last audited** | 2026-05-28 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui192` |
+| **Last audited** | 2026-06-06 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260606-ui193` |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
 
 This folder is the **single source of product truth** for engineering, design, product management, and stakeholders. Documents are maintained against the **current** implementation in `index.html`, `css/`, `src/`, and `api/`.
@@ -65,12 +65,12 @@ This folder is the **single source of product truth** for engineering, design, p
 
 ---
 
-## Source code map (audited 2026-05-28)
+## Source code map (audited 2026-06-06)
 
 ```
 pm-prioritization-tool/
-├── index.html                      # Shell, modals, filters, six views, footer
-├── css/                            # 31 layered stylesheets (see DESIGN_GUIDELINES.md §4)
+├── index.html                      # Shell, modals, filters, six views, BYOK, footer
+├── css/                            # 33 layered stylesheets (see DESIGN_GUIDELINES.md §4)
 │   ├── main.css                    # Base tokens, global buttons, status/framework pills
 │   ├── workspace-modern.css        # Workspace panel, table, board columns
 │   ├── header-modern.css           # App header, compact actions menu
@@ -90,6 +90,8 @@ pm-prioritization-tool/
 │   ├── roadmap-actions-modern.css  # View / Edit / Delete actions
 │   ├── roadmap-details-tooltip.css # Card/table description tooltips
 │   ├── rich-text-editor.css        # Rich-text toolbar + fields
+│   ├── rich-description-content.css # Rendered description typography (modal, tooltips)
+│   ├── byok-api-keys.css           # BYOK API keys modal
 │   ├── super-admin-modern.css      # Workspace-wide mode (GUARDRAILS §7)
 │   ├── map-tooltip-modern.css      # Map hover / pinned tooltips
 │   ├── board-drag.css              # Board DnD visuals
@@ -117,21 +119,30 @@ pm-prioritization-tool/
 │       ├── description-format.js   # Sanitize/render description HTML
 │       ├── rich-text-editor.js     # RichTextEditor for description fields
 │       ├── board-drag.js           # Board drag-and-drop
-│       └── board-card-interaction.js
+│       ├── board-card-interaction.js
+│       ├── byok-api-keys.js        # Encrypted local Groq/Tavily keys
+│       └── roadmap-llm-summary.js  # Tavily research + Groq synthesis
 ├── api/
 │   ├── health.js                   # GET storage probe
 │   ├── config.js                   # GET client config (same probe as health)
 │   ├── state.js                    # GET/PUT/POST workspace document
+│   ├── byok/
+│   │   ├── validate-groq.js        # POST validate Groq key (BYOK)
+│   │   └── validate-tavily.js      # POST validate Tavily key (BYOK)
 │   └── _lib/
 │       ├── auth.js                 # Bearer PM_API_SECRET
 │       ├── mongo.js                # Mongo client
 │       ├── http.js                 # JSON helpers
-│       └── roadmap-metadata.js     # Server-side labels/links normalize
+│       ├── roadmap-metadata.js     # Server-side labels/links normalize
+│       └── byok-validate.js        # Shared BYOK validation helpers
 ├── scripts/
 │   ├── verify-deployment.js        # Production smoke test
 │   ├── test-storage-sync-logic.js  # npm run test:storage
 │   ├── test-roadmap-metadata.js    # npm run test:metadata
 │   ├── test-persistence-keys.js    # npm run test:persistence
+│   ├── test-byok-encryption.js     # npm run test:byok
+│   ├── test-byok-validate.js       # npm run test:byok-validate
+│   ├── test-kano-zones.js          # npm run test:kano
 │   └── disable-vercel-deployment-protection.sh
 ├── .github/workflows/              # ci.yml, vercel-production.yml, fix-vercel-protection.yml
 ├── docs/                           # This documentation suite

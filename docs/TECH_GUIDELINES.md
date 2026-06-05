@@ -4,8 +4,8 @@ Engineering standards for the Product Management Prioritization Tool codebase.
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-05-28 |
-| **APP_ASSET_VERSION** | `20260528-ui192` |
+| **Last updated** | 2026-06-06 |
+| **APP_ASSET_VERSION** | `20260606-ui193` |
 | **COMPACT_LAYOUT_MAX_WIDTH_PX** | `1400` |
 
 ---
@@ -85,6 +85,8 @@ Later files win for equal specificity (all query `?v=APP_ASSET_VERSION`):
 | 29 | `rich-text-editor.css` | Rich-text fields |
 | 30 | `roadmap-details-tooltip.css` | Description tooltips |
 | 31 | `portfolio-kano-modern.css` | KANO portfolio matrix and cards |
+| 32 | `byok-api-keys.css` | BYOK API keys modal |
+| 33 | `rich-description-content.css` | Rich description typography |
 
 ### 3.2 Compact layout
 
@@ -112,7 +114,7 @@ Later files win for equal specificity (all query `?v=APP_ASSET_VERSION`):
 | Constant | Role |
 |----------|------|
 | `STORAGE_KEY` | `localStorage` key (`rice_prioritizer_v1`) |
-| `APP_ASSET_VERSION` | Cache buster (`20260528-ui192`) |
+| `APP_ASSET_VERSION` | Cache buster (`20260606-ui193`) |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | `1400` — single compact breakpoint |
 | `moscowList` | Stored MoSCoW values |
 | `moscowDisplayNames` | UI labels (Must Have, …) |

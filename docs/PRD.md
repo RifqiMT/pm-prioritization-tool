@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Status** | Implemented (local-first static app) |
-| **Last updated** | 2026-05-28 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui192` |
+| **Last updated** | 2026-06-06 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260606-ui193` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -75,6 +75,7 @@ See [USER_PERSONAS.md](USER_PERSONAS.md).
 | FR-2.9 | Labels/links cloud persistence | Canonical format on serialize; immediate cloud flush on roadmap save; server normalize on API write |
 | FR-2.10 | RACI assignments | Optional `raci` object with `responsible`, `accountable`, `consulted`, `informed` arrays; each entry has `name` + `domain` (`Business` or `Tech`); normalized on load/save |
 | FR-2.11 | KANO scores | Optional `kanoFunctionality` and `kanoSatisfaction` (integers 1–5); drive portfolio KANO matrix placement |
+| FR-2.12 | LLM roadmap analysis (optional) | Summary section: Tavily link/search enrichment + Groq three-paragraph briefing; professional/simplified tone toggle; session-only output (not persisted to roadmap or cloud) |
 
 ### FR-3 RICE
 
@@ -155,7 +156,7 @@ Owner profile grouping is available when privileged workspace mode is active (se
 
 ### FR-6 Filters
 
-Filters apply to **table, board, MoSCoW, and map** (portfolio-wide slice).
+Filters apply to **table, board, MoSCoW, map, RACI, and KANO** (portfolio-wide slice).
 
 #### FR-6.1 Search row
 
@@ -243,6 +244,18 @@ Cross-profile read/write behavior, eligibility, UI placement, and safety rules a
 
 Do not duplicate §7 policy detail here; update GUARDRAILS when behavior changes.
 
+### FR-11 BYOK API keys (optional AI providers)
+
+| ID | Requirement | Acceptance |
+|----|-------------|------------|
+| FR-11.1 | Store Groq + Tavily keys locally | Encrypted envelope in `localStorage` (`pm_byok_v1`); device-bound salt |
+| FR-11.2 | Validate on save | User-initiated POST to `/api/byok/validate-groq` or `validate-tavily`; key normalized server-side |
+| FR-11.3 | Never sync to cloud | BYOK payload excluded from workspace JSON and MongoDB |
+| FR-11.4 | Header affordance | API keys button shows configured count; modal with 3-step workflow per provider |
+| FR-11.5 | CSP | `connect-src` allows `https://api.groq.com` and `https://api.tavily.com` per `vercel.json` |
+
+Policy detail: [GUARDRAILS.md §8](GUARDRAILS.md).
+
 ---
 
 ## 6. Non-functional requirements
@@ -252,7 +265,7 @@ Do not duplicate §7 policy detail here; update GUARDRAILS when behavior changes
 | NFR-1 | Performance | Usable with hundreds of roadmaps per profile on modern browsers |
 | NFR-2 | Security | Passwords hashed (PBKDF2); never plaintext in storage |
 | NFR-3 | Privacy | No telemetry requirement; data in browser cache by default; optional cloud document on Vercel |
-| NFR-4 | Deploy | Static hosting; CSP in `vercel.json` |
+| NFR-4 | Deploy | Static hosting; CSP in `vercel.json` (includes Groq/Tavily for BYOK LLM features) |
 | NFR-5 | Offline | Core features work without network except map tiles and FX |
 | NFR-6 | Portability | Chrome, Firefox, Safari, Edge (current versions) |
 | NFR-7 | Cache bust | Ship UI changes with bumped `APP_ASSET_VERSION` on all static assets |
@@ -264,7 +277,9 @@ Do not duplicate §7 policy detail here; update GUARDRAILS when behavior changes
 - **localStorage:** browser cache of workspace JSON, UI preferences, FX cache
 - **MongoDB (optional):** canonical workspace document when `MONGODB_URI` configured
 - **sessionStorage:** unlocked profile IDs for current tab session
-- **User responsibility:** export backups; clearing site data deletes local cache (cloud may retain copy)
+- **BYOK storage:** encrypted API keys in `localStorage` only on this device; never in export/cloud
+- **LLM summaries:** session-only in roadmap modal; not written to roadmap entity or MongoDB
+- **User responsibility:** export backups; clearing site data deletes local cache and BYOK keys (cloud may retain workspace copy)
 
 ---
 

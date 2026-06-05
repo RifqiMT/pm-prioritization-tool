@@ -4,7 +4,7 @@
 |-------|-------|
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
-| **Last updated** | 2026-05-28 |
+| **Last updated** | 2026-06-06 |
 | **Compact breakpoint** | ≤ **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) |
 
 **Purpose:** Epics and user-story contracts with **Given / When / Then** acceptance criteria, including edge cases and error handling.
@@ -825,6 +825,59 @@ Policy and eligibility: **[GUARDRAILS.md §7](GUARDRAILS.md)** only.
 
 ---
 
+## Epic T — BYOK API keys
+
+### US-T1 — Configure Groq and Tavily keys locally
+
+- **Persona:** Product Manager  
+- **Goal:** Enable LLM features without storing keys in the cloud workspace.
+
+**Acceptance criteria**
+
+- **Given** the user opens header → API keys  
+- **When** they paste, validate, and save each provider key  
+- **Then** keys are encrypted in `localStorage` on this device only  
+- **And** the header shows configured status (e.g. “2 of 2 ready”).
+
+**Error / edge handling**
+
+- **Given** an invalid key format  
+- **When** the user saves  
+- **Then** validation fails with a provider-specific hint; key is not stored.
+
+---
+
+## Epic U — LLM roadmap analysis
+
+### US-U1 — Generate three-paragraph roadmap briefing
+
+- **Persona:** Product Manager  
+- **Goal:** Produce a stakeholder-ready narrative from roadmap data + optional web context.
+
+**Acceptance criteria**
+
+1. **Prerequisites**  
+   - **Given** both Groq and Tavily keys are configured  
+   - **When** the user clicks **Generate LLM analysis** in the Summary section  
+   - **Then** Tavily enriches from roadmap links/search and Groq returns three paragraphs.
+
+2. **Tone toggle**  
+   - **Given** a professional summary was generated  
+   - **When** the user selects **Simplified**  
+   - **Then** a simplified variant is generated or shown per module rules.
+
+**Error / edge handling**
+
+- **Given** missing BYOK keys  
+- **When** the user clicks generate  
+- **Then** status explains which provider keys to add via header → API keys.
+
+- **Given** Groq rate limit  
+- **When** the pipeline retries  
+- **Then** user sees a friendly wait/retry message (no silent failure).
+
+---
+
 ## Traceability
 
 Map story IDs to [PRD.md](PRD.md) FR IDs and [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md) during release review.
@@ -833,3 +886,5 @@ Map story IDs to [PRD.md](PRD.md) FR IDs and [TRACEABILITY_MATRIX.md](TRACEABILI
 |------|-----|
 | R | FR-2.10, FR-5.6 |
 | S | FR-2.11, FR-5.7 |
+| T | FR-11 |
+| U | FR-2.12, FR-11 |

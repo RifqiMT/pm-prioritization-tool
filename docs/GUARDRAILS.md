@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-05-28 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui192` |
+| **Last updated** | 2026-06-06 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260606-ui193` |
 
 ## 1. Business Guardrails
 
@@ -132,3 +132,29 @@
 
 - Changes to Super Admin eligibility, toggle placement, or cross-profile rules require updating **this section** and bumping `APP_ASSET_VERSION`.
 - Do not document Super Admin in [VARIABLES.md](VARIABLES.md); use technical names (`superAdminMode`, `filterOwnerProfile`) only in code comments or here.
+
+---
+
+## 8. BYOK and LLM analysis guardrails
+
+### 8.1 BYOK (Bring Your Own Key)
+
+- API keys (Groq, Tavily) are **user-supplied** and stored **only** in browser `localStorage` under `pm_byok_v1`, encrypted with AES-GCM + PBKDF2 (device salt).
+- Keys are **never** written to workspace export JSON, MongoDB, or server environment variables.
+- Validation endpoints (`/api/byok/validate-*`) receive the key **only** during an explicit user save/validate action; do not log keys.
+- Clearing site data or uninstalling the browser profile **deletes** BYOK keys — users must re-enter them.
+- Do not add server-side storage of user API keys without a new security review and PRD amendment.
+
+### 8.2 LLM roadmap analysis
+
+- Requires **both** Groq and Tavily keys configured via BYOK.
+- Tavily may fetch roadmap **links** and run limited web search; outbound calls go directly from the browser to Tavily/Groq (not through MongoDB).
+- Generated summaries are **session-only** in the roadmap modal — not persisted on the roadmap object or synced to cloud.
+- Outputs are **planning assistance**, not authoritative product decisions; users must review before sharing externally.
+- Respect provider rate limits (`GROQ_TPM_LIMIT`, `TAVILY_MIN_GAP_MS` in `roadmap-llm-summary.js`); surface user-friendly retry messages.
+- Do not send profile passwords, BYOK ciphertext, or `PM_API_SECRET` in LLM prompts.
+
+### 8.3 CSP and deployment
+
+- `vercel.json` `connect-src` must include `https://api.groq.com` and `https://api.tavily.com` when BYOK features ship.
+- After CSP changes, verify LLM generation on production per [DEPLOYMENT.md](DEPLOYMENT.md).

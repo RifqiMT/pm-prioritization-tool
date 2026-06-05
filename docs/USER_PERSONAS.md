@@ -4,7 +4,7 @@ Target users for the Product Management Prioritization Tool.
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-05-28 |
+| **Last updated** | 2026-06-06 |
 | **Layout baseline** | Compact UI at viewport ≤ **1400px** |
 
 ## How to use personas
@@ -23,7 +23,7 @@ Target users for the Product Management Prioritization Tool.
 | **Role** | Roadmap owner across teams or products |
 | **Goals** | Explainable prioritization; consistent RICE; MoSCoW alignment; portable backups; fast filtering by period, country, labels, and links |
 | **Pain points** | Scores scattered in spreadsheets; inconsistent rubrics; low trust in “gut feel” confidence; hard to find roadmaps missing labels or documentation links |
-| **Key workflows** | Create profiles → add roadmaps with RICE/MoSCoW, rich-text descriptions, labels, links, and tasks → use title/label autocomplete in filters → group compact table cards by MoSCoW or status → export JSON before planning milestones → present MoSCoW with **Must Have** / **Should Have** naming in workshops |
+| **Key workflows** | Create profiles → add roadmaps with RICE/MoSCoW, rich-text descriptions, labels, links, tasks, RACI, and KANO → configure BYOK keys → generate **LLM analysis** for stakeholder briefings → use title/label autocomplete in filters → group compact table cards by MoSCoW or status → export JSON before planning milestones |
 | **Device usage** | **Desktop** (>1400px) for deep table editing and multi-column sorts; **iPad / phone** (≤1400px) for between-meeting reviews via compact card table and MoSCoW nav pills |
 | **Success** | Stakeholders accept rankings because inputs, formulas, and filters are visible and reproducible |
 
@@ -107,6 +107,7 @@ Target users for the Product Management Prioritization Tool.
 | Map + FX normalization | Geo/Finance PM |
 | RACI matrix (accountability workshops) | PM Primary, Delivery Lead, Stakeholder |
 | KANO portfolio matrix (value classification) | PM Primary, Stakeholder |
+| BYOK API keys + LLM roadmap analysis | PM Primary |
 | Export / import | All |
 | Compact layout (≤1400px) | PM Primary, Delivery Lead, Mobile PM |
 | Site footer (GitHub, article) | Stakeholder, Mobile PM |

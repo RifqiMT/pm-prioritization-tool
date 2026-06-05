@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-05-28 |
+| **Last updated** | 2026-06-06 |
 | **Measurement** | Local-first — no default telemetry; manual QA + optional instrumentation |
 
 ---
@@ -21,6 +21,8 @@
 | PM-08 | **Retention proxy** | Workspaces returning after 30 days with ≥1 session | `returning_workspaces_30d / workspaces_30d_ago` | ≥ 35% |
 | PM-11 | **RACI coverage** | Roadmaps with ≥1 RACI role populated | `roadmaps_with_raci / total_roadmaps` | ≥ 50% |
 | PM-12 | **KANO positioning** | Roadmaps with both KANO axes set (1–5) | `kano_positioned_roadmaps / total_roadmaps` | ≥ 40% |
+| PM-13 | **BYOK configuration** | Devices with both Groq and Tavily keys saved | `byok_fully_configured_devices / active_devices` | ≥ 25% (among LLM adopters) |
+| PM-14 | **LLM summary usage** | Roadmap modal sessions with successful summary generation | `llm_summary_success / llm_summary_attempts` | ≥ 85% |
 
 ### PM-06 Activation — operational definition
 
@@ -128,6 +130,15 @@ Among workspaces that had ≥3 roadmaps 30 days ago, count those with ≥1 sessi
 | KR6.3 | RACI view adoption | ≥ 20% of portfolio sessions open RACI tab |
 | KR6.4 | KANO view adoption | ≥ 15% of portfolio sessions open KANO tab |
 
+### Objective 7 — Optional AI assistance (BYOK)
+
+| Key result | Metric | Target |
+|------------|--------|--------|
+| KR7.1 | PM-13 BYOK full configuration | ≥ 25% among users who try LLM |
+| KR7.2 | PM-14 LLM summary success rate | ≥ 85% |
+| KR7.3 | Zero BYOK keys in cloud export | 0 incidents per release |
+| KR7.4 | CSP / connect-src regressions | 0 production blocks on Groq/Tavily |
+
 ### Objective 5 — Grow meaningful product usage (activation & return)
 
 | Key result | Metric | Target |
@@ -167,6 +178,8 @@ The app does not stream telemetry by default. Collect metrics via:
 - **Successful export (PM-05):** Download starts without error after Export click.  
 - **Roadmap with RACI (PM-11):** At least one of `raci.responsible`, `accountable`, `consulted`, `informed` has a non-empty entry after normalization.  
 - **KANO positioned (PM-12):** Both `kanoFunctionality` and `kanoSatisfaction` are integers 1–5.  
+- **BYOK fully configured (PM-13):** `ByokApiKeys` reports both Groq and Tavily keys decryptable on device.  
+- **LLM summary success (PM-14):** Generate click completes with three non-empty paragraphs and no error status class.  
 
 ### UX collection notes
 

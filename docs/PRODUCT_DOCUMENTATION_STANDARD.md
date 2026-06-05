@@ -2,12 +2,12 @@
 
 **Purpose:** Define how product, design, and engineering maintain documentation for the Product Management Prioritization Tool.  
 **Audience:** Contributors, reviewers, release owners.  
-**Last updated:** 2026-05-28  
-**Last audited:** 2026-05-28
+**Last updated:** 2026-06-06  
+**Last audited:** 2026-06-06
 
 | Baseline | Value |
 |----------|-------|
-| **APP_ASSET_VERSION** | `20260528-ui192` |
+| **APP_ASSET_VERSION** | `20260606-ui193` |
 | **Compact breakpoint** | **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) |
 
 ---
@@ -112,6 +112,8 @@ When performing a comprehensive audit:
 8. Set **Last audited** / **Last updated** dates to audit date (YYYY-MM-DD).
 9. Verify **Roadmap** terminology (not Project) in user-facing docs; document legacy `projects` migration in VARIABLES §8.13 only.
 10. Confirm all **six views** (Table, Board, MoSCoW, Map, RACI, KANO) are documented in PRD FR-5, personas, and user stories.
+11. Confirm **33 CSS layers** in README, DESIGN_GUIDELINES, TECH_GUIDELINES, and ARCHITECTURE match `index.html` load order.
+12. Document **BYOK** (`byok-api-keys.js`, `api/byok/*`) and **LLM analysis** (`roadmap-llm-summary.js`) in PRD FR-11/FR-2.12, GUARDRAILS §8, VARIABLES §8.13–8.14, and traceability matrix.
 
 ---
 

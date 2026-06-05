@@ -2,8 +2,8 @@
 
 **Purpose:** Authoritative dictionary of application variables — technical name, friendly name, definition, formula, UI location, and examples.  
 **Audience:** Product, engineering, QA, analytics.  
-**Last audited:** 2026-05-28  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260528-ui192`
+**Last audited:** 2026-06-06  
+**Implementation baseline:** `APP_ASSET_VERSION` = `20260606-ui193`
 
 > Privileged cross-profile workspace variables (workspace-wide mode, owner filter, owner metadata) are specified in [GUARDRAILS.md](GUARDRAILS.md) §7 only. This dictionary uses neutral names below.
 
@@ -32,7 +32,7 @@ Persisted to `localStorage` under `rice_prioritizer_v1` unless noted.
 | `activeProfileId` | Active Profile | ID of portfolio currently selected for workspace views. | String; must match a profile `id`. | Profiles panel + portfolio header | `"profile_abc"` |
 | `sortField` | Table Sort Column | Active sort key for table view. | Enum used by `sortRoadmaps`. | Table view | `"riceScore"` |
 | `sortDirection` | Sort Direction | Ascending or descending table sort. | `"asc"` \| `"desc"`. | Table view | `"desc"` |
-| `roadmapsView` | Active Planning View | Which workspace tab is visible. | `table` \| `board` \| `moscow` \| `map` \| `raci` \| `kano`. | View tabs | `"board"` |
+| `roadmapsView` | Active Planning View | Which workspace tab is visible. | `table` \| `board` \| `moscow` \| `map` \| `raci` \| `kano`. | View tabs (six planning views) | `"board"` |
 | `raciMatrixDomain` | RACI Perspective | Filters RACI matrix entries by stakeholder domain. | `Business` \| `Tech`; persisted in workspace. | RACI view toolbar | `"Business"` |
 | `kanoPortfolioPanel` | KANO Portfolio Panel | Which KANO sub-panel is active. | `positioned` \| `unpositioned`; persisted. | KANO view toolbar | `"positioned"` |
 | `tableSortByRice` | Table RICE Sort | When true, table rows sorted by RICE score. | Boolean; persisted. | Table toolbar | `true` |
@@ -56,6 +56,18 @@ Persisted to `localStorage` under `rice_prioritizer_v1` unless noted.
 | `pendingUnlockAction` | Pending Unlock Action | Unlock intent queued when user triggers view/edit on a locked profile. | Cleared after successful unlock. | Profile unlock gating | `{ type: "edit" \| "view" \| "activate", profileId?: string }` |
 | `pendingExportFormat` | Pending Export Format | Export format chosen before verifying protected profiles. | Cleared after export completes. | Export unlock modal | `"json" \| "csv"` |
 | `profilesFilterQuery` | Profiles Panel Search Query | Search query for profiles panel (name/team). | Not persisted; resets on refresh. | Profiles panel | `"Growth"` |
+| `roadmapSummaryTone` | Summary Tone | Active LLM summary style in roadmap modal. | `professional` \| `simplified`; session-only. | Roadmap modal Summary section | `"professional"` |
+| `roadmapSummaryGenerated` | Generated Summary | Last LLM output object (paragraphs + links). | Session-only; cleared on modal close. | `#roadmapSummaryOutput` | `{ paragraph1, paragraph2, paragraph3, links }` |
+| `roadmapSummaryGenerating` | Summary In Flight | Whether Groq/Tavily pipeline is running. | Boolean; disables generate button. | Summary status line | `false` |
+
+### BYOK storage (`ByokApiKeys` — not in workspace payload)
+
+| Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
+|----------------|---------------|------------|-----------------|--------------|---------|
+| `pm_byok_v1` | BYOK Storage Key | Encrypted envelope for provider API keys. | AES-GCM + PBKDF2; never synced to cloud. | `localStorage` | `{ version, groq: {…}, tavily: {…} }` |
+| `pm_byok_device_salt_v1` | BYOK Device Salt | Per-browser salt for key derivation. | Random bytes on first use. | `localStorage` | hex string |
+| `groq` (provider) | Groq API Key | LLM inference for roadmap summaries. | Validated via `/api/byok/validate-groq`; used client-side against `api.groq.com`. | BYOK modal; header dot | `gsk_…` |
+| `tavily` (provider) | Tavily API Key | Web search/extract for summary enrichment. | Validated via `/api/byok/validate-tavily`; used against `api.tavily.com`. | BYOK modal | `tvly-…` |
 
 ---
 
@@ -390,7 +402,21 @@ flowchart TD
   DND --> SAVE[saveState → update axis scores]
 ```
 
-### 8.13 Legacy Project → Roadmap migration (load only)
+### 8.13 BYOK and LLM summary flow
+
+```mermaid
+flowchart TD
+  HDR[Header API keys button] --> MODAL[byokApiKeysModal]
+  MODAL --> ENC[Encrypt + localStorage pm_byok_v1]
+  MODAL --> VAL[POST /api/byok/validate-groq or tavily]
+  GEN[Generate LLM analysis] --> KEYS[ByokApiKeys.getStoredKey groq + tavily]
+  KEYS --> TAV[Tavily extract links + search]
+  TAV --> GROQ[Groq chat completions llama-3.1-8b-instant]
+  GROQ --> OUT[roadmapSummaryGenerated session-only]
+  OUT --> UI[#roadmapSummaryOutput 3 paragraphs]
+```
+
+### 8.14 Legacy Project → Roadmap migration (load only)
 
 ```mermaid
 flowchart LR
@@ -410,7 +436,7 @@ flowchart LR
 
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
-| `APP_ASSET_VERSION` | Asset Cache Version | Query-string cache buster for CSS/JS in `index.html`. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260528-ui192"` |
+| `APP_ASSET_VERSION` | Asset Cache Version | Query-string cache buster for CSS/JS in `index.html`. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260606-ui193"` |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | Compact Breakpoint (px) | Max viewport width for phone/tablet UI. | Constant in `constants.js`. | `src/constants.js` | `1400` |
 | `is-compact-layout` | Compact Layout Class | Viewport ≤1400px; enables compact CSS. | Set on `<html>` by `initCompactLayoutClass()`. | Global layout | class present |
 | `is-phone-layout` | Phone Layout Class | Same threshold as compact (unified phone UI). | Set together with compact class. | Global layout | class present |

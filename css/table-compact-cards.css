@@ -302,20 +302,19 @@
   html.is-compact-layout .roadmaps-table-card__badges {
     display: flex;
     flex: 1 1 auto;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.35rem;
     min-width: 0;
-    overflow: hidden;
   }
 
   html.is-compact-layout .roadmaps-table-card__status-pill {
     display: inline-flex;
     align-items: center;
     gap: 0.28rem;
-    flex: 0 1 auto;
+    flex: 0 0 auto;
     min-width: 0;
-    max-width: 42%;
+    max-width: none;
     padding: 0.2rem 0.45rem;
     border-radius: 999px;
     font-size: 0.68rem;
@@ -334,15 +333,13 @@
   }
 
   html.is-compact-layout .roadmaps-table-card__status-label {
-    overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   html.is-compact-layout .roadmaps-table-card__chip {
     display: inline-flex;
     align-items: center;
-    flex: 0 1 auto;
+    flex: 0 0 auto;
     min-width: 0;
     padding: 0.18rem 0.5rem;
     border-radius: 999px;
@@ -352,8 +349,24 @@
     background: rgba(255, 247, 237, 0.95);
     border: 1px solid rgba(251, 191, 36, 0.35);
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  }
+
+  html.is-compact-layout .roadmaps-table-card__chip--type-icon {
+    flex: 0 0 auto;
+    width: 1.85rem;
+    height: 1.85rem;
+    min-width: 1.85rem;
+    padding: 0;
+    justify-content: center;
+    color: #334155;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(203, 213, 225, 0.85);
+  }
+
+  html.is-compact-layout .roadmaps-table-card__chip--type-icon svg {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
   }
 
   html.is-compact-layout .roadmaps-table-card__chip--more {
@@ -609,6 +622,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.2rem;
+    flex: 0 0 auto;
     padding: 0.18rem 0.42rem;
     border-radius: 6px;
     background: rgba(254, 243, 199, 0.55);

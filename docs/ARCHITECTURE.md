@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last audited** | 2026-05-28 |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui192` |
+| **Last audited** | 2026-06-06 |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260606-ui193` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -51,10 +51,15 @@ The UI is a **static SPA** (`index.html` + `src/`). On Vercel, **serverless rout
 | `src/modules/rich-text-editor.js` | RichTextEditor mount for description fields |
 | `src/modules/board-drag.js` | Board drag-and-drop visuals |
 | `src/modules/board-card-interaction.js` | Board card press feedback |
+| `src/modules/byok-api-keys.js` | Encrypted local Groq/Tavily API keys (`ByokApiKeys`) |
+| `src/modules/roadmap-llm-summary.js` | Tavily research + Groq roadmap briefing (`RoadmapLlmSummary`) |
 | `api/health.js` | Storage backend probe |
 | `api/config.js` | Client config probe (same as health) |
 | `api/state.js` | GET/PUT workspace document |
+| `api/byok/validate-groq.js` | POST validate Groq BYOK key |
+| `api/byok/validate-tavily.js` | POST validate Tavily BYOK key |
 | `api/_lib/roadmap-metadata.js` | Server-side labels/links normalization before MongoDB write |
+| `api/_lib/byok-validate.js` | Shared BYOK key normalization and provider probes |
 | `src/app.js` | Bootstrap, `state`, events, rendering, filters, autocomplete, import/export, bulk transfer |
 | `css/*` | Layered presentation (see §10) |
 
@@ -238,10 +243,39 @@ Load order in `index.html` (later wins at equal specificity). All linked with `?
 | 29 | `roadmap-details-tooltip.css` | Description tooltips on cards |
 | 30 | `rich-text-editor.css` | Rich-text toolbar and fields |
 | 31 | `portfolio-kano-modern.css` | KANO portfolio matrix and cards |
+| 32 | `byok-api-keys.css` | BYOK modal |
+| 33 | `rich-description-content.css` | Rich HTML typography |
 
 ---
 
-## 11. Cloud sync architecture
+## 11. BYOK and LLM analysis (optional)
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant BYOK as ByokApiKeys
+  participant LS as localStorage
+  participant API as /api/byok/validate-*
+  participant LLM as RoadmapLlmSummary
+  participant G as api.groq.com
+  participant T as api.tavily.com
+
+  U->>BYOK: Save Groq/Tavily key
+  BYOK->>API: Validate (user-initiated)
+  API-->>BYOK: ok / error
+  BYOK->>LS: Encrypted pm_byok_v1
+  U->>LLM: Generate LLM analysis
+  LLM->>BYOK: Decrypt keys
+  LLM->>T: Extract links / search
+  LLM->>G: Chat completion
+  LLM-->>U: Three paragraphs (session only)
+```
+
+BYOK data is **outside** the workspace MongoDB document. LLM output is **not** persisted on roadmap entities.
+
+---
+
+## 12. Cloud sync architecture
 
 ```mermaid
 sequenceDiagram
@@ -266,7 +300,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for environment variables.
 
 ---
 
-## 12. Profile lock subsystem
+## 13. Profile lock subsystem
 
 ```mermaid
 stateDiagram-v2
@@ -280,7 +314,7 @@ Locked state blocks: roadmap list, board, MoSCoW, map, filters (disabled).
 
 ---
 
-## 13. Export / import architecture
+## 14. Export / import architecture
 
 ```mermaid
 flowchart TD
@@ -299,7 +333,7 @@ flowchart TD
 
 ---
 
-## 14. Deployment architecture
+## 15. Deployment architecture
 
 - **Vercel** serves static files from repo root.
 - `vercel.json`: security headers (CSP), cache rules.
@@ -307,7 +341,7 @@ flowchart TD
 
 ---
 
-## 15. Known architectural constraints
+## 16. Known architectural constraints
 
 - Monolithic `app.js` (~9k+ lines) — acceptable for static app; split only with clear module boundaries if growth continues.
 - Global namespace — naming collisions require discipline.

@@ -40,6 +40,10 @@ let state = {
 
 let editingRoadmapId = null;
 let roadmapModalMode = "create";
+let roadmapSummaryGenerating = false;
+let roadmapSummarySimplifiedGenerating = false;
+let roadmapSummaryTone = "professional";
+let roadmapSummaryGenerated = null;
 
 /** Profile IDs unlocked for this browser tab session (sessionStorage, not localStorage). */
 const unlockedProfileIds = new Set();
@@ -1152,7 +1156,8 @@ const ROADMAP_MODAL_SECTION_NAV_IDS = [
   "roadmapModalSectionKano",
   "roadmapModalSectionMeta",
   "roadmapModalSectionRaci",
-  "roadmapModalSectionFinancial"
+  "roadmapModalSectionFinancial",
+  "roadmapModalSectionSummary"
 ];
 
 function roadmapModalSectionRoadmapHasData() {
@@ -1451,6 +1456,411 @@ function navigateRoadmapModalToSection(sectionId, { focusSelector } = {}) {
   }
 }
 
+function pruneRoadmapSummaryContext(value) {
+  if (value == null) return undefined;
+  if (Array.isArray(value)) {
+    const items = value.map(pruneRoadmapSummaryContext).filter((item) => item !== undefined);
+    return items.length ? items : undefined;
+  }
+  if (typeof value === "object") {
+    const out = {};
+    Object.keys(value).forEach((key) => {
+      const next = pruneRoadmapSummaryContext(value[key]);
+      if (next !== undefined) out[key] = next;
+    });
+    return Object.keys(out).length ? out : undefined;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : undefined;
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : undefined;
+  }
+  return value;
+}
+
+function buildRoadmapSummaryContextFromViewForm() {
+  const kano = getRoadmapKanoFromControls();
+  const linkResult = getRoadmapLinksFromControls();
+  const links = linkResult.error ? [] : linkResult.links;
+  const raw = {
+    id: elements.roadmapMetaId ? String(elements.roadmapMetaId.textContent || "").trim() : undefined,
+    title: (elements.roadmapTitle?.value || "").trim(),
+    description: richDescriptionToPlainText(getRichDescriptionValue("roadmapDescription")),
+    note: richDescriptionToPlainText(getRichDescriptionValue("roadmapNote")),
+    roadmapType: (elements.roadmapType?.value || "").trim() || null,
+    roadmapStatus: (elements.roadmapStatus?.value || "").trim() || null,
+    tshirtSize: (elements.roadmapTshirtSize?.value || "").trim() || null,
+    roadmapPeriod: (elements.roadmapPeriod?.value || "").trim() || null,
+    moscowCategory: (elements.roadmapMoscow?.value || "").trim() || null,
+    reachValue: elements.reachValue?.value !== "" ? Number(elements.reachValue.value) : null,
+    reachDescription: richDescriptionToPlainText(getRichDescriptionValue("reachDescription")),
+    impactValue: elements.impactValue?.value !== "" ? Number(elements.impactValue.value) : null,
+    impactDescription: richDescriptionToPlainText(getRichDescriptionValue("impactDescription")),
+    confidenceValue: elements.confidenceValue?.value !== "" ? Number(elements.confidenceValue.value) : null,
+    confidenceDescription: richDescriptionToPlainText(getRichDescriptionValue("confidenceDescription")),
+    effortValue: elements.effortValue?.value !== "" ? Number(elements.effortValue.value) : null,
+    effortDescription: richDescriptionToPlainText(getRichDescriptionValue("effortDescription")),
+    financialImpactFramework: normalizeFinancialFramework(
+      elements.financialFramework && elements.financialFramework.value
+    ),
+    financialImpactValue:
+      elements.financialImpactValue?.value !== "" ? Number(elements.financialImpactValue.value) : null,
+    financialImpactCurrency: normalizeCurrency(elements.roadmapCurrency?.value),
+    kanoFunctionality: kano.kanoFunctionality,
+    kanoSatisfaction: kano.kanoSatisfaction,
+    countries: getCountriesFromControls(),
+    labels: getRoadmapLabelsFromControls(),
+    links,
+    tasks: getRoadmapTasksFromControls(),
+    raci: getRoadmapRaciFromControls()
+  };
+
+  const hasRiceInput =
+    raw.reachValue != null ||
+    raw.impactValue != null ||
+    raw.confidenceValue != null ||
+    raw.effortValue != null ||
+    !!raw.reachDescription ||
+    !!raw.impactDescription ||
+    !!raw.confidenceDescription ||
+    !!raw.effortDescription;
+  if (hasRiceInput) {
+    const effort = Number(raw.effortValue);
+    if (Number.isFinite(effort) && effort > 0) {
+      raw.riceScore = calculateRiceScore(raw);
+    }
+  }
+
+  if (raw.kanoFunctionality != null && raw.kanoSatisfaction != null && typeof getKanoCategoryFromPosition === "function") {
+    const category = getKanoCategoryFromPosition(raw.kanoFunctionality, raw.kanoSatisfaction);
+    raw.kanoCategory = category ? category.label : null;
+  }
+
+  if (
+    typeof RoadmapLlmSummary !== "undefined" &&
+    typeof RoadmapLlmSummary.prepareSummaryContext === "function"
+  ) {
+    return RoadmapLlmSummary.prepareSummaryContext(raw);
+  }
+
+  return pruneRoadmapSummaryContext(raw) || { title: raw.title || "Untitled roadmap" };
+}
+
+function resetRoadmapSummaryUi() {
+  roadmapSummaryGenerating = false;
+  roadmapSummarySimplifiedGenerating = false;
+  roadmapSummaryTone = "professional";
+  roadmapSummaryGenerated = null;
+  if (elements.roadmapSummaryOutput) {
+    elements.roadmapSummaryOutput.hidden = true;
+    elements.roadmapSummaryOutput.dataset.summaryTone = "professional";
+  }
+  if (elements.roadmapSummaryToneToggle) {
+    elements.roadmapSummaryToneToggle.hidden = true;
+  }
+  if (elements.roadmapSummaryParagraph1) elements.roadmapSummaryParagraph1.innerHTML = "";
+  if (elements.roadmapSummaryParagraph2) elements.roadmapSummaryParagraph2.innerHTML = "";
+  if (elements.roadmapSummaryParagraph3) elements.roadmapSummaryParagraph3.innerHTML = "";
+  syncRoadmapSummaryToneToggleUi();
+  if (elements.roadmapSummaryStatus) {
+    elements.roadmapSummaryStatus.textContent = "";
+    elements.roadmapSummaryStatus.classList.remove("roadmap-summary-status--error");
+  }
+  if (elements.roadmapSummaryGenerateBtn) {
+    elements.roadmapSummaryGenerateBtn.disabled = false;
+    elements.roadmapSummaryGenerateBtn.classList.remove("is-loading");
+    elements.roadmapSummaryGenerateBtn.textContent = "Generate LLM analysis";
+  }
+}
+
+function syncRoadmapSummaryToneToggleUi() {
+  const wrap = elements.roadmapSummaryToneToggleButtons;
+  if (!wrap) return;
+  wrap.dataset.activeTone = roadmapSummaryTone;
+  const simplifiedPending =
+    !!roadmapSummaryGenerated && !roadmapSummaryGenerated.simplified && !roadmapSummarySimplifiedGenerating;
+  wrap.querySelectorAll(".roadmap-summary-tone-btn").forEach((btn) => {
+    const tone = btn.getAttribute("data-summary-tone");
+    const active = tone === roadmapSummaryTone;
+    btn.classList.toggle("roadmap-summary-tone-btn--active", active);
+    btn.setAttribute("aria-selected", active ? "true" : "false");
+    if (tone === "simplified") {
+      btn.dataset.needsGeneration = simplifiedPending ? "true" : "false";
+      btn.setAttribute(
+        "aria-label",
+        simplifiedPending ? "Simplified — generates storytelling summary on click" : "Simplified"
+      );
+    }
+  });
+}
+
+function setRoadmapSummaryParagraphHtml(element, text) {
+  if (!element) return;
+  const links =
+    roadmapSummaryGenerated && Array.isArray(roadmapSummaryGenerated.links)
+      ? roadmapSummaryGenerated.links
+      : [];
+  if (
+    typeof RoadmapLlmSummary !== "undefined" &&
+    typeof RoadmapLlmSummary.renderRoadmapSummaryParagraphText === "function"
+  ) {
+    element.innerHTML = RoadmapLlmSummary.renderRoadmapSummaryParagraphText(text, links);
+    return;
+  }
+  element.textContent = text || "";
+}
+
+function renderRoadmapSummaryDisplay() {
+  if (!roadmapSummaryGenerated) return;
+  let variant = roadmapSummaryGenerated[roadmapSummaryTone];
+  if (
+    !variant &&
+    roadmapSummaryTone === "simplified" &&
+    roadmapSummaryGenerated.professional
+  ) {
+    variant = roadmapSummaryGenerated.professional;
+  }
+  if (!variant) return;
+  setRoadmapSummaryParagraphHtml(elements.roadmapSummaryParagraph1, variant.paragraph1 || "");
+  setRoadmapSummaryParagraphHtml(elements.roadmapSummaryParagraph2, variant.paragraph2 || "");
+  setRoadmapSummaryParagraphHtml(elements.roadmapSummaryParagraph3, variant.paragraph3 || "");
+  if (elements.roadmapSummaryOutput) {
+    elements.roadmapSummaryOutput.dataset.summaryTone = roadmapSummaryTone;
+  }
+  syncRoadmapSummaryToneToggleUi();
+}
+
+async function setRoadmapSummaryTone(tone) {
+  if (tone !== "professional" && tone !== "simplified") return;
+  if (!roadmapSummaryGenerated) return;
+  if (tone === "simplified" && !roadmapSummaryGenerated.simplified) {
+    if (roadmapSummarySimplifiedGenerating) return;
+    roadmapSummaryTone = tone;
+    syncRoadmapSummaryToneToggleUi();
+    await handleRoadmapSummarySimplifiedRequest();
+    return;
+  }
+  roadmapSummaryTone = tone;
+  renderRoadmapSummaryDisplay();
+}
+
+async function handleRoadmapSummarySimplifiedRequest() {
+  if (!roadmapSummaryGenerated || roadmapSummaryGenerated.simplified) return;
+  if (
+    typeof RoadmapLlmSummary === "undefined" ||
+    typeof RoadmapLlmSummary.generateSimplifiedSummary !== "function"
+  ) {
+    showToast("Simplified summary is unavailable. Reload the page and try again.");
+    return;
+  }
+
+  roadmapSummarySimplifiedGenerating = true;
+  if (elements.roadmapSummaryOutput) {
+    elements.roadmapSummaryOutput.classList.add("roadmap-summary-output--loading");
+  }
+  if (elements.roadmapSummaryStatus) {
+    elements.roadmapSummaryStatus.textContent =
+      "Preparing simplified storytelling summary (waiting for API cooldown if needed)…";
+    elements.roadmapSummaryStatus.classList.remove("roadmap-summary-status--error");
+  }
+  if (elements.roadmapSummaryToneToggleButtons) {
+    elements.roadmapSummaryToneToggleButtons
+      .querySelectorAll(".roadmap-summary-tone-btn")
+      .forEach((btn) => {
+        btn.disabled = true;
+      });
+  }
+
+  try {
+    const result = await RoadmapLlmSummary.generateSimplifiedSummary(roadmapSummaryGenerated, {
+      onProgress: (message) => {
+        if (elements.roadmapSummaryStatus) {
+          elements.roadmapSummaryStatus.textContent = message;
+        }
+      }
+    });
+    roadmapSummaryGenerated.simplified = result.simplified;
+    if (Array.isArray(result.links) && result.links.length) {
+      roadmapSummaryGenerated.links = result.links;
+    }
+    roadmapSummaryTone = "simplified";
+    renderRoadmapSummaryDisplay();
+    if (elements.roadmapSummaryStatus) {
+      elements.roadmapSummaryStatus.textContent =
+        result.simplifiedSource === "local"
+          ? "Simplified view ready (local fallback). Switch style above anytime."
+          : "Simplified storytelling summary ready. Switch style above anytime.";
+    }
+  } catch (err) {
+    console.error("Roadmap simplified summary failed:", err);
+    const message =
+      err && err.message ? err.message : "Could not generate the simplified roadmap summary.";
+    roadmapSummaryTone = "professional";
+    renderRoadmapSummaryDisplay();
+    if (elements.roadmapSummaryStatus) {
+      elements.roadmapSummaryStatus.textContent = message;
+      elements.roadmapSummaryStatus.classList.add("roadmap-summary-status--error");
+    }
+    showToast(message);
+  } finally {
+    roadmapSummarySimplifiedGenerating = false;
+    if (elements.roadmapSummaryOutput) {
+      elements.roadmapSummaryOutput.classList.remove("roadmap-summary-output--loading");
+    }
+    if (elements.roadmapSummaryToneToggleButtons) {
+      elements.roadmapSummaryToneToggleButtons
+        .querySelectorAll(".roadmap-summary-tone-btn")
+        .forEach((btn) => {
+          btn.disabled = false;
+        });
+    }
+    syncRoadmapSummaryToneToggleUi();
+  }
+}
+
+async function syncRoadmapSummaryGenerateAvailability() {
+  if (!elements.roadmapSummaryGenerateBtn) return;
+  if (roadmapModalMode !== "view") return;
+  if (roadmapSummaryGenerating) return;
+  if (
+    typeof RoadmapLlmSummary === "undefined" ||
+    typeof RoadmapLlmSummary.resolveSummaryApiKeys !== "function"
+  ) {
+    elements.roadmapSummaryGenerateBtn.disabled = true;
+    if (elements.roadmapSummaryStatus) {
+      elements.roadmapSummaryStatus.textContent = "LLM summary module is not loaded.";
+      elements.roadmapSummaryStatus.classList.add("roadmap-summary-status--error");
+    }
+    return;
+  }
+  try {
+    const resolved = await RoadmapLlmSummary.resolveSummaryApiKeys();
+    elements.roadmapSummaryGenerateBtn.disabled = !resolved.ok;
+    if (!resolved.ok && elements.roadmapSummaryStatus) {
+      elements.roadmapSummaryStatus.textContent = resolved.message;
+      elements.roadmapSummaryStatus.classList.add("roadmap-summary-status--error");
+      return;
+    }
+    if (elements.roadmapSummaryStatus) {
+      elements.roadmapSummaryStatus.classList.remove("roadmap-summary-status--error");
+      const hasOutput = elements.roadmapSummaryOutput && !elements.roadmapSummaryOutput.hidden;
+      if (!hasOutput && !roadmapSummaryGenerating) {
+        elements.roadmapSummaryStatus.textContent = "";
+      }
+    }
+  } catch (err) {
+    console.error("Roadmap summary key check failed:", err);
+    elements.roadmapSummaryGenerateBtn.disabled = true;
+  }
+}
+
+function syncRoadmapSummarySectionVisibility(isView) {
+  const show = !!isView;
+  if (elements.roadmapModalSectionSummary) {
+    elements.roadmapModalSectionSummary.hidden = !show;
+  }
+  const modal = elements.roadmapModal;
+  if (modal) {
+    modal.querySelectorAll(".roadmap-modal-section-btn--view-only").forEach((btn) => {
+      btn.hidden = !show;
+    });
+  }
+  if (!show) {
+    resetRoadmapSummaryUi();
+  } else {
+    syncRoadmapSummaryGenerateAvailability();
+    ensureRoadmapOptionalDisclosures();
+    syncRoadmapOptionalDisclosures({ resetCollapsed: true });
+  }
+}
+
+async function handleRoadmapSummaryGenerateClick() {
+  if (roadmapModalMode !== "view" || roadmapSummaryGenerating) return;
+  if (typeof RoadmapLlmSummary === "undefined" || typeof RoadmapLlmSummary.generateSummary !== "function") {
+    showToast("LLM summary is unavailable. Reload the page and try again.");
+    return;
+  }
+
+  resetRoadmapSummaryUi();
+  roadmapSummaryGenerating = true;
+  if (elements.roadmapSummaryGenerateBtn) {
+    elements.roadmapSummaryGenerateBtn.disabled = true;
+    elements.roadmapSummaryGenerateBtn.classList.add("is-loading");
+    elements.roadmapSummaryGenerateBtn.textContent = "Generating…";
+  }
+  if (elements.roadmapSummaryStatus) {
+    elements.roadmapSummaryStatus.textContent =
+      "Starting roadmap summary (Tavily research, then Groq synthesis)…";
+    elements.roadmapSummaryStatus.classList.remove("roadmap-summary-status--error");
+  }
+
+  try {
+    const context = buildRoadmapSummaryContextFromViewForm();
+    const result = await RoadmapLlmSummary.generateSummary(context, {
+      onProgress: (message) => {
+        if (elements.roadmapSummaryStatus) {
+          elements.roadmapSummaryStatus.textContent = message;
+        }
+      }
+    });
+    roadmapSummaryGenerated = {
+      professional: result.professional,
+      simplified: result.simplified || null,
+      links: Array.isArray(result.links) ? result.links : context.links || [],
+      preparedContext: result.preparedContext || null,
+      research: result.research || null
+    };
+    roadmapSummaryTone = "professional";
+    renderRoadmapSummaryDisplay();
+    if (elements.roadmapSummaryOutput) {
+      elements.roadmapSummaryOutput.hidden = false;
+    }
+    if (elements.roadmapSummaryToneToggle) {
+      elements.roadmapSummaryToneToggle.hidden = false;
+    }
+    if (elements.roadmapSummaryStatus) {
+      elements.roadmapSummaryStatus.textContent =
+        "Professional executive briefing ready (Tavily + Groq). Switch to Simplified to generate storytelling view.";
+    }
+    syncRoadmapOptionalDisclosures({ forceOpenSectionIds: ["roadmapModalSectionSummary"] });
+    syncRoadmapModalSectionNavIndicators();
+  } catch (err) {
+    console.error("Roadmap LLM summary failed:", err);
+    const message = err && err.message ? err.message : "Could not generate the roadmap summary.";
+    if (elements.roadmapSummaryStatus) {
+      elements.roadmapSummaryStatus.textContent = message;
+      elements.roadmapSummaryStatus.classList.add("roadmap-summary-status--error");
+    }
+    showToast(message);
+  } finally {
+    roadmapSummaryGenerating = false;
+    if (elements.roadmapSummaryGenerateBtn) {
+      elements.roadmapSummaryGenerateBtn.classList.remove("is-loading");
+      elements.roadmapSummaryGenerateBtn.textContent = "Generate LLM analysis";
+    }
+    syncRoadmapSummaryGenerateAvailability();
+  }
+}
+
+function initRoadmapSummaryControls() {
+  if (elements.roadmapSummaryGenerateBtn) {
+    elements.roadmapSummaryGenerateBtn.addEventListener("click", () => {
+      handleRoadmapSummaryGenerateClick();
+    });
+  }
+  const toneButtons = elements.roadmapSummaryToneToggleButtons;
+  if (toneButtons) {
+    toneButtons.querySelectorAll(".roadmap-summary-tone-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const tone = btn.getAttribute("data-summary-tone");
+        if (tone) setRoadmapSummaryTone(tone);
+      });
+    });
+  }
+}
+
 function openRoadmapModalForKanoScoring(roadmapId) {
   if (!roadmapId) return;
   const scrollOptions = { scrollToSection: "roadmapModalSectionKano" };
@@ -1513,16 +1923,80 @@ function getOptionalFieldSummaryText(labelEl) {
   return (clone.textContent || "").replace(/\s*\(optional[^)]*\)\s*/gi, "").replace(/\s+/g, " ").trim();
 }
 
+function isRoadmapOptionalDisclosureOpen(disclosureEl) {
+  return !!(disclosureEl && disclosureEl.classList.contains("is-open"));
+}
+
+function setRoadmapOptionalDisclosureOpen(disclosureEl, open) {
+  if (!disclosureEl) return;
+  disclosureEl.classList.toggle("is-open", !!open);
+  const body = disclosureEl.querySelector(
+    ":scope > .roadmap-optional-field-body, :scope > .roadmap-optional-section-body, :scope > .roadmap-tasks-disclosure-body"
+  );
+  if (body) body.toggleAttribute("hidden", !open);
+}
+
+function findRoadmapOptionalDisclosureTrigger(disclosureEl) {
+  return disclosureEl?.querySelector(":scope > .roadmap-optional-disclosure-trigger") || null;
+}
+
+function syncRoadmapOptionalDisclosureAfterToggle(disclosure) {
+  if (!disclosure) return;
+  if (disclosure.classList.contains("roadmap-tasks-disclosure")) {
+    syncRoadmapTasksDisclosure();
+    return;
+  }
+  if (disclosure.classList.contains("roadmap-optional-field-details")) {
+    const wrap = disclosure.closest(".roadmap-field-tooltip-wrap");
+    disclosure.classList.toggle("roadmap-optional--has-data", roadmapOptionalFieldHasData(wrap));
+    return;
+  }
+  const sectionId = disclosure.dataset.roadmapSectionRef;
+  disclosure.classList.toggle(
+    "roadmap-optional--has-data",
+    sectionId ? roadmapOptionalSectionHasData(sectionId) : false
+  );
+}
+
+function toggleRoadmapOptionalDisclosure(disclosure, open) {
+  if (!disclosure) return;
+  const nextOpen = typeof open === "boolean" ? open : !isRoadmapOptionalDisclosureOpen(disclosure);
+  setRoadmapOptionalDisclosureOpen(disclosure, nextOpen);
+  syncRoadmapOptionalDisclosureAria(disclosure);
+  syncRoadmapOptionalDisclosureAfterToggle(disclosure);
+}
+
+function handleRoadmapOptionalDisclosureTriggerClick(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  const trigger = event.currentTarget;
+  const disclosure = trigger?.closest(".roadmap-optional-disclosure");
+  if (!disclosure) return;
+  toggleRoadmapOptionalDisclosure(disclosure);
+}
+
+function bindRoadmapOptionalDisclosureTrigger(trigger) {
+  if (!trigger || trigger.dataset.disclosureBound === "1") return;
+  trigger.dataset.disclosureBound = "1";
+  trigger.addEventListener("click", handleRoadmapOptionalDisclosureTriggerClick);
+}
+
+function refreshRoadmapOptionalDisclosureBindings(root) {
+  const scope = root || elements.roadmapForm || $("roadmapForm") || document;
+  scope.querySelectorAll(".roadmap-optional-disclosure-trigger").forEach(bindRoadmapOptionalDisclosureTrigger);
+}
+
 function buildOptionalDisclosureSummary(titleText, options = {}) {
   const subtitle = options.subtitle || "";
   const summaryKind = options.kind === "section" ? "section" : "field";
 
-  const summary = document.createElement("summary");
-  summary.className =
+  const trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className =
     summaryKind === "section"
-      ? "form-section-header roadmap-optional-section-summary"
-      : "roadmap-optional-field-summary";
-  summary.dataset.optionalKind = summaryKind;
+      ? "form-section-header roadmap-optional-section-summary roadmap-optional-disclosure-trigger"
+      : "roadmap-optional-field-summary roadmap-optional-disclosure-trigger";
+  trigger.dataset.optionalKind = summaryKind;
 
   const row = document.createElement("div");
   row.className = "roadmap-optional-summary-row";
@@ -1573,10 +2047,12 @@ function buildOptionalDisclosureSummary(titleText, options = {}) {
   row.appendChild(statusDot);
   row.appendChild(optionalBadge);
 
-  summary.appendChild(row);
-  summary.appendChild(chevron);
-  summary.setAttribute("aria-label", `Expand ${titleText || "section"}`);
-  return summary;
+  trigger.appendChild(row);
+  trigger.appendChild(chevron);
+  trigger.setAttribute("aria-expanded", "false");
+  trigger.setAttribute("aria-label", `Expand ${titleText || "section"}`);
+  bindRoadmapOptionalDisclosureTrigger(trigger);
+  return trigger;
 }
 
 function wrapOptionalRoadmapField(wrap) {
@@ -1589,17 +2065,18 @@ function wrapOptionalRoadmapField(wrap) {
   const hintEl = wrap.querySelector(":scope > .roadmap-dynamic-field-hint");
   const subtitle = hintEl ? hintEl.textContent.trim() : "";
 
-  const details = document.createElement("details");
-  details.className = "roadmap-optional-disclosure roadmap-optional-field-details";
-  details.dataset.optionalKind = "field";
+  const disclosure = document.createElement("div");
+  disclosure.className = "roadmap-optional-disclosure roadmap-optional-field-details";
+  disclosure.dataset.optionalKind = "field";
 
-  const summary = buildOptionalDisclosureSummary(titleText, {
+  const trigger = buildOptionalDisclosureSummary(titleText, {
     kind: "field",
     subtitle: subtitle.length > 72 ? `${subtitle.slice(0, 69)}…` : subtitle
   });
 
   const body = document.createElement("div");
   body.className = "roadmap-optional-field-body";
+  body.hidden = true;
 
   Array.from(wrap.childNodes).forEach((child) => {
     if (child === labelEl) return;
@@ -1607,14 +2084,14 @@ function wrapOptionalRoadmapField(wrap) {
   });
 
   labelEl.remove();
-  details.appendChild(summary);
-  details.appendChild(body);
-  wrap.appendChild(details);
+  disclosure.appendChild(trigger);
+  disclosure.appendChild(body);
+  wrap.appendChild(disclosure);
   wrap.classList.add("roadmap-optional-field-wrap");
 }
 
 function wrapOptionalRoadmapSections() {
-  document.querySelectorAll("#roadmapForm [data-optional-section]").forEach((section) => {
+  document.querySelectorAll("#roadmapForm .form-section[data-optional-section]").forEach((section) => {
     if (section.dataset.optionalSectionWrapped === "1") return;
 
     const header = section.querySelector(":scope > .form-section-header");
@@ -1634,23 +2111,24 @@ function wrapOptionalRoadmapSections() {
     const titleText = (titleEl?.textContent || "Section").replace(/\s*\(optional\)\s*/i, "").trim();
     const subtitle = (hintEl?.textContent || section.getAttribute("data-optional-subtitle") || "").trim();
 
-    const details = document.createElement("details");
-    details.className = "roadmap-optional-disclosure roadmap-optional-section-details";
-    details.dataset.optionalSection = section.id || "";
-    details.dataset.optionalKind = "section";
+    const disclosure = document.createElement("div");
+    disclosure.className = "roadmap-optional-disclosure roadmap-optional-section-details";
+    disclosure.dataset.roadmapSectionRef = section.id || "";
+    disclosure.dataset.optionalKind = "section";
 
-    const summary = buildOptionalDisclosureSummary(titleText, {
+    const trigger = buildOptionalDisclosureSummary(titleText, {
       kind: "section",
       subtitle
     });
 
     const body = document.createElement("div");
     body.className = "roadmap-optional-section-body";
+    body.hidden = true;
     contentNodes.forEach((contentNode) => body.appendChild(contentNode));
 
-    details.appendChild(summary);
-    details.appendChild(body);
-    header.replaceWith(details);
+    disclosure.appendChild(trigger);
+    disclosure.appendChild(body);
+    header.replaceWith(disclosure);
     section.dataset.optionalSectionWrapped = "1";
     section.classList.add("roadmap-optional-section-host");
   });
@@ -1668,6 +2146,7 @@ function ensureRoadmapOptionalDisclosures() {
     ensureRoadmapKanoAxisMeters();
     ensureRoadmapKanoLegend();
     ensureRoadmapKanoMatrixMounted();
+    refreshRoadmapOptionalDisclosureBindings(roadmapForm);
     roadmapForm.dataset.optionalDisclosuresReady = "1";
   } catch (err) {
     console.error("Optional roadmap disclosures failed to initialize:", err);
@@ -1757,6 +2236,9 @@ function roadmapOptionalSectionHasData(sectionId) {
       return true;
     }
     return false;
+  }
+  if (sectionId === "roadmapModalSectionSummary") {
+    return !!(elements.roadmapSummaryOutput && !elements.roadmapSummaryOutput.hidden);
   }
   if (sectionId === "roadmapModalSectionRaci") {
     const rows = document.querySelectorAll("#roadmapModalSectionRaci .roadmap-raci-row");
@@ -2107,13 +2589,13 @@ function getRoadmapKanoCompactCodeLabel(zoneId) {
 
 function ensureRoadmapKanoMatrixMounted() {
   const host = elements.roadmapKanoMatrix || $("roadmapKanoMatrix");
-  if (!host || host.dataset.kanoVersion === "9") return;
+  if (!host || host.dataset.kanoVersion === "11") return;
   if (typeof kanoFunctionalityLevels === "undefined" || typeof kanoSatisfactionLevels === "undefined") {
     return;
   }
 
-  host.dataset.kanoVersion = "9";
-  host.classList.add("roadmap-kano-matrix-host--v9");
+  host.dataset.kanoVersion = "11";
+  host.classList.add("roadmap-kano-matrix-host--v11");
   host.innerHTML = "";
 
   const band = document.createElement("div");
@@ -2196,10 +2678,7 @@ function ensureRoadmapKanoMatrixMounted() {
 
       const zoneTag = document.createElement("span");
       zoneTag.className = "roadmap-kano-matrix-cell__zone-tag";
-      if (category && typeof kanoCategoryLegend !== "undefined") {
-        const legendEntry = kanoCategoryLegend.find((entry) => entry.id === category.id);
-        zoneTag.textContent = legendEntry && legendEntry.hint ? legendEntry.hint : category.label;
-      }
+      fillRoadmapKanoZoneTag(zoneTag, zoneId);
       cell.appendChild(zoneTag);
 
       cell.appendChild(buildRoadmapKanoCellGlyph(zoneId));
@@ -2314,6 +2793,24 @@ function ensureRoadmapKanoMatrixMounted() {
       if (elements.roadmapKanoFunctionalitySelect) elements.roadmapKanoFunctionalitySelect.focus();
     });
   }
+}
+
+function fillRoadmapKanoZoneTag(zoneTag, zoneId) {
+  if (!zoneTag) return;
+  const entry =
+    typeof kanoCategoryLegend !== "undefined"
+      ? kanoCategoryLegend.find((row) => row.id === zoneId)
+      : null;
+  zoneTag.replaceChildren();
+  if (!entry) return;
+  const labelEl = document.createElement("span");
+  labelEl.className = "roadmap-kano-matrix-cell__zone-label";
+  labelEl.textContent = entry.label;
+  const hintEl = document.createElement("span");
+  hintEl.className = "roadmap-kano-matrix-cell__zone-hint";
+  hintEl.textContent = entry.hint;
+  zoneTag.appendChild(labelEl);
+  zoneTag.appendChild(hintEl);
 }
 
 function syncRoadmapKanoAxisLabelHighlight(functionality, satisfaction) {
@@ -2462,34 +2959,32 @@ function getRoadmapKanoFromControls() {
   return { kanoFunctionality: f, kanoSatisfaction: s };
 }
 
-function syncRoadmapOptionalDisclosureState(detailsEl, hasData, resetCollapsed) {
-  if (!detailsEl) return;
+function syncRoadmapOptionalDisclosureState(disclosureEl, hasData, resetCollapsed) {
+  if (!disclosureEl) return;
   if (resetCollapsed) {
-    detailsEl.open = !!hasData;
+    setRoadmapOptionalDisclosureOpen(disclosureEl, !!hasData);
   }
-  detailsEl.classList.toggle("roadmap-optional--has-data", !!hasData);
-  syncRoadmapOptionalDisclosureAria(detailsEl);
+  disclosureEl.classList.toggle("roadmap-optional--has-data", !!hasData);
+  syncRoadmapOptionalDisclosureAria(disclosureEl);
 }
 
-function syncRoadmapOptionalDisclosureAria(detailsEl) {
-  if (!detailsEl) return;
-  const summary = detailsEl.querySelector("summary");
-  if (!summary) return;
-  const titleEl = summary.querySelector(
-    ".roadmap-optional-field-summary-title, .roadmap-optional-section-title, .form-section-title"
+function syncRoadmapOptionalDisclosureAria(disclosureEl) {
+  if (!disclosureEl) return;
+  const trigger = findRoadmapOptionalDisclosureTrigger(disclosureEl);
+  if (!trigger) return;
+  const titleEl = trigger.querySelector(
+    ".roadmap-optional-field-summary-title, .roadmap-optional-section-title, .form-section-title, .roadmap-tasks-summary-title"
   );
   const name = titleEl ? titleEl.textContent.trim() : "section";
-  summary.setAttribute("aria-expanded", detailsEl.open ? "true" : "false");
-  summary.setAttribute("aria-label", detailsEl.open ? `Collapse ${name}` : `Expand ${name}`);
+  const open = isRoadmapOptionalDisclosureOpen(disclosureEl);
+  trigger.setAttribute("aria-expanded", open ? "true" : "false");
+  trigger.setAttribute("aria-label", open ? `Collapse ${name}` : `Expand ${name}`);
 }
 
 function expandOptionalRoadmapSection(sectionEl) {
   if (!sectionEl) return;
-  const details = sectionEl.querySelector(":scope > .roadmap-optional-section-details");
-  if (details) {
-    details.open = true;
-    syncRoadmapOptionalDisclosureAria(details);
-  }
+  const disclosure = sectionEl.querySelector(":scope > .roadmap-optional-section-details");
+  if (disclosure) toggleRoadmapOptionalDisclosure(disclosure, true);
 }
 
 function forceRoadmapModalSectionOpen(sectionId) {
@@ -2508,7 +3003,7 @@ function syncRoadmapOptionalDisclosures({ resetCollapsed = false, forceOpenSecti
   });
 
   roadmapForm.querySelectorAll(".roadmap-optional-section-details").forEach((detailsEl) => {
-    const sectionId = detailsEl.dataset.optionalSection;
+    const sectionId = detailsEl.dataset.roadmapSectionRef;
     const forceOpen = sectionId && forceOpenSet.has(sectionId);
     syncRoadmapOptionalDisclosureState(
       detailsEl,
@@ -2516,8 +3011,7 @@ function syncRoadmapOptionalDisclosures({ resetCollapsed = false, forceOpenSecti
       resetCollapsed && !forceOpen
     );
     if (forceOpen) {
-      detailsEl.open = true;
-      syncRoadmapOptionalDisclosureAria(detailsEl);
+      toggleRoadmapOptionalDisclosure(detailsEl, true);
     }
   });
 
@@ -2958,6 +3452,7 @@ async function init() {
   initPortfolioWorkspace();
   initCloudStorageModal();
   initByokApiKeysModal();
+  initRoadmapSummaryControls();
   initBlockingModalGuards();
   registerAppOverlays();
 
@@ -3309,6 +3804,15 @@ function cacheElements() {
   elements.roadmapMetaFinancialEur = $("roadmapMetaFinancialEur");
   elements.roadmapMetaExchangeRate = $("roadmapMetaExchangeRate");
   elements.roadmapModalFooterMetaDetails = $("roadmapModalFooterMetaDetails");
+  elements.roadmapModalSectionSummary = $("roadmapModalSectionSummary");
+  elements.roadmapSummaryGenerateBtn = $("roadmapSummaryGenerateBtn");
+  elements.roadmapSummaryStatus = $("roadmapSummaryStatus");
+  elements.roadmapSummaryOutput = $("roadmapSummaryOutput");
+  elements.roadmapSummaryToneToggle = $("roadmapSummaryToneToggle");
+  elements.roadmapSummaryToneToggleButtons = $("roadmapSummaryToneToggleButtons");
+  elements.roadmapSummaryParagraph1 = $("roadmapSummaryParagraph1");
+  elements.roadmapSummaryParagraph2 = $("roadmapSummaryParagraph2");
+  elements.roadmapSummaryParagraph3 = $("roadmapSummaryParagraph3");
 
   elements.exportDataBtn = $("exportDataBtn");
   elements.importDataBtn = $("importDataBtn");
@@ -4010,32 +4514,7 @@ function attachEventListeners() {
         scheduleRoadmapTasksDisclosureSync();
       }
     });
-    elements.roadmapForm.addEventListener("toggle", (event) => {
-      const target = event.target;
-      if (
-        target instanceof HTMLDetailsElement &&
-        (target.classList.contains("roadmap-optional-field-details") ||
-          target.classList.contains("roadmap-optional-section-details") ||
-          target.classList.contains("roadmap-optional-disclosure") ||
-          target.classList.contains("roadmap-tasks-disclosure"))
-      ) {
-        syncRoadmapOptionalDisclosureAria(target);
-        if (target.classList.contains("roadmap-tasks-disclosure")) {
-          syncRoadmapTasksDisclosure();
-          return;
-        }
-        if (target.classList.contains("roadmap-optional-field-details")) {
-          const wrap = target.closest(".roadmap-field-tooltip-wrap");
-          target.classList.toggle("roadmap-optional--has-data", roadmapOptionalFieldHasData(wrap));
-        } else {
-          const sectionId = target.dataset.optionalSection;
-          target.classList.toggle(
-            "roadmap-optional--has-data",
-            sectionId ? roadmapOptionalSectionHasData(sectionId) : false
-          );
-        }
-      }
-    });
+    refreshRoadmapOptionalDisclosureBindings(elements.roadmapForm);
   }
 
   if (elements.profileEditCancelBtn) {
@@ -7077,6 +7556,17 @@ function addRoadmapLinkRow(link) {
 
 function getRoadmapLinksFromControls() {
   if (!elements.roadmapLinksContainer) return { links: [], error: null };
+  const readonlyCards = elements.roadmapLinksContainer.querySelectorAll(".roadmap-link-card");
+  if (readonlyCards.length) {
+    const links = [];
+    readonlyCards.forEach((card) => {
+      const anchor = card.querySelector(".roadmap-link-card__title");
+      const label = (anchor?.textContent || "").trim();
+      const url = normalizeRoadmapLinkUrl(anchor?.getAttribute("href") || anchor?.href || "");
+      if (label && url) links.push({ label, url });
+    });
+    return { links: normalizeRoadmapLinks(links), error: null };
+  }
   const rows = elements.roadmapLinksContainer.querySelectorAll(".roadmap-link-row");
   const links = [];
   for (const row of rows) {
@@ -7149,9 +7639,9 @@ function getRoadmapTasksSnapshotForProgress() {
   return [];
 }
 
-function shouldShowRoadmapTasksProgress(detailsEl, breakdown) {
-  if (!detailsEl || !breakdown.total) return false;
-  if (roadmapModalMode === "view") return !detailsEl.open;
+function shouldShowRoadmapTasksProgress(disclosureEl, breakdown) {
+  if (!disclosureEl || !breakdown.total) return false;
+  if (roadmapModalMode === "view") return !isRoadmapOptionalDisclosureOpen(disclosureEl);
   return true;
 }
 
@@ -7286,31 +7776,25 @@ function renderRoadmapTaskProgressSummary(detailsEl, breakdown) {
   });
 }
 
-function syncRoadmapTasksDisclosureAria(detailsEl) {
-  if (!detailsEl) return;
-  const summary = detailsEl.querySelector("summary");
-  if (!summary) return;
-  const titleEl = summary.querySelector(".roadmap-tasks-summary-title");
-  const name = titleEl ? titleEl.textContent.trim() : "Tasks";
-  summary.setAttribute("aria-expanded", detailsEl.open ? "true" : "false");
-  summary.setAttribute("aria-label", detailsEl.open ? `Collapse ${name}` : `Expand ${name}`);
+function syncRoadmapTasksDisclosureAria(disclosureEl) {
+  syncRoadmapOptionalDisclosureAria(disclosureEl);
 }
 
 function syncRoadmapTasksDisclosure({ resetCollapsed = false } = {}) {
   const wrap =
     document.querySelector("[data-roadmap-tasks-collapsible]") || elements.roadmapTasksCollapsibleWrap;
   if (!wrap) return;
-  const detailsEl = wrap.querySelector(".roadmap-tasks-disclosure");
-  if (!detailsEl) return;
+  const disclosureEl = wrap.querySelector(".roadmap-tasks-disclosure");
+  if (!disclosureEl) return;
 
   if (resetCollapsed) {
-    detailsEl.open = false;
+    setRoadmapOptionalDisclosureOpen(disclosureEl, false);
   }
 
   const breakdown = computeRoadmapTaskStatusBreakdown(getRoadmapTasksSnapshotForProgress());
-  detailsEl.classList.toggle("roadmap-tasks-disclosure--has-tasks", breakdown.total > 0);
-  renderRoadmapTaskProgressSummary(detailsEl, breakdown);
-  syncRoadmapTasksDisclosureAria(detailsEl);
+  disclosureEl.classList.toggle("roadmap-tasks-disclosure--has-tasks", breakdown.total > 0);
+  renderRoadmapTaskProgressSummary(disclosureEl, breakdown);
+  syncRoadmapTasksDisclosureAria(disclosureEl);
 }
 
 function scheduleRoadmapTasksDisclosureSync() {
@@ -7336,12 +7820,13 @@ function wrapRoadmapTasksField(wrap) {
   const hintEl = wrap.querySelector(":scope > .roadmap-dynamic-field-hint");
   const subtitle = hintEl ? hintEl.textContent.trim() : "";
 
-  const details = document.createElement("details");
-  details.className = "roadmap-tasks-disclosure roadmap-optional-disclosure";
-  details.open = false;
+  const disclosure = document.createElement("div");
+  disclosure.className = "roadmap-tasks-disclosure roadmap-optional-disclosure";
 
-  const summary = document.createElement("summary");
-  summary.className = "roadmap-tasks-disclosure-summary roadmap-optional-field-summary";
+  const trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className =
+    "roadmap-tasks-disclosure-summary roadmap-optional-field-summary roadmap-optional-disclosure-trigger";
 
   const row = document.createElement("div");
   row.className = "roadmap-optional-summary-row roadmap-tasks-summary-row";
@@ -7393,11 +7878,15 @@ function wrapRoadmapTasksField(wrap) {
   progressWrap.appendChild(barEl);
   progressWrap.appendChild(legendEl);
 
-  summary.appendChild(row);
-  summary.appendChild(progressWrap);
+  trigger.appendChild(row);
+  trigger.appendChild(progressWrap);
+  trigger.setAttribute("aria-expanded", "false");
+  trigger.setAttribute("aria-label", `Expand ${titleText}`);
+  bindRoadmapOptionalDisclosureTrigger(trigger);
 
   const body = document.createElement("div");
   body.className = "roadmap-tasks-disclosure-body roadmap-optional-field-body";
+  body.hidden = true;
 
   Array.from(wrap.childNodes).forEach((child) => {
     if (child === labelEl) return;
@@ -7405,9 +7894,9 @@ function wrapRoadmapTasksField(wrap) {
   });
 
   labelEl.remove();
-  details.appendChild(summary);
-  details.appendChild(body);
-  wrap.appendChild(details);
+  disclosure.appendChild(trigger);
+  disclosure.appendChild(body);
+  wrap.appendChild(disclosure);
   wrap.dataset.tasksDisclosureWrapped = "1";
 }
 
@@ -7618,6 +8107,23 @@ function getRoadmapRaciFromControls() {
   RACI_ROLES.forEach((role) => {
     const container = getRoadmapRaciContainer(role);
     if (!container) return;
+    const cards = container.querySelectorAll(".roadmap-raci-card");
+    if (cards.length) {
+      cards.forEach((card) => {
+        const name = (card.querySelector(".roadmap-raci-card__name")?.textContent || "").trim();
+        const domainEl = card.querySelector(".roadmap-raci-card__domain");
+        const domainRaw = domainEl
+          ? domainEl.dataset.domain || domainEl.textContent || ""
+          : "";
+        if (!name) return;
+        raci[role].push({
+          name,
+          domain: normalizeRaciDomain(domainRaw)
+        });
+      });
+      raci[role] = normalizeRaciEntries(raci[role]);
+      return;
+    }
     const rows = container.querySelectorAll(".roadmap-raci-row");
     rows.forEach((row) => {
       const name = (row.querySelector(".roadmap-raci-name-input")?.value || "").trim();
@@ -8223,12 +8729,12 @@ function syncPortfolioKanoLegendFilter() {
 
 function ensurePortfolioKanoMatrixMounted() {
   const host = elements.portfolioKanoMatrix;
-  if (!host || host.dataset.kanoVersion === "6") return;
+  if (!host || host.dataset.kanoVersion === "7") return;
   if (typeof kanoFunctionalityLevels === "undefined" || typeof kanoSatisfactionLevels === "undefined") {
     return;
   }
 
-  host.dataset.kanoVersion = "6";
+  host.dataset.kanoVersion = "7";
   host.innerHTML = "";
 
   const shell = document.createElement("div");
@@ -8961,7 +9467,7 @@ function renderKanoPortfolioMatrix() {
   });
 
   const host = elements.portfolioKanoMatrix;
-  if (!host || host.dataset.kanoVersion !== "6") {
+  if (!host || host.dataset.kanoVersion !== "7") {
     renderKanoPortfolioEmptyMessage("KANO matrix could not be initialized.");
     return;
   }
@@ -9164,19 +9670,7 @@ function addRoadmapTaskRow(task) {
 }
 
 function getRoadmapTasksFromControls() {
-  if (!elements.roadmapTasksContainer) return [];
-  const rows = elements.roadmapTasksContainer.querySelectorAll(".roadmap-task-row");
-  const tasks = [];
-  rows.forEach((row) => {
-    const name = (row.querySelector(".roadmap-task-name-input")?.value || "").trim();
-    const statusRaw = row.querySelector(".roadmap-task-status-select")?.value || "";
-    if (!name) return;
-    tasks.push({
-      name,
-      status: normalizeRoadmapTaskStatus(statusRaw)
-    });
-  });
-  return normalizeRoadmapTasks(tasks);
+  return normalizeRoadmapTasks(getRoadmapTasksSnapshotForProgress());
 }
 
 /** Preserves password hashes, drag order maps, and forward-compatible profile fields on load. */
@@ -14420,9 +14914,25 @@ function buildRoadmapTableCardBadges(roadmap, groupBy) {
   }
 
   if (roadmap.roadmapType && groupBy !== "roadmapType") {
+    const typeMeta = roadmapTypeIcons && roadmapTypeIcons[roadmap.roadmapType];
     const typeChip = document.createElement("span");
     typeChip.className = "roadmaps-table-card__chip roadmaps-table-card__chip--type";
-    typeChip.textContent = roadmap.roadmapType;
+    typeChip.setAttribute("aria-label", roadmap.roadmapType);
+    typeChip.dataset.iconKind = "type";
+    typeChip.dataset.type = roadmap.roadmapType;
+    if (typeMeta && typeMeta.svg) {
+      typeChip.classList.add(
+        "roadmaps-table-card__chip--type-icon",
+        "cell-type-icon-wrap",
+        "cell-type-pill"
+      );
+      typeChip.setAttribute("role", "img");
+      typeChip.setAttribute("tabindex", "0");
+      typeChip.innerHTML = typeMeta.svg;
+      appendIconMetaTooltip(typeChip, typeMeta);
+    } else {
+      typeChip.textContent = roadmap.roadmapType;
+    }
     candidates.push({ priority: 3, label: roadmap.roadmapType, el: typeChip });
   }
 
@@ -18433,6 +18943,8 @@ function openRoadmapModal(mode, roadmapId, options = {}) {
   });
   syncRoadmapTasksDisclosure({ resetCollapsed: true });
   syncRoadmapModalFooterMetaDetails({ resetCollapsed: true });
+  resetRoadmapSummaryUi();
+  syncRoadmapSummarySectionVisibility(isView);
   activateBlockingModal(elements.roadmapModal, "roadmapModal");
   elements.roadmapModal.classList.toggle("roadmap-modal--view", isView);
   if (!isView && !options.scrollToSection) {
@@ -18507,6 +19019,8 @@ function closeRoadmapModal({ immediate = false } = {}) {
   if (elements.roadmapModal) {
     elements.roadmapModal.classList.remove("roadmap-modal--view");
   }
+  syncRoadmapSummarySectionVisibility(false);
+  resetRoadmapSummaryUi();
   setRichDescriptionFieldsReadonly(false);
   editingRoadmapId = null;
 }

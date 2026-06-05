@@ -269,8 +269,9 @@
 .roadmap-details-tooltip__rich blockquote {
   margin: 0.1rem 0 0;
   padding: 0.25rem 0.45rem;
-  border-left: 2px solid rgba(234, 88, 12, 0.45);
-  background: rgba(254, 243, 199, 0.35);
+  border: 1px solid rgba(202, 138, 4, 0.2);
+  border-radius: 6px;
+  background: rgba(254, 243, 199, 0.28);
   font-style: italic;
   color: #57534e;
 }

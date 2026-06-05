@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-05-28 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui192` |
+| **Last updated** | 2026-06-06 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260606-ui193` |
 
 The app is a **static UI** plus **Vercel serverless API** routes under `/api`. Portfolio data is stored in **MongoDB Atlas** when `MONGODB_URI` is configured; the browser keeps a **local cache** for faster reload and offline fallback.
 
@@ -12,11 +12,11 @@ The app is a **static UI** plus **Vercel serverless API** routes under `/api`. P
 | Layer | Responsibility |
 |--------|----------------|
 | **Vercel CDN** | Host `index.html`, `css/`, `src/` at repo root |
-| **Vercel Functions** | `GET /api/health`, `GET/PUT /api/state` → MongoDB |
+| **Vercel Functions** | `GET /api/health`, `GET/PUT /api/state` → MongoDB; `POST /api/byok/validate-*` for BYOK key checks |
 | **MongoDB Atlas** | Primary workspace document (`workspaces` collection) |
-| **Browser** | UI logic; `sessionStorage` for profile unlock + API key; `localStorage` cache when cloud is active |
+| **Browser** | UI logic; `sessionStorage` for profile unlock; `localStorage` for workspace cache + encrypted BYOK keys (`pm_byok_v1`, separate from cloud) |
 | **Persistence** | Full workspace JSON (`profiles`, UI prefs, exchange rates) under `STORAGE_KEY`; cloud mirror at `PUT /api/state` when `MONGODB_URI` is set |
-| **External APIs** | Exchange rates, map tiles, GeoJSON |
+| **External APIs** | Exchange rates, map tiles, GeoJSON; **Groq** + **Tavily** (client-side BYOK only; allowed in CSP `connect-src`) |
 
 ## Required environment variables (Vercel)
 
@@ -71,6 +71,8 @@ https://YOUR_DOMAIN/?pm_api_key=YOUR_PM_API_SECRET
 4. On each change, state is written to `localStorage` (cache) and debounced to `PUT /api/state`.
 
 Profile passwords remain **hashed in the payload** (PBKDF2); unlock state stays in **sessionStorage** only.
+
+**BYOK API keys** (Groq/Tavily) are encrypted in `localStorage` (`pm_byok_v1`) on the client only — never in MongoDB or workspace export. Validation uses `POST /api/byok/validate-groq` and `POST /api/byok/validate-tavily` (key sent only during explicit user validation). LLM inference and Tavily calls run **from the browser**; `vercel.json` CSP `connect-src` must include `https://api.groq.com` and `https://api.tavily.com`.
 
 ## Local development
 

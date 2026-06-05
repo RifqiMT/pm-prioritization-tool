@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Document owner** | Product Team |
-| **Last audited** | 2026-05-28 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui192` |
+| **Last audited** | 2026-06-06 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260606-ui193` |
 
 ---
 
@@ -200,6 +200,22 @@ flowchart LR
 - Desktop supports drag-and-drop between matrix cells to update scores; compact uses per-card score controls.
 - Workspace preference `kanoPortfolioPanel` persists active sub-panel (`positioned` | `unpositioned`).
 
+### 4.8 BYOK API keys (optional)
+
+- Module: `src/modules/byok-api-keys.js` (`ByokApiKeys` global).
+- Providers: **Groq** (LLM) and **Tavily** (search/extract).
+- Storage: encrypted in `localStorage` keys `pm_byok_v1` + `pm_byok_device_salt_v1` — **excluded** from workspace export and MongoDB.
+- Validation: serverless routes `api/byok/validate-groq.js` and `validate-tavily.js` using `api/_lib/byok-validate.js`.
+- UI: header **API keys** button with status dot; modal with per-provider 3-step workflow (paste → validate → save).
+
+### 4.9 LLM roadmap analysis (optional)
+
+- Module: `src/modules/roadmap-llm-summary.js` (`RoadmapLlmSummary` global).
+- Trigger: **Generate LLM analysis** in roadmap modal Summary section (requires both BYOK keys).
+- Pipeline: build context from roadmap fields → Tavily extract on links (max 3) + optional search → Groq synthesis into **three paragraphs**.
+- Tones: **Professional** (default) and **Simplified** (toggle after generation).
+- Output is **session-only** — not stored on `roadmap` entity or in cloud workspace document.
+
 ---
 
 ## 5. Technical architecture (summary)
@@ -208,10 +224,10 @@ See [ARCHITECTURE.md](ARCHITECTURE.md).
 
 | Layer | Technology |
 |-------|------------|
-| UI | `index.html`, 31 layered CSS files |
+| UI | `index.html`, 33 layered CSS files |
 | Logic | `src/app.js`, `src/rice.js`, `src/constants.js`, `src/utils.js` |
-| Modules | `storage`, `profile-security`, `exchange-rates`, `fullscreen`, `overlay-manager`, `description-format`, `rich-text-editor`, `board-drag`, `board-card-interaction`; dev seed: `dev-seed-workspace.js` (localhost only) |
-| API | `api/health.js`, `api/config.js`, `api/state.js` |
+| Modules | `storage`, `profile-security`, `exchange-rates`, `fullscreen`, `overlay-manager`, `description-format`, `rich-text-editor`, `board-drag`, `board-card-interaction`, `byok-api-keys`, `roadmap-llm-summary`; dev seed: `dev-seed-workspace.js` (localhost only) |
+| API | `api/health.js`, `api/config.js`, `api/state.js`, `api/byok/validate-*.js` |
 | Database | MongoDB Atlas (optional) |
 | Map | Leaflet 1.9.4 (CDN) |
 

@@ -18,7 +18,8 @@
     "test:persistence": "node scripts/test-persistence-keys.js",
     "test:byok": "node scripts/test-byok-encryption.js",
     "test:byok-validate": "node scripts/test-byok-validate.js",
-    "test": "npm run test:storage && npm run test:metadata && npm run test:persistence && npm run test:byok && npm run test:byok-validate"
+    "test:kano": "node scripts/test-kano-zones.js",
+    "test": "npm run test:storage && npm run test:metadata && npm run test:persistence && npm run test:byok && npm run test:byok-validate && npm run test:kano"
   },
   "keywords": [
     "product-management",

@@ -2,7 +2,7 @@
  * Sample workspace for local dev when no persisted data exists (localhost / 127.0.0.1).
  * Loaded before app.js; provides buildDevSeedWorkspacePayload().
  */
-const DEV_SEED_WORKSPACE_VERSION = "20260605";
+const DEV_SEED_WORKSPACE_VERSION = "20260606-kano-v1";
 
 function buildDevSeedWorkspacePayload() {
   const now = new Date().toISOString();
@@ -18,7 +18,7 @@ function buildDevSeedWorkspacePayload() {
       impactValue: 3,
       confidenceValue: 80,
       effortValue: 6,
-      roadmapType: "Feature",
+      roadmapType: "Improvement",
       roadmapStatus: "In Progress",
       moscowCategory: "Must have",
       tshirtSize: "L",
@@ -41,7 +41,7 @@ function buildDevSeedWorkspacePayload() {
       impactValue: 2,
       confidenceValue: 90,
       effortValue: 3,
-      roadmapType: "Platform",
+      roadmapType: "Tech Debt",
       roadmapStatus: "Done",
       moscowCategory: "Must have",
       tshirtSize: "M",
@@ -61,7 +61,7 @@ function buildDevSeedWorkspacePayload() {
       impactValue: 3,
       confidenceValue: 70,
       effortValue: 5,
-      roadmapType: "Feature",
+      roadmapType: "New Product",
       roadmapStatus: "In Progress",
       moscowCategory: "Should have",
       tshirtSize: "L",
@@ -81,11 +81,13 @@ function buildDevSeedWorkspacePayload() {
       impactValue: 1,
       confidenceValue: 85,
       effortValue: 4,
-      roadmapType: "Feature",
+      roadmapType: "Improvement",
       roadmapStatus: "Not Started",
       moscowCategory: "Should have",
       tshirtSize: "M",
       roadmapPeriod: "2026-Q3",
+      kanoFunctionality: 3,
+      kanoSatisfaction: 4,
       countries: ["Canada"],
       labels: ["UX"]
     },
@@ -99,11 +101,13 @@ function buildDevSeedWorkspacePayload() {
       impactValue: 3,
       confidenceValue: 60,
       effortValue: 8,
-      roadmapType: "Platform",
+      roadmapType: "New Product",
       roadmapStatus: "On Hold",
       moscowCategory: "Could have",
       tshirtSize: "XL",
       roadmapPeriod: "2026-Q4",
+      kanoFunctionality: 3,
+      kanoSatisfaction: 3,
       countries: ["United States"],
       labels: ["Enterprise", "Security"]
     },
@@ -117,12 +121,12 @@ function buildDevSeedWorkspacePayload() {
       impactValue: 2,
       confidenceValue: 45,
       effortValue: 13,
-      roadmapType: "Feature",
+      roadmapType: "New Product",
       roadmapStatus: "Not Started",
       moscowCategory: "Could have",
       tshirtSize: "XL",
       roadmapPeriod: "2026-Q4",
-      kanoFunctionality: 5,
+      kanoFunctionality: 2,
       kanoSatisfaction: 5,
       labels: ["AI", "Experiment"]
     },
@@ -136,7 +140,7 @@ function buildDevSeedWorkspacePayload() {
       impactValue: 2,
       confidenceValue: 75,
       effortValue: 2,
-      roadmapType: "Tech debt",
+      roadmapType: "Tech Debt",
       roadmapStatus: "In Progress",
       moscowCategory: "Must have",
       tshirtSize: "S",
@@ -155,7 +159,7 @@ function buildDevSeedWorkspacePayload() {
       impactValue: 0.5,
       confidenceValue: 95,
       effortValue: 1,
-      roadmapType: "Maintenance",
+      roadmapType: "Tech Debt",
       roadmapStatus: "Cancelled",
       moscowCategory: "Won't have",
       tshirtSize: "XS",

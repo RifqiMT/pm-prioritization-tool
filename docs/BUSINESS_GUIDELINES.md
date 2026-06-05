@@ -4,7 +4,7 @@ Guidelines for teams using the Product Management Prioritization Tool in plannin
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-05-28 |
+| **Last updated** | 2026-06-06 |
 | **Audience** | Product managers, delivery leads, portfolio stakeholders |
 
 ---
@@ -173,6 +173,13 @@ Use **Business** domain for product/commercial stakeholders and **Tech** for eng
 | **Satisfaction** | 1–5 (Very dissatisfied → Delighted) | How customers respond when the capability exists |
 
 Scores drive category placement (Attractive, One-dimensional, Must-be, Indifferent, Reverse) per `kanoCategoryLegend` in `constants.js`. Use KANO for **portfolio classification**, not as a replacement for RICE priority.
+
+### LLM roadmap analysis (optional)
+
+- Requires user-owned **Groq** and **Tavily** API keys (BYOK) — not included in workspace subscription or MongoDB.
+- Use for **draft briefings** before exec reviews; always human-review before external distribution.
+- Summaries incorporate roadmap fields, optional Tavily link extraction, and limited web search — treat as **assistive**, not authoritative prioritization.
+- Generated text is **not stored** in the portfolio export; regenerate as needed per session.
 
 ---
 

@@ -9,7 +9,7 @@
 const STORAGE_KEY = "rice_prioritizer_v1";
 
 /** Bump when shipping client changes so browsers fetch fresh JS (Vercel caches /src with long TTL). */
-const APP_ASSET_VERSION = "20260528-ui192";
+const APP_ASSET_VERSION = "20260606-ui193";
 
 /**
  * Viewports at or below this width use the unified phone/tablet UI
@@ -169,7 +169,7 @@ const kanoCategoryLegend = [
     categoryCode: "A",
     hintCode: "D",
     description:
-      "This position suggests a delighter. Users are highly satisfied even though functionality is still limited, which can signal unexpected value or a feature that stands out.",
+      "High satisfaction relative to functionality — users are delighted even when capability is still limited. Typical of unexpected strengths and delighters.",
     detail:
       "Delighters are features people do not expect but enjoy when they appear. They are usually not required for the product to work, yet they create strong positive feelings and can help differentiate your offer. Use this zone to identify ideas worth promoting when you want to surprise customers and build emotional loyalty."
   },
@@ -181,7 +181,7 @@ const kanoCategoryLegend = [
     categoryCode: "O",
     hintCode: "P",
     description:
-      "This position reflects a performance driver. As functionality improves, satisfaction tends to rise as well, so users likely judge this area on how capably the product delivers.",
+      "Strong functionality paired with strong satisfaction — performance drivers where more capability tends to increase customer approval.",
     detail:
       "One-dimensional features behave like performance drivers. The more you deliver, the more satisfied users typically become, and falling short is often noticed quickly. Prioritize steady, visible improvement in this zone when customers compare you on quality, speed, or depth of capability."
   },
@@ -193,7 +193,7 @@ const kanoCategoryLegend = [
     categoryCode: "M",
     hintCode: "B",
     description:
-      "This position reflects baseline expectations. Customers assume this level of capability should exist; meeting it mainly prevents frustration rather than creating excitement.",
+      "Baseline expectations — customers assume this capability should exist; meeting it prevents frustration more than it creates excitement.",
     detail:
       "Must-be features are table stakes. People expect them, notice immediately when they are missing, and rarely celebrate when they are present. Focus on reliable delivery here to avoid dissatisfaction, reduce support burden, and protect trust before investing in standout enhancements elsewhere."
   },
@@ -205,7 +205,7 @@ const kanoCategoryLegend = [
     categoryCode: "R",
     hintCode: "S",
     description:
-      "This position suggests a simplify opportunity. Functionality is relatively high while satisfaction is low, which can mean the experience feels too complex or unnecessary.",
+      "High functionality with low satisfaction — may signal over-engineering, friction, or features that should be simplified or removed.",
     detail:
       "Reverse features can backfire. Adding more capability may confuse, frustrate, or feel redundant, so satisfaction can fall even as functionality grows. Treat this zone as a signal to streamline workflows, remove clutter, or reconsider whether the feature still earns its place in the product."
   },
@@ -217,11 +217,52 @@ const kanoCategoryLegend = [
     categoryCode: "I",
     hintCode: "N",
     description:
-      "This position is largely neutral. At this functionality level, satisfaction is barely affected, so users may not feel a meaningful difference either way.",
+      "Neutral impact — at this functionality level, satisfaction is barely affected, so users may not feel a meaningful difference either way.",
     detail:
       "Indifferent features neither delight nor frustrate most users. They may still support internal or operational needs, but they rarely change how customers feel about the product. Deprioritize extra polish here unless the feature clearly supports a strategic goal, compliance requirement, or dependency for something more important."
   }
 ];
+
+/**
+ * Explicit 5×5 KANO zone map (rows = satisfaction 5→1, cols = functionality 1→5).
+ * Attractive = high satisfaction vs functionality (delighters).
+ * One-dimensional = high F + high S (performance drivers).
+ * Must-be = expected baseline (adequate F, neutral–satisfied S).
+ * Reverse = high F + low S (over-built or unwanted complexity).
+ * Indifferent = low impact on satisfaction at this functionality level.
+ */
+const KANO_ZONE_MATRIX = {
+  5: ["attractive", "attractive", "attractive", "one-dimensional", "one-dimensional"],
+  4: ["attractive", "attractive", "must-be", "one-dimensional", "one-dimensional"],
+  3: ["indifferent", "must-be", "must-be", "indifferent", "indifferent"],
+  2: ["indifferent", "indifferent", "indifferent", "reverse", "reverse"],
+  1: ["indifferent", "indifferent", "reverse", "reverse", "reverse"]
+};
+
+function getKanoLevelMetaFromList(levels, level) {
+  if (!Array.isArray(levels)) return null;
+  const n = Number(level);
+  return levels.find((row) => row.level === n) || null;
+}
+
+function getKanoZoneIdFromPosition(functionality, satisfaction) {
+  const f = Number(functionality);
+  const s = Number(satisfaction);
+  if (!Number.isInteger(f) || !Number.isInteger(s) || f < 1 || f > 5 || s < 1 || s > 5) {
+    return null;
+  }
+  const row = KANO_ZONE_MATRIX[s];
+  return row && row[f - 1] ? row[f - 1] : "indifferent";
+}
+
+function buildKanoCategoryPositionDescription(entry, functionality, satisfaction) {
+  if (!entry) return "";
+  const fMeta = getKanoLevelMetaFromList(kanoFunctionalityLevels, functionality);
+  const sMeta = getKanoLevelMetaFromList(kanoSatisfactionLevels, satisfaction);
+  const fLabel = fMeta ? fMeta.label : `level ${functionality}`;
+  const sLabel = sMeta ? sMeta.label : `level ${satisfaction}`;
+  return `${entry.description} (${fLabel} · ${sLabel})`;
+}
 
 /** Interpretive KANO category from a matrix position (display only; axes are persisted). */
 function getKanoCategoryFromPosition(functionality, satisfaction) {
@@ -230,43 +271,19 @@ function getKanoCategoryFromPosition(functionality, satisfaction) {
   if (!Number.isInteger(f) || !Number.isInteger(s) || f < 1 || f > 5 || s < 1 || s > 5) {
     return null;
   }
-  if (f <= 2 && s >= 4) {
-    return {
-      id: "attractive",
-      label: "Attractive",
-      description:
-        "Your selection sits in the delighter zone. Satisfaction is high relative to functionality, which often marks an unexpected strength or a feature that delivers more emotional value than its scope suggests."
-    };
-  }
-  if (f >= 4 && s >= 4) {
-    return {
-      id: "one-dimensional",
-      label: "One-dimensional",
-      description:
-        "Your selection sits in the performance zone. Stronger functionality aligns with stronger satisfaction, so users are likely to reward further improvement in this area."
-    };
-  }
-  if (f >= 3 && s >= 3 && s <= 4) {
-    return {
-      id: "must-be",
-      label: "Must-be",
-      description:
-        "Your selection sits in the baseline zone. Customers expect this level of capability, so reliable delivery here mainly prevents disappointment rather than creating delight."
-    };
-  }
-  if (f >= 4 && s <= 2) {
-    return {
-      id: "reverse",
-      label: "Reverse",
-      description:
-        "Your selection sits in the simplify zone. Functionality is high while satisfaction is low, which may indicate over-engineering, friction, or features that should be streamlined."
-    };
+  const id = getKanoZoneIdFromPosition(f, s);
+  const entry =
+    typeof kanoCategoryLegend !== "undefined"
+      ? kanoCategoryLegend.find((row) => row.id === id)
+      : null;
+  if (!entry) {
+    return { id, label: id, description: "" };
   }
   return {
-    id: "indifferent",
-    label: "Indifferent",
-    description:
-      "Your selection sits in the neutral zone. At this functionality level, satisfaction is largely unchanged, so additional investment here is unlikely to shift how users feel."
+    id: entry.id,
+    label: entry.label,
+    hint: entry.hint,
+    description: buildKanoCategoryPositionDescription(entry, f, s)
   };
 }
 

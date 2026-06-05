@@ -104,8 +104,9 @@
 .rich-description-content blockquote {
   margin: 0.35rem 0;
   padding: 0.35rem 0.55rem;
-  border-left: 3px solid rgba(234, 88, 12, 0.45);
-  background: rgba(254, 243, 199, 0.35);
+  border: 1px solid rgba(202, 138, 4, 0.2);
+  border-radius: 8px;
+  background: rgba(254, 243, 199, 0.28);
   color: var(--rdc-muted);
   font-style: italic;
 }
@@ -113,5 +114,6 @@
 .roadmap-details-tooltip__rich.rich-description-content blockquote {
   margin-top: 0.18rem;
   padding: 0.25rem 0.45rem;
-  border-left-width: 2px;
+  border: 1px solid rgba(202, 138, 4, 0.2);
+  border-radius: 6px;
 }

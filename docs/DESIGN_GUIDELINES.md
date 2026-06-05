@@ -1,8 +1,8 @@
 # Design Guidelines
 
 **Product:** Product Management Prioritization Tool  
-**Last updated:** 2026-05-28  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260528-ui192`  
+**Last updated:** 2026-06-06  
+**Implementation baseline:** `APP_ASSET_VERSION` = `20260606-ui193`  
 **Layout breakpoint:** `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** (`html.is-compact-layout` + `html.is-phone-layout`)
 
 Visual and interaction standards for the local-first prioritization workspace.
@@ -48,7 +48,24 @@ Visual and interaction standards for the local-first prioritization workspace.
 | `--dt-bg-soft` | `#fffdf8` | Callouts, cards |
 | `--dt-radius` | `18px` | Modal corners (desktop) |
 
-### 2.4 View toolbars (`view-toolbars-modern.css`)
+### 2.4 BYOK modal (`byok-api-keys.css`)
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--byok-text` | `#3f0f19` | Headings |
+| `--byok-text-soft` | `#7a4b12` | Secondary copy |
+| `--byok-accent` | `#b91c1c` | Primary actions |
+| `--byok-green` | `#047857` | Valid/saved status |
+| `--byok-blue` | `#1d4ed8` | Provider accents |
+| `--byok-border` | `rgba(202, 138, 4, 0.35)` | Panel border |
+
+Panel uses cream gradient (`#fffdf8` → `#fffaf0`), 20px radius, max **1120×92vh** — aligned with profile view and roadmap modals.
+
+### 2.5 Rich description content (`rich-description-content.css`)
+
+Typography for sanitized HTML in roadmap descriptions, tooltips, and LLM summary paragraphs: heading scale, list spacing, link color, and empty-state muted text.
+
+### 2.6 View toolbars (`view-toolbars-modern.css`)
 
 | Token | Usage |
 |-------|-------|
@@ -141,8 +158,10 @@ Category badges use `categoryCode` (A/O/M/I/R) on compact cards; desktop matrix 
 | `filters-compact-bar.css` | Compact filters drawer summary bar |
 | `view-toolbars-compact-row.css` | Single-row compact toolbar layout |
 | `portfolio-kano-modern.css` | KANO portfolio matrix, category legend, positioned/unpositioned cards |
+| `byok-api-keys.css` | BYOK API keys modal (Groq/Tavily) |
+| `rich-description-content.css` | Rendered rich-text / summary paragraph typography |
 
-**Load order:** see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) — **31** stylesheets total.
+**Load order:** see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) — **33** stylesheets total.
 
 ### 4.1 Compact layout tokens (`compact-modern.css`)
 

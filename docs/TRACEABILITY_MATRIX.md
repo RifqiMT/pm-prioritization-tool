@@ -2,7 +2,7 @@
 
 **Purpose:** Map PRD requirements to concrete implementation evidence and verification steps.  
 **Standard:** Requirement IDs must remain synchronized with [PRD.md](PRD.md).  
-**Last audited:** 2026-05-28 · **Baseline:** `APP_ASSET_VERSION` = `20260528-ui192`
+**Last audited:** 2026-06-06 · **Baseline:** `APP_ASSET_VERSION` = `20260606-ui193`
 
 ---
 
@@ -106,6 +106,10 @@
 | FR-6 | Filters apply to all views | `applyFilters`; `getPortfolioRoadmapsBaseList` | Table/board/MoSCoW/map/RACI/KANO share filtered set |
 | US-R1 / US-R2 | RACI stories | `renderRaciMatrix`; roadmap modal RACI section | Epic R acceptance |
 | US-S1 / US-S2 | KANO stories | `renderKanoPortfolioMatrix`; `portfolio-kano-modern.css` | Epic S acceptance |
+| FR-11 | BYOK API keys | `byok-api-keys.js`; `api/byok/validate-*`; `byok-api-keys.css` | Keys encrypted locally; not in export/cloud |
+| FR-2.12 | LLM roadmap analysis | `roadmap-llm-summary.js`; Summary section in roadmap modal | Tavily + Groq; session-only output |
+| US-T1 | BYOK configuration story | `ByokApiKeys` modal workflow | Epic T acceptance |
+| US-U1 | LLM summary story | `RoadmapLlmSummary.generate` | Epic U acceptance |
 | FR-6.1.1 | Title substring filter | `filterTitle` | Typing narrows roadmaps |
 | FR-6.1.2 | Title autocomplete | Title listbox in filters drawer | Keyboard navigation; max suggestions |
 | FR-6.1.3 | Label substring filter | `filterLabel` | Matches any label on roadmap |

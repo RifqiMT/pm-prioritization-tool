@@ -8,7 +8,7 @@
 |---|---|
 | **Production** | [pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app) |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui192` (cache-bust all CSS/JS) |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260606-ui193` (cache-bust all CSS/JS) |
 | **Docs hub** | [docs/README.md](docs/README.md) |
 
 > Do not use `pm-prioritization-tool.vercel.app` — that hostname serves a legacy React app. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
@@ -32,6 +32,7 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 | **Portability** | JSON full backup + CSV export; merge import |
 | **Responsive UI** | Desktop (>1400px); unified phone/tablet UI (≤1400px) |
 | **Cloud (optional)** | MongoDB workspace via `/api/state` |
+| **BYOK AI (optional)** | Encrypted local Groq + Tavily API keys; roadmap **LLM analysis** (not synced to cloud) |
 
 ### Product benefits
 
@@ -40,6 +41,7 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 - **Data ownership** — export anytime; merge import; per-browser cache with optional cloud sync  
 - **Planning flexibility** — filter by country, quarter, framework, status, labels, links; map by count, RICE, or EUR  
 - **Meeting-ready on any device** — compact layout uses vertical stacks, FAB, touch-friendly controls, and quadrant nav pills  
+- **Optional AI briefing** — generate a three-paragraph roadmap analysis with Tavily research + Groq synthesis using your own API keys (BYOK)  
 
 ---
 
@@ -64,6 +66,14 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 - Bulk delete in table (toolbar on desktop; **floating selection bar** on compact)  
 - **Bulk duplicate / move** across profiles when privileged workspace mode is active (see [docs/GUARDRAILS.md](docs/GUARDRAILS.md) §7)  
 - Stable **roadmap ID** in modal footer metadata  
+- **LLM analysis** (optional) — Tavily enriches context from roadmap links; Groq (`llama-3.1-8b-instant`) produces professional or simplified three-paragraph summaries; session-only (not stored in MongoDB)
+
+### BYOK API keys (optional)
+
+- Header **API keys** modal stores **Groq** and **Tavily** keys encrypted in `localStorage` (`pm_byok_v1`) on this device only  
+- Keys validated via `/api/byok/validate-groq` and `/api/byok/validate-tavily` (key sent only during explicit validation)  
+- Never included in workspace export or MongoDB sync  
+- Required for **Generate LLM analysis** in the roadmap modal Summary section  
 
 ### Filters
 
@@ -128,9 +138,10 @@ pm-prioritization-tool/
 │   ├── utils.js            # Formatting, CSV, IDs, flags
 │   ├── dev-seed-workspace.js  # Localhost sample workspace (gated)
 │   └── modules/            # storage, profile-security, exchange-rates, fullscreen, overlay-manager,
-│                           # description-format, rich-text-editor, board-drag, board-card-interaction
-├── api/                    # health.js, config.js, state.js + _lib (Vercel)
-├── scripts/                # verify-deployment, test:storage, test:metadata, test:persistence
+│                           # description-format, rich-text-editor, board-drag, board-card-interaction,
+│                           # byok-api-keys, roadmap-llm-summary
+├── api/                    # health, config, state, byok/validate-* + _lib (Vercel)
+├── scripts/                # verify-deployment; test:storage, metadata, persistence, byok, kano
 ├── docs/                   # Product documentation suite
 ├── vercel.json
 └── package.json
@@ -169,6 +180,8 @@ pm-prioritization-tool/
 | `filters-compact-bar.css` | Compact filters drawer bar |
 | `view-toolbars-compact-row.css` | Single-row compact toolbars |
 | `portfolio-kano-modern.css` | KANO portfolio matrix and cards |
+| `byok-api-keys.css` | BYOK API keys modal |
+| `rich-description-content.css` | Rendered rich-text description typography |
 | `app-footer.css` | Site footer |
 
 ### Layout breakpoint
@@ -256,4 +269,4 @@ UNLICENSED (private). See `package.json`.
 - GitHub: [RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool)  
 - Article: [Effort–impact confusion to clear-cut priorities](https://rifqi-tjahyono.com/%f0%9f%93%8a-effort-impact-confusion-to-clear-cut-priorities-replace-tab-hopping-with-visual-roadmap-sanity-%f0%9f%a7%ad%e2%9c%a8/)
 
-**Documentation last comprehensively audited:** 2026-05-28 (baseline `20260528-ui192`).
+**Documentation last comprehensively audited:** 2026-06-06 (baseline `20260606-ui193`).

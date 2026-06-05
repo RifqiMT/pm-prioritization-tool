@@ -413,9 +413,9 @@
   grid-row: 1;
   display: flex;
   align-items: flex-end;
-  justify-content: flex-end;
+  justify-content: center;
   min-width: 0;
-  padding: 0 0.12rem 0.08rem 0;
+  padding: 0 0.08rem 0.08rem;
 }
 
 .portfolio-kano-axis-title {
@@ -431,8 +431,9 @@
   margin: 0;
   padding: 0 0 0.1rem;
   border-bottom: 1px solid rgba(202, 138, 4, 0.14);
-  text-align: right;
+  text-align: center;
   line-height: 1.25;
+  width: 100%;
 }
 
 .portfolio-kano-axis-title--x {
@@ -467,6 +468,19 @@
 .portfolio-kano-axis-label--y[data-level="3"] { grid-column: 1; grid-row: 4; }
 .portfolio-kano-axis-label--y[data-level="2"] { grid-column: 1; grid-row: 5; }
 .portfolio-kano-axis-label--y[data-level="1"] { grid-column: 1; grid-row: 6; }
+
+.portfolio-kano-axis-label--y {
+  justify-content: center;
+  align-items: center;
+  padding: 0.12rem 0.18rem;
+  text-align: center;
+}
+
+.portfolio-kano-axis-label--y .portfolio-kano-axis-label__full {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
 
 .portfolio-kano-axis-label--x {
   justify-content: center;
@@ -505,9 +519,9 @@
   align-self: stretch;
   padding: 0.28rem 0.22rem;
   border-radius: 12px;
-  border: 1px solid rgba(168, 162, 158, 0.22);
+  border: 1px solid rgba(168, 162, 158, 0.28);
   overflow: hidden;
-  background: var(--kano-zone-indifferent-muted);
+  background: #fafaf9;
   transition:
     border-color 0.16s ease,
     box-shadow 0.16s ease,
@@ -516,28 +530,28 @@
 }
 
 .portfolio-kano-matrix-cell--zone-attractive {
-  background: var(--kano-zone-attractive-muted);
-  border-color: rgba(5, 150, 105, 0.22);
+  background: linear-gradient(160deg, rgba(209, 250, 229, 0.95) 0%, rgba(236, 253, 245, 0.88) 100%);
+  border-color: rgba(16, 185, 129, 0.28);
 }
 
 .portfolio-kano-matrix-cell--zone-one-dimensional {
-  background: var(--kano-zone-one-dimensional-muted);
-  border-color: rgba(37, 99, 235, 0.2);
+  background: linear-gradient(160deg, rgba(219, 234, 254, 0.95) 0%, rgba(239, 246, 255, 0.88) 100%);
+  border-color: rgba(59, 130, 246, 0.28);
 }
 
 .portfolio-kano-matrix-cell--zone-must-be {
-  background: var(--kano-zone-must-be-muted);
-  border-color: rgba(217, 119, 6, 0.22);
+  background: linear-gradient(160deg, rgba(254, 243, 199, 0.95) 0%, rgba(255, 251, 235, 0.88) 100%);
+  border-color: rgba(245, 158, 11, 0.3);
 }
 
 .portfolio-kano-matrix-cell--zone-reverse {
-  background: var(--kano-zone-reverse-muted);
-  border-color: rgba(225, 29, 72, 0.2);
+  background: linear-gradient(160deg, rgba(255, 228, 230, 0.95) 0%, rgba(255, 241, 242, 0.88) 100%);
+  border-color: rgba(244, 63, 94, 0.28);
 }
 
 .portfolio-kano-matrix-cell--zone-indifferent {
-  background: var(--kano-zone-indifferent-muted);
-  border-color: rgba(168, 162, 158, 0.24);
+  background: linear-gradient(160deg, rgba(245, 245, 244, 0.98) 0%, rgba(250, 250, 249, 0.92) 100%);
+  border-color: rgba(168, 162, 158, 0.32);
 }
 
 .portfolio-kano-matrix-cell:has(.portfolio-kano-matrix-tile) {
@@ -769,28 +783,28 @@ html.portfolio-kano-drag-active .portfolio-kano-matrix-tile[data-kano-draggable=
 }
 
 .portfolio-kano-compact-group--attractive {
-  border-color: rgba(5, 150, 105, 0.22);
-  background: linear-gradient(180deg, var(--kano-zone-attractive-muted) 0%, #ffffff 42%);
+  border-color: rgba(16, 185, 129, 0.28);
+  background: linear-gradient(180deg, rgba(236, 253, 245, 0.88) 0%, #ffffff 42%);
 }
 
 .portfolio-kano-compact-group--one-dimensional {
-  border-color: rgba(37, 99, 235, 0.2);
-  background: linear-gradient(180deg, var(--kano-zone-one-dimensional-muted) 0%, #ffffff 42%);
+  border-color: rgba(59, 130, 246, 0.28);
+  background: linear-gradient(180deg, rgba(239, 246, 255, 0.88) 0%, #ffffff 42%);
 }
 
 .portfolio-kano-compact-group--must-be {
-  border-color: rgba(217, 119, 6, 0.22);
-  background: linear-gradient(180deg, var(--kano-zone-must-be-muted) 0%, #ffffff 42%);
+  border-color: rgba(245, 158, 11, 0.3);
+  background: linear-gradient(180deg, rgba(255, 251, 235, 0.88) 0%, #ffffff 42%);
 }
 
 .portfolio-kano-compact-group--reverse {
-  border-color: rgba(225, 29, 72, 0.2);
-  background: linear-gradient(180deg, var(--kano-zone-reverse-muted) 0%, #ffffff 42%);
+  border-color: rgba(244, 63, 94, 0.28);
+  background: linear-gradient(180deg, rgba(255, 241, 242, 0.88) 0%, #ffffff 42%);
 }
 
 .portfolio-kano-compact-group--indifferent {
-  border-color: rgba(168, 162, 158, 0.24);
-  background: linear-gradient(180deg, var(--kano-zone-indifferent-muted) 0%, #ffffff 42%);
+  border-color: rgba(168, 162, 158, 0.32);
+  background: linear-gradient(180deg, rgba(250, 250, 249, 0.92) 0%, #ffffff 42%);
 }
 
 .portfolio-kano-compact-group__header {
