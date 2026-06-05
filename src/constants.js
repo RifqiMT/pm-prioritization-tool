@@ -95,6 +95,7 @@ const TABLE_GROUP_BY_OPTIONS = [
   { id: "ownerProfileName", label: "Owner profile" },
   { id: "roadmapStatus", label: "Status" },
   { id: "moscowCategory", label: "MoSCoW" },
+  { id: "kanoModel", label: "KANO model" },
   { id: "tshirtSize", label: "T-shirt size" },
   { id: "financialImpactFramework", label: "Financial framework" },
   { id: "roadmapType", label: "Roadmap type" },

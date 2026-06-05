@@ -58,7 +58,21 @@
   html.is-compact-layout .roadmaps-table-card-group {
     display: flex;
     flex-direction: column;
+    gap: 0;
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group__disclosure {
+    display: flex;
+    flex-direction: column;
     gap: 0.5rem;
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group__disclosure > summary {
+    list-style: none;
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group__disclosure > summary::-webkit-details-marker {
+    display: none;
   }
 
   html.is-compact-layout .roadmaps-table-card-group__header {
@@ -74,6 +88,57 @@
     border: 1px solid rgba(202, 138, 4, 0.2);
     background: linear-gradient(180deg, rgba(255, 251, 242, 0.98), rgba(255, 247, 234, 0.96));
     box-shadow: 0 2px 8px rgba(120, 53, 15, 0.06);
+    cursor: pointer;
+    user-select: none;
+    transition:
+      border-color 0.16s ease,
+      box-shadow 0.16s ease,
+      transform 0.14s ease;
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group__header:hover {
+    border-color: rgba(202, 138, 4, 0.38);
+    box-shadow: 0 4px 12px rgba(120, 53, 15, 0.1);
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group__header:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(180, 83, 9, 0.35);
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group__header-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group__chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(168, 162, 158, 0.28);
+    color: #78716c;
+    font-size: 0.72rem;
+    line-height: 1;
+    font-weight: 800;
+    transition: transform 0.2s ease, color 0.16s ease, background 0.16s ease;
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group__chevron::before {
+    content: "▾";
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group__disclosure:not([open]) .roadmaps-table-card-group__chevron {
+    transform: rotate(-90deg);
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group__disclosure:not([open]) .roadmaps-table-card-group__list {
+    display: none;
   }
 
   html.is-compact-layout .roadmaps-table-card-group__title {
@@ -106,6 +171,62 @@
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group--kano-attractive .roadmaps-table-card-group__header {
+    border-color: rgba(5, 150, 105, 0.28);
+    background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%);
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group--kano-attractive .roadmaps-table-card-group__title {
+    color: #047857;
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group--kano-one-dimensional .roadmaps-table-card-group__header {
+    border-color: rgba(37, 99, 235, 0.24);
+    background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group--kano-one-dimensional .roadmaps-table-card-group__title {
+    color: #1d4ed8;
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group--kano-must-be .roadmaps-table-card-group__header {
+    border-color: rgba(217, 119, 6, 0.28);
+    background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group--kano-must-be .roadmaps-table-card-group__title {
+    color: #b45309;
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group--kano-reverse .roadmaps-table-card-group__header {
+    border-color: rgba(225, 29, 72, 0.24);
+    background: linear-gradient(180deg, #fff1f2 0%, #ffffff 100%);
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group--kano-reverse .roadmaps-table-card-group__title {
+    color: #be123c;
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group--kano-indifferent .roadmaps-table-card-group__header {
+    border-color: rgba(168, 162, 158, 0.28);
+    background: linear-gradient(180deg, #fafaf9 0%, #ffffff 100%);
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group--kano-indifferent .roadmaps-table-card-group__title {
+    color: #57534e;
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group--kano-unpositioned .roadmaps-table-card-group__header {
+    border-color: rgba(79, 70, 229, 0.24);
+    background: linear-gradient(180deg, #eef2ff 0%, #ffffff 100%);
+  }
+
+  html.is-compact-layout .roadmaps-table-card-group--kano-unpositioned .roadmaps-table-card-group__title {
+    color: #4338ca;
+    text-transform: none;
+    letter-spacing: 0.01em;
   }
 
   html.is-compact-layout .roadmaps-table-card {

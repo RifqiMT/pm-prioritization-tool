@@ -3567,6 +3567,7 @@ function initCompactLayoutClass() {
     }
     syncTableGroupByControlsForLayout();
     syncCompactFiltersChrome();
+    hideCellTypeTooltips();
     mountSuperAdminToggleForLayout();
     syncSuperAdminChrome();
     if (elements.roadmapModal?.classList.contains("active")) {
@@ -9784,6 +9785,7 @@ function hideAllTooltipsExcept(keepTooltip) {
       el._ownerWrap = null;
     }
   });
+  refreshCompactTooltipBackdrop();
 }
 
 /** Hide all cell-type tooltips and return any that were moved to body back to their owner. */
@@ -9833,6 +9835,7 @@ function hideTooltipForWrap(wrap) {
     tooltip._ownerWrap = null;
   }
   if (activeTooltipWrap === wrap) activeTooltipWrap = null;
+  refreshCompactTooltipBackdrop();
 }
 
 function scheduleTooltipHoverHide(wrap, delayMs) {
@@ -9859,6 +9862,13 @@ function getCompactTooltipBackdrop() {
   return compactTooltipBackdropEl;
 }
 
+function refreshCompactTooltipBackdrop() {
+  const activeScrollTooltip = document.querySelector(
+    ".cell-type-tooltip.cell-type-tooltip-visible.cell-type-tooltip--scroll"
+  );
+  syncCompactTooltipBackdrop(activeScrollTooltip);
+}
+
 function syncCompactTooltipBackdrop(tooltip) {
   const useBackdrop =
     typeof isCompactLayoutViewport === "function" &&
@@ -9871,8 +9881,7 @@ function syncCompactTooltipBackdrop(tooltip) {
     if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
     return;
   }
-  const root = getTooltipRoot();
-  if (backdrop.parentNode !== root) root.appendChild(backdrop);
+  if (backdrop.parentNode !== document.body) document.body.appendChild(backdrop);
   backdrop.classList.add("compact-tooltip-backdrop--visible");
 }
 
@@ -12102,6 +12111,7 @@ function renderRoadmaps() {
 
 function switchRoadmapsView(view) {
   closePortfolioViewTabsMenu();
+  hideCellTypeTooltips();
   state.roadmapsView = view;
   saveState();
   if (!elements.roadmapsTableView || !elements.roadmapsBoardView) return;
@@ -13993,15 +14003,42 @@ function initTableGroupByControls() {
   }
   elements.tableGroupBySelect.value = state.tableGroupBy;
   syncTableGroupByControlsForLayout();
+  initTableGroupDisclosureControls();
+}
+
+function initTableGroupDisclosureControls() {
+  if (!elements.roadmapsTableCardsList || elements.roadmapsTableCardsList.dataset.groupDisclosureReady === "1") {
+    return;
+  }
+  elements.roadmapsTableCardsList.dataset.groupDisclosureReady = "1";
+  elements.roadmapsTableCardsList.addEventListener(
+    "toggle",
+    (event) => {
+      const details = event.target.closest(".roadmaps-table-card-group__disclosure");
+      if (!details || event.target !== details) return;
+      const summary = details.querySelector("summary.roadmaps-table-card-group__header");
+      if (!summary) return;
+      summary.setAttribute("aria-expanded", details.open ? "true" : "false");
+    },
+    true
+  );
 }
 
 function getTableGroupByUnsetKey() {
   return "__unset__";
 }
 
+const TABLE_GROUP_BY_KANO_UNPOSITIONED_KEY = "__kano_unpositioned__";
+
 function getTableGroupByValue(roadmap, groupBy) {
   if (!roadmap || !groupBy || groupBy === "none") return getTableGroupByUnsetKey();
   switch (groupBy) {
+    case "kanoModel":
+      if (!roadmapHasKanoPosition(roadmap)) return TABLE_GROUP_BY_KANO_UNPOSITIONED_KEY;
+      return getKanoCellZoneId(
+        normalizeKanoAxisLevel(roadmap.kanoFunctionality),
+        normalizeKanoAxisLevel(roadmap.kanoSatisfaction)
+      );
     case "roadmapStatus":
       return (roadmap.roadmapStatus || "").toString().trim() || getTableGroupByUnsetKey();
     case "moscowCategory":
@@ -14025,6 +14062,14 @@ function getTableGroupByValue(roadmap, groupBy) {
 
 function getTableGroupDisplayLabel(rawKey, groupBy) {
   if (rawKey === getTableGroupByUnsetKey()) return "Not set";
+  if (groupBy === "kanoModel") {
+    if (rawKey === TABLE_GROUP_BY_KANO_UNPOSITIONED_KEY) return "Not positioned";
+    if (typeof kanoCategoryLegend !== "undefined") {
+      const entry = kanoCategoryLegend.find((item) => item.id === rawKey);
+      if (entry) return entry.label;
+    }
+    return rawKey;
+  }
   switch (groupBy) {
     case "financialImpactFramework": {
       const meta = FINANCIAL_FRAMEWORK_ICONS[rawKey];
@@ -14083,6 +14128,20 @@ function sortTableGroupKeys(keys, groupBy) {
         return ra - rb;
       })
     );
+  }
+
+  if (groupBy === "kanoModel" && typeof kanoCategoryLegend !== "undefined") {
+    const order = kanoCategoryLegend.map((entry) => entry.id);
+    const unpositioned = TABLE_GROUP_BY_KANO_UNPOSITIONED_KEY;
+    return list.sort((a, b) => {
+      if (a === unpositioned) return 1;
+      if (b === unpositioned) return -1;
+      const ia = order.indexOf(a);
+      const ib = order.indexOf(b);
+      const ra = ia === -1 ? 999 : ia;
+      const rb = ib === -1 ? 999 : ib;
+      return ra - rb;
+    });
   }
 
   return moveUnsetLast(
@@ -14515,6 +14574,7 @@ function buildRoadmapTableCard(roadmap, demoReadOnly, options = {}) {
 
 function renderRoadmapsTableCards(roadmaps, demoReadOnly) {
   if (!elements.roadmapsTableCardsList) return;
+  initTableGroupDisclosureControls();
   elements.roadmapsTableCardsList.innerHTML = "";
   const groupBy = state.tableGroupBy || "none";
   const fragment = document.createDocumentFragment();
@@ -14533,38 +14593,66 @@ function renderRoadmapsTableCards(roadmaps, demoReadOnly) {
     const keys = sortTableGroupKeys(Array.from(buckets.keys()), groupBy);
     keys.forEach((key) => {
       const section = document.createElement("section");
-      section.className = "roadmaps-table-card-group";
+      section.className = "roadmaps-table-card-group roadmaps-table-card-group--expandable";
       section.dataset.groupBy = groupBy;
       section.dataset.groupKey = key;
+      if (groupBy === "kanoModel") {
+        if (key === TABLE_GROUP_BY_KANO_UNPOSITIONED_KEY) {
+          section.classList.add("roadmaps-table-card-group--kano-unpositioned");
+        } else {
+          section.classList.add(`roadmaps-table-card-group--kano-${key}`);
+        }
+      }
 
-      const header = document.createElement("header");
-      header.className = "roadmaps-table-card-group__header";
+      const groupRoadmaps = buckets.get(key) || [];
+      const groupLabel = getTableGroupDisplayLabel(key, groupBy);
 
-      const title = document.createElement("h4");
+      const details = document.createElement("details");
+      details.className = "roadmaps-table-card-group__disclosure";
+      details.open = true;
+
+      const summary = document.createElement("summary");
+      summary.className = "roadmaps-table-card-group__header";
+      summary.setAttribute("aria-expanded", "true");
+      summary.setAttribute(
+        "aria-label",
+        `${groupLabel}, ${groupRoadmaps.length} roadmap${groupRoadmaps.length === 1 ? "" : "s"}. Tap to collapse or expand.`
+      );
+
+      const title = document.createElement("span");
       title.className = "roadmaps-table-card-group__title";
-      title.textContent = getTableGroupDisplayLabel(key, groupBy);
+      title.textContent = groupLabel;
+
+      const headerMeta = document.createElement("span");
+      headerMeta.className = "roadmaps-table-card-group__header-meta";
 
       const count = document.createElement("span");
       count.className = "roadmaps-table-card-group__count";
-      const groupRoadmaps = buckets.get(key) || [];
       count.textContent = String(groupRoadmaps.length);
       count.setAttribute(
         "aria-label",
         groupRoadmaps.length === 1 ? "1 roadmap" : `${groupRoadmaps.length} roadmaps`
       );
 
-      header.appendChild(title);
-      header.appendChild(count);
-      section.appendChild(header);
+      const chevron = document.createElement("span");
+      chevron.className = "roadmaps-table-card-group__chevron";
+      chevron.setAttribute("aria-hidden", "true");
+
+      headerMeta.appendChild(count);
+      headerMeta.appendChild(chevron);
+      summary.appendChild(title);
+      summary.appendChild(headerMeta);
+      details.appendChild(summary);
 
       const list = document.createElement("div");
       list.className = "roadmaps-table-card-group__list";
       list.setAttribute("role", "group");
-      list.setAttribute("aria-label", getTableGroupDisplayLabel(key, groupBy));
+      list.setAttribute("aria-label", groupLabel);
       groupRoadmaps.forEach((roadmap) => {
         list.appendChild(buildRoadmapTableCard(roadmap, demoReadOnly, { groupBy }));
       });
-      section.appendChild(list);
+      details.appendChild(list);
+      section.appendChild(details);
       fragment.appendChild(section);
     });
   }
