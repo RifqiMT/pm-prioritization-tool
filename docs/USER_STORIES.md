@@ -9,6 +9,8 @@
 
 **Purpose:** Epics and user-story contracts with **Given / When / Then** acceptance criteria, including edge cases and error handling.
 
+> Cross-feature logic: [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md) · **22 epics**, **43+ stories**
+
 ---
 
 ## Story template
@@ -150,18 +152,18 @@ Each story includes:
 
 ## Epic D — Multi-view planning
 
-### US-D1 — Switch among table, board, MoSCoW, and map
+### US-D1 — Switch among six portfolio views
 
 - **Persona:** Delivery Lead  
-- **Goal:** Use the right visualization for the meeting.
+- **Goal:** Use the right visualization for the meeting (Table, Board, MoSCoW, Map, RACI, KANO).
 
 **Acceptance criteria**
 
 1. **View toggle**  
    - **Given** an unlocked profile with roadmaps  
-   - **When** the user selects a view tab  
+   - **When** the user selects a view tab (Table, Board, MoSCoW, Map, RACI, or KANO)  
    - **Then** only that view is visible  
-   - **And** filters continue to apply.
+   - **And** filters continue to apply across all six views.
 
 2. **Fullscreen**  
    - **Given** the user enables fullscreen on a view  
@@ -662,17 +664,18 @@ Policy and eligibility: **[GUARDRAILS.md §7](GUARDRAILS.md)** only.
 
 ## Epic N — Rich-text descriptions
 
-### US-N1 — Format roadmap and RICE narratives
+### US-N1 — Format roadmap, Note, and RICE narratives
 
 - **Persona:** Product Manager  
-- **Goal:** Write readable descriptions without leaving the app.
+- **Goal:** Write readable descriptions across six rich-text surfaces without leaving the app.
 
 **Acceptance criteria**
 
 - **Given** the user creates or edits a roadmap  
-- **When** they use bold, lists, or alignment on description fields  
-- **Then** formatting is saved as sanitized HTML  
-- **And** view mode shows formatted text without the editing toolbar.
+- **When** they use bold, lists, or alignment on **Description**, **Note**, or any of the four RICE description fields  
+- **Then** formatting is saved as sanitized HTML (`roadmap.description`, `roadmap.note`, RICE `*Description` fields)  
+- **And** view mode shows formatted text without the editing toolbar  
+- **And** CSV export strips HTML to plain text for all six surfaces.
 
 **Error / edge handling**
 
@@ -878,6 +881,47 @@ Policy and eligibility: **[GUARDRAILS.md §7](GUARDRAILS.md)** only.
 
 ---
 
+## Epic V — 5 Why Framework
+
+### US-V1 — Generate iterative WHY questions in view mode
+
+- **Persona:** Product Manager  
+- **Goal:** Explore root-cause framing for a roadmap item using structured WHY 1→5 questions without persisting AI output to the portfolio.
+
+**Acceptance criteria**
+
+1. **View-only access**  
+   - **Given** the user opens a roadmap in **view** mode  
+   - **When** they navigate to the **5 Why Framework** section  
+   - **Then** the section is visible with **Ask WHY 1** enabled when BYOK keys are configured.
+
+2. **Iterative generation**  
+   - **Given** WHY 1 was generated  
+   - **When** the user clicks **Ask WHY 2** (through WHY 5)  
+   - **Then** each new question appears in the ordered list with its level lens label  
+   - **And** questions are plain English only (no answers or assumptions).
+
+3. **Reset**  
+   - **Given** at least one WHY exists  
+   - **When** the user clicks **Reset chain**  
+   - **Then** session output clears and the button returns to **Ask WHY 1**.
+
+**Error / edge handling**
+
+- **Given** missing BYOK keys  
+- **When** the user opens the section  
+- **Then** status explains which provider keys to add via header → API keys.
+
+- **Given** Groq or Tavily rate limit  
+- **When** generation retries  
+- **Then** user sees a friendly wait/retry message.
+
+- **Given** create or edit modal mode  
+- **When** the user opens the roadmap modal  
+- **Then** the Five Why section remains hidden (view-only feature).
+
+---
+
 ## Traceability
 
 Map story IDs to [PRD.md](PRD.md) FR IDs and [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md) during release review.
@@ -888,3 +932,4 @@ Map story IDs to [PRD.md](PRD.md) FR IDs and [TRACEABILITY_MATRIX.md](TRACEABILI
 | S | FR-2.11, FR-5.7 |
 | T | FR-11 |
 | U | FR-2.12, FR-11 |
+| V | FR-2.13, FR-11 |

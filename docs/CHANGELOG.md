@@ -29,10 +29,25 @@ When updating this file after a change:
 
 ### Docs — Full product documentation standard audit — 2026-06-06 — Product Team — Impact: documentation
 
-- Re-audited entire repository against `APP_ASSET_VERSION` = `20260606-ui193`.
-- **Roadmap** terminology, six views, legacy `projects` migration, RACI/KANO (Epics R–S), **BYOK** + **LLM analysis** (Epics T–U, GUARDRAILS §8, FR-11/FR-2.12).
-- **33 CSS layers**, modules `byok-api-keys.js`, `roadmap-llm-summary.js`, `api/byok/*`, tests `test:byok`, `test:kano`.
-- VARIABLES relationship charts §8.11–8.14; metrics PM-11–14; unified cache-bust in `index.html`.
+- Re-audited codebase vs 18-doc suite (`APP_ASSET_VERSION` = `20260528-ui194`).
+- Documented **`roadmap.note`** (six rich-text surfaces); fixed VARIABLES §8 numbering (§8.1–8.16).
+- Corrected **CSS load order** in TECH_GUIDELINES §3.1, ARCHITECTURE §10, README (matches `index.html`).
+- Restructured TRACEABILITY_MATRIX (FR-9.6/9.7, FR-11.1–5, FR-2.6/2.12/2.13 sections).
+- Expanded FEATURE_LOGIC (note, collapsibles, in-modal KANO, dev seed); US-D1 six views; `npm test`/CI in README and TECH.
+- Fixed TECH §17: `mongodb` dependency for Vercel API; `app.js` ~19.5k lines in ARCHITECTURE.
+
+### Docs — Feature logic and constraints reference — 2026-05-28 — Product Team — Impact: documentation
+
+- Added [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md): collaborative cross-feature guide (logic, rules, constraints) for PM, engineering, design, and QA.
+- Indexed in docs hub, README, PRODUCT_DOCUMENTATION_STANDARD required set, and PRODUCT_DOCUMENTATION §5.
+
+### Docs — Full product documentation standard audit — 2026-05-28 — Product Team — Impact: documentation
+
+- Re-audited entire repository against `APP_ASSET_VERSION` = `20260528-ui194`.
+- Documented **5 Why Framework** (`roadmap-5why-framework.js`, FR-2.13, Epic V, GUARDRAILS §8.3, VARIABLES §8.14, PM-15).
+- **Roadmap** terminology, six views, legacy `projects` migration, RACI/KANO (Epics R–S), **BYOK** + **LLM** (Epics T–U).
+- **33 CSS layers**; unified all `index.html` cache-bust query strings; `npm test` now includes `test:llm` and `test:5why`.
+- Corrected `TECH_GUIDELINES.md` script load order to match `index.html`.
 
 ### Terminology — Project → Roadmap across app and docs — 2026-05-31 — Product Team — Impact: user-visible
 
@@ -40,7 +55,7 @@ When updating this file after a change:
 - Persistence key `profile.projects` migrated to `profile.roadmaps` on load and save; legacy `projects` and `projectsView` keys still accepted on import.
 - Renamed files: `roadmap-metadata.js`, `roadmap-actions-modern.css`, `roadmap-details-tooltip.css`, `test-roadmap-metadata.js`.
 - Vercel infrastructure names (`VERCEL_PROJECT_ID`, `/v9/projects`) preserved in deployment scripts and workflows.
-- Cache bust: `APP_ASSET_VERSION` = `20260606-ui193`.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui194`.
 
 ### Data — Workspace persistence registry and round-trip fixes — 2026-06-06 — Product Team — Impact: user-visible
 
@@ -51,7 +66,7 @@ When updating this file after a change:
 
 ### Docs — Full documentation audit (product standard) — 2026-05-31 — Product Team — Impact: documentation
 
-- Re-audited repository against `APP_ASSET_VERSION` = `20260606-ui193`.
+- Re-audited repository against `APP_ASSET_VERSION` = `20260528-ui194`.
 - Updated README, documentation hub, PRD, product documentation, personas, user stories, variables (with relationship charts), metrics/OKRs, design guidelines, traceability matrix, guardrails, architecture, and tech guidelines.
 - Documented rich-text descriptions, roadmap tasks, labels/links cloud persistence, bulk duplicate/move, and complete source/CSS/module map.
 
@@ -62,7 +77,7 @@ When updating this file after a change:
 - Skip automatic cloud pull while local edits are pending or newer than the last applied remote snapshot.
 - Server-side normalization in `api/state` before MongoDB upsert.
 - GitHub `fix-vercel-protection` workflow no longer fails when Vercel secrets are missing (skips with notice).
-- Cache bust: `APP_ASSET_VERSION` = `20260606-ui193`.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui194`.
 
 ### Feature — Bulk duplicate and move across profiles — 2026-06-06 — Product Team — Impact: user-visible
 
@@ -271,12 +286,12 @@ When updating this file after a change:
 - Aligned layout breakpoint documentation to **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) across PRD, architecture, tech guidelines, variables, and design guidelines.
 - Traceability matrix expanded for FR-5.2 group-by, FR-5.4 MoSCoW display names, FR-6 labels/links filters, FR-9.6–9.7, and FR-10 (cross-references GUARDRAILS §7).
 - Variables dictionary: `tableGroupBy`, filter extensions, layout constants, filter pipeline and privileged-mode charts (neutral naming; policy in GUARDRAILS §7 only).
-- Asset baseline documented: `APP_ASSET_VERSION` = `20260606-ui193`.
+- Asset baseline documented: `APP_ASSET_VERSION` = `20260528-ui194`.
 
 ### UI — Site footer GitHub & article links — 2026-06-06 — Product Team — Impact: user-visible
 
 - Footer icon row: GitHub repo and prioritization article links alongside LinkedIn and website.
-- Cache bust: `APP_ASSET_VERSION` = `20260606-ui193`.
+- Cache bust: `APP_ASSET_VERSION` = `20260528-ui194`.
 
 ### UI — Compact profile bar controls on one row — 2026-06-06 — Product Team — Impact: user-visible
 

@@ -31,6 +31,8 @@ const {
   formatGroqErrorForUser,
   normalizeSummaryParagraph,
   normalizeSentenceSpacing,
+  repairEmptyQuotedPhrases,
+  stripAnchorMention,
   finalizeSummaryVariant,
   buildTavilySearchQuery,
   parseTavilySearchPayload,
@@ -329,6 +331,26 @@ const exclusive = enforceParagraphFieldExclusivity(
 );
 assert.ok(!exclusive.paragraph2.includes("Payments revamp"));
 assert.ok(exclusive.paragraph2.includes("42"));
+
+const quotedAnchorStripped = enforceParagraphFieldExclusivity(
+  {
+    paragraph1: "Payments revamp improves checkout conversion.",
+    paragraph2: "It is categorized as 'Payments revamp' with RICE 42 for the quarter.",
+    paragraph3: "Delivery tasks follow next."
+  },
+  contextForDedupe
+);
+assert.ok(!quotedAnchorStripped.paragraph2.includes("''"));
+assert.ok(!quotedAnchorStripped.paragraph2.includes("'Payments"));
+assert.ok(quotedAnchorStripped.paragraph2.includes("42"));
+
+assert.strictEqual(repairEmptyQuotedPhrases("It is listed as '' in the plan."), "It is in the plan.");
+assert.ok(!repairEmptyQuotedPhrases("It is listed as '' in the plan.").includes("''"));
+assert.strictEqual(
+  normalizeSentenceSpacing(stripAnchorMention("Rated as 'Must have' for Q3.", "Must have")),
+  "Rated for Q3."
+);
+assert.ok(!repairEmptyQuotedPhrases("Priority is '' and reach stays strong.").includes("''"));
 
 const sentenceDeduped = dedupeGlobalSentences({
   paragraph1: "The team aligns on scope.",

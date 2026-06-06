@@ -3,7 +3,9 @@
 | Field | Value |
 |-------|-------|
 | **Last updated** | 2026-06-06 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260606-ui193` |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui194` |
+
+Cross-feature behavior summaries live in [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md). This file defines **hard limits** and policies that must not be violated.
 
 ## 1. Business Guardrails
 
@@ -154,7 +156,17 @@
 - Respect provider rate limits (`GROQ_TPM_LIMIT`, `TAVILY_MIN_GAP_MS` in `roadmap-llm-summary.js`); surface user-friendly retry messages.
 - Do not send profile passwords, BYOK ciphertext, or `PM_API_SECRET` in LLM prompts.
 
-### 8.3 CSP and deployment
+### 8.3 Five Why Framework
+
+- Requires **both** Groq and Tavily keys (same BYOK store as FR-2.12); shares rate-limit constants pattern with `roadmap-llm-summary.js`.
+- **View-only** roadmap modal section — not available in create/edit modes.
+- Generates **questions only** (WHY 1→5); must not answer, assume, or invent facts not present in saved roadmap fields.
+- Each level uses a DMAIC-aligned lens (Define → Measure → Analyze → Improve → Control) mapped to plain-English labels in `WHY_LEVEL_LENS`.
+- Output is **session-only** (`roadmapFiveWhyGenerated`); not persisted on roadmap entity, export JSON, or MongoDB.
+- Independent pipeline from LLM Summary — only shares BYOK keys and Tavily/Groq clients; do not merge session state between modules.
+- Redundancy detection retries up to `FIVE_WHY_REDUNDANCY_RETRY_ATTEMPTS` before fallback question; surface errors via `#roadmapFiveWhyStatus`.
+
+### 8.4 CSP and deployment
 
 - `vercel.json` `connect-src` must include `https://api.groq.com` and `https://api.tavily.com` when BYOK features ship.
-- After CSP changes, verify LLM generation on production per [DEPLOYMENT.md](DEPLOYMENT.md).
+- After CSP changes, verify LLM summary and Five Why generation on production per [DEPLOYMENT.md](DEPLOYMENT.md).

@@ -44,6 +44,8 @@ let roadmapSummaryGenerating = false;
 let roadmapSummarySimplifiedGenerating = false;
 let roadmapSummaryTone = "professional";
 let roadmapSummaryGenerated = null;
+let roadmapFiveWhyGenerating = false;
+let roadmapFiveWhyGenerated = null;
 
 /** Profile IDs unlocked for this browser tab session (sessionStorage, not localStorage). */
 const unlockedProfileIds = new Set();
@@ -1157,6 +1159,7 @@ const ROADMAP_MODAL_SECTION_NAV_IDS = [
   "roadmapModalSectionMeta",
   "roadmapModalSectionRaci",
   "roadmapModalSectionFinancial",
+  "roadmapModalSectionFiveWhy",
   "roadmapModalSectionSummary"
 ];
 
@@ -1581,16 +1584,20 @@ function syncRoadmapSummaryToneToggleUi() {
   wrap.dataset.activeTone = roadmapSummaryTone;
   const simplifiedPending =
     !!roadmapSummaryGenerated && !roadmapSummaryGenerated.simplified && !roadmapSummarySimplifiedGenerating;
-  wrap.querySelectorAll(".roadmap-summary-tone-btn").forEach((btn) => {
+  if (elements.roadmapSummaryToneHint) {
+    elements.roadmapSummaryToneHint.hidden = !simplifiedPending;
+  }
+  wrap.querySelectorAll(".roadmap-summary-segment__option").forEach((btn) => {
     const tone = btn.getAttribute("data-summary-tone");
     const active = tone === roadmapSummaryTone;
-    btn.classList.toggle("roadmap-summary-tone-btn--active", active);
+    btn.classList.toggle("roadmap-summary-segment__option--active", active);
     btn.setAttribute("aria-selected", active ? "true" : "false");
     if (tone === "simplified") {
-      btn.dataset.needsGeneration = simplifiedPending ? "true" : "false";
+      const chip = btn.querySelector(".roadmap-summary-segment__chip");
+      if (chip) chip.hidden = !simplifiedPending;
       btn.setAttribute(
         "aria-label",
-        simplifiedPending ? "Simplified — generates storytelling summary on click" : "Simplified"
+        simplifiedPending ? "Simplified — generates storytelling summary on tap" : "Simplified storytelling view"
       );
     }
   });
@@ -1667,7 +1674,7 @@ async function handleRoadmapSummarySimplifiedRequest() {
   }
   if (elements.roadmapSummaryToneToggleButtons) {
     elements.roadmapSummaryToneToggleButtons
-      .querySelectorAll(".roadmap-summary-tone-btn")
+      .querySelectorAll(".roadmap-summary-segment__option")
       .forEach((btn) => {
         btn.disabled = true;
       });
@@ -1711,7 +1718,7 @@ async function handleRoadmapSummarySimplifiedRequest() {
     }
     if (elements.roadmapSummaryToneToggleButtons) {
       elements.roadmapSummaryToneToggleButtons
-        .querySelectorAll(".roadmap-summary-tone-btn")
+        .querySelectorAll(".roadmap-summary-segment__option")
         .forEach((btn) => {
           btn.disabled = false;
         });
@@ -1756,8 +1763,225 @@ async function syncRoadmapSummaryGenerateAvailability() {
   }
 }
 
+function resetRoadmapFiveWhyUi() {
+  roadmapFiveWhyGenerating = false;
+  roadmapFiveWhyGenerated = null;
+  if (elements.roadmapFiveWhyOutput) {
+    elements.roadmapFiveWhyOutput.hidden = true;
+    elements.roadmapFiveWhyOutput.innerHTML = "";
+    elements.roadmapFiveWhyOutput.classList.remove("roadmap-fivewhy-output--loading");
+  }
+  if (elements.roadmapFiveWhyStatus) {
+    elements.roadmapFiveWhyStatus.textContent = "";
+    elements.roadmapFiveWhyStatus.classList.remove("roadmap-fivewhy-status--error");
+  }
+  if (elements.roadmapFiveWhyResetBtn) {
+    elements.roadmapFiveWhyResetBtn.hidden = true;
+  }
+  syncRoadmapFiveWhyGenerateBtn();
+}
+
+function renderRoadmapFiveWhyDisplay() {
+  const list = elements.roadmapFiveWhyOutput;
+  if (!list) return;
+  const whys =
+    roadmapFiveWhyGenerated && Array.isArray(roadmapFiveWhyGenerated.whys)
+      ? roadmapFiveWhyGenerated.whys
+      : [];
+  if (!whys.length) {
+    list.hidden = true;
+    list.innerHTML = "";
+    return;
+  }
+  const renderFn =
+    typeof RoadmapFiveWhyFramework !== "undefined" &&
+    typeof RoadmapFiveWhyFramework.renderWhyParagraphHtml === "function"
+      ? RoadmapFiveWhyFramework.renderWhyParagraphHtml
+      : (text) => String(text || "");
+  list.innerHTML = whys
+    .map((entry) => {
+      const question = entry.question || entry.text || "";
+      const lens =
+        entry.lens ||
+        (typeof RoadmapFiveWhyFramework !== "undefined" &&
+        typeof RoadmapFiveWhyFramework.getWhyLevelLensLabel === "function"
+          ? RoadmapFiveWhyFramework.getWhyLevelLensLabel(entry.level)
+          : "");
+      const lensHtml = lens
+        ? `<span class="roadmap-fivewhy-item__lens">${renderFn(lens)}</span>`
+        : "";
+      return (
+        `<li class="roadmap-fivewhy-item" data-why-level="${entry.level}">` +
+        `<div class="roadmap-fivewhy-item__header">` +
+        `<span class="roadmap-fivewhy-item__label">WHY ${entry.level}</span>` +
+        lensHtml +
+        `</div>` +
+        `<p class="roadmap-fivewhy-item__question">${renderFn(question)}</p>` +
+        `</li>`
+      );
+    })
+    .join("");
+  list.hidden = false;
+}
+
+function syncRoadmapFiveWhyGenerateBtn() {
+  if (!elements.roadmapFiveWhyGenerateBtn) return;
+  const whys =
+    roadmapFiveWhyGenerated && Array.isArray(roadmapFiveWhyGenerated.whys)
+      ? roadmapFiveWhyGenerated.whys
+      : [];
+  if (
+    typeof RoadmapFiveWhyFramework !== "undefined" &&
+    typeof RoadmapFiveWhyFramework.getWhyGenerateButtonLabel === "function"
+  ) {
+    elements.roadmapFiveWhyGenerateBtn.textContent =
+      RoadmapFiveWhyFramework.getWhyGenerateButtonLabel(whys);
+  } else {
+    elements.roadmapFiveWhyGenerateBtn.textContent = "Ask WHY 1";
+  }
+  const complete =
+    typeof RoadmapFiveWhyFramework !== "undefined" &&
+    typeof RoadmapFiveWhyFramework.FIVE_WHY_MAX_LEVELS === "number"
+      ? whys.length >= RoadmapFiveWhyFramework.FIVE_WHY_MAX_LEVELS
+      : whys.length >= 5;
+  elements.roadmapFiveWhyGenerateBtn.disabled = roadmapFiveWhyGenerating || complete;
+  if (elements.roadmapFiveWhyResetBtn) {
+    elements.roadmapFiveWhyResetBtn.hidden = whys.length === 0;
+  }
+}
+
+async function syncRoadmapFiveWhyGenerateAvailability() {
+  if (!elements.roadmapFiveWhyGenerateBtn) return;
+  if (roadmapModalMode !== "view") return;
+  if (roadmapFiveWhyGenerating) return;
+  if (
+    typeof RoadmapFiveWhyFramework === "undefined" ||
+    typeof RoadmapFiveWhyFramework.resolveFiveWhyApiKeys !== "function"
+  ) {
+    elements.roadmapFiveWhyGenerateBtn.disabled = true;
+    if (elements.roadmapFiveWhyStatus) {
+      elements.roadmapFiveWhyStatus.textContent = "5 Why Framework module is not loaded.";
+      elements.roadmapFiveWhyStatus.classList.add("roadmap-fivewhy-status--error");
+    }
+    return;
+  }
+  try {
+    const resolved = await RoadmapFiveWhyFramework.resolveFiveWhyApiKeys();
+    syncRoadmapFiveWhyGenerateBtn();
+    if (!resolved.ok) {
+      elements.roadmapFiveWhyGenerateBtn.disabled = true;
+      if (elements.roadmapFiveWhyStatus) {
+        elements.roadmapFiveWhyStatus.textContent = resolved.message;
+        elements.roadmapFiveWhyStatus.classList.add("roadmap-fivewhy-status--error");
+      }
+      return;
+    }
+    if (elements.roadmapFiveWhyStatus) {
+      elements.roadmapFiveWhyStatus.classList.remove("roadmap-fivewhy-status--error");
+      const hasOutput = elements.roadmapFiveWhyOutput && !elements.roadmapFiveWhyOutput.hidden;
+      if (!hasOutput && !roadmapFiveWhyGenerating) {
+        elements.roadmapFiveWhyStatus.textContent = "";
+      }
+    }
+  } catch (err) {
+    console.error("5 Why key check failed:", err);
+    elements.roadmapFiveWhyGenerateBtn.disabled = true;
+  }
+}
+
+async function handleRoadmapFiveWhyGenerateClick() {
+  if (roadmapModalMode !== "view" || roadmapFiveWhyGenerating) return;
+  if (
+    typeof RoadmapFiveWhyFramework === "undefined" ||
+    typeof RoadmapFiveWhyFramework.generateNextWhy !== "function"
+  ) {
+    showToast("5 Why Framework is unavailable. Reload the page and try again.");
+    return;
+  }
+
+  roadmapFiveWhyGenerating = true;
+  if (elements.roadmapFiveWhyGenerateBtn) {
+    elements.roadmapFiveWhyGenerateBtn.disabled = true;
+    elements.roadmapFiveWhyGenerateBtn.classList.add("is-loading");
+  }
+  if (elements.roadmapFiveWhyOutput) {
+    elements.roadmapFiveWhyOutput.classList.add("roadmap-fivewhy-output--loading");
+  }
+  if (elements.roadmapFiveWhyStatus) {
+    elements.roadmapFiveWhyStatus.classList.remove("roadmap-fivewhy-status--error");
+  }
+
+  try {
+    const context = buildRoadmapSummaryContextFromViewForm();
+    const result = await RoadmapFiveWhyFramework.generateNextWhy(context, roadmapFiveWhyGenerated, {
+      onProgress: (message) => {
+        if (elements.roadmapFiveWhyStatus) {
+          elements.roadmapFiveWhyStatus.textContent = message;
+        }
+      }
+    });
+    roadmapFiveWhyGenerated = {
+      whys: result.whys,
+      research: result.research || null,
+      preparedContext: result.preparedContext || context,
+      links: result.links || context.links || []
+    };
+    renderRoadmapFiveWhyDisplay();
+    if (elements.roadmapFiveWhyStatus) {
+      const fallbackNote = result.usedFallback
+        ? " A simple backup question was used so you can keep going."
+        : "";
+      elements.roadmapFiveWhyStatus.textContent = result.complete
+        ? `All 5 WHY questions are ready.${fallbackNote} Reset to start a new chain.`
+        : `WHY ${result.entry.level} is ready.${fallbackNote} Click Ask WHY ${result.entry.level + 1} for the next question.`;
+    }
+    syncRoadmapOptionalDisclosures({ forceOpenSectionIds: ["roadmapModalSectionFiveWhy"] });
+    syncRoadmapModalSectionNavIndicators();
+  } catch (err) {
+    console.error("Roadmap 5 Why generation failed:", err);
+    const message = err && err.message ? err.message : "Could not generate the next WHY step.";
+    if (elements.roadmapFiveWhyStatus) {
+      elements.roadmapFiveWhyStatus.textContent = message;
+      elements.roadmapFiveWhyStatus.classList.add("roadmap-fivewhy-status--error");
+    }
+    showToast(message);
+  } finally {
+    roadmapFiveWhyGenerating = false;
+    if (elements.roadmapFiveWhyGenerateBtn) {
+      elements.roadmapFiveWhyGenerateBtn.classList.remove("is-loading");
+    }
+    if (elements.roadmapFiveWhyOutput) {
+      elements.roadmapFiveWhyOutput.classList.remove("roadmap-fivewhy-output--loading");
+    }
+    syncRoadmapFiveWhyGenerateAvailability();
+  }
+}
+
+function handleRoadmapFiveWhyResetClick() {
+  if (roadmapFiveWhyGenerating) return;
+  resetRoadmapFiveWhyUi();
+  syncRoadmapFiveWhyGenerateAvailability();
+  syncRoadmapModalSectionNavIndicators();
+}
+
+function initRoadmapFiveWhyControls() {
+  if (elements.roadmapFiveWhyGenerateBtn) {
+    elements.roadmapFiveWhyGenerateBtn.addEventListener("click", () => {
+      handleRoadmapFiveWhyGenerateClick();
+    });
+  }
+  if (elements.roadmapFiveWhyResetBtn) {
+    elements.roadmapFiveWhyResetBtn.addEventListener("click", () => {
+      handleRoadmapFiveWhyResetClick();
+    });
+  }
+}
+
 function syncRoadmapSummarySectionVisibility(isView) {
   const show = !!isView;
+  if (elements.roadmapModalSectionFiveWhy) {
+    elements.roadmapModalSectionFiveWhy.hidden = !show;
+  }
   if (elements.roadmapModalSectionSummary) {
     elements.roadmapModalSectionSummary.hidden = !show;
   }
@@ -1768,8 +1992,10 @@ function syncRoadmapSummarySectionVisibility(isView) {
     });
   }
   if (!show) {
+    resetRoadmapFiveWhyUi();
     resetRoadmapSummaryUi();
   } else {
+    syncRoadmapFiveWhyGenerateAvailability();
     syncRoadmapSummaryGenerateAvailability();
     ensureRoadmapOptionalDisclosures();
     syncRoadmapOptionalDisclosures({ resetCollapsed: true });
@@ -1852,7 +2078,7 @@ function initRoadmapSummaryControls() {
   }
   const toneButtons = elements.roadmapSummaryToneToggleButtons;
   if (toneButtons) {
-    toneButtons.querySelectorAll(".roadmap-summary-tone-btn").forEach((btn) => {
+    toneButtons.querySelectorAll(".roadmap-summary-segment__option").forEach((btn) => {
       btn.addEventListener("click", () => {
         const tone = btn.getAttribute("data-summary-tone");
         if (tone) setRoadmapSummaryTone(tone);
@@ -2237,6 +2463,15 @@ function roadmapOptionalSectionHasData(sectionId) {
     }
     return false;
   }
+  if (sectionId === "roadmapModalSectionFiveWhy") {
+    return !!(
+      elements.roadmapFiveWhyOutput &&
+      !elements.roadmapFiveWhyOutput.hidden &&
+      roadmapFiveWhyGenerated &&
+      Array.isArray(roadmapFiveWhyGenerated.whys) &&
+      roadmapFiveWhyGenerated.whys.length
+    );
+  }
   if (sectionId === "roadmapModalSectionSummary") {
     return !!(elements.roadmapSummaryOutput && !elements.roadmapSummaryOutput.hidden);
   }
@@ -2500,6 +2735,11 @@ function toggleRoadmapKanoLegendDetail(zoneId) {
   detailHost.hidden = false;
   requestAnimationFrame(() => {
     detailHost.classList.add("is-visible");
+    requestAnimationFrame(() => {
+      if (typeof detailHost.scrollIntoView === "function") {
+        detailHost.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    });
   });
 }
 
@@ -2875,7 +3115,7 @@ function syncRoadmapKanoSummary(functionality, satisfaction) {
     if (categoryEl) {
       categoryEl.hidden = true;
       categoryEl.textContent = "";
-      categoryEl.className = "roadmap-kano-category-badge";
+      categoryEl.className = "roadmap-kano-result__category roadmap-kano-category-badge";
     }
     if (clearBtn) clearBtn.hidden = true;
     return;
@@ -2889,14 +3129,22 @@ function syncRoadmapKanoSummary(functionality, satisfaction) {
   if (categoryEl && typeof getKanoCategoryFromPosition === "function") {
     const category = getKanoCategoryFromPosition(f, s);
     if (category) {
+      const legendEntry =
+        typeof kanoCategoryLegend !== "undefined"
+          ? kanoCategoryLegend.find((row) => row.id === category.id)
+          : null;
+      const compactLabel = (legendEntry && legendEntry.compactLabel) || category.label;
+      const hint = (legendEntry && legendEntry.hint) || category.hint || "";
       categoryEl.hidden = false;
-      categoryEl.textContent = category.label;
-      categoryEl.title = "Tap the matching category above to read the full analysis.";
-      categoryEl.className = `roadmap-kano-category-badge roadmap-kano-category-badge--${category.id}`;
+      categoryEl.innerHTML =
+        `<span class="roadmap-kano-category-badge__full">${escapeHtml(category.label)}</span>` +
+        `<span class="roadmap-kano-category-badge__compact">${escapeHtml(compactLabel)}</span>`;
+      categoryEl.title = hint ? `${category.label} — ${hint}` : category.label;
+      categoryEl.className = `roadmap-kano-result__category roadmap-kano-category-badge roadmap-kano-category-badge--${category.id}`;
     } else {
       categoryEl.hidden = true;
       categoryEl.textContent = "";
-      categoryEl.className = "roadmap-kano-category-badge";
+      categoryEl.className = "roadmap-kano-result__category roadmap-kano-category-badge";
     }
   }
 
@@ -3453,6 +3701,7 @@ async function init() {
   initCloudStorageModal();
   initByokApiKeysModal();
   initRoadmapSummaryControls();
+  initRoadmapFiveWhyControls();
   initBlockingModalGuards();
   registerAppOverlays();
 
@@ -3804,12 +4053,18 @@ function cacheElements() {
   elements.roadmapMetaFinancialEur = $("roadmapMetaFinancialEur");
   elements.roadmapMetaExchangeRate = $("roadmapMetaExchangeRate");
   elements.roadmapModalFooterMetaDetails = $("roadmapModalFooterMetaDetails");
+  elements.roadmapModalSectionFiveWhy = $("roadmapModalSectionFiveWhy");
+  elements.roadmapFiveWhyGenerateBtn = $("roadmapFiveWhyGenerateBtn");
+  elements.roadmapFiveWhyResetBtn = $("roadmapFiveWhyResetBtn");
+  elements.roadmapFiveWhyStatus = $("roadmapFiveWhyStatus");
+  elements.roadmapFiveWhyOutput = $("roadmapFiveWhyOutput");
   elements.roadmapModalSectionSummary = $("roadmapModalSectionSummary");
   elements.roadmapSummaryGenerateBtn = $("roadmapSummaryGenerateBtn");
   elements.roadmapSummaryStatus = $("roadmapSummaryStatus");
   elements.roadmapSummaryOutput = $("roadmapSummaryOutput");
   elements.roadmapSummaryToneToggle = $("roadmapSummaryToneToggle");
   elements.roadmapSummaryToneToggleButtons = $("roadmapSummaryToneToggleButtons");
+  elements.roadmapSummaryToneHint = $("roadmapSummaryToneHint");
   elements.roadmapSummaryParagraph1 = $("roadmapSummaryParagraph1");
   elements.roadmapSummaryParagraph2 = $("roadmapSummaryParagraph2");
   elements.roadmapSummaryParagraph3 = $("roadmapSummaryParagraph3");

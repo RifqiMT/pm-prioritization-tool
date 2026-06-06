@@ -5,7 +5,7 @@ Engineering standards for the Product Management Prioritization Tool codebase.
 | Field | Value |
 |-------|-------|
 | **Last updated** | 2026-06-06 |
-| **APP_ASSET_VERSION** | `20260606-ui193` |
+| **APP_ASSET_VERSION** | `20260528-ui194` |
 | **COMPACT_LAYOUT_MAX_WIDTH_PX** | `1400` |
 
 ---
@@ -35,12 +35,16 @@ Defined in `index.html` (order matters — globals, not ES modules):
 5. `src/modules/exchange-rates.js`
 6. `src/modules/fullscreen.js`
 7. `src/modules/overlay-manager.js`
-8. `src/modules/description-format.js`
-9. `src/modules/rich-text-editor.js`
-10. `src/modules/board-drag.js`
-11. `src/modules/board-card-interaction.js`
-12. `src/modules/storage.js`
-13. `src/app.js` — defines `init()` and runs on `DOMContentLoaded`
+8. `src/modules/storage.js` — `AppStorage` global
+9. `src/dev-seed-workspace.js` — localhost sample data (gated in `app.js`)
+10. `src/modules/description-format.js`
+11. `src/modules/rich-text-editor.js`
+12. `src/modules/board-drag.js`
+13. `src/modules/board-card-interaction.js`
+14. `src/modules/byok-api-keys.js` — `ByokApiKeys` global
+15. `src/modules/roadmap-llm-summary.js` — `RoadmapLlmSummary` global
+16. `src/modules/roadmap-5why-framework.js` — `RoadmapFiveWhyFramework` global
+17. `src/app.js` — defines `init()` and runs on `DOMContentLoaded`
 
 All shared symbols are **global functions and constants**. Do not introduce ES module imports without a planned migration.
 
@@ -61,32 +65,32 @@ Later files win for equal specificity (all query `?v=APP_ASSET_VERSION`):
 | 5 | `portfolio-modern.css` | Portfolio, filters, autocomplete |
 | 6 | `profile-modals-modern.css` | Profile modals |
 | 7 | `export-modals-modern.css` | Import/export modals |
-| 8 | `view-toolbars-modern.css` | View toolbars |
-| 9 | `compact-modern.css` | Compact chrome (≤1400px) |
-| 10 | `moscow-compact.css` | MoSCoW compact |
-| 11 | `board-compact.css` | Board compact |
-| 12 | `table-compact.css` | Table compact toolbar |
-| 13 | `roadmap-actions-modern.css` | Actions |
-| 14 | `fullscreen-modern.css` | Fullscreen |
-| 15 | `fullscreen-compact.css` | Fullscreen compact |
-| 16 | `app-footer.css` | Site footer |
-| 17 | `views-density.css` | Density |
-| 18 | `layout-flow.css` | Flat flow ≤1400px |
-| 19 | `portfolio-cards-compact.css` | Board/MoSCoW cards |
-| 20 | `table-rows-modern.css` | Table rows |
-| 21 | `table-revamp-modern.css` | Semantic `roadmaps-table-col--*` widths |
-| 22 | `table-compact-cards.css` | Table card list ≤1400px |
-| 23 | `super-admin-modern.css` | Workspace-wide mode UI ([GUARDRAILS.md §7](GUARDRAILS.md)) |
-| 24 | `map-tooltip-modern.css` | Map tooltips |
-| 25 | `board-drag.css` | Board DnD |
-| 26 | `board-card-interaction.css` | Card press feedback |
-| 27 | `filters-compact-bar.css` | Filters compact bar |
-| 28 | `view-toolbars-compact-row.css` | Compact toolbar single row |
-| 29 | `rich-text-editor.css` | Rich-text fields |
-| 30 | `roadmap-details-tooltip.css` | Description tooltips |
-| 31 | `portfolio-kano-modern.css` | KANO portfolio matrix and cards |
-| 32 | `byok-api-keys.css` | BYOK API keys modal |
-| 33 | `rich-description-content.css` | Rich description typography |
+| 8 | `byok-api-keys.css` | BYOK API keys modal |
+| 9 | `view-toolbars-modern.css` | View toolbars (table, board, MoSCoW, map, RACI, KANO) |
+| 10 | `compact-modern.css` | Compact chrome (≤1400px) |
+| 11 | `moscow-compact.css` | MoSCoW compact |
+| 12 | `board-compact.css` | Board compact |
+| 13 | `table-compact.css` | Table compact toolbar |
+| 14 | `roadmap-actions-modern.css` | Card/table action buttons |
+| 15 | `fullscreen-modern.css` | Fullscreen host |
+| 16 | `fullscreen-compact.css` | Fullscreen + compact |
+| 17 | `app-footer.css` | Site footer |
+| 18 | `views-density.css` | Density helpers |
+| 19 | `layout-flow.css` | Flat dividers (compact) |
+| 20 | `portfolio-cards-compact.css` | Board/MoSCoW card shells |
+| 21 | `table-rows-modern.css` | Desktop table rows |
+| 22 | `table-revamp-modern.css` | Semantic column layout |
+| 23 | `table-compact-cards.css` | Compact table card list |
+| 24 | `super-admin-modern.css` | Workspace-wide mode UI ([GUARDRAILS.md §7](GUARDRAILS.md)) |
+| 25 | `map-tooltip-modern.css` | Map country tooltips |
+| 26 | `board-drag.css` | Board drag-and-drop |
+| 27 | `board-card-interaction.css` | Card press feedback |
+| 28 | `view-toolbars-compact-row.css` | Single-row compact toolbars |
+| 29 | `filters-compact-bar.css` | Filters drawer compact bar |
+| 30 | `roadmap-details-tooltip.css` | Description tooltips on cards |
+| 31 | `rich-description-content.css` | Rendered rich-text typography |
+| 32 | `rich-text-editor.css` | Rich-text toolbar and fields |
+| 33 | `portfolio-kano-modern.css` | KANO portfolio matrix and cards |
 
 ### 3.2 Compact layout
 
@@ -114,7 +118,7 @@ Later files win for equal specificity (all query `?v=APP_ASSET_VERSION`):
 | Constant | Role |
 |----------|------|
 | `STORAGE_KEY` | `localStorage` key (`rice_prioritizer_v1`) |
-| `APP_ASSET_VERSION` | Cache buster (`20260606-ui193`) |
+| `APP_ASSET_VERSION` | Cache buster (`20260528-ui194`) |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | `1400` — single compact breakpoint |
 | `moscowList` | Stored MoSCoW values |
 | `moscowDisplayNames` | UI labels (Must Have, …) |
@@ -249,13 +253,28 @@ Export: `getExportableProfiles()` → `sanitizeProfilesForExport()` → download
 
 ---
 
-## 15. Testing expectations (manual)
+## 15. Automated tests and QA
 
-Minimum smoke path before release:
+### 15.1 `npm test` (CI on every push/PR via `.github/workflows/ci.yml`)
+
+| Script | Validates |
+|--------|-----------|
+| `test:storage` | Cloud sync race, pull/flush logic |
+| `test:metadata` | Labels, links, tasks, RACI, KANO, note normalization |
+| `test:persistence` | `WORKSPACE_PERSISTED_STATE_KEYS` round-trip |
+| `test:byok` | BYOK encryption round-trip |
+| `test:byok-validate` | Server validation helpers |
+| `test:kano` | KANO zone matrix (25 cells) |
+| `test:llm` | LLM summary module helpers |
+| `test:5why` | Five Why framework helpers |
+
+Also: `npm run verify:production` — smoke test deployed URL (`scripts/verify-deployment.js`).
+
+### 15.2 Manual smoke path (before release)
 
 1. Create profile (with and without password)
-2. CRUD roadmap with each financial framework
-3. All six views + fullscreen at **375px, 768px, 1400px, 1600px**
+2. CRUD roadmap with each financial framework; save **Note** rich-text field
+3. All **six views** + fullscreen at **375px, 768px, 1400px, 1600px**
 4. Title/label autocomplete; labels/links filters
 5. Table group-by on compact card list
 6. MoSCoW display names and compact nav pills
@@ -277,7 +296,12 @@ Minimum smoke path before release:
 
 ## 17. Dependencies
 
-- **No npm runtime dependencies** for the app (`package.json` dev script only).
-- CDN: Leaflet, Google Fonts (Inter).
+| Layer | Dependency | Notes |
+|-------|------------|-------|
+| **Browser UI** | None (classic scripts) | No bundler; globals from `index.html` script order |
+| **Vercel API** | `mongodb@^6.16.0` | Serverless routes in `api/` only |
+| **CDN** | Leaflet 1.9.4, Google Fonts (Inter) | Map tiles and typography |
 
 When adding CDN resources, update `vercel.json` CSP `connect-src` / `img-src`.
+
+**Cross-feature behavior:** [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md)

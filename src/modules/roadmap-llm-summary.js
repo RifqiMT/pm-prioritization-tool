@@ -1361,12 +1361,71 @@
       .join(" ");
   }
 
-  function normalizeSentenceSpacing(text) {
-    return String(text || "")
-      .replace(/\s+/g, " ")
-      .replace(/(?<!\d)([.!?]+)(?=[A-Za-z])/g, "$1 ")
+  function repairEmptyQuotedPhrases(text) {
+    let work = String(text || "");
+    const quoteChars = "['\"\u2018\u2019\u201C\u201D]";
+    const prepositionLookahead = "in|on|for|during|this|the|a|an|within|across|through|by";
+
+    work = work.replace(new RegExp(`${quoteChars}\\s*${quoteChars}`, "g"), "");
+    work = work.replace(/\(\s*['"\u2018\u2019\u201C\u201D]?\s*['"\u2018\u2019\u201C\u201D]?\s*\)/g, "");
+
+    work = work.replace(
+      /\b(is|was|were)\s+(listed|categorized|classified|marked|tagged|labeled)\s+as\s+/gi,
+      "$1 "
+    );
+    work = work.replace(
+      new RegExp(
+        `\\b(rated|labeled|tagged|marked|set|framed|positioned|prioritized|scoped|planned)\\s+as\\s+(?=\\s*(?:${prepositionLookahead})\\b)`,
+        "gi"
+      ),
+      "$1 "
+    );
+    work = work.replace(/\bas\s+(?=[.,;:!?])/gi, "");
+    work = work.replace(/\bis\s+(?=and\b)/gi, "");
+    work = work.replace(/\bis\s+(?=for\b)/gi, "");
+    work = work.replace(/\b(of|for|in|on|at|with|to)\s+(?=[.,;:!?])/gi, "");
+
+    work = work.replace(new RegExp(`\\s+${quoteChars}(?=\\s)`, "g"), " ");
+    work = work.replace(new RegExp(`${quoteChars}\\s+`, "g"), " ");
+    work = work.replace(new RegExp(`\\s+${quoteChars}`, "g"), " ");
+
+    return work
+      .replace(/\s+([.,;:!?])/g, "$1")
+      .replace(/([(\[{])\s+/g, "$1")
+      .replace(/\s+([)\]}])/g, "$1")
       .replace(/\s{2,}/g, " ")
       .trim();
+  }
+
+  function stripAnchorMention(text, anchor) {
+    const trimmed = String(anchor || "").trim();
+    if (!trimmed) return String(text || "");
+    const escaped = escapeRegExp(trimmed);
+    let work = String(text || "");
+    work = work.replace(
+      new RegExp(`(['"\u2018\u2019\u201C\u201D])\\s*${escaped}\\s*\\1`, "gi"),
+      ""
+    );
+    work = work.replace(
+      new RegExp(`(['"\u2018\u2019\u201C\u201D])\\s*${escaped}`, "gi"),
+      ""
+    );
+    work = work.replace(
+      new RegExp(`${escaped}\\s*(['"\u2018\u2019\u201C\u201D])`, "gi"),
+      ""
+    );
+    work = work.replace(new RegExp(escaped, "gi"), "");
+    return repairEmptyQuotedPhrases(work);
+  }
+
+  function normalizeSentenceSpacing(text) {
+    return repairEmptyQuotedPhrases(
+      String(text || "")
+        .replace(/\s+/g, " ")
+        .replace(/(?<!\d)([.!?]+)(?=[A-Za-z])/g, "$1 ")
+        .replace(/\s{2,}/g, " ")
+        .trim()
+    );
   }
 
   function normalizeSummaryParagraph(text) {
@@ -1584,15 +1643,12 @@
   function stripAnchorsFromText(text, anchors) {
     let work = String(text || "");
     anchors.forEach((anchor) => {
-      const pattern = new RegExp(escapeRegExp(anchor), "gi");
-      work = work.replace(pattern, "");
+      work = stripAnchorMention(work, anchor);
     });
     return normalizeSentenceSpacing(
       work
-        .replace(/\s+([.,;:!?])/g, "$1")
         .replace(/([.!?])\s*([.!?])+/g, "$1")
         .replace(/^\s*[.,;:!?]+\s*/g, "")
-        .replace(/\s{2,}/g, " ")
     );
   }
 
@@ -1772,7 +1828,12 @@
     work = dedupeRepeatedPhrases(work, SUMMARY_PHRASE_DEDUPE_WORDS);
     work = dedupeSummaryVariantContext(work, links);
     work = dedupeRelatedResourcesClauseAcrossVariant(work);
-    return coalesceSummaryVariant(work);
+    const coalesced = coalesceSummaryVariant(work);
+    return {
+      paragraph1: repairEmptyQuotedPhrases(coalesced.paragraph1),
+      paragraph2: repairEmptyQuotedPhrases(coalesced.paragraph2),
+      paragraph3: repairEmptyQuotedPhrases(coalesced.paragraph3)
+    };
   }
 
   function dedupeRelatedResourcesClauseAcrossVariant(variant) {
@@ -2366,6 +2427,8 @@
     formatGroqErrorForUser,
     normalizeSummaryParagraph,
     normalizeSentenceSpacing,
+    repairEmptyQuotedPhrases,
+    stripAnchorMention,
     finalizeSummaryVariant,
     buildTavilySearchQuery,
     parseTavilySearchPayload,

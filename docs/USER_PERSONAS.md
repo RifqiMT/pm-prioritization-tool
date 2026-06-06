@@ -23,7 +23,7 @@ Target users for the Product Management Prioritization Tool.
 | **Role** | Roadmap owner across teams or products |
 | **Goals** | Explainable prioritization; consistent RICE; MoSCoW alignment; portable backups; fast filtering by period, country, labels, and links |
 | **Pain points** | Scores scattered in spreadsheets; inconsistent rubrics; low trust in “gut feel” confidence; hard to find roadmaps missing labels or documentation links |
-| **Key workflows** | Create profiles → add roadmaps with RICE/MoSCoW, rich-text descriptions, labels, links, tasks, RACI, and KANO → configure BYOK keys → generate **LLM analysis** for stakeholder briefings → use title/label autocomplete in filters → group compact table cards by MoSCoW or status → export JSON before planning milestones |
+| **Key workflows** | Create profiles → add roadmaps with RICE/MoSCoW, rich-text descriptions, labels, links, tasks, RACI, and KANO → configure BYOK keys → generate **LLM analysis** for stakeholder briefings → run **5 Why** question chains in view mode for root-cause workshops → use title/label autocomplete in filters → group compact table cards by MoSCoW or status → export JSON before planning milestones |
 | **Device usage** | **Desktop** (>1400px) for deep table editing and multi-column sorts; **iPad / phone** (≤1400px) for between-meeting reviews via compact card table and MoSCoW nav pills |
 | **Success** | Stakeholders accept rankings because inputs, formulas, and filters are visible and reproducible |
 
@@ -107,7 +107,7 @@ Target users for the Product Management Prioritization Tool.
 | Map + FX normalization | Geo/Finance PM |
 | RACI matrix (accountability workshops) | PM Primary, Delivery Lead, Stakeholder |
 | KANO portfolio matrix (value classification) | PM Primary, Stakeholder |
-| BYOK API keys + LLM roadmap analysis | PM Primary |
+| BYOK API keys + LLM roadmap analysis + 5 Why Framework | PM Primary |
 | Export / import | All |
 | Compact layout (≤1400px) | PM Primary, Delivery Lead, Mobile PM |
 | Site footer (GitHub, article) | Stakeholder, Mobile PM |

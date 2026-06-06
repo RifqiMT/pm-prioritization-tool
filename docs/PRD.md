@@ -6,14 +6,16 @@
 | **Version** | 2.0.0 |
 | **Status** | Implemented (local-first static app) |
 | **Last updated** | 2026-06-06 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260606-ui193` |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui194` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
 
+> Cross-feature logic and constraints: [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md)
+
 ## 1. Executive summary
 
-A browser-based portfolio workspace for product teams to capture initiatives, score priority with **RICE**, classify delivery intent with **MoSCoW**, estimate value through **financial frameworks**, and communicate via **Table**, **Board**, **MoSCoW**, **Map**, **RACI**, and **KANO** views. Data persists in the browser (`localStorage` cache) with optional **MongoDB cloud sync** on Vercel, plus JSON/CSV export/import. Optional **profile passwords** protect sensitive portfolios.
+A browser-based portfolio workspace for product teams to capture initiatives, score priority with **RICE**, classify delivery intent with **MoSCoW**, estimate value through **financial frameworks**, and communicate via **Table**, **Board**, **MoSCoW**, **Map**, **RACI**, and **KANO** views. Data persists in the browser (`localStorage` cache) with optional **MongoDB cloud sync** on Vercel, plus JSON/CSV export/import. Optional **profile passwords** protect sensitive portfolios. Optional **BYOK AI** features (LLM summary and 5 Why Framework) use user-supplied Groq/Tavily keys client-side only.
 
 **Responsive UI:** Desktop layout when viewport width is **> 1400px**; tablets, phones, iPad landscape, split-screen, and narrow laptop windows use a **unified compact phone UI** at **≤ 1400px** (`html.is-compact-layout` + `html.is-phone-layout`).
 
@@ -70,12 +72,13 @@ See [USER_PERSONAS.md](USER_PERSONAS.md).
 | FR-2.4 | Bulk delete (table) | Confirmation; selection respected (toolbar desktop; selection bar compact) |
 | FR-2.5 | Roadmap ID in modal footer | Stable id visible in footer metadata |
 | FR-2.6 | Modal footer disclosure (compact) | At ≤1400px: metadata in `<details>` collapsed by default; desktop forces open |
-| FR-2.7 | Rich-text descriptions | Roadmap + RICE description fields; sanitized HTML; view mode read-only without toolbar |
+| FR-2.7 | Rich-text descriptions | Roadmap description, **Note**, and four RICE description fields (six surfaces); sanitized HTML; view mode read-only without toolbar |
 | FR-2.8 | Roadmap tasks | Optional task list with name + status per task; CSV import/export |
 | FR-2.9 | Labels/links cloud persistence | Canonical format on serialize; immediate cloud flush on roadmap save; server normalize on API write |
 | FR-2.10 | RACI assignments | Optional `raci` object with `responsible`, `accountable`, `consulted`, `informed` arrays; each entry has `name` + `domain` (`Business` or `Tech`); normalized on load/save |
 | FR-2.11 | KANO scores | Optional `kanoFunctionality` and `kanoSatisfaction` (integers 1–5); drive portfolio KANO matrix placement |
 | FR-2.12 | LLM roadmap analysis (optional) | Summary section: Tavily link/search enrichment + Groq three-paragraph briefing; professional/simplified tone toggle; session-only output (not persisted to roadmap or cloud) |
+| FR-2.13 | 5 Why Framework (optional) | View-only roadmap modal section: iterative WHY 1→5 questions via Tavily research + Groq; DMAIC-aligned lenses (Define → Control); plain-English questions only (no answers); session-only output; independent from FR-2.12 summary |
 
 ### FR-3 RICE
 
@@ -278,7 +281,8 @@ Policy detail: [GUARDRAILS.md §8](GUARDRAILS.md).
 - **MongoDB (optional):** canonical workspace document when `MONGODB_URI` configured
 - **sessionStorage:** unlocked profile IDs for current tab session
 - **BYOK storage:** encrypted API keys in `localStorage` only on this device; never in export/cloud
-- **LLM summaries:** session-only in roadmap modal; not written to roadmap entity or MongoDB
+- **LLM summaries:** session-only in roadmap modal Summary section; not written to roadmap entity or MongoDB
+- **5 Why output:** session-only in roadmap modal Five Why section (`roadmapFiveWhyGenerated`); not written to roadmap entity or MongoDB
 - **User responsibility:** export backups; clearing site data deletes local cache and BYOK keys (cloud may retain workspace copy)
 
 ---

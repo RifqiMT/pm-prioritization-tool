@@ -23,6 +23,7 @@
 | PM-12 | **KANO positioning** | Roadmaps with both KANO axes set (1–5) | `kano_positioned_roadmaps / total_roadmaps` | ≥ 40% |
 | PM-13 | **BYOK configuration** | Devices with both Groq and Tavily keys saved | `byok_fully_configured_devices / active_devices` | ≥ 25% (among LLM adopters) |
 | PM-14 | **LLM summary usage** | Roadmap modal sessions with successful summary generation | `llm_summary_success / llm_summary_attempts` | ≥ 85% |
+| PM-15 | **Five Why usage** | View-modal sessions completing ≥1 WHY question | `five_why_success / five_why_attempts` | ≥ 80% |
 
 ### PM-06 Activation — operational definition
 
@@ -138,6 +139,7 @@ Among workspaces that had ≥3 roadmaps 30 days ago, count those with ≥1 sessi
 | KR7.2 | PM-14 LLM summary success rate | ≥ 85% |
 | KR7.3 | Zero BYOK keys in cloud export | 0 incidents per release |
 | KR7.4 | CSP / connect-src regressions | 0 production blocks on Groq/Tavily |
+| KR7.5 | PM-15 Five Why success rate | ≥ 80% among users who start a WHY chain |
 
 ### Objective 5 — Grow meaningful product usage (activation & return)
 
@@ -180,6 +182,7 @@ The app does not stream telemetry by default. Collect metrics via:
 - **KANO positioned (PM-12):** Both `kanoFunctionality` and `kanoSatisfaction` are integers 1–5.  
 - **BYOK fully configured (PM-13):** `ByokApiKeys` reports both Groq and Tavily keys decryptable on device.  
 - **LLM summary success (PM-14):** Generate click completes with three non-empty paragraphs and no error status class.  
+- **Five Why success (PM-15):** Ask WHY click completes with a non-empty question in `#roadmapFiveWhyOutput` and no error status class.  
 
 ### UX collection notes
 

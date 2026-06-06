@@ -1,8 +1,10 @@
 # Enterprise Traceability Matrix
 
+> Cross-feature logic and constraints: [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md)
+
 **Purpose:** Map PRD requirements to concrete implementation evidence and verification steps.  
 **Standard:** Requirement IDs must remain synchronized with [PRD.md](PRD.md).  
-**Last audited:** 2026-06-06 · **Baseline:** `APP_ASSET_VERSION` = `20260606-ui193`
+**Last audited:** 2026-06-06 · **Baseline:** `APP_ASSET_VERSION` = `20260528-ui194`
 
 ---
 
@@ -38,10 +40,11 @@
 |---|---|---|---|
 | FR-2.1 | CRUD roadmaps via modal | `index.html` roadmap modal; `src/app.js` create/edit | Create/edit/view; fields persist across views |
 | FR-2.2 | RICE input validation | `src/rice.js` `validateRoadmapInput` | Invalid boundaries block save |
-| FR-2.3 | Metadata (type, status, MoSCoW, period, countries, t-shirt, labels, links) | Roadmap modal + normalization helpers | Fields visible in table/cards/board/MoSCoW/map/filters |
+| FR-2.3 | Metadata (type, status, MoSCoW, period, countries, t-shirt, labels, links, note) | Roadmap modal + normalization helpers | Fields visible in table/cards/views/filters; note in CSV |
 | FR-2.4 | Bulk delete (table) | Selection + bulk delete handlers | Confirm dialog; selection clears after delete |
 | FR-2.5 | Roadmap ID in modal footer | Modal footer metadata | ID stable across edits/export |
-| FR-2.7 | Rich-text descriptions | `rich-text-editor.js`; `description-format.js`; `roadmap-modal--view` CSS | Toolbar in edit; hidden in view; HTML sanitized |
+| FR-2.6 | Modal footer disclosure (compact) | `syncRoadmapModalFooterMetaDetails`; `<details>` in modal footer | ≤1400px collapsed by default; desktop open |
+| FR-2.7 | Rich-text descriptions (6 surfaces) | `rich-text-editor.js`; `#roadmapNote`; four RICE fields | Toolbar in edit; hidden in view; HTML sanitized |
 | FR-2.8 | Roadmap tasks | Task rows in modal; `normalizeRoadmapTasks`; CSV `roadmapTasks` | Tasks persist after save and cloud reload |
 | FR-2.9 | Labels/links cloud persistence | `serializeRoadmapForStorage`; `storage.js` flush; `roadmap-metadata.js` | Labels/links survive prod reload |
 | FR-2.10 | RACI assignments | Roadmap modal RACI section; `normalizeRoadmapRaci`; `renderRaciMatrix` | Names persist; Business/Tech filter works |
@@ -94,8 +97,8 @@
 | FR-5.8 | Fullscreen all views | `src/modules/fullscreen.js`; `fullscreen-compact.css` | Fullscreen preserves compact layout |
 | FR-5.9 | Locked profile blocks data | `getUnlockedActiveProfile()`; view guards | No roadmap leakage when locked |
 | FR-5.10 | Compact layout ≤1400px | `COMPACT_LAYOUT_MAX_WIDTH_PX`; `initCompactLayoutClass()` | At 1024px and 375px: compact classes; no horizontal board/MoSCoW scroll |
-| FR-9.6 | Site footer links | `index.html` `.app-site-footer`; `app-footer.css` | LinkedIn, website, GitHub, article open correctly |
-| FR-9.7 | Card visual + action parity | `portfolio-cards-compact.css`; `roadmap-actions-modern.css` | 12px radius; single action row on desktop board/MoSCoW |
+| US-R1 / US-R2 | RACI stories | `renderRaciMatrix`; roadmap modal RACI section | Epic R acceptance |
+| US-S1 / US-S2 | KANO stories | `renderKanoPortfolioMatrix`; `portfolio-kano-modern.css` | Epic S acceptance |
 
 ---
 
@@ -104,12 +107,6 @@
 | Requirement ID | Requirement Summary | Code Evidence | Verification |
 |---|---|---|---|
 | FR-6 | Filters apply to all views | `applyFilters`; `getPortfolioRoadmapsBaseList` | Table/board/MoSCoW/map/RACI/KANO share filtered set |
-| US-R1 / US-R2 | RACI stories | `renderRaciMatrix`; roadmap modal RACI section | Epic R acceptance |
-| US-S1 / US-S2 | KANO stories | `renderKanoPortfolioMatrix`; `portfolio-kano-modern.css` | Epic S acceptance |
-| FR-11 | BYOK API keys | `byok-api-keys.js`; `api/byok/validate-*`; `byok-api-keys.css` | Keys encrypted locally; not in export/cloud |
-| FR-2.12 | LLM roadmap analysis | `roadmap-llm-summary.js`; Summary section in roadmap modal | Tavily + Groq; session-only output |
-| US-T1 | BYOK configuration story | `ByokApiKeys` modal workflow | Epic T acceptance |
-| US-U1 | LLM summary story | `RoadmapLlmSummary.generate` | Epic U acceptance |
 | FR-6.1.1 | Title substring filter | `filterTitle` | Typing narrows roadmaps |
 | FR-6.1.2 | Title autocomplete | Title listbox in filters drawer | Keyboard navigation; max suggestions |
 | FR-6.1.3 | Label substring filter | `filterLabel` | Matches any label on roadmap |
@@ -152,6 +149,32 @@
 | FR-9.3 | Responsive ≤1400px phone UI | `compact-modern.css`; `initCompactLayoutClass` | Icon tabs; FAB; compact toolbars |
 | FR-9.4 | Password show/hide | `bindProfilePasswordToggles` | Eye toggle on all password fields |
 | FR-9.5 | Delete confirmations | Delete modals | Destructive actions require confirm |
+| FR-9.6 | Site footer links | `index.html` `.app-site-footer`; `app-footer.css` | LinkedIn, website, GitHub, article open correctly |
+| FR-9.7 | Card visual + action parity | `portfolio-cards-compact.css`; `roadmap-actions-modern.css` | 12px radius; single action row on desktop board/MoSCoW |
+
+---
+
+## FR-2.12 / FR-2.13 Optional AI (session-only)
+
+| Requirement ID | Requirement Summary | Code Evidence | Verification |
+|---|---|---|---|
+| FR-2.12 | LLM roadmap analysis | `roadmap-llm-summary.js`; Summary section in roadmap modal | Tavily + Groq; three paragraphs; session-only |
+| FR-2.13 | 5 Why Framework | `roadmap-5why-framework.js`; `#roadmapModalSectionFiveWhy` (view-only) | WHY 1→5 questions; session-only |
+| US-U1 | LLM summary story | `RoadmapLlmSummary.generate` | Epic U acceptance |
+| US-V1 | Five Why story | `RoadmapFiveWhyFramework.generateNextWhy` | Epic V acceptance |
+
+---
+
+## FR-11 BYOK API keys
+
+| Requirement ID | Requirement Summary | Code Evidence | Verification |
+|---|---|---|---|
+| FR-11.1 | Store Groq + Tavily locally | `byok-api-keys.js`; `pm_byok_v1` | Encrypted envelope in localStorage |
+| FR-11.2 | Validate on save | `api/byok/validate-groq.js`; `validate-tavily.js` | Invalid keys rejected with message |
+| FR-11.3 | Never sync to cloud | Export + `serialize` paths | Keys absent from MongoDB/export |
+| FR-11.4 | Header affordance | `#byokApiKeysBtn`; status dot | Configured count visible |
+| FR-11.5 | CSP allows providers | `vercel.json` connect-src | Groq/Tavily reachable in production |
+| US-T1 | BYOK configuration story | `ByokApiKeys` modal workflow | Epic T acceptance |
 
 ---
 

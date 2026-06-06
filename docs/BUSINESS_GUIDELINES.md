@@ -181,6 +181,14 @@ Scores drive category placement (Attractive, One-dimensional, Must-be, Indiffere
 - Summaries incorporate roadmap fields, optional Tavily link extraction, and limited web search — treat as **assistive**, not authoritative prioritization.
 - Generated text is **not stored** in the portfolio export; regenerate as needed per session.
 
+### 5 Why Framework (optional)
+
+- Same BYOK prerequisites as LLM analysis (Groq + Tavily on device).
+- Use in **view-only** roadmap sessions to facilitate root-cause workshops — the tool outputs **questions**, not answers; facilitators lead discussion.
+- Five levels map to DMAIC phases (Define → Control) with plain-English labels; do not treat generated questions as validated research.
+- Session output is **not stored** in export or cloud; reset and regenerate per meeting as needed.
+- Independent from LLM Summary — use Summary for stakeholder briefings, Five Why for facilitated inquiry.
+
 ---
 
 ## 8. Data portability and export practices

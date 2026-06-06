@@ -2,7 +2,7 @@
 
 **Product:** Product Management Prioritization Tool  
 **Last updated:** 2026-06-06  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260606-ui193`  
+**Implementation baseline:** `APP_ASSET_VERSION` = `20260528-ui194`  
 **Layout breakpoint:** `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** (`html.is-compact-layout` + `html.is-phone-layout`)
 
 Visual and interaction standards for the local-first prioritization workspace.
@@ -48,7 +48,21 @@ Visual and interaction standards for the local-first prioritization workspace.
 | `--dt-bg-soft` | `#fffdf8` | Callouts, cards |
 | `--dt-radius` | `18px` | Modal corners (desktop) |
 
-### 2.4 BYOK modal (`byok-api-keys.css`)
+### 2.4 Five Why section (roadmap modal, `main.css`)
+
+| Element | Class / token | Notes |
+|---------|---------------|-------|
+| Section host | `.roadmap-fivewhy-section` | View-only optional section; hidden in create/edit |
+| Panel | `.roadmap-fivewhy-panel` | Intro copy + action row |
+| Generate | `.roadmap-fivewhy-generate-btn` | Label cycles Ask WHY 1 → 5; `.is-loading` during pipeline |
+| Reset | `.roadmap-fivewhy-reset-btn` | Visible when chain has ≥1 entry |
+| Status | `.roadmap-fivewhy-status` | Progress/errors; `.roadmap-fivewhy-status--error` for failures |
+| Output list | `.roadmap-fivewhy-output` | Ordered list; `.roadmap-fivewhy-output--loading` while generating |
+| Item | `.roadmap-fivewhy-item` | Level label + lens chip + question text |
+
+Typography and spacing follow roadmap modal optional-section patterns (`--roadmap-optional-*` tokens in `main.css`).
+
+### 2.5 BYOK modal (`byok-api-keys.css`)
 
 | Token | Value | Usage |
 |-------|-------|-------|
@@ -61,11 +75,11 @@ Visual and interaction standards for the local-first prioritization workspace.
 
 Panel uses cream gradient (`#fffdf8` → `#fffaf0`), 20px radius, max **1120×92vh** — aligned with profile view and roadmap modals.
 
-### 2.5 Rich description content (`rich-description-content.css`)
+### 2.6 Rich description content (`rich-description-content.css`)
 
 Typography for sanitized HTML in roadmap descriptions, tooltips, and LLM summary paragraphs: heading scale, list spacing, link color, and empty-state muted text.
 
-### 2.6 View toolbars (`view-toolbars-modern.css`)
+### 2.7 View toolbars (`view-toolbars-modern.css`)
 
 | Token | Usage |
 |-------|-------|

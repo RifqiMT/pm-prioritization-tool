@@ -6,10 +6,10 @@
 | **Version** | 2.0.0 |
 | **Maintainer** | Product Team |
 | **Last audited** | 2026-06-06 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260606-ui193` |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui194` |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
 
-This folder is the **single source of product truth** for engineering, design, product management, and stakeholders. Documents are maintained against the **current** implementation in `index.html`, `css/`, `src/`, and `api/`.
+This folder is the **single source of product truth** for engineering, design, product management, and stakeholders (**17 documents** + root [README.md](../README.md) = **18-file suite**). Documents are maintained against the **current** implementation in `index.html`, `css/`, `src/`, and `api/`.
 
 ---
 
@@ -18,7 +18,8 @@ This folder is the **single source of product truth** for engineering, design, p
 | Audience | Start here | Then read |
 |----------|------------|-----------|
 | **New contributor** | [../README.md](../README.md) | [ARCHITECTURE.md](ARCHITECTURE.md), [TECH_GUIDELINES.md](TECH_GUIDELINES.md) |
-| **Product / PM** | [PRODUCT_DOCUMENTATION.md](PRODUCT_DOCUMENTATION.md) | [PRD.md](PRD.md), [USER_STORIES.md](USER_STORIES.md), [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md) |
+| **Product / PM** | [PRODUCT_DOCUMENTATION.md](PRODUCT_DOCUMENTATION.md) | [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md), [PRD.md](PRD.md), [USER_STORIES.md](USER_STORIES.md) |
+| **Cross-functional alignment** | [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md) | [GUARDRAILS.md](GUARDRAILS.md), [VARIABLES.md](VARIABLES.md), [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md) |
 | **Design** | [DESIGN_GUIDELINES.md](DESIGN_GUIDELINES.md) | [VARIABLES.md](VARIABLES.md) (labels and tooltips) |
 | **Leadership / OKRs** | [METRICS_AND_OKRS.md](METRICS_AND_OKRS.md) | [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md) |
 | **Release / QA** | [CHANGELOG.md](CHANGELOG.md) | [GUARDRAILS.md](GUARDRAILS.md), [DEPLOYMENT.md](DEPLOYMENT.md) |
@@ -46,6 +47,7 @@ This folder is the **single source of product truth** for engineering, design, p
 | [USER_PERSONAS.md](USER_PERSONAS.md) | Target users and workflow context |
 | [USER_STORIES.md](USER_STORIES.md) | Epics, stories, acceptance criteria |
 | [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md) | Prioritization rubrics and planning norms |
+| [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md) | Cross-feature logic, rules, and constraints (collaborative reference) |
 
 ### Technical reference
 
@@ -121,7 +123,8 @@ pm-prioritization-tool/
 │       ├── board-drag.js           # Board drag-and-drop
 │       ├── board-card-interaction.js
 │       ├── byok-api-keys.js        # Encrypted local Groq/Tavily keys
-│       └── roadmap-llm-summary.js  # Tavily research + Groq synthesis
+│       ├── roadmap-llm-summary.js  # Tavily research + Groq summary
+│       └── roadmap-5why-framework.js # Iterative WHY 1→5 questions
 ├── api/
 │   ├── health.js                   # GET storage probe
 │   ├── config.js                   # GET client config (same probe as health)
@@ -143,6 +146,8 @@ pm-prioritization-tool/
 │   ├── test-byok-encryption.js     # npm run test:byok
 │   ├── test-byok-validate.js       # npm run test:byok-validate
 │   ├── test-kano-zones.js          # npm run test:kano
+│   ├── test-roadmap-llm-summary.js # npm run test:llm
+│   ├── test-roadmap-5why-framework.js # npm run test:5why
 │   └── disable-vercel-deployment-protection.sh
 ├── .github/workflows/              # ci.yml, vercel-production.yml, fix-vercel-protection.yml
 ├── docs/                           # This documentation suite
@@ -159,9 +164,10 @@ pm-prioritization-tool/
 When changing user-visible behavior, update in the **same delivery** (minimum):
 
 1. [CHANGELOG.md](CHANGELOG.md)  
-2. Affected spec ([PRD.md](PRD.md), [VARIABLES.md](VARIABLES.md), or [DESIGN_GUIDELINES.md](DESIGN_GUIDELINES.md))  
-3. [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md) if requirement IDs change  
-4. Root [README.md](../README.md) if capabilities or stack change  
+2. [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md) when feature logic, rules, or constraints change  
+3. Affected spec ([PRD.md](PRD.md), [VARIABLES.md](VARIABLES.md), or [DESIGN_GUIDELINES.md](DESIGN_GUIDELINES.md))  
+4. [TRACEABILITY_MATRIX.md](TRACEABILITY_MATRIX.md) if requirement IDs change  
+5. Root [README.md](../README.md) if capabilities or stack change  
 
 Privileged workspace mode changes: update **[GUARDRAILS.md](GUARDRAILS.md) §7** only; do not duplicate in other documents.
 

@@ -3,7 +3,7 @@
 **Purpose:** Authoritative dictionary of application variables — technical name, friendly name, definition, formula, UI location, and examples.  
 **Audience:** Product, engineering, QA, analytics.  
 **Last audited:** 2026-06-06  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260606-ui193`
+**Implementation baseline:** `APP_ASSET_VERSION` = `20260528-ui194`
 
 > Privileged cross-profile workspace variables (workspace-wide mode, owner filter, owner metadata) are specified in [GUARDRAILS.md](GUARDRAILS.md) §7 only. This dictionary uses neutral names below.
 
@@ -59,6 +59,10 @@ Persisted to `localStorage` under `rice_prioritizer_v1` unless noted.
 | `roadmapSummaryTone` | Summary Tone | Active LLM summary style in roadmap modal. | `professional` \| `simplified`; session-only. | Roadmap modal Summary section | `"professional"` |
 | `roadmapSummaryGenerated` | Generated Summary | Last LLM output object (paragraphs + links). | Session-only; cleared on modal close. | `#roadmapSummaryOutput` | `{ paragraph1, paragraph2, paragraph3, links }` |
 | `roadmapSummaryGenerating` | Summary In Flight | Whether Groq/Tavily pipeline is running. | Boolean; disables generate button. | Summary status line | `false` |
+| `roadmapFiveWhyGenerating` | Five Why In Flight | Whether the next WHY question pipeline is running. | Boolean; disables Ask WHY button. | `#roadmapFiveWhyStatus` | `false` |
+| `roadmapFiveWhyGenerated` | Generated Five Why Chain | Last 5 Why output object (ordered WHY entries + research metadata). | Session-only; cleared on modal close or reset. | `#roadmapFiveWhyOutput` | `{ whys: [{ level, question, lensLabel }], research, complete }` |
+| `FIVE_WHY_MAX_LEVELS` | Five Why Depth | Maximum iterative WHY levels. | Constant `5` in `roadmap-5why-framework.js`. | Generate button label | `5` |
+| `WHY_LEVEL_LENS` | Five Why Level Lens | Per-level analytical framing (DMAIC phase + plain label). | Indexed by level 1–5; drives prompt and UI labels. | Five Why output list items | Define → Measure → Analyze → Improve → Control |
 
 ### BYOK storage (`ByokApiKeys` — not in workspace payload)
 
@@ -153,7 +157,8 @@ Full input field whitelists: `sanitizeFinancialImpactInputs` in `src/app.js`.
 |----------------|---------------|------------|-----------------|--------------|---------|
 | `id` | Roadmap ID | Stable roadmap identifier. | `generateId("roadmap")`. | Modal footer, merge | `"roadmap_1745..."` |
 | `title` | Roadmap Title | Short initiative name. | Required. | Table, cards, modal | `"EU GDPR compliance"` |
-| `description` | Description | Scope/outcome narrative (rich text). | Sanitized HTML via `RichTextEditor`; plain text in CSV export. | Roadmap modal; card tooltip | `"<p>Enable consent flows…</p>"` |
+| `description` | Description | Scope/outcome narrative (rich text). | Sanitized HTML via `RichTextEditor`; plain text in CSV export. | Roadmap modal Roadmap section; card tooltip | `"<p>Enable consent flows…</p>"` |
+| `note` | Note | Optional internal or contextual notes (rich text). | Sanitized HTML via `normalizeRoadmapNote`; plain text in CSV; included in LLM/Five Why context. | Roadmap modal Note field (`#roadmapNote`) | `"<p>Stakeholder alignment pending</p>"` |
 | `financialImpactFramework` | Financial Framework | Active value model. | Normalized enum. | Modal, table Framework column | `"operational"` |
 | `financialImpactInputs` | Framework Inputs | Key-value inputs per framework. | Sanitized on save/switch. | Roadmap modal sections | `{ opAnnualVolume: 10000 }` |
 | `financialImpactValue` | Financial Impact | Computed or manual amount. | From framework or custom. | Table, map | `166500` |
@@ -261,18 +266,6 @@ flowchart LR
   SEL --> FLT[Advanced Framework Filter]
 ```
 
-### 8.8 Profile currency totals (original currency → EUR)
-
-```mermaid
-flowchart TD
-  P[profile.roadmaps] --> SUM[buildProfileViewCurrencyData totals per currency]
-  SUM --> CARD[Currency total cards (original currency)]
-  SUM -->|non-EUR| ENSURE[ExchangeRates.ensure]
-  ENSURE --> CONV[convertToEUR(total, currency)]
-  CONV --> EUR2[EUR equivalent display]
-  CONV -->|missing rate| FALLBACK["EUR conversion unavailable"]
-```
-
 ### 8.3 Profile lock and export
 
 ```mermaid
@@ -339,7 +332,19 @@ flowchart TD
   OWNER --> VIEW[render active view]
 ```
 
-### 8.8 Privileged workspace mode (see GUARDRAILS §7)
+### 8.8 Profile currency totals (original currency → EUR)
+
+```mermaid
+flowchart TD
+  P[profile.roadmaps] --> SUM[buildProfileViewCurrencyData totals per currency]
+  SUM --> CARD[Currency total cards (original currency)]
+  SUM -->|non-EUR| ENSURE[ExchangeRates.ensure]
+  ENSURE --> CONV[convertToEUR(total, currency)]
+  CONV --> EUR2[EUR equivalent display]
+  CONV -->|missing rate| FALLBACK["EUR conversion unavailable"]
+```
+
+### 8.9 Privileged workspace mode (see GUARDRAILS §7)
 
 ```mermaid
 flowchart TD
@@ -351,31 +356,32 @@ flowchart TD
   FLAG --> OFF[Toggle off restores single-profile scope]
 ```
 
-### 8.9 Labels and links persistence (cloud)
+### 8.10 Labels, links, tasks, RACI, KANO, and note (cloud)
 
 ```mermaid
 flowchart TD
-  EDIT[User saves roadmap modal] --> NORM[normalizeRoadmapLabels + normalizeRoadmapLinks]
+  EDIT[User saves roadmap modal] --> NORM[normalize labels links tasks raci kano note]
   NORM --> MEM[state.profiles in memory]
   MEM --> SER[serializeRoadmapForStorage on saveState]
   SER --> CACHE[localStorage cache]
   SER --> FLUSH[saveState flush true → immediate PUT /api/state]
-  FLUSH --> API[api/_lib/roadmap-metadata normalize]
+  FLUSH --> API[api/_lib/roadmap-metadata.js normalize]
   API --> MONGO[(MongoDB workspaces)]
   PULL[Background pullFromCloudIfNewer] -->|local_pending| SKIP[Skip overwrite]
 ```
 
-### 8.10 Rich-text description fields
+### 8.11 Rich-text description fields (six surfaces)
 
 ```mermaid
 flowchart LR
-  RTE[RichTextEditor.mountAllFromDom] --> FIELDS[roadmapDescription reach impact confidence effort]
+  RTE[RichTextEditor.mountAllFromDom] --> FIELDS[roadmapDescription roadmapNote + 4 RICE fields]
   FIELDS --> HTML[sanitized HTML in roadmap object]
   HTML --> VIEW[View modal: toolbar hidden]
   HTML --> CSV[CSV export: strip HTML to plain text]
+  HTML --> AI[LLM + Five Why context builders]
 ```
 
-### 8.11 RACI matrix data flow
+### 8.12 RACI matrix data flow
 
 ```mermaid
 flowchart TD
@@ -389,7 +395,7 @@ flowchart TD
   RENDER --> COMP[Compact: card per roadmap]
 ```
 
-### 8.12 KANO portfolio positioning
+### 8.13 KANO portfolio positioning
 
 ```mermaid
 flowchart TD
@@ -402,7 +408,7 @@ flowchart TD
   DND --> SAVE[saveState → update axis scores]
 ```
 
-### 8.13 BYOK and LLM summary flow
+### 8.14 BYOK and LLM summary flow
 
 ```mermaid
 flowchart TD
@@ -416,7 +422,21 @@ flowchart TD
   OUT --> UI[#roadmapSummaryOutput 3 paragraphs]
 ```
 
-### 8.14 Legacy Project → Roadmap migration (load only)
+### 8.15 Five Why Framework flow
+
+```mermaid
+flowchart TD
+  VIEW[Roadmap modal view-only mode] --> SEC[roadmapModalSectionFiveWhy]
+  SEC --> BTN[Ask WHY 1 → WHY 5 button]
+  BTN --> KEYS[RoadmapFiveWhyFramework.resolveFiveWhyApiKeys]
+  KEYS --> TAV[Tavily extract links + search per level]
+  TAV --> GROQ[Groq question-only completion]
+  GROQ --> CHAIN[roadmapFiveWhyGenerated.whys array]
+  CHAIN --> UI[#roadmapFiveWhyOutput ordered list]
+  RST[Reset chain] --> CLR[clear session state]
+```
+
+### 8.16 Legacy Project → Roadmap migration (load only)
 
 ```mermaid
 flowchart LR
@@ -436,7 +456,7 @@ flowchart LR
 
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
-| `APP_ASSET_VERSION` | Asset Cache Version | Query-string cache buster for CSS/JS in `index.html`. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260606-ui193"` |
+| `APP_ASSET_VERSION` | Asset Cache Version | Query-string cache buster for CSS/JS in `index.html`. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260528-ui194"` |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | Compact Breakpoint (px) | Max viewport width for phone/tablet UI. | Constant in `constants.js`. | `src/constants.js` | `1400` |
 | `is-compact-layout` | Compact Layout Class | Viewport ≤1400px; enables compact CSS. | Set on `<html>` by `initCompactLayoutClass()`. | Global layout | class present |
 | `is-phone-layout` | Phone Layout Class | Same threshold as compact (unified phone UI). | Set together with compact class. | Global layout | class present |
@@ -457,6 +477,7 @@ flowchart LR
 
 ## 10. Related documents
 
+- [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md) — cross-feature logic and constraints  
 - [PRD.md](PRD.md) — requirements  
 - [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md) — rubrics  
 - [ARCHITECTURE.md](ARCHITECTURE.md) — data flow  

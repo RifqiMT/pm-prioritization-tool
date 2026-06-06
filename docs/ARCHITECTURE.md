@@ -1,9 +1,11 @@
 # Architecture Overview
 
+> Cross-feature logic: [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md)
+
 | Field | Value |
 |-------|-------|
 | **Last audited** | 2026-06-06 |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260606-ui193` |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui194` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -53,12 +55,13 @@ The UI is a **static SPA** (`index.html` + `src/`). On Vercel, **serverless rout
 | `src/modules/board-card-interaction.js` | Board card press feedback |
 | `src/modules/byok-api-keys.js` | Encrypted local Groq/Tavily API keys (`ByokApiKeys`) |
 | `src/modules/roadmap-llm-summary.js` | Tavily research + Groq roadmap briefing (`RoadmapLlmSummary`) |
+| `src/modules/roadmap-5why-framework.js` | Iterative WHY 1→5 questions (`RoadmapFiveWhyFramework`) |
 | `api/health.js` | Storage backend probe |
 | `api/config.js` | Client config probe (same as health) |
 | `api/state.js` | GET/PUT workspace document |
 | `api/byok/validate-groq.js` | POST validate Groq BYOK key |
 | `api/byok/validate-tavily.js` | POST validate Tavily BYOK key |
-| `api/_lib/roadmap-metadata.js` | Server-side labels/links normalization before MongoDB write |
+| `api/_lib/roadmap-metadata.js` | Server-side normalize: labels, links, tasks, RACI, KANO, note; legacy migration |
 | `api/_lib/byok-validate.js` | Shared BYOK key normalization and provider probes |
 | `src/app.js` | Bootstrap, `state`, events, rendering, filters, autocomplete, import/export, bulk transfer |
 | `css/*` | Layered presentation (see §10) |
@@ -159,6 +162,8 @@ CSS layers use `@media (max-width: 1400px)` aligned with the constant — not le
 | Board | `#scrumBoardContainer` | `renderScrumBoard` | unlocked / workspace-wide |
 | MoSCoW | `#moscowBoardContainer` | `renderMoscowBoard` | unlocked / workspace-wide |
 | Map | `#roadmapsMapContainer` | `renderRoadmapsMap` | unlocked + Leaflet |
+| RACI | `#roadmapsRaciView` | `renderRaciMatrix` | unlocked / workspace-wide |
+| KANO | `#roadmapsKanoView` | `renderKanoPortfolioMatrix` | unlocked / workspace-wide |
 
 `state.roadmapsView` controls visibility; switching views does not clear data.
 
@@ -180,7 +185,7 @@ flowchart TD
   F --> H
   G --> H
   H --> I[sortRoadmaps - table]
-  H --> J[Board / MoSCoW / Map renderers]
+  H --> J[Board / MoSCoW / Map / RACI / KANO renderers]
 ```
 
 1. Resolve roadmap array (single profile or workspace-wide per §7).
@@ -219,32 +224,32 @@ Load order in `index.html` (later wins at equal specificity). All linked with `?
 | 5 | `portfolio-modern.css` | Portfolio, filters, autocomplete |
 | 6 | `profile-modals-modern.css` | Profile modals |
 | 7 | `export-modals-modern.css` | Import/export modals |
-| 8 | `view-toolbars-modern.css` | View toolbars |
-| 9 | `compact-modern.css` | Compact chrome (≤1400px) |
-| 10 | `moscow-compact.css` | MoSCoW compact layout |
-| 11 | `board-compact.css` | Board compact layout |
-| 12 | `table-compact.css` | Table compact toolbar |
-| 13 | `roadmap-actions-modern.css` | Row/card actions |
-| 14 | `fullscreen-modern.css` | Fullscreen desktop |
-| 15 | `fullscreen-compact.css` | Fullscreen compact |
-| 16 | `app-footer.css` | Site footer |
-| 17 | `views-density.css` | Density tokens |
-| 18 | `layout-flow.css` | Flat workspace flow (≤1400px) |
-| 19 | `portfolio-cards-compact.css` | Board/MoSCoW card shells |
-| 20 | `table-rows-modern.css` | Table row styling |
-| 21 | `table-revamp-modern.css` | Semantic column widths |
-| 22 | `table-compact-cards.css` | Table card list (≤1400px) |
-| 23 | `super-admin-modern.css` | Workspace-wide mode chrome (see GUARDRAILS §7) |
-| 24 | `map-tooltip-modern.css` | Map country tooltips |
-| 25 | `board-drag.css` | Board drag-and-drop |
-| 26 | `board-card-interaction.css` | Card press feedback |
-| 27 | `view-toolbars-compact-row.css` | Single-row compact toolbars |
-| 28 | `filters-compact-bar.css` | Filters drawer compact bar |
-| 29 | `roadmap-details-tooltip.css` | Description tooltips on cards |
-| 30 | `rich-text-editor.css` | Rich-text toolbar and fields |
-| 31 | `portfolio-kano-modern.css` | KANO portfolio matrix and cards |
-| 32 | `byok-api-keys.css` | BYOK modal |
-| 33 | `rich-description-content.css` | Rich HTML typography |
+| 8 | `byok-api-keys.css` | BYOK modal |
+| 9 | `view-toolbars-modern.css` | View toolbars (six views) |
+| 10 | `compact-modern.css` | Compact chrome (≤1400px) |
+| 11 | `moscow-compact.css` | MoSCoW compact layout |
+| 12 | `board-compact.css` | Board compact layout |
+| 13 | `table-compact.css` | Table compact toolbar |
+| 14 | `roadmap-actions-modern.css` | Row/card actions |
+| 15 | `fullscreen-modern.css` | Fullscreen desktop |
+| 16 | `fullscreen-compact.css` | Fullscreen compact |
+| 17 | `app-footer.css` | Site footer |
+| 18 | `views-density.css` | Density tokens |
+| 19 | `layout-flow.css` | Flat workspace flow (≤1400px) |
+| 20 | `portfolio-cards-compact.css` | Board/MoSCoW card shells |
+| 21 | `table-rows-modern.css` | Table row styling |
+| 22 | `table-revamp-modern.css` | Semantic column widths |
+| 23 | `table-compact-cards.css` | Table card list (≤1400px) |
+| 24 | `super-admin-modern.css` | Workspace-wide mode chrome (see GUARDRAILS §7) |
+| 25 | `map-tooltip-modern.css` | Map country tooltips |
+| 26 | `board-drag.css` | Board drag-and-drop |
+| 27 | `board-card-interaction.css` | Card press feedback |
+| 28 | `view-toolbars-compact-row.css` | Single-row compact toolbars |
+| 29 | `filters-compact-bar.css` | Filters drawer compact bar |
+| 30 | `roadmap-details-tooltip.css` | Description tooltips on cards |
+| 31 | `rich-description-content.css` | Rich HTML typography |
+| 32 | `rich-text-editor.css` | Rich-text toolbar and fields |
+| 33 | `portfolio-kano-modern.css` | KANO portfolio matrix and cards |
 
 ---
 
@@ -272,6 +277,29 @@ sequenceDiagram
 ```
 
 BYOK data is **outside** the workspace MongoDB document. LLM output is **not** persisted on roadmap entities.
+
+### 11.1 Five Why Framework (optional)
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant APP as app.js
+  participant FW as RoadmapFiveWhyFramework
+  participant BYOK as ByokApiKeys
+  participant T as api.tavily.com
+  participant G as api.groq.com
+
+  U->>APP: Open roadmap view modal
+  APP->>FW: resolveFiveWhyApiKeys
+  U->>APP: Ask WHY n
+  APP->>FW: generateNextWhy(context, previousWhys)
+  FW->>T: Extract links / search (per level)
+  FW->>G: Question-only completion
+  FW-->>APP: { whys, complete }
+  APP-->>U: Ordered question list (session only)
+```
+
+Five Why is **view-only**, shares BYOK keys with LLM Summary, and stores output in `roadmapFiveWhyGenerated` (not on roadmap entity).
 
 ---
 
@@ -343,7 +371,7 @@ flowchart TD
 
 ## 16. Known architectural constraints
 
-- Monolithic `app.js` (~9k+ lines) — acceptable for static app; split only with clear module boundaries if growth continues.
+- Monolithic `app.js` (~19.5k lines) — acceptable for static app; split only with clear module boundaries if growth continues.
 - Global namespace — naming collisions require discipline.
 - Full re-render on state change — optimize only if measured pain at scale.
 

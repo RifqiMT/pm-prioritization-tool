@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|-------|
 | **Last updated** | 2026-06-06 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260606-ui193` |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui194` |
 
 The app is a **static UI** plus **Vercel serverless API** routes under `/api`. Portfolio data is stored in **MongoDB Atlas** when `MONGODB_URI` is configured; the browser keeps a **local cache** for faster reload and offline fallback.
 
@@ -72,7 +72,7 @@ https://YOUR_DOMAIN/?pm_api_key=YOUR_PM_API_SECRET
 
 Profile passwords remain **hashed in the payload** (PBKDF2); unlock state stays in **sessionStorage** only.
 
-**BYOK API keys** (Groq/Tavily) are encrypted in `localStorage` (`pm_byok_v1`) on the client only — never in MongoDB or workspace export. Validation uses `POST /api/byok/validate-groq` and `POST /api/byok/validate-tavily` (key sent only during explicit user validation). LLM inference and Tavily calls run **from the browser**; `vercel.json` CSP `connect-src` must include `https://api.groq.com` and `https://api.tavily.com`.
+**BYOK API keys** (Groq/Tavily) are encrypted in `localStorage` (`pm_byok_v1`) on the client only — never in MongoDB or workspace export. Validation uses `POST /api/byok/validate-groq` and `POST /api/byok/validate-tavily` (key sent only during explicit user validation). LLM summary, Five Why, and Tavily calls run **from the browser**; `vercel.json` CSP `connect-src` must include `https://api.groq.com` and `https://api.tavily.com`.
 
 ## Local development
 
@@ -164,8 +164,21 @@ With `PM_API_SECRET`: connect via **Cloud** menu or `https://YOUR-DOMAIN/?pm_api
 | `/api/config` returns HTML | Wrong Vercel project | Step 2 |
 | Data differs preview vs prod | Separate origins | Same `PM_WORKSPACE_ID` only if intentional |
 
+## CI and automated tests
+
+GitHub Actions workflow `.github/workflows/ci.yml` runs on every push/PR to `main`:
+
+1. `npm ci`
+2. `npm run build` — validates static root + `api/state.js`
+3. `npm test` — eight script suites (storage, metadata, persistence, BYOK, KANO, LLM, Five Why)
+
+Post-deploy smoke: `npm run verify:production` (or `verify:deploy` with your URL).
+
+Cross-feature behavior reference: [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md).
+
 ## Related documentation
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — modules and persistence
 - [GUARDRAILS.md](GUARDRAILS.md) — limits and security
+- [TECH_GUIDELINES.md](TECH_GUIDELINES.md) — §15 automated tests
 - [../.env.example](../.env.example) — variable template

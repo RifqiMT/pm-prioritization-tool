@@ -6,7 +6,7 @@
 | **Version** | 2.0.0 |
 | **Document owner** | Product Team |
 | **Last audited** | 2026-06-06 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260606-ui193` |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui194` |
 
 ---
 
@@ -52,8 +52,8 @@ The application is a **static single-page app** (HTML, layered CSS, vanilla Java
 
 - Full CRUD via modal (create, edit, read-only view) with section navigation (Roadmap, RICE, MoSCoW, KANO, Meta, RACI, Financial, Details).
 - **RICE** with validation (`src/rice.js`).
-- **Rich-text descriptions** on roadmap and all four RICE description fields (`RichTextEditor` in `src/modules/rich-text-editor.js`); stored as sanitized HTML; view mode hides toolbar; CSV export strips HTML to plain text.
-- Metadata: type, status, MoSCoW, quarter (`YYYY-Qn`), countries (including **EU** region shortcut), t-shirt size, **labels**, **links**, **tasks**.
+- **Rich-text descriptions** on **Description**, optional **Note**, and all four RICE description fields — **six surfaces** (`RichTextEditor`); sanitized HTML; view mode hides toolbar; CSV strips to plain text.
+- Metadata: type, status, MoSCoW, quarter (`YYYY-Qn`), countries (including **EU** region shortcut), t-shirt size, **labels**, **links**, **tasks**, **note**.
 - **Labels** — optional multi-value tags (multi-word allowed); normalized on save and cloud sync (`normalizeRoadmapLabels`).
 - **Links** — optional named hyperlinks (`{ label, url }`); http/https only; legacy import shapes (`name`, `href`, string URLs) normalized on load.
 - **Tasks** — optional checklist items with name + status (uses `roadmapStatusList` values); persisted as `tasks[]`; CSV column `roadmapTasks` (JSON).
@@ -122,7 +122,7 @@ When `html.is-compact-layout` and table view:
 - `AppStorage` (`src/modules/storage.js`): load/save workspace to MongoDB via `/api/state`.
 - Header status, Cloud modal (connect, pull, push, diagnostics); debounced sync (250ms) with **immediate flush** after roadmap save.
 - Background pull skipped while local edits are pending or newer than last applied remote snapshot (prevents overwriting labels/links).
-- Server normalizes labels/links/tasks/raci on every MongoDB write (`api/_lib/roadmap-metadata.js`).
+- Server normalizes labels, links, tasks, RACI, KANO axes, and note on every MongoDB write (`api/_lib/roadmap-metadata.js`).
 - Legacy JSON keys (`profile.projects`, `projectsView`, `projectType`, `projectStatus`, `projectPeriod`) migrate to roadmap equivalents on load; saves write only canonical keys.
 - Merge on load by document `updatedAt` and profile-count heuristics; local cache under `rice_prioritizer_v1`.
 
@@ -216,9 +216,25 @@ flowchart LR
 - Tones: **Professional** (default) and **Simplified** (toggle after generation).
 - Output is **session-only** — not stored on `roadmap` entity or in cloud workspace document.
 
+### 4.10 5 Why Framework (optional)
+
+- Module: `src/modules/roadmap-5why-framework.js` (`RoadmapFiveWhyFramework` global).
+- Trigger: **Ask WHY 1** (then **Ask WHY 2** … **Ask WHY 5**) in roadmap modal **5 Why Framework** section — **view-only** mode only.
+- Pipeline: build context from saved roadmap fields → Tavily link extract + search per level → Groq generates a **single plain-English question** per WHY level (no answers).
+- Lenses: five DMAIC-aligned levels (`WHY_LEVEL_LENS`) from “why on the roadmap” through “root reason underneath.”
+- Controls: **Reset chain** clears session output; generate button disables when all five levels complete.
+- Output is **session-only** — independent from LLM Summary (§4.9); shares BYOK keys only.
+- Styles: `main.css` `.roadmap-fivewhy-*` rules in roadmap modal.
+
 ---
 
-## 5. Technical architecture (summary)
+## 5. Feature logic across the app
+
+For a **collaborative, cross-feature** explanation of how each capability works — including shared rules, validation, and constraints — see **[FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md)**. Use it alongside [GUARDRAILS.md](GUARDRAILS.md) (hard limits) and [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md) (planning rubrics).
+
+---
+
+## 6. Technical architecture (summary)
 
 See [ARCHITECTURE.md](ARCHITECTURE.md).
 
@@ -226,7 +242,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md).
 |-------|------------|
 | UI | `index.html`, 33 layered CSS files |
 | Logic | `src/app.js`, `src/rice.js`, `src/constants.js`, `src/utils.js` |
-| Modules | `storage`, `profile-security`, `exchange-rates`, `fullscreen`, `overlay-manager`, `description-format`, `rich-text-editor`, `board-drag`, `board-card-interaction`, `byok-api-keys`, `roadmap-llm-summary`; dev seed: `dev-seed-workspace.js` (localhost only) |
+| Modules | `storage`, `profile-security`, `exchange-rates`, `fullscreen`, `overlay-manager`, `description-format`, `rich-text-editor`, `board-drag`, `board-card-interaction`, `byok-api-keys`, `roadmap-llm-summary`, `roadmap-5why-framework`; dev seed: `dev-seed-workspace.js` (localhost only) |
 | API | `api/health.js`, `api/config.js`, `api/state.js`, `api/byok/validate-*.js` |
 | Database | MongoDB Atlas (optional) |
 | Map | Leaflet 1.9.4 (CDN) |
@@ -242,7 +258,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ---
 
-## 6. Business guidelines (summary)
+## 7. Business guidelines (summary)
 
 See [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md).
 
@@ -254,7 +270,7 @@ See [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md).
 
 ---
 
-## 7. Technical guidelines (summary)
+## 8. Technical guidelines (summary)
 
 See [TECH_GUIDELINES.md](TECH_GUIDELINES.md).
 
@@ -266,7 +282,7 @@ See [TECH_GUIDELINES.md](TECH_GUIDELINES.md).
 
 ---
 
-## 8. Design system (summary)
+## 9. Design system (summary)
 
 See [DESIGN_GUIDELINES.md](DESIGN_GUIDELINES.md).
 
@@ -278,7 +294,7 @@ See [DESIGN_GUIDELINES.md](DESIGN_GUIDELINES.md).
 
 ---
 
-## 9. Limitations and guardrails
+## 10. Limitations and guardrails
 
 See [GUARDRAILS.md](GUARDRAILS.md).
 
@@ -290,10 +306,11 @@ See [GUARDRAILS.md](GUARDRAILS.md).
 
 ---
 
-## 10. Related documents
+## 11. Related documents
 
 | Document | Purpose |
 |----------|---------|
+| [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md) | Cross-feature logic, rules, and constraints |
 | [PRD.md](PRD.md) | Formal requirements |
 | [USER_PERSONAS.md](USER_PERSONAS.md) | Personas |
 | [USER_STORIES.md](USER_STORIES.md) | Stories and acceptance criteria |
@@ -306,7 +323,7 @@ See [GUARDRAILS.md](GUARDRAILS.md).
 
 ---
 
-## 11. Maintainer
+## 12. Maintainer
 
 **Developed, managed, and maintained by Rifqi Tjahyono**
 

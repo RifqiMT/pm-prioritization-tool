@@ -8,7 +8,7 @@
 |---|---|
 | **Production** | [pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app) |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260606-ui193` (cache-bust all CSS/JS) |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui194` (cache-bust all CSS/JS) |
 | **Docs hub** | [docs/README.md](docs/README.md) |
 
 > Do not use `pm-prioritization-tool.vercel.app` — that hostname serves a legacy React app. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
@@ -32,7 +32,7 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 | **Portability** | JSON full backup + CSV export; merge import |
 | **Responsive UI** | Desktop (>1400px); unified phone/tablet UI (≤1400px) |
 | **Cloud (optional)** | MongoDB workspace via `/api/state` |
-| **BYOK AI (optional)** | Encrypted local Groq + Tavily API keys; roadmap **LLM analysis** (not synced to cloud) |
+| **BYOK AI (optional)** | Encrypted local Groq + Tavily API keys; **LLM analysis** + **5 Why Framework** (session-only; not synced to cloud) |
 
 ### Product benefits
 
@@ -41,7 +41,7 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 - **Data ownership** — export anytime; merge import; per-browser cache with optional cloud sync  
 - **Planning flexibility** — filter by country, quarter, framework, status, labels, links; map by count, RICE, or EUR  
 - **Meeting-ready on any device** — compact layout uses vertical stacks, FAB, touch-friendly controls, and quadrant nav pills  
-- **Optional AI briefing** — generate a three-paragraph roadmap analysis with Tavily research + Groq synthesis using your own API keys (BYOK)  
+- **Optional AI assistance** — three-paragraph LLM briefings and iterative 5 Why question chains via Tavily + Groq using your own API keys (BYOK)  
 
 ---
 
@@ -59,21 +59,22 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 ### Roadmaps
 
 - Full CRUD via modal (create, edit, read-only view) with section navigation  
-- **Rich-text descriptions** on roadmap and RICE fields (sanitized HTML; plain text in CSV export)  
+- **Rich-text descriptions** on roadmap, **Note**, and four RICE fields — six surfaces total (sanitized HTML; plain text in CSV export)  
 - RICE validation and live score calculation  
 - Metadata: type, status, MoSCoW, quarter (`YYYY-Qn`), countries, t-shirt size, **labels**, **links**, **tasks**, **RACI** assignments, **KANO** scores (functionality × satisfaction)  
 - Six financial frameworks with computed impact  
 - Bulk delete in table (toolbar on desktop; **floating selection bar** on compact)  
 - **Bulk duplicate / move** across profiles when privileged workspace mode is active (see [docs/GUARDRAILS.md](docs/GUARDRAILS.md) §7)  
 - Stable **roadmap ID** in modal footer metadata  
-- **LLM analysis** (optional) — Tavily enriches context from roadmap links; Groq (`llama-3.1-8b-instant`) produces professional or simplified three-paragraph summaries; session-only (not stored in MongoDB)
+- **LLM analysis** (optional) — Tavily enriches context from roadmap links; Groq (`llama-3.1-8b-instant`) produces professional or simplified three-paragraph summaries; session-only (not stored in MongoDB)  
+- **5 Why Framework** (optional) — view-only section generates iterative WHY 1→5 plain-English questions (DMAIC-aligned lenses) via Tavily + Groq; session-only; independent from LLM summary
 
 ### BYOK API keys (optional)
 
 - Header **API keys** modal stores **Groq** and **Tavily** keys encrypted in `localStorage` (`pm_byok_v1`) on this device only  
 - Keys validated via `/api/byok/validate-groq` and `/api/byok/validate-tavily` (key sent only during explicit validation)  
 - Never included in workspace export or MongoDB sync  
-- Required for **Generate LLM analysis** in the roadmap modal Summary section  
+- Required for **Generate LLM analysis** (Summary section) and **5 Why Framework** (view-only section) in the roadmap modal  
 
 ### Filters
 
@@ -139,50 +140,28 @@ pm-prioritization-tool/
 │   ├── dev-seed-workspace.js  # Localhost sample workspace (gated)
 │   └── modules/            # storage, profile-security, exchange-rates, fullscreen, overlay-manager,
 │                           # description-format, rich-text-editor, board-drag, board-card-interaction,
-│                           # byok-api-keys, roadmap-llm-summary
+│                           # byok-api-keys, roadmap-llm-summary, roadmap-5why-framework
 ├── api/                    # health, config, state, byok/validate-* + _lib (Vercel)
-├── scripts/                # verify-deployment; test:storage, metadata, persistence, byok, kano
+├── scripts/                # verify-deployment; test:storage, metadata, persistence, byok, kano, llm, 5why
 ├── docs/                   # Product documentation suite
 ├── vercel.json
 └── package.json
 ```
 
-### CSS layers (load order in `index.html`)
+### CSS layers (load order in `index.html` — 33 files)
 
-| File | Role |
-|------|------|
-| `main.css` | Base design system, legacy modals |
-| `workspace-modern.css` | Workspace panel, table, board columns |
-| `header-modern.css` | App header |
-| `profiles-modern.css` | Profile panel v2 |
-| `portfolio-modern.css` | Command bar, filters, FAB |
-| `profile-modals-modern.css` | Profile modals |
-| `export-modals-modern.css` | Export / import modals |
-| `view-toolbars-modern.css` | View toolbars |
-| `compact-modern.css` | Compact chrome (≤1400px) |
-| `moscow-compact.css` | MoSCoW compact layout |
-| `board-compact.css` | Board compact layout |
-| `table-compact.css` | Table compact toolbar |
-| `roadmap-actions-modern.css` | Card/table action buttons |
-| `fullscreen-modern.css` | Fullscreen host |
-| `fullscreen-compact.css` | Fullscreen + compact |
-| `views-density.css` | Density helpers |
-| `layout-flow.css` | Flat section dividers (compact) |
-| `portfolio-cards-compact.css` | Compact board/MoSCoW card shells |
-| `table-rows-modern.css` | Table row styling |
-| `table-revamp-modern.css` | Modern table structure |
-| `table-compact-cards.css` | Compact table card list |
-| `super-admin-modern.css` | Workspace-wide mode UI (see GUARDRAILS §7) |
-| `rich-text-editor.css` | Rich-text toolbar and fields |
-| `roadmap-details-tooltip.css` | Description tooltips on cards |
-| `map-tooltip-modern.css` | Map country tooltips |
-| `board-drag.css` / `board-card-interaction.css` | Board interactions |
-| `filters-compact-bar.css` | Compact filters drawer bar |
-| `view-toolbars-compact-row.css` | Single-row compact toolbars |
-| `portfolio-kano-modern.css` | KANO portfolio matrix and cards |
-| `byok-api-keys.css` | BYOK API keys modal |
-| `rich-description-content.css` | Rendered rich-text description typography |
-| `app-footer.css` | Site footer |
+| # | File | Role |
+|---|------|------|
+| 1 | `main.css` | Base design system, legacy modals, Five Why section |
+| 2–7 | `workspace` … `export-modals` | Workspace shell through export modals |
+| 8 | `byok-api-keys.css` | BYOK API keys modal |
+| 9 | `view-toolbars-modern.css` | Toolbars for all six views |
+| 10–16 | `compact` … `app-footer` | Compact layouts, fullscreen, footer |
+| 17–23 | `views-density` … `table-compact-cards` | Density, table structure, compact cards |
+| 24–29 | `super-admin` … `filters-compact-bar` | Workspace mode, map tooltips, board DnD, filters |
+| 30–33 | `roadmap-details-tooltip` … `portfolio-kano-modern` | Tooltips, rich-text, KANO matrix |
+
+Full numbered list: [docs/TECH_GUIDELINES.md](docs/TECH_GUIDELINES.md) §3.1 (must match `index.html` lines 15–47).
 
 ### Layout breakpoint
 
@@ -220,6 +199,17 @@ npm run verify:production
 
 ---
 
+## Testing
+
+```bash
+npm test                    # 8 automated suites (storage, metadata, persistence, byok, kano, llm, 5why)
+npm run verify:production   # Smoke test production deploy
+```
+
+CI (`.github/workflows/ci.yml`) runs `npm run build` and `npm test` on every push/PR to `main`.
+
+---
+
 ## Business and technical guidelines
 
 - Use a **consistent RICE rubric** — [docs/BUSINESS_GUIDELINES.md](docs/BUSINESS_GUIDELINES.md)  
@@ -237,6 +227,7 @@ npm run verify:production
 |----------|-------------|
 | [docs/README.md](docs/README.md) | Documentation hub and source map |
 | [docs/PRODUCT_DOCUMENTATION.md](docs/PRODUCT_DOCUMENTATION.md) | Comprehensive product reference |
+| [docs/FEATURE_LOGIC_AND_CONSTRAINTS.md](docs/FEATURE_LOGIC_AND_CONSTRAINTS.md) | Cross-feature logic, rules, and constraints |
 | [docs/PRODUCT_DOCUMENTATION_STANDARD.md](docs/PRODUCT_DOCUMENTATION_STANDARD.md) | How to maintain documentation |
 | [docs/PRD.md](docs/PRD.md) | Product requirements |
 | [docs/USER_PERSONAS.md](docs/USER_PERSONAS.md) | Personas |
@@ -269,4 +260,4 @@ UNLICENSED (private). See `package.json`.
 - GitHub: [RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool)  
 - Article: [Effort–impact confusion to clear-cut priorities](https://rifqi-tjahyono.com/%f0%9f%93%8a-effort-impact-confusion-to-clear-cut-priorities-replace-tab-hopping-with-visual-roadmap-sanity-%f0%9f%a7%ad%e2%9c%a8/)
 
-**Documentation last comprehensively audited:** 2026-06-06 (baseline `20260606-ui193`).
+**Documentation last comprehensively audited:** 2026-06-06 (baseline `20260528-ui194`).
