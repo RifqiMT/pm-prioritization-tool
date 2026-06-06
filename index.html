@@ -17,7 +17,7 @@
   <link href="css/header-modern.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/profiles-modern.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/portfolio-modern.css?v=20260528-ui194" rel="stylesheet" />
-  <link href="css/profile-modals-modern.css?v=20260528-ui194" rel="stylesheet" />
+  <link href="css/profile-modals-modern.css?v=20260606-raci-unique-count-v1" rel="stylesheet" />
   <link href="css/export-modals-modern.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/byok-api-keys.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/view-toolbars-modern.css?v=20260528-ui194" rel="stylesheet" />
@@ -2352,6 +2352,26 @@
               <div id="profileViewByFramework" class="profile-view-chips"></div>
             </section>
 
+            <section class="profile-view-card profile-view-card--wide profile-view-card--raci-leads" aria-labelledby="profileViewSectionRaciLeads">
+              <p id="profileViewSectionRaciLeads" class="profile-view-section-note profile-view-raci-leads-note">Roadmaps per RACI actor (any role; not split by Responsible, Accountable, Consulted, or Informed).</p>
+              <div class="profile-view-metrics-split profile-view-raci-leads-split">
+                <div class="profile-view-metrics-block">
+                  <div class="profile-view-raci-leads-summary-head">
+                    <h4 id="profileViewSectionBusinessLeads" class="profile-view-section-title">Business leads</h4>
+                    <span id="profileViewBusinessLeadsUniqueCount" class="profile-view-raci-leads-summary-count" aria-live="polite">—</span>
+                  </div>
+                  <div id="profileViewBusinessLeads" class="profile-view-chips profile-view-chips--column profile-view-raci-leads-chips" aria-live="polite"></div>
+                </div>
+                <div class="profile-view-metrics-block">
+                  <div class="profile-view-raci-leads-summary-head">
+                    <h4 id="profileViewSectionTechLeads" class="profile-view-section-title">Tech leads</h4>
+                    <span id="profileViewTechLeadsUniqueCount" class="profile-view-raci-leads-summary-count" aria-live="polite">—</span>
+                  </div>
+                  <div id="profileViewTechLeads" class="profile-view-chips profile-view-chips--column profile-view-raci-leads-chips" aria-live="polite"></div>
+                </div>
+              </div>
+            </section>
+
             <section class="profile-view-card profile-view-card--wide profile-view-card--country" aria-labelledby="profileViewSectionCountry">
               <details class="profile-view-expandable-details profile-view-country-details" id="profileViewCountryDetails">
                 <summary class="profile-view-expandable-summary profile-view-country-summary" aria-controls="profileViewCountryPanel">
@@ -2844,7 +2864,7 @@
   <script src="src/modules/byok-api-keys.js?v=20260528-ui194"></script>
   <script src="src/modules/roadmap-llm-summary.js?v=20260528-ui194"></script>
   <script src="src/modules/roadmap-5why-framework.js?v=20260528-ui194"></script>
-  <script src="src/app.js?v=20260606-raci-pill-domain-v1"></script>
+  <script src="src/app.js?v=20260606-raci-unique-count-v1"></script>
 </body>
 </html>
 

@@ -4131,6 +4131,10 @@ function cacheElements() {
   elements.profileViewByMoscow = $("profileViewByMoscow");
   elements.profileViewByKano = $("profileViewByKano");
   elements.profileViewByFramework = $("profileViewByFramework");
+  elements.profileViewBusinessLeads = $("profileViewBusinessLeads");
+  elements.profileViewTechLeads = $("profileViewTechLeads");
+  elements.profileViewBusinessLeadsUniqueCount = $("profileViewBusinessLeadsUniqueCount");
+  elements.profileViewTechLeadsUniqueCount = $("profileViewTechLeadsUniqueCount");
   elements.profileViewByCountry = $("profileViewByCountry");
   elements.profileViewCountryDetails = $("profileViewCountryDetails");
   elements.profileViewCountryUniqueCount = $("profileViewCountryUniqueCount");
@@ -17913,7 +17917,7 @@ function renderProfileViewFinancialStats(roadmaps) {
   }
 }
 
-function renderProfileViewBreakdownChips(container, counts, { sortOrder, labelFor, titleFor } = {}) {
+function renderProfileViewBreakdownChips(container, counts, { sortOrder, labelFor, titleFor, emptyMessage } = {}) {
   if (!container) return;
   container.innerHTML = "";
   const formatLabel = typeof labelFor === "function" ? labelFor : (key) => key;
@@ -18189,6 +18193,58 @@ function getProfileViewFrameworkChipTitle(frameworkKey) {
 }
 
 const PROFILE_VIEW_NO_COUNTRIES_KEY = "No countries";
+
+function buildProfileViewRaciActorCounts(roadmaps, domain) {
+  const targetDomain = normalizeRaciDomain(domain);
+  const countsByKey = {};
+  const displayNames = {};
+
+  roadmaps.forEach((roadmap) => {
+    const raci = normalizeRoadmapRaci(roadmap && roadmap.raci);
+    const actorsInRoadmap = new Set();
+
+    RACI_ROLES.forEach((role) => {
+      raci[role].forEach((entry) => {
+        if (entry.domain !== targetDomain) return;
+        const name = String(entry.name || "").trim();
+        if (!name) return;
+        const key = name.toLowerCase();
+        actorsInRoadmap.add(key);
+        if (!displayNames[key]) displayNames[key] = name;
+      });
+    });
+
+    actorsInRoadmap.forEach((key) => {
+      countsByKey[key] = (countsByKey[key] || 0) + 1;
+    });
+  });
+
+  const counts = {};
+  Object.entries(countsByKey).forEach(([key, count]) => {
+    counts[displayNames[key]] = count;
+  });
+  return counts;
+}
+
+function getProfileViewRaciLeadChipTitle(actorName, count) {
+  const label = String(actorName || "").trim() || "Actor";
+  const n = Number(count) || 0;
+  if (n === 1) return `${label}: 1 roadmap (any RACI role)`;
+  return `${label}: ${n} roadmaps (any RACI role)`;
+}
+
+function formatProfileViewUniqueActorCount(count) {
+  const n = Number(count) || 0;
+  if (n === 1) return "1 unique actor";
+  return `${n} unique actors`;
+}
+
+function syncProfileViewRaciLeadsUniqueCount(element, count) {
+  if (!element) return;
+  const text = formatProfileViewUniqueActorCount(count);
+  element.textContent = text;
+  element.setAttribute("aria-label", text);
+}
 
 function buildProfileViewCountryCounts(roadmaps) {
   const counts = {};
@@ -18830,6 +18886,24 @@ function renderProfileViewContent(contextProfile, roadmaps, options = {}) {
     sortOrder: FINANCIAL_FRAMEWORKS.slice(),
     labelFor: (key) => getProfileViewFrameworkChipLabel(key),
     titleFor: (key) => getProfileViewFrameworkChipTitle(key),
+  });
+  const businessLeadCounts = buildProfileViewRaciActorCounts(roadmaps, "Business");
+  const techLeadCounts = buildProfileViewRaciActorCounts(roadmaps, "Tech");
+  syncProfileViewRaciLeadsUniqueCount(
+    elements.profileViewBusinessLeadsUniqueCount,
+    Object.keys(businessLeadCounts).length
+  );
+  syncProfileViewRaciLeadsUniqueCount(
+    elements.profileViewTechLeadsUniqueCount,
+    Object.keys(techLeadCounts).length
+  );
+  renderProfileViewBreakdownChips(elements.profileViewBusinessLeads, businessLeadCounts, {
+    titleFor: (key) => getProfileViewRaciLeadChipTitle(key, businessLeadCounts[key]),
+    emptyMessage: "No Business RACI actors yet.",
+  });
+  renderProfileViewBreakdownChips(elements.profileViewTechLeads, techLeadCounts, {
+    titleFor: (key) => getProfileViewRaciLeadChipTitle(key, techLeadCounts[key]),
+    emptyMessage: "No Tech RACI actors yet.",
   });
   renderProfileViewBreakdownChips(
     elements.profileViewByCountry,

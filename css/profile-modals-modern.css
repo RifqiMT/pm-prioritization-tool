@@ -1111,6 +1111,45 @@ html.is-workspace-trust-profile #profileViewOwnerFilterWrap:not([hidden]) {
   min-width: 0;
 }
 
+.profile-view-card--raci-leads {
+  gap: 0.65rem;
+}
+
+.profile-view-raci-leads-note {
+  margin: 0;
+}
+
+.profile-view-raci-leads-summary-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  min-width: 0;
+}
+
+.profile-view-raci-leads-summary-count {
+  flex: 0 0 auto;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: #991b1b;
+  background: rgba(254, 226, 226, 0.85);
+  border: 1px solid rgba(185, 28, 28, 0.14);
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-view-raci-leads-chips {
+  max-height: min(16rem, 42vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 0.15rem;
+}
+
 .profile-view-identity {
   display: flex;
   align-items: center;
