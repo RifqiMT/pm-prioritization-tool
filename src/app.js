@@ -8168,6 +8168,9 @@ function ensureRoadmapTasksDisclosure() {
 
 const RACI_ROLES = ["responsible", "accountable", "consulted", "informed"];
 const RACI_DOMAIN_OPTIONS = ["Business", "Tech"];
+const RACI_MATRIX_DOMAIN_OPTIONS = ["Business", "Tech", "All"];
+const RACI_MATRIX_DOMAIN_STACK_ORDER = ["Tech", "Business"];
+const RACI_MATRIX_DOMAIN_MARKS = { Tech: "(T)", Business: "(B)" };
 const RACI_MATRIX_ROLE_LABELS = {
   responsible: "Responsible",
   accountable: "Accountable",
@@ -8193,6 +8196,11 @@ function getEmptyRoadmapRaci() {
 function normalizeRaciDomain(domain) {
   const value = String(domain || "").trim();
   return RACI_DOMAIN_OPTIONS.includes(value) ? value : "Business";
+}
+
+function normalizeRaciMatrixDomain(domain) {
+  const value = String(domain || "").trim();
+  return RACI_MATRIX_DOMAIN_OPTIONS.includes(value) ? value : "Business";
 }
 
 function normalizeRaciEntries(entries) {
@@ -8394,14 +8402,21 @@ function getRoadmapRaciFromControls() {
   return normalizeRoadmapRaci(raci);
 }
 
-function getRaciEntriesForMatrixDomain(roadmap, role, domain) {
+function getRaciEntriesForEntryDomain(roadmap, role, entryDomain) {
   const raci = normalizeRoadmapRaci(roadmap && roadmap.raci);
-  const needle = normalizeRaciDomain(domain);
+  const needle = normalizeRaciDomain(entryDomain);
   return raci[role].filter((entry) => entry.domain === needle);
 }
 
+function getRaciEntriesForMatrixDomain(roadmap, role, perspective) {
+  const raci = normalizeRoadmapRaci(roadmap && roadmap.raci);
+  const domain = normalizeRaciMatrixDomain(perspective);
+  if (domain === "All") return raci[role];
+  return getRaciEntriesForEntryDomain({ raci }, role, domain);
+}
+
 function syncRaciMatrixDomainToggle(domain) {
-  const normalized = normalizeRaciDomain(domain);
+  const normalized = normalizeRaciMatrixDomain(domain);
   if (elements.raciMatrixDomainToggle) {
     elements.raciMatrixDomainToggle.dataset.activeDomain = normalized;
     elements.raciMatrixDomainToggle.querySelectorAll(".raci-matrix-domain-btn").forEach((btn) => {
@@ -8432,9 +8447,21 @@ function buildRaciMatrixRoadmapLink(roadmap) {
   return titleBtn;
 }
 
-function buildRaciMatrixNameChip(entry) {
+function buildRaciMatrixNameChip(entry, options = {}) {
+  const domainMark = options.domainMark || "";
+  const entryDomain = options.entryDomain || "";
   const item = document.createElement("li");
   item.className = "raci-matrix-name-chip";
+  if (entryDomain) {
+    item.classList.add(`raci-matrix-name-chip--${String(entryDomain).toLowerCase()}`);
+  }
+  if (domainMark) {
+    const domain = document.createElement("span");
+    domain.className = "raci-matrix-name-chip__domain";
+    domain.textContent = domainMark;
+    domain.setAttribute("aria-label", `${entryDomain} domain`);
+    item.appendChild(domain);
+  }
   const avatar = document.createElement("span");
   avatar.className = "raci-matrix-name-chip__avatar";
   avatar.setAttribute("aria-hidden", "true");
@@ -8446,6 +8473,30 @@ function buildRaciMatrixNameChip(entry) {
   item.appendChild(avatar);
   item.appendChild(label);
   return item;
+}
+
+function buildRaciMatrixCardEmptyDomainChip(entryDomain) {
+  const item = document.createElement("li");
+  item.className = `raci-matrix-name-chip raci-matrix-name-chip--empty raci-matrix-name-chip--${String(entryDomain).toLowerCase()}`;
+  const domain = document.createElement("span");
+  domain.className = "raci-matrix-name-chip__domain";
+  domain.textContent = RACI_MATRIX_DOMAIN_MARKS[entryDomain] || "";
+  domain.setAttribute("aria-label", `${entryDomain} domain`);
+  const empty = document.createElement("span");
+  empty.className = "raci-matrix-name-chip__label raci-matrix-name-chip__label--empty";
+  empty.textContent = "—";
+  empty.setAttribute("aria-label", "No assignment");
+  item.appendChild(domain);
+  item.appendChild(empty);
+  return item;
+}
+
+function getRaciMatrixChipDomainOptions(entryDomain) {
+  if (!entryDomain) return {};
+  return {
+    domainMark: RACI_MATRIX_DOMAIN_MARKS[entryDomain] || "",
+    entryDomain
+  };
 }
 
 function formatRaciEntriesTooltip(entries, role) {
@@ -8512,9 +8563,36 @@ function buildRaciMatrixTooltipWrap(entries, role, contentNode) {
   return wrap;
 }
 
-function buildRaciMatrixCardRoleValue(entries, role, roadmapId) {
+function buildRaciMatrixCardMoreChip(hiddenCount, role, expanded = false) {
+  const item = document.createElement("li");
+  item.className = "raci-matrix-name-chip-item--more";
+
+  const chip = document.createElement("button");
+  chip.type = "button";
+  chip.className = "raci-matrix-name-chip raci-matrix-name-chip--more raci-matrix-card__role-toggle";
+  chip.setAttribute("aria-expanded", String(expanded));
+  chip.dataset.raciRole = role;
+
+  const roleLabel = RACI_MATRIX_ROLE_LABELS[role] || role;
+  if (expanded) {
+    chip.textContent = "Less";
+    chip.setAttribute("aria-label", `Show fewer ${roleLabel} assignees`);
+  } else {
+    chip.textContent = `+${hiddenCount}`;
+    chip.setAttribute(
+      "aria-label",
+      `Show ${hiddenCount} more ${roleLabel} assignee${hiddenCount === 1 ? "" : "s"}`
+    );
+  }
+
+  item.appendChild(chip);
+  return item;
+}
+
+function buildRaciMatrixCardRoleValue(entries, role, roadmapId, entryDomain = null) {
   const body = document.createElement("div");
   body.className = "raci-matrix-card__role-body";
+  const chipDomainOptions = getRaciMatrixChipDomainOptions(entryDomain);
 
   const value = document.createElement("div");
   value.className = "raci-matrix-card__role-value raci-matrix-role-value";
@@ -8522,42 +8600,33 @@ function buildRaciMatrixCardRoleValue(entries, role, roadmapId) {
   value.id = `raci-card-${roadmapId}-${role}-assignees`;
 
   if (!entries.length) {
-    const empty = document.createElement("span");
-    empty.className = "raci-matrix-cell-empty";
-    empty.textContent = "—";
-    empty.setAttribute("aria-label", "No assignment");
-    value.appendChild(empty);
+    if (entryDomain) {
+      const list = document.createElement("ul");
+      list.className = "raci-matrix-name-list";
+      list.appendChild(buildRaciMatrixCardEmptyDomainChip(entryDomain));
+      value.appendChild(list);
+    } else {
+      const empty = document.createElement("span");
+      empty.className = "raci-matrix-cell-empty";
+      empty.textContent = "—";
+      empty.setAttribute("aria-label", "No assignment");
+      value.appendChild(empty);
+    }
     body.appendChild(value);
     return body;
   }
 
   const list = document.createElement("ul");
   list.className = "raci-matrix-name-list";
-  list.appendChild(buildRaciMatrixNameChip(entries[0]));
+  list.appendChild(buildRaciMatrixNameChip(entries[0], chipDomainOptions));
 
   if (entries.length > 1) {
     entries.slice(1).forEach((entry) => {
-      const chip = buildRaciMatrixNameChip(entry);
+      const chip = buildRaciMatrixNameChip(entry, chipDomainOptions);
       chip.classList.add("raci-matrix-card__role-extra");
       list.appendChild(chip);
     });
-    value.appendChild(list);
-    body.appendChild(value);
-
-    const roleLabel = RACI_MATRIX_ROLE_LABELS[role] || role;
-    const hiddenCount = entries.length - 1;
-    const toggle = document.createElement("button");
-    toggle.type = "button";
-    toggle.className = "raci-matrix-card__role-toggle";
-    toggle.setAttribute("aria-expanded", "false");
-    toggle.setAttribute("aria-controls", value.id);
-    toggle.setAttribute(
-      "aria-label",
-      `Show ${hiddenCount} more ${roleLabel} assignee${hiddenCount === 1 ? "" : "s"}`
-    );
-    toggle.textContent = `+${hiddenCount} more`;
-    body.appendChild(toggle);
-    return body;
+    list.appendChild(buildRaciMatrixCardMoreChip(entries.length - 1, role));
   }
 
   value.appendChild(list);
@@ -8566,27 +8635,33 @@ function buildRaciMatrixCardRoleValue(entries, role, roadmapId) {
 }
 
 function handleRaciMatrixCardRoleToggle(toggleBtn) {
-  const roleRow = toggleBtn.closest(".raci-matrix-card__role");
+  const roleRow = toggleBtn.closest(
+    ".raci-matrix-card__domain-row--expandable, .raci-matrix-card__role.raci-matrix-card__role--expandable"
+  );
   if (!roleRow) return;
 
-  const isCollapsed = roleRow.classList.contains("raci-matrix-card__role--collapsed");
+  const isCollapsed = roleRow.classList.contains("raci-matrix-card__role--collapsed") ||
+    roleRow.classList.contains("raci-matrix-card__domain-row--collapsed");
   const nextCollapsed = !isCollapsed;
   roleRow.classList.toggle("raci-matrix-card__role--collapsed", nextCollapsed);
   roleRow.classList.toggle("raci-matrix-card__role--expanded", !nextCollapsed);
+  roleRow.classList.toggle("raci-matrix-card__domain-row--collapsed", nextCollapsed);
+  roleRow.classList.toggle("raci-matrix-card__domain-row--expanded", !nextCollapsed);
   toggleBtn.setAttribute("aria-expanded", String(!nextCollapsed));
 
-  const role = roleRow.dataset.raciRole || "";
+  const roleHost = roleRow.closest(".raci-matrix-card__role");
+  const role = roleRow.dataset.raciRole || (roleHost && roleHost.dataset.raciRole) || "";
   const roleLabel = RACI_MATRIX_ROLE_LABELS[role] || role;
   const extraCount = roleRow.querySelectorAll(".raci-matrix-card__role-extra").length;
 
   if (nextCollapsed) {
-    toggleBtn.textContent = `+${extraCount} more`;
+    toggleBtn.textContent = `+${extraCount}`;
     toggleBtn.setAttribute(
       "aria-label",
       `Show ${extraCount} more ${roleLabel} assignee${extraCount === 1 ? "" : "s"}`
     );
   } else {
-    toggleBtn.textContent = "Show less";
+    toggleBtn.textContent = "Less";
     toggleBtn.setAttribute("aria-label", `Show fewer ${roleLabel} assignees`);
   }
 }
@@ -8620,6 +8695,52 @@ function buildRaciMatrixDesktopRoleValue(entries, role) {
     value.appendChild(list);
   }
   return value;
+}
+
+function buildRaciMatrixDesktopRoleValueAll(raci, role) {
+  const stack = document.createElement("div");
+  stack.className = "raci-matrix-domain-stack";
+
+  RACI_MATRIX_DOMAIN_STACK_ORDER.forEach((entryDomain) => {
+    const entries = getRaciEntriesForEntryDomain({ raci }, role, entryDomain);
+    const row = document.createElement("div");
+    row.className = `raci-matrix-domain-row raci-matrix-domain-row--${entryDomain.toLowerCase()}`;
+
+    const mark = document.createElement("span");
+    mark.className = "raci-matrix-domain-row__mark";
+    mark.textContent = RACI_MATRIX_DOMAIN_MARKS[entryDomain];
+    mark.setAttribute("aria-label", `${entryDomain} domain`);
+
+    row.appendChild(mark);
+    row.appendChild(buildRaciMatrixDesktopRoleValue(entries, role));
+    stack.appendChild(row);
+  });
+
+  return stack;
+}
+
+function buildRaciMatrixCardRoleValueAll(raci, role, roadmapId) {
+  const stack = document.createElement("div");
+  stack.className = "raci-matrix-card__domain-stack";
+
+  RACI_MATRIX_DOMAIN_STACK_ORDER.forEach((entryDomain) => {
+    const entries = getRaciEntriesForEntryDomain({ raci }, role, entryDomain);
+    const domainRow = document.createElement("div");
+    domainRow.className = `raci-matrix-card__domain-row raci-matrix-card__domain-row--${entryDomain.toLowerCase()}`;
+    if (entries.length > 1) {
+      domainRow.classList.add(
+        "raci-matrix-card__domain-row--expandable",
+        "raci-matrix-card__domain-row--collapsed"
+      );
+    }
+
+    domainRow.appendChild(
+      buildRaciMatrixCardRoleValue(entries, role, `${roadmapId}-${entryDomain.toLowerCase()}`, entryDomain)
+    );
+    stack.appendChild(domainRow);
+  });
+
+  return stack;
 }
 
 function buildRaciMatrixColumnHead(role) {
@@ -8671,6 +8792,8 @@ function buildRaciMatrixDesktopGrid(roadmaps, domain) {
   grid.setAttribute("role", "table");
   grid.setAttribute("aria-label", `RACI matrix (${domain} perspective)`);
 
+  const showAllDomains = normalizeRaciMatrixDomain(domain) === "All";
+
   const headerRow = document.createElement("div");
   headerRow.className = "raci-matrix-grid__row raci-matrix-grid__row--head";
   headerRow.setAttribute("role", "row");
@@ -8717,8 +8840,12 @@ function buildRaciMatrixDesktopGrid(roadmaps, domain) {
       roleCell.setAttribute("role", "cell");
       roleCell.dataset.raciRole = role;
       roleCell.setAttribute("headers", `raci-col-${role}`);
-      const entries = getRaciEntriesForMatrixDomain({ raci }, role, domain);
-      roleCell.appendChild(buildRaciMatrixDesktopRoleValue(entries, role));
+      if (showAllDomains) {
+        roleCell.appendChild(buildRaciMatrixDesktopRoleValueAll(raci, role));
+      } else {
+        const entries = getRaciEntriesForMatrixDomain({ raci }, role, domain);
+        roleCell.appendChild(buildRaciMatrixDesktopRoleValue(entries, role));
+      }
       row.appendChild(roleCell);
     });
     grid.appendChild(row);
@@ -8733,6 +8860,8 @@ function buildRaciMatrixCards(roadmaps, domain) {
   cards.className = "raci-matrix-cards";
   cards.setAttribute("role", "list");
   cards.setAttribute("aria-label", `RACI roadmap cards (${domain} perspective)`);
+
+  const showAllDomains = normalizeRaciMatrixDomain(domain) === "All";
 
   roadmaps.forEach((roadmap) => {
     const card = document.createElement("article");
@@ -8772,10 +8901,15 @@ function buildRaciMatrixCards(roadmaps, domain) {
 
       const entries = getRaciEntriesForMatrixDomain({ raci }, role, domain);
       roleRow.appendChild(roleLabel);
-      if (entries.length > 1) {
-        roleRow.classList.add("raci-matrix-card__role--expandable", "raci-matrix-card__role--collapsed");
+      if (showAllDomains) {
+        roleRow.classList.add("raci-matrix-card__role--all-domains");
+        roleRow.appendChild(buildRaciMatrixCardRoleValueAll(raci, role, roadmap.id));
+      } else {
+        if (entries.length > 1) {
+          roleRow.classList.add("raci-matrix-card__role--expandable", "raci-matrix-card__role--collapsed");
+        }
+        roleRow.appendChild(buildRaciMatrixCardRoleValue(entries, role, roadmap.id));
       }
-      roleRow.appendChild(buildRaciMatrixCardRoleValue(entries, role, roadmap.id));
       roles.appendChild(roleRow);
     });
 
@@ -8794,7 +8928,7 @@ function buildRaciMatrixCards(roadmaps, domain) {
 
 function renderRaciMatrix() {
   if (!elements.roadmapsRaciMatrixTable) return;
-  const domain = normalizeRaciDomain(state.raciMatrixDomain);
+  const domain = normalizeRaciMatrixDomain(state.raciMatrixDomain);
   syncRaciMatrixDomainToggle(domain);
 
   const activeProfile = getActiveProfile();
@@ -9778,7 +9912,7 @@ function initRaciMatrixDomainToggle() {
   elements.raciMatrixDomainToggle.addEventListener("click", (event) => {
     const btn = event.target.closest(".raci-matrix-domain-btn");
     if (!btn) return;
-    const next = normalizeRaciDomain(btn.getAttribute("data-raci-domain"));
+    const next = normalizeRaciMatrixDomain(btn.getAttribute("data-raci-domain"));
     if (state.raciMatrixDomain === next) return;
     state.raciMatrixDomain = next;
     saveState();
@@ -10032,7 +10166,7 @@ function applyPersistedWorkspaceUiState(parsed) {
   ) {
     state.roadmapsView = savedRoadmapsView;
   }
-  if (RACI_DOMAIN_OPTIONS.includes(parsed.raciMatrixDomain)) {
+  if (RACI_MATRIX_DOMAIN_OPTIONS.includes(parsed.raciMatrixDomain)) {
     state.raciMatrixDomain = parsed.raciMatrixDomain;
   }
   if (parsed.kanoPortfolioPanel === "positioned" || parsed.kanoPortfolioPanel === "unpositioned") {

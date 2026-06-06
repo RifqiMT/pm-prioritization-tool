@@ -1054,7 +1054,7 @@ button:disabled {
 .raci-matrix-domain-toggle__buttons {
   position: relative;
   display: inline-grid;
-  grid-template-columns: repeat(2, minmax(5.75rem, 1fr));
+  grid-template-columns: repeat(3, minmax(4.5rem, 1fr));
   gap: 0.22rem;
   padding: 0.24rem;
   border-radius: 12px;
@@ -1068,7 +1068,7 @@ button:disabled {
   top: 0.24rem;
   bottom: 0.24rem;
   left: 0.24rem;
-  width: calc(50% - 0.35rem);
+  width: calc((100% - 0.48rem - 0.44rem) / 3);
   border-radius: 9px;
   background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%);
   box-shadow: 0 4px 12px rgba(185, 28, 28, 0.24);
@@ -1080,6 +1080,10 @@ button:disabled {
 
 .raci-matrix-domain-toggle__buttons[data-active-domain="Tech"] .raci-matrix-domain-indicator {
   transform: translateX(calc(100% + 0.22rem));
+}
+
+.raci-matrix-domain-toggle__buttons[data-active-domain="All"] .raci-matrix-domain-indicator {
+  transform: translateX(calc(200% + 0.44rem));
 }
 
 .raci-matrix-domain-btn {
@@ -1432,6 +1436,41 @@ button:disabled {
   min-width: 0;
 }
 
+.raci-matrix-domain-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.raci-matrix-domain-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.28rem;
+  align-items: start;
+  min-width: 0;
+}
+
+.raci-matrix-domain-row__mark {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  color: #78716c;
+  line-height: 1.35;
+  padding-top: 0.18rem;
+  white-space: nowrap;
+}
+
+.raci-matrix-domain-row--tech .raci-matrix-domain-row__mark {
+  color: #1d4ed8;
+}
+
+.raci-matrix-domain-row--business .raci-matrix-domain-row__mark {
+  color: #b45309;
+}
+
 .raci-matrix-with-tooltip {
   display: inline-flex;
   align-items: center;
@@ -1757,35 +1796,81 @@ button:disabled {
   min-width: 0;
 }
 
+.raci-matrix-card__domain-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.38rem;
+  min-width: 0;
+}
+
+.raci-matrix-card__domain-row {
+  display: block;
+  min-width: 0;
+}
+
+.raci-matrix-card__domain-row .raci-matrix-card__role-body {
+  width: 100%;
+}
+
+.raci-matrix-name-chip__domain {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  color: #78716c;
+}
+
+.raci-matrix-name-chip--tech .raci-matrix-name-chip__domain {
+  color: #1d4ed8;
+}
+
+.raci-matrix-name-chip--business .raci-matrix-name-chip__domain {
+  color: #b45309;
+}
+
+.raci-matrix-card .raci-matrix-name-chip__domain {
+  margin-right: 0.08rem;
+}
+
+.raci-matrix-name-chip--empty {
+  color: #a8a29e;
+  background: rgba(250, 250, 249, 0.95);
+  border-style: dashed;
+}
+
+.raci-matrix-name-chip__label--empty {
+  color: #a8a29e;
+  font-weight: 600;
+}
+
+.raci-matrix-card__domain-row--collapsed .raci-matrix-card__role-extra {
+  display: none;
+}
+
 .raci-matrix-card__role--collapsed .raci-matrix-card__role-extra {
   display: none;
 }
 
-.raci-matrix-card__role--expandable.raci-matrix-card__role--collapsed .raci-matrix-card__role-body {
+.raci-matrix-card__role--expandable.raci-matrix-card__role--collapsed .raci-matrix-name-list,
+.raci-matrix-card__domain-row--expandable.raci-matrix-card__domain-row--collapsed .raci-matrix-name-list {
   flex-direction: row;
-  align-items: center;
   flex-wrap: nowrap;
-  gap: 0.4rem;
-}
-
-.raci-matrix-card__role--expandable.raci-matrix-card__role--collapsed .raci-matrix-card__role-value {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.raci-matrix-card__role--expandable.raci-matrix-card__role--collapsed .raci-matrix-name-list {
-  flex-direction: row;
   align-items: center;
-  min-width: 0;
+  gap: 0.28rem;
 }
 
-.raci-matrix-card__role--expandable.raci-matrix-card__role--collapsed .raci-matrix-name-chip:first-child {
+.raci-matrix-card__role--expandable.raci-matrix-card__role--collapsed .raci-matrix-name-chip:first-child,
+.raci-matrix-card__domain-row--expandable.raci-matrix-card__domain-row--collapsed .raci-matrix-name-chip:first-child {
   flex: 1 1 auto;
   min-width: 0;
-  max-width: 100%;
+  max-width: calc(100% - 3.25rem);
 }
 
 .raci-matrix-card__role--expandable.raci-matrix-card__role--collapsed
+  .raci-matrix-name-chip:first-child
+  .raci-matrix-name-chip__label,
+.raci-matrix-card__domain-row--expandable.raci-matrix-card__domain-row--collapsed
   .raci-matrix-name-chip:first-child
   .raci-matrix-name-chip__label {
   overflow: hidden;
@@ -1793,72 +1878,87 @@ button:disabled {
   white-space: nowrap;
 }
 
-.raci-matrix-card__role--expanded .raci-matrix-card__role-body {
-  flex-direction: column;
-  align-items: stretch;
+.raci-matrix-card__role--expandable.raci-matrix-card__role--collapsed .raci-matrix-name-chip--more,
+.raci-matrix-card__domain-row--expandable.raci-matrix-card__domain-row--collapsed .raci-matrix-name-chip--more {
+  flex: 0 0 auto;
 }
 
-.raci-matrix-card__role-toggle {
+.raci-matrix-card__role--expanded .raci-matrix-name-list,
+.raci-matrix-card__domain-row--expanded .raci-matrix-name-list {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.38rem;
+}
+
+.raci-matrix-card__role--expanded .raci-matrix-name-chip:first-child,
+.raci-matrix-card__domain-row--expanded .raci-matrix-name-chip:first-child {
+  max-width: 100%;
+}
+
+.raci-matrix-card__role--expanded
+  .raci-matrix-name-chip:first-child
+  .raci-matrix-name-chip__label,
+.raci-matrix-card__domain-row--expanded
+  .raci-matrix-name-chip:first-child
+  .raci-matrix-name-chip__label {
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal;
+}
+
+.raci-matrix-name-chip-item--more {
+  list-style: none;
+  display: contents;
+}
+
+.raci-matrix-card .raci-matrix-name-chip--more {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  align-self: flex-start;
-  flex: 0 0 auto;
-  width: auto !important;
-  max-width: none !important;
+  flex-shrink: 0;
+  min-width: 2.15rem;
   min-height: 32px;
-  padding: 0.28rem 0.62rem;
+  padding: 0.22rem 0.55rem;
   border-radius: 999px;
-  border: 1px solid rgba(168, 162, 158, 0.42);
-  background: rgba(245, 245, 244, 0.95);
-  color: #57534e;
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 750;
   letter-spacing: 0.01em;
-  white-space: nowrap;
-  text-transform: none;
-  cursor: pointer;
+  color: #57534e;
+  background: rgba(245, 245, 244, 0.95);
+  border: 1px solid rgba(168, 162, 158, 0.42);
   box-shadow: none !important;
   filter: none !important;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease,
-    box-shadow 0.15s ease;
+  cursor: pointer;
+  text-transform: none;
+  width: auto !important;
+  max-width: none !important;
+  gap: 0;
 }
 
-.raci-matrix-card__role--expandable.raci-matrix-card__role--collapsed .raci-matrix-card__role-toggle {
-  align-self: center;
-}
-
-.raci-matrix-card__role-toggle:hover {
+.raci-matrix-card .raci-matrix-name-chip--more:hover {
   color: #44403c;
   border-color: rgba(120, 113, 108, 0.5);
   background: #fafaf9 !important;
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06) !important;
-  filter: none !important;
 }
 
-.raci-matrix-card__role-toggle:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(185, 28, 28, 0.28);
-}
-
-.raci-matrix-card__role:not(.raci-matrix-card__role--expandable) .raci-matrix-card__role-toggle {
-  display: none;
-}
-
-.raci-matrix-card__role--expanded .raci-matrix-card__role-toggle {
+.raci-matrix-card__role--expanded .raci-matrix-name-chip--more,
+.raci-matrix-card__domain-row--expanded .raci-matrix-name-chip--more {
   align-self: flex-start;
   border-color: rgba(202, 138, 4, 0.35);
   background: linear-gradient(180deg, #fffefb 0%, #fff7ed 100%) !important;
   color: #92400e !important;
 }
 
-.raci-matrix-card__role--expanded .raci-matrix-card__role-toggle:hover {
-  border-color: rgba(202, 138, 4, 0.48);
-  background: #fff !important;
-  color: #7c2d12 !important;
+.raci-matrix-card__role--expanded .raci-matrix-card__role-body {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.raci-matrix-card .raci-matrix-name-chip--more:focus-visible,
+.raci-matrix-card__role-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(185, 28, 28, 0.28);
 }
 
 .raci-matrix-card .raci-matrix-roadmap-link {
@@ -2051,6 +2151,15 @@ button:disabled {
     overflow: visible;
   }
 
+  .raci-matrix-card__role--all-domains {
+    grid-template-columns: 1fr;
+    gap: 0.42rem;
+  }
+
+  .raci-matrix-card__role--all-domains .raci-matrix-card__domain-stack {
+    width: 100%;
+  }
+
   .raci-matrix-cards {
     padding: 0.65rem;
   }
@@ -2075,6 +2184,12 @@ button:disabled {
   }
 
   .raci-matrix-card__role-toggle {
+    min-height: 36px;
+    font-size: 0.74rem;
+    padding-inline: 0.72rem;
+  }
+
+  .raci-matrix-card .raci-matrix-name-chip--more {
     min-height: 36px;
     font-size: 0.74rem;
     padding-inline: 0.72rem;
@@ -10964,6 +11079,28 @@ button,
 
 .raci-matrix-card__role-toggle:hover {
   filter: none !important;
+}
+
+.raci-matrix-card .raci-matrix-name-chip--more.raci-matrix-card__role-toggle {
+  background: rgba(245, 245, 244, 0.95) !important;
+  color: #57534e !important;
+  border: 1px solid rgba(168, 162, 158, 0.42) !important;
+  box-shadow: none !important;
+}
+
+.raci-matrix-card .raci-matrix-name-chip--more.raci-matrix-card__role-toggle:hover {
+  color: #44403c !important;
+  border-color: rgba(120, 113, 108, 0.5) !important;
+  background: #fafaf9 !important;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06) !important;
+  filter: none !important;
+}
+
+.raci-matrix-card__role--expanded .raci-matrix-name-chip--more.raci-matrix-card__role-toggle,
+.raci-matrix-card__domain-row--expanded .raci-matrix-name-chip--more.raci-matrix-card__role-toggle {
+  border-color: rgba(202, 138, 4, 0.35) !important;
+  background: linear-gradient(180deg, #fffefb 0%, #fff7ed 100%) !important;
+  color: #92400e !important;
 }
 
 button:hover,
