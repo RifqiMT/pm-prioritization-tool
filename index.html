@@ -16,7 +16,7 @@
   <link href="css/workspace-modern.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/header-modern.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/profiles-modern.css?v=20260528-ui194" rel="stylesheet" />
-  <link href="css/portfolio-modern.css?v=20260528-ui194" rel="stylesheet" />
+  <link href="css/portfolio-modern.css?v=20260606-raci-lead-filters-v1" rel="stylesheet" />
   <link href="css/profile-modals-modern.css?v=20260606-raci-unique-count-v1" rel="stylesheet" />
   <link href="css/export-modals-modern.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/byok-api-keys.css?v=20260528-ui194" rel="stylesheet" />
@@ -679,6 +679,46 @@
                       <option value="with">With link(s)</option>
                       <option value="without">Without links</option>
                     </select>
+                  </div>
+                  <div class="filter-group filter-group--compact filter-group--autocomplete">
+                    <label for="filterBusinessLead">Business lead</label>
+                    <div class="filter-autocomplete" id="filterBusinessLeadAutocomplete">
+                      <input
+                        id="filterBusinessLead"
+                        type="search"
+                        role="combobox"
+                        aria-expanded="false"
+                        aria-controls="filterBusinessLeadListbox"
+                        aria-autocomplete="list"
+                        autocomplete="off"
+                        spellcheck="false"
+                        placeholder="Search or pick an actor…"
+                      />
+                      <div id="filterBusinessLeadDropdown" class="filter-autocomplete__dropdown" hidden>
+                        <ul id="filterBusinessLeadListbox" class="filter-autocomplete__list" role="listbox" aria-label="Business lead suggestions"></ul>
+                        <p id="filterBusinessLeadAutocompleteEmpty" class="filter-autocomplete__empty" hidden>No matching business leads</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="filter-group filter-group--compact filter-group--autocomplete">
+                    <label for="filterTechLead">Tech lead</label>
+                    <div class="filter-autocomplete" id="filterTechLeadAutocomplete">
+                      <input
+                        id="filterTechLead"
+                        type="search"
+                        role="combobox"
+                        aria-expanded="false"
+                        aria-controls="filterTechLeadListbox"
+                        aria-autocomplete="list"
+                        autocomplete="off"
+                        spellcheck="false"
+                        placeholder="Search or pick an actor…"
+                      />
+                      <div id="filterTechLeadDropdown" class="filter-autocomplete__dropdown" hidden>
+                        <ul id="filterTechLeadListbox" class="filter-autocomplete__list" role="listbox" aria-label="Tech lead suggestions"></ul>
+                        <p id="filterTechLeadAutocompleteEmpty" class="filter-autocomplete__empty" hidden>No matching tech leads</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </section>
@@ -2864,7 +2904,7 @@
   <script src="src/modules/byok-api-keys.js?v=20260528-ui194"></script>
   <script src="src/modules/roadmap-llm-summary.js?v=20260528-ui194"></script>
   <script src="src/modules/roadmap-5why-framework.js?v=20260528-ui194"></script>
-  <script src="src/app.js?v=20260606-raci-unique-count-v1"></script>
+  <script src="src/app.js?v=20260606-raci-lead-filters-v1"></script>
 </body>
 </html>
 

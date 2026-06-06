@@ -3856,6 +3856,14 @@ function cacheElements() {
   elements.filterLabelDropdown = $("filterLabelDropdown");
   elements.filterLabelListbox = $("filterLabelListbox");
   elements.filterLabelAutocompleteEmpty = $("filterLabelAutocompleteEmpty");
+  elements.filterBusinessLead = $("filterBusinessLead");
+  elements.filterBusinessLeadDropdown = $("filterBusinessLeadDropdown");
+  elements.filterBusinessLeadListbox = $("filterBusinessLeadListbox");
+  elements.filterBusinessLeadAutocompleteEmpty = $("filterBusinessLeadAutocompleteEmpty");
+  elements.filterTechLead = $("filterTechLead");
+  elements.filterTechLeadDropdown = $("filterTechLeadDropdown");
+  elements.filterTechLeadListbox = $("filterTechLeadListbox");
+  elements.filterTechLeadAutocompleteEmpty = $("filterTechLeadAutocompleteEmpty");
   elements.filterLinks = $("filterLinks");
   elements.filterLabels = $("filterLabels");
   elements.superAdminToggleWrap = $("superAdminToggleWrap");
@@ -5444,6 +5452,12 @@ function updateFiltersActivePill() {
   if (elements.filterTshirtSize.value) activeFilters.push("T-shirt size");
   if (elements.filterMoscow && elements.filterMoscow.value) activeFilters.push("MOSCOW");
   if (elements.filterLabel && (elements.filterLabel.value || "").trim()) activeFilters.push("Label");
+  if (elements.filterBusinessLead && (elements.filterBusinessLead.value || "").trim()) {
+    activeFilters.push("Business lead");
+  }
+  if (elements.filterTechLead && (elements.filterTechLead.value || "").trim()) {
+    activeFilters.push("Tech lead");
+  }
   if (elements.filterLabels && elements.filterLabels.value) {
     activeFilters.push(elements.filterLabels.value === "with" ? "With labels" : "Without labels");
   }
@@ -5479,12 +5493,15 @@ function updateFiltersActivePill() {
   }
 }
 
-// --- Filter autocomplete (roadmap title, label) ---
+// --- Filter autocomplete (roadmap title, label, RACI leads) ---
 const FILTER_AUTOCOMPLETE_MAX_SUGGESTIONS = 12;
+const FILTER_AUTOCOMPLETE_KINDS = ["title", "label", "businessLead", "techLead"];
 
 const filterAutocompleteState = {
   title: { open: false, highlightIndex: -1 },
-  label: { open: false, highlightIndex: -1 }
+  label: { open: false, highlightIndex: -1 },
+  businessLead: { open: false, highlightIndex: -1 },
+  techLead: { open: false, highlightIndex: -1 }
 };
 
 const debouncedFilterTextApply =
@@ -5519,6 +5536,28 @@ function getFilterAutocompleteField(kind) {
       wrapper: $("filterLabelAutocomplete"),
       emptyMessage: "No matching labels in this profile",
       icon: "#"
+    };
+  }
+  if (kind === "businessLead") {
+    return {
+      input: elements.filterBusinessLead,
+      dropdown: elements.filterBusinessLeadDropdown,
+      listbox: elements.filterBusinessLeadListbox,
+      empty: elements.filterBusinessLeadAutocompleteEmpty,
+      wrapper: $("filterBusinessLeadAutocomplete"),
+      emptyMessage: "No matching business leads in this profile",
+      icon: "B"
+    };
+  }
+  if (kind === "techLead") {
+    return {
+      input: elements.filterTechLead,
+      dropdown: elements.filterTechLeadDropdown,
+      listbox: elements.filterTechLeadListbox,
+      empty: elements.filterTechLeadAutocompleteEmpty,
+      wrapper: $("filterTechLeadAutocomplete"),
+      emptyMessage: "No matching tech leads in this profile",
+      icon: "T"
     };
   }
   return null;
@@ -5558,9 +5597,34 @@ function collectFilterLabelSuggestions() {
   return out.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
 }
 
+function collectFilterRaciActorSuggestions(domain) {
+  const targetDomain = normalizeRaciDomain(domain);
+  const seen = new Set();
+  const out = [];
+  getActiveProfileRoadmapsForFilters().forEach((roadmap) => {
+    const raci = normalizeRoadmapRaci(roadmap && roadmap.raci);
+    RACI_ROLES.forEach((role) => {
+      raci[role].forEach((entry) => {
+        if (entry.domain !== targetDomain) return;
+        const name = String(entry.name || "").trim();
+        if (!name) return;
+        const key = name.toLowerCase();
+        if (seen.has(key)) return;
+        seen.add(key);
+        out.push(name);
+      });
+    });
+  });
+  return out.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+}
+
 function getFilterAutocompleteMatches(kind, query) {
   const q = (query || "").trim().toLowerCase();
-  const source = kind === "title" ? collectFilterTitleSuggestions() : collectFilterLabelSuggestions();
+  let source = [];
+  if (kind === "title") source = collectFilterTitleSuggestions();
+  else if (kind === "label") source = collectFilterLabelSuggestions();
+  else if (kind === "businessLead") source = collectFilterRaciActorSuggestions("Business");
+  else if (kind === "techLead") source = collectFilterRaciActorSuggestions("Tech");
   const filtered = q ? source.filter((item) => item.toLowerCase().includes(q)) : source;
   return filtered.slice(0, FILTER_AUTOCOMPLETE_MAX_SUGGESTIONS);
 }
@@ -5589,8 +5653,9 @@ function setFilterAutocompleteOpen(kind, open) {
   if (!state) return;
 
   if (open) {
-    const otherKind = kind === "title" ? "label" : "title";
-    setFilterAutocompleteOpen(otherKind, false);
+    FILTER_AUTOCOMPLETE_KINDS.forEach((otherKind) => {
+      if (otherKind !== kind) setFilterAutocompleteOpen(otherKind, false);
+    });
     prepareAppOverlay("filterAutocomplete");
   }
 
@@ -5609,12 +5674,11 @@ function setFilterAutocompleteOpen(kind, open) {
 }
 
 function closeAllFilterAutocompleteDropdowns() {
-  setFilterAutocompleteOpen("title", false);
-  setFilterAutocompleteOpen("label", false);
+  FILTER_AUTOCOMPLETE_KINDS.forEach((kind) => setFilterAutocompleteOpen(kind, false));
 }
 
 function refreshFilterAutocompleteDropdowns() {
-  ["title", "label"].forEach((kind) => {
+  FILTER_AUTOCOMPLETE_KINDS.forEach((kind) => {
     if (filterAutocompleteState[kind].open) {
       renderFilterAutocompleteOptions(kind);
     }
@@ -5768,8 +5832,7 @@ function initFilterAutocompleteField(kind) {
 }
 
 function initFilterAutocompletes() {
-  initFilterAutocompleteField("title");
-  initFilterAutocompleteField("label");
+  FILTER_AUTOCOMPLETE_KINDS.forEach((kind) => initFilterAutocompleteField(kind));
 }
 
 // --- Export / import (JSON & CSV, merge logic) ---
@@ -7544,6 +7607,21 @@ function roadmapMatchesLabelFilter(roadmap, labelQuery) {
   if (!query) return true;
   const labels = normalizeRoadmapLabels(roadmap && roadmap.labels);
   return labels.some((label) => label.toLowerCase().includes(query));
+}
+
+/** Substring match against any RACI actor name in the given domain (case-insensitive). */
+function roadmapMatchesRaciActorFilter(roadmap, domain, actorQuery) {
+  const query = (actorQuery || "").trim().toLowerCase();
+  if (!query) return true;
+  const targetDomain = normalizeRaciDomain(domain);
+  const raci = normalizeRoadmapRaci(roadmap && roadmap.raci);
+  return RACI_ROLES.some((role) =>
+    raci[role].some((entry) => {
+      if (entry.domain !== targetDomain) return false;
+      const name = String(entry.name || "").trim().toLowerCase();
+      return name.includes(query);
+    })
+  );
 }
 
 /** Deduplicated, trimmed roadmap labels (each may contain spaces). */
@@ -17109,6 +17187,10 @@ function applyFilters(roadmaps) {
   const roadmapTypeFilter = elements.filterRoadmapType.value;
   const selectedCountriesFilter = getSelectedFilterCountries();
   const labelQuery = elements.filterLabel ? (elements.filterLabel.value || "").trim().toLowerCase() : "";
+  const businessLeadQuery = elements.filterBusinessLead
+    ? (elements.filterBusinessLead.value || "").trim().toLowerCase()
+    : "";
+  const techLeadQuery = elements.filterTechLead ? (elements.filterTechLead.value || "").trim().toLowerCase() : "";
   const labelsFilter = elements.filterLabels ? elements.filterLabels.value : "";
   const linksFilter = elements.filterLinks ? elements.filterLinks.value : "";
   const ownerProfileFilter =
@@ -17177,6 +17259,14 @@ function applyFilters(roadmaps) {
     }
 
     if (labelQuery && !roadmapMatchesLabelFilter(p, labelQuery)) {
+      return false;
+    }
+
+    if (businessLeadQuery && !roadmapMatchesRaciActorFilter(p, "Business", businessLeadQuery)) {
+      return false;
+    }
+
+    if (techLeadQuery && !roadmapMatchesRaciActorFilter(p, "Tech", techLeadQuery)) {
       return false;
     }
 
@@ -17311,6 +17401,8 @@ function clearFilters() {
   if (elements.filterTshirtSize) elements.filterTshirtSize.value = "";
   if (elements.filterMoscow) elements.filterMoscow.value = "";
   if (elements.filterLabel) elements.filterLabel.value = "";
+  if (elements.filterBusinessLead) elements.filterBusinessLead.value = "";
+  if (elements.filterTechLead) elements.filterTechLead.value = "";
   if (elements.filterLabels) elements.filterLabels.value = "";
   if (elements.filterLinks) elements.filterLinks.value = "";
   if (elements.filterOwnerProfile) elements.filterOwnerProfile.value = "";

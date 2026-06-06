@@ -737,6 +737,14 @@ html.is-super-admin-mode .super-admin-filter-group:not([hidden]) {
   min-width: 0;
 }
 
+.workspace-panel--v2 .filter-group--autocomplete {
+  min-width: 0;
+}
+
+.workspace-panel--v2 .filter-group--autocomplete .filter-autocomplete {
+  width: 100%;
+}
+
 .workspace-panel--v2 .filter-group label {
   font-size: 0.72rem !important;
   font-weight: 600 !important;
