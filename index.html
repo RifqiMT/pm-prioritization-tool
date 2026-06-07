@@ -12,39 +12,43 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="css/main.css?v=20260606-raci-pill-domain-v1" rel="stylesheet" />
+  <link href="css/main.css?v=20260606-tooltips-standard-v1" rel="stylesheet" />
   <link href="css/workspace-modern.css?v=20260528-ui194" rel="stylesheet" />
-  <link href="css/header-modern.css?v=20260528-ui194" rel="stylesheet" />
-  <link href="css/profiles-modern.css?v=20260528-ui194" rel="stylesheet" />
-  <link href="css/portfolio-modern.css?v=20260606-raci-lead-filters-v1" rel="stylesheet" />
-  <link href="css/profile-modals-modern.css?v=20260606-raci-unique-count-v1" rel="stylesheet" />
-  <link href="css/export-modals-modern.css?v=20260528-ui194" rel="stylesheet" />
+  <link href="css/header-modern.css?v=20260607-header-cockpit-restore-v1" rel="stylesheet" />
+  <link href="css/profiles-modern.css?v=20260607-profiles-list-7-rows-v1" rel="stylesheet" />
+  <link href="css/portfolio-modern.css?v=20260607-view-tabs-compact-v1" rel="stylesheet" />
+  <link href="css/profile-modals-modern.css?v=20260607-profile-security-polish-v1" rel="stylesheet" />
+  <link href="css/export-modals-modern.css?v=20260607-modal-solo-primary-v1" rel="stylesheet" />
   <link href="css/byok-api-keys.css?v=20260528-ui194" rel="stylesheet" />
-  <link href="css/view-toolbars-modern.css?v=20260528-ui194" rel="stylesheet" />
-  <link href="css/compact-modern.css?v=20260528-ui194" rel="stylesheet" />
-  <link href="css/moscow-compact.css?v=20260528-ui194" rel="stylesheet" />
+  <link href="css/view-toolbars-modern.css?v=20260607-view-desc-single-row-v1" rel="stylesheet" />
+  <link href="css/compact-modern.css?v=20260607-unlock-center-v1" rel="stylesheet" />
+  <link href="css/moscow-compact.css?v=20260607-compact-gutter-prod-v1" rel="stylesheet" />
   <link href="css/board-compact.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/table-compact.css?v=20260528-ui194" rel="stylesheet" />
-  <link href="css/roadmap-actions-modern.css?v=20260528-ui194" rel="stylesheet" />
+  <link href="css/roadmap-actions-modern.css?v=20260607-profile-actions-clarity-v1" rel="stylesheet" />
   <link href="css/fullscreen-modern.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/fullscreen-compact.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/app-footer.css?v=20260528-ui194" rel="stylesheet" />
-  <link href="css/views-density.css?v=20260528-ui194" rel="stylesheet" />
-  <link href="css/layout-flow.css?v=20260528-ui194" rel="stylesheet" />
+  <link href="css/views-density.css?v=20260607-table-prod-align-v1" rel="stylesheet" />
+  <link href="css/layout-flow.css?v=20260606-desktop-viewport-v4" rel="stylesheet" />
   <link href="css/portfolio-cards-compact.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/table-rows-modern.css?v=20260528-ui194" rel="stylesheet" />
-  <link href="css/table-revamp-modern.css?v=20260528-ui194" rel="stylesheet" />
-  <link href="css/table-compact-cards.css?v=20260528-ui194" rel="stylesheet" />
+  <link href="css/table-revamp-modern.css?v=20260607-table-prod-align-v1" rel="stylesheet" />
+  <link href="css/table-compact-cards.css?v=20260606-tooltips-standard-v1" rel="stylesheet" />
   <link href="css/super-admin-modern.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/map-tooltip-modern.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/board-drag.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/board-card-interaction.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/view-toolbars-compact-row.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/filters-compact-bar.css?v=20260528-ui194" rel="stylesheet" />
-  <link href="css/roadmap-details-tooltip.css?v=20260528-ui194" rel="stylesheet" />
+  <link href="css/filters-sheet-modern.css?v=20260606-profiles-compact-v5" rel="stylesheet" />
+  <link href="css/mobile-command-deck.css?v=20260607-compact-gutter-prod-v1" rel="stylesheet" />
+  <link href="css/compact-view-gutter.css?v=20260607-compact-gutter-prod-v1" rel="stylesheet" />
+  <link href="css/profile-picker-compact.css?v=20260607-profile-picker-compact-v2" rel="stylesheet" />
+  <link href="css/view-tabs-compact-menu.css?v=20260607-view-tabs-compact-v2" rel="stylesheet" />
   <link href="css/rich-description-content.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/rich-text-editor.css?v=20260528-ui194" rel="stylesheet" />
-  <link href="css/portfolio-kano-modern.css?v=20260528-ui194" rel="stylesheet" />
+  <link href="css/portfolio-kano-modern.css?v=20260607-kano-intro-hide-compact-v1" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 <body>
@@ -154,6 +158,7 @@
               <span class="byok-header-meta" id="byokHeaderMeta">Not configured</span>
             </span>
           </button>
+          <div id="superAdminToggleActionsSlot" class="super-admin-toggle-slot super-admin-toggle-slot--actions" hidden></div>
         </div>
         <p id="exchangeRatesDateLabel" class="exchange-rates-date-label app-header-rates-footnote" aria-live="polite"></p>
       </nav>
@@ -163,10 +168,11 @@
       <!-- Profiles / owners (sidebar on desktop; bottom-sheet on tablet/phone) -->
       <!-- Bottom-sheet backdrop (mobile only) -->
       <div class="profiles-sheet-backdrop" id="profilesSheetBackdrop" aria-hidden="true" hidden></div>
+      <div class="filters-sheet-backdrop" id="filtersSheetBackdrop" aria-hidden="true" hidden></div>
 
       <section class="card profiles-panel profiles-panel--modern profiles-panel--v2" aria-labelledby="profilesPanelTitle">
         <!-- Desktop: sidebar; tablet/phone: bottom sheet via profile picker -->
-        <div class="profiles-panel-sheet" id="profilesPanelSheet" role="dialog" aria-modal="true" aria-labelledby="profilesPanelTitle" hidden>
+        <div class="profiles-panel-sheet profiles-panel--v2" id="profilesPanelSheet" role="dialog" aria-modal="true" aria-labelledby="profilesPanelTitle" hidden>
           <div class="profiles-panel-sheet-handle" aria-hidden="true"></div>
           <div class="profiles-panel-sheet-header">
             <div class="profiles-panel-sheet-title-group">
@@ -182,107 +188,87 @@
           </div>
           <div class="profiles-panel-sheet-body">
         <header class="profiles-panel-header">
-          <div class="profiles-panel-mark" aria-hidden="true">
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          </div>
-          <div class="profiles-panel-intro">
-            <p class="profiles-panel-eyebrow">Portfolios</p>
-            <h2 id="profilesPanelTitle" class="card-title profiles-panel-title">Profiles</h2>
-            <p class="card-caption profiles-panel-caption">Separate workspaces for teams, products, or owners.</p>
+          <div class="profiles-panel-header__brand">
+            <div class="profiles-panel-mark" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="profiles-panel-intro">
+              <h2 id="profilesPanelTitle" class="profiles-panel-title">Profiles</h2>
+              <p class="profiles-panel-caption">Team &amp; owner workspaces</p>
+            </div>
           </div>
         </header>
 
-        <nav class="profiles-sheet-tabs" id="profilesSheetTabs" role="tablist" aria-label="Profile sections" hidden>
-          <button type="button" class="profiles-sheet-tab profiles-sheet-tab--active" role="tab" id="profilesSheetTabBrowse" aria-selected="true" aria-controls="profilesSheetPanelBrowse" data-profiles-tab="browse">
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <span>Browse</span>
-          </button>
-          <button type="button" class="profiles-sheet-tab" role="tab" id="profilesSheetTabCreate" aria-selected="false" aria-controls="profilesSheetPanelCreate" data-profiles-tab="create">
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-            <span>New profile</span>
-          </button>
-        </nav>
+        <nav class="profiles-sheet-tabs" id="profilesSheetTabs" role="tablist" aria-label="Profile sections" hidden></nav>
 
         <div class="profiles-sheet-panels">
-        <div id="profilesSheetPanelCreate" class="profiles-sheet-panel profiles-sheet-panel--create" role="tabpanel" aria-labelledby="profilesSheetTabCreate" hidden>
-        <details class="profiles-create-panel" id="profilesCreatePanel">
-          <summary class="profiles-create-summary">
-            <span class="profiles-create-summary-title">New profile</span>
-            <span class="profiles-create-summary-hint">Add name, team, optional password</span>
-          </summary>
-          <form id="addProfileForm" class="profiles-create-form" autocomplete="off">
-            <div class="profiles-create-grid">
-              <div class="profile-form-field">
-                <label for="newProfileName">Profile name</label>
-                <input id="newProfileName" name="newProfileName" type="text" placeholder="e.g. Product Squad Alpha" required />
-              </div>
-              <div class="profile-form-field">
-                <label for="newProfileTeam">Team <span class="profiles-label-optional">(optional)</span></label>
-                <input id="newProfileTeam" name="newProfileTeam" type="text" placeholder="e.g. Growth, Platform" />
-              </div>
-              <details class="profiles-create-security" id="profilesCreateSecurity">
-                <summary class="profiles-create-security-summary">Password protection <span class="profiles-label-optional">(optional)</span></summary>
-                <div class="profiles-create-security-fields">
-                  <div class="profile-form-field profile-form-field--full">
-                    <label for="newProfilePassword">Password</label>
-                    <div class="profile-password-input-wrap">
-                      <input id="newProfilePassword" name="newProfilePassword" type="password" autocomplete="new-password" placeholder="Lock this profile" />
-                      <button type="button" class="profile-password-toggle" data-target="newProfilePassword" aria-label="Show password">
-                        <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                        <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="profile-form-field profile-form-field--full">
-                    <label for="newProfilePasswordConfirm">Confirm password</label>
-                    <div class="profile-password-input-wrap">
-                      <input id="newProfilePasswordConfirm" name="newProfilePasswordConfirm" type="password" autocomplete="new-password" placeholder="Re-enter password" />
-                      <button type="button" class="profile-password-toggle" data-target="newProfilePasswordConfirm" aria-label="Show password">
-                        <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                        <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </details>
-            </div>
-            <p id="newProfilePasswordHint" class="profile-password-hint profiles-create-hint">Leave password blank for open access. Protected profiles require a password to view or delete.</p>
-            <button type="submit" class="profile-add-btn profiles-create-submit" aria-label="Create profile">
-              <svg class="profile-add-btn-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-              <span class="profile-add-btn-text">Create profile</span>
-            </button>
-          </form>
-        </details>
-        </div><!-- /#profilesSheetPanelCreate -->
-
-        <div id="profilesSheetPanelBrowse" class="profiles-sheet-panel profiles-sheet-panel--browse" role="tabpanel" aria-labelledby="profilesSheetTabBrowse">
+        <div id="profilesSheetPanelBrowse" class="profiles-sheet-panel profiles-sheet-panel--browse" role="tabpanel" aria-labelledby="profilesPanelTitle">
         <div class="profiles-list-section" id="profilesListSection">
-          <div class="profiles-list-toolbar">
-            <h3 class="profiles-list-heading">Your profiles</h3>
-            <span id="profilesCountBadge" class="profiles-count-badge" aria-live="polite">0</span>
+          <button type="button" class="profiles-create-trigger" id="profilesCreateOpenBtn" aria-haspopup="dialog">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            <span>New profile</span>
+          </button>
+          <div class="profiles-select profiles-select--modern" id="profilesSelect">
+            <div class="profiles-select__shell">
+              <div class="profiles-select__field">
+                <button
+                  type="button"
+                  class="profiles-select__trigger"
+                  id="profilesSelectTrigger"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                  aria-controls="profilesSelectListbox"
+                >
+                  <span class="profiles-select__trigger-status" id="profilesSelectStatus" aria-hidden="true"></span>
+                  <span class="profiles-select__trigger-avatar" id="profilesSelectAvatar" aria-hidden="true">?</span>
+                  <span class="profiles-select__trigger-copy">
+                    <span class="profiles-select__trigger-kicker" id="profilesSelectKicker" hidden>Active workspace</span>
+                    <span class="profiles-select__trigger-label-row">
+                      <span class="profiles-select__trigger-name" id="profilesSelectName">Select a profile</span>
+                      <span id="profilesCountBadge" class="profiles-select__count" aria-live="polite" title="Total profiles">0</span>
+                    </span>
+                    <span class="profiles-select__trigger-meta" id="profilesSelectMeta">Choose a workspace to begin</span>
+                  </span>
+                  <span class="profiles-select__trigger-chevron" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  </span>
+                </button>
+                <div class="profiles-select__panel" id="profilesSelectPanel" hidden>
+                  <p class="profiles-select__panel-label" id="profilesSelectPanelLabel">Switch workspace</p>
+                  <label class="profiles-select__search" for="profilesSelectSearch">
+                    <span class="profiles-select__search-icon" aria-hidden="true">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    </span>
+                    <input
+                      type="search"
+                      id="profilesSelectSearch"
+                      class="profiles-select__search-input"
+                      placeholder="Filter workspaces…"
+                      autocomplete="off"
+                      aria-label="Filter profiles"
+                      aria-controls="profilesSelectListbox"
+                    />
+                  </label>
+                  <p class="profiles-select__hint" id="profilesSelectHint" aria-live="polite"></p>
+                  <div class="profiles-select__list-scroll" id="profilesSelectListScroll">
+                    <ul id="profilesSelectListbox" class="profiles-select__list" role="listbox" aria-label="Select a profile"></ul>
+                  </div>
+                  <p id="profilesSelectEmpty" class="profiles-select__empty" hidden role="status">
+                    No matching workspaces. Try another name or team.
+                  </p>
+                </div>
+              </div>
+              <div class="profiles-select__actions" id="profilesSelectActions" hidden aria-label="Profile actions"></div>
+            </div>
           </div>
-          <label class="profiles-search" for="profilesSearchInput">
-            <span class="profiles-search-icon" aria-hidden="true">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-            </span>
-            <input
-              type="search"
-              id="profilesSearchInput"
-              class="profiles-search-input"
-              placeholder="Search by name or team…"
-              autocomplete="off"
-              aria-label="Search profiles"
-            />
-          </label>
-          <ul id="profileList" class="profiles-list profiles-list--modern" role="listbox" aria-label="Select a profile"></ul>
-          <p id="profilesNoResults" class="profiles-no-results" style="display:none;" role="status">
+          <p id="profilesNoResults" class="profiles-no-results" style="display:none;" role="status" hidden>
             No profiles match your search. Try a different name or team.
           </p>
           <p id="profilesEmptyState" class="profiles-empty-state profile-empty" style="display:none;">
             <span class="profiles-empty-icon" aria-hidden="true">
               <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             </span>
-            <span class="profiles-empty-copy">No profiles yet. Switch to <strong>New profile</strong> to create your first workspace.</span>
+            <span class="profiles-empty-copy">No profiles yet. Select <strong>New profile</strong> to create your first workspace.</span>
           </p>
         </div>
         </div><!-- /#profilesSheetPanelBrowse -->
@@ -293,12 +279,52 @@
 
       <!-- Roadmaps side -->
       <section class="card-plain workspace-panel workspace-panel--v2" id="workspacePanel" aria-labelledby="activeProfileTitleText">
+        <div id="profileLockedBanner" class="profile-unlock-panel" role="region" aria-labelledby="profileLockedBannerTitle" aria-hidden="true">
+          <div class="profile-unlock-panel__card">
+            <div class="profile-unlock-panel__icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <h2 id="profileLockedBannerTitle" class="profile-unlock-panel__title">This profile is locked</h2>
+            <p id="profileLockedBannerText" class="profile-unlock-panel__text">Enter the profile password to view and manage roadmaps.</p>
+            <form id="profileLockedUnlockForm" class="profile-unlock-panel__form" autocomplete="off">
+              <label class="profile-unlock-panel__field-label" for="profileLockedInlinePassword">Password</label>
+              <div class="profile-unlock-panel__field">
+                <div class="profile-password-input-wrap profile-unlock-panel__password-wrap">
+                  <input id="profileLockedInlinePassword" type="password" autocomplete="current-password" placeholder="Enter profile password" />
+                  <button type="button" class="profile-password-toggle" data-target="profileLockedInlinePassword" aria-label="Show password">
+                    <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                  </button>
+                </div>
+                <p class="profile-unlock-panel__password-hint">Tap the eye icon to show or hide your password.</p>
+                <button type="submit" id="profileLockedUnlockSubmitBtn" class="profile-unlock-panel__submit">
+                  Unlock profile
+                </button>
+              </div>
+            </form>
+            <p id="profileLockedInlineError" class="field-error profile-password-error profile-unlock-panel__error" role="alert" style="display:none;"></p>
+          </div>
+        </div>
+
+        <div class="mobile-workspace-chrome" id="mobileWorkspaceChrome">
+        <div class="compact-cockpit-brand-slot" id="compactCockpitBrandSlot" hidden aria-hidden="true"></div>
         <div class="profile-picker-bar" id="profilePickerBar" hidden>
           <label class="profile-picker-bar__label" for="profilePickerInput">Profile</label>
           <div class="profile-picker" id="profilePicker">
             <div class="profile-picker__field">
               <div class="profile-picker__control" id="profilePickerControl">
                 <span class="profile-picker__avatar" id="profilePickerAvatar" aria-hidden="true">?</span>
+                <button
+                  type="button"
+                  class="profile-picker__display"
+                  id="profilePickerDisplay"
+                  aria-label="Switch profile"
+                  aria-haspopup="listbox"
+                  aria-controls="profilePickerListbox"
+                >
+                  <span class="profile-picker__name" id="profilePickerName">Select profile</span>
+                  <span class="profile-picker__meta" id="profilePickerMeta" hidden></span>
+                </button>
                 <input
                   type="text"
                   id="profilePickerInput"
@@ -328,43 +354,15 @@
               aria-expanded="false"
               aria-controls="profilesPanelSheet"
               aria-haspopup="dialog"
-              aria-label="Manage profiles"
+              aria-label="Open profiles"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-              <span class="profile-picker__manage-label">Manage</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <span class="profile-picker__manage-label">Profiles</span>
             </button>
           </div>
           <div id="superAdminToggleMobileSlot" class="super-admin-toggle-slot super-admin-toggle-slot--mobile" hidden></div>
         </div>
 
-        <div id="profileLockedBanner" class="profile-unlock-panel" role="region" aria-labelledby="profileLockedBannerTitle" aria-hidden="true">
-          <div class="profile-unlock-panel__card">
-            <div class="profile-unlock-panel__icon" aria-hidden="true">
-              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            </div>
-            <h2 id="profileLockedBannerTitle" class="profile-unlock-panel__title">This profile is locked</h2>
-            <p id="profileLockedBannerText" class="profile-unlock-panel__text">Enter the profile password to view and manage roadmaps.</p>
-            <form id="profileLockedUnlockForm" class="profile-unlock-panel__form" autocomplete="off">
-              <label class="profile-unlock-panel__field-label" for="profileLockedInlinePassword">Password</label>
-              <div class="profile-unlock-panel__field">
-                <div class="profile-password-input-wrap profile-unlock-panel__password-wrap">
-                  <input id="profileLockedInlinePassword" type="password" autocomplete="current-password" placeholder="Enter profile password" />
-                  <button type="button" class="profile-password-toggle" data-target="profileLockedInlinePassword" aria-label="Show password">
-                    <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                    <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
-                  </button>
-                </div>
-                <button type="submit" id="profileLockedUnlockSubmitBtn" class="profile-unlock-panel__submit">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
-                  Unlock profile
-                </button>
-              </div>
-            </form>
-            <p id="profileLockedInlineError" class="field-error profile-password-error profile-unlock-panel__error" role="alert" style="display:none;"></p>
-          </div>
-        </div>
-
-        <div class="workspace-portfolio-body" id="workspacePortfolioBody">
         <header class="portfolio-command-bar roadmaps-header-row workspace-toolbar">
           <div class="portfolio-command-intro roadmaps-header-left">
             <div class="portfolio-identity" id="portfolioIdentity">
@@ -418,10 +416,14 @@
                   aria-haspopup="menu"
                   aria-controls="portfolioViewTabsMoreMenu"
                 >
-                  <svg class="view-tab-icon portfolio-view-tabs-more-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/></svg>
-                  <span class="portfolio-view-tabs-more-label">More</span>
+                  <svg class="view-tab-icon portfolio-view-tabs-more-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+                  <span class="portfolio-view-tabs-more-label">Views</span>
+                  <svg class="portfolio-view-tabs-more-chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
                 </button>
-                <div id="portfolioViewTabsMoreMenu" class="portfolio-view-tabs-more-menu" role="menu" hidden aria-label="More portfolio views"></div>
+                <div id="portfolioViewTabsMoreMenu" class="portfolio-view-tabs-more-menu" role="menu" hidden aria-label="Switch portfolio view">
+                  <p class="portfolio-view-tabs-more-menu__title" id="portfolioViewTabsMoreMenuTitle">Switch view</p>
+                  <div class="portfolio-view-tabs-more-menu__list" id="portfolioViewTabsMoreMenuList" role="none"></div>
+                </div>
               </div>
             </div>
             <div class="portfolio-action-group">
@@ -440,7 +442,7 @@
         </header>
 
         <details class="portfolio-filters-drawer filters-shell" id="portfolioFiltersDrawer" aria-label="Roadmap filters">
-          <summary class="portfolio-filters-summary" aria-controls="portfolioFiltersBody" aria-expanded="false">
+          <summary class="portfolio-filters-summary" aria-label="Filters" aria-controls="portfolioFiltersBody" aria-expanded="false">
             <span class="portfolio-filters-summary-lead">
               <span class="portfolio-filters-summary-icon" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6"/></svg>
@@ -462,6 +464,28 @@
             ></span>
             <span class="portfolio-filters-summary-hint">Tap to expand · title, type, status, and more</span>
           </summary>
+          <div
+            class="portfolio-filters-sheet workspace-panel--v2"
+            id="portfolioFiltersSheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="portfolioFiltersSheetTitle"
+            hidden
+          >
+            <div class="portfolio-filters-sheet-handle" aria-hidden="true"></div>
+            <header class="portfolio-filters-sheet-header">
+              <div class="portfolio-filters-sheet-title-group">
+                <span class="portfolio-filters-sheet-icon" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6"/></svg>
+                </span>
+                <h2 id="portfolioFiltersSheetTitle" class="portfolio-filters-sheet-title">Filters</h2>
+                <span id="filtersSheetActiveBadge" class="filters-active-pill portfolio-filters-badge filters-sheet-active-badge" style="display:none;" aria-hidden="true"></span>
+              </div>
+              <button type="button" id="portfolioFiltersSheetCloseBtn" class="portfolio-filters-sheet-close" aria-label="Close filters">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </button>
+            </header>
+            <div class="portfolio-filters-sheet-body">
           <div id="portfolioFiltersBody" class="portfolio-filters-body">
           <div class="filters-header portfolio-filters-toolbar">
             <div class="filters-header-copy">
@@ -724,9 +748,12 @@
               </section>
             </div>
           </div>
-          </div>
+          </div><!-- /.portfolio-filters-sheet-body -->
+          </div><!-- /#portfolioFiltersSheet -->
         </details>
+        </div><!-- /.mobile-workspace-chrome -->
 
+        <div class="workspace-portfolio-body" id="workspacePortfolioBody">
         <div class="portfolio-stage">
         <div id="roadmapsTableView" class="roadmaps-view roadmaps-view--table portfolio-view">
         <div class="view-toolbar view-toolbar--table roadmaps-table-toolbar" role="region" aria-label="Table view controls">
@@ -737,7 +764,7 @@
               </span>
               <div class="view-toolbar__copy">
                 <h3 class="view-toolbar__title">Roadmaps table</h3>
-                <p class="view-toolbar__desc">Sort by RICE, select roadmaps, and open view, edit, or delete.</p>
+                <p class="view-toolbar__desc">All roadmaps in one sortable list.</p>
               </div>
             </div>
             <div class="view-toolbar__cluster view-toolbar__cluster--table-tools view-toolbar__cluster--compact-controls">
@@ -765,6 +792,10 @@
               <button type="button" id="bulkMoveBtn" class="view-toolbar__btn view-toolbar__btn--secondary super-admin-bulk-action" disabled hidden aria-label="Move selected roadmaps">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 9 7-7 7 7"/><path d="M12 16V2"/><path d="M5 22h14"/></svg>
                 <span class="view-toolbar__btn-label">Move selected</span>
+              </button>
+              <button type="button" id="bulkEditBtn" class="view-toolbar__btn view-toolbar__btn--secondary" disabled hidden aria-label="Edit selected roadmaps">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                <span class="view-toolbar__btn-label">Edit selected</span>
               </button>
               <button type="button" id="bulkDeleteBtn" class="view-toolbar__btn view-toolbar__btn--danger" disabled hidden aria-label="Delete selected roadmaps">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -889,7 +920,7 @@
                 </span>
                 <div class="view-toolbar__copy">
                   <h3 class="view-toolbar__title">Board view</h3>
-                  <p class="view-toolbar__desc">Drag cards between columns to update status. Reorder within a column when manual sort is on.</p>
+                  <p class="view-toolbar__desc">Track progress on a status board.</p>
                 </div>
               </div>
               <div class="view-toolbar__cluster view-toolbar__cluster--board-tools view-toolbar__cluster--compact-controls">
@@ -951,7 +982,7 @@
                 </span>
                 <div class="view-toolbar__copy">
                   <h3 class="view-toolbar__title">Map view</h3>
-                  <p class="view-toolbar__desc">Geographic distribution of roadmaps by country.</p>
+                  <p class="view-toolbar__desc">See roadmaps by country on a map.</p>
                 </div>
               </div>
               <div class="view-toolbar__cluster view-toolbar__cluster--actions view-toolbar__cluster--compact-controls">
@@ -1014,7 +1045,7 @@
                 </span>
                 <div class="view-toolbar__copy">
                   <h3 class="view-toolbar__title">RACI matrix</h3>
-                  <p class="view-toolbar__desc">Desktop shows a 5-column matrix; phones and tablets show one card per roadmap.</p>
+                  <p class="view-toolbar__desc">Who owns each role on every roadmap.</p>
                 </div>
               </div>
               <div class="view-toolbar__cluster view-toolbar__cluster--compact-controls">
@@ -1049,7 +1080,7 @@
                 </span>
                 <div class="view-toolbar__copy">
                   <h3 class="view-toolbar__title">KANO model</h3>
-                  <p class="view-toolbar__desc">High-level portfolio map of functionality vs satisfaction. Set positions in each roadmap’s KANO section.</p>
+                  <p class="view-toolbar__desc">Balance customer delight and feature level.</p>
                 </div>
               </div>
               <div class="view-toolbar__cluster view-toolbar__cluster--compact-controls">
@@ -1118,7 +1149,7 @@
                 </span>
                 <div class="view-toolbar__copy">
                   <h3 class="view-toolbar__title moscow-grid-title">MoSCoW prioritisation</h3>
-                  <p class="view-toolbar__desc moscow-board-hint">Drag cards between quadrants to change category, or set it in the roadmap form.</p>
+                  <p class="view-toolbar__desc">Sort into Must, Should, Could, and Won't have.</p>
                 </div>
               </div>
               <div class="view-toolbar__cluster view-toolbar__cluster--compact-controls">
@@ -1135,9 +1166,7 @@
               </div>
             </div>
           </header>
-          <nav id="moscowCompactNav" class="moscow-compact-nav" aria-label="MoSCoW quadrants" hidden></nav>
           <div id="moscowBoardContainer" class="moscow-grid" aria-label="MOSCOW prioritization grid"></div>
-        </div>
         </div>
 
         <div class="portfolio-bottom-bar">
@@ -1147,6 +1176,7 @@
               <button type="button" id="portfolioSelectionClearBtn" class="portfolio-selection-bar__clear">Clear</button>
               <button type="button" id="portfolioSelectionDuplicateBtn" class="portfolio-selection-bar__action portfolio-selection-bar__duplicate super-admin-bulk-action" disabled hidden>Duplicate</button>
               <button type="button" id="portfolioSelectionMoveBtn" class="portfolio-selection-bar__action portfolio-selection-bar__move super-admin-bulk-action" disabled hidden>Move</button>
+              <button type="button" id="portfolioSelectionEditBtn" class="portfolio-selection-bar__action portfolio-selection-bar__edit" disabled hidden>Edit</button>
               <button type="button" id="portfolioSelectionDeleteBtn" class="portfolio-selection-bar__delete" disabled>Delete selected</button>
             </div>
           </div>
@@ -1154,6 +1184,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
           </button>
         </div>
+        </div><!-- /.workspace-portfolio-body -->
       </section>
     </main>
 
@@ -1333,9 +1364,8 @@
           </button>
         </div>
       </div>
-      <footer class="data-transfer-modal__footer">
-        <button type="button" class="data-transfer-modal__cancel" id="exportFormatModalCancelBtn">Cancel</button>
-        <p class="data-transfer-modal__dismiss-hint">Press Esc to close</p>
+      <footer class="data-transfer-modal__footer data-transfer-modal__footer--solo">
+        <button type="button" class="export-modal-btn export-modal-btn--primary" id="exportFormatModalCancelBtn">Close</button>
       </footer>
     </div>
   </div>
@@ -1399,9 +1429,8 @@
           </div>
         </div>
       </div>
-      <footer class="data-transfer-modal__footer">
-        <button type="button" class="data-transfer-modal__cancel" id="importFormatModalCancelBtn">Cancel</button>
-        <p class="data-transfer-modal__dismiss-hint">Press Esc to close</p>
+      <footer class="data-transfer-modal__footer data-transfer-modal__footer--solo">
+        <button type="button" class="export-modal-btn export-modal-btn--primary" id="importFormatModalCancelBtn">Close</button>
       </footer>
     </div>
   </div>
@@ -2459,21 +2488,20 @@
         </div>
       </div>
 
-      <footer class="profile-view-footer-bar">
-        <p class="profile-view-footer-hint">Press Esc to close</p>
+      <footer class="profile-view-footer-bar profile-view-footer-bar--actions-only">
         <div class="profile-view-footer-actions">
-          <button type="button" class="btn-secondary" id="profileViewCloseBtnFooter">Close</button>
+          <button type="button" class="profile-modal-btn profile-modal-btn--primary" id="profileViewCloseBtnFooter">Close</button>
         </div>
       </footer>
     </div>
   </div>
 
   <!-- Profile edit modal -->
-  <div id="profileEditModal" class="modal-backdrop modal-backdrop--profile" aria-hidden="true">
-    <div class="modal-panel modal-panel--profile profile-edit-modal" role="dialog" aria-modal="true" aria-labelledby="profileEditModalTitle">
-      <header class="profile-modal-header">
+  <div id="profileEditModal" class="modal-backdrop modal-backdrop--profile modal-backdrop--profile-view" aria-hidden="true">
+    <div class="modal-panel modal-panel--profile-view profile-edit-modal" role="dialog" aria-modal="true" aria-labelledby="profileEditModalTitle">
+      <header class="profile-modal-header profile-view-modal-header">
         <div class="profile-modal-header-main">
-          <span class="profile-modal-mark" aria-hidden="true">
+          <span class="profile-modal-mark profile-modal-mark--edit" aria-hidden="true">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
           </span>
           <div class="profile-modal-title-group">
@@ -2483,74 +2511,209 @@
         </div>
       </header>
 
-      <div class="profile-modal-body">
-        <section class="profile-form-block" aria-labelledby="profileEditSectionIdentity">
-          <h4 id="profileEditSectionIdentity" class="profile-form-block-title">Profile &amp; team</h4>
-          <div class="profile-form-fields profile-form-fields--split">
-            <div class="profile-field">
-              <label for="profileEditName">Profile name</label>
-              <input id="profileEditName" type="text" placeholder="e.g. Product Squad Alpha" required />
-            </div>
-            <div class="profile-field">
-              <label for="profileEditTeam">Team <span class="profile-field-optional">(optional)</span></label>
-              <input id="profileEditTeam" type="text" placeholder="e.g. Growth, Platform" />
+      <div class="profile-view-shell">
+        <div class="profile-view-scroll">
+          <div class="profile-view-summary profile-view-hero profile-edit-hero" aria-label="Profile preview">
+            <div class="profile-view-hero-top">
+              <div class="profile-view-hero-profile">
+                <span id="profileEditAvatar" class="profile-view-avatar" aria-hidden="true">—</span>
+                <div class="profile-view-hero-profile-copy">
+                  <h4 id="profileEditPreviewName" class="profile-view-name profile-view-name--placeholder">Profile name</h4>
+                  <p class="profile-view-team-wrap" id="profileEditPreviewTeamWrap" hidden>
+                    <span id="profileEditPreviewTeam" class="profile-view-team">—</span>
+                  </p>
+                </div>
+              </div>
+              <div class="profile-edit-hero-lock" id="profileEditLockBadge" aria-live="polite">
+                <span class="profile-edit-hero-lock-icon" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                </span>
+                <div class="profile-edit-hero-lock-copy">
+                  <span class="profile-edit-hero-lock-label">Protection</span>
+                  <span id="profileEditLockStatus" class="profile-edit-hero-lock-value">Open access</span>
+                </div>
+              </div>
             </div>
           </div>
-        </section>
 
-        <section class="profile-form-block profile-form-block--security" aria-labelledby="profileEditSectionSecurity">
-          <div class="profile-form-block-head">
-            <h4 id="profileEditSectionSecurity" class="profile-form-block-title">Security</h4>
-            <p id="profileEditPasswordHint" class="profile-form-block-desc">Set or change the password that locks this profile.</p>
+          <div class="profile-view-dashboard profile-edit-dashboard">
+            <section class="profile-view-card profile-view-card--wide profile-edit-card" aria-labelledby="profileEditSectionIdentity">
+              <h4 id="profileEditSectionIdentity" class="profile-view-section-title">Profile &amp; team</h4>
+              <div class="profile-form-fields profile-form-fields--split profile-edit-fields">
+                <div class="profile-field">
+                  <label for="profileEditName" class="profile-edit-field-label">Profile name</label>
+                  <input id="profileEditName" type="text" placeholder="e.g. Product Squad Alpha" required />
+                </div>
+                <div class="profile-field">
+                  <label for="profileEditTeam" class="profile-edit-field-label">Team <span class="profile-field-optional">(optional)</span></label>
+                  <input id="profileEditTeam" type="text" placeholder="e.g. Growth, Platform" />
+                </div>
+              </div>
+            </section>
+
+            <section class="profile-view-card profile-view-card--wide profile-edit-card profile-edit-card--security" aria-labelledby="profileEditSectionSecurity">
+              <div class="profile-edit-security-head">
+                <h4 id="profileEditSectionSecurity" class="profile-view-section-title">Security</h4>
+                <span id="profileEditSecurityBadge" class="profile-security-badge" hidden>Protected</span>
+              </div>
+              <p id="profileEditPasswordHint" class="profile-view-section-note">Set or change the password that locks this profile.</p>
+              <div class="profile-form-fields profile-edit-fields" id="profileEditPasswordFieldsWrap">
+                <div class="profile-field profile-field--hidden" id="profileEditCurrentPasswordWrap">
+                  <label for="profileEditCurrentPassword">Current password</label>
+                  <div class="profile-password-input-wrap">
+                    <input id="profileEditCurrentPassword" type="password" autocomplete="current-password" placeholder="Required to save changes" />
+                    <button type="button" class="profile-password-toggle" data-target="profileEditCurrentPassword" aria-label="Show password">
+                      <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                      <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="profile-edit-change-password-fields" id="profileEditChangePasswordFieldsWrap">
+                <div class="profile-field">
+                  <label for="profileEditNewPassword">New password</label>
+                  <div class="profile-password-input-wrap">
+                    <input id="profileEditNewPassword" type="password" autocomplete="new-password" placeholder="Leave blank to keep unchanged" />
+                    <button type="button" class="profile-password-toggle" data-target="profileEditNewPassword" aria-label="Show password">
+                      <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                      <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="profile-field">
+                  <label for="profileEditConfirmPassword">Confirm new password</label>
+                  <div class="profile-password-input-wrap">
+                    <input id="profileEditConfirmPassword" type="password" autocomplete="new-password" placeholder="Re-enter new password" />
+                    <button type="button" class="profile-password-toggle" data-target="profileEditConfirmPassword" aria-label="Show password">
+                      <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                      <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                    </button>
+                  </div>
+                </div>
+                </div>
+              </div>
+              <div id="profileEditRemoveProtectionWrap" class="profile-security-footer" hidden>
+                <div class="profile-security-footer-default" id="profileEditRemoveProtectionDefault">
+                  <button type="button" class="profile-security-footer-action profile-security-footer-action--remove" id="profileEditRemoveProtectionBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                    <span>Remove password protection</span>
+                  </button>
+                </div>
+                <div class="profile-security-footer-pending" id="profileEditRemoveProtectionPending" hidden role="status" aria-live="polite">
+                  <div class="profile-security-footer-pending-body">
+                    <span class="profile-security-footer-pending-dot" aria-hidden="true"></span>
+                    <p class="profile-security-footer-pending-text">Password will be removed when you save.</p>
+                  </div>
+                  <button type="button" class="profile-security-footer-action profile-security-footer-action--undo" id="profileEditRemoveProtectionUndoBtn">Undo</button>
+                </div>
+              </div>
+              <input type="checkbox" id="profileEditRemovePassword" class="profile-switch-input" hidden aria-hidden="true" tabindex="-1" />
+              <p id="profileEditPasswordError" class="profile-form-error" role="alert" style="display:none;"></p>
+            </section>
           </div>
-          <div class="profile-form-fields">
-            <div class="profile-field profile-field--hidden" id="profileEditCurrentPasswordWrap">
-              <label for="profileEditCurrentPassword">Current password</label>
-              <div class="profile-password-input-wrap">
-                <input id="profileEditCurrentPassword" type="password" autocomplete="current-password" placeholder="Required to save changes" />
-                <button type="button" class="profile-password-toggle" data-target="profileEditCurrentPassword" aria-label="Show password">
-                  <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                  <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
-                </button>
-              </div>
-            </div>
-            <div class="profile-field">
-              <label for="profileEditNewPassword">New password</label>
-              <div class="profile-password-input-wrap">
-                <input id="profileEditNewPassword" type="password" autocomplete="new-password" placeholder="Leave blank to keep unchanged" />
-                <button type="button" class="profile-password-toggle" data-target="profileEditNewPassword" aria-label="Show password">
-                  <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                  <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
-                </button>
-              </div>
-            </div>
-            <div class="profile-field">
-              <label for="profileEditConfirmPassword">Confirm new password</label>
-              <div class="profile-password-input-wrap">
-                <input id="profileEditConfirmPassword" type="password" autocomplete="new-password" placeholder="Re-enter new password" />
-                <button type="button" class="profile-password-toggle" data-target="profileEditConfirmPassword" aria-label="Show password">
-                  <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                  <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
-                </button>
-              </div>
-            </div>
-          </div>
-          <label class="profile-switch" for="profileEditRemovePassword">
-            <input type="checkbox" id="profileEditRemovePassword" class="profile-switch-input" />
-            <span class="profile-switch-box" aria-hidden="true"></span>
-            <span class="profile-switch-text">
-              <span class="profile-switch-label">Remove password protection</span>
-              <span class="profile-switch-hint">Profile will be open without a password</span>
-            </span>
-          </label>
-          <p id="profileEditPasswordError" class="profile-form-error" role="alert" style="display:none;"></p>
-        </section>
+        </div>
       </div>
 
-      <footer class="profile-modal-footer">
-        <button type="button" class="profile-modal-btn profile-modal-btn--ghost" id="profileEditCancelBtn">Cancel</button>
-        <button type="button" class="profile-modal-btn profile-modal-btn--primary" id="profileEditSaveBtn">Save changes</button>
+      <footer class="profile-view-footer-bar">
+        <div class="profile-view-footer-actions profile-edit-footer-actions">
+          <button type="button" class="profile-modal-btn profile-modal-btn--ghost" id="profileEditCancelBtn">Cancel</button>
+          <button type="button" class="profile-modal-btn profile-modal-btn--primary" id="profileEditSaveBtn">Save changes</button>
+        </div>
       </footer>
+    </div>
+  </div>
+
+  <!-- Profile create modal -->
+  <div id="profileCreateModal" class="modal-backdrop modal-backdrop--profile modal-backdrop--profile-view" aria-hidden="true">
+    <div class="modal-panel modal-panel--profile-view profile-create-modal" role="dialog" aria-modal="true" aria-labelledby="profileCreateModalTitle">
+      <header class="profile-modal-header profile-view-modal-header">
+        <div class="profile-modal-header-main">
+          <span class="profile-modal-mark profile-modal-mark--create" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>
+          </span>
+          <div class="profile-modal-title-group">
+            <h3 id="profileCreateModalTitle" class="profile-modal-title">New profile</h3>
+            <p id="profileCreateModalSubtitle" class="profile-modal-subtitle">Add a workspace with name, team, and optional password protection.</p>
+          </div>
+        </div>
+      </header>
+
+      <form id="addProfileForm" class="profile-view-shell profile-create-form" autocomplete="off" novalidate>
+        <div class="profile-view-scroll">
+          <div class="profile-view-summary profile-view-hero profile-edit-hero profile-create-hero" aria-label="Profile preview">
+            <div class="profile-view-hero-top">
+              <div class="profile-view-hero-profile">
+                <span id="profileCreateAvatar" class="profile-view-avatar" aria-hidden="true">—</span>
+                <div class="profile-view-hero-profile-copy">
+                  <h4 id="profileCreatePreviewName" class="profile-view-name profile-view-name--placeholder">Profile name</h4>
+                  <p class="profile-view-team-wrap" id="profileCreatePreviewTeamWrap" hidden>
+                    <span id="profileCreatePreviewTeam" class="profile-view-team">—</span>
+                  </p>
+                </div>
+              </div>
+              <div class="profile-edit-hero-lock" id="profileCreateLockBadge" aria-live="polite">
+                <span class="profile-edit-hero-lock-icon" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                </span>
+                <div class="profile-edit-hero-lock-copy">
+                  <span class="profile-edit-hero-lock-label">Protection</span>
+                  <span id="profileCreateLockStatus" class="profile-edit-hero-lock-value">Open access</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-view-dashboard profile-edit-dashboard">
+            <section class="profile-view-card profile-view-card--wide profile-edit-card" aria-labelledby="profileCreateSectionIdentity">
+              <h4 id="profileCreateSectionIdentity" class="profile-view-section-title">Profile &amp; team</h4>
+              <div class="profile-form-fields profile-form-fields--split profile-edit-fields">
+                <div class="profile-field">
+                  <label for="newProfileName" class="profile-edit-field-label">Profile name</label>
+                  <input id="newProfileName" name="newProfileName" type="text" placeholder="e.g. Product Squad Alpha" required />
+                </div>
+                <div class="profile-field">
+                  <label for="newProfileTeam" class="profile-edit-field-label">Team <span class="profile-field-optional">(optional)</span></label>
+                  <input id="newProfileTeam" name="newProfileTeam" type="text" placeholder="e.g. Growth, Platform" />
+                </div>
+              </div>
+            </section>
+
+            <section class="profile-view-card profile-view-card--wide profile-edit-card profile-edit-card--security" aria-labelledby="profileCreateSectionSecurity">
+              <h4 id="profileCreateSectionSecurity" class="profile-view-section-title">Security</h4>
+              <p id="newProfilePasswordHint" class="profile-view-section-note">Leave password blank for open access. Protected profiles require a password to view or delete.</p>
+              <div class="profile-form-fields profile-edit-fields">
+                <div class="profile-field">
+                  <label for="newProfilePassword" class="profile-edit-field-label">Password <span class="profile-field-optional">(optional)</span></label>
+                  <div class="profile-password-input-wrap">
+                    <input id="newProfilePassword" name="newProfilePassword" type="password" autocomplete="new-password" placeholder="Lock this profile" />
+                    <button type="button" class="profile-password-toggle" data-target="newProfilePassword" aria-label="Show password">
+                      <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                      <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="profile-field">
+                  <label for="newProfilePasswordConfirm" class="profile-edit-field-label">Confirm password</label>
+                  <div class="profile-password-input-wrap">
+                    <input id="newProfilePasswordConfirm" name="newProfilePasswordConfirm" type="password" autocomplete="new-password" placeholder="Re-enter password" />
+                    <button type="button" class="profile-password-toggle" data-target="newProfilePasswordConfirm" aria-label="Show password">
+                      <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                      <svg class="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <p id="profileCreatePasswordError" class="profile-form-error" role="alert" style="display:none;"></p>
+            </section>
+          </div>
+        </div>
+
+        <footer class="profile-view-footer-bar">
+          <div class="profile-view-footer-actions profile-edit-footer-actions">
+            <button type="button" class="profile-modal-btn profile-modal-btn--ghost" id="profileCreateCancelBtn">Cancel</button>
+            <button type="submit" class="profile-modal-btn profile-modal-btn--primary" id="profileCreateSaveBtn">Create profile</button>
+          </div>
+        </footer>
+      </form>
     </div>
   </div>
 
@@ -2614,6 +2777,51 @@
         <div class="form-actions" style="margin-top:1rem;justify-content:flex-end;">
           <button type="button" class="btn-ghost" id="profileDeleteCancelBtn">Keep profile</button>
           <button type="button" class="btn-danger" id="profileDeleteConfirmBtn" disabled>Delete profile</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk edit modal (table multi-select) -->
+  <div id="roadmapBulkEditModal" class="modal-backdrop modal-backdrop--profile" aria-hidden="true">
+    <div class="modal-panel modal-panel--profile" role="dialog" aria-modal="true" aria-labelledby="roadmapBulkEditModalTitle">
+      <header class="modal-header profile-modal-header">
+        <div class="modal-title-group">
+          <h3 id="roadmapBulkEditModalTitle" class="profile-modal-title">Edit selected roadmaps</h3>
+          <p id="roadmapBulkEditModalSubtitle" class="profile-modal-subtitle">
+            <span class="modal-subtitle-strong" id="roadmapBulkEditCountLabel"></span>
+          </p>
+        </div>
+      </header>
+      <div class="modal-body profile-modal-body">
+        <p class="modal-subtitle" id="roadmapBulkEditHelpText">
+          Choose the fields you want to update. Leave a field on “No change” to keep existing values on each roadmap.
+        </p>
+        <div class="form-grid form-grid-full">
+          <label class="form-field" for="roadmapBulkEditStatus">
+            <span class="form-label">Roadmap status</span>
+            <select id="roadmapBulkEditStatus" class="form-input"></select>
+          </label>
+          <label class="form-field" for="roadmapBulkEditType">
+            <span class="form-label">Roadmap type</span>
+            <select id="roadmapBulkEditType" class="form-input"></select>
+          </label>
+          <label class="form-field" for="roadmapBulkEditMoscow">
+            <span class="form-label">MoSCoW category</span>
+            <select id="roadmapBulkEditMoscow" class="form-input"></select>
+          </label>
+          <label class="form-field" for="roadmapBulkEditTshirtSize">
+            <span class="form-label">T-shirt size</span>
+            <select id="roadmapBulkEditTshirtSize" class="form-input"></select>
+          </label>
+          <label class="form-field" for="roadmapBulkEditPeriod">
+            <span class="form-label">Roadmap period (YYYY-QX)</span>
+            <input id="roadmapBulkEditPeriod" class="form-input" type="text" placeholder="Leave blank for no change" pattern="[0-9]{4}-[Qq][1-4]" />
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-ghost" id="roadmapBulkEditCancelBtn">Cancel</button>
+          <button type="button" class="btn-primary" id="roadmapBulkEditConfirmBtn">Apply changes</button>
         </div>
       </div>
     </div>
@@ -2846,7 +3054,7 @@
 
       <footer class="byok-modal-footer profile-view-footer-bar">
         <p class="profile-view-footer-hint byok-footer-note">
-          Keys are encrypted on this device. Validation uses a one-time proxy — nothing is stored on our servers. Press Esc to close.
+          Keys are encrypted on this device. Validation uses a one-time proxy — nothing is stored on our servers.
         </p>
         <div class="profile-view-footer-actions byok-modal-footer-actions">
           <button type="button" class="profile-modal-btn profile-modal-btn--primary" id="byokApiKeysCancelBtn">Done</button>
@@ -2885,6 +3093,7 @@
   </div>
 
   <div id="toastContainer" class="toast-container" role="status" aria-live="polite" aria-label="Deletion notifications"></div>
+  <div id="appOverlayHost" class="app-overlay-host" aria-hidden="true"></div>
 
   <!-- Classic scripts (no ES modules) so you can just open index.html directly -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -2893,7 +3102,7 @@
   <script src="src/modules/profile-security.js?v=20260528-ui194"></script>
   <script src="src/rice.js?v=20260528-ui194"></script>
   <script src="src/modules/exchange-rates.js?v=20260528-ui194"></script>
-  <script src="src/modules/fullscreen.js?v=20260528-ui194"></script>
+  <script src="src/modules/fullscreen.js?v=20260607-mobile-views-v1"></script>
   <script src="src/modules/overlay-manager.js?v=20260528-ui194"></script>
   <script src="src/modules/storage.js?v=20260528-ui194"></script>
   <script src="src/dev-seed-workspace.js?v=20260528-ui194"></script>
@@ -2904,7 +3113,7 @@
   <script src="src/modules/byok-api-keys.js?v=20260528-ui194"></script>
   <script src="src/modules/roadmap-llm-summary.js?v=20260528-ui194"></script>
   <script src="src/modules/roadmap-5why-framework.js?v=20260528-ui194"></script>
-  <script src="src/app.js?v=20260606-raci-lead-filters-v1"></script>
+  <script src="src/app.js?v=20260607-bulk-edit-table-v1"></script>
 </body>
 </html>
 

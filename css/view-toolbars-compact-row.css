@@ -7,7 +7,9 @@
   html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--table .roadmaps-table-toolbar.view-toolbar,
   html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--board .scrum-board-toolbar.view-toolbar,
   html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--moscow .moscow-view-header.view-toolbar,
-  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--map .roadmaps-map-toolbar.view-toolbar {
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--map .roadmaps-map-toolbar.view-toolbar,
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--raci .roadmaps-raci-toolbar.view-toolbar,
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--kano .portfolio-kano-toolbar.view-toolbar {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
@@ -15,15 +17,15 @@
     gap: 0.4rem !important;
     width: 100% !important;
     min-height: 0 !important;
-    padding: 0.4rem 0.45rem !important;
-    margin-bottom: 0.35rem !important;
     box-sizing: border-box !important;
   }
 
   html.is-compact-layout .view-toolbar--table .view-toolbar__row--primary,
   html.is-compact-layout .view-toolbar--board .view-toolbar__row--primary,
   html.is-compact-layout .view-toolbar--moscow .view-toolbar__row--primary,
-  html.is-compact-layout .view-toolbar--map .view-toolbar__row--primary {
+  html.is-compact-layout .view-toolbar--map .view-toolbar__row--primary,
+  html.is-compact-layout .view-toolbar--raci .view-toolbar__row--primary,
+  html.is-compact-layout .view-toolbar--kano .view-toolbar__row--primary {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
@@ -40,7 +42,9 @@
   html.is-compact-layout .view-toolbar--board .view-toolbar__cluster--compact-controls,
   html.is-compact-layout .view-toolbar--moscow .view-toolbar__cluster--compact-controls,
   html.is-compact-layout .view-toolbar--map .view-toolbar__cluster--compact-controls,
-  html.is-compact-layout .view-toolbar--map .view-toolbar__cluster--actions.view-toolbar__cluster--compact-controls {
+  html.is-compact-layout .view-toolbar--map .view-toolbar__cluster--actions.view-toolbar__cluster--compact-controls,
+  html.is-compact-layout .view-toolbar--raci .view-toolbar__cluster--compact-controls,
+  html.is-compact-layout .view-toolbar--kano .view-toolbar__cluster--compact-controls {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
@@ -129,19 +133,32 @@
     color: #78716c !important;
   }
 
-  /* Board — status columns selector */
-  html.is-compact-layout .view-toolbar--board .scrum-board-status-filter.view-toolbar__field {
+  /* Board / RACI / KANO — control-only row (field labels sr-only on compact) */
+  html.is-compact-layout .view-toolbar--board .scrum-board-status-filter.view-toolbar__field,
+  html.is-compact-layout .view-toolbar--raci .raci-matrix-domain-toggle.view-toolbar__field,
+  html.is-compact-layout .view-toolbar--kano .portfolio-kano-panel-toggle.view-toolbar__field {
+    display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
-    gap: 0.35rem !important;
+    flex-wrap: nowrap !important;
+    gap: 0 !important;
   }
 
-  html.is-compact-layout .view-toolbar--board .scrum-board-status-filter .view-toolbar__field-label {
-    flex: 0 0 auto !important;
-    margin: 0 !important;
+  html.is-compact-layout .view-toolbar--board .scrum-board-status-filter .view-toolbar__field-label,
+  html.is-compact-layout .view-toolbar--raci .raci-matrix-domain-toggle .view-toolbar__field-label,
+  html.is-compact-layout .view-toolbar--kano .portfolio-kano-panel-toggle .view-toolbar__field-label,
+  html.is-compact-layout .view-toolbar--map .view-toolbar__metric--map .view-toolbar__field-label,
+  html.is-compact-layout .view-toolbar--map .roadmaps-map-metric-label,
+  html.is-compact-layout .view-toolbar--table .roadmaps-table-group-label__text {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
     white-space: nowrap !important;
-    font-size: 0.62rem !important;
-    line-height: 1.2 !important;
+    border: 0 !important;
   }
 
   html.is-compact-layout .view-toolbar--board .scrum-board-status-columns {
@@ -167,14 +184,7 @@
   html.is-compact-layout .view-toolbar--map .view-toolbar__metric--map {
     flex-direction: row !important;
     align-items: center !important;
-    gap: 0.35rem !important;
-  }
-
-  html.is-compact-layout .view-toolbar--map .view-toolbar__metric--map .view-toolbar__field-label,
-  html.is-compact-layout .view-toolbar--map .roadmaps-map-metric-label {
-    flex: 0 0 auto !important;
-    white-space: nowrap !important;
-    font-size: 0.62rem !important;
+    gap: 0 !important;
   }
 
   html.is-compact-layout .view-toolbar--map .map-metric-picker {
@@ -217,6 +227,44 @@
     gap: 0.35rem !important;
   }
 
+  html.is-compact-layout .view-toolbar--raci .raci-matrix-domain-toggle.view-toolbar__field,
+  html.is-compact-layout .view-toolbar--kano .portfolio-kano-panel-toggle.view-toolbar__field {
+    order: 1 !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    width: auto !important;
+  }
+
+  html.is-compact-layout .view-toolbar--raci .view-toolbar__compact-fullscreen,
+  html.is-compact-layout .view-toolbar--kano .view-toolbar__compact-fullscreen {
+    order: 3 !important;
+    flex: 0 0 auto !important;
+    min-width: 44px !important;
+    margin-left: auto !important;
+  }
+
+  html.is-compact-layout .view-toolbar--raci .raci-matrix-domain-toggle__buttons,
+  html.is-compact-layout .view-toolbar--kano .portfolio-kano-panel-toggle__buttons {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+
+  /* main.css stacks RACI toolbar at ≤1024px — keep compact strip horizontal */
+  html.is-compact-layout .roadmaps-view--raci .roadmaps-raci-toolbar .view-toolbar__row--primary {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0 !important;
+  }
+
+  html.is-compact-layout .roadmaps-view--raci .view-toolbar__cluster--compact-controls,
+  html.is-compact-layout .roadmaps-view--kano .view-toolbar__cluster--compact-controls {
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+  }
+
   html.is-compact-layout .view-toolbar--moscow .view-toolbar__compact-rice,
   html.is-compact-layout .view-toolbar--moscow .moscow-sort-toggle.view-toolbar__compact-rice {
     order: 2 !important;
@@ -237,9 +285,7 @@
     margin-left: auto !important;
   }
 
-  html.is-compact-layout .view-toolbar--moscow .view-toolbar__identity,
-  html.is-compact-layout .view-toolbar--moscow .view-toolbar__desc,
-  html.is-compact-layout .view-toolbar--moscow .moscow-board-hint {
+  html.is-compact-layout .view-toolbar--moscow .view-toolbar__identity {
     display: none !important;
   }
 
@@ -274,21 +320,5 @@ html.is-desktop-layout .roadmaps-table-group-bar--compact-only {
   html.is-desktop-layout .view-toolbar__compact-fullscreen {
     order: unset !important;
     margin-left: unset !important;
-  }
-}
-
-@media (max-width: 360px) {
-  html.is-compact-layout .view-toolbar--board .scrum-board-status-filter .view-toolbar__field-label,
-  html.is-compact-layout .view-toolbar--table .roadmaps-table-group-label__text,
-  html.is-compact-layout .view-toolbar--map .roadmaps-map-metric-label {
-    position: absolute !important;
-    width: 1px !important;
-    height: 1px !important;
-    padding: 0 !important;
-    margin: -1px !important;
-    overflow: hidden !important;
-    clip: rect(0, 0, 0, 0) !important;
-    white-space: nowrap !important;
-    border: 0 !important;
   }
 }

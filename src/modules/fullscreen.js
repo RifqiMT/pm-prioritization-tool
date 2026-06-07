@@ -5,7 +5,7 @@
 (function (global) {
   const PORTAL_IDS = [
     "exportFormatModal", "importFormatModal", "roadmapModal",
-    "profileViewModal", "profileEditModal", "profileDeleteModal",
+    "profileViewModal", "profileEditModal", "profileCreateModal", "profileDeleteModal",
     "roadmapDeleteModal", "roadmapBulkTransferModal", "toastContainer"
   ];
 
@@ -124,8 +124,7 @@
   }
 
   function getWorkspaceContainer() {
-    const els = getElements();
-    return els.workspacePortfolioBody || document.querySelector(".portfolio-stage") || els.roadmapsTableView?.parentNode || null;
+    return getPortfolioStageContainer();
   }
 
   function saveViewAnchor(viewEl) {
@@ -384,20 +383,69 @@
     });
   }
 
-  function restoreChromeToContainer() {
-    const container = getWorkspaceContainer();
-    const anchor = getElements().roadmapsTableView;
-    if (!container || !anchor) return;
+  function getPortfolioStageContainer() {
+    const els = getElements();
+    return (
+      document.querySelector(".portfolio-stage") ||
+      els.roadmapsTableView?.parentNode ||
+      els.workspacePortfolioBody ||
+      null
+    );
+  }
 
+  function getWorkspaceChromeContainer() {
+    const els = getElements();
+    return els.mobileWorkspaceChrome || document.getElementById("mobileWorkspaceChrome") || null;
+  }
+
+  function safeReparentNode(parent, node, beforeNode) {
+    if (!parent || !node) return false;
+    if (node.parentNode === parent) return true;
+    try {
+      if (beforeNode && beforeNode.parentNode === parent) {
+        parent.insertBefore(node, beforeNode);
+      } else {
+        parent.appendChild(node);
+      }
+      return true;
+    } catch (err) {
+      console.warn("Fullscreen DOM restore skipped:", err);
+      return false;
+    }
+  }
+
+  function restoreChromeToContainer() {
+    const chromeContainer = getWorkspaceChromeContainer();
     const headerRow = document.querySelector(".roadmaps-header-row");
     const filtersShell = document.querySelector(".filters-shell");
 
-    if (filtersShell && filtersShell.parentNode !== container) {
-      container.insertBefore(filtersShell, anchor);
+    if (chromeContainer) {
+      if (headerRow && headerRow.parentNode !== chromeContainer) {
+        const filtersInChrome =
+          filtersShell && filtersShell.parentNode === chromeContainer;
+        safeReparentNode(
+          chromeContainer,
+          headerRow,
+          filtersInChrome ? filtersShell : null
+        );
+      }
+      if (filtersShell && filtersShell.parentNode !== chromeContainer) {
+        const insertBefore =
+          headerRow && headerRow.parentNode === chromeContainer
+            ? headerRow.nextSibling
+            : null;
+        safeReparentNode(chromeContainer, filtersShell, insertBefore);
+      }
     }
-    if (headerRow && headerRow.parentNode !== container) {
-      const insertBefore = filtersShell && filtersShell.parentNode === container ? filtersShell : anchor;
-      container.insertBefore(headerRow, insertBefore);
+
+    const stage = getPortfolioStageContainer();
+    if (stage) {
+      getViewRoots().forEach((viewEl) => {
+        if (!viewEl || viewEl.parentNode === stage || viewEl.parentNode === fullscreenStage) {
+          return;
+        }
+        restoreViewToPortfolio(viewEl);
+      });
     }
 
     clearChromePresentationStyles(headerRow);

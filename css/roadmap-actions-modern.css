@@ -24,7 +24,11 @@
 /* ── Shared action button ─────────────────────────────────── */
 .roadmap-action-btn,
 .profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip,
-.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn {
+.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn,
+.profiles-panel--v2 .profiles-select__actions .profile-action-chip,
+.profiles-panel--v2 .profiles-select__actions .profile-icon-btn,
+.profiles-panel-sheet .profiles-select__actions .profile-action-chip,
+.profiles-panel-sheet .profiles-select__actions .profile-icon-btn {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -54,7 +58,11 @@
 
 .roadmap-action-btn__icon,
 .profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip svg,
-.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn svg {
+.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn svg,
+.profiles-panel--v2 .profiles-select__actions .profile-action-chip svg,
+.profiles-panel--v2 .profiles-select__actions .profile-icon-btn svg,
+.profiles-panel-sheet .profiles-select__actions .profile-action-chip svg,
+.profiles-panel-sheet .profiles-select__actions .profile-icon-btn svg {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -71,7 +79,9 @@
 }
 
 .roadmap-action-btn__label,
-.profiles-panel--v2 .profiles-card-actions--footer .profile-action-label--visible {
+.profiles-panel--v2 .profiles-card-actions--footer .profile-action-label--visible,
+.profiles-panel--v2 .profiles-select__actions .profile-action-label--visible,
+.profiles-panel-sheet .profiles-select__actions .profile-action-label--visible {
   position: static !important;
   width: auto !important;
   height: auto !important;
@@ -206,21 +216,27 @@
 }
 
 .profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip--view,
-.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn--view {
+.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn--view,
+.profiles-panel--v2 .profiles-select__actions .profile-action-chip--view,
+.profiles-panel-sheet .profiles-select__actions .profile-action-chip--view {
   color: var(--action-view) !important;
   background: var(--action-view-bg) !important;
   border-color: var(--action-view-border) !important;
 }
 
 .profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip--edit,
-.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn--edit {
+.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn--edit,
+.profiles-panel--v2 .profiles-select__actions .profile-action-chip--edit,
+.profiles-panel-sheet .profiles-select__actions .profile-action-chip--edit {
   color: var(--action-edit) !important;
   background: var(--action-edit-bg) !important;
   border-color: var(--action-edit-border) !important;
 }
 
 .profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip--danger,
-.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn--danger {
+.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn--danger,
+.profiles-panel--v2 .profiles-select__actions .profile-action-chip--danger,
+.profiles-panel-sheet .profiles-select__actions .profile-action-chip--danger {
   color: var(--action-delete) !important;
   background: var(--action-delete-bg) !important;
   border-color: var(--action-delete-border) !important;
@@ -424,6 +440,145 @@ html.is-desktop-layout .moscow-board-card-btn--order {
 
   .profiles-panel--v2 .profiles-card-actions--footer .profile-action-label--visible {
     font-size: 0.64rem !important;
+  }
+}
+
+/* Desktop profile switcher actions — refined semantic chips */
+@media (min-width: 1401px) {
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip,
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-icon-btn {
+    flex: 1 1 auto !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.42rem !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 40px !important;
+    padding: 0.48rem 0.62rem !important;
+    border-radius: 10px !important;
+    font-size: 0.76rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.015em !important;
+    line-height: 1.15 !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
+    transition:
+      background 0.18s ease,
+      border-color 0.18s ease,
+      color 0.18s ease,
+      box-shadow 0.18s ease,
+      transform 0.18s ease !important;
+  }
+
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip svg,
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-icon-btn svg {
+    flex: 0 0 auto !important;
+    width: 16px !important;
+    height: 16px !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: none !important;
+    box-shadow: none !important;
+    display: block !important;
+  }
+
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip--view,
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-icon-btn--view {
+    color: var(--action-view) !important;
+    background: linear-gradient(180deg, #f8f9ff 0%, var(--action-view-bg) 100%) !important;
+    border: 1px solid var(--action-view-border) !important;
+  }
+
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip--view svg,
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-icon-btn--view svg {
+    color: var(--action-view) !important;
+  }
+
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip--edit,
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-icon-btn--edit {
+    color: var(--action-edit) !important;
+    background: linear-gradient(180deg, #fffdf5 0%, var(--action-edit-bg) 100%) !important;
+    border: 1px solid var(--action-edit-border) !important;
+  }
+
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip--edit svg,
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-icon-btn--edit svg {
+    color: var(--action-edit) !important;
+  }
+
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip--danger,
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-icon-btn--danger {
+    color: var(--action-delete) !important;
+    background: linear-gradient(180deg, #fffafa 0%, var(--action-delete-bg) 100%) !important;
+    border: 1px solid var(--action-delete-border) !important;
+  }
+
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip--danger svg,
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-icon-btn--danger svg {
+    color: var(--action-delete) !important;
+  }
+
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-label--visible {
+    font-size: 0.76rem !important;
+    font-weight: 600 !important;
+  }
+
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip--view:hover:not(:disabled),
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-icon-btn--view:hover:not(:disabled) {
+    background: #e0e7ff !important;
+    border-color: rgba(99, 102, 241, 0.42) !important;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.14) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip--edit:hover:not(:disabled),
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-icon-btn--edit:hover:not(:disabled) {
+    background: #fef3c7 !important;
+    border-color: rgba(245, 158, 11, 0.48) !important;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.14) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip--danger:hover:not(:disabled),
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-icon-btn--danger:hover:not(:disabled) {
+    background: #fee2e2 !important;
+    border-color: rgba(239, 68, 68, 0.42) !important;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.12) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip:active:not(:disabled),
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-icon-btn:active:not(:disabled) {
+    transform: translateY(0) scale(0.98) !important;
+  }
+
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip:focus-visible,
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-icon-btn:focus-visible {
+    outline: none !important;
+  }
+
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip--view:focus-visible,
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-icon-btn--view:focus-visible {
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.22) !important;
+  }
+
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip--edit:focus-visible,
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-icon-btn--edit:focus-visible {
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.22) !important;
+  }
+
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip--danger:focus-visible,
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-icon-btn--danger:focus-visible {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+  }
+
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip:disabled,
+  html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-icon-btn:disabled {
+    opacity: 0.52 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
   }
 }
 

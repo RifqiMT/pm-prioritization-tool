@@ -515,13 +515,40 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: nowrap;
     gap: 1rem 1.25rem;
     padding: 0.9rem 1.15rem;
+  }
+
+  html.is-desktop-layout .app-header.app-header--modern.app-header--cockpit-embedded {
+    height: auto !important;
+    min-height: 0 !important;
+    margin-bottom: 1.25rem !important;
+    padding: 0.9rem 1.15rem !important;
+    overflow: visible !important;
+    border: 1px solid var(--hdr-border) !important;
+    background: var(--hdr-bg) !important;
+  }
+
+  html.is-desktop-layout .app-header--cockpit-embedded .app-header-toolbar {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    width: auto !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   .app-header-top {
     flex: 1 1 auto;
     min-width: 0;
+  }
+
+  .app-header-toolbar {
+    flex: 0 0 auto;
+    margin-left: auto;
   }
 
   .app-header-menu-toggle {
@@ -552,16 +579,17 @@
     gap: 0.35rem;
   }
 
-  /* Compact toolbar: icon only (labels in aria-label / title) */
+  /* Labeled toolbar — matches pm-prioritization-tool-six.vercel.app desktop */
   .app-header-action-btn {
     width: auto;
     flex: 0 0 auto;
-    min-width: 44px;
-    min-height: 40px;
-    padding: 0.4rem;
-    justify-content: center;
     flex-direction: row;
-    gap: 0;
+    justify-content: flex-start;
+    gap: 0.45rem;
+    min-height: 42px;
+    min-width: 0;
+    padding: 0.45rem 0.7rem;
+    text-align: left;
   }
 
   .app-header-action-icon {
@@ -570,15 +598,27 @@
   }
 
   .app-header-action-title {
-    position: absolute;
-    width: 1px;
-    height: 1px;
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
     padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
+    overflow: visible;
+    clip: auto;
+    font-size: 0.78rem;
+    text-align: left;
+  }
+
+  .app-header-action-btn--fx .app-header-action-title {
+    font-size: 0.74rem;
+  }
+
+  .app-header-action-btn--byok .app-header-action-title {
+    font-size: 0.78rem;
+  }
+
+  .byok-header-meta {
+    font-size: 0.64rem;
   }
 
   .app-header-rates-footnote,

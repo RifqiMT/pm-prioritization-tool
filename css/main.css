@@ -38,13 +38,19 @@
 
 html {
   scroll-behavior: smooth;
+  width: 100%;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  width: 100%;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  max-width: 100%;
   font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: radial-gradient(ellipse 120% 80% at 50% -20%, rgba(220, 38, 38, 0.16), transparent 52%),
     radial-gradient(ellipse 80% 50% at 80% 50%, rgba(212, 175, 55, 0.12), transparent 50%),
@@ -58,7 +64,8 @@ body {
 
 .app-shell {
   width: 100%;
-  max-width: none;
+  max-width: 100%;
+  min-width: 0;
   margin: 0;
   /* Minimal outer inset for the whole app. */
   padding: 0.35rem;
@@ -66,6 +73,7 @@ body {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
   /* Let the inner panels (cards) define structure; remove outdated outer frame. */
   background: transparent;
   border-radius: 0;
@@ -4454,6 +4462,10 @@ tbody td {
 .cell-rice-with-tooltip:focus-within .cell-type-tooltip,
 .cell-desc-with-tooltip:hover .cell-type-tooltip,
 .cell-desc-with-tooltip:focus-within .cell-type-tooltip,
+.card-title-with-tooltip:hover .cell-type-tooltip,
+.card-title-with-tooltip:focus-within .cell-type-tooltip,
+.card-meta-with-tooltip:hover .cell-type-tooltip,
+.card-meta-with-tooltip:focus-within .cell-type-tooltip,
 .profile-icon-wrap:hover .cell-type-tooltip,
 .profile-icon-wrap:focus-within .cell-type-tooltip,
 .roadmap-field-tooltip-wrap:hover .cell-type-tooltip,
@@ -4481,6 +4493,10 @@ tbody td {
 .cell-rice-with-tooltip:focus-within .cell-type-tooltip:not(.cell-type-tooltip--below),
 .cell-desc-with-tooltip:hover .cell-type-tooltip:not(.cell-type-tooltip--below),
 .cell-desc-with-tooltip:focus-within .cell-type-tooltip:not(.cell-type-tooltip--below),
+.card-title-with-tooltip:hover .cell-type-tooltip:not(.cell-type-tooltip--below),
+.card-title-with-tooltip:focus-within .cell-type-tooltip:not(.cell-type-tooltip--below),
+.card-meta-with-tooltip:hover .cell-type-tooltip:not(.cell-type-tooltip--below),
+.card-meta-with-tooltip:focus-within .cell-type-tooltip:not(.cell-type-tooltip--below),
 .profile-icon-wrap:hover .cell-type-tooltip:not(.cell-type-tooltip--below),
 .profile-icon-wrap:focus-within .cell-type-tooltip:not(.cell-type-tooltip--below),
 .roadmap-field-tooltip-wrap:hover .cell-type-tooltip:not(.cell-type-tooltip--below),
@@ -4506,6 +4522,10 @@ tbody td {
 .cell-rice-with-tooltip:focus-within .cell-type-tooltip.cell-type-tooltip--below,
 .cell-desc-with-tooltip:hover .cell-type-tooltip.cell-type-tooltip--below,
 .cell-desc-with-tooltip:focus-within .cell-type-tooltip.cell-type-tooltip--below,
+.card-title-with-tooltip:hover .cell-type-tooltip.cell-type-tooltip--below,
+.card-title-with-tooltip:focus-within .cell-type-tooltip.cell-type-tooltip--below,
+.card-meta-with-tooltip:hover .cell-type-tooltip.cell-type-tooltip--below,
+.card-meta-with-tooltip:focus-within .cell-type-tooltip.cell-type-tooltip--below,
 .profile-icon-wrap:hover .cell-type-tooltip.cell-type-tooltip--below,
 .profile-icon-wrap:focus-within .cell-type-tooltip.cell-type-tooltip--below,
 .roadmap-field-tooltip-wrap:hover .cell-type-tooltip.cell-type-tooltip--below,
@@ -11201,12 +11221,23 @@ button:hover,
 .profiles-sheet-tab,
 .profiles-panel-sheet-close,
 .profiles-panel--v2 .profiles-card-actions--footer .profile-action-chip,
-.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn {
+.profiles-panel--v2 .profiles-card-actions--footer .profile-icon-btn,
+.profiles-panel-sheet .profiles-select__trigger,
+.profiles-panel-sheet .profiles-select__option,
+.profiles-panel-sheet .profiles-select__actions .profile-action-chip,
+.profiles-panel-sheet .profiles-select__actions .profile-icon-btn,
+.profiles-panel-sheet .profiles-sheet-tab,
+.portfolio-filters-sheet .portfolio-filters-sheet-close,
+.portfolio-filters-sheet .filters-reset-btn,
+.portfolio-filters-sheet .filters-toggle-btn {
   background: transparent !important;
   color: var(--id-text, #3f0f19) !important;
   border-color: rgba(231, 201, 120, 0.65) !important;
   box-shadow: none !important;
   filter: none !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  transform: none !important;
 }
 
 .profiles-sheet-tab--active {

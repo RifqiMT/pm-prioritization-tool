@@ -10,11 +10,6 @@
     max-height: none;
   }
 
-  html.is-compact-layout .roadmaps-view--table .roadmaps-table-toolbar .view-toolbar__desc {
-    font-size: 0.72rem;
-    line-height: 1.35;
-  }
-
   html.is-compact-layout .roadmaps-view--table .roadmaps-table-shell {
     display: none !important;
   }
@@ -385,37 +380,163 @@
   html.is-compact-layout .roadmaps-table-card .cell-countries-with-tooltip,
   html.is-compact-layout .roadmaps-table-card .cell-moscow-with-tooltip,
   html.is-compact-layout .roadmaps-table-card .roadmaps-table-card__status-pill,
-  html.is-compact-layout .roadmaps-table-card .card-meta-with-tooltip {
+  html.is-compact-layout .roadmaps-table-card .card-meta-with-tooltip,
+  html.is-compact-layout .scrum-board-card .card-title-with-tooltip,
+  html.is-compact-layout .scrum-board-card .card-meta-with-tooltip,
+  html.is-compact-layout .scrum-board-card .cell-type-icon-wrap,
+  html.is-compact-layout .scrum-board-card .scrum-board-card-type-wrap,
+  html.is-compact-layout .scrum-board-card .cell-rice-with-tooltip,
+  html.is-compact-layout .scrum-board-card .cell-financial-with-tooltip,
+  html.is-compact-layout .scrum-board-card .cell-tshirt-with-tooltip,
+  html.is-compact-layout .scrum-board-card .cell-countries-with-tooltip,
+  html.is-compact-layout .scrum-board-card .cell-moscow-with-tooltip,
+  html.is-compact-layout .moscow-board-card .card-title-with-tooltip,
+  html.is-compact-layout .moscow-board-card .card-meta-with-tooltip,
+  html.is-compact-layout .moscow-board-card .cell-type-icon-wrap,
+  html.is-compact-layout .moscow-board-card .scrum-board-card-type-wrap,
+  html.is-compact-layout .moscow-board-card .cell-rice-with-tooltip,
+  html.is-compact-layout .moscow-board-card .cell-financial-with-tooltip,
+  html.is-compact-layout .moscow-board-card .cell-tshirt-with-tooltip,
+  html.is-compact-layout .moscow-board-card .cell-countries-with-tooltip,
+  html.is-compact-layout .moscow-board-card .cell-moscow-with-tooltip {
     cursor: pointer;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
 
-  html.is-compact-layout .cell-type-tooltip.cell-type-tooltip-visible {
-    pointer-events: auto;
-    max-width: min(18rem, calc(100vw - 1.5rem));
-    z-index: 10001;
-  }
-
-  html.is-compact-layout .cell-type-tooltip.cell-type-tooltip--wide {
-    max-width: min(20rem, calc(100vw - 1.5rem));
-  }
-
-  html.is-compact-layout .compact-tooltip-backdrop {
+  /* Full-viewport overlay layer — portaled to <html> on compact (tooltip scrim + floating panels) */
+  html.is-compact-layout > .app-overlay-host,
+  html.is-compact-layout .app-overlay-host {
     position: fixed;
     inset: 0;
-    z-index: 10000;
-    background: rgba(15, 23, 42, 0.35);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+    z-index: 10040;
+    pointer-events: none;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    transform: none;
+    contain: strict;
+  }
+
+  html.is-compact-layout > .app-overlay-host:has(.compact-tooltip-backdrop--visible),
+  html.is-compact-layout .app-overlay-host:has(.compact-tooltip-backdrop--visible) {
+    pointer-events: auto;
+  }
+
+  html.is-compact-layout.compact-tooltip-open {
+    overflow: hidden !important;
+    overscroll-behavior: none;
+  }
+
+  html.is-compact-layout.filters-sheet-open body,
+  html.is-compact-layout.profiles-sheet-open body {
+    overflow: hidden !important;
+    overscroll-behavior: none;
+  }
+
+  html.is-compact-layout.compact-tooltip-open .portfolio-bottom-bar,
+  html.is-compact-layout.compact-tooltip-open .mobile-workspace-chrome,
+  html.is-compact-layout.compact-tooltip-open .app-header--modern,
+  html.is-compact-layout.filters-sheet-open .portfolio-bottom-bar,
+  html.is-compact-layout.filters-sheet-open .mobile-workspace-chrome,
+  html.is-compact-layout.filters-sheet-open .app-header--modern,
+  html.is-compact-layout.profiles-sheet-open .portfolio-bottom-bar,
+  html.is-compact-layout.profiles-sheet-open .mobile-workspace-chrome,
+  html.is-compact-layout.profiles-sheet-open .app-header--modern {
+    z-index: 40 !important;
+  }
+
+  html.is-compact-layout .roadmaps-view:fullscreen > .compact-tooltip-backdrop,
+  html.is-compact-layout .roadmaps-view.view-pseudo-fullscreen > .compact-tooltip-backdrop,
+  html.is-compact-layout .roadmaps-view::-webkit-full-screen > .compact-tooltip-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    min-height: 100dvh;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
     transition: opacity 0.15s ease, visibility 0.15s ease;
+    touch-action: none;
   }
 
-  html.is-compact-layout .compact-tooltip-backdrop.compact-tooltip-backdrop--visible {
+  html.is-compact-layout .roadmaps-view:fullscreen > .compact-tooltip-backdrop.compact-tooltip-backdrop--visible,
+  html.is-compact-layout .roadmaps-view.view-pseudo-fullscreen > .compact-tooltip-backdrop.compact-tooltip-backdrop--visible,
+  html.is-compact-layout .roadmaps-view::-webkit-full-screen > .compact-tooltip-backdrop.compact-tooltip-backdrop--visible {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
+    cursor: pointer;
+  }
+
+  html.is-compact-layout > .app-overlay-host .compact-tooltip-backdrop,
+  html.is-compact-layout .app-overlay-host .compact-tooltip-backdrop {
+    position: fixed;
+    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    z-index: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.15s ease, visibility 0.15s ease;
+    touch-action: none;
+    transform: none;
+  }
+
+  html.is-compact-layout > .app-overlay-host .compact-tooltip-backdrop.compact-tooltip-backdrop--visible,
+  html.is-compact-layout .app-overlay-host .compact-tooltip-backdrop.compact-tooltip-backdrop--visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  html.is-compact-layout .app-overlay-host > .cell-type-tooltip.cell-type-tooltip-visible {
+    position: fixed;
+    z-index: 1;
+    pointer-events: auto;
+  }
+
+  html.is-compact-layout .cell-type-tooltip.cell-type-tooltip-visible {
+    pointer-events: auto;
+    max-width: min(18rem, calc(100vw - 1.5rem));
+    z-index: 10041;
+  }
+
+  html.is-compact-layout .cell-type-tooltip.cell-type-tooltip--wide {
+    max-width: min(20rem, calc(100vw - 1.5rem));
   }
 
   html.is-compact-layout .roadmaps-table-card .cell-rice-with-tooltip,
@@ -747,6 +868,32 @@
 html.is-desktop-layout .roadmaps-table-cards-shell,
 html.is-desktop-layout .roadmaps-table-group-bar--compact-only {
   display: none !important;
+}
+
+/* Desktop: never show compact overlay / sheet scrims (prevents stuck dim strip after resize) */
+html.is-desktop-layout > .app-overlay-host,
+html.is-desktop-layout > .filters-sheet-backdrop,
+html.is-desktop-layout > .profiles-sheet-backdrop,
+html.is-desktop-layout > .portfolio-filters-sheet,
+html.is-desktop-layout > .profiles-panel-sheet,
+html.is-desktop-layout .app-overlay-host,
+html.is-desktop-layout .compact-tooltip-backdrop,
+html.is-desktop-layout .filters-sheet-backdrop,
+html.is-desktop-layout .profiles-sheet-backdrop {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
+html.is-desktop-layout.compact-tooltip-open,
+html.is-desktop-layout.compact-tooltip-open body,
+html.is-desktop-layout.filters-sheet-open,
+html.is-desktop-layout.filters-sheet-open body,
+html.is-desktop-layout.profiles-sheet-open,
+html.is-desktop-layout.profiles-sheet-open body {
+  overflow: visible !important;
+  overscroll-behavior: auto;
 }
 
 @media (min-width: 1401px) {

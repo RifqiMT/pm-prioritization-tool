@@ -60,6 +60,9 @@ let pendingExportFormat = null;
 
 /** Filters profile list in the profiles panel (name / team). */
 let profilesFilterQuery = "";
+let profilesSelectOpen = false;
+let profilesSelectHighlightIndex = -1;
+let profilesSelectPointerSelecting = false;
 let profilePickerOpen = false;
 let profilePickerHighlightIndex = -1;
 let profilePickerIsSearching = false;
@@ -3690,9 +3693,11 @@ async function init() {
   });
   attachEventListeners();
   initCompactLayoutClass();
+  initCompactChromeMetrics();
   initAppHeaderMenu();
   initPortfolioViewTabsOverflow();
   initProfilesPanel();
+  initProfilesSelect();
   initProfilePicker();
   initFilterAutocompletes();
   initSuperAdminToggle();
@@ -3770,33 +3775,54 @@ function syncSiteFooterYear() {
 }
 
 function cacheElements() {
-  elements.profileList = $("profileList");
   elements.profilesEmptyState = $("profilesEmptyState");
   elements.profilesCountBadge = $("profilesCountBadge");
-  elements.profilesCreatePanel = $("profilesCreatePanel");
+  elements.profilesCreateOpenBtn = $("profilesCreateOpenBtn");
   elements.profilesSheetTabs = $("profilesSheetTabs");
-  elements.profilesSheetTabBrowse = $("profilesSheetTabBrowse");
-  elements.profilesSheetTabCreate = $("profilesSheetTabCreate");
   elements.profilesSheetPanelBrowse = $("profilesSheetPanelBrowse");
-  elements.profilesSheetPanelCreate = $("profilesSheetPanelCreate");
   elements.profilesPanelSheet = $("profilesPanelSheet");
   elements.profilesSheetCountBadge = $("profilesSheetCountBadge");
   elements.profilesSheetBackdrop = $("profilesSheetBackdrop");
   elements.profilesSheetCloseBtn = $("profilesSheetCloseBtn");
   elements.workspacePanel = $("workspacePanel");
   elements.workspacePortfolioBody = $("workspacePortfolioBody");
+  elements.mobileWorkspaceChrome = $("mobileWorkspaceChrome");
+  elements.compactCockpitBrandSlot = $("compactCockpitBrandSlot");
   elements.profilePickerBar = $("profilePickerBar");
   elements.profilePicker = $("profilePicker");
   elements.profilePickerInput = $("profilePickerInput");
   elements.profilePickerAvatar = $("profilePickerAvatar");
+  elements.profilePickerDisplay = $("profilePickerDisplay");
+  elements.profilePickerName = $("profilePickerName");
+  elements.profilePickerMeta = $("profilePickerMeta");
+  elements.profilePickerControl = $("profilePickerControl");
   elements.profilePickerToggle = $("profilePickerToggle");
   elements.profilePickerDropdown = $("profilePickerDropdown");
   elements.profilePickerListbox = $("profilePickerListbox");
   elements.profilePickerEmpty = $("profilePickerEmpty");
   elements.mobileProfileManageBtn = $("mobileProfileManageBtn");
-  elements.profilesSearchInput = $("profilesSearchInput");
+  elements.profilesSearchInput = $("profilesSelectSearch");
+  elements.profilesSelect = $("profilesSelect");
+  elements.profilesSelectTrigger = $("profilesSelectTrigger");
+  elements.profilesSelectAvatar = $("profilesSelectAvatar");
+  elements.profilesSelectStatus = $("profilesSelectStatus");
+  elements.profilesSelectKicker = $("profilesSelectKicker");
+  elements.profilesSelectPanelLabel = $("profilesSelectPanelLabel");
+  elements.profilesSelectName = $("profilesSelectName");
+  elements.profilesSelectMeta = $("profilesSelectMeta");
+  elements.profilesSelectPanel = $("profilesSelectPanel");
+  elements.profilesSelectSearch = $("profilesSelectSearch");
+  elements.profilesSelectHint = $("profilesSelectHint");
+  elements.profilesSelectListScroll = $("profilesSelectListScroll");
+  elements.profilesSelectListbox = $("profilesSelectListbox");
+  elements.profilesSelectEmpty = $("profilesSelectEmpty");
+  elements.profilesSelectActions = $("profilesSelectActions");
   elements.profilesNoResults = $("profilesNoResults");
   elements.portfolioFiltersDrawer = $("portfolioFiltersDrawer");
+  elements.portfolioFiltersSheet = $("portfolioFiltersSheet");
+  elements.filtersSheetBackdrop = $("filtersSheetBackdrop");
+  elements.portfolioFiltersSheetCloseBtn = $("portfolioFiltersSheetCloseBtn");
+  elements.filtersSheetActiveBadge = $("filtersSheetActiveBadge");
   elements.portfolioFiltersSummaryActions = $("portfolioFiltersSummaryActions");
   elements.portfolioFabAddRoadmap = $("portfolioFabAddRoadmap");
   elements.portfolioSelectionBar = $("portfolioSelectionBar");
@@ -3808,6 +3834,18 @@ function cacheElements() {
   elements.newProfileTeam = $("newProfileTeam");
   elements.newProfilePassword = $("newProfilePassword");
   elements.newProfilePasswordConfirm = $("newProfilePasswordConfirm");
+  elements.profileCreateModal = $("profileCreateModal");
+  elements.profileCreateModalTitle = $("profileCreateModalTitle");
+  elements.profileCreateModalSubtitle = $("profileCreateModalSubtitle");
+  elements.profileCreateAvatar = $("profileCreateAvatar");
+  elements.profileCreatePreviewName = $("profileCreatePreviewName");
+  elements.profileCreatePreviewTeam = $("profileCreatePreviewTeam");
+  elements.profileCreatePreviewTeamWrap = $("profileCreatePreviewTeamWrap");
+  elements.profileCreateLockBadge = $("profileCreateLockBadge");
+  elements.profileCreateLockStatus = $("profileCreateLockStatus");
+  elements.profileCreateCancelBtn = $("profileCreateCancelBtn");
+  elements.profileCreateSaveBtn = $("profileCreateSaveBtn");
+  elements.profileCreatePasswordError = $("profileCreatePasswordError");
 
   elements.profileLockedBanner = $("profileLockedBanner");
   elements.profileLockedBannerTitle = $("profileLockedBannerTitle");
@@ -3824,10 +3862,24 @@ function cacheElements() {
   elements.roadmapsHeaderBadges = $("roadmapsHeaderBadges");
   elements.addRoadmapBtn = $("addRoadmapBtn");
   elements.bulkDeleteBtn = $("bulkDeleteBtn");
+  elements.bulkEditBtn = $("bulkEditBtn");
   elements.bulkDuplicateBtn = $("bulkDuplicateBtn");
   elements.bulkMoveBtn = $("bulkMoveBtn");
+  elements.portfolioSelectionEditBtn = $("portfolioSelectionEditBtn");
   elements.portfolioSelectionDuplicateBtn = $("portfolioSelectionDuplicateBtn");
   elements.portfolioSelectionMoveBtn = $("portfolioSelectionMoveBtn");
+  elements.roadmapBulkEditModal = $("roadmapBulkEditModal");
+  elements.roadmapBulkEditModalTitle = $("roadmapBulkEditModalTitle");
+  elements.roadmapBulkEditModalSubtitle = $("roadmapBulkEditModalSubtitle");
+  elements.roadmapBulkEditCountLabel = $("roadmapBulkEditCountLabel");
+  elements.roadmapBulkEditHelpText = $("roadmapBulkEditHelpText");
+  elements.roadmapBulkEditStatus = $("roadmapBulkEditStatus");
+  elements.roadmapBulkEditType = $("roadmapBulkEditType");
+  elements.roadmapBulkEditMoscow = $("roadmapBulkEditMoscow");
+  elements.roadmapBulkEditTshirtSize = $("roadmapBulkEditTshirtSize");
+  elements.roadmapBulkEditPeriod = $("roadmapBulkEditPeriod");
+  elements.roadmapBulkEditCancelBtn = $("roadmapBulkEditCancelBtn");
+  elements.roadmapBulkEditConfirmBtn = $("roadmapBulkEditConfirmBtn");
   elements.roadmapBulkTransferModal = $("roadmapBulkTransferModal");
   elements.roadmapBulkTransferModalTitle = $("roadmapBulkTransferModalTitle");
   elements.roadmapBulkTransferModalSubtitle = $("roadmapBulkTransferModalSubtitle");
@@ -3870,6 +3922,7 @@ function cacheElements() {
   elements.superAdminModeToggle = $("superAdminModeToggle");
   elements.superAdminToggleDesktopSlot = $("superAdminToggleDesktopSlot");
   elements.superAdminToggleMobileSlot = $("superAdminToggleMobileSlot");
+  elements.superAdminToggleActionsSlot = $("superAdminToggleActionsSlot");
   elements.filterOwnerProfile = $("filterOwnerProfile");
   elements.filterOwnerProfileGroup = $("filterOwnerProfileGroup");
   elements.roadmapOwnerProfileWrap = $("roadmapOwnerProfileWrap");
@@ -3888,6 +3941,7 @@ function cacheElements() {
   elements.roadmapsViewKanoBtn = $("roadmapsViewKanoBtn");
   elements.portfolioViewTabsMoreBtn = $("portfolioViewTabsMoreBtn");
   elements.portfolioViewTabsMoreMenu = $("portfolioViewTabsMoreMenu");
+  elements.portfolioViewTabsMoreMenuList = $("portfolioViewTabsMoreMenuList");
   elements.roadmapsTableView = $("roadmapsTableView");
   elements.roadmapsBoardView = $("roadmapsBoardView");
   elements.roadmapsMoscowView = $("roadmapsMoscowView");
@@ -4155,6 +4209,14 @@ function cacheElements() {
   elements.profileViewFinancialNote = $("profileViewFinancialNote");
 
   elements.profileEditModal = $("profileEditModal");
+  elements.profileEditModalTitle = $("profileEditModalTitle");
+  elements.profileEditModalSubtitle = $("profileEditModalSubtitle");
+  elements.profileEditAvatar = $("profileEditAvatar");
+  elements.profileEditPreviewName = $("profileEditPreviewName");
+  elements.profileEditPreviewTeam = $("profileEditPreviewTeam");
+  elements.profileEditPreviewTeamWrap = $("profileEditPreviewTeamWrap");
+  elements.profileEditLockBadge = $("profileEditLockBadge");
+  elements.profileEditLockStatus = $("profileEditLockStatus");
   elements.profileEditName = $("profileEditName");
   elements.profileEditTeam = $("profileEditTeam");
   elements.profileEditCancelBtn = $("profileEditCancelBtn");
@@ -4164,6 +4226,13 @@ function cacheElements() {
   elements.profileEditNewPassword = $("profileEditNewPassword");
   elements.profileEditConfirmPassword = $("profileEditConfirmPassword");
   elements.profileEditRemovePassword = $("profileEditRemovePassword");
+  elements.profileEditRemoveProtectionWrap = $("profileEditRemoveProtectionWrap");
+  elements.profileEditRemoveProtectionDefault = $("profileEditRemoveProtectionDefault");
+  elements.profileEditRemoveProtectionPending = $("profileEditRemoveProtectionPending");
+  elements.profileEditRemoveProtectionBtn = $("profileEditRemoveProtectionBtn");
+  elements.profileEditRemoveProtectionUndoBtn = $("profileEditRemoveProtectionUndoBtn");
+  elements.profileEditSecurityBadge = $("profileEditSecurityBadge");
+  elements.profileEditChangePasswordFieldsWrap = $("profileEditChangePasswordFieldsWrap");
   elements.profileEditPasswordError = $("profileEditPasswordError");
   elements.profileEditPasswordHint = $("profileEditPasswordHint");
 
@@ -4347,6 +4416,94 @@ function handleRaciMatrixTooltipShow(e) {
   positionProfileTooltip(wrap);
 }
 
+const compactCockpitDom = {
+  headerTopParent: null,
+  headerTopNextSibling: null,
+};
+
+function mountCompactCockpitBrand() {
+  const header = document.querySelector(".app-header.app-header--modern");
+  const slot = elements.compactCockpitBrandSlot || $("compactCockpitBrandSlot");
+  const top =
+    header?.querySelector(".app-header-top") ||
+    slot?.querySelector(".app-header-top");
+  if (!header || !slot || !top) return;
+
+  // Vercel prod parity: brand + Actions toggle stay in the app header on compact.
+  if (top.parentElement === slot) {
+    const parent = compactCockpitDom.headerTopParent || header;
+    const toolbar = header.querySelector(".app-header-toolbar");
+    const ref = compactCockpitDom.headerTopNextSibling;
+    if (ref && ref.parentElement === parent) {
+      parent.insertBefore(top, ref);
+    } else if (toolbar && toolbar.parentElement === parent) {
+      parent.insertBefore(top, toolbar);
+    } else {
+      parent.insertBefore(top, parent.firstChild);
+    }
+  }
+  slot.hidden = true;
+  slot.setAttribute("aria-hidden", "true");
+  top.classList.remove("compact-cockpit-brand-row");
+  header.classList.remove("app-header--cockpit-embedded");
+}
+
+/** Sync sticky command-rail offset to measured app header height (compact layouts). */
+let compactChromeResizeObserver = null;
+
+function syncCompactChromeMetrics() {
+  const root = document.documentElement;
+  if (!root.classList.contains("is-compact-layout")) {
+    root.classList.remove("compact-chrome-ready");
+    root.style.removeProperty("--compact-app-bar-height");
+    root.style.removeProperty("--compact-cockpit-height");
+    root.style.removeProperty("--compact-sticky-stack");
+    return;
+  }
+
+  const chrome = elements.mobileWorkspaceChrome || $("mobileWorkspaceChrome");
+  const header = document.querySelector(".app-header.app-header--modern");
+  const embedded = Boolean(header?.classList.contains("app-header--cockpit-embedded"));
+
+  const chromeHeight = chrome?.getBoundingClientRect().height || 0;
+  if (chromeHeight > 0) {
+    root.style.setProperty("--compact-cockpit-height", `${chromeHeight}px`);
+  }
+
+  let headerHeight = 0;
+  if (!embedded && header) {
+    headerHeight = header.getBoundingClientRect().height || 0;
+    if (headerHeight > 0) {
+      root.style.setProperty("--compact-app-bar-height", `${headerHeight}px`);
+    }
+  } else {
+    root.style.setProperty("--compact-app-bar-height", "0px");
+  }
+
+  root.style.setProperty(
+    "--compact-sticky-stack",
+    `${headerHeight + chromeHeight}px`
+  );
+
+  root.classList.add("compact-chrome-ready");
+}
+
+function initCompactChromeMetrics() {
+  const header = document.querySelector(".app-header.app-header--modern");
+  const chrome = elements.mobileWorkspaceChrome || $("mobileWorkspaceChrome");
+  if (!header && !chrome) return;
+
+  if (typeof ResizeObserver !== "undefined") {
+    if (compactChromeResizeObserver) compactChromeResizeObserver.disconnect();
+    compactChromeResizeObserver = new ResizeObserver(() => syncCompactChromeMetrics());
+    if (header) compactChromeResizeObserver.observe(header);
+    if (chrome) compactChromeResizeObserver.observe(chrome);
+  } else {
+    window.addEventListener("resize", syncCompactChromeMetrics, { passive: true });
+  }
+  syncCompactChromeMetrics();
+}
+
 /** Mobile/tablet header actions menu (export, import, rates). */
 function initCompactLayoutClass() {
   const compactMq = window.matchMedia(getCompactLayoutMediaQueryString());
@@ -4373,7 +4530,7 @@ function initCompactLayoutClass() {
       renderRoadmaps();
     }
     if (compact && elements.portfolioFiltersDrawer?.open) {
-      elements.portfolioFiltersDrawer.open = false;
+      closeFiltersSheet({ immediate: true });
       if (elements.filtersAdvanced) {
         elements.filtersAdvanced.classList.remove("visible");
         syncCompactFilterButtonLabels();
@@ -4383,12 +4540,22 @@ function initCompactLayoutClass() {
     syncTableGroupByControlsForLayout();
     syncCompactFiltersChrome();
     hideCellTypeTooltips();
+    if (compact) {
+      ensureAppOverlayHostPortaled();
+      reconcileCompactScrimLayers();
+    } else {
+      reconcileDesktopViewportState();
+      closeAppHeaderMenu();
+    }
     mountSuperAdminToggleForLayout();
     syncSuperAdminChrome();
     if (elements.roadmapModal?.classList.contains("active")) {
       syncRoadmapModalFooterMetaDetails({ resetCollapsed: compact });
     }
     schedulePortfolioViewTabsLayout();
+    mountCompactCockpitBrand();
+    syncFiltersSheetLayoutMode();
+    syncCompactChromeMetrics();
   };
 
   apply();
@@ -4397,6 +4564,12 @@ function initCompactLayoutClass() {
   } else if (typeof compactMq.addListener === "function") {
     compactMq.addListener(apply);
   }
+  window.addEventListener("resize", () => {
+    mountCompactCockpitBrand();
+    syncCompactChromeMetrics();
+  }, { passive: true });
+  initDesktopOverlayGuard();
+  initCompactScrimGuard();
 }
 
 function initAppHeaderMenu() {
@@ -4410,6 +4583,7 @@ function initAppHeaderMenu() {
     if (willOpen) prepareAppOverlay("appHeaderMenu");
     const isOpen = header.classList.toggle("app-header--menu-open");
     toggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    syncCompactChromeMetrics();
   });
 
   document.addEventListener("keydown", (e) => {
@@ -4425,9 +4599,9 @@ function initAppHeaderMenu() {
     });
   });
 
-  const desktopMq = window.matchMedia("(min-width: 768px)");
+  const desktopMq = window.matchMedia(getCompactLayoutMediaQueryString());
   const onViewportChange = () => {
-    if (desktopMq.matches) closeAppHeaderMenu();
+    if (!desktopMq.matches) closeAppHeaderMenu();
   };
   if (typeof desktopMq.addEventListener === "function") {
     desktopMq.addEventListener("change", onViewportChange);
@@ -4438,46 +4612,31 @@ function initAppHeaderMenu() {
 
 function attachEventListeners() {
   // --- Profiles & roadmaps: core interactions ---
-  elements.addProfileForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const name = (elements.newProfileName.value || "").trim();
-    if (!name) return;
-    const team = (elements.newProfileTeam && elements.newProfileTeam.value || "").trim();
-    const pwd = elements.newProfilePassword ? elements.newProfilePassword.value : "";
-    const confirm = elements.newProfilePasswordConfirm ? elements.newProfilePasswordConfirm.value : "";
-    if (typeof ProfileSecurity === "undefined") {
-      showToast("Profile security module failed to load. Refresh the page and try again.");
-      return;
-    }
-    const validation = ProfileSecurity.validatePasswordPair(pwd, confirm, { required: false });
-    if (!validation.ok) {
-      showToast(validation.message);
-      return;
-    }
-    addProfile(name, team, validation.password)
-      .then(() => {
-        elements.newProfileName.value = "";
-        if (elements.newProfileTeam) elements.newProfileTeam.value = "";
-        if (elements.newProfilePassword) elements.newProfilePassword.value = "";
-        if (elements.newProfilePasswordConfirm) elements.newProfilePasswordConfirm.value = "";
-        resetProfilePasswordToggles(elements.addProfileForm || $("addProfileForm"));
-        showToast(
-          validation.password
-            ? "Profile created with password protection."
-            : "Profile created successfully."
-        );
-        if (isCompactProfilesLayout()) {
-          setProfilesSheetTab("browse");
-          if (elements.profilesCreatePanel) elements.profilesCreatePanel.open = false;
-        } else if (elements.profilesCreatePanel && window.matchMedia("(max-width: 767px)").matches) {
-          elements.profilesCreatePanel.open = false;
-        }
-      })
-      .catch((err) => {
+  if (elements.addProfileForm) {
+    elements.addProfileForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      handleProfileCreateSave().catch((err) => {
         console.error("Failed to create profile:", err);
         showToast("Could not create profile. Please try again.");
       });
-  });
+    });
+  }
+  if (elements.profilesCreateOpenBtn) {
+    elements.profilesCreateOpenBtn.addEventListener("click", () => openProfileCreateModal());
+  }
+  if (elements.profileCreateCancelBtn) {
+    elements.profileCreateCancelBtn.addEventListener("click", () => closeProfileCreateModal());
+  }
+  bindProfileModalHeroPreview(
+    elements.addProfileForm,
+    "#newProfileName, #newProfileTeam, #newProfilePassword",
+    syncProfileCreateHeroPreview
+  );
+  bindProfileModalHeroPreview(
+    elements.profileEditModal,
+    "#profileEditName, #profileEditTeam, #profileEditNewPassword",
+    syncProfileEditHeroPreview
+  );
 
   elements.addRoadmapBtn.addEventListener("click", () => {
     openRoadmapModal("create");
@@ -4485,6 +4644,9 @@ function attachEventListeners() {
 
   if (elements.bulkDeleteBtn) {
     elements.bulkDeleteBtn.addEventListener("click", handleBulkDelete);
+  }
+  if (elements.bulkEditBtn) {
+    elements.bulkEditBtn.addEventListener("click", handleBulkEdit);
   }
   if (elements.bulkDuplicateBtn) {
     elements.bulkDuplicateBtn.addEventListener("click", () => handleBulkRoadmapTransfer("duplicate"));
@@ -4494,6 +4656,9 @@ function attachEventListeners() {
   }
   if (elements.portfolioSelectionDeleteBtn) {
     elements.portfolioSelectionDeleteBtn.addEventListener("click", handleBulkDelete);
+  }
+  if (elements.portfolioSelectionEditBtn) {
+    elements.portfolioSelectionEditBtn.addEventListener("click", handleBulkEdit);
   }
   if (elements.portfolioSelectionDuplicateBtn) {
     elements.portfolioSelectionDuplicateBtn.addEventListener("click", () => handleBulkRoadmapTransfer("duplicate"));
@@ -4793,6 +4958,16 @@ function attachEventListeners() {
         console.error("Profile save failed:", err);
         showToast("Could not save profile. Please try again.");
       });
+    });
+  }
+  if (elements.profileEditRemoveProtectionBtn) {
+    elements.profileEditRemoveProtectionBtn.addEventListener("click", () => {
+      setProfileEditRemoveProtectionPending(true);
+    });
+  }
+  if (elements.profileEditRemoveProtectionUndoBtn) {
+    elements.profileEditRemoveProtectionUndoBtn.addEventListener("click", () => {
+      setProfileEditRemoveProtectionPending(false);
     });
   }
 
@@ -5193,7 +5368,7 @@ function attachEventListeners() {
     const wrap = findTableViewTooltipTrigger(e.target);
     if (!wrap) return;
     cancelTooltipHoverHide();
-    positionProfileTooltip(wrap);
+    positionProfileTooltip(wrap, getTooltipPointerAnchor(wrap, e));
   }
 
   if (elements.roadmapsTableBody) {
@@ -5208,7 +5383,7 @@ function attachEventListeners() {
     elements.roadmapsTableCardsList.addEventListener("change", handleRoadmapTableSelectionChange);
     elements.roadmapsTableCardsList.addEventListener("input", handleRoadmapTableSelectionChange);
     elements.roadmapsTableCardsList.addEventListener("click", (e) => {
-      handleCompactTableTooltipClick(e);
+      handleCompactCardTooltipClick(e);
       handleRoadmapTableSelectionClick(e);
       handleRoadmapTableRowActionClick(e);
     }, true);
@@ -5245,23 +5420,22 @@ function attachEventListeners() {
     }, { passive: true });
   }
 
-  document.body.addEventListener("mouseenter", (e) => {
-    const wrap = e.target.closest(".profile-icon-wrap");
-    if (!wrap) return;
-    document.body.classList.remove("cell-type-tooltip-hidden");
-    positionProfileTooltip(wrap);
-  }, true);
+  if (elements.scrumBoardContainer) {
+    elements.scrumBoardContainer.addEventListener("click", handleCompactCardTooltipClick, true);
+  }
+  if (elements.moscowBoardContainer) {
+    elements.moscowBoardContainer.addEventListener("click", handleCompactCardTooltipClick, true);
+  }
 
   document.body.addEventListener("mouseenter", (e) => {
-    if (isCompactLayoutViewport() && e.target.closest(".roadmaps-table-card")) return;
-    const wrap = e.target.closest(".cell-type-icon-wrap, .scrum-board-card-type-wrap, .card-meta-with-tooltip, .card-title-with-tooltip");
+    if (isCompactTooltipTapTarget(e.target)) return;
+    const wrap = findTooltipHoverTrigger(e.target);
     if (!wrap) return;
     const tooltip = wrap.querySelector(".cell-type-tooltip");
     if (!tooltip) return;
-    const anchorPoint = wrap.classList.contains("card-title-with-tooltip")
-      ? { x: e.clientX, y: e.clientY }
-      : null;
-    positionProfileTooltip(wrap, anchorPoint);
+    cancelTooltipHoverHide();
+    document.body.classList.remove("cell-type-tooltip-hidden");
+    positionProfileTooltip(wrap, getTooltipPointerAnchor(wrap, e));
   }, true);
 
   document.body.addEventListener("focusin", (e) => {
@@ -5270,9 +5444,20 @@ function attachEventListeners() {
       positionProfileTooltip(raciWrap);
       return;
     }
-    const wrap = e.target.closest(".profile-icon-wrap");
+    if (isCompactTooltipTapTarget(e.target)) return;
+    const wrap = findTooltipHoverTrigger(e.target);
     if (!wrap) return;
     positionProfileTooltip(wrap);
+  }, true);
+
+  document.body.addEventListener("focusout", (e) => {
+    const wrap = findTooltipHoverTrigger(e.target);
+    if (!wrap || activeTooltipWrap !== wrap) return;
+    requestAnimationFrame(() => {
+      if (activeTooltipWrap !== wrap) return;
+      if (isWithinTooltipHoverZone(document.activeElement, wrap)) return;
+      hideTooltipForWrap(wrap);
+    });
   }, true);
 
   document.body.addEventListener("mouseover", (e) => {
@@ -5287,20 +5472,18 @@ function attachEventListeners() {
       cancelTooltipHoverHide();
       return;
     }
-    if (isCompactLayoutViewport()) return;
+    if (isCompactTooltipTapTarget(e.target)) return;
     const tooltip = e.target.closest(".cell-type-tooltip.cell-type-tooltip-visible");
     if (tooltip && tooltip._ownerWrap) {
       cancelTooltipHoverHide();
       return;
     }
-    const wrap = e.target.closest(
-      ".profile-icon-wrap, .cell-type-icon-wrap, .scrum-board-card-type-wrap, .roadmap-field-tooltip-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip, .raci-matrix-with-tooltip"
-    );
+    const wrap = findTooltipHoverTrigger(e.target);
     if (wrap) cancelTooltipHoverHide();
   }, true);
 
   document.body.addEventListener("mouseout", (e) => {
-    if (isCompactLayoutViewport() && e.target.closest(".roadmaps-table-card")) return;
+    if (isCompactTooltipTapTarget(e.target)) return;
 
     const tooltipEl = e.target.closest(".cell-type-tooltip.cell-type-tooltip-visible");
     if (tooltipEl && tooltipEl._ownerWrap) {
@@ -5310,9 +5493,7 @@ function attachEventListeners() {
       return;
     }
 
-    const wrap = e.target.closest(
-      ".profile-icon-wrap, .cell-type-icon-wrap, .scrum-board-card-type-wrap, .roadmap-field-tooltip-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip, .raci-matrix-with-tooltip"
-    );
+    const wrap = findTooltipHoverTrigger(e.target);
     if (!wrap) return;
     if (e.relatedTarget && isWithinTooltipHoverZone(e.relatedTarget, wrap)) {
       cancelTooltipHoverHide();
@@ -5321,8 +5502,12 @@ function attachEventListeners() {
     scheduleTooltipHoverHide(wrap, 160);
   }, true);
 
-  if (elements.profileList) {
-    elements.profileList.addEventListener("scroll", () => {
+  if (elements.profilesSelectListScroll) {
+    elements.profilesSelectListScroll.addEventListener("scroll", () => {
+      hideCellTypeTooltips();
+    }, { passive: true });
+  } else if (elements.profilesSelectListbox) {
+    elements.profilesSelectListbox.addEventListener("scroll", () => {
       hideCellTypeTooltips();
     }, { passive: true });
   }
@@ -5438,7 +5623,6 @@ function attachEventListeners() {
 }
 
 function updateFiltersActivePill() {
-  if (!elements.filtersActivePill) return;
   const activeFilters = [];
   if ((elements.filterTitle.value || "").trim()) activeFilters.push("Title");
   if (elements.filterRoadmapType.value) activeFilters.push("Type");
@@ -5469,28 +5653,33 @@ function updateFiltersActivePill() {
     activeFilters.push(opt ? `Profile: ${opt.textContent}` : "Owner profile");
   }
 
-  if (!activeFilters.length) {
-    elements.filtersActivePill.style.display = "none";
-    elements.filtersActivePill.textContent = "";
-    elements.filtersActivePill.removeAttribute("title");
-    elements.filtersActivePill.setAttribute("aria-hidden", "true");
-    return;
-  }
-  elements.filtersActivePill.style.display = "inline-flex";
-  elements.filtersActivePill.setAttribute("aria-hidden", "false");
   const verboseLabel = activeFilters.length === 1
     ? `1 active filter (${activeFilters[0]})`
     : `${activeFilters.length} active filters`;
   const compact = isTableCompactLayout();
-  elements.filtersActivePill.textContent = compact
-    ? String(activeFilters.length)
-    : verboseLabel;
-  elements.filtersActivePill.setAttribute("title", verboseLabel);
-  if (compact) {
-    elements.filtersActivePill.setAttribute("aria-label", verboseLabel);
-  } else {
-    elements.filtersActivePill.removeAttribute("aria-label");
+  const pills = [elements.filtersActivePill, elements.filtersSheetActiveBadge].filter(Boolean);
+
+  if (!activeFilters.length) {
+    pills.forEach((pill) => {
+      pill.style.display = "none";
+      pill.textContent = "";
+      pill.removeAttribute("title");
+      pill.setAttribute("aria-hidden", "true");
+    });
+    return;
   }
+
+  pills.forEach((pill) => {
+    pill.style.display = "inline-flex";
+    pill.setAttribute("aria-hidden", "false");
+    pill.textContent = compact ? String(activeFilters.length) : verboseLabel;
+    pill.setAttribute("title", verboseLabel);
+    if (compact) {
+      pill.setAttribute("aria-label", verboseLabel);
+    } else {
+      pill.removeAttribute("aria-label");
+    }
+  });
 }
 
 // --- Filter autocomplete (roadmap title, label, RACI leads) ---
@@ -6030,8 +6219,10 @@ function hideSuperAdminToggleChrome() {
   const wrap = elements.superAdminToggleWrap;
   const mobileSlot = elements.superAdminToggleMobileSlot;
   const desktopSlot = elements.superAdminToggleDesktopSlot;
+  const actionsSlot = elements.superAdminToggleActionsSlot;
   if (wrap) wrap.hidden = true;
   if (mobileSlot) mobileSlot.hidden = true;
+  if (actionsSlot) actionsSlot.hidden = true;
   if (desktopSlot) {
     if (wrap && wrap.parentElement !== desktopSlot) {
       desktopSlot.appendChild(wrap);
@@ -6044,7 +6235,8 @@ function mountSuperAdminToggleForLayout() {
   const wrap = elements.superAdminToggleWrap;
   const mobileSlot = elements.superAdminToggleMobileSlot;
   const desktopSlot = elements.superAdminToggleDesktopSlot;
-  if (!wrap || !mobileSlot || !desktopSlot) return;
+  const actionsSlot = elements.superAdminToggleActionsSlot;
+  if (!wrap || !mobileSlot || !desktopSlot || !actionsSlot) return;
 
   if (!isActiveSuperAdminProfile()) {
     hideSuperAdminToggleChrome();
@@ -6053,16 +6245,14 @@ function mountSuperAdminToggleForLayout() {
 
   wrap.hidden = false;
 
-  const profileBar = elements.profilePickerBar || $("profilePickerBar");
-  const useMobile =
-    isCompactProfilesLayout() && profileBar && !profileBar.hidden;
-
-  const target = useMobile ? mobileSlot : desktopSlot;
+  const useActionsMenu = isCompactLayoutViewport();
+  const target = useActionsMenu ? actionsSlot : desktopSlot;
   if (wrap.parentElement !== target) {
     target.appendChild(wrap);
   }
-  mobileSlot.hidden = !useMobile;
-  desktopSlot.hidden = useMobile;
+  actionsSlot.hidden = !useActionsMenu;
+  mobileSlot.hidden = true;
+  desktopSlot.hidden = useActionsMenu;
 }
 
 function populateFilterOwnerProfileOptions() {
@@ -10951,6 +11141,253 @@ function scheduleTooltipHoverHide(wrap, delayMs) {
   }, delay);
 }
 let compactTooltipBackdropEl = null;
+let desktopOverlayGuardReady = false;
+let compactScrimGuardReady = false;
+
+function getCompactScrimRoot() {
+  return document.documentElement;
+}
+
+function ensureAppOverlayHostPortaled() {
+  const host = document.getElementById("appOverlayHost");
+  if (!host) return null;
+  const root = getCompactScrimRoot();
+  if (host.parentNode !== root) {
+    root.appendChild(host);
+  }
+  resetCompactOverlayHostGeometry();
+  return host;
+}
+
+function returnOverlayHostTooltipsToOwner() {
+  const host = document.getElementById("appOverlayHost");
+  if (!host) return;
+  host.querySelectorAll(".cell-type-tooltip").forEach((tooltip) => {
+    if (!tooltip._ownerWrap) return;
+    if (tooltip.parentNode === tooltip._ownerWrap) return;
+    tooltip.classList.remove("cell-type-tooltip-visible", "cell-type-tooltip--floating");
+    tooltip._ownerWrap.appendChild(tooltip);
+    tooltip._ownerWrap = null;
+  });
+}
+
+function clearCompactTooltipOverlayState() {
+  const backdrop =
+    compactTooltipBackdropEl ||
+    document.querySelector(".compact-tooltip-backdrop");
+  if (backdrop) {
+    backdrop.classList.remove("compact-tooltip-backdrop--visible");
+    if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+  }
+  returnOverlayHostTooltipsToOwner();
+  const host = document.getElementById("appOverlayHost");
+  if (host) {
+    host.setAttribute("aria-hidden", "true");
+    resetCompactOverlayHostGeometry();
+  }
+  document.documentElement.classList.remove("compact-tooltip-open");
+}
+
+function reconcileStuckAppScrollLock() {
+  if (getActiveBlockingModalOverlayId()) return;
+  if (appScrollLockDepth > 0) {
+    appScrollLockDepth = 1;
+    unlockAppScroll();
+  }
+  if (
+    !document.documentElement.classList.contains("app-scroll-lock") &&
+    (document.body.style.position === "fixed" || document.body.style.width)
+  ) {
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.left = "";
+    document.body.style.right = "";
+    document.body.style.width = "";
+  }
+}
+
+function restoreAppOverlayHostToBody() {
+  const host = document.getElementById("appOverlayHost");
+  if (!host || host.parentNode === document.body) return;
+  document.body.appendChild(host);
+  resetCompactOverlayHostGeometry();
+}
+
+function reconcileDesktopViewportState() {
+  if (isCompactLayoutViewport()) return;
+
+  clearCompactTooltipOverlayState();
+  restoreAppOverlayHostToBody();
+
+  const filtersSheet = elements.portfolioFiltersSheet || $("portfolioFiltersSheet");
+  const filtersBackdrop = elements.filtersSheetBackdrop || $("filtersSheetBackdrop");
+  if (filtersSheet?.classList.contains("portfolio-filters-sheet--open")) {
+    closeFiltersSheet({ immediate: true });
+  } else {
+    restoreFiltersSheetToDrawer();
+    if (filtersSheet) {
+      filtersSheet.hidden = false;
+      filtersSheet.classList.remove("portfolio-filters-sheet--open");
+    }
+    if (filtersBackdrop) {
+      filtersBackdrop.hidden = true;
+      filtersBackdrop.classList.remove("filters-sheet-backdrop--visible");
+    }
+  }
+
+  const profilesSheet = elements.profilesPanelSheet || $("profilesPanelSheet");
+  const profilesBackdrop = elements.profilesSheetBackdrop || $("profilesSheetBackdrop");
+  if (profilesSheet?.classList.contains("profiles-panel-sheet--open")) {
+    closeProfilesSheet({ immediate: true });
+  } else {
+    restoreProfilesSheetToPanel();
+    if (profilesSheet) {
+      profilesSheet.classList.remove("profiles-panel-sheet--open");
+    }
+    if (profilesBackdrop) {
+      profilesBackdrop.hidden = true;
+      profilesBackdrop.classList.remove("profiles-sheet-backdrop--visible");
+    }
+  }
+
+  document.documentElement.classList.remove(
+    "compact-tooltip-open",
+    "filters-sheet-open",
+    "profiles-sheet-open"
+  );
+  document.body.style.overflow = "";
+  syncPortfolioFiltersDrawerState();
+  reconcileStuckAppScrollLock();
+}
+
+function initDesktopOverlayGuard() {
+  if (desktopOverlayGuardReady) return;
+  desktopOverlayGuardReady = true;
+  let resizeTimer = null;
+  const sweepDesktopOverlayState = () => {
+    if (isCompactLayoutViewport()) return;
+    reconcileDesktopViewportState();
+  };
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(sweepDesktopOverlayState, 120);
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") sweepDesktopOverlayState();
+  });
+}
+
+function getCompactOverlayHost() {
+  if (
+    typeof Fullscreen !== "undefined" &&
+    typeof Fullscreen.isViewFullscreen === "function" &&
+    Fullscreen.isViewFullscreen()
+  ) {
+    return getTooltipRoot();
+  }
+  return ensureAppOverlayHostPortaled() || document.getElementById("appOverlayHost") || getCompactScrimRoot();
+}
+
+function compactTooltipUsesBackdrop(tooltip) {
+  if (
+    !tooltip ||
+    typeof isCompactLayoutViewport !== "function" ||
+    !isCompactLayoutViewport()
+  ) {
+    return false;
+  }
+  if (!tooltip.classList.contains("cell-type-tooltip-visible")) return false;
+  if (tooltip.classList.contains("cell-type-tooltip--scroll")) return true;
+  if (tooltip.classList.contains("cell-type-tooltip--raci")) return true;
+  return false;
+}
+
+function resetCompactOverlayHostGeometry() {
+  const host = document.getElementById("appOverlayHost");
+  if (!host) return;
+  host.style.top = "";
+  host.style.left = "";
+  host.style.right = "";
+  host.style.bottom = "";
+  host.style.width = "";
+  host.style.height = "";
+}
+
+function reconcileCompactScrimLayers() {
+  if (!isCompactLayoutViewport()) return;
+
+  ensureAppOverlayHostPortaled();
+
+  const visibleTooltip = document.querySelector(".cell-type-tooltip.cell-type-tooltip-visible");
+  if (!compactTooltipUsesBackdrop(visibleTooltip)) {
+    if (
+      document.documentElement.classList.contains("compact-tooltip-open") ||
+      document.querySelector(".compact-tooltip-backdrop--visible")
+    ) {
+      clearCompactTooltipOverlayState();
+    }
+  }
+
+  const filtersSheet = elements.portfolioFiltersSheet || $("portfolioFiltersSheet");
+  const filtersBackdrop = elements.filtersSheetBackdrop || $("filtersSheetBackdrop");
+  const filtersOpen = Boolean(filtersSheet?.classList.contains("portfolio-filters-sheet--open"));
+  if (!filtersOpen && filtersBackdrop?.classList.contains("filters-sheet-backdrop--visible")) {
+    filtersBackdrop.classList.remove("filters-sheet-backdrop--visible");
+    filtersBackdrop.hidden = true;
+  }
+
+  const profilesSheet = elements.profilesPanelSheet || $("profilesPanelSheet");
+  const profilesBackdrop = elements.profilesSheetBackdrop || $("profilesSheetBackdrop");
+  const profilesOpen = Boolean(profilesSheet?.classList.contains("profiles-panel-sheet--open"));
+  if (!profilesOpen && profilesBackdrop?.classList.contains("profiles-sheet-backdrop--visible")) {
+    profilesBackdrop.classList.remove("profiles-sheet-backdrop--visible");
+    profilesBackdrop.hidden = true;
+    document.documentElement.classList.remove("profiles-sheet-open");
+  }
+
+  const anyCompactScrimOpen =
+    document.documentElement.classList.contains("compact-tooltip-open") ||
+    filtersOpen ||
+    profilesOpen;
+  if (!anyCompactScrimOpen && !getActiveBlockingModalOverlayId()) {
+    if (document.body.style.overflow === "hidden") {
+      document.body.style.overflow = "";
+    }
+  }
+}
+
+function initCompactScrimGuard() {
+  if (compactScrimGuardReady) return;
+  compactScrimGuardReady = true;
+
+  let resizeTimer = null;
+  const sweep = () => {
+    if (!isCompactLayoutViewport()) return;
+    reconcileCompactScrimLayers();
+  };
+
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(sweep, 120);
+  });
+  window.addEventListener("orientationchange", sweep);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") sweep();
+  });
+  document.addEventListener(
+    "scroll",
+    () => {
+      if (!isCompactLayoutViewport()) return;
+      if (
+        document.documentElement.classList.contains("compact-tooltip-open") ||
+        document.querySelector(".compact-tooltip-backdrop--visible")
+      ) {
+        reconcileCompactScrimLayers();
+      }
+    },
+    true
+  );
+}
 
 function getCompactTooltipBackdrop() {
   if (compactTooltipBackdropEl) return compactTooltipBackdropEl;
@@ -10967,33 +11404,77 @@ function getCompactTooltipBackdrop() {
 
 function refreshCompactTooltipBackdrop() {
   const activeScrollTooltip = document.querySelector(
-    ".cell-type-tooltip.cell-type-tooltip-visible.cell-type-tooltip--scroll"
+    ".cell-type-tooltip.cell-type-tooltip-visible"
   );
   syncCompactTooltipBackdrop(activeScrollTooltip);
 }
 
 function syncCompactTooltipBackdrop(tooltip) {
-  const useBackdrop =
-    typeof isCompactLayoutViewport === "function" &&
-    isCompactLayoutViewport() &&
-    tooltip &&
-    tooltip.classList.contains("cell-type-tooltip--scroll");
+  const useBackdrop = compactTooltipUsesBackdrop(tooltip);
+  const host = getCompactOverlayHost();
   const backdrop = getCompactTooltipBackdrop();
+
   if (!useBackdrop) {
-    backdrop.classList.remove("compact-tooltip-backdrop--visible");
-    if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+    clearCompactTooltipOverlayState();
     return;
   }
-  if (backdrop.parentNode !== document.body) document.body.appendChild(backdrop);
+
+  if (backdrop.parentNode !== host) {
+    host.insertBefore(backdrop, host.firstChild);
+  }
   backdrop.classList.add("compact-tooltip-backdrop--visible");
+  if (tooltip && tooltip.parentNode !== host) {
+    host.appendChild(tooltip);
+  }
+  document.documentElement.classList.add("compact-tooltip-open");
+  if (host.id === "appOverlayHost") host.setAttribute("aria-hidden", "false");
 }
 
 const TABLE_VIEW_TOOLTIP_TRIGGER_SELECTOR =
-  ".cell-type-icon-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-desc-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .card-title-with-tooltip, .roadmaps-table-card__status-pill, .roadmaps-table-card__chip--more, .raci-matrix-with-tooltip";
+  ".cell-type-icon-wrap, .cell-date-with-tooltip, .cell-countries-with-tooltip, .cell-tshirt-with-tooltip, .cell-financial-with-tooltip, .cell-moscow-with-tooltip, .cell-period-with-tooltip, .cell-rice-with-tooltip, .card-meta-with-tooltip, .roadmaps-table-card__status-pill, .roadmaps-table-card__chip--more, .raci-matrix-with-tooltip";
+
+const TOOLTIP_HOVER_TRIGGER_SELECTOR =
+  ".profile-icon-wrap, .scrum-board-card-type-wrap, .roadmap-field-tooltip-wrap, " +
+  TABLE_VIEW_TOOLTIP_TRIGGER_SELECTOR;
 
 function findTableViewTooltipTrigger(target) {
   if (!target || !(target instanceof Element)) return null;
   return target.closest(TABLE_VIEW_TOOLTIP_TRIGGER_SELECTOR);
+}
+
+function findTooltipHoverTrigger(target) {
+  if (!target || !(target instanceof Element)) return null;
+  return target.closest(TOOLTIP_HOVER_TRIGGER_SELECTOR);
+}
+
+function findCompactCardTooltipTrigger(target) {
+  const wrap = findTooltipHoverTrigger(target);
+  if (!wrap) return null;
+  if (
+    wrap.classList.contains("profile-icon-wrap") ||
+    wrap.classList.contains("roadmap-field-tooltip-wrap") ||
+    wrap.classList.contains("raci-matrix-with-tooltip")
+  ) {
+    return null;
+  }
+  return wrap;
+}
+
+function isRoadmapDetailsTooltipWrap() {
+  return false;
+}
+
+function getTooltipPointerAnchor(wrap, event) {
+  if (!isRoadmapDetailsTooltipWrap(wrap) || !event) return null;
+  if (!Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) return null;
+  return { x: event.clientX, y: event.clientY };
+}
+
+function isCompactTooltipTapTarget(target) {
+  if (!isCompactLayoutViewport()) return false;
+  const tableCard = target.closest(".roadmaps-table-card");
+  if (tableCard) return isTableCompactLayout();
+  return !!(target.closest(".scrum-board-card, .moscow-board-card"));
 }
 
 function isTableCardActionControl(target) {
@@ -11029,9 +11510,7 @@ function finalizeTooltipViewportPosition(tooltip, anchorRect) {
     tooltip.classList.add("cell-type-tooltip--below");
     const gap = 2;
     let top = anchorRect.bottom + gap;
-    const maxHeightCap = tooltip.classList.contains("cell-type-tooltip--roadmap-details")
-      ? Math.min(Math.floor(vh * 0.62), 420)
-      : Math.min(Math.floor(vh * 0.55), 320);
+    const maxHeightCap = Math.min(Math.floor(vh * 0.55), 320);
     let maxHeight = Math.max(120, Math.min(maxHeightCap, vh - margin - top));
     if (maxHeight < 120) {
       top = margin;
@@ -11123,8 +11602,6 @@ function positionProfileTooltip(wrap, anchorPoint) {
   }
 
   const useWideTooltip =
-    wrap.classList.contains("card-title-with-tooltip") ||
-    wrap.classList.contains("cell-desc-with-tooltip") ||
     wrap.classList.contains("cell-countries-with-tooltip") ||
     wrap.classList.contains("cell-rice-with-tooltip") ||
     wrap.classList.contains("raci-matrix-with-tooltip");
@@ -11143,8 +11620,8 @@ function toggleCompactTableTooltip(wrap, anchorPoint) {
   positionProfileTooltip(wrap, anchorPoint);
 }
 
-function handleCompactTableTooltipClick(e) {
-  if (!isCompactLayoutViewport() || !isTableCompactLayout()) return;
+function handleCompactCardTooltipClick(e) {
+  if (!isCompactLayoutViewport()) return;
 
   if (e.target.closest(".cell-type-tooltip.cell-type-tooltip-visible")) {
     return;
@@ -11152,8 +11629,13 @@ function handleCompactTableTooltipClick(e) {
 
   if (isTableCardActionControl(e.target)) return;
 
-  const wrap = findTableViewTooltipTrigger(e.target);
-  if (!wrap || !wrap.closest(".roadmaps-table-card")) {
+  if (!isCompactTooltipTapTarget(e.target)) {
+    if (activeTooltipWrap) hideCellTypeTooltips();
+    return;
+  }
+
+  const wrap = findCompactCardTooltipTrigger(e.target);
+  if (!wrap) {
     if (activeTooltipWrap) hideCellTypeTooltips();
     return;
   }
@@ -11162,18 +11644,14 @@ function handleCompactTableTooltipClick(e) {
   if (!tooltip) return;
 
   e.stopPropagation();
-
-  const anchorPoint = wrap.classList.contains("card-title-with-tooltip")
-    ? { x: e.clientX, y: e.clientY }
-    : null;
-  toggleCompactTableTooltip(wrap, anchorPoint);
+  toggleCompactTableTooltip(wrap, getTooltipPointerAnchor(wrap, e));
 }
 
 function handleCompactTooltipDismissPointerDown(e) {
   if (!isCompactLayoutViewport() || !activeTooltipWrap) return;
   if (e.target.closest(".cell-type-tooltip.cell-type-tooltip-visible")) return;
   if (e.target.closest(".compact-tooltip-backdrop")) return;
-  const trigger = findTableViewTooltipTrigger(e.target);
+  const trigger = findCompactCardTooltipTrigger(e.target);
   if (trigger && trigger === activeTooltipWrap) return;
   hideCellTypeTooltips();
 }
@@ -11195,13 +11673,180 @@ function syncPortfolioActionButtons() {
 }
 
 /** Portfolio workspace: filters drawer (collapsed by default). */
+let filtersSheetCloseTimer = null;
+
+function isCompactFiltersSheetLayout() {
+  return isCompactLayoutViewport();
+}
+
+function mountFiltersSheetToScrimRoot() {
+  if (!isCompactFiltersSheetLayout()) return;
+  const root = getCompactScrimRoot();
+  const sheet = elements.portfolioFiltersSheet || $("portfolioFiltersSheet");
+  const backdrop = elements.filtersSheetBackdrop || $("filtersSheetBackdrop");
+  if (backdrop && backdrop.parentNode !== root) {
+    root.appendChild(backdrop);
+  }
+  if (!sheet || sheet.parentNode === root) return;
+  root.appendChild(sheet);
+  sheet.dataset.filtersSheetPortaled = "1";
+}
+
+function restoreFiltersSheetToDrawer() {
+  const sheet = elements.portfolioFiltersSheet || $("portfolioFiltersSheet");
+  const drawer = elements.portfolioFiltersDrawer || $("portfolioFiltersDrawer");
+  const backdrop = elements.filtersSheetBackdrop || $("filtersSheetBackdrop");
+  const layoutMain = document.querySelector(".app-layout");
+  if (sheet && drawer && sheet.parentNode !== drawer) {
+    drawer.appendChild(sheet);
+    delete sheet.dataset.filtersSheetPortaled;
+  }
+  if (backdrop && layoutMain && backdrop.parentNode !== layoutMain) {
+    layoutMain.insertBefore(backdrop, layoutMain.firstChild);
+  }
+}
+
+function openFiltersSheet() {
+  const drawer = elements.portfolioFiltersDrawer || $("portfolioFiltersDrawer");
+  const sheet = elements.portfolioFiltersSheet || $("portfolioFiltersSheet");
+  const backdrop = elements.filtersSheetBackdrop || $("filtersSheetBackdrop");
+  const summary = drawer?.querySelector(".portfolio-filters-summary");
+  if (!drawer) return;
+
+  if (!isCompactFiltersSheetLayout()) {
+    drawer.open = true;
+    syncPortfolioFiltersDrawerState();
+    syncCompactFiltersChrome();
+    return;
+  }
+
+  prepareAppOverlay("filtersSheet");
+  drawer.open = false;
+  mountFiltersSheetToScrimRoot();
+
+  if (sheet) {
+    sheet.hidden = false;
+    void sheet.offsetHeight;
+    sheet.classList.add("portfolio-filters-sheet--open");
+  }
+  if (backdrop) {
+    backdrop.hidden = false;
+    void backdrop.offsetHeight;
+    backdrop.classList.add("filters-sheet-backdrop--visible");
+  }
+  if (summary) summary.setAttribute("aria-expanded", "true");
+
+  document.body.style.overflow = "hidden";
+  syncPortfolioFiltersDrawerState();
+  syncCompactFiltersChrome();
+  syncCompactChromeMetrics();
+}
+
+function closeFiltersSheet({ immediate = false } = {}) {
+  const drawer = elements.portfolioFiltersDrawer || $("portfolioFiltersDrawer");
+  const sheet = elements.portfolioFiltersSheet || $("portfolioFiltersSheet");
+  const backdrop = elements.filtersSheetBackdrop || $("filtersSheetBackdrop");
+  const summary = drawer?.querySelector(".portfolio-filters-summary");
+  if (!drawer) return;
+
+  if (filtersSheetCloseTimer) {
+    clearTimeout(filtersSheetCloseTimer);
+    filtersSheetCloseTimer = null;
+  }
+
+  closeFilterCountriesPopup();
+  closeFilterRoadmapPeriodPopup();
+  if (elements.filtersAdvanced) {
+    elements.filtersAdvanced.classList.remove("visible");
+    syncCompactFilterButtonLabels();
+  }
+
+  drawer.open = false;
+
+  if (sheet) sheet.classList.remove("portfolio-filters-sheet--open");
+  if (backdrop) backdrop.classList.remove("filters-sheet-backdrop--visible");
+  if (summary) summary.setAttribute("aria-expanded", "false");
+  document.body.style.overflow = "";
+
+  const finishClose = () => {
+    if (sheet && !sheet.classList.contains("portfolio-filters-sheet--open")) {
+      sheet.hidden = true;
+    }
+    if (backdrop && !backdrop.classList.contains("filters-sheet-backdrop--visible")) {
+      backdrop.hidden = true;
+    }
+    restoreFiltersSheetToDrawer();
+    syncPortfolioFiltersDrawerState();
+    syncCompactFiltersChrome();
+    syncCompactChromeMetrics();
+  };
+
+  syncPortfolioFiltersDrawerState();
+
+  if (immediate) {
+    if (sheet) markOverlayCloseImmediate(sheet);
+    if (backdrop) markOverlayCloseImmediate(backdrop);
+    finishClose();
+    return;
+  }
+
+  filtersSheetCloseTimer = setTimeout(() => {
+    filtersSheetCloseTimer = null;
+    finishClose();
+  }, 380);
+}
+
+function syncFiltersSheetLayoutMode() {
+  const sheet = elements.portfolioFiltersSheet || $("portfolioFiltersSheet");
+  const drawer = elements.portfolioFiltersDrawer || $("portfolioFiltersDrawer");
+  if (!sheet) return;
+
+  if (isCompactFiltersSheetLayout()) {
+    if (!sheet.classList.contains("portfolio-filters-sheet--open")) {
+      sheet.hidden = true;
+      restoreFiltersSheetToDrawer();
+    }
+  } else {
+    restoreFiltersSheetToDrawer();
+    sheet.hidden = false;
+    sheet.classList.remove("portfolio-filters-sheet--open");
+    const backdrop = elements.filtersSheetBackdrop || $("filtersSheetBackdrop");
+    if (backdrop) {
+      backdrop.hidden = true;
+      backdrop.classList.remove("filters-sheet-backdrop--visible");
+    }
+    document.body.style.overflow = "";
+  }
+}
+
 function initPortfolioFiltersDrawer() {
   const drawer = elements.portfolioFiltersDrawer || $("portfolioFiltersDrawer");
   if (!drawer) return;
 
   drawer.open = false;
+  const summary = drawer.querySelector(".portfolio-filters-summary");
+
+  if (summary) {
+    summary.addEventListener("click", (e) => {
+      if (!isCompactFiltersSheetLayout()) return;
+      e.preventDefault();
+      if (elements.portfolioFiltersSheet?.classList.contains("portfolio-filters-sheet--open")) {
+        closeFiltersSheet();
+      } else {
+        openFiltersSheet();
+      }
+    });
+  }
 
   drawer.addEventListener("toggle", () => {
+    if (isCompactFiltersSheetLayout()) {
+      const nativeOpen = drawer.open;
+      drawer.open = false;
+      if (nativeOpen && !elements.portfolioFiltersSheet?.classList.contains("portfolio-filters-sheet--open")) {
+        openFiltersSheet();
+      }
+      return;
+    }
     if (!drawer.open) {
       closeFilterCountriesPopup();
       closeFilterRoadmapPeriodPopup();
@@ -11214,6 +11859,39 @@ function initPortfolioFiltersDrawer() {
     syncCompactFiltersChrome();
   });
 
+  const closeBtn = elements.portfolioFiltersSheetCloseBtn || $("portfolioFiltersSheetCloseBtn");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => closeFiltersSheet());
+  }
+
+  const backdrop = elements.filtersSheetBackdrop || $("filtersSheetBackdrop");
+  if (backdrop) {
+    backdrop.addEventListener("click", () => closeFiltersSheet());
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || !isCompactFiltersSheetLayout()) return;
+    const sheet = elements.portfolioFiltersSheet || $("portfolioFiltersSheet");
+    if (sheet?.classList.contains("portfolio-filters-sheet--open")) {
+      e.preventDefault();
+      closeFiltersSheet();
+    }
+  });
+
+  const mqCompact = window.matchMedia(getCompactLayoutMediaQueryString());
+  const onBreakpointChange = (e) => {
+    if (!e.matches) closeFiltersSheet({ immediate: true });
+    syncFiltersSheetLayoutMode();
+    syncPortfolioFiltersDrawerState();
+    syncCompactFiltersChrome();
+  };
+  if (typeof mqCompact.addEventListener === "function") {
+    mqCompact.addEventListener("change", onBreakpointChange);
+  } else if (typeof mqCompact.addListener === "function") {
+    mqCompact.addListener(onBreakpointChange);
+  }
+
+  syncFiltersSheetLayoutMode();
   syncPortfolioFiltersDrawerState();
   syncCompactFiltersChrome();
 }
@@ -11222,9 +11900,15 @@ function syncPortfolioFiltersDrawerState() {
   const drawer = elements.portfolioFiltersDrawer || $("portfolioFiltersDrawer");
   if (!drawer) return;
   const summary = drawer.querySelector(".portfolio-filters-summary");
-  if (summary) summary.setAttribute("aria-expanded", drawer.open ? "true" : "false");
-  document.documentElement.classList.toggle("filters-drawer-open", drawer.open);
-  document.documentElement.classList.toggle("filters-drawer-collapsed", !drawer.open);
+  const sheetOpen = Boolean(
+    isCompactFiltersSheetLayout()
+      ? elements.portfolioFiltersSheet?.classList.contains("portfolio-filters-sheet--open")
+      : drawer.open
+  );
+  if (summary) summary.setAttribute("aria-expanded", sheetOpen ? "true" : "false");
+  document.documentElement.classList.toggle("filters-drawer-open", sheetOpen);
+  document.documentElement.classList.toggle("filters-drawer-collapsed", !sheetOpen);
+  document.documentElement.classList.toggle("filters-sheet-open", sheetOpen && isCompactFiltersSheetLayout());
 }
 
 /** Portfolio workspace: filters drawer defaults, mobile FAB. */
@@ -11269,9 +11953,11 @@ const BLOCKING_MODAL_OVERLAY_IDS = new Set([
   "roadmapModal",
   "profileViewModal",
   "profileEditModal",
+  "profileCreateModal",
   "profileDeleteModal",
   "profileUnlockModal",
   "roadmapDeleteModal",
+  "roadmapBulkEditModal",
   "roadmapBulkTransferModal",
   "exportFormatModal",
   "importFormatModal",
@@ -11285,9 +11971,11 @@ function getBlockingModalCandidates() {
     ["roadmapModal", elements.roadmapModal],
     ["profileViewModal", elements.profileViewModal],
     ["profileEditModal", elements.profileEditModal],
+    ["profileCreateModal", elements.profileCreateModal],
     ["profileDeleteModal", elements.profileDeleteModal],
     ["profileUnlockModal", elements.profileUnlockModal],
     ["roadmapDeleteModal", elements.roadmapDeleteModal],
+    ["roadmapBulkEditModal", elements.roadmapBulkEditModal],
     ["roadmapBulkTransferModal", elements.roadmapBulkTransferModal],
     ["exportFormatModal", elements.exportFormatModal],
     ["importFormatModal", elements.importFormatModal],
@@ -11377,6 +12065,9 @@ function closeTopBlockingModal() {
     case "profileEditModal":
       closeProfileEditModal();
       break;
+    case "profileCreateModal":
+      closeProfileCreateModal();
+      break;
     case "profileDeleteModal":
       closeProfileDeleteModal();
       break;
@@ -11385,6 +12076,9 @@ function closeTopBlockingModal() {
       break;
     case "roadmapDeleteModal":
       closeRoadmapDeleteModal();
+      break;
+    case "roadmapBulkEditModal":
+      closeRoadmapBulkEditModal();
       break;
     case "roadmapBulkTransferModal":
       closeRoadmapBulkTransferModal();
@@ -11483,7 +12177,9 @@ function registerAppOverlays() {
   const closeNow = (fn) => () => fn({ immediate: true });
 
   OverlayManager.register("profilesSheet", closeNow(closeProfilesSheet));
+  OverlayManager.register("filtersSheet", closeNow(closeFiltersSheet));
   OverlayManager.register("profilePicker", closeProfilePickerDropdown);
+  OverlayManager.register("profilesSelect", closeProfilesSelect);
   OverlayManager.register("mapMetricPicker", closeMapMetricPickerDropdown);
   OverlayManager.register("appHeaderMenu", closeAppHeaderMenu);
   OverlayManager.register("filterCountries", closeFilterCountriesPopup);
@@ -11492,9 +12188,11 @@ function registerAppOverlays() {
   OverlayManager.register("roadmapModal", closeNow(closeRoadmapModal));
   OverlayManager.register("profileViewModal", closeNow(closeProfileViewModal));
   OverlayManager.register("profileEditModal", closeNow(closeProfileEditModal));
+  OverlayManager.register("profileCreateModal", closeNow(closeProfileCreateModal));
   OverlayManager.register("profileDeleteModal", closeNow(closeProfileDeleteModal));
   OverlayManager.register("profileUnlockModal", closeNow(closeProfileUnlockModal));
   OverlayManager.register("roadmapDeleteModal", closeNow(closeRoadmapDeleteModal));
+  OverlayManager.register("roadmapBulkEditModal", closeNow(closeRoadmapBulkEditModal));
   OverlayManager.register("roadmapBulkTransferModal", closeNow(closeRoadmapBulkTransferModal));
   OverlayManager.register("exportFormatModal", closeNow(closeExportFormatModal));
   OverlayManager.register("importFormatModal", closeNow(closeImportFormatModal));
@@ -11614,6 +12312,15 @@ function setPortfolioViewTabButtonSlot(btn, slot) {
   btn.setAttribute("role", slot === "track" ? "tab" : "menuitem");
 }
 
+function getPortfolioViewTabsMoreMenuList() {
+  return (
+    elements.portfolioViewTabsMoreMenuList ||
+    $("portfolioViewTabsMoreMenuList") ||
+    elements.portfolioViewTabsMoreMenu ||
+    $("portfolioViewTabsMoreMenu")
+  );
+}
+
 function closePortfolioViewTabsMenu() {
   const nav = getPortfolioViewTabNav();
   if (!nav) return;
@@ -11636,14 +12343,15 @@ function syncPortfolioViewTabsMoreState() {
   moreBtn.removeAttribute("aria-selected");
 
   const labelEl = moreBtn.querySelector(".portfolio-view-tabs-more-label");
-  if (labelEl) labelEl.textContent = "More";
+  if (labelEl) labelEl.textContent = "Views";
 
-  const menuLabels = Array.from(menu.querySelectorAll(".view-tab-text"))
-    .map((node) => node.textContent.trim())
+  const menuItems = getPortfolioViewTabsMoreMenuList().querySelectorAll(".view-toggle-btn[data-view]");
+  const menuLabels = Array.from(menuItems)
+    .map((btn) => btn.querySelector(".view-tab-text")?.textContent.trim() || btn.getAttribute("aria-label") || "")
     .filter(Boolean);
-  moreBtn.title = menuLabels.length ? `More views: ${menuLabels.join(", ")}` : "";
+  moreBtn.title = menuLabels.length ? `Other views: ${menuLabels.join(", ")}` : "Switch view";
 
-  menu.querySelectorAll(".view-toggle-btn[data-view]").forEach((btn) => {
+  menuItems.forEach((btn) => {
     const isActive = btn.dataset.view === activeView;
     btn.classList.toggle("view-toggle-btn--active", isActive);
     btn.setAttribute("aria-selected", String(isActive));
@@ -11661,7 +12369,8 @@ function applyPortfolioViewTabsDuo(track, menu, overflowWrap, nav) {
   closePortfolioViewTabsMenu();
 
   track.replaceChildren();
-  menu.replaceChildren();
+  const menuList = getPortfolioViewTabsMoreMenuList();
+  menuList.replaceChildren();
 
   const activeBtn = getPortfolioViewTabButton(activeView);
   if (activeBtn) {
@@ -11674,7 +12383,7 @@ function applyPortfolioViewTabsDuo(track, menu, overflowWrap, nav) {
     const btn = getPortfolioViewTabButton(view);
     if (btn) {
       setPortfolioViewTabButtonSlot(btn, "menu");
-      menu.appendChild(btn);
+      menuList.appendChild(btn);
     }
   });
 }
@@ -11804,6 +12513,515 @@ function getSortedProfiles() {
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 }
 
+function getProfilesSelectQuery() {
+  return (elements.profilesSelectSearch?.value || profilesFilterQuery || "").trim().toLowerCase();
+}
+
+function isProfilesSheetOpen() {
+  const sheet = elements.profilesPanelSheet || $("profilesPanelSheet");
+  return Boolean(sheet?.classList.contains("profiles-panel-sheet--open"));
+}
+
+function isProfilesSheetBrowseMode() {
+  return isCompactProfilesLayout() && isProfilesSheetOpen() && profilesSheetTab === "browse";
+}
+
+function syncProfilesSelectBrowseMode() {
+  const select = elements.profilesSelect || $("profilesSelect");
+  const kicker = elements.profilesSelectKicker || $("profilesSelectKicker");
+  const panelLabel = elements.profilesSelectPanelLabel || $("profilesSelectPanelLabel");
+  const countBadge = elements.profilesCountBadge || $("profilesCountBadge");
+  const trigger = elements.profilesSelectTrigger || $("profilesSelectTrigger");
+  const inBrowse = isProfilesSheetBrowseMode();
+
+  if (select) select.classList.toggle("profiles-select--sheet-browse", inBrowse);
+  if (kicker) kicker.hidden = !inBrowse;
+  if (panelLabel) panelLabel.hidden = !inBrowse;
+  if (countBadge && inBrowse) countBadge.hidden = true;
+  if (trigger) {
+    trigger.classList.toggle("profiles-select__trigger--pinned", inBrowse);
+    if (inBrowse) trigger.setAttribute("aria-expanded", "true");
+  }
+
+  if (inBrowse && state.profiles.length && !profilesSelectOpen) {
+    setProfilesSelectOpen(true);
+  }
+}
+
+function scheduleProfilesBrowseOpenInSheet() {
+  if (!isCompactProfilesLayout() || !isProfilesSheetOpen() || profilesSheetTab !== "browse") {
+    return;
+  }
+  if (!state.profiles.length) return;
+  window.requestAnimationFrame(() => {
+    if (!isProfilesSheetOpen() || profilesSheetTab !== "browse") return;
+    syncProfilesSelectBrowseMode();
+    setProfilesSelectOpen(true);
+  });
+}
+
+function syncProfilesSelectTrigger() {
+  const avatar = elements.profilesSelectAvatar || $("profilesSelectAvatar");
+  const status = elements.profilesSelectStatus || $("profilesSelectStatus");
+  const nameEl = elements.profilesSelectName || $("profilesSelectName");
+  const metaEl = elements.profilesSelectMeta || $("profilesSelectMeta");
+  const trigger = elements.profilesSelectTrigger || $("profilesSelectTrigger");
+  const countBadge = elements.profilesCountBadge || $("profilesCountBadge");
+  const { profiles } = state;
+  const activeProfile = getActiveProfile();
+
+  if (countBadge) {
+    countBadge.textContent = String(profiles.length);
+    countBadge.dataset.count = String(profiles.length);
+    countBadge.hidden = profiles.length <= 1;
+  }
+
+  if (!nameEl || !metaEl) return;
+
+  if (!profiles.length) {
+    if (avatar) avatar.textContent = "?";
+    if (status) status.className = "profiles-select__trigger-status";
+    nameEl.textContent = "No profiles yet";
+    metaEl.textContent = "Create a workspace below";
+    if (trigger) {
+      trigger.disabled = true;
+      trigger.classList.remove("profiles-select__trigger--active");
+      trigger.setAttribute("aria-label", "No workspaces yet");
+    }
+    return;
+  }
+
+  if (trigger) {
+    trigger.disabled = false;
+    trigger.classList.toggle("profiles-select__trigger--active", Boolean(activeProfile));
+    if (activeProfile) {
+      trigger.setAttribute(
+        "aria-label",
+        `Switch workspace, current: ${activeProfile.name}`
+      );
+    } else {
+      trigger.setAttribute("aria-label", "Select workspace");
+    }
+  }
+
+  if (activeProfile) {
+    if (avatar) avatar.textContent = getProfileInitials(activeProfile.name);
+    if (status) {
+      status.className =
+        "profiles-select__trigger-status profiles-select__trigger-status--live";
+    }
+    nameEl.textContent = activeProfile.name;
+    const teamText = (activeProfile.team || "").trim();
+    const roadmapCount = Array.isArray(activeProfile.roadmaps) ? activeProfile.roadmaps.length : 0;
+    const roadmapLabel = roadmapCount === 1 ? "1 roadmap" : `${roadmapCount} roadmaps`;
+    const locked =
+      isProfilePasswordProtected(activeProfile) && !isProfileUnlocked(activeProfile.id);
+    const metaParts = [];
+    if (teamText) metaParts.push(teamText);
+    metaParts.push(roadmapLabel);
+    if (locked) metaParts.push("Locked");
+    metaEl.textContent = metaParts.join(" · ");
+  } else {
+    if (avatar) avatar.textContent = "?";
+    if (status) status.className = "profiles-select__trigger-status";
+    nameEl.textContent = "Select workspace";
+    metaEl.textContent =
+      profiles.length === 1
+        ? "1 workspace available"
+        : `${profiles.length} workspaces · tap to switch`;
+  }
+}
+
+function syncProfilesSelectListScroll() {
+  const scrollHost =
+    elements.profilesSelectListScroll || $("profilesSelectListScroll");
+  if (!scrollHost) return;
+  window.requestAnimationFrame(() => {
+    const overflows = scrollHost.scrollHeight > scrollHost.clientHeight + 2;
+    scrollHost.classList.toggle("profiles-select__list-scroll--overflow", overflows);
+    scrollHost.dataset.overflow = overflows ? "true" : "false";
+  });
+}
+
+function setProfilesSelectOpen(open) {
+  const shell = elements.profilesSelect?.querySelector(".profiles-select__shell");
+  const field = elements.profilesSelect?.querySelector(".profiles-select__field");
+  const panel = elements.profilesSelectPanel || $("profilesSelectPanel");
+  const trigger = elements.profilesSelectTrigger || $("profilesSelectTrigger");
+  const search = elements.profilesSelectSearch || $("profilesSelectSearch");
+  const showSearch = state.profiles.length > 1;
+
+  if (open && !isProfilesSheetOpen()) {
+    prepareAppOverlay("profilesSelect");
+  }
+
+  profilesSelectOpen = !!open;
+  if (shell) shell.classList.toggle("profiles-select__shell--open", profilesSelectOpen);
+  if (field) field.classList.toggle("profiles-select__field--open", profilesSelectOpen);
+  if (panel) {
+    panel.hidden = !profilesSelectOpen;
+    panel.classList.toggle("profiles-select__panel--no-search", !showSearch);
+  }
+  if (trigger) trigger.setAttribute("aria-expanded", profilesSelectOpen ? "true" : "false");
+  syncProfilesSelectBrowseMode();
+
+  if (profilesSelectOpen) {
+    profilesSelectHighlightIndex = -1;
+    renderProfilesSelectOptions();
+    syncProfilesSelectTrigger();
+    if (showSearch && search) {
+      window.requestAnimationFrame(() => {
+        try {
+          search.focus({ preventScroll: true });
+        } catch (_) {
+          search.focus();
+        }
+      });
+    }
+  } else {
+    profilesSelectHighlightIndex = -1;
+    if (search) search.value = "";
+    profilesFilterQuery = "";
+    syncProfilesSelectTrigger();
+    trigger?.focus({ preventScroll: true });
+  }
+  syncProfilesSelectListScroll();
+}
+
+function closeProfilesSelect(options = {}) {
+  if (isProfilesSheetBrowseMode() && !options.force) return;
+  profilesSelectHighlightIndex = -1;
+  setProfilesSelectOpen(false);
+}
+
+function openProfilesSelect() {
+  if (!state.profiles.length) return;
+  setProfilesSelectOpen(true);
+}
+
+function selectProfileFromProfilesSelect(profileId) {
+  if (!profileId) return;
+  profilesSelectPointerSelecting = true;
+  profilesSelectHighlightIndex = -1;
+  profilesFilterQuery = "";
+  if (!isProfilesSheetBrowseMode()) {
+    setProfilesSelectOpen(false);
+  }
+  setActiveProfile(profileId);
+  window.setTimeout(() => {
+    profilesSelectPointerSelecting = false;
+    syncProfilesSelectTrigger();
+    if (isProfilesSheetBrowseMode()) {
+      renderProfilesSelectOptions();
+    }
+  }, 0);
+}
+
+function ensureProfilesSelectHighlight(visible, query) {
+  if (!visible.length) {
+    profilesSelectHighlightIndex = -1;
+    return;
+  }
+  if (query) {
+    profilesSelectHighlightIndex = 0;
+    return;
+  }
+  const activeIdx = visible.findIndex((profile) => profile.id === state.activeProfileId);
+  profilesSelectHighlightIndex = activeIdx >= 0 ? activeIdx : 0;
+}
+
+function renderProfilesSelectOptions() {
+  const listbox = elements.profilesSelectListbox || $("profilesSelectListbox");
+  const empty = elements.profilesSelectEmpty || $("profilesSelectEmpty");
+  const hint = elements.profilesSelectHint || $("profilesSelectHint");
+  if (!listbox) return;
+
+  const query = getProfilesSelectQuery();
+  const sorted = getSortedProfiles();
+  const visible = sorted.filter((profile) => profileMatchesFilter(profile, query));
+  listbox.innerHTML = "";
+
+  if (hint) {
+    if (isProfilesSheetBrowseMode()) {
+      if (query) {
+        hint.textContent =
+          visible.length === 0
+            ? "No matches — try another name or team"
+            : `${visible.length} match${visible.length === 1 ? "" : "es"}`;
+        hint.hidden = false;
+      } else {
+        hint.textContent = "";
+        hint.hidden = true;
+      }
+    } else if (!query && sorted.length > 1) {
+      hint.textContent = `${sorted.length} workspaces · filter or use ↑↓ Enter`;
+      hint.hidden = false;
+    } else if (query) {
+      hint.textContent =
+        visible.length === 0
+          ? "No matches — try another name or team"
+          : visible.length === 1
+            ? "1 match — press Enter to switch"
+            : `${visible.length} matches — ↑↓ then Enter`;
+      hint.hidden = false;
+    } else {
+      hint.textContent = "";
+      hint.hidden = true;
+    }
+  }
+
+  if (visible.length === 0) {
+    if (empty) empty.hidden = false;
+    profilesSelectHighlightIndex = -1;
+    syncProfilesSelectListScroll();
+    return;
+  }
+
+  if (empty) empty.hidden = true;
+  if (profilesSelectHighlightIndex >= visible.length || profilesSelectHighlightIndex < 0) {
+    ensureProfilesSelectHighlight(visible, query);
+  }
+
+  visible.forEach((profile, index) => {
+    const isActive = profile.id === state.activeProfileId;
+    const isLocked = isProfilePasswordProtected(profile) && !isProfileUnlocked(profile.id);
+    const teamText = (profile.team || "").trim();
+    const roadmapCount = Array.isArray(profile.roadmaps) ? profile.roadmaps.length : 0;
+    const roadmapLabel = roadmapCount === 1 ? "1 roadmap" : `${roadmapCount} roadmaps`;
+
+    const option = document.createElement("button");
+    option.type = "button";
+    option.className =
+      "profiles-select__option" +
+      (isActive ? " profiles-select__option--active" : "") +
+      (index === profilesSelectHighlightIndex ? " profiles-select__option--highlight" : "") +
+      (isLocked ? " profiles-select__option--locked" : "");
+    option.setAttribute("role", "option");
+    option.setAttribute("aria-selected", isActive ? "true" : "false");
+    option.dataset.profileId = profile.id;
+
+    const avatar = document.createElement("span");
+    avatar.className = "profiles-select__option-avatar";
+    avatar.textContent = getProfileInitials(profile.name);
+    avatar.setAttribute("aria-hidden", "true");
+
+    const copy = document.createElement("span");
+    copy.className = "profiles-select__option-copy";
+
+    const titleRow = document.createElement("span");
+    titleRow.className = "profiles-select__option-title-row";
+
+    const name = document.createElement("span");
+    name.className = "profiles-select__option-name";
+    name.textContent = profile.name;
+    titleRow.appendChild(name);
+
+    if (isActive) {
+      const badge = document.createElement("span");
+      badge.className = "profiles-select__option-badge";
+      badge.textContent = isLocked ? "Locked" : "Active";
+      titleRow.appendChild(badge);
+    }
+
+    if (isProfilePasswordProtected(profile)) {
+      const lock = document.createElement("span");
+      lock.className = "profiles-select__option-lock";
+      lock.setAttribute("aria-hidden", "true");
+      lock.innerHTML = isLocked
+        ? '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>'
+        : '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>';
+      titleRow.appendChild(lock);
+    }
+
+    const meta = document.createElement("span");
+    meta.className = "profiles-select__option-meta";
+
+    if (teamText) {
+      const teamPill = document.createElement("span");
+      teamPill.className = "profiles-select__option-team";
+      teamPill.textContent = teamText;
+      meta.appendChild(teamPill);
+    }
+
+    const countEl = document.createElement("span");
+    countEl.className = "profiles-select__option-count";
+    countEl.textContent = roadmapLabel;
+    meta.appendChild(countEl);
+
+    copy.appendChild(titleRow);
+    copy.appendChild(meta);
+
+    const check = document.createElement("span");
+    check.className = "profiles-select__option-check";
+    check.setAttribute("aria-hidden", "true");
+    check.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+
+    option.appendChild(avatar);
+    option.appendChild(copy);
+    option.appendChild(check);
+
+    option.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      selectProfileFromProfilesSelect(profile.id);
+    });
+
+    listbox.appendChild(option);
+  });
+  syncProfilesSelectListScroll();
+}
+
+function renderProfilesSelectActions() {
+  const actionsHost = elements.profilesSelectActions || $("profilesSelectActions");
+  if (!actionsHost) return;
+
+  const activeProfile = getActiveProfile();
+  actionsHost.innerHTML = "";
+
+  if (!activeProfile) {
+    actionsHost.hidden = true;
+    return;
+  }
+
+  actionsHost.hidden = false;
+  const demoProfileCard = isDemoProfile(activeProfile);
+  const actionOpts = { showLabel: true };
+
+  appendProfileActionChip(
+    actionsHost,
+    "view",
+    "View",
+    "View profile",
+    "Open profile details and statistics",
+    getProfileIconSvg("view"),
+    () => openProfileViewModal(activeProfile.id),
+    actionOpts
+  );
+
+  appendProfileActionChip(
+    actionsHost,
+    "edit",
+    "Edit",
+    demoProfileCard ? "Edit profile (disabled)" : "Edit profile",
+    demoProfileCard
+      ? DEMO_READ_ONLY_ACTION_TITLE
+      : "Change name, team, or profile password (current password required if locked).",
+    getProfileIconSvg("edit"),
+    () => openProfileEditModal(activeProfile.id),
+    { ...actionOpts, disabled: demoProfileCard }
+  );
+
+  appendProfileActionChip(
+    actionsHost,
+    "danger",
+    "Delete",
+    demoProfileCard ? "Delete profile (disabled)" : "Delete profile",
+    demoProfileCard ? DEMO_READ_ONLY_ACTION_TITLE : "Remove this profile and all its roadmaps permanently",
+    getProfileIconSvg("trash"),
+    () => deleteProfile(activeProfile.id),
+    { ...actionOpts, disabled: demoProfileCard }
+  );
+}
+
+function renderProfilesSelect() {
+  syncProfilesSelectTrigger();
+  updateProfilesSearchUi(state.profiles.length);
+  if (profilesSelectOpen) {
+    renderProfilesSelectOptions();
+  }
+  renderProfilesSelectActions();
+}
+
+function initProfilesSelect() {
+  const trigger = elements.profilesSelectTrigger || $("profilesSelectTrigger");
+  const search = elements.profilesSelectSearch || $("profilesSelectSearch");
+  const select = elements.profilesSelect || $("profilesSelect");
+
+  if (trigger) {
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (trigger.disabled) return;
+      if (isProfilesSheetBrowseMode()) {
+        const search = elements.profilesSelectSearch || $("profilesSelectSearch");
+        search?.focus({ preventScroll: true });
+        return;
+      }
+      if (profilesSelectOpen) closeProfilesSelect();
+      else openProfilesSelect();
+    });
+  }
+
+  if (search) {
+    search.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+
+    search.addEventListener("input", () => {
+      profilesFilterQuery = search.value.trim().toLowerCase();
+      profilesSelectHighlightIndex = -1;
+      if (!profilesSelectOpen) setProfilesSelectOpen(true);
+      renderProfilesSelectOptions();
+    });
+
+    search.addEventListener("keydown", (e) => {
+      const options = Array.from(
+        (elements.profilesSelectListbox || $("profilesSelectListbox"))?.querySelectorAll(
+          ".profiles-select__option"
+        ) || []
+      );
+
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        closeProfilesSelect();
+        return;
+      }
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (!profilesSelectOpen) openProfilesSelect();
+        if (options.length === 0) return;
+        profilesSelectHighlightIndex = Math.min(profilesSelectHighlightIndex + 1, options.length - 1);
+        renderProfilesSelectOptions();
+        options[profilesSelectHighlightIndex]?.scrollIntoView({ block: "nearest" });
+        return;
+      }
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (options.length === 0) return;
+        profilesSelectHighlightIndex = Math.max(profilesSelectHighlightIndex - 1, 0);
+        renderProfilesSelectOptions();
+        options[profilesSelectHighlightIndex]?.scrollIntoView({ block: "nearest" });
+        return;
+      }
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const highlighted = options[profilesSelectHighlightIndex];
+        const targetId = highlighted?.dataset.profileId || options[0]?.dataset.profileId;
+        if (targetId) selectProfileFromProfilesSelect(targetId);
+      }
+    });
+  }
+
+  document.addEventListener("pointerdown", (e) => {
+    if (!profilesSelectOpen) return;
+    if (select && !select.contains(e.target)) {
+      closeProfilesSelect();
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || !profilesSelectOpen) return;
+    closeProfilesSelect();
+  });
+
+  window.addEventListener("resize", syncProfilesSelectListScroll, { passive: true });
+}
+
 function getProfilePickerQuery() {
   if (!profilePickerIsSearching) return "";
   return (elements.profilePickerInput?.value || "").trim().toLowerCase();
@@ -11812,17 +13030,59 @@ function getProfilePickerQuery() {
 function syncProfilePickerInputDisplay() {
   const input = elements.profilePickerInput || $("profilePickerInput");
   const avatar = elements.profilePickerAvatar || $("profilePickerAvatar");
+  const nameEl = elements.profilePickerName || $("profilePickerName");
+  const metaEl = elements.profilePickerMeta || $("profilePickerMeta");
+  const control = elements.profilePickerControl || $("profilePickerControl");
+  const field = elements.profilePicker?.querySelector(".profile-picker__field");
   if (!input) return;
 
   const activeProfile = getActiveProfile();
+  const isSearching = profilePickerIsSearching || profilePickerOpen;
+
+  if (field) {
+    field.classList.toggle("profile-picker__field--search", isSearching);
+  }
+
+  if (control) {
+    const isLocked =
+      activeProfile &&
+      isProfilePasswordProtected(activeProfile) &&
+      !isProfileUnlocked(activeProfile.id);
+    control.classList.toggle("profile-picker__control--locked", !!isLocked);
+    control.classList.toggle(
+      "profile-picker__control--protected",
+      !!(activeProfile && isProfilePasswordProtected(activeProfile))
+    );
+  }
+
   if (!profilePickerIsSearching) {
     if (activeProfile) {
       input.value = activeProfile.name;
       input.placeholder = "Search profiles…";
+      if (nameEl) nameEl.textContent = activeProfile.name;
+      if (metaEl) {
+        const teamLabel = (activeProfile.team || "").trim();
+        const metaParts = [];
+        if (teamLabel) metaParts.push(teamLabel);
+        if (isProfilePasswordProtected(activeProfile)) {
+          metaParts.push(
+            isProfilePasswordProtected(activeProfile) && !isProfileUnlocked(activeProfile.id)
+              ? "Password required"
+              : "Protected"
+          );
+        }
+        metaEl.textContent = metaParts.join(" · ");
+        metaEl.hidden = metaParts.length === 0;
+      }
       if (avatar) avatar.textContent = getProfileInitials(activeProfile.name);
     } else {
       input.value = "";
       input.placeholder = "Search or select a profile…";
+      if (nameEl) nameEl.textContent = "Select profile";
+      if (metaEl) {
+        metaEl.textContent = "";
+        metaEl.hidden = true;
+      }
       if (avatar) avatar.textContent = "?";
     }
   } else if (avatar && activeProfile) {
@@ -11844,9 +13104,12 @@ function setProfilePickerOpen(open) {
   if (dropdown) dropdown.hidden = !profilePickerOpen;
   if (input) input.setAttribute("aria-expanded", profilePickerOpen ? "true" : "false");
   if (toggle) toggle.setAttribute("aria-expanded", profilePickerOpen ? "true" : "false");
+  const display = elements.profilePickerDisplay || $("profilePickerDisplay");
+  if (display) display.setAttribute("aria-expanded", profilePickerOpen ? "true" : "false");
 
   if (profilePickerOpen) {
     renderProfilePickerOptions();
+    syncProfilePickerInputDisplay();
   } else {
     profilePickerIsSearching = false;
     profilePickerHighlightIndex = -1;
@@ -12014,7 +13277,20 @@ function renderProfilePicker() {
 function initProfilePicker() {
   const input = elements.profilePickerInput || $("profilePickerInput");
   const toggle = elements.profilePickerToggle || $("profilePickerToggle");
+  const display = elements.profilePickerDisplay || $("profilePickerDisplay");
   const field = elements.profilePicker?.querySelector(".profile-picker__field");
+
+  if (display) {
+    display.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (!isCompactProfilesLayout()) return;
+      if (profilePickerOpen) {
+        closeProfilePickerDropdown();
+      } else {
+        openProfilePickerDropdown();
+      }
+    });
+  }
 
   if (input) {
     input.addEventListener("focus", () => {
@@ -12127,55 +13403,53 @@ function initProfilePicker() {
 
 /* ─── Bottom-sheet helpers ──────────────────────────────── */
 function syncProfilesSheetTabsUi() {
-  const compact = isCompactProfilesLayout();
-  const tabs = elements.profilesSheetTabs;
-  const browseTab = elements.profilesSheetTabBrowse;
-  const createTab = elements.profilesSheetTabCreate;
   const browsePanel = elements.profilesSheetPanelBrowse;
-  const createPanel = elements.profilesSheetPanelCreate;
   const sheetBody = document.querySelector(".profiles-panel-sheet-body");
 
-  if (tabs) tabs.hidden = !compact;
-
-  if (!compact) {
-    if (browsePanel) browsePanel.hidden = false;
-    if (createPanel) createPanel.hidden = false;
-    if (sheetBody) {
-      sheetBody.classList.remove("profiles-sheet-body--tab-browse", "profiles-sheet-body--tab-create");
-    }
-    return;
-  }
-
-  const showBrowse = profilesSheetTab !== "create";
-  if (browseTab) {
-    browseTab.classList.toggle("profiles-sheet-tab--active", showBrowse);
-    browseTab.setAttribute("aria-selected", showBrowse ? "true" : "false");
-  }
-  if (createTab) {
-    createTab.classList.toggle("profiles-sheet-tab--active", !showBrowse);
-    createTab.setAttribute("aria-selected", !showBrowse ? "true" : "false");
-  }
-  if (browsePanel) browsePanel.hidden = !showBrowse;
-  if (createPanel) createPanel.hidden = showBrowse;
-
-  const createDetails = elements.profilesCreatePanel || $("profilesCreatePanel");
-  if (createDetails && compact) createDetails.open = true;
-
+  if (browsePanel) browsePanel.hidden = false;
   if (sheetBody) {
-    sheetBody.classList.toggle("profiles-sheet-body--tab-browse", showBrowse);
-    sheetBody.classList.toggle("profiles-sheet-body--tab-create", !showBrowse);
+    sheetBody.classList.remove("profiles-sheet-body--tab-browse", "profiles-sheet-body--tab-create");
+  }
+  syncProfilesSelectBrowseMode();
+  if (isCompactProfilesLayout() && isProfilesSheetOpen()) {
+    scheduleProfilesBrowseOpenInSheet();
   }
 }
 
 function setProfilesSheetTab(tab) {
-  profilesSheetTab = tab === "create" ? "create" : "browse";
+  profilesSheetTab = "browse";
   syncProfilesSheetTabsUi();
-  if (profilesSheetTab === "create") {
-    const nameInput = $("newProfileName");
-    requestAnimationFrame(() => nameInput?.focus());
-  } else {
-    const search = elements.profilesSearchInput;
-    requestAnimationFrame(() => search?.focus());
+  const trigger = elements.profilesSelectTrigger || $("profilesSelectTrigger");
+  requestAnimationFrame(() => {
+    scheduleProfilesBrowseOpenInSheet();
+    if (!profilesSelectOpen) trigger?.focus();
+  });
+}
+
+function mountProfilesSheetToScrimRoot() {
+  if (!isCompactProfilesLayout()) return;
+  const root = getCompactScrimRoot();
+  const sheet = elements.profilesPanelSheet || $("profilesPanelSheet");
+  const backdrop = elements.profilesSheetBackdrop || $("profilesSheetBackdrop");
+  if (backdrop && backdrop.parentNode !== root) {
+    root.appendChild(backdrop);
+  }
+  if (!sheet || sheet.parentNode === root) return;
+  root.appendChild(sheet);
+  sheet.dataset.profilesSheetPortaled = "1";
+}
+
+function restoreProfilesSheetToPanel() {
+  const sheet = elements.profilesPanelSheet || $("profilesPanelSheet");
+  const panel = document.querySelector(".profiles-panel.profiles-panel--v2");
+  const backdrop = elements.profilesSheetBackdrop || $("profilesSheetBackdrop");
+  const layoutMain = document.querySelector(".app-layout");
+  if (sheet && panel && sheet.parentNode !== panel) {
+    panel.insertBefore(sheet, panel.firstChild);
+    delete sheet.dataset.profilesSheetPortaled;
+  }
+  if (backdrop && layoutMain && backdrop.parentNode !== layoutMain) {
+    layoutMain.insertBefore(backdrop, layoutMain.firstChild);
   }
 }
 
@@ -12190,6 +13464,8 @@ function openProfilesSheet() {
   profilesSheetTab = "browse";
   syncProfilesSheetTabsUi();
 
+  mountProfilesSheetToScrimRoot();
+
   sheet.hidden = false;
   // Force reflow so CSS transition fires
   void sheet.offsetHeight;
@@ -12201,16 +13477,13 @@ function openProfilesSheet() {
     backdrop.classList.add("profiles-sheet-backdrop--visible");
   }
 
+  document.documentElement.classList.add("profiles-sheet-open");
   if (manageBtn) manageBtn.setAttribute("aria-expanded", "true");
 
   // Scroll lock
   document.body.style.overflow = "hidden";
 
-  // Focus search when opening browse tab
-  const search = elements.profilesSearchInput;
-  if (search) {
-    setTimeout(() => { try { search.focus(); } catch (_) {} }, 120);
-  }
+  scheduleProfilesBrowseOpenInSheet();
 }
 
 function closeProfilesSheet({ immediate = false } = {}) {
@@ -12219,6 +13492,8 @@ function closeProfilesSheet({ immediate = false } = {}) {
   const manageBtn = elements.mobileProfileManageBtn || $("mobileProfileManageBtn");
   if (!sheet) return;
 
+  closeProfilesSelect({ force: true });
+
   if (profilesSheetCloseTimer) {
     clearTimeout(profilesSheetCloseTimer);
     profilesSheetCloseTimer = null;
@@ -12226,41 +13501,38 @@ function closeProfilesSheet({ immediate = false } = {}) {
 
   sheet.classList.remove("profiles-panel-sheet--open");
   if (backdrop) backdrop.classList.remove("profiles-sheet-backdrop--visible");
+  document.documentElement.classList.remove("profiles-sheet-open");
   if (manageBtn) manageBtn.setAttribute("aria-expanded", "false");
   document.body.style.overflow = "";
+
+  const finishProfilesClose = () => {
+    if (sheet.classList.contains("profiles-panel-sheet--open")) return;
+    sheet.hidden = true;
+    if (backdrop && !backdrop.classList.contains("profiles-sheet-backdrop--visible")) {
+      backdrop.hidden = true;
+    }
+    restoreProfilesSheetToPanel();
+  };
 
   if (immediate) {
     markOverlayCloseImmediate(sheet);
     if (backdrop) markOverlayCloseImmediate(backdrop);
-    sheet.hidden = true;
-    if (backdrop) backdrop.hidden = true;
+    finishProfilesClose();
     return;
   }
 
   profilesSheetCloseTimer = setTimeout(() => {
     profilesSheetCloseTimer = null;
-    if (!sheet.classList.contains("profiles-panel-sheet--open")) {
-      sheet.hidden = true;
-    }
-    if (backdrop && !backdrop.classList.contains("profiles-sheet-backdrop--visible")) {
-      backdrop.hidden = true;
-    }
+    finishProfilesClose();
   }, 380);
 }
 
 function initProfilesPanel() {
-  const panel = elements.profilesCreatePanel || $("profilesCreatePanel");
   const manageBtn = elements.mobileProfileManageBtn || $("mobileProfileManageBtn");
   const closeBtn = elements.profilesSheetCloseBtn || $("profilesSheetCloseBtn");
   const backdrop = elements.profilesSheetBackdrop || $("profilesSheetBackdrop");
 
   syncProfilesSheetTabsUi();
-
-  [elements.profilesSheetTabBrowse, elements.profilesSheetTabCreate].filter(Boolean).forEach((btn) => {
-    btn.addEventListener("click", () => {
-      setProfilesSheetTab(btn.dataset.profilesTab || "browse");
-    });
-  });
 
   if (manageBtn) {
     manageBtn.addEventListener("click", () => {
@@ -12293,36 +13565,25 @@ function initProfilesPanel() {
   const mqCompact = window.matchMedia(getCompactLayoutMediaQueryString());
   const handleBreakpoint = (e) => {
     if (!e.matches) {
-      closeProfilesSheet();
+      closeProfilesSheet({ immediate: true });
+      restoreProfilesSheetToPanel();
+    } else if (!(elements.profilesPanelSheet || $("profilesPanelSheet"))?.classList.contains("profiles-panel-sheet--open")) {
+      restoreProfilesSheetToPanel();
     }
     syncProfilesSheetTabsUi();
     renderProfiles();
   };
   if (typeof mqCompact.addEventListener === "function") {
     mqCompact.addEventListener("change", handleBreakpoint);
-  } else if (typeof mqCompact.addListener === "function") {
+  } else   if (typeof mqCompact.addListener === "function") {
     mqCompact.addListener(handleBreakpoint);
   }
 
-  if (!panel) return;
-  const applyDefaultOpen = () => {
-    if (window.matchMedia("(min-width: 900px)").matches) {
-      panel.open = true;
-    }
-  };
-  applyDefaultOpen();
-  const mq = window.matchMedia("(min-width: 900px)");
-  if (typeof mq.addEventListener === "function") {
-    mq.addEventListener("change", applyDefaultOpen);
-  } else if (typeof mq.addListener === "function") {
-    mq.addListener(applyDefaultOpen);
-  }
-
-  const search = elements.profilesSearchInput || $("profilesSearchInput");
+  const search = elements.profilesSelectSearch || $("profilesSelectSearch");
   if (search) {
     search.addEventListener("input", () => {
       profilesFilterQuery = search.value.trim().toLowerCase();
-      renderProfiles();
+      if (profilesSelectOpen) renderProfilesSelectOptions();
     });
   }
 }
@@ -12344,8 +13605,11 @@ function profileMatchesFilter(profile, query) {
 }
 
 function updateProfilesSearchUi(profileCount) {
-  const wrap = elements.profilesSearchInput?.closest(".profiles-search");
-  if (wrap) wrap.classList.toggle("profiles-search--hidden", profileCount <= 1);
+  const wrap = elements.profilesSelectSearch?.closest(".profiles-select__search");
+  const panel = elements.profilesSelectPanel || $("profilesSelectPanel");
+  const showSearch = profileCount > 1;
+  if (wrap) wrap.classList.toggle("profiles-select__search--hidden", !showSearch);
+  if (panel) panel.classList.toggle("profiles-select__panel--no-search", !showSearch);
 }
 
 function appendProfileActionChip(actions, classSuffix, label, tooltipTitle, tooltipBody, svg, onClick, { showLabel = false, disabled = false } = {}) {
@@ -12372,185 +13636,11 @@ function appendProfileActionChip(actions, classSuffix, label, tooltipTitle, tool
 const DEMO_READ_ONLY_ACTION_TITLE = "Demo profile is read-only. Edits and deletions are disabled.";
 
 function renderProfiles() {
-  const { profiles, activeProfileId } = state;
-  const query = profilesFilterQuery;
+  const { profiles } = state;
 
-  elements.profileList.innerHTML = "";
   elements.profilesEmptyState.style.display = profiles.length ? "none" : "block";
-  updateProfilesSearchUi(profiles.length);
 
-  if (elements.profilesCountBadge) {
-    elements.profilesCountBadge.textContent = String(profiles.length);
-    elements.profilesCountBadge.dataset.count = String(profiles.length);
-  }
-
-  const sorted = profiles
-    .slice()
-    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  const visible = sorted.filter((p) => profileMatchesFilter(p, query));
-
-  if (elements.profilesNoResults) {
-    elements.profilesNoResults.style.display =
-      profiles.length > 0 && visible.length === 0 ? "block" : "none";
-  }
-
-  visible.forEach((profile) => {
-    const li = document.createElement("li");
-    li.className = "profiles-list-item";
-    li.setAttribute("role", "presentation");
-
-    const isActive = profile.id === activeProfileId;
-    const isLocked = isProfilePasswordProtected(profile) && !isProfileUnlocked(profile.id);
-    const isLockedActive = isActive && isLocked;
-    const compactCard = isCompactProfilesLayout();
-
-    const row = document.createElement("article");
-    row.className =
-      "profile-item-row profiles-card" +
-      (compactCard ? " profiles-card--compact" : "") +
-      (isActive ? " profiles-card--active" : "") +
-      (isLockedActive ? " profiles-card--locked" : "");
-    row.setAttribute("role", "option");
-    row.setAttribute("aria-selected", isActive ? "true" : "false");
-
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className =
-      "profiles-card-select profile-item-btn" +
-      (isActive ? " active" : "") +
-      (isLockedActive ? " profile-item-btn--locked-active" : "");
-    btn.setAttribute("aria-label", `Select profile ${profile.name}`);
-
-    if (!compactCard) {
-      const radio = document.createElement("span");
-      radio.className = "profiles-card-radio";
-      radio.setAttribute("aria-hidden", "true");
-      btn.appendChild(radio);
-    }
-
-    const avatar = document.createElement("span");
-    avatar.className = "profiles-card-avatar";
-    avatar.setAttribute("aria-hidden", "true");
-    avatar.textContent = getProfileInitials(profile.name);
-    btn.appendChild(avatar);
-
-    const body = document.createElement("span");
-    body.className = "profiles-card-body profile-item-main";
-
-    const titleRow = document.createElement("span");
-    titleRow.className = "profiles-card-title-row";
-
-    const nameEl = document.createElement("span");
-    nameEl.className = "profile-item-name";
-    nameEl.textContent = profile.name;
-    titleRow.appendChild(nameEl);
-
-    if (isProfilePasswordProtected(profile)) {
-      const lockBadge = document.createElement("span");
-      lockBadge.className = "profile-item-lock-badge";
-      lockBadge.setAttribute("aria-hidden", "true");
-      lockBadge.innerHTML = isProfileUnlocked(profile.id)
-        ? '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>'
-        : '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
-      lockBadge.setAttribute(
-        "aria-label",
-        isProfileUnlocked(profile.id) ? "Unlocked this session" : "Password protected"
-      );
-      titleRow.appendChild(lockBadge);
-    }
-
-    if (isActive) {
-      const status = document.createElement("span");
-      status.className = "profiles-card-status" + (isLocked ? " profiles-card-status--locked" : "");
-      status.textContent = isLocked ? "Locked" : "Active";
-      titleRow.appendChild(status);
-    }
-
-    body.appendChild(titleRow);
-
-    const summary = document.createElement("span");
-    summary.className = "profile-summary";
-
-    const teamText = (profile.team || "").trim();
-    if (teamText) {
-      const teamSpan = document.createElement("span");
-      teamSpan.className = "profile-item-team-pill";
-      teamSpan.textContent = teamText;
-      summary.appendChild(teamSpan);
-    }
-
-    const roadmapCount = Array.isArray(profile.roadmaps) ? profile.roadmaps.length : 0;
-    const countSpan = document.createElement("span");
-    countSpan.className = "profile-item-count";
-    countSpan.textContent = roadmapCount === 1 ? "1 roadmap" : `${roadmapCount} roadmaps`;
-    summary.appendChild(countSpan);
-
-    body.appendChild(summary);
-    btn.appendChild(body);
-    btn.addEventListener("click", () => setActiveProfile(profile.id));
-
-    const actions = document.createElement("div");
-    actions.className =
-      "profile-item-actions profiles-card-actions" +
-      (compactCard ? " profiles-card-actions--footer" : "");
-
-    const actionOpts = { showLabel: compactCard };
-
-    appendProfileActionChip(
-      actions,
-      "view",
-      "View",
-      "View profile",
-      "Open profile details and statistics",
-      getProfileIconSvg("view"),
-      (event) => {
-        event.stopPropagation();
-        openProfileViewModal(profile.id);
-      },
-      actionOpts
-    );
-
-    const demoProfileCard = isDemoProfile(profile);
-    appendProfileActionChip(
-      actions,
-      "edit",
-      "Edit",
-      demoProfileCard ? "Edit profile (disabled)" : "Edit profile",
-      demoProfileCard
-        ? DEMO_READ_ONLY_ACTION_TITLE
-        : "Change name, team, or profile password (current password required if locked).",
-      getProfileIconSvg("edit"),
-      (event) => {
-        event.stopPropagation();
-        openProfileEditModal(profile.id);
-      },
-      { ...actionOpts, disabled: demoProfileCard }
-    );
-
-    appendProfileActionChip(
-      actions,
-      "danger",
-      "Delete",
-      demoProfileCard ? "Delete profile (disabled)" : "Delete profile",
-      demoProfileCard ? DEMO_READ_ONLY_ACTION_TITLE : "Remove this profile and all its roadmaps permanently",
-      getProfileIconSvg("trash"),
-      (event) => {
-        event.stopPropagation();
-        deleteProfile(profile.id);
-      },
-      { ...actionOpts, disabled: demoProfileCard }
-    );
-
-    if (compactCard) {
-      row.appendChild(btn);
-      row.appendChild(actions);
-    } else {
-      row.appendChild(btn);
-      row.appendChild(actions);
-    }
-    li.appendChild(row);
-    elements.profileList.appendChild(li);
-  });
+  renderProfilesSelect();
 
   const activeProfile = getActiveProfile();
   updateProfilesShellSummary(activeProfile, profiles.length);
@@ -12704,25 +13794,10 @@ function renderRoadmaps() {
     const countries = Array.isArray(roadmap.countries) ? roadmap.countries : [];
     const titleBlock = document.createElement("div");
     titleBlock.className = "cell-title-block";
-    const roadmapDesc = roadmap.description || "";
     const titleDiv = document.createElement("div");
     titleDiv.className = "cell-title";
     titleDiv.textContent = roadmap.title || "";
-    if (roadmapDesc) {
-      const descWrap = document.createElement("span");
-      descWrap.className = "cell-desc-with-tooltip";
-      descWrap.setAttribute("aria-label", "Roadmap name; hover for description");
-      descWrap.appendChild(titleDiv);
-      descWrap.appendChild(
-        buildRoadmapDetailsTooltip({
-          titleLabel: "Description",
-          rawDescription: roadmapDesc
-        })
-      );
-      titleBlock.appendChild(descWrap);
-    } else {
-      titleBlock.appendChild(titleDiv);
-    }
+    titleBlock.appendChild(titleDiv);
     if (countries.length) {
       const normalizedCountries = normalizeRoadmapCountriesList(countries);
       const isEuRegion = roadmapCountriesRepresentEuRegion(normalizedCountries);
@@ -13228,7 +14303,7 @@ function switchRoadmapsView(view) {
   const showRaci = view === "raci";
   const showKano = view === "kano";
 
-  elements.roadmapsTableView.style.display = showTable ? "" : "none";
+  elements.roadmapsTableView.style.display = showTable ? "flex" : "none";
   elements.roadmapsBoardView.style.display = showBoard ? "flex" : "none";
   elements.roadmapsBoardView.setAttribute("aria-hidden", String(!showBoard));
   if (elements.roadmapsMoscowView) {
@@ -13253,8 +14328,12 @@ function switchRoadmapsView(view) {
   }
 
   if (typeof Fullscreen !== "undefined" && !Fullscreen.isViewFullscreen()) {
-    if (typeof Fullscreen.restoreWorkspaceChrome === "function") {
-      Fullscreen.restoreWorkspaceChrome();
+    try {
+      if (typeof Fullscreen.restoreWorkspaceChrome === "function") {
+        Fullscreen.restoreWorkspaceChrome();
+      }
+    } catch (err) {
+      console.warn("Workspace chrome restore skipped:", err);
     }
   }
 
@@ -14963,39 +16042,17 @@ function buildRoadmapTableCardFinancialMetric(roadmap) {
 }
 
 function buildCardTitleTooltipElement(titleClassName, roadmap) {
-  const titleText = (roadmap && roadmap.title ? String(roadmap.title) : "Untitled");
-  const statusText = (roadmap && roadmap.roadmapStatus ? String(roadmap.roadmapStatus) : "Not set");
-  const rawDescription =
-    roadmap && (roadmap.description != null || roadmap.roadmapDescription != null)
-      ? String(roadmap.description != null ? roadmap.description : roadmap.roadmapDescription)
-      : "";
-
-  const wrap = document.createElement("div");
-  wrap.className = `${titleClassName} card-title-with-tooltip`;
-  wrap.setAttribute("aria-label", `${titleText}. Status: ${statusText}.`);
-  wrap.setAttribute("tabindex", "0");
-
-  const textSpan = document.createElement("span");
-  textSpan.textContent = titleText;
-  wrap.appendChild(textSpan);
-
-  wrap.appendChild(
-    buildRoadmapDetailsTooltip({
-      titleLabel: "Roadmap details",
-      statusText,
-      rawDescription
-    })
-  );
-
-  return wrap;
+  const titleText = roadmap && roadmap.title ? String(roadmap.title) : "Untitled";
+  const el = document.createElement("div");
+  el.className = titleClassName;
+  el.textContent = titleText;
+  return el;
 }
 
 function openPortfolioFiltersDrawerIfClosed() {
   const drawer = elements.portfolioFiltersDrawer;
-  if (drawer && !drawer.open) {
-    drawer.open = true;
-    syncPortfolioFiltersDrawerState();
-  }
+  if (!drawer || drawer.open) return;
+  openFiltersSheet();
 }
 
 function getFiltersToggleButtonLabel(advancedOpen) {
@@ -15028,7 +16085,10 @@ function syncCompactFiltersChrome() {
     document.querySelector(".portfolio-filters-toolbar .filters-meta") ||
     document.querySelector(".portfolio-filters-summary-actions .filters-meta");
   const compact = isTableCompactLayout();
-  const drawerOpen = Boolean(drawer && drawer.open);
+  const sheetLayout = isCompactFiltersSheetLayout();
+  const drawerOpen = sheetLayout
+    ? Boolean(elements.portfolioFiltersSheet?.classList.contains("portfolio-filters-sheet--open"))
+    : Boolean(drawer && drawer.open);
   const summaryTitle = $("portfolioFiltersSummaryTitle");
 
   if (!meta || !toolbar) return;
@@ -15041,7 +16101,10 @@ function syncCompactFiltersChrome() {
       summarySlot.hidden = true;
       summarySlot.setAttribute("aria-hidden", "true");
     }
-    if (drawerOpen) {
+    if (sheetLayout) {
+      toolbar.hidden = false;
+      toolbar.setAttribute("aria-hidden", "false");
+    } else if (drawerOpen) {
       toolbar.hidden = false;
       toolbar.setAttribute("aria-hidden", "false");
     } else {
@@ -16650,148 +17713,16 @@ function getMoscowDisplayName(moscowKey) {
   return moscowKey || "";
 }
 
+/** Compact MoSCoW quadrant jump nav removed — users scroll the board directly. */
 function syncMoscowCompactNav() {
-  const nav = elements.moscowCompactNav;
-  if (!nav || !elements.moscowBoardContainer) return;
-
-  const isCompact = document.documentElement.classList.contains("is-compact-layout");
-  const showNav = isCompact && state.roadmapsView === "moscow";
-  const columns = elements.moscowBoardContainer.querySelectorAll(".moscow-board-column");
-
-  if (!showNav || !columns.length) {
-    nav.hidden = true;
-    nav.innerHTML = "";
-    if (moscowCompactNavObserver) {
-      moscowCompactNavObserver.disconnect();
-      moscowCompactNavObserver = null;
-    }
-    return;
-  }
-
-  const abbrLabels = {
-    "Must have": "M",
-    "Should have": "S",
-    "Could have": "C",
-    "Won't have": "W"
-  };
-
-  nav.hidden = false;
-  nav.innerHTML = "";
-
-  const header = document.createElement("div");
-  header.className = "moscow-compact-nav__header";
-  const headerTitle = document.createElement("span");
-  headerTitle.className = "moscow-compact-nav__title";
-  headerTitle.textContent = "Jump to quadrant";
-  header.appendChild(headerTitle);
-  nav.appendChild(header);
-
-  const track = document.createElement("div");
-  track.className = "moscow-compact-nav__track";
-  track.setAttribute("role", "tablist");
-  track.setAttribute("aria-label", "MoSCoW quadrants");
-
-  columns.forEach((column, index) => {
-    const moscow = column.getAttribute("data-moscow") || "";
-    const countEl = column.querySelector(".moscow-board-column-count");
-    const count = countEl ? countEl.textContent : "0";
-    const pill = document.createElement("button");
-    pill.type = "button";
-    pill.className = "moscow-compact-nav__pill" + (index === 0 ? " is-active" : "");
-    pill.setAttribute("role", "tab");
-    pill.setAttribute("aria-selected", index === 0 ? "true" : "false");
-    pill.setAttribute("data-moscow", moscow);
-    pill.setAttribute("aria-controls", "moscow-col-" + index);
-    pill.setAttribute("aria-label", getMoscowDisplayName(moscow) + ", " + count + " roadmaps");
-
-    const main = document.createElement("span");
-    main.className = "moscow-compact-nav__pill-main";
-
-    const abbr = document.createElement("span");
-    abbr.className = "moscow-compact-nav__abbr";
-    abbr.textContent = abbrLabels[moscow] || moscow.charAt(0).toUpperCase();
-
-    const label = document.createElement("span");
-    label.className = "moscow-compact-nav__label";
-    label.textContent = getMoscowDisplayName(moscow);
-
-    const countBadge = document.createElement("span");
-    countBadge.className = "moscow-compact-nav__count";
-    countBadge.textContent = count;
-    countBadge.setAttribute("aria-label", count + " roadmaps");
-
-    main.appendChild(abbr);
-    main.appendChild(label);
-    pill.appendChild(main);
-    pill.appendChild(countBadge);
-
-    pill.addEventListener("click", () => {
-      column.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
-      track.querySelectorAll(".moscow-compact-nav__pill").forEach((p) => {
-        p.classList.remove("is-active");
-        p.setAttribute("aria-selected", "false");
-      });
-      pill.classList.add("is-active");
-      pill.setAttribute("aria-selected", "true");
-    });
-
-    track.appendChild(pill);
-    column.id = "moscow-col-" + index;
-  });
-
-  nav.appendChild(track);
-
-  const hint = document.createElement("p");
-  hint.className = "moscow-compact-nav__hint";
-  hint.textContent = document.documentElement.classList.contains("is-phone-layout")
-    ? "Tap a quadrant, then swipe the board below for roadmaps"
-    : "Tap a quadrant to scroll the board to that column";
-  nav.appendChild(hint);
-
-  bindMoscowCompactNavScrollSync(track, columns);
-}
-
-function bindMoscowCompactNavScrollSync(track, columns) {
   if (moscowCompactNavObserver) {
     moscowCompactNavObserver.disconnect();
     moscowCompactNavObserver = null;
   }
-  if (!track || !columns.length || !elements.moscowBoardContainer) return;
-
-  const pills = track.querySelectorAll(".moscow-compact-nav__pill");
-  const setActivePill = (index) => {
-    pills.forEach((pill, i) => {
-      const active = i === index;
-      pill.classList.toggle("is-active", active);
-      pill.setAttribute("aria-selected", active ? "true" : "false");
-    });
-  };
-
-  if (document.documentElement.classList.contains("is-compact-layout") && typeof IntersectionObserver !== "undefined") {
-    moscowCompactNavObserver = new IntersectionObserver(
-      (entries) => {
-        let best = null;
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          if (!best || entry.intersectionRatio > best.ratio) {
-            best = { index: Number(entry.target.dataset.moscowIndex), ratio: entry.intersectionRatio };
-          }
-        });
-        if (best != null && Number.isFinite(best.index)) {
-          setActivePill(best.index);
-        }
-      },
-      {
-        root: null,
-        rootMargin: "-12% 0px -48% 0px",
-        threshold: [0.12, 0.28, 0.45, 0.6]
-      }
-    );
-    columns.forEach((column, index) => {
-      column.dataset.moscowIndex = String(index);
-      moscowCompactNavObserver.observe(column);
-    });
-  }
+  const nav = elements.moscowCompactNav;
+  if (!nav) return;
+  nav.hidden = true;
+  nav.innerHTML = "";
 }
 
 function moveMoscowRoadmapUp(roadmapId, quadrant) {
@@ -17477,6 +18408,7 @@ function updateBulkSelectionActions() {
     }
   };
 
+  syncToolbarBtn(elements.bulkEditBtn);
   syncToolbarBtn(elements.bulkDeleteBtn);
   syncToolbarBtn(elements.bulkDuplicateBtn, { superAdminOnly: true });
   syncToolbarBtn(elements.bulkMoveBtn, { superAdminOnly: true });
@@ -17503,6 +18435,7 @@ function updateBulkSelectionActions() {
     }
   };
 
+  syncMobileBtn(elements.portfolioSelectionEditBtn);
   syncMobileBtn(elements.portfolioSelectionDeleteBtn);
   syncMobileBtn(elements.portfolioSelectionDuplicateBtn, { superAdminOnly: true });
   syncMobileBtn(elements.portfolioSelectionMoveBtn, { superAdminOnly: true });
@@ -17561,6 +18494,180 @@ function handleBulkDelete() {
   if (elements.roadmapDeleteCancelBtn) {
     elements.roadmapDeleteCancelBtn.onclick = () => {
       closeRoadmapDeleteModal();
+    };
+  }
+}
+
+const BULK_EDIT_NO_CHANGE = "";
+const BULK_EDIT_CLEAR = "__clear__";
+const ROADMAP_TYPE_OPTIONS = ["New Product", "Improvement", "Tech Debt", "Market Expansion"];
+
+function populateBulkEditSelect(selectEl, options) {
+  if (!selectEl) return;
+  selectEl.innerHTML = "";
+  const noChange = document.createElement("option");
+  noChange.value = BULK_EDIT_NO_CHANGE;
+  noChange.textContent = "No change";
+  selectEl.appendChild(noChange);
+  const clearOpt = document.createElement("option");
+  clearOpt.value = BULK_EDIT_CLEAR;
+  clearOpt.textContent = "Clear value";
+  selectEl.appendChild(clearOpt);
+  (Array.isArray(options) ? options : []).forEach((value) => {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = value;
+    selectEl.appendChild(opt);
+  });
+}
+
+function resetRoadmapBulkEditForm() {
+  populateBulkEditSelect(elements.roadmapBulkEditStatus, roadmapStatusList);
+  populateBulkEditSelect(elements.roadmapBulkEditType, ROADMAP_TYPE_OPTIONS);
+  populateBulkEditSelect(elements.roadmapBulkEditMoscow, moscowList);
+  populateBulkEditSelect(elements.roadmapBulkEditTshirtSize, tshirtSizeList);
+  if (elements.roadmapBulkEditPeriod) {
+    elements.roadmapBulkEditPeriod.value = "";
+  }
+}
+
+function resolveBulkEditFieldValue(rawValue) {
+  const value = (rawValue || "").trim();
+  if (!value || value === BULK_EDIT_NO_CHANGE) return undefined;
+  if (value === BULK_EDIT_CLEAR) return null;
+  return value;
+}
+
+function buildBulkEditPatchFromForm() {
+  const patch = {};
+  const status = resolveBulkEditFieldValue(elements.roadmapBulkEditStatus?.value);
+  if (status !== undefined) patch.roadmapStatus = status;
+  const type = resolveBulkEditFieldValue(elements.roadmapBulkEditType?.value);
+  if (type !== undefined) patch.roadmapType = type;
+  const moscow = resolveBulkEditFieldValue(elements.roadmapBulkEditMoscow?.value);
+  if (moscow !== undefined) patch.moscowCategory = moscow;
+  const tshirtSize = resolveBulkEditFieldValue(elements.roadmapBulkEditTshirtSize?.value);
+  if (tshirtSize !== undefined) patch.tshirtSize = tshirtSize;
+
+  const periodRaw = (elements.roadmapBulkEditPeriod?.value || "").trim();
+  if (periodRaw) {
+    patch.roadmapPeriod = periodRaw.toUpperCase();
+  }
+
+  return patch;
+}
+
+function applyBulkRoadmapEdits(roadmapIds, patch) {
+  let count = 0;
+  const now = new Date().toISOString();
+  (Array.isArray(roadmapIds) ? roadmapIds : []).forEach((roadmapId) => {
+    const located = findRoadmapWithOwner(roadmapId);
+    const roadmap = located.roadmap;
+    if (!roadmap) return;
+    let changed = false;
+    if (Object.prototype.hasOwnProperty.call(patch, "roadmapStatus")) {
+      roadmap.roadmapStatus = patch.roadmapStatus;
+      changed = true;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "roadmapType")) {
+      roadmap.roadmapType = patch.roadmapType;
+      changed = true;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "moscowCategory")) {
+      roadmap.moscowCategory = patch.moscowCategory;
+      changed = true;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "tshirtSize")) {
+      roadmap.tshirtSize = patch.tshirtSize;
+      changed = true;
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, "roadmapPeriod")) {
+      roadmap.roadmapPeriod = patch.roadmapPeriod;
+      changed = true;
+    }
+    if (changed) {
+      roadmap.modifiedAt = now;
+      roadmap.riceScore = calculateRiceScore(roadmap);
+      count += 1;
+    }
+  });
+  return count;
+}
+
+function closeRoadmapBulkEditModal({ immediate = false } = {}) {
+  if (!elements.roadmapBulkEditModal) return;
+  deactivateBlockingModal(elements.roadmapBulkEditModal, { immediate });
+  elements.roadmapBulkEditModal.removeAttribute("data-roadmap-ids");
+}
+
+function handleBulkEdit() {
+  if (state.roadmapsView !== "table") return;
+  if (!requireWritableActiveProfile("Bulk edit")) return;
+  if (!getUnlockedActiveProfile() || !elements.roadmapBulkEditModal) return;
+
+  const ids = getSelectedRoadmapIdsFromTable();
+  if (!ids.length) return;
+
+  resetRoadmapBulkEditForm();
+
+  activateBlockingModal(elements.roadmapBulkEditModal, "roadmapBulkEditModal");
+  elements.roadmapBulkEditModal.setAttribute("data-roadmap-ids", ids.join(","));
+
+  const countLabel = `${ids.length} roadmap${ids.length === 1 ? "" : "s"} selected`;
+  if (elements.roadmapBulkEditCountLabel) {
+    elements.roadmapBulkEditCountLabel.textContent = countLabel;
+  }
+  if (elements.roadmapBulkEditHelpText) {
+    elements.roadmapBulkEditHelpText.textContent = isSuperAdminModeActive()
+      ? "Updates apply to every selected roadmap across owner profiles. Leave a field on “No change” to keep existing values."
+      : "Choose the fields you want to update. Leave a field on “No change” to keep existing values on each roadmap.";
+  }
+
+  if (elements.roadmapBulkEditConfirmBtn) {
+    elements.roadmapBulkEditConfirmBtn.onclick = () => {
+      const idsAttr = elements.roadmapBulkEditModal.getAttribute("data-roadmap-ids") || "";
+      const idList = idsAttr ? idsAttr.split(",").filter(Boolean) : [];
+      if (!idList.length) {
+        closeRoadmapBulkEditModal();
+        return;
+      }
+
+      const patch = buildBulkEditPatchFromForm();
+      if (!Object.keys(patch).length) {
+        showToast("Choose at least one field to update.");
+        return;
+      }
+
+      if (patch.roadmapPeriod) {
+        const periodError = validateRoadmapInput({
+          title: "Bulk edit",
+          description: "Bulk edit",
+          roadmapPeriod: patch.roadmapPeriod
+        });
+        if (periodError) {
+          showToast(periodError);
+          elements.roadmapBulkEditPeriod?.focus();
+          return;
+        }
+      }
+
+      const count = applyBulkRoadmapEdits(idList, patch);
+      if (!count) {
+        showToast("No roadmaps were updated.");
+        return;
+      }
+
+      saveState({ flush: true });
+      clearRoadmapSelection();
+      renderRoadmaps();
+      closeRoadmapBulkEditModal();
+      showToast(count === 1 ? "1 roadmap updated successfully." : `${count} roadmaps updated successfully.`);
+    };
+  }
+
+  if (elements.roadmapBulkEditCancelBtn) {
+    elements.roadmapBulkEditCancelBtn.onclick = () => {
+      closeRoadmapBulkEditModal();
     };
   }
 }
@@ -19083,6 +20190,257 @@ function closeProfileViewModal({ immediate = false } = {}) {
   deactivateBlockingModal(elements.profileViewModal, { immediate });
 }
 
+function updateProfileHeroIdentity({
+  nameInput,
+  teamInput,
+  avatarEl,
+  nameEl,
+  teamEl,
+  teamWrapEl,
+  namePlaceholder = "Profile name",
+}) {
+  const name = (nameInput?.value ?? "").trim();
+  const team = (teamInput?.value ?? "").trim();
+  const hasName = Boolean(name);
+
+  if (avatarEl) {
+    avatarEl.textContent = hasName ? getProfileInitials(name) : "?";
+  }
+  if (nameEl) {
+    nameEl.textContent = hasName ? name : namePlaceholder;
+    nameEl.classList.toggle("profile-view-name--placeholder", !hasName);
+  }
+  if (teamWrapEl) {
+    teamWrapEl.hidden = !team;
+  }
+  if (teamEl) {
+    teamEl.textContent = team;
+    teamEl.classList.remove("profile-view-team--empty");
+  }
+}
+
+function bindProfileModalHeroPreview(rootEl, fieldSelector, syncFn) {
+  if (!rootEl || typeof syncFn !== "function") return;
+  if (rootEl.dataset.heroPreviewBound !== "1") {
+    rootEl.dataset.heroPreviewBound = "1";
+    rootEl.addEventListener("input", (event) => {
+      if (event.target.matches(fieldSelector)) syncFn();
+    });
+    rootEl.addEventListener("change", (event) => {
+      if (event.target.matches(fieldSelector)) syncFn();
+    });
+  }
+  scheduleProfileModalHeroSync(syncFn);
+}
+
+function scheduleProfileModalHeroSync(syncFn) {
+  if (typeof syncFn !== "function") return;
+  syncFn();
+  requestAnimationFrame(syncFn);
+  window.setTimeout(syncFn, 120);
+  window.setTimeout(syncFn, 350);
+}
+
+function syncProfileCreateHeroPreview() {
+  const name = (elements.newProfileName?.value || "").trim();
+  const team = (elements.newProfileTeam?.value || "").trim();
+  const password = (elements.newProfilePassword?.value || "").trim();
+
+  updateProfileHeroIdentity({
+    nameInput: elements.newProfileName,
+    teamInput: elements.newProfileTeam,
+    avatarEl: elements.profileCreateAvatar,
+    nameEl: elements.profileCreatePreviewName,
+    teamEl: elements.profileCreatePreviewTeam,
+    teamWrapEl: elements.profileCreatePreviewTeamWrap,
+    namePlaceholder: "Profile name",
+  });
+
+  const isProtected = Boolean(password);
+  if (elements.profileCreateLockStatus) {
+    elements.profileCreateLockStatus.textContent = isProtected ? "Password locked" : "Open access";
+  }
+  if (elements.profileCreateLockBadge) {
+    elements.profileCreateLockBadge.classList.toggle("profile-edit-hero-lock--secured", isProtected);
+  }
+}
+
+function showProfileCreatePasswordError(message) {
+  if (!elements.profileCreatePasswordError) return;
+  elements.profileCreatePasswordError.textContent = message;
+  elements.profileCreatePasswordError.style.display = message ? "block" : "none";
+}
+
+function resetProfileCreateForm() {
+  if (elements.newProfileName) elements.newProfileName.value = "";
+  if (elements.newProfileTeam) elements.newProfileTeam.value = "";
+  if (elements.newProfilePassword) elements.newProfilePassword.value = "";
+  if (elements.newProfilePasswordConfirm) elements.newProfilePasswordConfirm.value = "";
+  showProfileCreatePasswordError("");
+  resetProfilePasswordToggles(elements.profileCreateModal || elements.addProfileForm);
+  resetProfileCreatePasswordFieldTypes();
+  syncProfileCreateHeroPreview();
+}
+
+function resetProfileCreatePasswordFieldTypes() {
+  ["newProfilePassword", "newProfilePasswordConfirm"].forEach((id) => {
+    const input = $(id);
+    if (input) input.type = "password";
+  });
+  elements.profileCreateModal?.querySelectorAll(".profile-password-toggle").forEach((btn) => {
+    btn.classList.remove("is-visible");
+    btn.setAttribute("aria-label", "Show password");
+  });
+}
+
+function openProfileCreateModal() {
+  if (!elements.profileCreateModal) return;
+  activateBlockingModal(elements.profileCreateModal, "profileCreateModal");
+  resetProfileCreateForm();
+  bindProfilePasswordToggles(elements.profileCreateModal);
+  scheduleProfileModalHeroSync(syncProfileCreateHeroPreview);
+  if (elements.profileCreateModalTitle) {
+    elements.profileCreateModalTitle.textContent = "New profile";
+  }
+  if (elements.profileCreateModalSubtitle) {
+    elements.profileCreateModalSubtitle.textContent = "Add a workspace with name, team, and optional password protection.";
+  }
+  setTimeout(() => {
+    if (elements.newProfileName) elements.newProfileName.focus();
+  }, 80);
+}
+
+function closeProfileCreateModal({ immediate = false } = {}) {
+  if (!elements.profileCreateModal) return;
+  deactivateBlockingModal(elements.profileCreateModal, { immediate });
+  resetProfileCreateForm();
+}
+
+async function handleProfileCreateSave() {
+  const name = (elements.newProfileName?.value || "").trim();
+  if (!name) {
+    if (elements.newProfileName) elements.newProfileName.focus();
+    showProfileCreatePasswordError("Profile name is required.");
+    return;
+  }
+
+  const team = (elements.newProfileTeam?.value || "").trim();
+  const pwd = elements.newProfilePassword ? elements.newProfilePassword.value : "";
+  const confirm = elements.newProfilePasswordConfirm ? elements.newProfilePasswordConfirm.value : "";
+
+  if (typeof ProfileSecurity === "undefined") {
+    showToast("Profile security module failed to load. Refresh the page and try again.");
+    return;
+  }
+
+  const validation = ProfileSecurity.validatePasswordPair(pwd, confirm, { required: false });
+  if (!validation.ok) {
+    showProfileCreatePasswordError(validation.message);
+    return;
+  }
+
+  showProfileCreatePasswordError("");
+  await addProfile(name, team, validation.password);
+  closeProfileCreateModal();
+  showToast(
+    validation.password
+      ? "Profile created with password protection."
+      : "Profile created successfully."
+  );
+}
+
+function setProfileEditRemoveProtectionPending(pending) {
+  const isPending = Boolean(pending);
+  if (elements.profileEditRemovePassword) {
+    elements.profileEditRemovePassword.checked = isPending;
+  }
+  if (elements.profileEditRemoveProtectionDefault) {
+    elements.profileEditRemoveProtectionDefault.hidden = isPending;
+  }
+  if (elements.profileEditRemoveProtectionPending) {
+    elements.profileEditRemoveProtectionPending.hidden = !isPending;
+  }
+  if (elements.profileEditChangePasswordFieldsWrap) {
+    elements.profileEditChangePasswordFieldsWrap.classList.toggle("profile-edit-fields--disabled", isPending);
+  }
+  if (isPending) {
+    if (elements.profileEditNewPassword) elements.profileEditNewPassword.value = "";
+    if (elements.profileEditConfirmPassword) elements.profileEditConfirmPassword.value = "";
+    resetProfilePasswordToggles(elements.profileEditModal);
+    resetProfileEditPasswordFieldTypes();
+    if (elements.profileEditPasswordHint) {
+      elements.profileEditPasswordHint.textContent =
+        "Enter your current password, then save to remove protection.";
+    }
+  } else if (elements.profileEditPasswordHint) {
+    const profileId = elements.profileEditModal?.getAttribute("data-profile-id");
+    const profile = profileId ? state.profiles.find((entry) => entry.id === profileId) : null;
+    const protectedProfile = Boolean(profile && isProfilePasswordProtected(profile));
+    elements.profileEditPasswordHint.textContent = protectedProfile
+      ? "Confirm with your current password. Change it below, or remove protection."
+      : "Optionally set a password to lock this profile.";
+  }
+  syncProfileEditHeroPreview();
+}
+
+function syncProfileEditSecurityChrome(profile) {
+  const protectedProfile = Boolean(profile && isProfilePasswordProtected(profile));
+  if (elements.profileEditRemoveProtectionWrap) {
+    elements.profileEditRemoveProtectionWrap.hidden = !protectedProfile;
+  }
+  if (elements.profileEditSecurityBadge) {
+    elements.profileEditSecurityBadge.hidden = !protectedProfile;
+  }
+  setProfileEditRemoveProtectionPending(false);
+  if (elements.profileEditCurrentPasswordWrap) {
+    elements.profileEditCurrentPasswordWrap.classList.toggle("profile-field--hidden", !protectedProfile);
+    elements.profileEditCurrentPasswordWrap.style.display = "";
+  }
+  if (elements.profileEditPasswordHint) {
+    elements.profileEditPasswordHint.textContent = protectedProfile
+      ? "Confirm with your current password. Change it below, or remove protection."
+      : "Optionally set a password to lock this profile.";
+  }
+}
+
+function syncProfileEditModalChrome(profile) {
+  if (!profile) return;
+  const name = (profile.name || "").trim() || "Unnamed profile";
+  if (elements.profileEditModalTitle) {
+    elements.profileEditModalTitle.textContent = "Edit profile";
+  }
+  if (elements.profileEditModalSubtitle) {
+    elements.profileEditModalSubtitle.textContent = `Update name, team, and password for ${name}.`;
+  }
+}
+
+function syncProfileEditHeroPreview() {
+  updateProfileHeroIdentity({
+    nameInput: elements.profileEditName,
+    teamInput: elements.profileEditTeam,
+    avatarEl: elements.profileEditAvatar,
+    nameEl: elements.profileEditPreviewName,
+    teamEl: elements.profileEditPreviewTeam,
+    teamWrapEl: elements.profileEditPreviewTeamWrap,
+    namePlaceholder: "Profile name",
+  });
+
+  const profileId = elements.profileEditModal?.getAttribute("data-profile-id");
+  const profile = profileId ? state.profiles.find((entry) => entry.id === profileId) : null;
+  const removingPassword = Boolean(elements.profileEditRemovePassword?.checked);
+  const newPassword = (elements.profileEditNewPassword?.value || "").trim();
+  const isProtected =
+    Boolean(profile && isProfilePasswordProtected(profile) && !removingPassword) ||
+    Boolean(!removingPassword && newPassword);
+
+  if (elements.profileEditLockStatus) {
+    elements.profileEditLockStatus.textContent = isProtected ? "Password locked" : "Open access";
+  }
+  if (elements.profileEditLockBadge) {
+    elements.profileEditLockBadge.classList.toggle("profile-edit-hero-lock--secured", isProtected);
+  }
+}
+
 function openProfileEditModal(profileId) {
   const profile = state.profiles.find((p) => p.id === profileId);
   if (!profile || !elements.profileEditModal) return;
@@ -19093,26 +20451,20 @@ function openProfileEditModal(profileId) {
   if (!requireProfileUnlocked(profileId, "edit")) return;
   activateBlockingModal(elements.profileEditModal, "profileEditModal");
   elements.profileEditModal.setAttribute("data-profile-id", profileId);
+  syncProfileEditModalChrome(profile);
+  syncProfileEditSecurityChrome(profile);
   if (elements.profileEditName) {
     elements.profileEditName.value = profile.name || "";
   }
   if (elements.profileEditTeam) {
     elements.profileEditTeam.value = (profile.team || "").trim();
   }
-  const protectedProfile = isProfilePasswordProtected(profile);
-  if (elements.profileEditCurrentPasswordWrap) {
-    elements.profileEditCurrentPasswordWrap.classList.toggle("profile-field--hidden", !protectedProfile);
-    elements.profileEditCurrentPasswordWrap.style.display = "";
-  }
+  scheduleProfileModalHeroSync(syncProfileEditHeroPreview);
   if (elements.profileEditCurrentPassword) elements.profileEditCurrentPassword.value = "";
   if (elements.profileEditNewPassword) elements.profileEditNewPassword.value = "";
   if (elements.profileEditConfirmPassword) elements.profileEditConfirmPassword.value = "";
-  if (elements.profileEditRemovePassword) elements.profileEditRemovePassword.checked = false;
-  if (elements.profileEditPasswordHint) {
-    elements.profileEditPasswordHint.textContent = protectedProfile
-      ? "Current password is required to save changes. Set a new password or remove protection."
-      : "Optionally set a password to lock this profile.";
-  }
+  resetProfilePasswordToggles(elements.profileEditModal);
+  bindProfilePasswordToggles(elements.profileEditModal);
   if (elements.profileEditPasswordError) {
     elements.profileEditPasswordError.style.display = "none";
     elements.profileEditPasswordError.textContent = "";
@@ -19129,7 +20481,11 @@ function closeProfileEditModal({ immediate = false } = {}) {
   if (elements.profileEditCurrentPassword) elements.profileEditCurrentPassword.value = "";
   if (elements.profileEditNewPassword) elements.profileEditNewPassword.value = "";
   if (elements.profileEditConfirmPassword) elements.profileEditConfirmPassword.value = "";
-  if (elements.profileEditRemovePassword) elements.profileEditRemovePassword.checked = false;
+  setProfileEditRemoveProtectionPending(false);
+  if (elements.profileEditRemoveProtectionWrap) {
+    elements.profileEditRemoveProtectionWrap.hidden = true;
+  }
+  resetProfilePasswordToggles(elements.profileEditModal);
   resetProfileEditPasswordFieldTypes();
 }
 

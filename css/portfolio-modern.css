@@ -285,6 +285,27 @@
   animation: portfolio-view-tabs-menu-in 0.18s ease;
 }
 
+.portfolio-view-tabs-more-menu__title {
+  margin: 0;
+  padding: 0.12rem 0.42rem 0.22rem;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(122, 75, 18, 0.72);
+}
+
+.portfolio-view-tabs-more-menu__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.portfolio-view-tabs-more-chevron {
+  display: none;
+  flex: 0 0 auto;
+}
+
 .workspace-panel--v2 .portfolio-view-tabs--overflow-open .portfolio-view-tabs-more-menu:not([hidden]) {
   display: flex;
 }
@@ -1023,6 +1044,20 @@ html.is-super-admin-mode col.super-admin-only-column:not([hidden]) {
   flex-shrink: 0;
 }
 
+html.is-compact-layout .super-admin-toggle-slot--mobile {
+  display: none !important;
+}
+
+html.is-compact-layout .super-admin-toggle-slot--actions:not([hidden]) {
+  display: flex !important;
+  align-items: center;
+  width: 100%;
+}
+
+html.is-desktop-layout .super-admin-toggle-slot--actions {
+  display: none !important;
+}
+
 .super-admin-toggle-slot--mobile .portfolio-super-admin-toggle {
   width: auto;
   justify-content: flex-start;
@@ -1045,11 +1080,6 @@ html.is-super-admin-mode col.super-admin-only-column:not([hidden]) {
   .profile-picker-bar:not([hidden]) .profile-picker {
     flex: 1 1 auto;
     min-width: 0;
-  }
-
-  .profile-picker-bar:not([hidden]) .super-admin-toggle-slot--mobile:not([hidden]) {
-    display: flex !important;
-    align-items: center;
   }
 
   .portfolio-action-group .super-admin-toggle-slot--desktop[hidden] {
@@ -1565,13 +1595,14 @@ html.filters-drawer-open .portfolio-filters-body {
 }
 
 .profile-unlock-panel__password-wrap {
+  position: relative;
   width: 100%;
 }
 
 .profile-unlock-panel__password-wrap input {
   width: 100%;
-  min-height: 46px;
-  padding: 0.55rem 2.65rem 0.55rem 0.85rem;
+  min-height: 48px;
+  padding: 0.6rem 2.85rem 0.6rem 0.9rem;
   font-size: 0.92rem;
   font-family: inherit;
   color: var(--pf-text, #3f0f19);
@@ -1579,6 +1610,53 @@ html.filters-drawer-open .portfolio-filters-body {
   border: 1px solid rgba(231, 201, 120, 0.65);
   border-radius: 12px;
   box-sizing: border-box;
+}
+
+.profile-unlock-panel .profile-password-toggle {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  min-height: 32px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #7a4b12 !important;
+  box-shadow: none !important;
+  cursor: pointer;
+}
+
+.profile-unlock-panel .profile-password-toggle:hover {
+  background: rgba(254, 243, 199, 0.55) !important;
+  color: #b91c1c !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: translateY(-50%) !important;
+}
+
+.profile-unlock-panel .profile-password-toggle:focus-visible {
+  outline: 2px solid rgba(185, 28, 28, 0.45);
+  outline-offset: 1px;
+}
+
+.profile-unlock-panel .profile-password-toggle svg {
+  width: 18px !important;
+  height: 18px !important;
+  display: block !important;
+  flex-shrink: 0;
+}
+
+.profile-unlock-panel__password-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--pf-text-soft, #7a4b12);
 }
 
 .profile-unlock-panel__password-wrap input:focus {
@@ -1593,19 +1671,23 @@ html.filters-drawer-open .portfolio-filters-body {
   justify-content: center !important;
   gap: 0.45rem !important;
   width: 100%;
-  min-height: 46px !important;
-  padding: 0.55rem 1rem !important;
+  min-height: 48px !important;
+  padding: 0.62rem 1rem !important;
   border-radius: 12px !important;
   border: none !important;
   background: linear-gradient(135deg, #b91c1c, #991b1b) !important;
   color: #fff !important;
-  font-size: 0.88rem !important;
+  font-size: 0.9rem !important;
   font-weight: 600 !important;
   letter-spacing: normal !important;
   text-transform: none !important;
   box-shadow: 0 4px 14px rgba(185, 28, 28, 0.22) !important;
   transform: none !important;
   cursor: pointer;
+}
+
+.profile-unlock-panel__submit svg {
+  display: none !important;
 }
 
 .profile-unlock-panel__submit:hover {
@@ -1797,14 +1879,16 @@ html:not(.is-super-admin-mode) .portfolio-selection-bar .super-admin-bulk-action
 }
 
 .portfolio-selection-bar__duplicate,
-.portfolio-selection-bar__move {
+.portfolio-selection-bar__move,
+.portfolio-selection-bar__edit {
   background: #fff;
   border: 1px solid rgba(180, 83, 9, 0.35);
   color: #92400e;
 }
 
 .portfolio-selection-bar__duplicate:disabled,
-.portfolio-selection-bar__move:disabled {
+.portfolio-selection-bar__move:disabled,
+.portfolio-selection-bar__edit:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

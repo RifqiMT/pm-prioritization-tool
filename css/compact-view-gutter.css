@@ -1,0 +1,34 @@
+/**
+ * Compact view horizontal gutters — aligned with pm-prioritization-tool-six.vercel.app.
+ * Loaded after mobile-command-deck so cockpit chrome cannot drift view insets.
+ */
+
+@media (max-width: 1400px) {
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .portfolio-view,
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view,
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--table,
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--board,
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--moscow,
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--map,
+  html.is-compact-layout .workspace-panel--v2 .portfolio-view,
+  html.is-compact-layout .workspace-panel--v2 .roadmaps-view,
+  html.is-compact-layout .workspace-panel .roadmaps-view--table,
+  html.is-compact-layout .workspace-panel .roadmaps-view--board,
+  html.is-compact-layout .workspace-panel .roadmaps-view--moscow,
+  html.is-compact-layout .workspace-panel .roadmaps-view--map {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+    padding-bottom: 0.3rem !important;
+    gap: 0.25rem !important;
+  }
+
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--raci,
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--kano,
+  html.is-compact-layout .workspace-panel .roadmaps-view--raci,
+  html.is-compact-layout .workspace-panel .roadmaps-view--kano {
+    padding-left: 0.45rem !important;
+    padding-right: 0.45rem !important;
+    padding-bottom: 0.45rem !important;
+    gap: 0.35rem !important;
+  }
+}

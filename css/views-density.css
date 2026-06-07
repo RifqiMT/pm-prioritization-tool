@@ -20,22 +20,31 @@
   padding-top: 0.2rem !important;
 }
 
-/* ── View stage containers ────────────────────────────────── */
+/* View shell + toolbar spacing: production-aligned (see views-density below) */
+
+/* ── View stage containers (Vercel prod reference) ─────────── */
 .workspace-panel .roadmaps-view,
 .workspace-panel--v2 .portfolio-view,
 .workspace-panel--v2 .roadmaps-view,
+.workspace-panel .roadmaps-view--table,
+.workspace-panel .roadmaps-view--board,
 .workspace-panel .roadmaps-view--moscow,
 .workspace-panel .roadmaps-view--map,
+.workspace-panel .roadmaps-view--raci,
+.workspace-panel .roadmaps-view--kano,
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .portfolio-view,
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--table,
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--board,
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--moscow,
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--map {
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--map,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--raci,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--kano {
   padding: 0 0.45rem 0.45rem !important;
   gap: 0.35rem !important;
 }
 
-/* ── View toolbars (Table / Board / MoSCoW / Map) ─────────── */
+/* ── View toolbars (Table / Board / MoSCoW / Map) — prod spacing ─ */
 .view-toolbar,
 .roadmaps-table-toolbar.view-toolbar,
 .roadmaps-map-toolbar.view-toolbar,
@@ -60,15 +69,15 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .ro
   gap: 0.35rem 0.45rem !important;
 }
 
+.workspace-panel .roadmaps-map-toolbar {
+  padding: 0.3rem 0 0.2rem !important;
+}
+
 .portfolio-view-bar,
 .workspace-panel--v2 .workspace-view-toolbar,
 .workspace-view-toolbar {
   padding: 0.35rem 0 !important;
   margin-bottom: 0.3rem !important;
-}
-
-.workspace-panel .roadmaps-map-toolbar {
-  padding: 0.3rem 0 0.2rem !important;
 }
 
 /* ── Table ────────────────────────────────────────────────── */
@@ -193,6 +202,8 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .ro
 
   html.is-compact-layout .workspace-panel--v2 .portfolio-view,
   html.is-compact-layout .workspace-panel--v2 .roadmaps-view,
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .portfolio-view,
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view,
   html.is-compact-layout .workspace-panel .roadmaps-view--table,
   html.is-compact-layout .workspace-panel .roadmaps-view--board,
   html.is-compact-layout .workspace-panel .roadmaps-view--moscow,
@@ -206,7 +217,9 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .ro
   html.is-compact-layout .view-toolbar--table,
   html.is-compact-layout .view-toolbar--board,
   html.is-compact-layout .view-toolbar--moscow,
-  html.is-compact-layout .view-toolbar--map {
+  html.is-compact-layout .view-toolbar--map,
+  html.is-compact-layout .view-toolbar--raci,
+  html.is-compact-layout .view-toolbar--kano {
     padding: 0.25rem 0.35rem !important;
     margin: 0 0 0.18rem !important;
   }

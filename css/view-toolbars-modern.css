@@ -80,7 +80,7 @@
 /* Identity block */
 .view-toolbar__identity {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.6rem;
   min-width: 0;
   flex: 1 1 auto;
@@ -117,15 +117,25 @@
   line-height: 1.25 !important;
 }
 
-.view-toolbar__desc,
-.view-toolbar .moscow-board-hint {
-  margin: 0.18rem 0 0 !important;
+.view-toolbar__desc {
+  margin: 0.12rem 0 0 !important;
   font-size: 0.78rem !important;
-  line-height: 1.45 !important;
+  line-height: 1.25 !important;
   color: var(--vt-text-soft) !important;
   text-transform: none !important;
   letter-spacing: normal !important;
-  max-width: 48ch;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+}
+
+html.is-desktop-layout .view-toolbar__identity:has(.view-toolbar__desc) {
+  align-items: flex-start;
+}
+
+html.is-compact-layout .view-toolbar__desc {
+  display: none !important;
 }
 
 /* Action cluster */
@@ -258,6 +268,7 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
 }
 
 #bulkDeleteBtn[hidden],
+#bulkEditBtn[hidden],
 #bulkDuplicateBtn[hidden],
 #bulkMoveBtn[hidden] {
   display: none !important;
@@ -266,20 +277,25 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
 /* Map metric field */
 .view-toolbar__field {
   display: flex;
-  flex-direction: column;
-  gap: 0.22rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
   flex: 1 1 10rem;
   min-width: 0;
 }
 
+/* Visually hidden on all breakpoints — controls stay labelled via aria / for= */
 .view-toolbar__field-label,
 .view-toolbar .roadmaps-map-metric-label {
-  font-size: 0.68rem !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.05em !important;
-  text-transform: uppercase !important;
-  color: var(--vt-gold) !important;
-  margin: 0 !important;
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }
 
 .view-toolbar__select {
@@ -806,10 +822,6 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
     padding-right: 0.55rem !important;
   }
 
-  .view-toolbar__desc {
-    display: none;
-  }
-
   .view-toolbar__row--secondary {
     flex-direction: column;
     align-items: stretch;
@@ -849,12 +861,6 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
   .view-toolbar--map .map-metric-picker {
     min-width: 14.5rem;
     max-width: 20rem;
-  }
-}
-
-@media (min-width: 900px) {
-  .view-toolbar__desc {
-    display: block;
   }
 }
 
@@ -1217,16 +1223,9 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .view-toolbar__legen
     flex: 1 1 auto !important;
     flex-direction: row !important;
     align-items: center !important;
-    gap: 0.35rem !important;
+    gap: 0 !important;
     min-width: 0 !important;
     max-width: none !important;
-  }
-
-  html.is-compact-layout .view-toolbar--board .scrum-board-status-filter .view-toolbar__field-label {
-    flex: 0 0 auto !important;
-    margin: 0 !important;
-    white-space: nowrap !important;
-    font-size: 0.62rem !important;
   }
 
   html.is-compact-layout .view-toolbar--board .scrum-board-status-columns {

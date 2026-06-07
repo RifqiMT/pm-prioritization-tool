@@ -122,6 +122,10 @@
   box-shadow: inset 3px 0 0 #6366f1 !important;
 }
 
+.table-wrapper--modern.roadmaps-table-shell tbody tr:nth-child(even) td {
+  background: #ffffff !important;
+}
+
 /* Column widths — semantic classes (stable when Profile column is hidden) */
 .table-wrapper.roadmaps-table-shell .roadmaps-table-col--select { width: 44px !important; min-width: 44px !important; max-width: 44px !important; }
 
@@ -414,6 +418,16 @@
 }
 
 @media (min-width: 1401px) {
+  html.is-desktop-layout .workspace-panel--v2 .table-wrapper--modern.roadmaps-table-shell {
+    border-radius: 14px !important;
+    box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.22) !important;
+    border: none !important;
+    border-top: none !important;
+    background: #ffffff !important;
+    max-height: min(62vh, 600px) !important;
+    overflow: auto !important;
+  }
+
   .table-wrapper--modern.roadmaps-table-shell tbody tr.roadmaps-table-empty-row td.empty-state {
     min-height: 10.5rem;
   }

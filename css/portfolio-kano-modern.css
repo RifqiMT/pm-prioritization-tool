@@ -1274,6 +1274,16 @@ html.portfolio-kano-drag-active .portfolio-kano-matrix-tile[data-kano-draggable=
 }
 
 /* —— Responsive —— */
+@media (max-width: 1400px) {
+  .portfolio-kano-positioned__intro {
+    display: none !important;
+  }
+
+  .portfolio-kano-positioned__header {
+    gap: 0.35rem;
+  }
+}
+
 @media (max-width: 1024px) {
   .portfolio-kano-positioned__title--desktop,
   .portfolio-kano-positioned__hint--desktop {

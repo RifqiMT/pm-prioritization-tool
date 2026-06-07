@@ -87,7 +87,8 @@
   }
 
   html.is-compact-layout .workspace-panel--v2 .table-wrapper--modern {
-    max-height: min(58vh, 520px);
+    max-height: none;
+    overflow: visible;
   }
 
   html.is-compact-layout .table-wrapper--modern .cell-actions:not(.cell-actions--roadmap) {

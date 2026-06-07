@@ -291,6 +291,17 @@
   }
 }
 
+.data-transfer-modal__footer--solo {
+  align-items: stretch;
+}
+
+.data-transfer-modal__footer--solo .export-modal-btn,
+.data-transfer-modal__footer--solo .profile-modal-btn {
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 46px;
+}
+
 .data-transfer-modal__cancel {
   width: 100%;
   min-height: 46px;
