@@ -158,30 +158,7 @@
     display: none !important;
   }
 
-  html.is-compact-layout .profile-picker__control {
-    min-height: var(--compact-touch);
-    border-radius: var(--compact-radius-sm);
-    border-color: var(--compact-border);
-    box-shadow: inset 0 1px 2px rgba(63, 15, 25, 0.04);
-  }
-
-  html.is-compact-layout .profile-picker__avatar {
-    width: 32px;
-    height: 32px;
-    font-size: 0.72rem;
-    border-radius: 9px;
-  }
-
-  html.is-compact-layout .profile-picker__input {
-    font-size: 0.9rem;
-    font-weight: 600;
-  }
-
-  html.is-compact-layout .profile-picker__manage {
-    min-height: var(--compact-touch) !important;
-    min-width: var(--compact-touch) !important;
-    border-radius: var(--compact-radius-sm) !important;
-  }
+  /* Profile picker visuals — profile-picker-compact.css */
 
   /* ── Portfolio command — view tabs only (no duplicate title) ─ */
   html.is-compact-layout .profile-picker-bar:not([hidden]) ~ .workspace-portfolio-body .portfolio-command-intro {

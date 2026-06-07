@@ -10,12 +10,19 @@
     closers.set(id, closeFn);
   }
 
-  function closeAllExcept(exceptId) {
+  function closeAllExcept(exceptIdOrIds) {
     if (isClosing) return;
     isClosing = true;
+    const exceptSet = new Set();
+    if (exceptIdOrIds != null) {
+      const list = Array.isArray(exceptIdOrIds) ? exceptIdOrIds : [exceptIdOrIds];
+      list.forEach((id) => {
+        if (id != null && id !== "") exceptSet.add(id);
+      });
+    }
     try {
       closers.forEach((closeFn, id) => {
-        if (exceptId != null && id === exceptId) return;
+        if (exceptSet.has(id)) return;
         try {
           closeFn();
         } catch (err) {

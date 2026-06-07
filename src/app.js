@@ -5658,8 +5658,18 @@ function updateFiltersActivePill() {
     : `${activeFilters.length} active filters`;
   const compact = isTableCompactLayout();
   const pills = [elements.filtersActivePill, elements.filtersSheetActiveBadge].filter(Boolean);
+  const drawer = elements.portfolioFiltersDrawer || $("portfolioFiltersDrawer");
+  const summary = drawer?.querySelector(".portfolio-filters-summary");
+  const indicator = drawer?.querySelector(".portfolio-filters-summary-indicator");
 
   if (!activeFilters.length) {
+    drawer?.classList.remove("portfolio-filters-drawer--active");
+    summary?.classList.remove("portfolio-filters-summary--active");
+    drawer?.removeAttribute("data-active-count");
+    if (indicator) indicator.hidden = true;
+    if (summary) {
+      summary.setAttribute("aria-label", "Search and filter roadmaps");
+    }
     pills.forEach((pill) => {
       pill.style.display = "none";
       pill.textContent = "";
@@ -5667,6 +5677,14 @@ function updateFiltersActivePill() {
       pill.setAttribute("aria-hidden", "true");
     });
     return;
+  }
+
+  drawer?.classList.add("portfolio-filters-drawer--active");
+  summary?.classList.add("portfolio-filters-summary--active");
+  drawer?.setAttribute("data-active-count", String(activeFilters.length));
+  if (indicator) indicator.hidden = false;
+  if (summary) {
+    summary.setAttribute("aria-label", `Search and filter roadmaps — ${verboseLabel}`);
   }
 
   pills.forEach((pill) => {
@@ -11679,6 +11697,15 @@ function isCompactFiltersSheetLayout() {
   return isCompactLayoutViewport();
 }
 
+function isFiltersSheetOpen() {
+  if (isCompactFiltersSheetLayout()) {
+    return Boolean(
+      elements.portfolioFiltersSheet?.classList.contains("portfolio-filters-sheet--open")
+    );
+  }
+  return Boolean(elements.portfolioFiltersDrawer?.open);
+}
+
 function mountFiltersSheetToScrimRoot() {
   if (!isCompactFiltersSheetLayout()) return;
   const root = getCompactScrimRoot();
@@ -11756,6 +11783,7 @@ function closeFiltersSheet({ immediate = false } = {}) {
 
   closeFilterCountriesPopup();
   closeFilterRoadmapPeriodPopup();
+  closeAllFilterAutocompleteDropdowns();
   if (elements.filtersAdvanced) {
     elements.filtersAdvanced.classList.remove("visible");
     syncCompactFilterButtonLabels();
@@ -12140,6 +12168,12 @@ function closeModalBackdrop(el, { immediate = false } = {}) {
   el.setAttribute("aria-hidden", "true");
 }
 
+const FILTERS_SHEET_NESTED_OVERLAY_IDS = new Set([
+  "filterAutocomplete",
+  "filterCountries",
+  "filterRoadmapPeriod"
+]);
+
 function prepareAppOverlay(id) {
   hideCellTypeTooltips();
   if (typeof OverlayManager === "undefined") return;
@@ -12147,6 +12181,11 @@ function prepareAppOverlay(id) {
   const activeModalId = getActiveBlockingModalOverlayId();
   if (activeModalId && id !== activeModalId && !BLOCKING_MODAL_OVERLAY_IDS.has(id)) {
     OverlayManager.closeAllExcept(activeModalId);
+    return;
+  }
+
+  if (isFiltersSheetOpen() && FILTERS_SHEET_NESTED_OVERLAY_IDS.has(id)) {
+    OverlayManager.closeAllExcept(["filtersSheet", id]);
     return;
   }
 
@@ -13278,7 +13317,20 @@ function initProfilePicker() {
   const input = elements.profilePickerInput || $("profilePickerInput");
   const toggle = elements.profilePickerToggle || $("profilePickerToggle");
   const display = elements.profilePickerDisplay || $("profilePickerDisplay");
+  const control = elements.profilePickerControl || $("profilePickerControl");
   const field = elements.profilePicker?.querySelector(".profile-picker__field");
+
+  if (control) {
+    control.addEventListener("click", (e) => {
+      if (!isCompactProfilesLayout() || profilePickerIsSearching) return;
+      if (e.target.closest(".profile-picker__input")) return;
+      if (e.target.closest(".profile-picker__display")) return;
+      if (e.target.closest(".profile-picker__dropdown-manage")) return;
+      e.preventDefault();
+      if (profilePickerOpen) closeProfilePickerDropdown();
+      else openProfilePickerDropdown();
+    });
+  }
 
   if (display) {
     display.addEventListener("click", (e) => {
@@ -13458,6 +13510,8 @@ function openProfilesSheet() {
   const backdrop = elements.profilesSheetBackdrop || $("profilesSheetBackdrop");
   const manageBtn = elements.mobileProfileManageBtn || $("mobileProfileManageBtn");
   if (!sheet || !isCompactProfilesLayout()) return;
+
+  closeProfilePickerDropdown();
 
   prepareAppOverlay("profilesSheet");
 
@@ -16050,8 +16104,7 @@ function buildCardTitleTooltipElement(titleClassName, roadmap) {
 }
 
 function openPortfolioFiltersDrawerIfClosed() {
-  const drawer = elements.portfolioFiltersDrawer;
-  if (!drawer || drawer.open) return;
+  if (isFiltersSheetOpen()) return;
   openFiltersSheet();
 }
 

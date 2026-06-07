@@ -109,7 +109,7 @@
     grid-area: profile;
     display: flex !important;
     align-items: center;
-    gap: 0.2rem;
+    gap: 0;
     margin: 0 !important;
     padding: 0 !important;
     min-width: 0;
@@ -124,35 +124,7 @@
   html.is-compact-layout .profile-picker {
     flex: 1 1 auto;
     min-width: 0;
-  }
-
-  html.is-compact-layout .profile-picker__control {
-    min-height: var(--cockpit-touch) !important;
-    padding: 0.14rem 0.22rem 0.14rem 0.16rem !important;
-    border-radius: var(--cockpit-pill) !important;
-    border: 1px solid var(--cockpit-border) !important;
-    background: rgba(255, 255, 255, 0.86) !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
-    transition: border-color 0.18s ease, box-shadow 0.18s ease;
-  }
-
-  html.is-compact-layout .profile-picker__control:focus-within,
-  html.is-compact-layout .profile-picker__field--open .profile-picker__control {
-    border-color: rgba(185, 28, 28, 0.35) !important;
-    box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.08);
-  }
-
-  html.is-compact-layout .profile-picker__avatar {
-    width: 24px !important;
-    height: 24px !important;
-    font-size: 0.58rem !important;
-    border-radius: 7px !important;
-  }
-
-  html.is-compact-layout .profile-picker__input {
-    font-size: 0.78rem !important;
-    font-weight: 650 !important;
-    padding: 0.1rem 0.12rem !important;
+    width: 100%;
   }
 
   html.is-compact-layout .super-admin-toggle-slot--mobile {
@@ -273,86 +245,24 @@
     display: none !important;
   }
 
-  /* Filter chip — icon trigger; body opens in bottom sheet */
+  /* Filter trigger — layout slot only; visuals in filters-compact-bar.css */
   html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-drawer {
     grid-area: filters;
     align-self: stretch;
     width: auto;
     min-width: 0;
     margin: 0 !important;
-    border: 1px solid var(--cockpit-border) !important;
-    border-radius: var(--cockpit-pill) !important;
-    background: rgba(255, 255, 255, 0.72) !important;
     overflow: visible !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
   }
 
   html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-drawer[open] {
     grid-column: auto;
     grid-row: auto;
     width: auto;
-    border-radius: var(--cockpit-pill) !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
   }
 
-  html.is-compact-layout.filters-sheet-open .mobile-workspace-chrome .portfolio-filters-drawer {
-    border-color: rgba(185, 28, 28, 0.32) !important;
-    background: rgba(185, 28, 28, 0.06) !important;
-  }
-
-  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary {
-    padding: 0.18rem 0.22rem !important;
-    min-height: var(--cockpit-touch);
-    box-sizing: border-box;
-    position: relative;
-  }
-
-  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-hint,
-  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-actions,
-  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-copy,
-  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-chevron,
-  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-subline {
-    display: none !important;
-  }
-
-  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-lead {
-    gap: 0 !important;
-    justify-content: center;
-  }
-
-  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-icon {
-    width: calc(var(--cockpit-touch) - 6px) !important;
-    height: calc(var(--cockpit-touch) - 6px) !important;
-    border-radius: 8px !important;
-    border: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    color: #991b1b !important;
-  }
-
-  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-icon svg {
-    width: 17px;
-    height: 17px;
-  }
-
-  /* Sheet is portaled to body when open — keep drawer slot as trigger only */
   html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-drawer:not(:has(.portfolio-filters-sheet--open)) {
     overflow: visible !important;
-  }
-
-  html.is-compact-layout .mobile-workspace-chrome .filters-active-pill.portfolio-filters-badge:not([style*="display: none"]) {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    min-width: 15px;
-    height: 15px;
-    padding: 0 4px;
-    font-size: 0.55rem;
-    line-height: 15px;
-    border-radius: 999px;
-    background: var(--cockpit-accent) !important;
-    color: #fff !important;
-    border: 1.5px solid #fff;
   }
 
   html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-body {

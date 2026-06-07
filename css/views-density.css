@@ -44,33 +44,41 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .ro
   gap: 0.35rem !important;
 }
 
-/* ── View toolbars (Table / Board / MoSCoW / Map) — prod spacing ─ */
-.view-toolbar,
-.roadmaps-table-toolbar.view-toolbar,
-.roadmaps-map-toolbar.view-toolbar,
-.scrum-board-toolbar.view-toolbar,
-.moscow-view-header.view-toolbar {
-  padding: 0.4rem 0.5rem !important;
-  margin: 0 0 0.3rem !important;
-  min-height: auto !important;
-}
+/* ── View toolbars — compact spacing only (desktop: view-toolbars-modern.css) ─ */
+@media (max-width: 1400px) {
+  html.is-compact-layout .view-toolbar,
+  html.is-compact-layout .roadmaps-table-toolbar.view-toolbar,
+  html.is-compact-layout .roadmaps-map-toolbar.view-toolbar,
+  html.is-compact-layout .scrum-board-toolbar.view-toolbar,
+  html.is-compact-layout .moscow-view-header.view-toolbar,
+  html.is-compact-layout .roadmaps-raci-toolbar.view-toolbar,
+  html.is-compact-layout .portfolio-kano-toolbar.view-toolbar {
+    padding: 0.4rem 0.5rem !important;
+    margin: 0 0 0.3rem !important;
+    min-height: auto !important;
+  }
 
-.view-toolbar__row {
-  gap: 0.4rem 0.55rem !important;
-}
+  html.is-compact-layout .view-toolbar__row {
+    gap: 0.4rem 0.55rem !important;
+  }
 
-.view-toolbar__row--primary {
-  gap: 0.4rem 0.55rem !important;
-}
+  html.is-compact-layout .view-toolbar__row--primary {
+    gap: 0.4rem 0.55rem !important;
+  }
 
-.view-toolbar__row--secondary {
-  margin-top: 0.35rem !important;
-  padding-top: 0.35rem !important;
-  gap: 0.35rem 0.45rem !important;
-}
+  html.is-compact-layout .view-toolbar__row--secondary {
+    margin-top: 0.35rem !important;
+    padding-top: 0.35rem !important;
+    gap: 0.35rem 0.45rem !important;
+  }
 
-.workspace-panel .roadmaps-map-toolbar {
-  padding: 0.3rem 0 0.2rem !important;
+  html.is-compact-layout .workspace-panel .roadmaps-map-toolbar {
+    padding: 0.3rem 0 0.2rem !important;
+  }
+
+  html.is-compact-layout .moscow-view-header {
+    margin-bottom: 0.15rem !important;
+  }
 }
 
 .portfolio-view-bar,
@@ -144,10 +152,6 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .ro
 .moscow-board-card {
   padding: 0.45rem 0.55rem !important;
   min-height: 56px !important;
-}
-
-.moscow-view-header {
-  margin-bottom: 0.15rem !important;
 }
 
 /* ── Map ──────────────────────────────────────────────────── */

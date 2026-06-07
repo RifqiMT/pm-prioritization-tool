@@ -3968,6 +3968,12 @@ button:disabled {
   .filter-group--date-range {
     flex: 1 1 100%;
   }
+
+  .filters-row--leads > .filter-group--compact {
+    flex: 0 0 auto !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
 }
 
 /* Table */

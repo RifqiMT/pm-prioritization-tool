@@ -1,11 +1,182 @@
 /**
- * Phones & tablets — polished filters drawer summary + action bar.
+ * Phones, tablets, narrow screens (≤1400px) — filter trigger + expanded drawer.
+ * Cockpit chip matches profile picker; active filters show count badge + accent state.
  */
 
 @media (max-width: 1400px) {
+  /* ── Cockpit filter chip (mobile command rail) ─────────── */
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-drawer {
+    flex: 0 0 auto;
+    border: 1px solid rgba(202, 138, 4, 0.24) !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.98),
+      0 1px 4px rgba(63, 15, 25, 0.05) !important;
+    transition:
+      border-color 0.18s ease,
+      background 0.18s ease,
+      box-shadow 0.18s ease,
+      transform 0.12s ease;
+  }
+
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-drawer.portfolio-filters-drawer--active {
+    border-color: rgba(185, 28, 28, 0.42) !important;
+    background: linear-gradient(180deg, rgba(255, 247, 237, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.98),
+      0 0 0 3px rgba(185, 28, 28, 0.08),
+      0 2px 8px rgba(185, 28, 28, 0.1) !important;
+  }
+
+  html.is-compact-layout.filters-sheet-open .mobile-workspace-chrome .portfolio-filters-drawer {
+    border-color: rgba(185, 28, 28, 0.48) !important;
+    background: #fff !important;
+    box-shadow:
+      0 0 0 3px rgba(185, 28, 28, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.98) !important;
+  }
+
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    min-height: var(--cockpit-touch, 36px) !important;
+    padding: 0.24rem 0.42rem !important;
+    position: relative;
+    list-style: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary::after {
+    display: none !important;
+  }
+
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary:active {
+    transform: scale(0.98);
+  }
+
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-hint,
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-actions,
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-copy,
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-chevron,
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-subline {
+    display: none !important;
+  }
+
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-lead {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.38rem;
+    min-width: 0;
+    width: 100%;
+  }
+
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-icon {
+    position: relative;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    color: #7a4b12;
+    background: rgba(254, 243, 199, 0.42);
+    border: none;
+    box-shadow: none;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-icon svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2.15;
+  }
+
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-drawer--active .portfolio-filters-summary-icon {
+    color: #b91c1c;
+    background: rgba(254, 226, 226, 0.55);
+  }
+
+  html.is-compact-layout.filters-sheet-open .mobile-workspace-chrome .portfolio-filters-summary-icon {
+    color: #fff;
+    background: linear-gradient(145deg, #dc2626, #b91c1c);
+    box-shadow: 0 2px 6px rgba(185, 28, 28, 0.28);
+  }
+
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-label {
+    display: none;
+    flex: 0 1 auto;
+    min-width: 0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: #3f0f19;
+    white-space: nowrap;
+  }
+
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-drawer--active .portfolio-filters-summary-label {
+    color: #991b1b;
+  }
+
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-indicator {
+    position: relative;
+    flex: 0 0 auto;
+    display: none;
+    align-items: center;
+    min-width: 0;
+  }
+
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-drawer--active .portfolio-filters-summary-indicator:not([hidden]) {
+    display: flex;
+  }
+
+  html.is-compact-layout .mobile-workspace-chrome .filters-active-pill.portfolio-filters-badge:not([style*="display: none"]) {
+    position: absolute;
+    top: -7px;
+    right: -9px;
+    z-index: 2;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    font-size: 0.62rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0;
+    color: #fff !important;
+    background: linear-gradient(180deg, #dc2626, #b91c1c) !important;
+    border: 2px solid #fff !important;
+    box-shadow: 0 2px 8px rgba(185, 28, 28, 0.38);
+    animation: filters-badge-pop 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
+  }
+
+  @keyframes filters-badge-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.72);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* ── Non-cockpit compact drawer (fallback / expanded contexts) ─ */
   html.is-compact-layout .portfolio-filters-drawer {
     border-bottom: 1px solid rgba(202, 138, 4, 0.28) !important;
     background: linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(255, 249, 240, 0.94)) !important;
+  }
+
+  html.is-compact-layout .portfolio-filters-drawer.portfolio-filters-drawer--active {
+    border-color: rgba(185, 28, 28, 0.28) !important;
   }
 
   html.is-compact-layout .portfolio-filters-summary {
@@ -35,7 +206,6 @@
     box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.65);
   }
 
-  /* Row 1 — title + active count + expand chevron */
   html.is-compact-layout .portfolio-filters-summary-lead {
     display: flex;
     align-items: center;
@@ -51,10 +221,17 @@
     width: 36px;
     height: 36px;
     border-radius: 10px;
-    color: #991b1b;
-    background: linear-gradient(145deg, rgba(185, 28, 28, 0.1), rgba(161, 98, 7, 0.14));
-    border: 1px solid rgba(202, 138, 4, 0.35);
+    color: #7a4b12;
+    background: linear-gradient(145deg, rgba(254, 243, 199, 0.55), rgba(254, 226, 226, 0.35));
+    border: 1px solid rgba(202, 138, 4, 0.28);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  }
+
+  html.is-compact-layout .portfolio-filters-drawer--active .portfolio-filters-summary-icon {
+    color: #b91c1c;
+    background: linear-gradient(145deg, rgba(254, 226, 226, 0.65), rgba(255, 237, 213, 0.55));
+    border-color: rgba(185, 28, 28, 0.28);
   }
 
   html.is-compact-layout .portfolio-filters-summary-icon svg {
@@ -83,6 +260,10 @@
     text-transform: none !important;
   }
 
+  html.is-compact-layout .portfolio-filters-drawer--active .portfolio-filters-summary-title {
+    color: #991b1b !important;
+  }
+
   html.is-compact-layout .portfolio-filters-summary-subline {
     font-size: 0.68rem;
     font-weight: 500;
@@ -92,6 +273,10 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  html.is-compact-layout .portfolio-filters-summary-label {
+    display: none;
   }
 
   html.is-compact-layout .portfolio-filters-badge.filters-active-pill {
@@ -106,10 +291,10 @@
     letter-spacing: 0.02em !important;
     text-transform: none !important;
     line-height: 1.2 !important;
-    color: #7c2d12 !important;
-    background: linear-gradient(180deg, #fff7ed, #ffedd5) !important;
-    border: 1px solid rgba(234, 88, 12, 0.35) !important;
-    box-shadow: 0 1px 2px rgba(124, 45, 18, 0.08);
+    color: #fff !important;
+    background: linear-gradient(180deg, #dc2626, #b91c1c) !important;
+    border: 1px solid rgba(185, 28, 28, 0.35) !important;
+    box-shadow: 0 2px 6px rgba(185, 28, 28, 0.22);
   }
 
   html.is-compact-layout .portfolio-filters-summary-chevron {
@@ -126,13 +311,13 @@
     transition: transform 0.22s ease, background 0.2s ease, color 0.2s ease;
   }
 
-  html.is-compact-layout .portfolio-filters-drawer[open] .portfolio-filters-summary-chevron {
+  html.is-compact-layout .portfolio-filters-drawer[open] .portfolio-filters-summary-chevron,
+  html.is-compact-layout.filters-sheet-open .portfolio-filters-summary-chevron {
     transform: rotate(180deg);
     background: rgba(254, 243, 199, 0.85);
     color: #92400e;
   }
 
-  /* Action buttons only when drawer is expanded (inside filter body) */
   html.is-compact-layout .portfolio-filters-summary-actions {
     display: none !important;
   }
@@ -142,7 +327,6 @@
     display: none !important;
   }
 
-  /* Expanded drawer — action bar at top of filter body */
   html.is-compact-layout .portfolio-filters-drawer[open] .portfolio-filters-toolbar:has(.filters-meta) {
     display: block !important;
     position: sticky;
@@ -263,6 +447,61 @@
     animation: filters-compact-body-in 0.2s ease-out;
   }
 
+  /* RACI lead filters — stacked rows on compact (phones, tablets, narrow) */
+  html.is-compact-layout .portfolio-filters-sheet .filters-row--leads,
+  html.is-compact-layout .portfolio-filters-body .filters-row--leads {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 0.45rem !important;
+    width: 100% !important;
+    margin: 0 0 0.45rem !important;
+    box-sizing: border-box;
+  }
+
+  html.is-compact-layout .filters-row--leads > .filter-group,
+  html.is-compact-layout .filters-row--leads > .filter-group--compact,
+  html.is-compact-layout .filters-row--leads > .filter-group--autocomplete {
+    flex: 0 0 auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  html.is-compact-layout .filters-row--leads .filter-group label {
+    display: block;
+    width: 100%;
+    min-height: auto;
+    font-size: 0.62rem !important;
+    letter-spacing: 0.045em !important;
+    line-height: 1.15;
+    margin-bottom: 0.22rem !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  html.is-compact-layout .filters-row--leads .filter-autocomplete {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  html.is-compact-layout .filters-row--leads .filter-autocomplete input[type="search"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    min-height: 40px !important;
+    font-size: 0.82rem !important;
+    padding: 0.42rem 0.55rem !important;
+    box-sizing: border-box;
+  }
+
+  html.is-compact-layout .filters-row--advanced {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
   @keyframes filters-compact-body-in {
     from {
       opacity: 0;
@@ -275,14 +514,37 @@
   }
 }
 
+/* Tablet — show Filters label beside icon in cockpit */
+@media (min-width: 640px) and (max-width: 1400px) {
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary {
+    padding-inline: 0.55rem 0.62rem !important;
+  }
+
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-label {
+    display: inline;
+  }
+
+  html.is-compact-layout .mobile-workspace-chrome .filters-active-pill.portfolio-filters-badge:not([style*="display: none"]) {
+    position: static;
+    top: auto;
+    right: auto;
+    min-width: 20px;
+    height: 20px;
+    margin-left: 0.12rem;
+  }
+}
+
 @media (max-width: 1400px) and (prefers-reduced-motion: reduce) {
   html.is-compact-layout .portfolio-filters-body,
-  html.is-compact-layout .filters-advanced.visible {
+  html.is-compact-layout .filters-advanced.visible,
+  html.is-compact-layout .mobile-workspace-chrome .filters-active-pill.portfolio-filters-badge {
     animation: none;
   }
 
   html.is-compact-layout .portfolio-filters-summary-chevron,
-  html.is-compact-layout .portfolio-filters-summary-actions .portfolio-filter-btn {
+  html.is-compact-layout .portfolio-filters-summary-actions .portfolio-filter-btn,
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-drawer,
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary {
     transition: none;
   }
 }
@@ -294,6 +556,10 @@
 
   html.is-compact-layout .portfolio-filter-btn__label {
     font-size: 0.72rem;
+  }
+
+  html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary {
+    padding-inline: 0.34rem !important;
   }
 }
 
@@ -308,7 +574,9 @@ html.is-desktop-layout .portfolio-filters-summary-actions .filters-meta {
 
 html.is-desktop-layout .portfolio-filters-summary-icon,
 html.is-desktop-layout .portfolio-filters-summary-subline,
-html.is-desktop-layout .portfolio-filters-summary-chevron {
+html.is-desktop-layout .portfolio-filters-summary-chevron,
+html.is-desktop-layout .portfolio-filters-summary-label,
+html.is-desktop-layout .portfolio-filters-summary-indicator {
   display: none !important;
 }
 

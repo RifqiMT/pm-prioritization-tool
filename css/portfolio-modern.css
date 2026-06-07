@@ -729,6 +729,46 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .workspace-panel--v2
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.workspace-panel--v2 .filters-row--leads {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: flex-end !important;
+  gap: 0.5rem !important;
+  width: 100% !important;
+  margin: 0 0 0.45rem !important;
+  box-sizing: border-box;
+}
+
+.workspace-panel--v2 .filters-row--leads > .filter-group {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  width: auto !important;
+}
+
+.workspace-panel--v2 .filters-row--leads .filter-group--compact {
+  flex: 1 1 0 !important;
+}
+
+.workspace-panel--v2 .filters-row--leads .filter-group label {
+  display: block;
+  width: 100%;
+  min-height: 1.35rem;
+  margin-bottom: 0.3rem !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-panel--v2 .filters-row--leads .filter-autocomplete,
+.workspace-panel--v2 .filters-row--leads .filter-autocomplete input[type="search"] {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
+}
+
 @media (min-width: 900px) {
   .workspace-panel--v2 .filters-row--advanced {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1228,11 +1268,11 @@ html.filters-drawer-open .portfolio-filters-body {
 }
 
 /* MoSCoW */
-.workspace-panel--v2 .moscow-view-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.75rem;
+.workspace-panel--v2 .moscow-view-header.view-toolbar {
+  display: block !important;
+  flex-wrap: unset !important;
+  align-items: stretch !important;
+  gap: unset !important;
 }
 
 .workspace-panel--v2 .moscow-grid-title {
@@ -1338,31 +1378,57 @@ html.filters-drawer-open .portfolio-filters-body {
   font-weight: 500;
 }
 
-.profile-picker__toggle {
-  flex: 0 0 auto;
-  width: 32px !important;
-  height: 32px !important;
-  min-height: 32px !important;
-  padding: 0 !important;
-  border: none !important;
-  border-radius: 8px !important;
-  background: transparent !important;
-  color: var(--pf-text-soft, #7a4b12) !important;
-  box-shadow: none !important;
-  transform: none !important;
+.profile-picker__display {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
   cursor: pointer;
-  display: grid !important;
-  place-items: center !important;
+  box-shadow: none;
 }
 
-.profile-picker__toggle:hover {
-  background: rgba(254, 243, 199, 0.55) !important;
-  color: var(--pf-accent, #b91c1c) !important;
-  transform: none !important;
-  box-shadow: none !important;
+.profile-picker__display-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.06rem;
 }
 
-.profile-picker__field--open .profile-picker__toggle svg {
+.profile-picker__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 650;
+}
+
+.profile-picker__meta {
+  font-size: 0.72rem;
+  color: var(--pf-text-soft, #7a4b12);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-picker__chevron {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pf-text-soft, #7a4b12);
+  transition: transform 0.18s ease;
+}
+
+.profile-picker__field--open .profile-picker__chevron {
   transform: rotate(180deg);
 }
 
@@ -1481,6 +1547,36 @@ html.filters-drawer-open .portfolio-filters-body {
   font-size: 0.82rem;
   color: var(--pf-text-soft, #7a4b12);
   text-align: center;
+}
+
+.profile-picker__dropdown-footer {
+  flex: 0 0 auto;
+  padding: 0.35rem;
+  border-top: 1px solid rgba(231, 201, 120, 0.45);
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.6), rgba(255, 250, 242, 0.95));
+}
+
+.profile-picker__dropdown-manage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 42px;
+  padding: 0.55rem 0.75rem;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--pf-text-soft, #7a4b12);
+  font-size: 0.82rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.profile-picker__dropdown-manage:hover {
+  background: rgba(254, 243, 199, 0.45);
+  color: var(--pf-accent, #b91c1c);
 }
 
 .profile-picker__manage {
