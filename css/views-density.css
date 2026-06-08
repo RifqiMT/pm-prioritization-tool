@@ -1,5 +1,8 @@
 /**
- * View density — tight spacing for Table, Board, MoSCoW, and Map.
+ * View density — tight spacing for Table,
+Board,
+MoSCoW,
+and Map.
  * Loaded last; reduces unnecessary padding inside feature views.
  */
 
@@ -7,20 +10,14 @@
 .workspace-panel--v2 .portfolio-command-bar {
   padding: 0.5rem 0.6rem 0.45rem !important;
   gap: 0.4rem !important;
-}
-
-.workspace-panel .filters-shell,
+}.workspace-panel .filters-shell,
 .workspace-panel--v2 .portfolio-filters-body,
 .portfolio-filters-body {
   padding: 0.45rem 0.6rem 0.5rem !important;
-}
-
-.portfolio-filters-toolbar {
+}.portfolio-filters-toolbar {
   margin-bottom: 0.4rem !important;
   padding-top: 0.2rem !important;
-}
-
-/* View shell + toolbar spacing: production-aligned (see views-density below) */
+}/* View shell + toolbar spacing: production-aligned (see views-density below) */
 
 /* ── View stage containers (Vercel prod reference) ─────────── */
 .workspace-panel .roadmaps-view,
@@ -42,9 +39,7 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .ro
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--kano {
   padding: 0 0.45rem 0.45rem !important;
   gap: 0.35rem !important;
-}
-
-/* ── View toolbars — compact spacing only (desktop: view-toolbars-modern.css) ─ */
+}/* ── View toolbars — compact spacing only (desktop: view-toolbars-modern.css) ─ */
 @media (max-width: 1400px) {
   html.is-compact-layout .view-toolbar,
   html.is-compact-layout .roadmaps-table-toolbar.view-toolbar,
@@ -79,88 +74,54 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .ro
   html.is-compact-layout .moscow-view-header {
     margin-bottom: 0.15rem !important;
   }
-}
-
-.portfolio-view-bar,
+}.portfolio-view-bar,
 .workspace-panel--v2 .workspace-view-toolbar,
 .workspace-view-toolbar {
   padding: 0.35rem 0 !important;
   margin-bottom: 0.3rem !important;
-}
-
-/* ── Table ────────────────────────────────────────────────── */
+}/* ── Table ────────────────────────────────────────────────── */
 .table-wrapper--modern thead th {
   padding: 0.42rem 0.38rem !important;
-}
-
-.table-wrapper--modern tbody td {
+}.table-wrapper--modern tbody td {
   padding: 0.38rem 0.36rem !important;
-}
-
-.table-wrapper--modern .empty-state,
+}.table-wrapper--modern .empty-state,
 .workspace-panel--v2 .empty-state {
   padding: 1.25rem 0.75rem !important;
-}
-
-.workspace-panel--v2 .table-wrapper--modern::before {
+}.workspace-panel--v2 .table-wrapper--modern::before {
   padding: 0.28rem 0.45rem !important;
-}
-
-/* ── Board ────────────────────────────────────────────────── */
+}/* ── Board ────────────────────────────────────────────────── */
 .roadmaps-view--board .scrum-board {
   padding: 0.15rem 0 0.3rem !important;
   gap: 0.5rem !important;
-}
-
-.roadmaps-view--board .scrum-board-column-header {
+}.roadmaps-view--board .scrum-board-column-header {
   padding: 0.45rem 0.5rem !important;
-}
-
-.roadmaps-view--board .scrum-board-column-cards {
+}.roadmaps-view--board .scrum-board-column-cards {
   padding: 0.3rem !important;
   gap: 0.35rem !important;
-}
-
-.roadmaps-view--board .scrum-board-card {
+}.roadmaps-view--board .scrum-board-card {
   padding: 0.45rem 0.5rem !important;
-}
-
-.roadmaps-view--board .scrum-board-empty {
+}.roadmaps-view--board .scrum-board-empty {
   padding: 0.75rem 0.5rem !important;
-}
-
-.workspace-panel--v2 .scrum-board {
+}.workspace-panel--v2 .scrum-board {
   padding-bottom: 0.25rem !important;
-}
-
-/* ── MoSCoW ───────────────────────────────────────────────── */
+}/* ── MoSCoW ───────────────────────────────────────────────── */
 .moscow-quadrant-header {
   padding: 0.45rem 0.55rem 0.4rem !important;
   min-height: auto !important;
   gap: 0.3rem !important;
-}
-
-.moscow-quadrant-label {
+}.moscow-quadrant-label {
   padding: 0.28rem 0.6rem !important;
-}
-
-.moscow-board-column-cards {
+}.moscow-board-column-cards {
   padding: 0.35rem !important;
   gap: 0.35rem !important;
-}
-
-.moscow-board-card {
+}.moscow-board-card {
   padding: 0.45rem 0.55rem !important;
   min-height: 56px !important;
-}
-
-/* ── Map ──────────────────────────────────────────────────── */
+}/* ── Map ──────────────────────────────────────────────────── */
 .roadmaps-map-legend {
   margin-bottom: 0.3rem !important;
   font-size: 0.8rem !important;
-}
-
-.workspace-panel--v2 .roadmaps-map-container,
+}.workspace-panel--v2 .roadmaps-map-container,
 .workspace-panel .roadmaps-map-container {
   position: relative !important;
   flex: 0 0 auto !important;
@@ -169,18 +130,14 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .ro
   height: auto !important;
   min-height: 0 !important;
   max-height: min(42vh, 480px) !important;
-}
-
-.workspace-panel--v2 .roadmaps-map-container .leaflet-container,
+}.workspace-panel--v2 .roadmaps-map-container .leaflet-container,
 .workspace-panel .roadmaps-map-container .leaflet-container {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
   min-height: 0 !important;
-}
-
-/* ── Compact (phones & tablets ≤1400px) — minimal padding ─── */
+}/* ── Compact (phones & tablets ≤1400px) — minimal padding ─── */
 @media (max-width: 1400px) {
   html.is-compact-layout .app-layout {
     gap: 0.35rem !important;

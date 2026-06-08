@@ -4,14 +4,10 @@
 
 html.is-desktop-layout.board-drag-active {
   cursor: grabbing !important;
-}
-
-html.is-desktop-layout.board-drag-active .scrum-board-card,
+}html.is-desktop-layout.board-drag-active .scrum-board-card,
 html.is-desktop-layout.board-drag-active .moscow-board-card {
   cursor: grabbing !important;
-}
-
-/* Floating card preview */
+}/* Floating card preview */
 html.is-desktop-layout .board-drag-preview {
   position: fixed;
   z-index: 10050;
@@ -35,9 +31,7 @@ html.is-desktop-layout .board-drag-preview {
     opacity: 1;
     transform: rotate(-1.25deg) scale(1.025);
   }
-}
-
-/* Source card placeholder while dragging */
+}/* Source card placeholder while dragging */
 html.is-desktop-layout .scrum-board-card.scrum-board-card--dragging,
 html.is-desktop-layout .moscow-board-card.moscow-board-card--dragging,
 html.is-desktop-layout .roadmaps-view--board .scrum-board-card.scrum-board-card--dragging {
@@ -47,9 +41,7 @@ html.is-desktop-layout .roadmaps-view--board .scrum-board-card.scrum-board-card-
   border-color: rgba(185, 28, 28, 0.5) !important;
   background: rgba(254, 242, 242, 0.45) !important;
   box-shadow: inset 0 0 0 1px rgba(220, 38, 38, 0.12) !important;
-}
-
-/* Drop position slot */
+}/* Drop position slot */
 html.is-desktop-layout .board-drop-indicator {
   flex-shrink: 0;
   height: 5px;
@@ -75,9 +67,7 @@ html.is-desktop-layout .board-drop-indicator {
     opacity: 1;
     transform: scaleY(1.15);
   }
-}
-
-/* Target column / quadrant */
+}/* Target column / quadrant */
 html.is-desktop-layout .scrum-board-column.scrum-board-column--drag-over,
 html.is-desktop-layout .moscow-board-column.moscow-board-column--drag-over,
 html.is-desktop-layout .moscow-board-column.moscow-grid-cell.moscow-board-column--drag-over {
@@ -86,9 +76,7 @@ html.is-desktop-layout .moscow-board-column.moscow-grid-cell.moscow-board-column
     0 0 0 3px rgba(220, 38, 38, 0.22),
     0 14px 32px rgba(127, 29, 29, 0.14) !important;
   animation: board-column-drag-over 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-html.is-desktop-layout .scrum-board-column.scrum-board-column--drag-over .scrum-board-column-cards,
+}html.is-desktop-layout .scrum-board-column.scrum-board-column--drag-over .scrum-board-column-cards,
 html.is-desktop-layout .moscow-board-column.moscow-board-column--drag-over .moscow-board-column-cards {
   background: rgba(254, 242, 242, 0.4);
   outline: 1px dashed rgba(220, 38, 38, 0.28);

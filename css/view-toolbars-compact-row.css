@@ -297,9 +297,7 @@
   html.is-compact-layout .view-toolbar--moscow .view-fullscreen-btn {
     flex: 0 0 auto !important;
   }
-}
-
-/* Desktop: group-by selector is compact-only (phones/tablets) */
+}/* Desktop: group-by selector is compact-only (phones/tablets) */
 html.is-desktop-layout .view-toolbar--table .roadmaps-table-group-bar,
 html.is-desktop-layout .roadmaps-table-group-bar--compact-only {
   display: none !important;

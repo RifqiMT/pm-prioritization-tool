@@ -1,0 +1,133 @@
+/**
+ * Roadmap quarter periods (YYYY-Q1..Q4) with per-period status.
+ */
+const RoadmapPeriods = (function () {
+  const START_YEAR = 2020;
+  const FUTURE_YEARS = 20;
+  const PERIOD_PATTERN = /^(\d{4})-Q([1-4])$/;
+
+  function getEndYear() {
+    return new Date().getFullYear() + FUTURE_YEARS;
+  }
+
+  function getCurrentQuarter(date) {
+    const d = date instanceof Date ? date : new Date();
+    return Math.floor(d.getMonth() / 3) + 1;
+  }
+
+  function getCurrentPeriod(date) {
+    const d = date instanceof Date ? date : new Date();
+    const year = d.getFullYear();
+    const quarter = getCurrentQuarter(d);
+    const period = `${year}-Q${quarter}`;
+    return normalizeKey(period) || `${START_YEAR}-Q1`;
+  }
+
+  function buildDefaultPeriodEntry(statusOptions) {
+    return {
+      period: getCurrentPeriod(),
+      status: normalizeStatus("Not Started", statusOptions)
+    };
+  }
+
+  function buildOptions() {
+    const options = [];
+    const endYear = getEndYear();
+    for (let year = START_YEAR; year <= endYear; year += 1) {
+      for (let quarter = 1; quarter <= 4; quarter += 1) {
+        options.push(`${year}-Q${quarter}`);
+      }
+    }
+    return options;
+  }
+
+  function normalizeKey(raw) {
+    const value = String(raw || "").trim().toUpperCase().replace(/\s+/g, "");
+    if (!value) return null;
+    const match = value.match(PERIOD_PATTERN);
+    if (!match) return null;
+    return `${match[1]}-Q${match[2]}`;
+  }
+
+  function normalizeStatus(status, statusOptions) {
+    const value = String(status || "").trim();
+    const options = Array.isArray(statusOptions) && statusOptions.length ? statusOptions : ["Not Started"];
+    return options.includes(value) ? value : options[0];
+  }
+
+  function normalizePeriods(raw, { legacyPeriod = null, legacyStatus = null, statusOptions = null } = {}) {
+    const out = [];
+    const seen = new Set();
+
+    const pushEntry = (periodRaw, statusRaw) => {
+      const period = normalizeKey(periodRaw);
+      if (!period || seen.has(period)) return;
+      seen.add(period);
+      out.push({
+        period,
+        status: normalizeStatus(statusRaw, statusOptions)
+      });
+    };
+
+    if (Array.isArray(raw)) {
+      raw.forEach((entry) => {
+        if (!entry || typeof entry !== "object") return;
+        pushEntry(entry.period != null ? entry.period : entry.quarter, entry.status);
+      });
+    } else if (typeof raw === "string" && raw.trim()) {
+      raw
+        .split(/[,|;]+/)
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .forEach((token) => pushEntry(token, legacyStatus));
+    }
+
+    if (!out.length && legacyPeriod) {
+      pushEntry(legacyPeriod, legacyStatus);
+    }
+
+    out.sort((a, b) => {
+      const [ay, aq] = a.period.split("-Q").map(Number);
+      const [by, bq] = b.period.split("-Q").map(Number);
+      if (ay !== by) return ay - by;
+      return aq - bq;
+    });
+
+    return out;
+  }
+
+  function deriveLegacyPeriod(periods) {
+    const list = Array.isArray(periods) ? periods : [];
+    return list.length ? list[0].period : null;
+  }
+
+  function formatDisplay(periods) {
+    const list = Array.isArray(periods) ? periods : [];
+    return list.map((entry) => entry.period).join(", ");
+  }
+
+  function validatePeriods(periods) {
+    const list = Array.isArray(periods) ? periods : [];
+    for (const entry of list) {
+      if (!entry || !normalizeKey(entry.period)) {
+        return "Each roadmap period must use the format YYYY-QX (e.g. 2026-Q1).";
+      }
+    }
+    return "";
+  }
+
+  return {
+    START_YEAR,
+    FUTURE_YEARS,
+    getEndYear,
+    getCurrentQuarter,
+    getCurrentPeriod,
+    buildDefaultPeriodEntry,
+    buildOptions,
+    normalizeKey,
+    normalizePeriods,
+    deriveLegacyPeriod,
+    formatDisplay,
+    validatePeriods
+  };
+})();

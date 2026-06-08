@@ -159,7 +159,7 @@ pm-prioritization-tool/
 | 10–16 | `compact` … `app-footer` | Compact layouts, fullscreen, footer |
 | 17–23 | `views-density` … `table-compact-cards` | Density, table structure, compact cards |
 | 24–29 | `super-admin` … `filters-compact-bar` | Workspace mode, map tooltips, board DnD, filters |
-| 30–33 | `roadmap-details-tooltip` … `portfolio-kano-modern` | Tooltips, rich-text, KANO matrix |
+| 30–33 | `rich-description-content` … `portfolio-kano-modern` | Rich-text, descriptions, KANO matrix |
 
 Full numbered list: [docs/TECH_GUIDELINES.md](docs/TECH_GUIDELINES.md) §3.1 (must match `index.html` lines 15–47).
 

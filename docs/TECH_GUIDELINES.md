@@ -87,7 +87,7 @@ Later files win for equal specificity (all query `?v=APP_ASSET_VERSION`):
 | 27 | `board-card-interaction.css` | Card press feedback |
 | 28 | `view-toolbars-compact-row.css` | Single-row compact toolbars |
 | 29 | `filters-compact-bar.css` | Filters drawer compact bar |
-| 30 | `roadmap-details-tooltip.css` | Description tooltips on cards |
+| 30 | `rich-description-content.css` | RTE and sanitized description HTML |
 | 31 | `rich-description-content.css` | Rendered rich-text typography |
 | 32 | `rich-text-editor.css` | Rich-text toolbar and fields |
 | 33 | `portfolio-kano-modern.css` | KANO portfolio matrix and cards |

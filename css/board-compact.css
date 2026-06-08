@@ -1,6 +1,7 @@
 /**
  * Board view — non-desktop (≤1400px).
- * Phone layout: stacked columns, no horizontal scroll.
+ * Phone layout: stacked columns,
+no horizontal scroll.
  * Requires html.is-compact-layout (app.js).
  */
 

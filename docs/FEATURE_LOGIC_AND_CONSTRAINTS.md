@@ -429,7 +429,7 @@ flowchart LR
 | **Logic** | `OverlayManager` enforces single modal/drawer; one active description tooltip host |
 | **Rules** | Modals close via footer actions, Esc, backdrop — no header × dismiss |
 | **Constraints** | Tooltips must not clip at map edges (dedicated positioning) |
-| **Code** | `src/modules/overlay-manager.js`, `css/roadmap-details-tooltip.css` |
+| **Code** | `src/modules/overlay-manager.js`, `css/rich-description-content.css` |
 
 ### F-51 Fullscreen per view
 

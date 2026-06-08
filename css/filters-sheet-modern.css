@@ -1,5 +1,7 @@
 /**
- * Filters bottom sheet — phones, tablets, narrow screens (≤1400px).
+ * Filters bottom sheet — phones,
+tablets,
+narrow screens (≤1400px).
  * Mirrors the profiles & owners sheet pattern.
  */
 
@@ -57,7 +59,7 @@
   .filters-sheet-backdrop.filters-sheet-backdrop--visible {
     opacity: 1;
     pointer-events: auto;
-    cursor: pointer;
+    cursor: default;
   }
 
   /* Bottom sheet panel — portaled to <html> on compact */

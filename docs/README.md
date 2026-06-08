@@ -90,7 +90,7 @@ pm-prioritization-tool/
 │   ├── table-rows-modern.css       # Desktop table rows
 │   ├── table-revamp-modern.css     # Semantic column layout
 │   ├── roadmap-actions-modern.css  # View / Edit / Delete actions
-│   ├── roadmap-details-tooltip.css # Card/table description tooltips
+│   ├── rich-description-content.css # RTE / description HTML rendering
 │   ├── rich-text-editor.css        # Rich-text toolbar + fields
 │   ├── rich-description-content.css # Rendered description typography (modal, tooltips)
 │   ├── byok-api-keys.css           # BYOK API keys modal

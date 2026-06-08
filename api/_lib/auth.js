@@ -59,6 +59,5 @@ function verifyRequest(req) {
 module.exports = {
   getWorkspaceId,
   isAuthRequired,
-  getConfiguredSecret,
   verifyRequest
 };

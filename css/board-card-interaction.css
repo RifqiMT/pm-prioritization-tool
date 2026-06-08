@@ -1,6 +1,9 @@
 /**
  * Standardized Scrum / MoSCoW roadmap card hover & press feedback.
- * No padding, margin, transform, or scale changes — outline + shadow only.
+ * No padding,
+margin,
+transform,
+or scale changes — outline + shadow only.
  */
 
 html.is-desktop-layout,
@@ -12,9 +15,7 @@ html.is-compact-layout {
   --bci-outline-hover: rgba(220, 38, 38, 0.32);
   --bci-outline-pressed: rgba(220, 38, 28, 0.5);
   --bci-surface-pressed: rgba(254, 242, 242, 0.42);
-}
-
-/* Base interactive shell (structured board cards) */
+}/* Base interactive shell (structured board cards) */
 html.is-desktop-layout .scrum-board-card.portfolio-board-card--structured,
 html.is-desktop-layout .moscow-board-card.portfolio-board-card--structured,
 html.is-compact-layout .scrum-board-card.portfolio-board-card--structured,
@@ -31,21 +32,15 @@ html.is-desktop-layout .roadmaps-view--moscow .moscow-board-card.portfolio-board
     outline-color var(--bci-ease),
     box-shadow var(--bci-ease),
     background-color var(--bci-ease) !important;
-}
-
-html.is-desktop-layout .scrum-board-card.portfolio-board-card--structured,
+}html.is-desktop-layout .scrum-board-card.portfolio-board-card--structured,
 html.is-desktop-layout .moscow-board-card.portfolio-board-card--structured,
 html.is-desktop-layout .roadmaps-view--board .scrum-board-card.portfolio-board-card--structured,
 html.is-desktop-layout .roadmaps-view--moscow .moscow-board-card.portfolio-board-card--structured {
   cursor: grab !important;
-}
-
-html.is-compact-layout .scrum-board-card.portfolio-board-card--structured,
+}html.is-compact-layout .scrum-board-card.portfolio-board-card--structured,
 html.is-compact-layout .moscow-board-card.portfolio-board-card--structured {
   cursor: default !important;
-}
-
-/* Hover */
+}/* Hover */
 html.is-desktop-layout .scrum-board-card.portfolio-board-card--structured:hover:not(.scrum-board-card--dragging):not(.moscow-board-card--dragging):not(.portfolio-board-card--pressed),
 html.is-desktop-layout .moscow-board-card.portfolio-board-card--structured:hover:not(.scrum-board-card--dragging):not(.moscow-board-card--dragging):not(.portfolio-board-card--pressed),
 html.is-compact-layout .scrum-board-card.portfolio-board-card--structured:hover:not(.scrum-board-card--dragging):not(.moscow-board-card--dragging):not(.portfolio-board-card--pressed),
@@ -56,9 +51,7 @@ html.is-compact-layout .moscow-board-card.portfolio-board-card--structured:hover
   box-shadow: var(--bci-shadow-hover) !important;
   transform: none !important;
   z-index: 2;
-}
-
-/* Press / click (pointer or :active) */
+}/* Press / click (pointer or :active) */
 html.is-desktop-layout .scrum-board-card.portfolio-board-card--structured.portfolio-board-card--pressed:not(.scrum-board-card--dragging):not(.moscow-board-card--dragging),
 html.is-desktop-layout .moscow-board-card.portfolio-board-card--structured.portfolio-board-card--pressed:not(.scrum-board-card--dragging):not(.moscow-board-card--dragging),
 html.is-compact-layout .scrum-board-card.portfolio-board-card--structured.portfolio-board-card--pressed:not(.scrum-board-card--dragging):not(.moscow-board-card--dragging),
@@ -72,23 +65,17 @@ html.is-compact-layout .moscow-board-card.portfolio-board-card--structured:activ
   background-color: var(--bci-surface-pressed) !important;
   transform: none !important;
   z-index: 3;
-}
-
-html.is-desktop-layout .scrum-board-card.portfolio-board-card--structured.portfolio-board-card--pressed,
+}html.is-desktop-layout .scrum-board-card.portfolio-board-card--structured.portfolio-board-card--pressed,
 html.is-desktop-layout .moscow-board-card.portfolio-board-card--structured.portfolio-board-card--pressed {
   cursor: grabbing !important;
-}
-
-/* No hover flash on other cards while dragging */
+}/* No hover flash on other cards while dragging */
 html.board-drag-active .scrum-board-card.portfolio-board-card--structured:not(.scrum-board-card--dragging):hover,
 html.board-drag-active .moscow-board-card.portfolio-board-card--structured:not(.moscow-board-card--dragging):hover {
   outline-color: transparent !important;
   box-shadow: var(--bci-shadow-rest) !important;
   background-color: inherit !important;
   z-index: auto;
-}
-
-/* Action controls keep their own affordances */
+}/* Action controls keep their own affordances */
 .scrum-board-card.portfolio-board-card--structured .scrum-board-card-actions,
 .scrum-board-card.portfolio-board-card--structured .scrum-board-card-actions button,
 .moscow-board-card.portfolio-board-card--structured .moscow-board-card-actions,
@@ -96,14 +83,10 @@ html.board-drag-active .moscow-board-card.portfolio-board-card--structured:not(.
 .scrum-board-card.portfolio-board-card--structured .portfolio-card-move,
 .moscow-board-card.portfolio-board-card--structured .portfolio-card-move {
   cursor: pointer;
-}
-
-.scrum-board-card.portfolio-board-card--structured .scrum-board-card-btn:active,
+}.scrum-board-card.portfolio-board-card--structured .scrum-board-card-btn:active,
 .moscow-board-card.portfolio-board-card--structured .moscow-board-card-btn:active {
   transform: none !important;
-}
-
-/* Compact table view — roadmap cards (phones & tablets) */
+}/* Compact table view — roadmap cards (phones & tablets) */
 html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured {
   transform: none !important;
   margin: 0 !important;
@@ -114,40 +97,30 @@ html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured {
     box-shadow var(--bci-ease),
     background-color var(--bci-ease) !important;
   cursor: default;
-}
-
-html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured:hover:not(.portfolio-board-card--pressed),
+}html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured:hover:not(.portfolio-board-card--pressed),
 html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured.roadmaps-table-card--selected:hover:not(.portfolio-board-card--pressed) {
   outline-color: var(--bci-outline-hover) !important;
   box-shadow: var(--bci-shadow-hover) !important;
   transform: none !important;
   z-index: 2;
-}
-
-html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured.portfolio-board-card--pressed,
+}html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured.portfolio-board-card--pressed,
 html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured:active:not(.portfolio-board-card--pressed) {
   outline-color: var(--bci-outline-pressed) !important;
   box-shadow: var(--bci-shadow-pressed) !important;
   background-color: var(--bci-surface-pressed) !important;
   transform: none !important;
   z-index: 3;
-}
-
-html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured.roadmaps-table-card--selected {
+}html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured.roadmaps-table-card--selected {
   border-color: rgba(185, 28, 28, 0.42) !important;
   box-shadow:
     0 0 0 2px rgba(254, 202, 202, 0.55),
     var(--bci-shadow-rest) !important;
-}
-
-html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured.roadmaps-table-card--selected.portfolio-board-card--pressed,
+}html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured.roadmaps-table-card--selected.portfolio-board-card--pressed,
 html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured.roadmaps-table-card--selected:active {
   box-shadow:
     0 0 0 2px rgba(254, 202, 202, 0.55),
     var(--bci-shadow-pressed) !important;
-}
-
-.roadmaps-table-card.portfolio-board-card--structured .roadmaps-table-card__select,
+}.roadmaps-table-card.portfolio-board-card--structured .roadmaps-table-card__select,
 .roadmaps-table-card.portfolio-board-card--structured .roadmaps-table-card__actions,
 .roadmaps-table-card.portfolio-board-card--structured .roadmaps-table-card__actions button {
   cursor: pointer;

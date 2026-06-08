@@ -97,7 +97,12 @@ function validateRoadmapInput(raw) {
     return "Select a currency when financial impact is provided.";
   }
 
-  if (raw.roadmapPeriod) {
+  if (raw.roadmapPeriods && Array.isArray(raw.roadmapPeriods) && raw.roadmapPeriods.length) {
+    if (typeof RoadmapPeriods !== "undefined") {
+      const periodError = RoadmapPeriods.validatePeriods(raw.roadmapPeriods);
+      if (periodError) return periodError;
+    }
+  } else if (raw.roadmapPeriod) {
     const periodPattern = /^\d{4}-Q[1-4]$/;
     if (!periodPattern.test(raw.roadmapPeriod)) {
       return "Roadmap period must be in the format YYYY-QX (e.g. 2026-Q1).";

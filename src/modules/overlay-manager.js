@@ -38,14 +38,9 @@
     closeAllExcept(id);
   }
 
-  function closeAll() {
-    closeAllExcept(null);
-  }
-
   global.OverlayManager = {
     register,
     prepareOpen,
-    closeAllExcept,
-    closeAll
+    closeAllExcept
   };
 })(typeof window !== "undefined" ? window : this);

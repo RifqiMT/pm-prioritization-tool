@@ -1,6 +1,9 @@
 /**
- * Portfolio view toolbars — Table, Board, MoSCoW, Map (v2).
- * Overrides main.css .roadmaps-table-toolbar { justify-content: flex-end } etc.
+ * Portfolio view toolbars — Table,
+Board,
+MoSCoW,
+Map (v2).
+ * Overrides main.css .roadmaps-table-toolbar { justify-content: flex-end }etc.
  */
 
 .view-toolbar,
@@ -38,35 +41,26 @@
   justify-content: flex-start !important;
   align-items: stretch !important;
   text-align: left !important;
-}
-
-.view-toolbar__row {
+}.view-toolbar__row {
   display: flex !important;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.65rem 0.85rem;
   width: 100% !important;
   box-sizing: border-box !important;
-}
-
-/* Standard desktop row: title block left, controls right */
+}/* Standard desktop row: title block left,
+controls right */
 .view-toolbar__row--primary {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.65rem 1rem;
   justify-content: unset !important;
-}
-
-.view-toolbar--board .view-toolbar__row--primary {
+}.view-toolbar--board .view-toolbar__row--primary {
   grid-template-columns: minmax(0, 1fr) auto;
-}
-
-.view-toolbar--board .view-toolbar__row--secondary {
+}.view-toolbar--board .view-toolbar__row--secondary {
   display: none !important;
-}
-
-.view-toolbar__row--secondary {
+}.view-toolbar__row--secondary {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -75,14 +69,10 @@
   padding-top: 0.65rem;
   border-top: 1px solid rgba(231, 201, 120, 0.4);
   justify-content: unset !important;
-}
-
-.view-toolbar--table .view-toolbar__row--secondary,
+}.view-toolbar--table .view-toolbar__row--secondary,
 .view-toolbar--map .view-toolbar__row--secondary {
   display: none;
-}
-
-/* Identity block */
+}/* Identity block */
 .view-toolbar__identity {
   display: flex;
   align-items: center;
@@ -92,9 +82,7 @@
   justify-self: start;
   width: 100%;
   max-width: 100%;
-}
-
-.view-toolbar__icon {
+}.view-toolbar__icon {
   flex: 0 0 auto;
   width: 36px;
   height: 36px;
@@ -104,14 +92,10 @@
   background: linear-gradient(145deg, rgba(185, 28, 28, 0.12), rgba(161, 98, 7, 0.15));
   color: var(--vt-accent);
   border: 1px solid rgba(185, 28, 28, 0.15);
-}
-
-.view-toolbar__copy {
+}.view-toolbar__copy {
   min-width: 0;
   flex: 1;
-}
-
-.view-toolbar__title,
+}.view-toolbar__title,
 .view-toolbar .moscow-grid-title {
   margin: 0 !important;
   font-size: 0.95rem !important;
@@ -120,9 +104,7 @@
   text-transform: none !important;
   color: var(--vt-text) !important;
   line-height: 1.25 !important;
-}
-
-.view-toolbar__desc {
+}.view-toolbar__desc {
   margin: 0.12rem 0 0 !important;
   font-size: 0.78rem !important;
   line-height: 1.25 !important;
@@ -133,17 +115,11 @@
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   max-width: 100% !important;
-}
-
-html.is-desktop-layout .view-toolbar__identity:has(.view-toolbar__desc) {
+}html.is-desktop-layout .view-toolbar__identity:has(.view-toolbar__desc) {
   align-items: center;
-}
-
-html.is-compact-layout .view-toolbar__desc {
+}html.is-compact-layout .view-toolbar__desc {
   display: none !important;
-}
-
-/* Action cluster */
+}/* Action cluster */
 .view-toolbar__cluster {
   display: flex;
   flex-wrap: wrap;
@@ -153,9 +129,7 @@ html.is-compact-layout .view-toolbar__desc {
   flex: 0 0 auto;
   justify-self: end;
   margin-left: 0 !important;
-}
-
-.view-toolbar__cluster--actions {
+}.view-toolbar__cluster--actions {
   display: flex !important;
   flex-wrap: nowrap !important;
   align-items: flex-end !important;
@@ -163,13 +137,9 @@ html.is-compact-layout .view-toolbar__desc {
   justify-content: flex-end !important;
   width: auto !important;
   max-width: 100%;
-}
-
-.view-toolbar--map .view-toolbar__row--primary {
+}.view-toolbar--map .view-toolbar__row--primary {
   align-items: center;
-}
-
-.view-toolbar--map .view-toolbar__metric--map {
+}.view-toolbar--map .view-toolbar__metric--map {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -177,24 +147,16 @@ html.is-compact-layout .view-toolbar__desc {
   flex: 1 1 auto;
   min-width: 0;
   max-width: 100%;
-}
-
-.view-toolbar--map .view-toolbar__field-label,
+}.view-toolbar--map .view-toolbar__field-label,
 .view-toolbar--map .roadmaps-map-metric-label {
   flex-shrink: 0;
   white-space: nowrap;
-}
-
-.view-toolbar--map .map-metric-picker {
+}.view-toolbar--map .map-metric-picker {
   flex: 1 1 auto;
   min-width: 0;
-}
-
-.view-toolbar--map .view-toolbar__cluster--actions {
+}.view-toolbar--map .view-toolbar__cluster--actions {
   align-items: center !important;
-}
-
-/* Buttons */
+}/* Buttons */
 .view-toolbar__btn,
 .view-toolbar .view-fullscreen-btn,
 .view-toolbar .roadmaps-map-fullscreen-btn {
@@ -220,66 +182,44 @@ html.is-compact-layout .view-toolbar__desc {
   filter: none !important;
   cursor: pointer;
   transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
-}
-
-.view-toolbar__btn:hover,
+}.view-toolbar__btn:hover,
 .view-toolbar .view-fullscreen-btn:hover,
 .view-toolbar .roadmaps-map-fullscreen-btn:hover {
   border-color: rgba(185, 28, 28, 0.35) !important;
   color: var(--vt-accent) !important;
   background: #fffdf8 !important;
-}
-
-.view-toolbar__btn svg {
+}.view-toolbar__btn svg {
   flex-shrink: 0;
-}
-
-.view-toolbar__btn--danger {
+}.view-toolbar__btn--danger {
   border-color: rgba(185, 28, 28, 0.28) !important;
   background: #fff5f5 !important;
   color: #b91c1c !important;
-}
-
-.view-toolbar__btn--danger:hover:not(:disabled) {
+}.view-toolbar__btn--danger:hover:not(:disabled) {
   border-color: rgba(185, 28, 28, 0.45) !important;
   background: #fee2e2 !important;
   color: #991b1b !important;
-}
-
-.view-toolbar__btn--danger:disabled {
+}.view-toolbar__btn--danger:disabled {
   opacity: 0.55;
   cursor: not-allowed;
-}
-
-.view-toolbar__btn--secondary {
+}.view-toolbar__btn--secondary {
   background: #fff !important;
   border: 1px solid rgba(180, 83, 9, 0.35) !important;
   color: #92400e !important;
-}
-
-.view-toolbar__btn--secondary:hover:not(:disabled) {
+}.view-toolbar__btn--secondary:hover:not(:disabled) {
   background: #fff7ed !important;
   border-color: rgba(180, 83, 9, 0.55) !important;
   color: #9a3412 !important;
-}
-
-.view-toolbar__btn--secondary:disabled {
+}.view-toolbar__btn--secondary:disabled {
   opacity: 0.55;
   cursor: not-allowed;
-}
-
-html:not(.is-super-admin-mode) .super-admin-bulk-action {
+}html:not(.is-super-admin-mode) .super-admin-bulk-action {
   display: none !important;
-}
-
-#bulkDeleteBtn[hidden],
+}#bulkDeleteBtn[hidden],
 #bulkEditBtn[hidden],
 #bulkDuplicateBtn[hidden],
 #bulkMoveBtn[hidden] {
   display: none !important;
-}
-
-/* Map metric field */
+}/* Map metric field */
 .view-toolbar__field {
   display: flex;
   flex-direction: row;
@@ -287,9 +227,7 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
   gap: 0;
   flex: 1 1 10rem;
   min-width: 0;
-}
-
-/* Visually hidden on all breakpoints — controls stay labelled via aria / for= */
+}/* Visually hidden on all breakpoints — controls stay labelled via aria / for= */
 .view-toolbar__field-label,
 .view-toolbar .roadmaps-map-metric-label {
   position: absolute !important;
@@ -301,9 +239,7 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
   clip: rect(0, 0, 0, 0) !important;
   white-space: nowrap !important;
   border: 0 !important;
-}
-
-.view-toolbar__select {
+}.view-toolbar__select {
   width: 100%;
   min-height: 40px;
   padding: 0.4rem 2rem 0.4rem 0.65rem;
@@ -318,27 +254,19 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
   background-repeat: no-repeat;
   background-position: right 0.55rem center;
   cursor: pointer;
-}
-
-.view-toolbar__select:focus {
+}.view-toolbar__select:focus {
   outline: none;
   border-color: rgba(185, 28, 28, 0.4);
   box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1);
-}
-
-/* Map metric picker — select-style trigger + searchable dropdown */
+}/* Map metric picker — select-style trigger + searchable dropdown */
 .map-metric-picker {
   width: 100%;
   min-width: 0;
-}
-
-.map-metric-picker__field {
+}.map-metric-picker__field {
   position: relative;
   width: 100%;
   min-width: 0;
-}
-
-.map-metric-picker__trigger {
+}.map-metric-picker__trigger {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -355,33 +283,25 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
   text-align: left;
   cursor: pointer;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.map-metric-picker__trigger:hover {
+}.map-metric-picker__trigger:hover {
   border-color: rgba(185, 28, 28, 0.28) !important;
   background: #fff !important;
   color: var(--vt-text) !important;
   box-shadow: inset 0 1px 2px rgba(63, 15, 25, 0.03) !important;
   filter: none !important;
   transform: none !important;
-}
-
-.map-metric-picker__field--open .map-metric-picker__trigger,
+}.map-metric-picker__field--open .map-metric-picker__trigger,
 .map-metric-picker__trigger:focus-visible {
   border-color: rgba(185, 28, 28, 0.4) !important;
   box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1) !important;
   outline: none;
-}
-
-.map-metric-picker__trigger-main {
+}.map-metric-picker__trigger-main {
   display: flex;
   align-items: center;
   gap: 0.45rem;
   min-width: 0;
   flex: 1 1 auto;
-}
-
-.map-metric-picker__trigger-badge {
+}.map-metric-picker__trigger-badge {
   flex: 0 0 auto;
   min-width: 2.35rem;
   padding: 0.14rem 0.38rem;
@@ -393,9 +313,7 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   text-align: center;
-}
-
-.map-metric-picker__trigger-label {
+}.map-metric-picker__trigger-label {
   flex: 1 1 auto;
   min-width: 0;
   font-size: 0.84rem;
@@ -404,19 +322,13 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.map-metric-picker__chevron {
+}.map-metric-picker__chevron {
   flex: 0 0 auto;
   color: var(--vt-gold);
   transition: transform 0.15s ease;
-}
-
-.map-metric-picker__field--open .map-metric-picker__chevron {
+}.map-metric-picker__field--open .map-metric-picker__chevron {
   transform: rotate(180deg);
-}
-
-.map-metric-picker__dropdown {
+}.map-metric-picker__dropdown {
   position: absolute;
   top: calc(100% + 0.35rem);
   left: 0;
@@ -427,40 +339,28 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
   background: #fffdf8;
   box-shadow: 0 10px 28px rgba(63, 15, 25, 0.12);
   overflow: hidden;
-}
-
-.view-toolbar--map:has(.map-metric-picker__field--open),
+}.view-toolbar--map:has(.map-metric-picker__field--open),
 .roadmaps-view--map .roadmaps-map-toolbar:has(.map-metric-picker__field--open) {
   position: relative;
   z-index: 200;
   overflow: visible !important;
-}
-
-.roadmaps-view--map .roadmaps-map-legend {
+}.roadmaps-view--map .roadmaps-map-legend {
   position: relative;
   z-index: 1;
-}
-
-.map-metric-picker__dropdown[hidden] {
+}.map-metric-picker__dropdown[hidden] {
   display: none !important;
-}
-
-.map-metric-picker__search-wrap {
+}.map-metric-picker__search-wrap {
   display: flex;
   align-items: center;
   gap: 0.45rem;
   padding: 0.45rem 0.55rem;
   border-bottom: 1px solid rgba(231, 201, 120, 0.35);
   background: #fffdf8;
-}
-
-.map-metric-picker__search-icon {
+}.map-metric-picker__search-icon {
   flex: 0 0 auto;
   color: var(--vt-gold);
   opacity: 0.85;
-}
-
-.map-metric-picker__search {
+}.map-metric-picker__search {
   flex: 1 1 auto;
   min-width: 0;
   min-height: 34px !important;
@@ -472,28 +372,20 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
   font-size: 0.82rem !important;
   font-weight: 500 !important;
   box-shadow: none !important;
-}
-
-.map-metric-picker__search:focus {
+}.map-metric-picker__search:focus {
   outline: none !important;
   border-color: rgba(185, 28, 28, 0.35) !important;
   box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.08) !important;
-}
-
-.map-metric-picker__search::placeholder {
+}.map-metric-picker__search::placeholder {
   color: rgba(122, 75, 18, 0.55);
-}
-
-.map-metric-picker__list {
+}.map-metric-picker__list {
   list-style: none;
   margin: 0;
   padding: 0.35rem;
   max-height: min(280px, 45dvh);
   overflow-y: auto;
   background: #fffdf8;
-}
-
-.map-metric-picker__option {
+}.map-metric-picker__option {
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
@@ -510,21 +402,15 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
   box-shadow: none !important;
   filter: none !important;
   transform: none !important;
-}
-
-.map-metric-picker__option:hover,
+}.map-metric-picker__option:hover,
 .map-metric-picker__option--highlight {
   background: rgba(254, 243, 199, 0.42) !important;
   color: var(--vt-text) !important;
   border-left-color: rgba(185, 28, 28, 0.25);
-}
-
-.map-metric-picker__option--active {
+}.map-metric-picker__option--active {
   background: rgba(254, 242, 242, 0.75) !important;
   border-left-color: var(--vt-accent, #b91c1c) !important;
-}
-
-.map-metric-picker__option-badge {
+}.map-metric-picker__option-badge {
   flex: 0 0 auto;
   min-width: 2.2rem;
   padding: 0.12rem 0.32rem;
@@ -537,131 +423,38 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
   text-transform: uppercase;
   text-align: center;
   line-height: 1.3;
-}
-
-.map-metric-picker__option--active .map-metric-picker__option-badge {
+}.map-metric-picker__option--active .map-metric-picker__option-badge {
   background: rgba(185, 28, 28, 0.1);
   color: var(--vt-accent, #b91c1c);
-}
-
-.map-metric-picker__option-copy {
+}.map-metric-picker__option-copy {
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 0.06rem;
-}
-
-.map-metric-picker__option-label {
+}.map-metric-picker__option-label {
   font-size: 0.8rem;
   font-weight: 700;
   color: var(--vt-text);
   line-height: 1.2;
-}
-
-.map-metric-picker__option-desc {
+}.map-metric-picker__option-desc {
   font-size: 0.68rem;
   color: var(--vt-text-soft);
   line-height: 1.25;
-}
-
-.map-metric-picker__option-check {
+}.map-metric-picker__option-check {
   flex: 0 0 auto;
   margin-top: 0.1rem;
   color: var(--vt-accent, #b91c1c);
   opacity: 0;
-}
-
-.map-metric-picker__option--active .map-metric-picker__option-check {
+}.map-metric-picker__option--active .map-metric-picker__option-check {
   opacity: 1;
-}
-
-.map-metric-picker__empty {
+}.map-metric-picker__empty {
   margin: 0;
   padding: 0.65rem 0.75rem;
   font-size: 0.76rem;
   color: var(--vt-text-soft);
   text-align: center;
-}
-
-/* Legacy segmented control (kept for reference; replaced by combobox) */
-.map-metric-toggle {
-  display: flex;
-  align-items: stretch;
-  gap: 0.15rem;
-  width: 100%;
-  min-width: 0;
-  min-height: 40px;
-  padding: 0.18rem;
-  border-radius: 999px;
-  border: 1px solid var(--vt-border);
-  background: linear-gradient(180deg, #fffdf8 0%, #faf6ee 100%);
-  box-shadow: inset 0 1px 2px rgba(63, 15, 25, 0.04);
-}
-
-.map-metric-toggle__option {
-  flex: 1 1 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.04rem;
-  padding: 0.32rem 0.45rem;
-  margin: 0;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--vt-text-soft);
-  font-family: inherit;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  line-height: 1.15;
-  cursor: pointer;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease,
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
-}
-
-.map-metric-toggle__option:hover:not(.map-metric-toggle__option--active) {
-  background: rgba(255, 255, 255, 0.85);
-  color: var(--vt-text);
-}
-
-.map-metric-toggle__option:focus-visible {
-  outline: 2px solid var(--vt-gold, #a16207);
-  outline-offset: 1px;
-}
-
-.map-metric-toggle__option--active {
-  background: #fff !important;
-  color: var(--vt-text) !important;
-  border: 1px solid rgba(185, 28, 28, 0.35) !important;
-  box-shadow: 0 1px 4px rgba(63, 15, 25, 0.08);
-}
-
-.map-metric-toggle__option--active .map-metric-toggle__long {
-  color: rgba(255, 255, 255, 0.88);
-}
-
-.map-metric-toggle__long {
-  font-size: 0.58rem;
-  font-weight: 500;
-  letter-spacing: normal;
-  text-transform: none;
-  opacity: 0.75;
-  line-height: 1.1;
-}
-
-.map-metric-toggle__short {
-  line-height: 1.2;
-}
-
-/* Toggle (RICE sort) */
+}/* Toggle (RICE sort) */
 .view-toolbar__toggle,
 .view-toolbar .scrum-board-sort-toggle,
 .view-toolbar .moscow-sort-toggle {
@@ -677,17 +470,13 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
   user-select: none;
   margin: 0 !important;
   text-transform: none !important;
-}
-
-.view-toolbar__toggle-input {
+}.view-toolbar__toggle-input {
   position: absolute;
   opacity: 0;
   width: 0;
   height: 0;
   pointer-events: none;
-}
-
-.view-toolbar__toggle-track {
+}.view-toolbar__toggle-track {
   flex: 0 0 auto;
   width: 36px;
   height: 20px;
@@ -695,17 +484,11 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
   background: rgba(161, 98, 7, 0.25);
   position: relative;
   transition: background 0.2s ease;
-}
-
-.view-toolbar__toggle-thumb {
+}.view-toolbar__toggle-thumb {
   display: none;
-}
-
-.view-toolbar__toggle-input:checked + .view-toolbar__toggle-track {
+}.view-toolbar__toggle-input:checked + .view-toolbar__toggle-track {
   background: var(--vt-accent);
-}
-
-.view-toolbar__toggle-label,
+}.view-toolbar__toggle-label,
 .view-toolbar #scrumBoardSortByRiceLabel,
 .view-toolbar #moscowSortByRiceLabel,
 .view-toolbar #tableSortByRiceLabel {
@@ -714,13 +497,9 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
   color: var(--vt-text-soft) !important;
   text-transform: none !important;
   letter-spacing: normal !important;
-}
-
-.view-toolbar__toggle-input:checked ~ .view-toolbar__toggle-label {
+}.view-toolbar__toggle-input:checked ~ .view-toolbar__toggle-label {
   color: var(--vt-text) !important;
-}
-
-/* Board legend — horizontal scroll on mobile */
+}/* Board legend — horizontal scroll on mobile */
 .view-toolbar__legend,
 .view-toolbar .scrum-board-legend--modern {
   display: flex !important;
@@ -739,13 +518,9 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
   overflow-y: hidden !important;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-}
-
-.view-toolbar__legend::-webkit-scrollbar {
+}.view-toolbar__legend::-webkit-scrollbar {
   display: none;
-}
-
-.view-toolbar__legend-label,
+}.view-toolbar__legend-label,
 .view-toolbar .scrum-board-legend-label {
   flex: 0 0 auto;
   font-size: 0.68rem !important;
@@ -754,9 +529,7 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
   text-transform: uppercase !important;
   color: var(--vt-gold) !important;
   padding-right: 0.25rem;
-}
-
-.view-toolbar__legend .cell-type-pill,
+}.view-toolbar__legend .cell-type-pill,
 .view-toolbar__legend .view-toolbar__chip,
 .scrum-board-legend--modern .cell-type-pill {
   flex: 0 0 auto;
@@ -770,9 +543,7 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
   border: 1px solid rgba(0, 0, 0, 0.08) !important;
   background: #fffdf8 !important;
   color: var(--vt-text-soft) !important;
-}
-
-/* ── Non-desktop (≤1400px) — phone UI on tablets & phones ── */
+}/* ── Non-desktop (≤1400px) — phone UI on tablets & phones ── */
 @media (max-width: 1400px) {
   .view-toolbar {
     padding: 0.35rem 0.4rem;
@@ -867,9 +638,7 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
     min-width: 14.5rem;
     max-width: 20rem;
   }
-}
-
-/* Override portfolio dashed legacy bar */
+}/* Override portfolio dashed legacy bar */
 .workspace-panel--v2 .view-toolbar {
   border-bottom: none !important;
   border-style: solid !important;
@@ -886,68 +655,48 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
     padding: 0.28rem 0.38rem !important;
     margin-bottom: 0.2rem !important;
   }
-}
-
-.workspace-panel--v2 .workspace-view-toolbar:not(.view-toolbar) {
+}.workspace-panel--v2 .workspace-view-toolbar:not(.view-toolbar) {
   border-bottom: 1px dashed rgba(231, 201, 120, 0.45);
-}
-
-/* Beat global red button styles */
+}/* Beat global red button styles */
 .workspace-panel--v2 .view-toolbar button.view-toolbar__btn,
 .workspace-panel--v2 .view-toolbar .view-fullscreen-btn,
 .workspace-panel--v2 .view-toolbar .roadmaps-map-fullscreen-btn,
 .workspace-panel--v2 .view-toolbar .map-metric-picker__trigger,
 .workspace-panel--v2 .view-toolbar .map-metric-picker__option {
   filter: none !important;
-}
-
-.workspace-panel--v2 .view-toolbar .map-metric-picker__trigger {
+}.workspace-panel--v2 .view-toolbar .map-metric-picker__trigger {
   background: #fff !important;
   color: var(--vt-text) !important;
   border: 1px solid var(--vt-border) !important;
   box-shadow: inset 0 1px 2px rgba(63, 15, 25, 0.03) !important;
-}
-
-.workspace-panel--v2 .view-toolbar .map-metric-picker__trigger:hover {
+}.workspace-panel--v2 .view-toolbar .map-metric-picker__trigger:hover {
   background: #fff !important;
   color: var(--vt-text) !important;
   border-color: rgba(185, 28, 28, 0.28) !important;
   box-shadow: inset 0 1px 2px rgba(63, 15, 25, 0.03) !important;
-}
-
-.workspace-panel--v2 .view-toolbar .map-metric-picker__option {
+}.workspace-panel--v2 .view-toolbar .map-metric-picker__option {
   background: transparent !important;
   color: var(--vt-text) !important;
   border-top: none !important;
   border-right: none !important;
   border-bottom: none !important;
-}
-
-.workspace-panel--v2 .view-toolbar .map-metric-picker__option:hover,
+}.workspace-panel--v2 .view-toolbar .map-metric-picker__option:hover,
 .workspace-panel--v2 .view-toolbar .map-metric-picker__option--highlight {
   background: rgba(254, 243, 199, 0.42) !important;
   color: var(--vt-text) !important;
-}
-
-.workspace-panel--v2 .view-toolbar .map-metric-picker__option--active {
+}.workspace-panel--v2 .view-toolbar .map-metric-picker__option--active {
   background: rgba(254, 242, 242, 0.75) !important;
   color: var(--vt-text) !important;
-}
-
-.workspace-panel--v2 .view-toolbar button.view-toolbar__btn,
+}.workspace-panel--v2 .view-toolbar button.view-toolbar__btn,
 .workspace-panel--v2 .view-toolbar .view-fullscreen-btn,
 .workspace-panel--v2 .view-toolbar .roadmaps-map-fullscreen-btn {
   background: #fff !important;
   color: var(--vt-text-soft) !important;
   filter: none !important;
   min-width: 0 !important;
-}
-
-.workspace-panel--v2 .view-toolbar label.view-toolbar__toggle {
+}.workspace-panel--v2 .view-toolbar label.view-toolbar__toggle {
   background: #fff !important;
-}
-
-.workspace-panel--v2 .view-toolbar .view-toolbar__toggle-input,
+}.workspace-panel--v2 .view-toolbar .view-toolbar__toggle-input,
 .view-toolbar .scrum-board-sort-toggle input,
 .view-toolbar .moscow-sort-toggle input {
   position: absolute !important;
@@ -963,40 +712,28 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
   .view-toolbar__btn {
     transition: none;
   }
-}
-
-/* Board view — visible status columns multi-select */
+}/* Board view — visible status columns multi-select */
 .view-toolbar--board .scrum-board-status-filter {
   flex: 0 1 auto;
   min-width: 9.5rem;
   max-width: 14.5rem;
-}
-
-.view-toolbar--board .scrum-board-status-columns {
+}.view-toolbar--board .scrum-board-status-columns {
   position: relative;
   width: 100%;
-}
-
-.view-toolbar--board .scrum-board-status-columns-toggle {
+}.view-toolbar--board .scrum-board-status-columns-toggle {
   width: 100%;
   min-width: 9rem;
   max-width: 14rem;
-}
-
-.view-toolbar--board .scrum-board-status-columns-popup {
+}.view-toolbar--board .scrum-board-status-columns-popup {
   right: 0;
   left: auto;
   min-width: 13.5rem;
-}
-
-.scrum-board-status-columns-actions {
+}.scrum-board-status-columns-actions {
   display: flex;
   justify-content: flex-end;
   padding: 0.35rem 0.55rem 0.3rem;
   border-bottom: 1px solid var(--vt-border);
-}
-
-.scrum-board-status-columns-action {
+}.scrum-board-status-columns-action {
   border: none;
   background: transparent;
   color: var(--vt-gold);
@@ -1006,32 +743,22 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
   text-transform: uppercase;
   cursor: pointer;
   padding: 0.15rem 0.25rem;
-}
-
-.scrum-board-status-columns-action:hover {
+}.scrum-board-status-columns-action:hover {
   text-decoration: underline;
-}
-
-.scrum-board-status-option-label {
+}.scrum-board-status-option-label {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-}
-
-.scrum-board-status-option-icon {
+}.scrum-board-status-option-icon {
   display: inline-flex;
   flex-shrink: 0;
   width: 1.1rem;
   height: 1.1rem;
   color: var(--vt-gold);
-}
-
-.scrum-board-status-option-icon svg {
+}.scrum-board-status-option-icon svg {
   width: 100%;
   height: 100%;
-}
-
-/* ── Legacy main.css overrides (must win) ───────────────── */
+}/* ── Legacy main.css overrides (must win) ───────────────── */
 .roadmaps-table-toolbar.view-toolbar,
 .roadmaps-view--table .roadmaps-table-toolbar.view-toolbar,
 .roadmaps-map-toolbar.view-toolbar,
@@ -1049,24 +776,16 @@ html:not(.is-super-admin-mode) .super-admin-bulk-action {
   align-items: stretch !important;
   padding: var(--vt-toolbar-py, 0.72rem) var(--vt-toolbar-px, 0.85rem) !important;
   margin-bottom: 0.65rem !important;
-}
-
-.view-toolbar .roadmaps-map-fullscreen-btn,
+}.view-toolbar .roadmaps-map-fullscreen-btn,
 .view-toolbar .view-fullscreen-btn,
 .moscow-view-header.view-toolbar .view-fullscreen-btn {
   margin-left: 0 !important;
-}
-
-.workspace-panel--v2 .roadmaps-map-toolbar {
+}.workspace-panel--v2 .roadmaps-map-toolbar {
   flex-wrap: unset !important;
-}
-
-/* ── Post-fullscreen layout reset ─────────────────────────── */
+}/* ── Post-fullscreen layout reset ─────────────────────────── */
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage {
   scroll-padding-top: 0.35rem;
-}
-
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view .view-toolbar {
+}html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view .view-toolbar {
   position: relative !important;
   top: auto !important;
   z-index: 2 !important;
@@ -1080,18 +799,14 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view .view
   margin-bottom: 0.65rem !important;
   min-height: 3.25rem !important;
   overflow: visible !important;
-}
-
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .view-toolbar__row,
+}html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .view-toolbar__row,
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .view-toolbar__row--primary,
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .view-toolbar__row--secondary {
   visibility: visible !important;
   opacity: 1 !important;
   min-height: 0;
   transform: none !important;
-}
-
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--map .roadmaps-map-container {
+}html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--map .roadmaps-map-container {
   position: relative !important;
   z-index: 1 !important;
   flex: 0 0 auto !important;
@@ -1101,24 +816,18 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--map 
   min-height: 0 !important;
   max-height: min(42vh, 480px) !important;
   overflow: hidden !important;
-}
-
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--map .roadmaps-map-container .leaflet-container {
+}html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--map .roadmaps-map-container .leaflet-container {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
   min-height: 0 !important;
-}
-
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--map {
+}html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--map {
   flex: 0 0 auto !important;
   min-height: 0 !important;
   height: auto !important;
   align-self: start !important;
-}
-
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--board .scrum-board,
+}html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--board .scrum-board,
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--moscow .moscow-grid {
   position: relative !important;
   z-index: 1 !important;
@@ -1126,28 +835,20 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--mosc
   min-height: 420px;
   max-height: min(72vh, 720px);
   height: min(65vh, 640px);
-}
-
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--moscow {
+}html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--moscow {
   min-height: 0;
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-}
-
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--moscow .moscow-grid {
+}html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--moscow .moscow-grid {
   flex: 1 1 auto;
   min-height: 420px;
-}
-
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--raci {
+}html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--raci {
   min-height: 0;
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-}
-
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--raci .raci-matrix-wrap {
+}html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--raci .raci-matrix-wrap {
   position: relative;
   z-index: 1;
   flex: 1 1 auto;
@@ -1157,9 +858,7 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--raci
   overflow-x: auto;
   overflow-y: auto;
   overscroll-behavior: contain;
-}
-
-html.has-view-fullscreen .roadmaps-view--raci .raci-matrix-wrap,
+}html.has-view-fullscreen .roadmaps-view--raci .raci-matrix-wrap,
 .roadmaps-view.view-pseudo-fullscreen.roadmaps-view--raci .raci-matrix-wrap {
   flex: 1 1 auto;
   min-height: 0;
@@ -1167,22 +866,16 @@ html.has-view-fullscreen .roadmaps-view--raci .raci-matrix-wrap,
   height: auto;
   overflow-x: auto;
   overflow-y: auto;
-}
-
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .view-toolbar__legend:empty {
+}html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .view-toolbar__legend:empty {
   min-height: 2.25rem;
-}
-
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .view-toolbar__legend:empty::after {
+}html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .view-toolbar__legend:empty::after {
   content: "Status filters appear when a profile is unlocked.";
   font-size: 0.72rem;
   font-style: italic;
   color: var(--vt-text-soft);
   padding: 0.2rem 0.35rem;
   white-space: nowrap;
-}
-
-/* ── Compact (phones & tablets): single-row view toolbars ─── */
+}/* ── Compact (phones & tablets): single-row view toolbars ─── */
 @media (max-width: 1400px) {
   html.is-compact-layout .view-toolbar--board.scrum-board-toolbar,
   html.is-compact-layout .view-toolbar--table.roadmaps-table-toolbar,
@@ -1324,9 +1017,7 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .view-toolbar__legen
     white-space: nowrap !important;
     border: 0 !important;
   }
-}
-
-/* ── Desktop toolbar shell — unified padding & alignment (all views) ─ */
+}/* ── Desktop toolbar shell — unified padding & alignment (all views) ─ */
 @media (min-width: 1401px) {
   html.is-desktop-layout .roadmaps-view .view-toolbar,
   html.is-desktop-layout .view-toolbar.view-toolbar--table,

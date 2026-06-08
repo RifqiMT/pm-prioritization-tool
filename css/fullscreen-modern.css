@@ -7,14 +7,10 @@
 html.pseudo-view-fullscreen .app-shell {
   visibility: hidden;
   pointer-events: none;
-}
-
-html.pseudo-view-fullscreen .view-fullscreen-host:not([hidden]) {
+}html.pseudo-view-fullscreen .view-fullscreen-host:not([hidden]) {
   visibility: visible;
   pointer-events: auto;
-}
-
-/* ── Host shell ──────────────────────────────────────────── */
+}/* ── Host shell ──────────────────────────────────────────── */
 .view-fullscreen-host {
   position: fixed;
   inset: 0;
@@ -23,13 +19,9 @@ html.pseudo-view-fullscreen .view-fullscreen-host:not([hidden]) {
   flex-direction: column;
   background: #fffdf8;
   box-sizing: border-box;
-}
-
-.view-fullscreen-host[hidden] {
+}.view-fullscreen-host[hidden] {
   display: none !important;
-}
-
-/* ── Top chrome bar ──────────────────────────────────────── */
+}/* ── Top chrome bar ──────────────────────────────────────── */
 .view-fullscreen-chrome {
   flex: 0 0 auto;
   display: grid;
@@ -40,16 +32,12 @@ html.pseudo-view-fullscreen .view-fullscreen-host:not([hidden]) {
   border-bottom: 1px solid rgba(231, 201, 120, 0.55);
   background: linear-gradient(180deg, #ffffff 0%, #fffdf8 100%);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85), 0 4px 18px rgba(127, 29, 29, 0.06);
-}
-
-.view-fullscreen-brand {
+}.view-fullscreen-brand {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   min-width: 0;
-}
-
-.view-fullscreen-mark {
+}.view-fullscreen-mark {
   flex: 0 0 auto;
   width: 40px;
   height: 40px;
@@ -59,37 +47,27 @@ html.pseudo-view-fullscreen .view-fullscreen-host:not([hidden]) {
   background: linear-gradient(145deg, #b91c1c 0%, #991b1b 48%, #a16207 100%);
   color: #fff;
   box-shadow: 0 4px 12px rgba(185, 28, 28, 0.28);
-}
-
-.view-fullscreen-mark svg {
+}.view-fullscreen-mark svg {
   display: block;
-}
-
-.view-fullscreen-context {
+}.view-fullscreen-context {
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
   min-width: 0;
-}
-
-.view-fullscreen-eyebrow {
+}.view-fullscreen-eyebrow {
   font-size: 0.64rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #a16207;
-}
-
-.view-fullscreen-profile {
+}.view-fullscreen-profile {
   font-size: 0.95rem;
   font-weight: 700;
   color: #3f0f19;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.view-fullscreen-tabs {
+}.view-fullscreen-tabs {
   display: inline-flex;
   align-items: center;
   gap: 0.28rem;
@@ -97,9 +75,7 @@ html.pseudo-view-fullscreen .view-fullscreen-host:not([hidden]) {
   border-radius: 12px;
   background: rgba(254, 243, 199, 0.38);
   border: 1px solid rgba(231, 201, 120, 0.5);
-}
-
-.view-fullscreen-tab {
+}.view-fullscreen-tab {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -118,34 +94,24 @@ html.pseudo-view-fullscreen .view-fullscreen-host:not([hidden]) {
     color 0.15s ease,
     border-color 0.15s ease,
     box-shadow 0.15s ease;
-}
-
-.view-fullscreen-tab-icon {
+}.view-fullscreen-tab-icon {
   flex-shrink: 0;
   width: 15px;
   height: 15px;
-}
-
-.view-fullscreen-tab--active,
+}.view-fullscreen-tab--active,
 .view-fullscreen-tab[aria-selected="true"] {
   background: #fff;
   border-color: rgba(185, 28, 28, 0.28);
   color: #b91c1c;
   box-shadow: 0 1px 4px rgba(185, 28, 28, 0.12);
-}
-
-.view-fullscreen-tab:hover:not(.view-fullscreen-tab--active):not([aria-selected="true"]) {
+}.view-fullscreen-tab:hover:not(.view-fullscreen-tab--active):not([aria-selected="true"]) {
   background: rgba(255, 255, 255, 0.65);
   border-color: rgba(231, 201, 120, 0.45);
-}
-
-.view-fullscreen-actions {
+}.view-fullscreen-actions {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-}
-
-.view-fullscreen-exit-btn {
+}.view-fullscreen-exit-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -161,19 +127,13 @@ html.pseudo-view-fullscreen .view-fullscreen-host:not([hidden]) {
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.view-fullscreen-exit-btn:hover {
+}.view-fullscreen-exit-btn:hover {
   background: #fee2e2;
   border-color: rgba(185, 28, 28, 0.5);
   box-shadow: 0 2px 8px rgba(185, 28, 28, 0.12);
-}
-
-.view-fullscreen-exit-btn svg {
+}.view-fullscreen-exit-btn svg {
   flex-shrink: 0;
-}
-
-/* ── Stage & view ────────────────────────────────────────── */
+}/* ── Stage & view ────────────────────────────────────────── */
 .view-fullscreen-stage {
   flex: 1 1 auto;
   min-height: 0;
@@ -181,9 +141,7 @@ html.pseudo-view-fullscreen .view-fullscreen-host:not([hidden]) {
   flex-direction: column;
   overflow: hidden;
   background: #fff;
-}
-
-.view-fullscreen-stage > .roadmaps-view.view-in-fullscreen-host {
+}.view-fullscreen-stage > .roadmaps-view.view-in-fullscreen-host {
   flex: 1 1 auto;
   min-height: 0;
   width: 100% !important;
@@ -200,19 +158,13 @@ html.pseudo-view-fullscreen .view-fullscreen-host:not([hidden]) {
   border: none !important;
   border-radius: 0 !important;
   box-shadow: none !important;
-}
-
-/* Dedupe: chrome owns navigation + exit; toolbar is controls-only */
+}/* Dedupe: chrome owns navigation + exit; toolbar is controls-only */
 .view-in-fullscreen-host .view-toolbar__identity {
   display: none !important;
-}
-
-.view-in-fullscreen-host .view-fullscreen-btn,
+}.view-in-fullscreen-host .view-fullscreen-btn,
 .view-in-fullscreen-host .roadmaps-map-fullscreen-btn {
   display: none !important;
-}
-
-.view-in-fullscreen-host .view-toolbar {
+}.view-in-fullscreen-host .view-toolbar {
   flex: 0 0 auto;
   position: relative !important;
   top: auto !important;
@@ -220,100 +172,64 @@ html.pseudo-view-fullscreen .view-fullscreen-host:not([hidden]) {
   margin-bottom: 0.55rem !important;
   border-radius: 12px !important;
   background: rgba(255, 253, 248, 0.92) !important;
-}
-
-.view-in-fullscreen-host .view-toolbar__row--primary {
+}.view-in-fullscreen-host .view-toolbar__row--primary {
   grid-template-columns: 1fr !important;
-}
-
-.view-in-fullscreen-host .scrum-board,
+}.view-in-fullscreen-host .scrum-board,
 .view-in-fullscreen-host .moscow-grid,
 .view-in-fullscreen-host .table-wrapper--modern {
   flex: 1 1 auto;
   min-height: 0 !important;
   max-height: none !important;
   height: auto !important;
-}
-
-.view-in-fullscreen-host .table-wrapper--modern {
+}.view-in-fullscreen-host .table-wrapper--modern {
   overflow: auto;
-}
-
-html:not(.is-compact-layout) .view-in-fullscreen-host .scrum-board {
+}html:not(.is-compact-layout) .view-in-fullscreen-host .scrum-board {
   overflow-x: auto;
   overflow-y: hidden;
-}
-
-html:not(.is-compact-layout) .view-in-fullscreen-host .moscow-grid {
+}html:not(.is-compact-layout) .view-in-fullscreen-host .moscow-grid {
   overflow: auto;
-}
-
-.view-in-fullscreen-host .roadmaps-map-container {
+}.view-in-fullscreen-host .roadmaps-map-container {
   flex: 1 1 auto;
   min-height: 0 !important;
   max-height: none !important;
   height: 100% !important;
   overflow: hidden;
-}
-
-.view-in-fullscreen-host .roadmaps-map-legend {
+}.view-in-fullscreen-host .roadmaps-map-legend {
   flex: 0 0 auto;
-}
-
-/* ── Desktop fullscreen ──────────────────────────────────── */
+}/* ── Desktop fullscreen ──────────────────────────────────── */
 .view-fullscreen-host--desktop {
   padding: 0;
-}
-
-.view-fullscreen-host--desktop .view-fullscreen-chrome {
+}.view-fullscreen-host--desktop .view-fullscreen-chrome {
   grid-template-columns: minmax(12rem, 1fr) auto auto;
   padding: 0.75rem 1.5rem;
   min-height: 64px;
-}
-
-.view-fullscreen-host--desktop .view-fullscreen-profile {
+}.view-fullscreen-host--desktop .view-fullscreen-profile {
   font-size: 1.02rem;
   max-width: 28ch;
-}
-
-.view-fullscreen-host--desktop .view-fullscreen-tabs {
+}.view-fullscreen-host--desktop .view-fullscreen-tabs {
   gap: 0.32rem;
   padding: 0.25rem;
-}
-
-.view-fullscreen-host--desktop .view-fullscreen-tab {
+}.view-fullscreen-host--desktop .view-fullscreen-tab {
   min-height: 42px;
   padding: 0.45rem 1rem;
-}
-
-.view-fullscreen-host--desktop .view-fullscreen-stage > .roadmaps-view.view-in-fullscreen-host {
+}.view-fullscreen-host--desktop .view-fullscreen-stage > .roadmaps-view.view-in-fullscreen-host {
   padding: 0.85rem 1.35rem 1.15rem !important;
-}
-
-.view-fullscreen-host--desktop .view-in-fullscreen-host .view-toolbar {
+}.view-fullscreen-host--desktop .view-in-fullscreen-host .view-toolbar {
   padding: 0.65rem 0.85rem !important;
   margin-bottom: 0.65rem !important;
-}
-
-.view-fullscreen-host--desktop .view-in-fullscreen-host .view-toolbar__desc {
+}.view-fullscreen-host--desktop .view-in-fullscreen-host .view-toolbar__desc {
   display: none;
-}
-
-/* ── Compact host overrides (phone/tablet) ───────────────── */
+}/* ── Compact host overrides (phone/tablet) ───────────────── */
 .view-fullscreen-host--compact .view-fullscreen-chrome {
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-rows: auto;
   gap: 0.35rem 0.45rem;
   padding: 0.5rem 0.65rem 0.45rem;
   align-items: center;
-}
-
-.view-fullscreen-host--compact .view-fullscreen-brand {
+}.view-fullscreen-host--compact .view-fullscreen-brand {
   grid-column: 1 / -1;
   display: none;
-}
-
-.view-fullscreen-host--compact .view-fullscreen-tabs {
+}.view-fullscreen-host--compact .view-fullscreen-tabs {
   grid-column: 1;
   grid-row: 1;
   width: 100%;
@@ -321,27 +237,19 @@ html:not(.is-compact-layout) .view-in-fullscreen-host .moscow-grid {
   display: flex;
   flex-wrap: nowrap;
   gap: 0.18rem;
-}
-
-.view-fullscreen-host--compact .view-fullscreen-actions {
+}.view-fullscreen-host--compact .view-fullscreen-actions {
   grid-column: 2;
   grid-row: 1;
   align-self: center;
-}
-
-.view-fullscreen-host--compact .view-fullscreen-tab {
+}.view-fullscreen-host--compact .view-fullscreen-tab {
   flex-direction: column;
   gap: 0.12rem;
   min-height: 38px;
   padding: 0.35rem 0.25rem;
   font-size: 0.68rem;
-}
-
-.view-fullscreen-host--compact .view-fullscreen-stage > .roadmaps-view.view-in-fullscreen-host {
+}.view-fullscreen-host--compact .view-fullscreen-stage > .roadmaps-view.view-in-fullscreen-host {
   padding: 0.45rem 0.6rem 0.65rem !important;
-}
-
-/* Icon-only fullscreen tabs handled in compact-modern.css for ≤1400px */
+}/* Icon-only fullscreen tabs handled in compact-modern.css for ≤1400px */
 
 @media (min-width: 1401px) {
   html.is-desktop-layout.pseudo-view-fullscreen {

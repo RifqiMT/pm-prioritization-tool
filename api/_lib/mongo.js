@@ -45,7 +45,5 @@ async function getDb() {
 
 module.exports = {
   isMongoConfigured,
-  getDb,
-  dbName,
-  getMongoUri
+  getDb
 };

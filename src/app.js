@@ -1330,15 +1330,16 @@ function syncRoadmapModalSectionActiveIndicator(modal) {
 
 function ensureRoadmapModalSectionNavIndicatorObserver(modal) {
   const rail = modal?.querySelector(".roadmap-modal-section-rail");
-  if (!rail || rail.dataset.indicatorObserverReady === "1") return;
-  rail.dataset.indicatorObserverReady = "1";
-  if (roadmapModalSectionNavResizeObserver) {
-    roadmapModalSectionNavResizeObserver.disconnect();
+  if (!rail) return;
+  if (!roadmapModalSectionNavResizeObserver) {
+    roadmapModalSectionNavResizeObserver = new ResizeObserver(() => {
+      syncRoadmapModalSectionActiveIndicator(modal);
+    });
   }
-  roadmapModalSectionNavResizeObserver = new ResizeObserver(() => {
-    syncRoadmapModalSectionActiveIndicator(modal);
-  });
-  roadmapModalSectionNavResizeObserver.observe(rail);
+  if (rail.dataset.indicatorObserverReady !== "1") {
+    rail.dataset.indicatorObserverReady = "1";
+    roadmapModalSectionNavResizeObserver.observe(rail);
+  }
   rail.querySelectorAll(".roadmap-modal-section-btn").forEach((btn) => {
     roadmapModalSectionNavResizeObserver.observe(btn);
   });
@@ -1498,7 +1499,11 @@ function buildRoadmapSummaryContextFromViewForm() {
     roadmapType: (elements.roadmapType?.value || "").trim() || null,
     roadmapStatus: (elements.roadmapStatus?.value || "").trim() || null,
     tshirtSize: (elements.roadmapTshirtSize?.value || "").trim() || null,
-    roadmapPeriod: (elements.roadmapPeriod?.value || "").trim() || null,
+    roadmapPeriods: getRoadmapPeriodsFromControls(),
+    roadmapPeriod:
+      typeof RoadmapPeriods !== "undefined"
+        ? RoadmapPeriods.deriveLegacyPeriod(getRoadmapPeriodsFromControls())
+        : (getRoadmapPeriodsFromControls()[0]?.period || null),
     moscowCategory: (elements.roadmapMoscow?.value || "").trim() || null,
     reachValue: elements.reachValue?.value !== "" ? Number(elements.reachValue.value) : null,
     reachDescription: richDescriptionToPlainText(getRichDescriptionValue("reachDescription")),
@@ -1600,7 +1605,7 @@ function syncRoadmapSummaryToneToggleUi() {
       if (chip) chip.hidden = !simplifiedPending;
       btn.setAttribute(
         "aria-label",
-        simplifiedPending ? "Simplified — generates storytelling summary on tap" : "Simplified storytelling view"
+        simplifiedPending ? "Simplified: tap to generate a storytelling summary" : "Simplified storytelling view"
       );
     }
   });
@@ -1672,7 +1677,7 @@ async function handleRoadmapSummarySimplifiedRequest() {
   }
   if (elements.roadmapSummaryStatus) {
     elements.roadmapSummaryStatus.textContent =
-      "Preparing simplified storytelling summary (waiting for API cooldown if needed)…";
+      "Preparing simplified summary. Waiting for the API to be ready again if needed…";
     elements.roadmapSummaryStatus.classList.remove("roadmap-summary-status--error");
   }
   if (elements.roadmapSummaryToneToggleButtons) {
@@ -1991,8 +1996,17 @@ function syncRoadmapSummarySectionVisibility(isView) {
   const modal = elements.roadmapModal;
   if (modal) {
     modal.querySelectorAll(".roadmap-modal-section-btn--view-only").forEach((btn) => {
-      btn.hidden = !show;
+      btn.removeAttribute("hidden");
     });
+    if (show) {
+      requestAnimationFrame(() => {
+        ensureRoadmapModalSectionNavIndicatorObserver(modal);
+        syncRoadmapModalSectionNavIndicators();
+        syncRoadmapModalSectionActiveIndicator(modal);
+      });
+    } else {
+      syncRoadmapModalSectionNavIndicators();
+    }
   }
   if (!show) {
     resetRoadmapFiveWhyUi();
@@ -2021,7 +2035,7 @@ async function handleRoadmapSummaryGenerateClick() {
   }
   if (elements.roadmapSummaryStatus) {
     elements.roadmapSummaryStatus.textContent =
-      "Starting roadmap summary (Tavily research, then Groq synthesis)…";
+      "Starting summary. Tavily gathers context first, then Groq writes the briefing…";
     elements.roadmapSummaryStatus.classList.remove("roadmap-summary-status--error");
   }
 
@@ -2051,7 +2065,7 @@ async function handleRoadmapSummaryGenerateClick() {
     }
     if (elements.roadmapSummaryStatus) {
       elements.roadmapSummaryStatus.textContent =
-        "Professional executive briefing ready (Tavily + Groq). Switch to Simplified to generate storytelling view.";
+        "Executive summary ready. Tap Simplified above for a shorter storytelling version.";
     }
     syncRoadmapOptionalDisclosures({ forceOpenSectionIds: ["roadmapModalSectionSummary"] });
     syncRoadmapModalSectionNavIndicators();
@@ -2443,8 +2457,7 @@ function roadmapOptionalSectionHasData(sectionId) {
     const scalarFields = [
       elements.roadmapType,
       elements.roadmapStatus,
-      elements.roadmapTshirtSize,
-      elements.roadmapPeriod
+      elements.roadmapTshirtSize
     ];
     for (const el of scalarFields) {
       if (el && String(el.value || "").trim()) return true;
@@ -2453,6 +2466,10 @@ function roadmapOptionalSectionHasData(sectionId) {
       document.querySelector("#roadmapModalSectionMeta .roadmap-optional-section-body") ||
       document.getElementById("roadmapModalSectionMeta");
     if (!sectionBody) return false;
+    const periodRows = sectionBody.querySelectorAll(".roadmap-period-row");
+    for (const row of periodRows) {
+      if ((row.querySelector(".roadmap-period-select")?.value || "").trim()) return true;
+    }
     const taskRows = sectionBody.querySelectorAll(".roadmap-task-row");
     for (const row of taskRows) {
       if ((row.querySelector("input")?.value || "").trim()) return true;
@@ -2461,7 +2478,7 @@ function roadmapOptionalSectionHasData(sectionId) {
     for (const select of countryRows) {
       if ((select.value || "").trim()) return true;
     }
-    if (sectionBody.querySelector(".roadmap-task-card, .roadmap-task-readonly-row")) {
+    if (sectionBody.querySelector(".roadmap-tasks-readonly .roadmap-task-card")) {
       return true;
     }
     return false;
@@ -4094,7 +4111,8 @@ function cacheElements() {
   elements.roadmapType = $("roadmapType");
   elements.roadmapStatus = $("roadmapStatus");
   elements.roadmapTshirtSize = $("roadmapTshirtSize");
-  elements.roadmapPeriod = $("roadmapPeriod");
+  elements.roadmapPeriodsContainer = $("roadmapPeriodsContainer");
+  elements.addRoadmapPeriodBtn = $("addRoadmapPeriodBtn");
   elements.roadmapMoscow = $("roadmapMoscow");
   elements.roadmapKanoFunctionalitySelect = $("roadmapKanoFunctionalitySelect");
   elements.roadmapKanoSatisfactionSelect = $("roadmapKanoSatisfactionSelect");
@@ -4368,8 +4386,9 @@ function initFilterRoadmapPeriodOptions(roadmaps) {
 
   const periodsSet = new Set();
   (roadmaps || []).forEach((p) => {
-    const raw = p.roadmapPeriod != null ? String(p.roadmapPeriod).trim().toUpperCase() : "";
-    if (raw) periodsSet.add(raw);
+    getRoadmapPeriodEntries(p).forEach((entry) => {
+      if (entry.period) periodsSet.add(entry.period);
+    });
   });
 
   const periods = Array.from(periodsSet).sort();
@@ -4400,6 +4419,53 @@ function getCompactLayoutMediaQueryString() {
 
 function isCompactLayoutViewport() {
   return window.matchMedia(getCompactLayoutMediaQueryString()).matches;
+}
+
+/** Phones/tablets/narrow: overlays close only via explicit buttons, not backdrop/Escape. */
+function allowImplicitOverlayDismiss() {
+  return !isCompactLayoutViewport();
+}
+
+function isCompactOverlayScrollLockNeeded() {
+  if (!isCompactLayoutViewport()) return false;
+  if (getActiveBlockingModalOverlayId()) return true;
+  if (isCompactFiltersSheetLayout() && isFiltersSheetOpen()) return true;
+  if (isProfilesSheetOpen()) return true;
+  return false;
+}
+
+function isCompactOverlayTouchScrollAllowed(target) {
+  if (!target || typeof target.closest !== "function") return false;
+  if (target.closest(".portfolio-filters-sheet--open, .profiles-panel-sheet--open")) return true;
+  const modal = target.closest(".modal-backdrop.active");
+  if (!modal) return false;
+  const panel = modal.querySelector(".modal-panel, .data-transfer-modal");
+  return !!(panel && panel.contains(target));
+}
+
+function initCompactOverlayScrollGuards() {
+  if (document.documentElement.dataset.compactOverlayScrollGuardsReady === "1") return;
+  document.documentElement.dataset.compactOverlayScrollGuardsReady = "1";
+
+  document.addEventListener(
+    "touchmove",
+    (event) => {
+      if (!isCompactOverlayScrollLockNeeded()) return;
+      if (isCompactOverlayTouchScrollAllowed(event.target)) return;
+      event.preventDefault();
+    },
+    { passive: false }
+  );
+
+  document.addEventListener(
+    "wheel",
+    (event) => {
+      if (!isCompactOverlayScrollLockNeeded()) return;
+      if (isCompactOverlayTouchScrollAllowed(event.target)) return;
+      event.preventDefault();
+    },
+    { passive: false }
+  );
 }
 
 /** RACI desktop grid uses 1025px (CSS), not the 1400px compact breakpoint. */
@@ -4570,6 +4636,7 @@ function initCompactLayoutClass() {
   }, { passive: true });
   initDesktopOverlayGuard();
   initCompactScrimGuard();
+  initCompactOverlayScrollGuards();
 }
 
 function initAppHeaderMenu() {
@@ -5133,7 +5200,7 @@ function attachEventListeners() {
 
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
-    if (closeTopBlockingModal()) {
+    if (allowImplicitOverlayDismiss() && closeTopBlockingModal()) {
       event.preventDefault();
       return;
     }
@@ -5272,6 +5339,25 @@ function attachEventListeners() {
         addRoadmapTaskRow();
       }
       scheduleRoadmapTasksDisclosureSync();
+    });
+  }
+
+  if (elements.addRoadmapPeriodBtn && elements.roadmapPeriodsContainer) {
+    elements.addRoadmapPeriodBtn.addEventListener("click", () => {
+      if (roadmapModalMode === "view") return;
+      addRoadmapPeriodRow();
+    });
+    elements.roadmapPeriodsContainer.addEventListener("click", (event) => {
+      if (roadmapModalMode === "view") return;
+      const btn = event.target.closest(".roadmap-period-remove-btn");
+      if (!btn) return;
+      const row = btn.closest(".roadmap-period-row");
+      if (!row) return;
+      elements.roadmapPeriodsContainer.removeChild(row);
+      if (!elements.roadmapPeriodsContainer.querySelector(".roadmap-period-row")) {
+        addRoadmapPeriodRow();
+      }
+      scheduleRoadmapModalSectionNavSync();
     });
   }
 
@@ -5433,6 +5519,7 @@ function attachEventListeners() {
     if (!wrap) return;
     const tooltip = wrap.querySelector(".cell-type-tooltip");
     if (!tooltip) return;
+    if (activeTooltipWrap === wrap) return;
     cancelTooltipHoverHide();
     document.body.classList.remove("cell-type-tooltip-hidden");
     positionProfileTooltip(wrap, getTooltipPointerAnchor(wrap, e));
@@ -5441,12 +5528,13 @@ function attachEventListeners() {
   document.body.addEventListener("focusin", (e) => {
     const raciWrap = e.target.closest(".raci-matrix-with-tooltip");
     if (raciWrap && isRaciMatrixDesktopLayout()) {
-      positionProfileTooltip(raciWrap);
+      if (activeTooltipWrap !== raciWrap) positionProfileTooltip(raciWrap);
       return;
     }
     if (isCompactTooltipTapTarget(e.target)) return;
     const wrap = findTooltipHoverTrigger(e.target);
     if (!wrap) return;
+    if (activeTooltipWrap === wrap) return;
     positionProfileTooltip(wrap);
   }, true);
 
@@ -5525,8 +5613,15 @@ function attachEventListeners() {
     elements.roadmapModal.addEventListener("focusin", (e) => {
       const wrap = e.target.closest(".roadmap-field-tooltip-wrap");
       if (!wrap) return;
+      if (activeTooltipWrap === wrap) return;
       positionProfileTooltip(wrap);
     }, true);
+    const roadmapModalScroll = elements.roadmapModal.querySelector("#roadmapModalScrollRegion");
+    if (roadmapModalScroll) {
+      roadmapModalScroll.addEventListener("scroll", () => {
+        hideCellTypeTooltips();
+      }, { passive: true });
+    }
   }
 
   // Prevent accidental wheel-based increments on number inputs.
@@ -6066,12 +6161,6 @@ function isActiveProfileWorkspaceTrustHolder() {
   return normalizeProfileLabelForTrust(active.name) === normalizeProfileLabelForTrust(trustLabel);
 }
 
-function getSuperAdminTeamLabel() {
-  return typeof SUPER_ADMIN_TEAM_LABEL !== "undefined" && SUPER_ADMIN_TEAM_LABEL
-    ? String(SUPER_ADMIN_TEAM_LABEL).trim()
-    : "Super Admin";
-}
-
 /** Only the workspace trust profile (e.g. Rifqi Tjahyono) may use super admin mode. */
 function isSuperAdminProfile(profile) {
   if (!profile) return false;
@@ -6080,17 +6169,8 @@ function isSuperAdminProfile(profile) {
   return normalizeProfileLabelForTrust(profile.name) === normalizeProfileLabelForTrust(trustLabel);
 }
 
-/** @deprecated Use isSuperAdminProfile — kept for call-site compatibility. */
-function isSuperAdminCapableProfile(profile) {
-  return isSuperAdminProfile(profile);
-}
-
 function isActiveSuperAdminProfile() {
   return isSuperAdminProfile(getActiveProfile());
-}
-
-function isActiveSuperAdminCapableProfile() {
-  return isActiveSuperAdminProfile();
 }
 
 function isSuperAdminModeActive() {
@@ -6168,19 +6248,6 @@ function buildRoadmapOwnerIdentityElement(roadmap, options = {}) {
   }
 
   return root;
-}
-
-function appendRoadmapOwnerBadge(container, roadmap, options = {}) {
-  const el = buildRoadmapOwnerIdentityElement(roadmap, options);
-  if (!el || !container) return null;
-  if (options.className) {
-    String(options.className)
-      .split(/\s+/)
-      .filter(Boolean)
-      .forEach((cls) => el.classList.add(cls));
-  }
-  container.appendChild(el);
-  return el;
 }
 
 function syncSuperAdminModeBanner() {
@@ -7109,6 +7176,7 @@ function handleExportCsv(profilesForExport, exportMeta) {
       "roadmapStatus",
       "tshirtSize",
       "roadmapPeriod",
+      "roadmapPeriods",
       "moscowCategory",
       "kanoFunctionality",
       "kanoSatisfaction",
@@ -7133,6 +7201,7 @@ function handleExportCsv(profilesForExport, exportMeta) {
           escapeCsvCell(profileName),
           escapeCsvCell(profileTeam),
           escapeCsvCell(profileCreatedAt),
+          "",
           "",
           "",
           "",
@@ -7203,7 +7272,8 @@ function handleExportCsv(profilesForExport, exportMeta) {
           escapeCsvCell(roadmap.roadmapType || ""),
           escapeCsvCell(roadmap.roadmapStatus || ""),
           escapeCsvCell(roadmap.tshirtSize || ""),
-          escapeCsvCell(roadmap.roadmapPeriod || ""),
+          escapeCsvCell(roadmap.roadmapPeriod || formatRoadmapPeriodEntriesForDisplay(roadmap)),
+          escapeCsvCell(JSON.stringify(getRoadmapPeriodEntries(roadmap))),
           escapeCsvCell(roadmap.moscowCategory || ""),
           escapeCsvCell(roadmap.kanoFunctionality != null ? String(roadmap.kanoFunctionality) : ""),
           escapeCsvCell(roadmap.kanoSatisfaction != null ? String(roadmap.kanoSatisfaction) : ""),
@@ -7473,6 +7543,23 @@ function buildProfilesFromCsvRows(header, rows) {
       roadmapStatus: (cells[colIndex.roadmapStatus] ?? "").toString().trim() || null,
       tshirtSize: (cells[colIndex.tshirtSize] ?? "").toString().trim() || null,
       roadmapPeriod: (cells[colIndex.roadmapPeriod] ?? "").toString().trim().toUpperCase() || null,
+      roadmapPeriods: (() => {
+        const raw = (cells[colIndex.roadmapPeriods] ?? "").toString().trim();
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) return parsed;
+          } catch (_) {
+            /* fall through */
+          }
+        }
+        const legacy = (cells[colIndex.roadmapPeriod] ?? "").toString().trim().toUpperCase();
+        const legacyStatus = (cells[colIndex.roadmapStatus] ?? "").toString().trim();
+        if (typeof RoadmapPeriods !== "undefined") {
+          return RoadmapPeriods.normalizePeriods(null, { legacyPeriod: legacy, legacyStatus });
+        }
+        return legacy ? [{ period: legacy, status: legacyStatus || "Not Started" }] : [];
+      })(),
       moscowCategory: (cells[colIndex.moscowCategory] ?? "").toString().trim() || null,
       kanoFunctionality: normalizeKanoAxisLevel(cells[colIndex.kanoFunctionality]),
       kanoSatisfaction: normalizeKanoAxisLevel(cells[colIndex.kanoSatisfaction]),
@@ -7549,6 +7636,13 @@ function normalizeImportedRoadmap(roadmap) {
   );
   const periodRaw = coalesceLegacyRoadmapStringField(roadmap, "roadmapPeriod", "projectPeriod") || "";
   const roadmapPeriod = periodRaw ? periodRaw.toUpperCase() : null;
+  const roadmapPeriods = getRoadmapPeriodEntries(
+    Object.assign({}, roadmap, { roadmapPeriod, roadmapPeriods: roadmap.roadmapPeriods })
+  );
+  const normalizedLegacyPeriod =
+    typeof RoadmapPeriods !== "undefined"
+      ? RoadmapPeriods.deriveLegacyPeriod(roadmapPeriods)
+      : roadmapPeriod;
   const normalizedFinancialValue = computeFrameworkFinancialImpact(financialImpactFramework, financialImpactInputs, financialImpactValue);
   const normalized = {
     id,
@@ -7572,7 +7666,8 @@ function normalizeImportedRoadmap(roadmap) {
     roadmapType: coalesceLegacyRoadmapStringField(roadmap, "roadmapType", "projectType"),
     roadmapStatus: coalesceLegacyRoadmapStringField(roadmap, "roadmapStatus", "projectStatus"),
     tshirtSize: (roadmap.tshirtSize != null && String(roadmap.tshirtSize).trim() !== "") ? String(roadmap.tshirtSize).trim() : null,
-    roadmapPeriod,
+    roadmapPeriod: normalizedLegacyPeriod,
+    roadmapPeriods,
     moscowCategory: (roadmap.moscowCategory != null && String(roadmap.moscowCategory).trim() !== "" && typeof moscowList !== "undefined" && moscowList.includes(roadmap.moscowCategory)) ? String(roadmap.moscowCategory).trim() : null,
     kanoFunctionality: normalizeKanoAxisLevel(roadmap.kanoFunctionality),
     kanoSatisfaction: normalizeKanoAxisLevel(roadmap.kanoSatisfaction),
@@ -8143,14 +8238,6 @@ const ROADMAP_TASK_PROGRESS_STATUSES = [
   "Done",
   "Cancelled"
 ];
-
-function getRoadmapTaskStatusSlug(status) {
-  return String(status || "")
-    .trim()
-    .toLowerCase()
-    .replace(/'/g, "")
-    .replace(/\s+/g, "-");
-}
 
 function getRoadmapTasksSnapshotForProgress() {
   const container = elements.roadmapTasksContainer;
@@ -9927,10 +10014,6 @@ function renderPortfolioKanoPositionedList(positioned) {
   });
 }
 
-function buildPortfolioKanoMatrixChip(roadmap) {
-  return buildPortfolioKanoMatrixTile(roadmap);
-}
-
 function buildPortfolioKanoUnpositionedCard(roadmap) {
   const card = document.createElement("article");
   card.className = "portfolio-kano-card";
@@ -10352,6 +10435,229 @@ function getRoadmapTasksFromControls() {
   return normalizeRoadmapTasks(getRoadmapTasksSnapshotForProgress());
 }
 
+function getRoadmapPeriodStatusOptions() {
+  return getRoadmapTaskStatusOptions();
+}
+
+function getRoadmapPeriodEntries(roadmap) {
+  const statusOptions = getRoadmapPeriodStatusOptions();
+  const legacyPeriod = coalesceLegacyRoadmapStringField(roadmap || {}, "roadmapPeriod", "projectPeriod");
+  const legacyStatus = coalesceLegacyRoadmapStringField(roadmap || {}, "roadmapStatus", "projectStatus");
+  if (typeof RoadmapPeriods === "undefined") {
+    const period = legacyPeriod ? String(legacyPeriod).trim().toUpperCase() : "";
+    return period ? [{ period, status: normalizeRoadmapTaskStatus(legacyStatus) }] : [];
+  }
+  if (Array.isArray(roadmap?.roadmapPeriods) && roadmap.roadmapPeriods.length) {
+    return RoadmapPeriods.normalizePeriods(roadmap.roadmapPeriods, { legacyStatus, statusOptions });
+  }
+  return RoadmapPeriods.normalizePeriods(null, { legacyPeriod, legacyStatus, statusOptions });
+}
+
+function syncRoadmapLegacyPeriodFields(roadmap) {
+  if (!roadmap || typeof roadmap !== "object") return;
+  const entries = getRoadmapPeriodEntries(roadmap);
+  roadmap.roadmapPeriods = entries;
+  roadmap.roadmapPeriod =
+    typeof RoadmapPeriods !== "undefined"
+      ? RoadmapPeriods.deriveLegacyPeriod(entries)
+      : entries.length
+        ? entries[0].period
+        : null;
+}
+
+function getDefaultRoadmapPeriodEntry() {
+  if (typeof RoadmapPeriods !== "undefined" && typeof RoadmapPeriods.buildDefaultPeriodEntry === "function") {
+    return RoadmapPeriods.buildDefaultPeriodEntry(getRoadmapPeriodStatusOptions());
+  }
+  return { period: "", status: "Not Started" };
+}
+
+function buildRoadmapPeriodSelect(selectedPeriod) {
+  const select = document.createElement("select");
+  select.className = "roadmap-period-select";
+  select.setAttribute("aria-label", "Quarter period");
+  const resolvedPeriod =
+    (selectedPeriod && String(selectedPeriod).trim()) ||
+    (typeof RoadmapPeriods !== "undefined" ? RoadmapPeriods.getCurrentPeriod() : "");
+  if (typeof RoadmapPeriods !== "undefined") {
+    RoadmapPeriods.buildOptions().forEach((period) => {
+      const option = document.createElement("option");
+      option.value = period;
+      option.textContent = period;
+      select.appendChild(option);
+    });
+  }
+  if (resolvedPeriod) {
+    select.value = resolvedPeriod;
+  }
+  return select;
+}
+
+function ensureRoadmapPeriodRowHeader() {
+  if (!elements.roadmapPeriodsContainer) return;
+  if (elements.roadmapPeriodsContainer.querySelector(".roadmap-period-row-header")) return;
+  const header = document.createElement("div");
+  header.className = "roadmap-period-row-header";
+  header.setAttribute("aria-hidden", "true");
+  const colPeriod = document.createElement("span");
+  colPeriod.textContent = "Quarter";
+  const colStatus = document.createElement("span");
+  colStatus.textContent = "Status";
+  const colAction = document.createElement("span");
+  header.appendChild(colPeriod);
+  header.appendChild(colStatus);
+  header.appendChild(colAction);
+  elements.roadmapPeriodsContainer.appendChild(header);
+}
+
+function renderRoadmapPeriodControls(periods, { readonly = false, legacyPeriod = null, legacyStatus = null } = {}) {
+  if (!elements.roadmapPeriodsContainer) return;
+  elements.roadmapPeriodsContainer.innerHTML = "";
+  const statusOptions = getRoadmapPeriodStatusOptions();
+  const normalized =
+    typeof RoadmapPeriods !== "undefined"
+      ? RoadmapPeriods.normalizePeriods(periods, { legacyPeriod, legacyStatus, statusOptions })
+      : getRoadmapPeriodEntries({ roadmapPeriods: periods, roadmapPeriod: legacyPeriod, roadmapStatus: legacyStatus });
+
+  if (readonly) {
+    if (!normalized.length) {
+      const hint = document.createElement("p");
+      hint.className = "roadmap-field-empty-hint";
+      hint.textContent = "No quarters added";
+      elements.roadmapPeriodsContainer.appendChild(hint);
+      return;
+    }
+    const wrap = document.createElement("div");
+    wrap.className = "roadmap-tasks-readonly";
+    wrap.setAttribute("role", "list");
+    normalized.forEach((entry) => {
+      const row = document.createElement("article");
+      row.className = "roadmap-task-card";
+      row.setAttribute("role", "listitem");
+
+      const main = document.createElement("div");
+      main.className = "roadmap-task-card__main";
+
+      const statusDot = document.createElement("span");
+      statusDot.className = "roadmap-task-card__status-dot";
+      statusDot.dataset.status = entry.status;
+      statusDot.setAttribute("aria-hidden", "true");
+
+      const periodEl = document.createElement("span");
+      periodEl.className = "roadmap-task-card__name";
+      periodEl.textContent = entry.period;
+
+      const statusEl = document.createElement("span");
+      statusEl.className = "roadmap-task-card__status";
+      statusEl.dataset.status = entry.status;
+      statusEl.textContent = entry.status;
+
+      main.appendChild(statusDot);
+      main.appendChild(periodEl);
+      row.appendChild(main);
+      row.appendChild(statusEl);
+      wrap.appendChild(row);
+    });
+    elements.roadmapPeriodsContainer.appendChild(wrap);
+    return;
+  }
+
+  ensureRoadmapPeriodRowHeader();
+  const list = normalized.length ? normalized : [getDefaultRoadmapPeriodEntry()];
+  list.forEach((entry) => addRoadmapPeriodRow(entry));
+}
+
+function addRoadmapPeriodRow(entry) {
+  if (!elements.roadmapPeriodsContainer) return;
+  ensureRoadmapPeriodRowHeader();
+  const defaults = getDefaultRoadmapPeriodEntry();
+  const resolvedEntry = {
+    period: (entry && entry.period) || defaults.period,
+    status: (entry && entry.status) || defaults.status
+  };
+  const row = document.createElement("div");
+  row.className = "roadmap-period-row";
+
+  const fields = document.createElement("div");
+  fields.className = "roadmap-period-row__fields";
+
+  const periodSelect = buildRoadmapPeriodSelect(resolvedEntry.period);
+  const statusSelect = buildRoadmapTaskStatusSelect(resolvedEntry.status);
+  statusSelect.classList.add("roadmap-period-status-select");
+  statusSelect.setAttribute("aria-label", "Quarter status");
+
+  const removeBtn = document.createElement("button");
+  removeBtn.type = "button";
+  removeBtn.className = "roadmap-period-remove-btn";
+  removeBtn.textContent = "×";
+  removeBtn.setAttribute("aria-label", "Remove quarter");
+
+  fields.appendChild(periodSelect);
+  fields.appendChild(statusSelect);
+  row.appendChild(fields);
+  row.appendChild(removeBtn);
+  elements.roadmapPeriodsContainer.appendChild(row);
+  scheduleRoadmapModalSectionNavSync();
+}
+
+function getRoadmapPeriodsFromControls() {
+  if (!elements.roadmapPeriodsContainer) return [];
+  const statusOptions = getRoadmapPeriodStatusOptions();
+  const rows = elements.roadmapPeriodsContainer.querySelectorAll(".roadmap-period-row");
+  const raw = [];
+  rows.forEach((row) => {
+    let period = (row.querySelector(".roadmap-period-select")?.value || "").trim();
+    const status = row.querySelector(".roadmap-period-status-select, .roadmap-task-status-select")?.value;
+    if (!period && typeof RoadmapPeriods !== "undefined") {
+      period = RoadmapPeriods.getCurrentPeriod();
+    }
+    if (!period) return;
+    raw.push({ period, status: status || "Not Started" });
+  });
+  if (typeof RoadmapPeriods === "undefined") return raw;
+  return RoadmapPeriods.normalizePeriods(raw, { statusOptions });
+}
+
+function populateBulkEditPeriodSelect(selectEl) {
+  if (!selectEl) return;
+  selectEl.innerHTML = "";
+  const noChange = document.createElement("option");
+  noChange.value = BULK_EDIT_NO_CHANGE;
+  noChange.textContent = "No change";
+  selectEl.appendChild(noChange);
+  const clear = document.createElement("option");
+  clear.value = BULK_EDIT_CLEAR;
+  clear.textContent = "Clear periods";
+  selectEl.appendChild(clear);
+  if (typeof RoadmapPeriods !== "undefined") {
+    RoadmapPeriods.buildOptions().forEach((period) => {
+      const option = document.createElement("option");
+      option.value = period;
+      option.textContent = period;
+      selectEl.appendChild(option);
+    });
+  }
+  selectEl.value = BULK_EDIT_NO_CHANGE;
+}
+
+function formatRoadmapPeriodEntriesForDisplay(roadmap) {
+  const entries = getRoadmapPeriodEntries(roadmap);
+  if (!entries.length) return "";
+  return entries.map((entry) => entry.period).join(", ");
+}
+
+function roadmapHasPeriodFilterMatch(roadmap, selectedPeriods) {
+  if (!selectedPeriods || !selectedPeriods.length) return true;
+  const entries = getRoadmapPeriodEntries(roadmap);
+  if (!entries.length) return false;
+  const roadmapPeriods = entries.map((entry) => entry.period);
+  return roadmapPeriods.some((period) => selectedPeriods.includes(period));
+}
+
+function roadmapHasAnyPeriod(roadmap) {
+  return getRoadmapPeriodEntries(roadmap).length > 0;
+}
+
 /** Preserves password hashes, drag order maps, and forward-compatible profile fields on load. */
 function normalizeLoadedProfile(raw) {
   if (!raw || typeof raw !== "object") return null;
@@ -10579,6 +10885,13 @@ function normalizeLoadedRoadmap(roadmap) {
   const effortValue = toNumberOrNull(roadmap.effortValue);
   const periodRaw = coalesceLegacyRoadmapStringField(roadmap, "roadmapPeriod", "projectPeriod") || "";
   const roadmapPeriod = periodRaw ? periodRaw.toUpperCase() : null;
+  const roadmapPeriods = getRoadmapPeriodEntries(
+    Object.assign({}, roadmap, { roadmapPeriod, roadmapPeriods: roadmap.roadmapPeriods })
+  );
+  const normalizedLegacyPeriod =
+    typeof RoadmapPeriods !== "undefined"
+      ? RoadmapPeriods.deriveLegacyPeriod(roadmapPeriods)
+      : roadmapPeriod;
   const financialImpactFramework = normalizeFinancialFramework(roadmap.financialImpactFramework);
   const financialImpactInputs = sanitizeFinancialImpactInputs(
     financialImpactFramework,
@@ -10613,7 +10926,8 @@ function normalizeLoadedRoadmap(roadmap) {
     roadmapType: coalesceLegacyRoadmapStringField(roadmap, "roadmapType", "projectType"),
     roadmapStatus: coalesceLegacyRoadmapStringField(roadmap, "roadmapStatus", "projectStatus"),
     tshirtSize: (roadmap.tshirtSize != null && String(roadmap.tshirtSize).trim() !== "") ? String(roadmap.tshirtSize).trim() : null,
-    roadmapPeriod,
+    roadmapPeriod: normalizedLegacyPeriod,
+    roadmapPeriods,
     moscowCategory: (roadmap.moscowCategory != null && String(roadmap.moscowCategory).trim() !== "" && typeof moscowList !== "undefined" && moscowList.includes(roadmap.moscowCategory)) ? String(roadmap.moscowCategory).trim() : null,
     kanoFunctionality: normalizeKanoAxisLevel(roadmap.kanoFunctionality),
     kanoSatisfaction: normalizeKanoAxisLevel(roadmap.kanoSatisfaction),
@@ -11093,9 +11407,10 @@ function hideAllTooltipsExcept(keepTooltip) {
     el.classList.remove("cell-type-tooltip-visible", "cell-type-tooltip--floating");
     if (el._ownerWrap && el.parentNode !== el._ownerWrap) {
       el._ownerWrap.appendChild(el);
-      el._ownerWrap = null;
     }
+    el._ownerWrap = null;
   });
+  if (!keepTooltip) activeTooltipWrap = null;
   refreshCompactTooltipBackdrop();
 }
 
@@ -11207,7 +11522,7 @@ function clearCompactTooltipOverlayState() {
 }
 
 function reconcileStuckAppScrollLock() {
-  if (getActiveBlockingModalOverlayId()) return;
+  if (isCompactOverlayScrollLockNeeded()) return;
   if (appScrollLockDepth > 0) {
     appScrollLockDepth = 1;
     unlockAppScroll();
@@ -11368,9 +11683,7 @@ function reconcileCompactScrimLayers() {
     filtersOpen ||
     profilesOpen;
   if (!anyCompactScrimOpen && !getActiveBlockingModalOverlayId()) {
-    if (document.body.style.overflow === "hidden") {
-      document.body.style.overflow = "";
-    }
+    reconcileStuckAppScrollLock();
   }
 }
 
@@ -11571,6 +11884,10 @@ function positionProfileTooltip(wrap, anchorPoint) {
   cancelTooltipHoverHide();
   document.body.classList.remove("cell-type-tooltip-hidden");
 
+  if (activeTooltipWrap && activeTooltipWrap !== wrap) {
+    hideTooltipForWrap(activeTooltipWrap);
+  }
+
   let rect;
   if (wrap.classList.contains("roadmap-field-tooltip-wrap")) {
     const control = wrap.querySelector("input, select, textarea");
@@ -11763,7 +12080,7 @@ function openFiltersSheet() {
   }
   if (summary) summary.setAttribute("aria-expanded", "true");
 
-  document.body.style.overflow = "hidden";
+  lockAppScroll();
   syncPortfolioFiltersDrawerState();
   syncCompactFiltersChrome();
   syncCompactChromeMetrics();
@@ -11791,10 +12108,14 @@ function closeFiltersSheet({ immediate = false } = {}) {
 
   drawer.open = false;
 
+  const shouldReleaseScrollLock =
+    isCompactFiltersSheetLayout() &&
+    sheet?.classList.contains("portfolio-filters-sheet--open");
+
   if (sheet) sheet.classList.remove("portfolio-filters-sheet--open");
   if (backdrop) backdrop.classList.remove("filters-sheet-backdrop--visible");
   if (summary) summary.setAttribute("aria-expanded", "false");
-  document.body.style.overflow = "";
+  if (shouldReleaseScrollLock) unlockAppScroll();
 
   const finishClose = () => {
     if (sheet && !sheet.classList.contains("portfolio-filters-sheet--open")) {
@@ -11894,11 +12215,15 @@ function initPortfolioFiltersDrawer() {
 
   const backdrop = elements.filtersSheetBackdrop || $("filtersSheetBackdrop");
   if (backdrop) {
-    backdrop.addEventListener("click", () => closeFiltersSheet());
+    backdrop.addEventListener("click", () => {
+      if (!allowImplicitOverlayDismiss()) return;
+      closeFiltersSheet();
+    });
   }
 
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape" || !isCompactFiltersSheetLayout()) return;
+    if (!allowImplicitOverlayDismiss()) return;
     const sheet = elements.portfolioFiltersSheet || $("portfolioFiltersSheet");
     if (sheet?.classList.contains("portfolio-filters-sheet--open")) {
       e.preventDefault();
@@ -12055,10 +12380,6 @@ function isBlockingModalOpen(el) {
   return !!(el && el.classList.contains("active"));
 }
 
-function isRoadmapModalOpen() {
-  return isBlockingModalOpen(elements.roadmapModal);
-}
-
 function syncBlockingModalOpenClass() {
   const hasOpen = getBlockingModalCandidates().some(([, el]) => isBlockingModalOpen(el));
   document.documentElement.classList.toggle("blocking-modal-open", hasOpen);
@@ -12067,6 +12388,10 @@ function syncBlockingModalOpenClass() {
 function activateBlockingModal(el, overlayId) {
   if (!el || !overlayId) return;
   prepareAppOverlay(overlayId);
+  if (overlayId !== "roadmapModal") {
+    syncRoadmapSummarySectionVisibility(false);
+    elements.roadmapModal?.classList.remove("roadmap-modal--view");
+  }
   lockAppScroll();
   syncBlockingModalOpenClass();
   el.setAttribute("aria-hidden", "false");
@@ -12136,6 +12461,14 @@ function initBlockingModalGuards() {
   document.querySelectorAll(".modal-backdrop").forEach((modal) => {
     if (modal.dataset.interactionGuardsReady === "1") return;
     modal.dataset.interactionGuardsReady = "1";
+
+    modal.addEventListener("click", (event) => {
+      if (allowImplicitOverlayDismiss() || !isBlockingModalOpen(modal)) return;
+      const panel = modal.querySelector(".modal-panel, .data-transfer-modal");
+      if (panel && panel.contains(event.target)) return;
+      event.preventDefault();
+      event.stopPropagation();
+    });
 
     modal.addEventListener(
       "wheel",
@@ -13468,16 +13801,6 @@ function syncProfilesSheetTabsUi() {
   }
 }
 
-function setProfilesSheetTab(tab) {
-  profilesSheetTab = "browse";
-  syncProfilesSheetTabsUi();
-  const trigger = elements.profilesSelectTrigger || $("profilesSelectTrigger");
-  requestAnimationFrame(() => {
-    scheduleProfilesBrowseOpenInSheet();
-    if (!profilesSelectOpen) trigger?.focus();
-  });
-}
-
 function mountProfilesSheetToScrimRoot() {
   if (!isCompactProfilesLayout()) return;
   const root = getCompactScrimRoot();
@@ -13534,8 +13857,7 @@ function openProfilesSheet() {
   document.documentElement.classList.add("profiles-sheet-open");
   if (manageBtn) manageBtn.setAttribute("aria-expanded", "true");
 
-  // Scroll lock
-  document.body.style.overflow = "hidden";
+  lockAppScroll();
 
   scheduleProfilesBrowseOpenInSheet();
 }
@@ -13553,11 +13875,14 @@ function closeProfilesSheet({ immediate = false } = {}) {
     profilesSheetCloseTimer = null;
   }
 
+  const shouldReleaseScrollLock =
+    isCompactProfilesLayout() && sheet.classList.contains("profiles-panel-sheet--open");
+
   sheet.classList.remove("profiles-panel-sheet--open");
   if (backdrop) backdrop.classList.remove("profiles-sheet-backdrop--visible");
   document.documentElement.classList.remove("profiles-sheet-open");
   if (manageBtn) manageBtn.setAttribute("aria-expanded", "false");
-  document.body.style.overflow = "";
+  if (shouldReleaseScrollLock) unlockAppScroll();
 
   const finishProfilesClose = () => {
     if (sheet.classList.contains("profiles-panel-sheet--open")) return;
@@ -13601,14 +13926,17 @@ function initProfilesPanel() {
   }
 
   if (backdrop) {
-    backdrop.addEventListener("click", closeProfilesSheet);
+    backdrop.addEventListener("click", () => {
+      if (!allowImplicitOverlayDismiss()) return;
+      closeProfilesSheet();
+    });
   }
 
-  // Close on Escape
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape" || !isCompactProfilesLayout()) return;
     const sheet = elements.profilesPanelSheet || $("profilesPanelSheet");
     if (sheet && sheet.classList.contains("profiles-panel-sheet--open")) {
+      if (!allowImplicitOverlayDismiss()) return;
       closeProfilesSheet();
       return;
     }
@@ -14018,7 +14346,8 @@ function renderRoadmaps() {
 
     const tdPeriod = document.createElement("td");
     stampRoadmapsTableCol(tdPeriod, "period");
-    const periodValue = roadmap.roadmapPeriod || "";
+    const periodValue = formatRoadmapPeriodEntriesForDisplay(roadmap);
+    const periodEntries = getRoadmapPeriodEntries(roadmap);
     if (periodValue && typeof roadmapPeriodTooltip !== "undefined") {
       const meta = roadmapPeriodTooltip;
       const wrap = document.createElement("span");
@@ -14040,21 +14369,25 @@ function renderRoadmaps() {
       if (meta.tooltipBodyDescription != null) {
         const bodyEl = document.createElement("div");
         bodyEl.className = "cell-type-tooltip-body";
-        const periodMatch = String(periodValue).trim().match(/^(\d{4})-Q([1-4])$/i);
-        let bodyText = meta.tooltipBodyDescription;
-        if (periodMatch) {
-          const year = periodMatch[1];
-          const q = periodMatch[2];
-          const quarterMonths = { "1": "Jan - Mar", "2": "Apr - Jun", "3": "Jul - Sep", "4": "Oct - Dec" };
-          const range = quarterMonths[q] || "";
-          bodyText = bodyText + "\n\n" + `${periodValue} → ${range} ${year}`;
-        }
-        const paragraphs = String(bodyText).split(/\n\n+/);
-        paragraphs.forEach((p) => {
+        periodEntries.forEach((entry) => {
+          const periodMatch = String(entry.period).trim().match(/^(\d{4})-Q([1-4])$/i);
+          let bodyText = `${entry.period} (${entry.status})`;
+          if (periodMatch) {
+            const year = periodMatch[1];
+            const q = periodMatch[2];
+            const quarterMonths = { "1": "Jan - Mar", "2": "Apr - Jun", "3": "Jul - Sep", "4": "Oct - Dec" };
+            const range = quarterMonths[q] || "";
+            bodyText = `${entry.period} (${entry.status}) → ${range} ${year}`;
+          }
           const block = document.createElement("p");
-          block.textContent = p.trim();
+          block.textContent = bodyText;
           if (block.textContent) bodyEl.appendChild(block);
         });
+        if (!bodyEl.childNodes.length) {
+          const block = document.createElement("p");
+          block.textContent = meta.tooltipBodyDescription;
+          bodyEl.appendChild(block);
+        }
         tooltipEl.appendChild(bodyEl);
       }
       wrap.appendChild(tooltipEl);
@@ -15894,43 +16227,6 @@ function buildBoardCardMetricsRow(roadmap, boardPrefix, options = {}) {
   return row;
 }
 
-function buildTshirtSizeTooltipWrap(tshirtSize, extraClass) {
-  const wrap = document.createElement("span");
-  wrap.className = ["cell-tshirt-with-tooltip", extraClass].filter(Boolean).join(" ");
-  wrap.setAttribute("tabindex", "0");
-  wrap.setAttribute("aria-label", `T-shirt size: ${tshirtSize}`);
-  const textSpan = document.createElement("span");
-  textSpan.className = "cell-tshirt-size-text";
-  textSpan.textContent = tshirtSize;
-  wrap.appendChild(textSpan);
-  const meta =
-    typeof tshirtSizeTooltips !== "undefined" && tshirtSizeTooltips[tshirtSize]
-      ? tshirtSizeTooltips[tshirtSize]
-      : null;
-  appendIconMetaTooltip(wrap, meta);
-  return wrap;
-}
-
-function buildRoadmapTableCardTshirtMetric(roadmap) {
-  const metric = document.createElement("div");
-  metric.className = "roadmaps-table-card__metric roadmaps-table-card__metric--size";
-  const sizeLabel = document.createElement("span");
-  sizeLabel.className = "roadmaps-table-card__metric-label";
-  sizeLabel.textContent = "Size";
-  metric.appendChild(sizeLabel);
-  if (roadmap.tshirtSize) {
-    metric.appendChild(
-      buildTshirtSizeTooltipWrap(roadmap.tshirtSize, "roadmaps-table-card__metric-value")
-    );
-  } else {
-    const sizeVal = document.createElement("span");
-    sizeVal.className = "roadmaps-table-card__metric-value";
-    sizeVal.textContent = "—";
-    metric.appendChild(sizeVal);
-  }
-  return metric;
-}
-
 function appendIconMetaTooltip(wrap, meta) {
   if (!wrap || !meta || (meta.tooltipTitle == null && meta.tooltipBody == null)) return;
   const tooltipEl = document.createElement("div");
@@ -15955,144 +16251,6 @@ function appendIconMetaTooltip(wrap, meta) {
     tooltipEl.appendChild(bodyEl);
   }
   wrap.appendChild(tooltipEl);
-}
-
-function buildRoadmapTableCardRiceMetric(roadmap) {
-  const riceScore = roadmap.riceScore != null ? roadmap.riceScore : calculateRiceScore(roadmap);
-  const reachVal = roadmap.reachValue != null && roadmap.reachValue !== "" ? roadmap.reachValue : "—";
-  const impactVal = roadmap.impactValue != null && roadmap.impactValue !== "" ? roadmap.impactValue : "—";
-  const confidenceVal =
-    roadmap.confidenceValue != null && roadmap.confidenceValue !== "" ? roadmap.confidenceValue : "—";
-  const effortVal = roadmap.effortValue != null && roadmap.effortValue !== "" ? roadmap.effortValue : "—";
-  const reachNum = Number(roadmap.reachValue);
-  const impactNum = Number(roadmap.impactValue);
-  const confidenceNum = Number(roadmap.confidenceValue);
-  const effortNum = Number(roadmap.effortValue);
-  const confidenceDecimal = Number.isFinite(confidenceNum) ? confidenceNum / 100 : null;
-  const formulaLine =
-    Number.isFinite(reachNum) &&
-    Number.isFinite(impactNum) &&
-    Number.isFinite(confidenceDecimal) &&
-    Number.isFinite(effortNum) &&
-    effortNum > 0
-      ? `[${reachNum} × ${impactNum} × ${confidenceDecimal.toFixed(2)}] ÷ ${effortNum} = ${formatRice(riceScore)}`
-      : "Not enough inputs to compute full formula.";
-
-  const metric = document.createElement("div");
-  metric.className = "roadmaps-table-card__metric roadmaps-table-card__metric--rice";
-
-  const riceLabel = document.createElement("span");
-  riceLabel.className = "roadmaps-table-card__metric-label";
-  riceLabel.textContent = "RICE";
-  metric.appendChild(riceLabel);
-
-  const riceWrap = document.createElement("span");
-  riceWrap.className = "cell-rice-with-tooltip roadmaps-table-card__metric-value";
-  riceWrap.setAttribute("tabindex", "0");
-  riceWrap.setAttribute(
-    "aria-label",
-    `RICE details: Reach ${reachVal}, Impact ${impactVal}, Confidence ${confidenceVal !== "—" ? confidenceVal + "%" : "—"}, Effort ${effortVal}.`
-  );
-  const riceText = document.createElement("span");
-  riceText.textContent = formatRice(riceScore);
-  riceWrap.appendChild(riceText);
-
-  const riceTooltip = document.createElement("div");
-  riceTooltip.className = "cell-type-tooltip";
-  riceTooltip.setAttribute("role", "tooltip");
-  const riceTooltipTitle = document.createElement("div");
-  riceTooltipTitle.className = "cell-type-tooltip-title";
-  riceTooltipTitle.textContent = "RICE score details";
-  riceTooltip.appendChild(riceTooltipTitle);
-  const riceTooltipBody = document.createElement("div");
-  riceTooltipBody.className = "cell-type-tooltip-body";
-  const formula = document.createElement("p");
-  formula.textContent = "Formula: [Reach × Impact × Confidence] ÷ Effort";
-  riceTooltipBody.appendChild(formula);
-  [
-    `R (Reach) - ${reachVal}`,
-    `I (Impact) - ${impactVal}`,
-    `C (Confidence) - ${confidenceVal !== "—" ? confidenceVal + "%" : "—"}${Number.isFinite(confidenceDecimal) ? ` (${confidenceDecimal.toFixed(2)})` : ""}`,
-    `E (Effort) - ${effortVal}`,
-    `Calculation - ${formulaLine}`
-  ].forEach((line) => {
-    const p = document.createElement("p");
-    p.textContent = line;
-    riceTooltipBody.appendChild(p);
-  });
-  riceTooltip.appendChild(riceTooltipBody);
-  riceWrap.appendChild(riceTooltip);
-  metric.appendChild(riceWrap);
-  return metric;
-}
-
-function buildRoadmapTableCardFinancialMetric(roadmap) {
-  const financialShort = getRoadmapFinancialImpactEurShort(roadmap) || "—";
-  const metric = document.createElement("div");
-  metric.className = "roadmaps-table-card__metric roadmaps-table-card__metric--financial";
-
-  const finLabel = document.createElement("span");
-  finLabel.className = "roadmaps-table-card__metric-label";
-  finLabel.textContent = "Impact";
-  metric.appendChild(finLabel);
-
-  if (roadmap.financialImpactValue == null || roadmap.financialImpactValue === "") {
-    const finVal = document.createElement("span");
-    finVal.className = "roadmaps-table-card__metric-value";
-    finVal.textContent = financialShort;
-    metric.appendChild(finVal);
-    return metric;
-  }
-
-  const raw = roadmap.financialImpactValue;
-  const amount = Number.isFinite(raw) ? raw : Number(raw);
-  const currency = (roadmap.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
-  const amountEur =
-    typeof ExchangeRates !== "undefined" && typeof ExchangeRates.convertToEUR === "function"
-      ? ExchangeRates.convertToEUR(amount, currency)
-      : amount;
-  const hasEurRate =
-    typeof ExchangeRates !== "undefined" && typeof ExchangeRates.hasRate === "function"
-      ? ExchangeRates.hasRate(currency)
-      : true;
-  const shortOriginal =
-    typeof formatFinancialShort === "function"
-      ? formatFinancialShort(amount)
-      : String(Number(amount).toLocaleString(undefined, { maximumFractionDigits: 2 }));
-
-  const finWrap = document.createElement("span");
-  finWrap.className = "cell-financial-with-tooltip roadmaps-table-card__metric-value";
-  finWrap.setAttribute("tabindex", "0");
-  const finText = document.createElement("span");
-  finText.className = "cell-financial-text";
-  finText.textContent = financialShort;
-  finWrap.appendChild(finText);
-
-  const tooltipEl = document.createElement("div");
-  tooltipEl.className = "cell-type-tooltip";
-  tooltipEl.setAttribute("role", "tooltip");
-  const titleEl = document.createElement("div");
-  titleEl.className = "cell-type-tooltip-title";
-  titleEl.textContent = "Original financial impact";
-  tooltipEl.appendChild(titleEl);
-  const bodyEl = document.createElement("div");
-  bodyEl.className = "cell-type-tooltip-body";
-  const p = document.createElement("p");
-  p.textContent =
-    hasEurRate && Number.isFinite(amountEur)
-      ? `${shortOriginal} ${currency}`
-      : `${shortOriginal} ${currency} (EUR rate unavailable)`;
-  bodyEl.appendChild(p);
-  tooltipEl.appendChild(bodyEl);
-  finWrap.appendChild(tooltipEl);
-  finWrap.setAttribute(
-    "aria-label",
-    hasEurRate && Number.isFinite(amountEur)
-      ? `Financial impact: ${financialShort} (original: ${shortOriginal} ${currency})`
-      : `Financial impact: ${shortOriginal} ${currency} (EUR rate unavailable)`
-  );
-  metric.appendChild(finWrap);
-  return metric;
 }
 
 function buildCardTitleTooltipElement(titleClassName, roadmap) {
@@ -16442,26 +16600,6 @@ function truncateTableCardText(text, maxLen) {
   return raw.slice(0, Math.max(0, maxLen - 1)).trimEnd() + "…";
 }
 
-function appendRoadmapTableCardTitleIcon(iconsWrap, options) {
-  const { svg, ariaLabel, extraClass, iconKind, fallbackText, meta } = options;
-  if (!ariaLabel) return;
-  const wrap = document.createElement("span");
-  wrap.className = `roadmaps-table-card__title-icon cell-type-icon-wrap cell-type-pill${extraClass ? " " + extraClass : ""}`;
-  if (iconKind) wrap.dataset.iconKind = iconKind;
-  wrap.setAttribute("role", "img");
-  wrap.setAttribute("aria-label", ariaLabel);
-  wrap.setAttribute("tabindex", "0");
-  if (svg) {
-    wrap.innerHTML = svg;
-  } else if (fallbackText) {
-    wrap.textContent = fallbackText;
-  } else {
-    return;
-  }
-  appendIconMetaTooltip(wrap, meta);
-  iconsWrap.appendChild(wrap);
-}
-
 const TABLE_CARD_MAX_BADGES = 3;
 
 function buildRoadmapTableCardBadges(roadmap, groupBy) {
@@ -16530,11 +16668,13 @@ function buildRoadmapTableCardBadges(roadmap, groupBy) {
     candidates.push({ priority: 4, label: curChip.textContent, el: curChip });
   }
 
-  if (roadmap.roadmapPeriod) {
+  const periodEntries = getRoadmapPeriodEntries(roadmap);
+  if (periodEntries.length) {
+    const periodLabel = periodEntries.map((entry) => entry.period).join(", ");
     const periodChip = document.createElement("span");
     periodChip.className = "roadmaps-table-card__chip roadmaps-table-card__chip--period";
-    periodChip.textContent = roadmap.roadmapPeriod;
-    candidates.push({ priority: 5, label: roadmap.roadmapPeriod, el: periodChip });
+    periodChip.textContent = periodLabel;
+    candidates.push({ priority: 5, label: periodLabel, el: periodChip });
   }
 
   candidates.sort((a, b) => a.priority - b.priority);
@@ -18189,8 +18329,7 @@ function applyFilters(roadmaps) {
     }
 
     if (selectedPeriodsFilter.length) {
-      const roadmapPeriod = (p.roadmapPeriod || "").toString().trim().toUpperCase();
-      if (!roadmapPeriod || !selectedPeriodsFilter.includes(roadmapPeriod)) return false;
+      if (!roadmapHasPeriodFilterMatch(p, selectedPeriodsFilter)) return false;
     }
 
     if (impactFilter) {
@@ -18579,9 +18718,7 @@ function resetRoadmapBulkEditForm() {
   populateBulkEditSelect(elements.roadmapBulkEditType, ROADMAP_TYPE_OPTIONS);
   populateBulkEditSelect(elements.roadmapBulkEditMoscow, moscowList);
   populateBulkEditSelect(elements.roadmapBulkEditTshirtSize, tshirtSizeList);
-  if (elements.roadmapBulkEditPeriod) {
-    elements.roadmapBulkEditPeriod.value = "";
-  }
+  populateBulkEditPeriodSelect(elements.roadmapBulkEditPeriod);
 }
 
 function resolveBulkEditFieldValue(rawValue) {
@@ -18602,9 +18739,9 @@ function buildBulkEditPatchFromForm() {
   const tshirtSize = resolveBulkEditFieldValue(elements.roadmapBulkEditTshirtSize?.value);
   if (tshirtSize !== undefined) patch.tshirtSize = tshirtSize;
 
-  const periodRaw = (elements.roadmapBulkEditPeriod?.value || "").trim();
-  if (periodRaw) {
-    patch.roadmapPeriod = periodRaw.toUpperCase();
+  const periodValue = resolveBulkEditFieldValue(elements.roadmapBulkEditPeriod?.value);
+  if (periodValue !== undefined) {
+    patch.roadmapPeriod = periodValue;
   }
 
   return patch;
@@ -18636,6 +18773,18 @@ function applyBulkRoadmapEdits(roadmapIds, patch) {
     }
     if (Object.prototype.hasOwnProperty.call(patch, "roadmapPeriod")) {
       roadmap.roadmapPeriod = patch.roadmapPeriod;
+      const status =
+        patch.roadmapStatus !== undefined
+          ? patch.roadmapStatus
+          : coalesceLegacyRoadmapStringField(roadmap, "roadmapStatus", "projectStatus") || "Not Started";
+      if (patch.roadmapPeriod && typeof RoadmapPeriods !== "undefined") {
+        roadmap.roadmapPeriods = RoadmapPeriods.normalizePeriods(
+          [{ period: patch.roadmapPeriod, status }],
+          { statusOptions: getRoadmapPeriodStatusOptions() }
+        );
+      } else {
+        roadmap.roadmapPeriods = [];
+      }
       changed = true;
     }
     if (changed) {
@@ -19937,33 +20086,27 @@ function initProfileViewOwnerFilterOptions(defaultProfileId) {
 function getProfileViewUniquePeriods(roadmaps) {
   const periods = new Set();
   (roadmaps || []).forEach((roadmap) => {
-    const raw =
-      roadmap.roadmapPeriod != null ? String(roadmap.roadmapPeriod).trim().toUpperCase() : "";
-    if (raw) periods.add(raw);
+    getRoadmapPeriodEntries(roadmap).forEach((entry) => {
+      if (entry.period) periods.add(entry.period);
+    });
   });
   return Array.from(periods).sort();
 }
 
 function countProfileViewRoadmapsWithoutPeriod(roadmaps) {
-  return (roadmaps || []).filter(
-    (roadmap) =>
-      !(coalesceLegacyRoadmapStringField(roadmap, "roadmapPeriod", "projectPeriod") || "").trim()
-  ).length;
+  return (roadmaps || []).filter((roadmap) => !roadmapHasAnyPeriod(roadmap)).length;
 }
 
 function filterProfileViewRoadmaps(roadmaps, periodFilter) {
   const list = Array.isArray(roadmaps) ? roadmaps : [];
   if (!periodFilter) return list.slice();
   if (periodFilter === "__none__") {
-    return list.filter(
-      (roadmap) =>
-        !(coalesceLegacyRoadmapStringField(roadmap, "roadmapPeriod", "projectPeriod") || "").trim()
-    );
+    return list.filter((roadmap) => !roadmapHasAnyPeriod(roadmap));
   }
   const target = periodFilter.toUpperCase();
   return list.filter((roadmap) => {
-    const period = (roadmap.roadmapPeriod || "").toString().trim().toUpperCase();
-    return period === target;
+    const entries = getRoadmapPeriodEntries(roadmap);
+    return entries.some((entry) => entry.period === target);
   });
 }
 
@@ -20836,7 +20979,7 @@ function openRoadmapModal(mode, roadmapId, options = {}) {
     elements.roadmapType.value = roadmap.roadmapType || "";
     elements.roadmapStatus.value = roadmap.roadmapStatus || "";
     elements.roadmapTshirtSize.value = roadmap.tshirtSize || "";
-    elements.roadmapPeriod.value = roadmap.roadmapPeriod || "";
+    renderRoadmapPeriodControls(getRoadmapPeriodEntries(roadmap), { readonly: isView });
     elements.roadmapMoscow.value = roadmap.moscowCategory || "";
     setRoadmapKanoSelection(roadmap.kanoFunctionality, roadmap.kanoSatisfaction, { readonly: isView });
     renderCountriesControls(Array.isArray(roadmap.countries) ? roadmap.countries : []);
@@ -20879,7 +21022,7 @@ function openRoadmapModal(mode, roadmapId, options = {}) {
     elements.roadmapType.value = "";
     elements.roadmapStatus.value = "";
     elements.roadmapTshirtSize.value = "";
-    elements.roadmapPeriod.value = "";
+    renderRoadmapPeriodControls([], { readonly: false });
     elements.roadmapMoscow.value = "";
     setRoadmapKanoSelection(null, null, { readonly: false });
     renderCountriesControls([]);
@@ -20908,9 +21051,15 @@ function openRoadmapModal(mode, roadmapId, options = {}) {
   syncRoadmapTasksDisclosure({ resetCollapsed: true });
   syncRoadmapModalFooterMetaDetails({ resetCollapsed: true });
   resetRoadmapSummaryUi();
-  syncRoadmapSummarySectionVisibility(isView);
   activateBlockingModal(elements.roadmapModal, "roadmapModal");
   elements.roadmapModal.classList.toggle("roadmap-modal--view", isView);
+  syncRoadmapSummarySectionVisibility(isView);
+  if (isView) {
+    requestAnimationFrame(() => {
+      syncRoadmapModalSectionNavIndicators();
+      syncRoadmapModalSectionActiveIndicator(elements.roadmapModal);
+    });
+  }
   if (!isView && !options.scrollToSection) {
     elements.roadmapTitle.focus();
   }
@@ -20938,6 +21087,9 @@ function openRoadmapModal(mode, roadmapId, options = {}) {
   if (elements.addRoadmapTaskBtn) {
     elements.addRoadmapTaskBtn.style.display = isView ? "none" : "";
   }
+  if (elements.addRoadmapPeriodBtn) {
+    elements.addRoadmapPeriodBtn.style.display = isView ? "none" : "";
+  }
   if (elements.roadmapRaciSection) {
     elements.roadmapRaciSection.querySelectorAll(".roadmap-raci-add-btn").forEach((btn) => {
       btn.style.display = isView ? "none" : "";
@@ -20952,6 +21104,12 @@ function openRoadmapModal(mode, roadmapId, options = {}) {
   if (elements.countriesContainer) {
     const removeButtons = elements.countriesContainer.querySelectorAll(".country-remove-btn");
     removeButtons.forEach((btn) => {
+      btn.style.display = isView ? "none" : "";
+    });
+  }
+  if (elements.roadmapPeriodsContainer) {
+    const periodRemoveButtons = elements.roadmapPeriodsContainer.querySelectorAll(".roadmap-period-remove-btn");
+    periodRemoveButtons.forEach((btn) => {
       btn.style.display = isView ? "none" : "";
     });
   }
@@ -21016,10 +21174,19 @@ function handleRoadmapFormSubmit(e) {
     return;
   }
 
-  let period = (elements.roadmapPeriod.value || "").trim();
-  if (period) {
-    period = period.toUpperCase();
+  let roadmapPeriods = getRoadmapPeriodsFromControls();
+  if (typeof RoadmapPeriods !== "undefined") {
+    const periodValidationError = RoadmapPeriods.validatePeriods(roadmapPeriods);
+    if (periodValidationError) {
+      elements.roadmapFormError.textContent = periodValidationError;
+      elements.roadmapFormError.style.display = "block";
+      return;
+    }
   }
+  const roadmapPeriod =
+    typeof RoadmapPeriods !== "undefined"
+      ? RoadmapPeriods.deriveLegacyPeriod(roadmapPeriods)
+      : roadmapPeriods[0]?.period || null;
 
   const raw = {
     title: (elements.roadmapTitle.value || "").trim(),
@@ -21043,7 +21210,8 @@ function handleRoadmapFormSubmit(e) {
     roadmapType: (elements.roadmapType.value || "").trim() || null,
     roadmapStatus: (elements.roadmapStatus.value || "").trim() || null,
     tshirtSize: (elements.roadmapTshirtSize.value || "").trim() || null,
-    roadmapPeriod: period,
+    roadmapPeriod,
+    roadmapPeriods,
     moscowCategory: (elements.roadmapMoscow && elements.roadmapMoscow.value)
       ? (elements.roadmapMoscow.value || "").trim() || null
       : null,
@@ -21123,6 +21291,7 @@ function handleRoadmapFormSubmit(e) {
     roadmap.roadmapStatus = raw.roadmapStatus || null;
     roadmap.tshirtSize = raw.tshirtSize || null;
     roadmap.roadmapPeriod = raw.roadmapPeriod || null;
+    roadmap.roadmapPeriods = Array.isArray(raw.roadmapPeriods) ? raw.roadmapPeriods : [];
     roadmap.moscowCategory = raw.moscowCategory || null;
     roadmap.kanoFunctionality = raw.kanoFunctionality != null ? raw.kanoFunctionality : null;
     roadmap.kanoSatisfaction = raw.kanoSatisfaction != null ? raw.kanoSatisfaction : null;
@@ -21172,6 +21341,7 @@ function handleRoadmapFormSubmit(e) {
       roadmapStatus: raw.roadmapStatus || null,
       tshirtSize: raw.tshirtSize || null,
       roadmapPeriod: raw.roadmapPeriod || null,
+      roadmapPeriods: Array.isArray(raw.roadmapPeriods) ? raw.roadmapPeriods : [],
       moscowCategory: raw.moscowCategory || null,
       kanoFunctionality: raw.kanoFunctionality != null ? raw.kanoFunctionality : null,
       kanoSatisfaction: raw.kanoSatisfaction != null ? raw.kanoSatisfaction : null,

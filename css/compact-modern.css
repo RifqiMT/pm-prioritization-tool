@@ -1,6 +1,8 @@
 /**
  * Compact layout — phones & tablets (≤1400px).
- * Unified responsive revamp: tighter hierarchy, deduplicated chrome, touch-first.
+ * Unified responsive revamp: tighter hierarchy,
+deduplicated chrome,
+touch-first.
  * Requires html.is-compact-layout / html.is-phone-layout (set in app.js; both on ≤1400px).
  */
 

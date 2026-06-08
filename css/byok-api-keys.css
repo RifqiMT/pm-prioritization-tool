@@ -8,9 +8,7 @@
   justify-content: center;
   padding: max(0.85rem, env(safe-area-inset-top)) max(0.85rem, env(safe-area-inset-right))
     max(0.85rem, env(safe-area-inset-bottom)) max(0.85rem, env(safe-area-inset-left));
-}
-
-#byokApiKeysModal.modal-backdrop--byok.active {
+}#byokApiKeysModal.modal-backdrop--byok.active {
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   background: rgba(63, 15, 25, 0.45) !important;
@@ -34,9 +32,7 @@
     max-height: none;
     max-width: min(1120px, 100%);
   }
-}
-
-/* ── Panel shell (same tokens as profile view / roadmap) ─── */
+}/* ── Panel shell (same tokens as profile view / roadmap) ─── */
 #byokApiKeysModal .byok-modal {
   --byok-border: rgba(202, 138, 4, 0.35);
   --byok-border-soft: rgba(202, 138, 4, 0.22);
@@ -62,13 +58,9 @@
   color: var(--byok-text) !important;
   overflow: hidden;
   transform: translateY(0) !important;
-}
-
-.profile-modal-mark--byok {
+}.profile-modal-mark--byok {
   background: linear-gradient(145deg, #1d4ed8 0%, #7c3aed 52%, #b91c1c);
-}
-
-/* ── Header ──────────────────────────────────────────────── */
+}/* ── Header ──────────────────────────────────────────────── */
 .byok-modal-header {
   flex-shrink: 0;
   display: flex;
@@ -77,26 +69,20 @@
   margin-bottom: 0.85rem;
   padding: 0.15rem 0.2rem 0.85rem;
   border-bottom: 1px solid var(--byok-border-soft);
-}
-
-.byok-modal-header-main {
+}.byok-modal-header-main {
   display: flex;
   align-items: flex-start;
   gap: 0.65rem;
   min-width: 0;
   flex: 1;
-}
-
-/* ── Scroll shell (matches profile-view-shell) ───────────── */
+}/* ── Scroll shell (matches profile-view-shell) ───────────── */
 .byok-modal-shell {
   display: flex;
   flex-direction: column;
   flex: 1 1 0%;
   min-height: 0;
   overflow: hidden;
-}
-
-.byok-modal-scroll {
+}.byok-modal-scroll {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
@@ -107,9 +93,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.95rem;
-}
-
-/* ── Top bar: summary + workflow ─────────────────────────── */
+}/* ── Top bar: summary + workflow ─────────────────────────── */
 .byok-top-bar {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
@@ -121,9 +105,7 @@
   .byok-top-bar {
     grid-template-columns: 1fr;
   }
-}
-
-.byok-hero-panel {
+}.byok-hero-panel {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
@@ -133,51 +115,35 @@
   background: linear-gradient(180deg, #fffefb 0%, #fff 100%);
   box-shadow: var(--byok-card-shadow);
   transition: border-color 0.25s ease, background 0.25s ease;
-}
-
-.byok-hero-panel--partial {
+}.byok-hero-panel--partial {
   border-color: rgba(202, 138, 4, 0.32);
-}
-
-.byok-hero-panel--ready {
+}.byok-hero-panel--ready {
   border-color: rgba(4, 120, 87, 0.28);
   background: linear-gradient(180deg, #f0fdf4 0%, #fff 100%);
-}
-
-.byok-hero-head {
+}.byok-hero-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
-}
-
-.byok-hero-head__copy {
+}.byok-hero-head__copy {
   display: flex;
   flex-direction: column;
   gap: 0.18rem;
   min-width: 0;
-}
-
-.byok-hero-eyebrow {
+}.byok-hero-eyebrow {
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--byok-text-soft);
-}
-
-.byok-hero-value {
+}.byok-hero-value {
   font-size: 0.92rem;
   font-weight: 650;
   line-height: 1.35;
   color: var(--byok-text);
-}
-
-.byok-hero-panel--ready .byok-hero-value {
+}.byok-hero-panel--ready .byok-hero-value {
   color: var(--byok-green);
-}
-
-.byok-hero-trust-pill {
+}.byok-hero-trust-pill {
   flex: 0 0 auto;
   align-self: flex-start;
   padding: 0.28rem 0.55rem;
@@ -200,28 +166,20 @@
   .byok-hero-trust-pill {
     align-self: flex-start;
   }
-}
-
-.byok-progress__track {
+}.byok-progress__track {
   height: 5px;
   border-radius: 999px;
   background: rgba(231, 201, 120, 0.35);
   overflow: hidden;
-}
-
-.byok-progress__fill {
+}.byok-progress__fill {
   height: 100%;
   width: 0%;
   border-radius: inherit;
   background: linear-gradient(90deg, #047857, #10b981);
   transition: width 0.45s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.byok-progress__fill--complete {
+}.byok-progress__fill--complete {
   background: linear-gradient(90deg, #047857, #059669, #a16207);
-}
-
-/* ── Setup guide (progress + plain-language help) ────────── */
+}/* ── Setup guide (progress + plain-language help) ────────── */
 .byok-setup-guide {
   display: flex;
   flex-direction: column;
@@ -231,20 +189,14 @@
   border: 1px solid var(--byok-border-soft);
   background: linear-gradient(180deg, #fffefb 0%, #fff 100%);
   box-shadow: var(--byok-card-shadow);
-}
-
-.byok-setup-guide--complete {
+}.byok-setup-guide--complete {
   border-color: rgba(4, 120, 87, 0.28);
   background: linear-gradient(180deg, #f0fdf4 0%, #fff 100%);
-}
-
-.byok-setup-guide__head {
+}.byok-setup-guide__head {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
-}
-
-.byok-setup-guide__badge {
+}.byok-setup-guide__badge {
   align-self: flex-start;
   padding: 0.22rem 0.55rem;
   border-radius: 999px;
@@ -255,51 +207,37 @@
   color: #92400e;
   background: #fffbeb;
   border: 1px solid rgba(202, 138, 4, 0.28);
-}
-
-.byok-setup-guide--complete .byok-setup-guide__badge {
+}.byok-setup-guide--complete .byok-setup-guide__badge {
   color: #047857;
   background: #ecfdf5;
   border-color: rgba(4, 120, 87, 0.28);
-}
-
-.byok-setup-guide__track {
+}.byok-setup-guide__track {
   height: 4px;
   border-radius: 999px;
   background: rgba(231, 201, 120, 0.35);
   overflow: hidden;
-}
-
-.byok-setup-guide__fill {
+}.byok-setup-guide__fill {
   height: 100%;
   width: 33%;
   border-radius: inherit;
   background: linear-gradient(90deg, #b91c1c, #dc2626);
   transition: width 0.4s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.byok-setup-guide__fill--complete {
+}.byok-setup-guide__fill--complete {
   background: linear-gradient(90deg, #047857, #10b981);
-}
-
-.byok-setup-guide__message {
+}.byok-setup-guide__message {
   margin: 0;
   font-size: 0.82rem;
   font-weight: 500;
   line-height: 1.5;
   color: var(--byok-text);
-}
-
-.byok-setup-guide__checklist {
+}.byok-setup-guide__checklist {
   display: flex;
   align-items: flex-start;
   gap: 0;
   margin: 0.15rem 0 0;
   padding: 0;
   list-style: none;
-}
-
-.byok-setup-step {
+}.byok-setup-step {
   flex: 1 1 0;
   min-width: 0;
   display: flex;
@@ -309,9 +247,7 @@
   text-align: center;
   position: relative;
   padding: 0 0.15rem;
-}
-
-.byok-setup-step:not(:last-child)::after {
+}.byok-setup-step:not(:last-child)::after {
   content: "";
   position: absolute;
   top: 11px;
@@ -322,13 +258,9 @@
   background: rgba(231, 201, 120, 0.45);
   transition: background 0.3s ease;
   pointer-events: none;
-}
-
-.byok-setup-step--done:not(:last-child)::after {
+}.byok-setup-step--done:not(:last-child)::after {
   background: rgba(4, 120, 87, 0.45);
-}
-
-.byok-setup-step__marker {
+}.byok-setup-step__marker {
   width: 24px;
   height: 24px;
   display: grid;
@@ -345,47 +277,33 @@
     border-color 0.2s ease,
     color 0.2s ease,
     box-shadow 0.2s ease;
-}
-
-.byok-setup-step__label {
+}.byok-setup-step__label {
   font-size: 0.68rem;
   font-weight: 600;
   line-height: 1.3;
   color: rgba(122, 75, 18, 0.72);
   transition: color 0.2s ease;
-}
-
-.byok-setup-step--active .byok-setup-step__marker {
+}.byok-setup-step--active .byok-setup-step__marker {
   color: #b91c1c;
   background: #fff;
   border-color: rgba(185, 28, 28, 0.45);
   box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1);
-}
-
-.byok-setup-step--active .byok-setup-step__label {
+}.byok-setup-step--active .byok-setup-step__label {
   color: var(--byok-text);
   font-weight: 650;
-}
-
-.byok-setup-step--done .byok-setup-step__marker {
+}.byok-setup-step--done .byok-setup-step__marker {
   color: #fff;
   background: #047857;
   border-color: #047857;
   font-size: 0;
-}
-
-.byok-setup-step--done .byok-setup-step__marker::before {
+}.byok-setup-step--done .byok-setup-step__marker::before {
   content: "✓";
   font-size: 0.72rem;
   font-weight: 800;
   line-height: 1;
-}
-
-.byok-setup-step--done .byok-setup-step__label {
+}.byok-setup-step--done .byok-setup-step__label {
   color: rgba(4, 120, 87, 0.85);
-}
-
-.byok-setup-step--pending .byok-setup-step__marker {
+}.byok-setup-step--pending .byok-setup-step__marker {
   color: rgba(122, 75, 18, 0.4);
   background: rgba(255, 253, 248, 0.95);
 }
@@ -394,9 +312,8 @@
   .byok-setup-step__label {
     font-size: 0.62rem;
   }
-}
-
-/* ── Provider switcher (segmented control, mobile/tablet) ── */
+}/* ── Provider switcher (segmented control,
+mobile/tablet) ── */
 .byok-provider-tabs {
   display: none;
   gap: 0.35rem;
@@ -405,9 +322,7 @@
   border: 1px solid rgba(231, 201, 120, 0.42);
   background: linear-gradient(180deg, rgba(255, 251, 242, 0.98), rgba(255, 248, 235, 0.95));
   box-shadow: inset 0 1px 2px rgba(120, 53, 15, 0.05);
-}
-
-#byokApiKeysModal .byok-provider-tab {
+}#byokApiKeysModal .byok-provider-tab {
   flex: 1 1 0;
   min-width: 0;
   display: inline-flex;
@@ -432,64 +347,46 @@
     border-color 0.18s ease,
     color 0.18s ease,
     box-shadow 0.18s ease;
-}
-
-#byokApiKeysModal .byok-provider-tab:hover:not(.byok-provider-tab--active):not(:disabled) {
+}#byokApiKeysModal .byok-provider-tab:hover:not(.byok-provider-tab--active):not(:disabled) {
   background: rgba(255, 255, 255, 0.62) !important;
   color: #3f0f19 !important;
   border-color: rgba(231, 201, 120, 0.35) !important;
   box-shadow: none !important;
   transform: none !important;
-}
-
-#byokApiKeysModal .byok-provider-tab--active {
+}#byokApiKeysModal .byok-provider-tab--active {
   background: #fff !important;
   color: #3f0f19 !important;
   border-color: rgba(231, 201, 120, 0.58) !important;
   box-shadow:
     0 2px 10px rgba(63, 15, 25, 0.08),
     0 0 0 1px rgba(255, 255, 255, 0.85) !important;
-}
-
-#byokApiKeysModal .byok-provider-tab:focus-visible {
+}#byokApiKeysModal .byok-provider-tab:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16) !important;
-}
-
-#byokApiKeysModal .byok-provider-tab--active:focus-visible {
+}#byokApiKeysModal .byok-provider-tab--active:focus-visible {
   box-shadow:
     0 2px 10px rgba(63, 15, 25, 0.08),
     0 0 0 3px rgba(37, 99, 235, 0.16) !important;
-}
-
-.byok-provider-tab__copy {
+}.byok-provider-tab__copy {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.06rem;
   min-width: 0;
   flex: 1 1 auto;
-}
-
-.byok-provider-tab__label {
+}.byok-provider-tab__label {
   font-size: 0.86rem;
   font-weight: 650;
   line-height: 1.2;
   color: inherit;
-}
-
-.byok-provider-tab__hint {
+}.byok-provider-tab__hint {
   font-size: 0.68rem;
   font-weight: 500;
   line-height: 1.25;
   color: rgba(122, 75, 18, 0.72);
-}
-
-.byok-provider-tab--active .byok-provider-tab__hint {
+}.byok-provider-tab--active .byok-provider-tab__hint {
   color: rgba(63, 15, 25, 0.58);
-}
-
-.byok-provider-tab__logo {
+}.byok-provider-tab__logo {
   flex: 0 0 auto;
   width: 32px;
   height: 32px;
@@ -501,17 +398,11 @@
   letter-spacing: -0.02em;
   color: #fff;
   box-shadow: 0 2px 6px rgba(63, 15, 25, 0.12);
-}
-
-.byok-provider-tab__logo--groq {
+}.byok-provider-tab__logo--groq {
   background: linear-gradient(145deg, #fb923c, #ea580c 48%, #0d9488);
-}
-
-.byok-provider-tab__logo--tavily {
+}.byok-provider-tab__logo--tavily {
   background: linear-gradient(145deg, #3b82f6, #6366f1 55%, #8b5cf6);
-}
-
-.byok-provider-tab__status {
+}.byok-provider-tab__status {
   flex: 0 0 auto;
   min-height: 20px;
   padding: 0;
@@ -522,17 +413,13 @@
   color: transparent;
   border-radius: 999px;
   background: transparent;
-}
-
-.byok-provider-tab__status--ready {
+}.byok-provider-tab__status--ready {
   padding: 0.22rem 0.45rem;
   color: #047857 !important;
   background: #ecfdf5 !important;
   border: 1px solid rgba(4, 120, 87, 0.22);
   box-shadow: none !important;
-}
-
-.byok-provider-tab--ready:not(.byok-provider-tab--active) .byok-provider-tab__logo {
+}.byok-provider-tab--ready:not(.byok-provider-tab--active) .byok-provider-tab__logo {
   box-shadow:
     0 0 0 2px #fff,
     0 0 0 3px rgba(4, 120, 87, 0.35);
@@ -553,9 +440,7 @@
     padding: 0.18rem 0.38rem;
     font-size: 0.58rem;
   }
-}
-
-/* ── Provider grid (wide layout) ─────────────────────────── */
+}/* ── Provider grid (wide layout) ─────────────────────────── */
 .byok-providers-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -575,9 +460,7 @@
   .byok-provider-card:not(.byok-provider-card--active) {
     display: none !important;
   }
-}
-
-.byok-provider-card {
+}.byok-provider-card {
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -587,23 +470,15 @@
   overflow: hidden;
   box-shadow: var(--byok-card-shadow);
   transition: border-color 0.25s ease, box-shadow 0.25s ease;
-}
-
-.byok-provider-card--configured {
+}.byok-provider-card--configured {
   border-color: rgba(4, 120, 87, 0.38);
   box-shadow: 0 4px 18px rgba(4, 120, 87, 0.08);
-}
-
-.byok-provider-card--validating,
+}.byok-provider-card--validating,
 .byok-provider-card--pending {
   border-color: rgba(202, 138, 4, 0.45);
-}
-
-.byok-provider-card--error {
+}.byok-provider-card--error {
   border-color: rgba(185, 28, 28, 0.38);
-}
-
-.byok-provider-card--active {
+}.byok-provider-card--active {
   animation: byok-card-in 0.32s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
@@ -616,9 +491,7 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.byok-provider-card__head {
+}.byok-provider-card__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -626,16 +499,12 @@
   padding: 0.9rem 1rem 0.75rem;
   border-bottom: 1px solid rgba(231, 201, 120, 0.35);
   background: linear-gradient(180deg, #fffdf8, #ffffff);
-}
-
-.byok-provider-brand {
+}.byok-provider-brand {
   display: flex;
   align-items: flex-start;
   gap: 0.65rem;
   min-width: 0;
-}
-
-.byok-provider-logo {
+}.byok-provider-logo {
   flex: 0 0 auto;
   width: 40px;
   height: 40px;
@@ -647,32 +516,22 @@
   letter-spacing: -0.03em;
   color: #fff;
   box-shadow: 0 3px 10px rgba(63, 15, 25, 0.14);
-}
-
-.byok-provider-logo--groq {
+}.byok-provider-logo--groq {
   background: linear-gradient(145deg, #f97316, #ea580c 45%, #0d9488);
-}
-
-.byok-provider-logo--tavily {
+}.byok-provider-logo--tavily {
   background: linear-gradient(145deg, #2563eb, #4f46e5 55%, #7c3aed);
-}
-
-.byok-provider-title {
+}.byok-provider-title {
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--byok-text);
-}
-
-.byok-provider-desc {
+}.byok-provider-desc {
   margin: 0.18rem 0 0;
   font-size: 0.78rem;
   line-height: 1.45;
   color: var(--byok-text-soft);
-}
-
-.byok-provider-chip {
+}.byok-provider-chip {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
@@ -687,49 +546,33 @@
   background: #fffbeb;
   border: 1px solid rgba(202, 138, 4, 0.28);
   white-space: nowrap;
-}
-
-.byok-provider-chip::before {
+}.byok-provider-chip::before {
   content: "";
   width: 6px;
   height: 6px;
   border-radius: 999px;
   background: #ca8a04;
-}
-
-.byok-provider-chip--configured,
+}.byok-provider-chip--configured,
 .byok-provider-chip--valid {
   color: var(--byok-green);
   background: #ecfdf5;
   border-color: rgba(4, 120, 87, 0.28);
-}
-
-.byok-provider-chip--configured::before,
+}.byok-provider-chip--configured::before,
 .byok-provider-chip--valid::before {
   background: var(--byok-green);
-}
-
-.byok-provider-chip--error {
+}.byok-provider-chip--error {
   color: var(--byok-accent);
   background: #fef2f2;
   border-color: rgba(185, 28, 28, 0.28);
-}
-
-.byok-provider-chip--error::before {
+}.byok-provider-chip--error::before {
   background: var(--byok-accent);
-}
-
-.byok-provider-chip--pending::before {
+}.byok-provider-chip--pending::before {
   animation: byok-pulse 1s ease-in-out infinite;
-}
-
-.byok-provider-chip--draft {
+}.byok-provider-chip--draft {
   color: var(--byok-blue);
   background: #eff6ff;
   border-color: rgba(37, 99, 235, 0.28);
-}
-
-.byok-provider-chip--draft::before {
+}.byok-provider-chip--draft::before {
   background: var(--byok-blue);
 }
 
@@ -743,31 +586,23 @@
     opacity: 0.55;
     transform: scale(0.85);
   }
-}
-
-.byok-provider-card__body {
+}.byok-provider-card__body {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
   padding: 0.95rem 1rem 1.05rem;
   min-height: 0;
-}
-
-.byok-field-row {
+}.byok-field-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-}
-
-.byok-field-label {
+}.byok-field-label {
   font-size: 0.78rem;
   font-weight: 650;
   color: var(--byok-text);
-}
-
-.byok-signup-link {
+}.byok-signup-link {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
@@ -778,13 +613,9 @@
   padding: 0.22rem 0.45rem;
   border-radius: 999px;
   transition: background 0.15s ease;
-}
-
-.byok-signup-link:hover {
+}.byok-signup-link:hover {
   background: rgba(37, 99, 235, 0.08);
-}
-
-.byok-key-input-wrap {
+}.byok-key-input-wrap {
   position: relative;
   display: block;
   border: 1px solid rgba(231, 201, 120, 0.75);
@@ -792,23 +623,15 @@
   background: #fff;
   overflow: visible;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.byok-key-input-wrap:focus-within {
+}.byok-key-input-wrap:focus-within {
   border-color: rgba(37, 99, 235, 0.45);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-}
-
-.byok-provider-card--configured .byok-key-input-wrap:focus-within {
+}.byok-provider-card--configured .byok-key-input-wrap:focus-within {
   border-color: rgba(4, 120, 87, 0.45);
   box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.12);
-}
-
-.byok-provider-card--configured .byok-provider-actions {
+}.byok-provider-card--configured .byok-provider-actions {
   border-top-color: rgba(4, 120, 87, 0.22);
-}
-
-.byok-key-input-wrap input {
+}.byok-key-input-wrap input {
   display: block;
   width: 100%;
   min-width: 0;
@@ -819,13 +642,9 @@
   font-size: 0.88rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   color: var(--byok-text);
-}
-
-.byok-key-input-wrap input:focus {
+}.byok-key-input-wrap input:focus {
   outline: none;
-}
-
-.byok-key-input-wrap .profile-password-toggle {
+}.byok-key-input-wrap .profile-password-toggle {
   position: absolute !important;
   right: 0.45rem !important;
   top: 0 !important;
@@ -847,45 +666,29 @@
   cursor: pointer;
   transform: none !important;
   z-index: 2;
-}
-
-.byok-key-input-wrap .profile-password-toggle:hover {
+}.byok-key-input-wrap .profile-password-toggle:hover {
   background: #fffdf8 !important;
   color: var(--byok-accent) !important;
   border-color: rgba(185, 28, 28, 0.35) !important;
   transform: none !important;
-}
-
-.byok-key-input-wrap .profile-password-toggle:active {
+}.byok-key-input-wrap .profile-password-toggle:active {
   transform: none !important;
-}
-
-.byok-key-input-wrap .profile-password-toggle .icon-eye-off {
+}.byok-key-input-wrap .profile-password-toggle .icon-eye-off {
   display: none;
-}
-
-.byok-key-input-wrap .profile-password-toggle.is-visible .icon-eye {
+}.byok-key-input-wrap .profile-password-toggle.is-visible .icon-eye {
   display: none;
-}
-
-.byok-key-input-wrap .profile-password-toggle.is-visible .icon-eye-off {
+}.byok-key-input-wrap .profile-password-toggle.is-visible .icon-eye-off {
   display: block;
-}
-
-.byok-key-meta {
+}.byok-key-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.35rem;
   font-size: 0.72rem;
   color: var(--byok-text-soft);
-}
-
-.byok-key-meta[hidden] {
+}.byok-key-meta[hidden] {
   display: none !important;
-}
-
-.byok-key-meta__mask {
+}.byok-key-meta__mask {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-weight: 600;
   color: var(--byok-text);
@@ -893,14 +696,10 @@
   border-radius: 999px;
   background: rgba(255, 253, 248, 0.95);
   border: 1px solid rgba(231, 201, 120, 0.45);
-}
-
-.byok-key-meta__saved {
+}.byok-key-meta__saved {
   color: var(--byok-green);
   font-weight: 600;
-}
-
-.byok-provider-status {
+}.byok-provider-status {
   display: flex;
   align-items: flex-start;
   gap: 0.45rem;
@@ -910,32 +709,22 @@
   font-size: 0.78rem;
   line-height: 1.45;
   animation: byok-status-in 0.28s ease;
-}
-
-.byok-provider-status[hidden] {
+}.byok-provider-status[hidden] {
   display: none !important;
-}
-
-.byok-provider-status__icon {
+}.byok-provider-status__icon {
   flex: 0 0 auto;
   width: 18px;
   height: 18px;
-}
-
-.byok-provider-status--pending {
+}.byok-provider-status--pending {
   color: #92400e;
   background: #fffbeb;
   border: 1px solid rgba(202, 138, 4, 0.28);
-}
-
-.byok-provider-status--valid,
+}.byok-provider-status--valid,
 .byok-provider-status--saved {
   color: var(--byok-green);
   background: #ecfdf5;
   border: 1px solid rgba(4, 120, 87, 0.28);
-}
-
-.byok-provider-status--error {
+}.byok-provider-status--error {
   color: var(--byok-accent);
   background: #fef2f2;
   border: 1px solid rgba(185, 28, 28, 0.22);
@@ -950,9 +739,7 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* ── Provider actions (single CTA + link row) ─────────────── */
+}/* ── Provider actions (single CTA + link row) ─────────────── */
 .byok-provider-actions {
   display: flex;
   flex-direction: column;
@@ -962,26 +749,20 @@
   min-width: 0;
   padding-top: 0.9rem;
   border-top: 1px solid rgba(231, 201, 120, 0.32);
-}
-
-.byok-actions-more {
+}.byok-actions-more {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 0.15rem 0.35rem;
   min-width: 0;
-}
-
-/* Override global red button bleed from main.css */
+}/* Override global red button bleed from main.css */
 #byokApiKeysModal button:not(.profile-password-toggle):not(.byok-provider-tab) {
   text-transform: none !important;
   letter-spacing: normal !important;
   font-family: inherit;
   filter: none;
-}
-
-.byok-btn {
+}.byok-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1001,40 +782,26 @@
     box-shadow 0.18s ease,
     transform 0.12s ease,
     opacity 0.15s ease;
-}
-
-.byok-btn--block {
+}.byok-btn--block {
   width: 100%;
-}
-
-.byok-btn__label {
+}.byok-btn__label {
   min-width: 0;
-}
-
-.byok-btn:active:not(:disabled) {
+}.byok-btn:active:not(:disabled) {
   transform: scale(0.985);
-}
-
-.byok-btn:disabled,
+}.byok-btn:disabled,
 .byok-btn.byok-btn--loading {
   opacity: 0.62;
   cursor: not-allowed;
   pointer-events: none;
-}
-
-.byok-btn--primary {
+}.byok-btn--primary {
   color: #fff !important;
   background: linear-gradient(135deg, #b91c1c, #991b1b) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(185, 28, 28, 0.22) !important;
-}
-
-.byok-btn--primary:hover:not(:disabled) {
+}.byok-btn--primary:hover:not(:disabled) {
   filter: brightness(1.03);
   box-shadow: 0 6px 16px rgba(185, 28, 28, 0.28) !important;
-}
-
-.byok-action-link {
+}.byok-action-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1052,30 +819,20 @@
   white-space: normal;
   text-align: center;
   transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
-}
-
-.byok-action-link:hover:not(:disabled) {
+}.byok-action-link:hover:not(:disabled) {
   background: rgba(37, 99, 235, 0.08) !important;
   color: #1d4ed8 !important;
-}
-
-.byok-action-link--danger {
+}.byok-action-link--danger {
   color: #b91c1c !important;
-}
-
-.byok-action-link--danger:hover:not(:disabled) {
+}.byok-action-link--danger:hover:not(:disabled) {
   background: rgba(185, 28, 28, 0.07) !important;
   color: #991b1b !important;
-}
-
-.byok-action-link:disabled,
+}.byok-action-link:disabled,
 .byok-action-link.byok-btn--loading {
   opacity: 0.45;
   cursor: not-allowed;
   pointer-events: none;
-}
-
-.byok-action-link[hidden] {
+}.byok-action-link[hidden] {
   display: none !important;
 }
 
@@ -1090,9 +847,7 @@
     justify-content: center;
     padding-block: 0.45rem;
   }
-}
-
-.byok-btn__spinner {
+}.byok-btn__spinner {
   width: 14px;
   height: 14px;
   border: 2px solid currentColor;
@@ -1106,20 +861,14 @@
   to {
     transform: rotate(360deg);
   }
-}
-
-/* ── Footer (matches profile view footer bar) ────────────── */
+}/* ── Footer (matches profile view footer bar) ────────────── */
 #byokApiKeysModal .byok-modal-footer {
   flex-shrink: 0;
   margin-top: 0.85rem;
   padding: 0.62rem 0.25rem 0.3rem;
-}
-
-.byok-footer-note {
+}.byok-footer-note {
   max-width: none;
-}
-
-.byok-modal-footer-actions .profile-modal-btn {
+}.byok-modal-footer-actions .profile-modal-btn {
   min-width: 7.5rem;
   min-height: 46px;
 }

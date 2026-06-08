@@ -34,7 +34,7 @@
   const SUMMARY_PARAGRAPH_KEYS = ["paragraph1", "paragraph2", "paragraph3"];
 
   const SUMMARY_FIELD_GROUPS = {
-    opening: ["title", "description", "note", "roadmapType", "roadmapStatus", "roadmapPeriod"],
+    opening: ["title", "description", "note", "roadmapType", "roadmapStatus", "roadmapPeriod", "roadmapPeriods"],
     prioritization: [
       "moscowCategory",
       "kanoFunctionality",
@@ -1103,6 +1103,7 @@
       "roadmapStatus",
       "tshirtSize",
       "roadmapPeriod",
+      "roadmapPeriods",
       "moscowCategory",
       "reachValue",
       "reachDescription",

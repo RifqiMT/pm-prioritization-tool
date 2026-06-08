@@ -1,6 +1,8 @@
 /**
  * Table view — phones & tablets (≤1400px).
- * Same compact UI as phone: FAB + selection bar, stacked row actions, touch toolbars.
+ * Same compact UI as phone: FAB + selection bar,
+stacked row actions,
+touch toolbars.
  * Requires html.is-compact-layout (app.js).
  */
 
@@ -115,9 +117,7 @@
   html.is-compact-layout .table-wrapper--modern tbody td {
     padding: 0.36rem 0.3rem !important;
   }
-}
-
-/* Fullscreen table on compact */
+}/* Fullscreen table on compact */
 @media (max-width: 1400px) {
   html.is-compact-layout .view-in-fullscreen-host.roadmaps-view--table .table-wrapper--modern {
     flex: 1 1 auto !important;

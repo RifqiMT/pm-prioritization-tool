@@ -70,11 +70,6 @@
     max-width: 100%;
   }
 
-  html.is-compact-layout .view-in-fullscreen-host .moscow-compact-nav {
-    flex: 0 0 auto;
-    max-width: 100%;
-  }
-
   html.is-compact-layout .view-in-fullscreen-host .moscow-grid {
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) !important;

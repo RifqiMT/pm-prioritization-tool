@@ -1,6 +1,8 @@
 /**
  * MoSCoW view — non-desktop (≤1400px).
- * Phone layout: single-row quadrant nav, single-column board, no horizontal scroll on grid.
+ * Phone layout: single-row quadrant nav,
+single-column board,
+no horizontal scroll on grid.
  * Requires html.is-compact-layout (app.js; same phone UI on all widths ≤1400px).
  */
 
@@ -48,177 +50,6 @@
 
   html.is-compact-layout .view-toolbar--moscow .view-fullscreen-label {
     display: none;
-  }
-
-  /* ── Quadrant navigator — one row, simplified labels ───── */
-  html.is-compact-layout .moscow-compact-nav {
-    display: block;
-    margin: 0 0 0.28rem;
-    padding: 0;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-
-  html.is-compact-layout .moscow-compact-nav[hidden] {
-    display: none !important;
-  }
-
-  html.is-compact-layout .moscow-compact-nav__header {
-    display: none !important;
-  }
-
-  html.is-compact-layout .moscow-compact-nav__track {
-    display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    align-items: stretch !important;
-    gap: 0.18rem !important;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    padding: 0.22rem;
-    border-radius: var(--compact-radius-sm, 11px);
-    border: 1px solid rgba(231, 201, 120, 0.45);
-    background: #fffdf8;
-    box-shadow: 0 1px 4px rgba(127, 29, 29, 0.05);
-    overflow: hidden !important;
-  }
-
-  html.is-compact-layout .moscow-compact-nav__pill {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 0.14rem !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    min-height: 40px !important;
-    padding: 0.28rem 0.14rem !important;
-    border: 1.5px solid rgba(148, 163, 184, 0.32) !important;
-    border-radius: 9px !important;
-    background: #ffffff !important;
-    color: #1e293b !important;
-    font-family: inherit !important;
-    font-size: inherit !important;
-    font-weight: 600 !important;
-    letter-spacing: 0 !important;
-    text-transform: none !important;
-    box-shadow: none !important;
-    cursor: pointer;
-    transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  html.is-compact-layout .moscow-compact-nav__pill-main,
-  html.is-compact-layout .moscow-compact-nav__abbr {
-    display: none !important;
-  }
-
-  html.is-compact-layout .moscow-compact-nav__pill:hover {
-    transform: none !important;
-    background: #ffffff !important;
-    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08) !important;
-  }
-
-  html.is-compact-layout .moscow-compact-nav__pill:active {
-    transform: scale(0.98) !important;
-  }
-
-  html.is-compact-layout .moscow-compact-nav__pill[data-moscow="Must have"] {
-    border-color: rgba(236, 72, 153, 0.45) !important;
-    background: linear-gradient(180deg, #fff5f9 0%, #ffffff 72%) !important;
-  }
-
-  html.is-compact-layout .moscow-compact-nav__pill[data-moscow="Should have"] {
-    border-color: rgba(20, 184, 166, 0.45) !important;
-    background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 72%) !important;
-  }
-
-  html.is-compact-layout .moscow-compact-nav__pill[data-moscow="Could have"] {
-    border-color: rgba(14, 165, 233, 0.45) !important;
-    background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 72%) !important;
-  }
-
-  html.is-compact-layout .moscow-compact-nav__pill[data-moscow="Won't have"] {
-    border-color: rgba(139, 92, 246, 0.45) !important;
-    background: linear-gradient(180deg, #f5f3ff 0%, #ffffff 72%) !important;
-  }
-
-  html.is-compact-layout .moscow-compact-nav__label {
-    display: block;
-    width: 100%;
-    font-size: clamp(0.62rem, 2.8vw, 0.72rem);
-    font-weight: 700;
-    letter-spacing: 0;
-    text-transform: none;
-    line-height: 1.1;
-    color: #334155;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  html.is-compact-layout .moscow-compact-nav__count {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    font-size: clamp(0.58rem, 2.4vw, 0.66rem);
-    font-weight: 800;
-    line-height: 1;
-    min-width: 1.1rem;
-    height: 1.1rem;
-    padding: 0 0.2rem;
-    border-radius: 999px;
-    background: #f1f5f9 !important;
-    color: #0f172a !important;
-    border: 1px solid rgba(15, 23, 42, 0.1);
-    box-shadow: none !important;
-  }
-
-  html.is-compact-layout .moscow-compact-nav__pill.is-active {
-    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.08), 0 3px 10px rgba(15, 23, 42, 0.1) !important;
-  }
-
-  html.is-compact-layout .moscow-compact-nav__pill.is-active[data-moscow="Must have"] {
-    border-color: #ec4899 !important;
-    box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.35), 0 3px 10px rgba(236, 72, 153, 0.15) !important;
-  }
-
-  html.is-compact-layout .moscow-compact-nav__pill.is-active[data-moscow="Should have"] {
-    border-color: #14b8a6 !important;
-    box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.35), 0 3px 10px rgba(20, 184, 166, 0.15) !important;
-  }
-
-  html.is-compact-layout .moscow-compact-nav__pill.is-active[data-moscow="Could have"] {
-    border-color: #0ea5e9 !important;
-    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.35), 0 3px 10px rgba(14, 165, 233, 0.15) !important;
-  }
-
-  html.is-compact-layout .moscow-compact-nav__pill.is-active[data-moscow="Won't have"] {
-    border-color: #8b5cf6 !important;
-    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.35), 0 3px 10px rgba(139, 92, 246, 0.15) !important;
-  }
-
-  html.is-compact-layout .moscow-compact-nav__pill.is-active .moscow-compact-nav__count {
-    background: #0f172a !important;
-    color: #ffffff !important;
-    border-color: transparent;
-  }
-
-  html.is-compact-layout .moscow-compact-nav__pill.is-active .moscow-compact-nav__label {
-    color: #0f172a;
-  }
-
-  html.is-compact-layout .moscow-compact-nav__hint {
-    margin: 0.4rem 0 0;
-    padding: 0.35rem 0.5rem;
-    font-size: 0.7rem;
-    line-height: 1.4;
-    color: #64748b;
-    text-align: center;
-    background: rgba(241, 245, 249, 0.65);
-    border-radius: 8px;
   }
 
   /* ── Grid — single column (phone layout, all compact widths) ─ */
@@ -372,23 +203,6 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  html.is-compact-layout .moscow-compact-nav__hint {
-    text-align: left;
-  }
-
-  @media (max-width: 420px) {
-    html.is-compact-layout .moscow-compact-nav__track {
-      gap: 0.12rem !important;
-      padding: 0.18rem;
-    }
-
-    html.is-compact-layout .moscow-compact-nav__pill {
-      min-height: 38px !important;
-      padding: 0.22rem 0.1rem !important;
-      gap: 0.1rem !important;
-    }
-  }
-
   html.is-compact-layout .moscow-board-column-cards::-webkit-scrollbar {
     width: 4px;
   }
@@ -410,13 +224,8 @@
     padding: 1.25rem;
   }
 
-  /* Fullscreen: see fullscreen-compact.css */
-  html.is-compact-layout .view-in-fullscreen-host .moscow-compact-nav {
-    margin-bottom: 0.4rem;
-  }
-}
-
-/* Desktop 2×2 — equal quadrant height, scrollable card lists */
+}/* Desktop 2×2 — equal quadrant height,
+scrollable card lists */
 html.is-desktop-layout .roadmaps-view--moscow .moscow-grid {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
@@ -425,18 +234,14 @@ html.is-desktop-layout .roadmaps-view--moscow .moscow-grid {
   height: min(65vh, 640px) !important;
   max-height: min(72vh, 720px) !important;
   overflow: hidden !important;
-}
-
-html.is-desktop-layout .moscow-board-column.moscow-grid-cell {
+}html.is-desktop-layout .moscow-board-column.moscow-grid-cell {
   min-height: 0 !important;
   height: 100% !important;
   max-height: 100% !important;
   display: flex !important;
   flex-direction: column !important;
   overflow: hidden !important;
-}
-
-html.is-desktop-layout .moscow-board-column-cards {
+}html.is-desktop-layout .moscow-board-column-cards {
   flex: 1 1 auto !important;
   min-height: 0 !important;
   max-height: 100% !important;
@@ -446,9 +251,7 @@ html.is-desktop-layout .moscow-board-column-cards {
   scroll-padding-bottom: 0.75rem;
   padding-bottom: 1rem !important;
   -webkit-overflow-scrolling: touch;
-}
-
-html.is-desktop-layout .view-in-fullscreen-host .moscow-grid {
+}html.is-desktop-layout .view-in-fullscreen-host .moscow-grid {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
   grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) !important;
@@ -457,15 +260,11 @@ html.is-desktop-layout .view-in-fullscreen-host .moscow-grid {
   height: 100% !important;
   max-height: none !important;
   overflow: hidden !important;
-}
-
-html.is-desktop-layout .view-in-fullscreen-host .moscow-board-column.moscow-grid-cell {
+}html.is-desktop-layout .view-in-fullscreen-host .moscow-board-column.moscow-grid-cell {
   min-height: 0 !important;
   height: 100% !important;
   max-height: 100% !important;
-}
-
-html.is-desktop-layout .view-in-fullscreen-host .scrum-board {
+}html.is-desktop-layout .view-in-fullscreen-host .scrum-board {
   display: flex !important;
   flex-wrap: nowrap !important;
   overflow-x: auto !important;
@@ -473,7 +272,6 @@ html.is-desktop-layout .view-in-fullscreen-host .scrum-board {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html.is-compact-layout .moscow-compact-nav__pill,
   html.is-compact-layout .moscow-board-card,
   html.is-compact-layout .scrum-board-card,
   html.is-compact-layout .moscow-board-column.moscow-grid-cell {
@@ -483,112 +281,77 @@ html.is-desktop-layout .view-in-fullscreen-host .scrum-board {
   html.is-compact-layout .moscow-grid {
     scroll-behavior: auto;
   }
-}
-
-/* ── Portfolio cards: hover disabled (all breakpoints) ─────── */
+}/* ── Portfolio cards: hover disabled (all breakpoints) ─────── */
 .scrum-board-card,
 .moscow-board-card,
 .roadmaps-view--board .scrum-board-card,
 .roadmaps-view--moscow .moscow-board-card,
 .workspace-panel--v2 .roadmaps-view--board .scrum-board-card {
   transition: none !important;
-}
-
-.scrum-board-card:hover,
+}.scrum-board-card:hover,
 .moscow-board-card:hover,
 .roadmaps-view--board .scrum-board-card:hover,
 .roadmaps-view--moscow .moscow-board-card:hover,
 .workspace-panel--v2 .roadmaps-view--board .scrum-board-card:hover {
   transform: none !important;
-}
-
-/* Preserve status left accent on hover (board) */
+}/* Preserve status left accent on hover (board) */
 .scrum-board-column[data-status="Not Started"] .scrum-board-card:hover {
   border-color: rgba(148, 163, 184, 0.35) !important;
   border-left-color: rgba(148, 163, 184, 0.8) !important;
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08) !important;
-}
-
-.scrum-board-column[data-status="In Progress"] .scrum-board-card:hover {
+}.scrum-board-column[data-status="In Progress"] .scrum-board-card:hover {
   border-color: rgba(148, 163, 184, 0.35) !important;
   border-left-color: rgba(59, 130, 246, 0.9) !important;
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08) !important;
-}
-
-.scrum-board-column[data-status="On Hold"] .scrum-board-card:hover {
+}.scrum-board-column[data-status="On Hold"] .scrum-board-card:hover {
   border-color: rgba(148, 163, 184, 0.35) !important;
   border-left-color: rgba(251, 191, 36, 0.9) !important;
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08) !important;
-}
-
-.scrum-board-column[data-status="Done"] .scrum-board-card:hover {
+}.scrum-board-column[data-status="Done"] .scrum-board-card:hover {
   border-color: rgba(148, 163, 184, 0.35) !important;
   border-left-color: rgba(52, 211, 153, 0.9) !important;
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08) !important;
-}
-
-.scrum-board-column[data-status="Cancelled"] .scrum-board-card:hover {
+}.scrum-board-column[data-status="Cancelled"] .scrum-board-card:hover {
   border-color: rgba(148, 163, 184, 0.35) !important;
   border-left-color: rgba(248, 113, 113, 0.9) !important;
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08) !important;
-}
-
-html.is-compact-layout .scrum-board-column[data-status="Not Started"] .scrum-board-card:hover {
+}html.is-compact-layout .scrum-board-column[data-status="Not Started"] .scrum-board-card:hover {
   border-color: rgba(231, 201, 120, 0.38) !important;
   border-left-color: rgba(148, 163, 184, 0.95) !important;
   box-shadow: 0 1px 5px rgba(127, 29, 29, 0.06) !important;
-}
-
-html.is-compact-layout .scrum-board-column[data-status="In Progress"] .scrum-board-card:hover {
+}html.is-compact-layout .scrum-board-column[data-status="In Progress"] .scrum-board-card:hover {
   border-color: rgba(231, 201, 120, 0.38) !important;
   border-left-color: rgba(59, 130, 246, 0.95) !important;
   box-shadow: 0 1px 5px rgba(127, 29, 29, 0.06) !important;
-}
-
-html.is-compact-layout .scrum-board-column[data-status="On Hold"] .scrum-board-card:hover {
+}html.is-compact-layout .scrum-board-column[data-status="On Hold"] .scrum-board-card:hover {
   border-color: rgba(231, 201, 120, 0.38) !important;
   border-left-color: rgba(245, 158, 11, 0.95) !important;
   box-shadow: 0 1px 5px rgba(127, 29, 29, 0.06) !important;
-}
-
-html.is-compact-layout .scrum-board-column[data-status="Done"] .scrum-board-card:hover {
+}html.is-compact-layout .scrum-board-column[data-status="Done"] .scrum-board-card:hover {
   border-color: rgba(231, 201, 120, 0.38) !important;
   border-left-color: rgba(16, 185, 129, 0.95) !important;
   box-shadow: 0 1px 5px rgba(127, 29, 29, 0.06) !important;
-}
-
-html.is-compact-layout .scrum-board-column[data-status="Cancelled"] .scrum-board-card:hover {
+}html.is-compact-layout .scrum-board-column[data-status="Cancelled"] .scrum-board-card:hover {
   border-color: rgba(231, 201, 120, 0.38) !important;
   border-left-color: rgba(239, 68, 68, 0.95) !important;
   box-shadow: 0 1px 5px rgba(127, 29, 29, 0.06) !important;
-}
-
-/* MoSCoW quadrant left accent on hover */
+}/* MoSCoW quadrant left accent on hover */
 .moscow-board-column[data-moscow="Must have"] .moscow-board-card:hover {
   border-left-color: #ec4899 !important;
-}
-
-.moscow-board-column[data-moscow="Should have"] .moscow-board-card:hover {
+}.moscow-board-column[data-moscow="Should have"] .moscow-board-card:hover {
   border-left-color: #14b8a6 !important;
-}
-
-.moscow-board-column[data-moscow="Could have"] .moscow-board-card:hover {
+}.moscow-board-column[data-moscow="Could have"] .moscow-board-card:hover {
   border-left-color: #38bdf8 !important;
-}
-
-.moscow-board-column[data-moscow="Won't have"] .moscow-board-card:hover {
+}.moscow-board-column[data-moscow="Won't have"] .moscow-board-card:hover {
   border-left-color: #a78bfa !important;
-}
-
-/* Touch devices: no sticky hover highlight after tap */
-@media (hover: none), (pointer: coarse) {
+}/* Touch devices: no sticky hover highlight after tap */
+@media (hover: none),
+(pointer: coarse) {
   .scrum-board-card:hover,
   .moscow-board-card:hover {
     transform: none !important;
   }
-}
-
-/* ── Desktop board: stable card size (no hover layout shift) ─ */
+}/* ── Desktop board: stable card size (no hover layout shift) ─ */
 html.is-desktop-layout .roadmaps-view--board .scrum-board-card {
   box-sizing: border-box !important;
   width: 100%;
@@ -596,46 +359,32 @@ html.is-desktop-layout .roadmaps-view--board .scrum-board-card {
   transform: none !important;
   transition: none !important;
   flex-shrink: 0;
-}
-
-html.is-desktop-layout .roadmaps-view--board .scrum-board-card.portfolio-board-card--structured:hover,
+}html.is-desktop-layout .roadmaps-view--board .scrum-board-card.portfolio-board-card--structured:hover,
 html.is-desktop-layout .roadmaps-view--board .scrum-board-card.portfolio-board-card--structured.portfolio-board-card--pressed {
   transform: none !important;
   margin: 0 !important;
   padding: 0 !important;
-}
-
-html.is-desktop-layout .scrum-board-column[data-status="Not Started"] .scrum-board-card,
+}html.is-desktop-layout .scrum-board-column[data-status="Not Started"] .scrum-board-card,
 html.is-desktop-layout .scrum-board-column[data-status="Not Started"] .scrum-board-card:hover {
   border-left-width: 4px !important;
   border-left-color: rgba(148, 163, 184, 0.8) !important;
-}
-
-html.is-desktop-layout .scrum-board-column[data-status="In Progress"] .scrum-board-card,
+}html.is-desktop-layout .scrum-board-column[data-status="In Progress"] .scrum-board-card,
 html.is-desktop-layout .scrum-board-column[data-status="In Progress"] .scrum-board-card:hover {
   border-left-width: 4px !important;
   border-left-color: rgba(59, 130, 246, 0.9) !important;
-}
-
-html.is-desktop-layout .scrum-board-column[data-status="On Hold"] .scrum-board-card,
+}html.is-desktop-layout .scrum-board-column[data-status="On Hold"] .scrum-board-card,
 html.is-desktop-layout .scrum-board-column[data-status="On Hold"] .scrum-board-card:hover {
   border-left-width: 4px !important;
   border-left-color: rgba(251, 191, 36, 0.9) !important;
-}
-
-html.is-desktop-layout .scrum-board-column[data-status="Done"] .scrum-board-card,
+}html.is-desktop-layout .scrum-board-column[data-status="Done"] .scrum-board-card,
 html.is-desktop-layout .scrum-board-column[data-status="Done"] .scrum-board-card:hover {
   border-left-width: 4px !important;
   border-left-color: rgba(52, 211, 153, 0.9) !important;
-}
-
-html.is-desktop-layout .scrum-board-column[data-status="Cancelled"] .scrum-board-card,
+}html.is-desktop-layout .scrum-board-column[data-status="Cancelled"] .scrum-board-card,
 html.is-desktop-layout .scrum-board-column[data-status="Cancelled"] .scrum-board-card:hover {
   border-left-width: 4px !important;
   border-left-color: rgba(248, 113, 113, 0.9) !important;
-}
-
-html.is-desktop-layout .roadmaps-view--board .scrum-board-card .scrum-board-card-btn,
+}html.is-desktop-layout .roadmaps-view--board .scrum-board-card .scrum-board-card-btn,
 html.is-desktop-layout .roadmaps-view--board .scrum-board-card .scrum-board-card-btn:hover,
 html.is-desktop-layout .roadmaps-view--board .scrum-board-card .scrum-board-card-btn:active,
 html.is-desktop-layout .roadmaps-view--board .scrum-board-card .scrum-board-card-btn:focus-visible {
@@ -643,16 +392,12 @@ html.is-desktop-layout .roadmaps-view--board .scrum-board-card .scrum-board-card
   box-shadow: none !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
-}
-
-html.is-desktop-layout .roadmaps-view--board .scrum-board-card-actions,
+}html.is-desktop-layout .roadmaps-view--board .scrum-board-card-actions,
 html.is-desktop-layout .roadmaps-view--moscow .moscow-board-card-actions {
   min-height: 2.15rem;
   align-items: center;
   flex-wrap: nowrap;
-}
-
-html.is-desktop-layout .roadmaps-view--board .scrum-board-card-actions-order,
+}html.is-desktop-layout .roadmaps-view--board .scrum-board-card-actions-order,
 html.is-desktop-layout .roadmaps-view--moscow .moscow-board-card-actions-order {
   flex-shrink: 0;
 }

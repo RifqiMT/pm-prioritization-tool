@@ -1,5 +1,7 @@
 /**
- * Phones, tablets, narrow screens (≤1400px) — filter trigger + expanded drawer.
+ * Phones,
+tablets,
+narrow screens (≤1400px) — filter trigger + expanded drawer.
  * Cockpit chip matches profile picker; active filters show count badge + accent state.
  */
 
@@ -512,9 +514,7 @@
       transform: translateY(0);
     }
   }
-}
-
-/* Tablet — show Filters label beside icon in cockpit */
+}/* Tablet — show Filters label beside icon in cockpit */
 @media (min-width: 640px) and (max-width: 1400px) {
   html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary {
     padding-inline: 0.55rem 0.62rem !important;
@@ -561,43 +561,29 @@
   html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary {
     padding-inline: 0.34rem !important;
   }
-}
-
-/* Desktop — summary actions live in toolbar only */
+}/* Desktop — summary actions live in toolbar only */
 html.is-desktop-layout .portfolio-filters-summary-actions {
   display: none !important;
-}
-
-html.is-desktop-layout .portfolio-filters-summary-actions .filters-meta {
+}html.is-desktop-layout .portfolio-filters-summary-actions .filters-meta {
   display: none !important;
-}
-
-html.is-desktop-layout .portfolio-filters-summary-icon,
+}html.is-desktop-layout .portfolio-filters-summary-icon,
 html.is-desktop-layout .portfolio-filters-summary-subline,
 html.is-desktop-layout .portfolio-filters-summary-chevron,
 html.is-desktop-layout .portfolio-filters-summary-label,
 html.is-desktop-layout .portfolio-filters-summary-indicator {
   display: none !important;
-}
-
-html.is-desktop-layout .portfolio-filters-summary-lead {
+}html.is-desktop-layout .portfolio-filters-summary-lead {
   display: contents;
-}
-
-html.is-desktop-layout .portfolio-filters-summary-copy {
+}html.is-desktop-layout .portfolio-filters-summary-copy {
   display: contents;
-}
-
-html.is-desktop-layout .portfolio-filters-summary {
+}html.is-desktop-layout .portfolio-filters-summary {
   display: flex !important;
   flex-wrap: wrap !important;
   align-items: center !important;
   grid-template-rows: unset !important;
   grid-template-columns: unset !important;
   gap: 0.35rem 0.65rem !important;
-}
-
-html.is-desktop-layout .portfolio-filters-summary-hint {
+}html.is-desktop-layout .portfolio-filters-summary-hint {
   position: static !important;
   width: auto !important;
   height: auto !important;

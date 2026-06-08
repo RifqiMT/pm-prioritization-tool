@@ -828,10 +828,6 @@
     blurViewTabButtons();
   }
 
-  function requestViewSwitchWhileFullscreen(view) {
-    switchViewWhileFullscreen(view);
-  }
-
   function scheduleCompactLayoutRefresh() {
     if (!pseudoFullscreenEl) return;
     updateFullscreenHostLayoutClass();
@@ -909,7 +905,6 @@
     isViewFullscreen,
     getViewElement: () => getViewElement,
     switchViewWhileFullscreen,
-    requestViewSwitchWhileFullscreen,
     exit: exitFullscreen,
     restoreWorkspaceChrome: restoreChromeToContainer,
     restoreViewShell: restoreViewShellPresentation,

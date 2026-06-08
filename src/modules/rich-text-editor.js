@@ -233,6 +233,14 @@ const RichTextEditor = (function () {
       .replace(/"/g, "&quot;");
   }
 
+  function escapeHtml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
   function getAccessibleName(labelId, fallback) {
     if (labelId) {
       const labelEl = document.getElementById(labelId);
@@ -244,6 +252,41 @@ const RichTextEditor = (function () {
     return fallback || "Description";
   }
 
+  function getComposeCaption(labelId, fallback) {
+    const raw = getAccessibleName(labelId, fallback || "Write here");
+    const cleaned = raw
+      .replace(/\s*required\s*/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    return cleaned || "Write here";
+  }
+
+  function getComposeMeta(placeholder) {
+    const hint = String(placeholder || "").replace(/\s+/g, " ").trim();
+    if (!hint) return "Tap or click to edit";
+    if (hint.length > 52) return `${hint.slice(0, 49)}…`;
+    return hint;
+  }
+
+  function hostMountOptions(host) {
+    const surfaceId = host.getAttribute("data-surface-id") || host.id.replace(/Mount$/, "");
+    return {
+      surfaceId,
+      toolbarId: host.getAttribute("data-toolbar-id") || `${surfaceId}Toolbar`,
+      labelId: host.getAttribute("data-label-id") || "",
+      placeholder: host.getAttribute("data-placeholder") || "",
+      ariaLabel: host.getAttribute("data-aria-label") || "Description formatting",
+      size: host.getAttribute("data-size") || "standard",
+      required: host.hasAttribute("data-required")
+    };
+  }
+
+  function editorHasComposeChrome(surfaceId) {
+    const inst = getInstance(surfaceId);
+    if (!inst || !inst.surface) return false;
+    return !!inst.surface.closest(".rich-text-editor")?.querySelector(".rich-text-editor__compose");
+  }
+
   function buildEditorHtml(options) {
     const surfaceId = options.surfaceId;
     const toolbarId = options.toolbarId;
@@ -251,6 +294,8 @@ const RichTextEditor = (function () {
     const placeholder = options.placeholder || "";
     const size = options.size === "compact" ? "rich-text-editor--compact" : "";
     const accessibleName = getAccessibleName(labelId, options.ariaLabel || "Description");
+    const composeCaption = getComposeCaption(labelId, options.ariaLabel || "Write here");
+    const composeMeta = getComposeMeta(placeholder);
 
     return (
       `<div class="rich-text-editor ${size}">` +
@@ -264,11 +309,22 @@ const RichTextEditor = (function () {
       `</div></div>` +
       buildBulletStyleBarHtml() +
       `</div>` +
-      `<div id="${surfaceId}" class="rich-text-editor__surface rich-description-content" contenteditable="true" role="textbox" ` +
+      `<div class="rich-text-editor__compose">` +
+      `<div class="rich-text-editor__compose-head">` +
+      `<span class="rich-text-editor__compose-icon" aria-hidden="true">` +
+      `<svg class="rich-text-editor__compose-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">` +
+      `<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>` +
+      `</svg></span>` +
+      `<span class="rich-text-editor__compose-caption">${escapeHtml(composeCaption)}</span>` +
+      `<span class="rich-text-editor__compose-meta">${escapeHtml(composeMeta)}</span>` +
+      `</div>` +
+      `<div class="rich-text-editor__surface-wrap">` +
+      `<div id="${surfaceId}" class="rich-text-editor__surface rich-description-content rich-text-editor__surface--empty" contenteditable="true" role="textbox" ` +
       `aria-multiline="true" aria-label="${escapeAttr(accessibleName)}"${
         labelId ? ` aria-labelledby="${labelId}"` : ""
       }${options.required ? ' aria-required="true"' : ""} ` +
       `data-placeholder="${placeholder.replace(/"/g, "&quot;")}"></div>` +
+      `</div></div>` +
       `<p class="rich-text-editor__hint">Tab to indent lists · Enter on empty line exits list · Ctrl/Cmd+B/I/U for style</p>` +
       `</div>`
     );
@@ -583,6 +639,24 @@ const RichTextEditor = (function () {
     });
   }
 
+  function remountHost(hostEl, options) {
+    if (!hostEl || !options || !options.surfaceId) return false;
+    const surfaceId = options.surfaceId;
+    const existing = getInstance(surfaceId);
+    const savedHtml = existing?.surface ? existing.surface.innerHTML : "";
+    const wasReadonly = !!existing?.readonly;
+    instances.delete(surfaceId);
+    mount(hostEl, options);
+    const surface = getSurface(surfaceId);
+    if (surface && savedHtml) {
+      surface.innerHTML = savedHtml;
+      updateEmptyState(surface);
+      updateToolbarState(surfaceId);
+    }
+    if (wasReadonly) setReadonly(surfaceId, true);
+    return true;
+  }
+
   function mount(hostEl, options) {
     if (!hostEl || !options || !options.surfaceId) return false;
     hostEl.innerHTML = buildEditorHtml(options);
@@ -595,17 +669,15 @@ const RichTextEditor = (function () {
 
   function mountAllFromDom() {
     document.querySelectorAll("[data-rich-text-editor]").forEach((host) => {
-      const surfaceId = host.getAttribute("data-surface-id") || host.id.replace(/Mount$/, "");
-      if (!surfaceId || getInstance(surfaceId)) return;
-      mount(host, {
-        surfaceId,
-        toolbarId: host.getAttribute("data-toolbar-id") || `${surfaceId}Toolbar`,
-        labelId: host.getAttribute("data-label-id") || "",
-        placeholder: host.getAttribute("data-placeholder") || "",
-        ariaLabel: host.getAttribute("data-aria-label") || "Description formatting",
-        size: host.getAttribute("data-size") || "standard",
-        required: host.hasAttribute("data-required")
-      });
+      const options = hostMountOptions(host);
+      const surfaceId = options.surfaceId;
+      if (!surfaceId) return;
+      if (getInstance(surfaceId)) {
+        if (editorHasComposeChrome(surfaceId)) return;
+        remountHost(host, options);
+        return;
+      }
+      mount(host, options);
     });
   }
 
@@ -613,6 +685,8 @@ const RichTextEditor = (function () {
     if (!surface) return;
     const isEmpty = !(surface.textContent || "").trim();
     surface.classList.toggle("rich-text-editor__surface--empty", isEmpty);
+    const editorEl = surface.closest(".rich-text-editor");
+    if (editorEl) editorEl.classList.toggle("rich-text-editor--empty", isEmpty);
   }
 
   function updateToolbarState(surfaceId) {
@@ -838,6 +912,15 @@ const RichTextEditor = (function () {
           updateToolbarState(surfaceId);
         });
       });
+
+      const focusSurfaceFromCompose = (e) => {
+        if (getInstance(surfaceId)?.readonly) return;
+        if (e.target.closest(".rich-text-editor__surface")) return;
+        e.preventDefault();
+        surface.focus();
+      };
+      editorEl.querySelector(".rich-text-editor__compose-head")?.addEventListener("mousedown", focusSurfaceFromCompose);
+      editorEl.querySelector(".rich-text-editor__surface-wrap")?.addEventListener("mousedown", focusSurfaceFromCompose);
     }
 
     surface.addEventListener("input", () => {

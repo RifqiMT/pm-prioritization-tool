@@ -1,15 +1,14 @@
 /**
  * Flat connected layout — no stacked “curvy” boxes.
- * Structural surfaces use square corners + hairline dividers; radius only on controls (pills, FAB).
+ * Structural surfaces use square corners + hairline dividers; radius only on controls (pills,
+FAB).
  */
 
 :root {
   --flow-divider: rgba(231, 201, 120, 0.45);
   --flow-surface: #ffffff;
   --flow-surface-soft: #fffdf8;
-}
-
-/* ═══════════════════════════════════════════════════════════
+}/* ═══════════════════════════════════════════════════════════
    PHONES & TABLETS (≤1400px) — fully flat workspace flow
    ═══════════════════════════════════════════════════════════ */
 @media (max-width: 1400px) {
@@ -170,17 +169,6 @@
     background: var(--flow-surface-soft) !important;
   }
 
-  html.is-compact-layout .moscow-compact-nav {
-    margin-bottom: 0 !important;
-    border-bottom: 1px solid var(--flow-divider);
-  }
-
-  html.is-compact-layout .moscow-compact-nav__track {
-    border-radius: var(--flow-radius-control) !important;
-    box-shadow: none !important;
-    border: 1px solid rgba(231, 201, 120, 0.4) !important;
-  }
-
   /* Segmented tabs — only controls stay softly rounded */
   html.is-compact-layout .portfolio-view-tabs.view-toggle-group--portfolio {
     border-radius: var(--flow-radius-control) !important;
@@ -201,10 +189,9 @@
     border-radius: 0 !important;
     box-shadow: none !important;
   }
-}
-
-/* ═══════════════════════════════════════════════════════════
-   DESKTOP — one workspace panel, flat inner sections
+}/* ═══════════════════════════════════════════════════════════
+   DESKTOP — one workspace panel,
+flat inner sections
    ═══════════════════════════════════════════════════════════ */
 @media (min-width: 1401px) {
   /* Full-width shell — prevents dark body (#12080b) strip on right after dynamic resize */
@@ -310,33 +297,25 @@
     border-radius: 4px !important;
     box-shadow: none !important;
   }
-}
-
-/* ═══════════════════════════════════════════════════════════
+}/* ═══════════════════════════════════════════════════════════
    GLOBAL OVERRIDES (theme layers in main.css)
    ═══════════════════════════════════════════════════════════ */
 .card-plain.workspace-panel,
 .workspace-panel.card-plain {
   box-shadow: none !important;
-}
-
-/* ── App shell: content-height rows (no dead space under profiles) ── */
+}/* ── App shell: content-height rows (no dead space under profiles) ── */
 .app-layout {
   grid-template-rows: auto !important;
   align-items: start !important;
   flex: 0 1 auto !important;
   min-height: 0 !important;
-}
-
-.app-layout > .profiles-panel--v2,
+}.app-layout > .profiles-panel--v2,
 .app-layout > section.profiles-panel {
   align-self: start !important;
   height: auto !important;
   max-height: none !important;
   margin-bottom: 0 !important;
-}
-
-.app-layout > .workspace-panel--v2,
+}.app-layout > .workspace-panel--v2,
 .app-layout > section.workspace-panel {
   align-self: start !important;
   height: auto !important;
@@ -353,27 +332,20 @@
     overflow: visible !important;
     gap: 0 !important;
   }
-}
-
-.view-toolbar,
+}.view-toolbar,
 .roadmaps-table-toolbar.view-toolbar,
 .scrum-board-toolbar.view-toolbar,
 .moscow-view-header.view-toolbar,
 .roadmaps-map-toolbar.view-toolbar {
   background-image: none !important;
-}
-
-.moscow-grid,
+}.moscow-grid,
 .roadmaps-view--moscow .moscow-grid {
   box-shadow: none !important;
-}
-
-.scrum-board-column,
+}.scrum-board-column,
 .moscow-board-column.moscow-grid-cell {
   box-shadow: none !important;
-}
-
-/* Beat main.css theme radii (20px card-plain, etc.) */
+}/* Beat main.css theme radii (20px card-plain,
+etc.) */
 @media (max-width: 1400px) {
   html.is-compact-layout .card,
   html.is-compact-layout .card-plain,
@@ -402,31 +374,23 @@
     border-radius: 0 !important;
     box-shadow: none !important;
   }
-}
-
-/* ── Map view: Leaflet fills shell; no dead space below map ── */
+}/* ── Map view: Leaflet fills shell; no dead space below map ── */
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage:has(#roadmapsMapView[aria-hidden="false"]) {
   flex: 0 0 auto !important;
   height: auto !important;
   min-height: 0 !important;
   align-self: start !important;
-}
-
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .workspace-panel--v2:has(#roadmapsMapView[aria-hidden="false"]) {
+}html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .workspace-panel--v2:has(#roadmapsMapView[aria-hidden="false"]) {
   min-height: 0 !important;
   height: auto !important;
-}
-
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--map {
+}html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--map {
   flex: 0 0 auto !important;
   min-height: 0 !important;
   height: auto !important;
   align-self: start !important;
   padding-bottom: 0.35rem !important;
   gap: 0.35rem !important;
-}
-
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-map-container {
+}html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-map-container {
   position: relative !important;
   display: block !important;
   flex: 0 0 auto !important;
@@ -436,9 +400,7 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-map-contai
   max-height: min(42vh, 480px) !important;
   min-height: 0 !important;
   overflow: hidden !important;
-}
-
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-map-container .leaflet-container {
+}html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-map-container .leaflet-container {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;

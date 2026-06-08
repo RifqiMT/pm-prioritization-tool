@@ -439,10 +439,40 @@
     overscroll-behavior: none;
   }
 
-  html.is-compact-layout.filters-sheet-open body,
-  html.is-compact-layout.profiles-sheet-open body {
+  html.is-compact-layout.app-scroll-lock {
     overflow: hidden !important;
     overscroll-behavior: none;
+  }
+
+  html.is-compact-layout.filters-sheet-open body,
+  html.is-compact-layout.profiles-sheet-open body,
+  html.is-compact-layout.app-scroll-lock body {
+    overflow: hidden !important;
+    overscroll-behavior: none;
+  }
+
+  html.is-compact-layout.app-scroll-lock .app-shell,
+  html.is-compact-layout.app-scroll-lock .app-layout,
+  html.is-compact-layout.app-scroll-lock .workspace-panel--v2,
+  html.is-compact-layout.app-scroll-lock .roadmaps-view,
+  html.is-compact-layout.app-scroll-lock .table-wrapper {
+    overflow: hidden !important;
+    overscroll-behavior: none;
+  }
+
+  html.is-compact-layout.app-scroll-lock .roadmaps-table-cards-list,
+  html.is-compact-layout.app-scroll-lock .scrum-board-column-cards,
+  html.is-compact-layout.app-scroll-lock .moscow-board-column-cards,
+  html.is-compact-layout.app-scroll-lock .roadmaps-map-container,
+  html.is-compact-layout.app-scroll-lock .raci-matrix-wrap {
+    overflow: hidden !important;
+    overscroll-behavior: none;
+    touch-action: none;
+  }
+
+  html.is-compact-layout.filters-sheet-open .filters-sheet-backdrop--visible,
+  html.is-compact-layout.profiles-sheet-open .profiles-sheet-backdrop--visible {
+    touch-action: none;
   }
 
   html.is-compact-layout.compact-tooltip-open .portfolio-bottom-bar,
@@ -862,15 +892,11 @@
     max-height: none;
     padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   }
-}
-
-/* Desktop: card list and compact-only group-by bar hidden (table is primary) */
+}/* Desktop: card list and compact-only group-by bar hidden (table is primary) */
 html.is-desktop-layout .roadmaps-table-cards-shell,
 html.is-desktop-layout .roadmaps-table-group-bar--compact-only {
   display: none !important;
-}
-
-/* Desktop: never show compact overlay / sheet scrims (prevents stuck dim strip after resize) */
+}/* Desktop: never show compact overlay / sheet scrims (prevents stuck dim strip after resize) */
 html.is-desktop-layout > .app-overlay-host,
 html.is-desktop-layout > .filters-sheet-backdrop,
 html.is-desktop-layout > .profiles-sheet-backdrop,
@@ -884,9 +910,7 @@ html.is-desktop-layout .profiles-sheet-backdrop {
   visibility: hidden !important;
   pointer-events: none !important;
   opacity: 0 !important;
-}
-
-html.is-desktop-layout.compact-tooltip-open,
+}html.is-desktop-layout.compact-tooltip-open,
 html.is-desktop-layout.compact-tooltip-open body,
 html.is-desktop-layout.filters-sheet-open,
 html.is-desktop-layout.filters-sheet-open body,

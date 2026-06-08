@@ -27,6 +27,14 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Removed — Dead code and legacy CSS cleanup — 2026-06-03 — Product Team — Impact: developer
+
+- Removed unused functions from `src/app.js` (deprecated super-admin aliases, legacy table-card metric builders, unused modal/profile helpers).
+- Removed dead description tooltip builders from `description-format.js`; deleted unreferenced `css/roadmap-details-tooltip.css`.
+- Removed unused `OverlayManager.closeAll` and `Fullscreen.requestViewSwitchWhileFullscreen` exports.
+- Trimmed internal-only exports from `api/_lib/auth.js` and `api/_lib/mongo.js`.
+- Pruned legacy CSS selectors (removed MoSCoW compact nav, old profile cards, export-format-option, map-metric-toggle, stale map tooltip chips, and related dead rules) across `css/`.
+
 ### Docs — Full product documentation standard audit — 2026-06-06 — Product Team — Impact: documentation
 
 - Re-audited codebase vs 18-doc suite (`APP_ASSET_VERSION` = `20260528-ui194`).

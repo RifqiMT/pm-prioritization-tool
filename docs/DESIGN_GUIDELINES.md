@@ -166,7 +166,7 @@ Category badges use `categoryCode` (A/O/M/I/R) on compact cards; desktop matrix 
 | `app-footer.css` | Centered one-row site footer (LinkedIn, website, GitHub, article) |
 | `map-tooltip-modern.css` | Map view country hover cards (Leaflet HTML tooltips) |
 | `rich-text-editor.css` | Rich-text toolbar, format buttons, compact RICE fields |
-| `roadmap-details-tooltip.css` | HTML description previews on cards |
+| `rich-description-content.css` | Sanitized HTML in RTE surfaces |
 | `board-drag.css` | Board drag ghost and drop targets |
 | `board-card-interaction.css` | Card press/hover feedback |
 | `filters-compact-bar.css` | Compact filters drawer summary bar |

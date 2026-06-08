@@ -292,8 +292,8 @@ function getKanoCategoryFromPosition(functionality, satisfaction) {
  * tooltipTitle: column label; tooltipBodyDescription: static description. Interpretation (e.g. "2026-Q1 = Jan–Mar 2026") is appended in app.js when a value is present.
  */
 const roadmapPeriodTooltip = {
-  tooltipTitle: "Roadmap period",
-  tooltipBodyDescription: "Planning quarter for this roadmap (YYYY-Qn). Used for filtering and roadmap views.\n\nQ1 = Jan - Mar\nQ2 = Apr - Jun\nQ3 = Jul - Sep\nQ4 = Oct - Dec"
+  tooltipTitle: "Roadmap periods",
+  tooltipBodyDescription: "Planning quarters for this roadmap (YYYY-Qn). Each quarter can have its own status. Used for filtering and roadmap views.\n\nQ1 = Jan - Mar\nQ2 = Apr - Jun\nQ3 = Jul - Sep\nQ4 = Oct - Dec"
 };
 
 /**
