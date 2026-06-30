@@ -13,24 +13,38 @@ jobs:
   deploy:
     name: Deploy pm-prioritization-tool
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.ref == 'refs/heads/main' && secrets.VERCEL_TOKEN != '') }}
     steps:
+      - name: Check Vercel secrets
+        id: secrets
+        run: |
+          if [ -z "${{ secrets.VERCEL_TOKEN }}" ] || [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Skipped::VERCEL_TOKEN and VERCEL_PROJECT_ID are not set — skipping Vercel production deploy."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout
+        if: steps.secrets.outputs.configured == 'true'
         uses: actions/checkout@v4
 
       - name: Setup Node
+        if: steps.secrets.outputs.configured == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: npm
 
       - name: Install dependencies
+        if: steps.secrets.outputs.configured == 'true'
         run: npm ci
 
       - name: Validate Vercel layout
+        if: steps.secrets.outputs.configured == 'true'
         run: npm run build
 
       - name: Disable Deployment Protection (public /api)
+        if: steps.secrets.outputs.configured == 'true'
         run: |
           URL="https://api.vercel.com/v9/projects/${{ secrets.VERCEL_PROJECT_ID }}"
           if [ -n "${{ secrets.VERCEL_ORG_ID }}" ]; then
@@ -42,15 +56,19 @@ jobs:
             -d '{"ssoProtection":null}' || echo "Warning: could not PATCH ssoProtection (check VERCEL_PROJECT_ID)"
 
       - name: Install Vercel CLI
+        if: steps.secrets.outputs.configured == 'true'
         run: npm install -g vercel@latest
 
       - name: Pull Vercel settings
+        if: steps.secrets.outputs.configured == 'true'
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build for Vercel
+        if: steps.secrets.outputs.configured == 'true'
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy to Vercel
+        if: steps.secrets.outputs.configured == 'true'
         id: deploy
         run: |
           set -e
@@ -59,5 +77,5 @@ jobs:
           echo "Deployed to $DEPLOY_URL"
 
       - name: Verify cloud API
-        if: steps.deploy.outputs.url != ''
+        if: steps.secrets.outputs.configured == 'true' && steps.deploy.outputs.url != ''
         run: npm run verify:deploy -- "${{ steps.deploy.outputs.url }}"
