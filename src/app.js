@@ -41,6 +41,8 @@ let state = {
 };
 
 let editingRoadmapId = null;
+/** Roadmap ID shown in view modal (edit uses {@link editingRoadmapId}). */
+let viewingRoadmapId = null;
 let bulkEditingRoadmapIds = null;
 let bulkPreviewRoadmapIndex = 0;
 /** Per-roadmap unsaved edit payloads while multi-edit modal is open. */
@@ -204,22 +206,6 @@ function formatTargetCountryDisplayLabel(countryName) {
   if (flag && code && displayName) return `${flag} - ${code} - ${displayName}`;
   if (code && displayName) return `${code} - ${displayName}`;
   return displayName || String(countryName).trim();
-}
-
-/** Table/country-list tooltip line (prod style): "🇩🇪 DE — Germany". */
-function formatTargetCountryTooltipLine(countryName) {
-  if (!countryName) return "";
-  const canonical = getCanonicalCountryName(countryName);
-  if (isEuRegionOption(canonical)) {
-    return `${getEuRegionFlagEmoji()} EU — European Union`;
-  }
-  const displayName = canonical || String(countryName).trim();
-  const code = getCountryCodeForDisplayName(countryName);
-  const flag =
-    code && typeof countryCodeToFlag === "function" ? countryCodeToFlag(code) : "";
-  if (flag && code) return `${flag} ${code} — ${displayName}`;
-  if (code) return `${code} — ${displayName}`;
-  return displayName;
 }
 
 /** Expands EU pseudo-option into all EU member countries; dedupes and keeps only countryList entries. */
@@ -4051,6 +4037,20 @@ async function init() {
   initBlockingModalGuards();
   registerAppOverlays();
 
+  if (typeof ShareLink !== "undefined") {
+    ShareLink.init({
+      getSnapshot: getShareLinkSnapshot,
+      findRoadmapWithOwner,
+      switchView: switchRoadmapsView,
+      setActiveProfile,
+      openRoadmapModal,
+      isProfileUnlocked,
+      showToast,
+      queueUnlockViewRoadmap,
+      getActiveProfileId: () => state.activeProfileId
+    });
+  }
+
   if (typeof AppStorage !== "undefined") {
     const boot = await AppStorage.bootstrap({
       apply: applyStatePayload,
@@ -4059,6 +4059,9 @@ async function init() {
       onStatusChange: updateStorageStatusUI,
       onCloudDataRefreshed: (extra) => {
         refreshUiAfterCloudDataChange();
+        if (typeof ShareLink !== "undefined" && typeof ShareLink.retryAfterDataRefresh === "function") {
+          ShareLink.retryAfterDataRefresh();
+        }
         if (extra && (extra.updated || extra.source === "reconcile" || extra.source === "pull")) {
           showCloudWorkspaceToast(extra);
         }
@@ -4093,7 +4096,13 @@ async function init() {
   renderProfiles();
   renderRoadmaps();
   focusLockedProfileUnlockIfNeeded();
-  if (elements.roadmapsTableView && elements.roadmapsBoardView) {
+  let shareLinkBoot = { appliedAny: false, appliedView: false };
+  if (typeof ShareLink !== "undefined" && typeof ShareLink.applyAfterBoot === "function") {
+    shareLinkBoot = ShareLink.applyAfterBoot();
+  } else if (typeof ShareLink !== "undefined" && typeof ShareLink.markBootComplete === "function") {
+    ShareLink.markBootComplete();
+  }
+  if (!shareLinkBoot.appliedView && elements.roadmapsTableView && elements.roadmapsBoardView) {
     switchRoadmapsView(state.roadmapsView);
   }
   ExchangeRates.ensure()
@@ -7030,6 +7039,50 @@ function findRoadmapWithOwner(roadmapId) {
   if (!profile) return { profile: null, roadmap: null };
   const roadmap = profile.roadmaps.find((p) => p.id === roadmapId) || null;
   return { profile, roadmap };
+}
+
+function getShareLinkSnapshot() {
+  let roadmapId = "";
+  if (roadmapModalMode === "view" && viewingRoadmapId) {
+    roadmapId = viewingRoadmapId;
+  } else if (roadmapModalMode === "edit" && editingRoadmapId) {
+    roadmapId = editingRoadmapId;
+  } else if (
+    elements.roadmapModal &&
+    elements.roadmapModal.classList.contains("active") &&
+    elements.roadmapMetaId
+  ) {
+    const metaId = String(elements.roadmapMetaId.textContent || "").trim();
+    if (metaId && metaId !== "—" && !/generated/i.test(metaId)) roadmapId = metaId;
+  } else if (state.roadmapsView === "table") {
+    const selectedIds = getSelectedRoadmapIdsFromTable();
+    if (selectedIds.length === 1) roadmapId = selectedIds[0];
+  }
+  let profileId = state.activeProfileId || "";
+  if (roadmapId) {
+    const located = findRoadmapWithOwner(roadmapId);
+    if (located.profile && located.profile.id) profileId = located.profile.id;
+  }
+  return {
+    roadmapId,
+    view: state.roadmapsView,
+    profileId
+  };
+}
+
+function notifyShareLinkStateChanged() {
+  if (typeof ShareLink !== "undefined" && typeof ShareLink.notifyAppStateChanged === "function") {
+    ShareLink.notifyAppStateChanged();
+  }
+}
+
+function queueUnlockViewRoadmap({ profileId, roadmapId, view }) {
+  pendingUnlockAction = {
+    type: "viewRoadmap",
+    profileId,
+    roadmapId,
+    view: view || state.roadmapsView
+  };
 }
 
 function getPortfolioRoadmapsBaseList() {
@@ -12009,10 +12062,6 @@ function assignRoadmapStatus(roadmap, newStatus) {
   return true;
 }
 
-function roadmapFormHasPeriodEntries() {
-  return resolveRoadmapPeriodsForFormCollect().length > 0;
-}
-
 function syncRoadmapStatusControlFromPeriods() {
   if (!elements.roadmapStatus) return;
   const periods = resolveRoadmapPeriodsForFormCollect();
@@ -12587,6 +12636,7 @@ function setActiveProfile(profileId) {
   clearFilters();
   syncSuperAdminChrome();
   renderRoadmaps();
+  notifyShareLinkStateChanged();
   if (!isProfileUnlocked(profileId)) {
     pendingUnlockAction = { type: "activate", profileId };
     if (isCompactProfilesLayout()) {
@@ -16246,6 +16296,7 @@ function switchRoadmapsView(view) {
       invalidateMapSizeAfterFullscreenExit();
     });
   }
+  notifyShareLinkStateChanged();
 }
 
 /** Returns a map of ISO 2-letter country code -> number of roadmaps that target that country (active profile, filtered). */
@@ -20166,6 +20217,7 @@ function updateBulkSelectionActions() {
   syncMobileBtn(elements.portfolioSelectionDeleteBtn);
   syncMobileBtn(elements.portfolioSelectionDuplicateBtn, { superAdminOnly: true });
   syncMobileBtn(elements.portfolioSelectionMoveBtn, { superAdminOnly: true });
+  notifyShareLinkStateChanged();
 }
 
 function syncHeaderCheckbox() {
@@ -20951,47 +21003,6 @@ function resetRoadmapModalBulkState() {
   }
 }
 
-function resetRoadmapFormFieldForBulkEdit() {
-  if (elements.roadmapTitle) {
-    elements.roadmapTitle.value = "";
-    elements.roadmapTitle.removeAttribute("required");
-    elements.roadmapTitle.placeholder = "Leave blank for no change";
-  }
-  setRichDescriptionValue("roadmapDescription", "");
-  setRichDescriptionValue("roadmapNote", "");
-  setRichDescriptionValue("reachDescription", "");
-  if (elements.reachValue) elements.reachValue.value = "";
-  setRichDescriptionValue("impactDescription", "");
-  if (elements.impactValue) elements.impactValue.value = "";
-  setRichDescriptionValue("confidenceDescription", "");
-  if (elements.confidenceValue) elements.confidenceValue.value = "";
-  setRichDescriptionValue("effortDescription", "");
-  if (elements.effortValue) elements.effortValue.value = "";
-  if (elements.financialImpactValue) elements.financialImpactValue.value = "";
-  if (elements.financialFramework) {
-    elements.financialFramework.value = FINANCIAL_FRAMEWORK_DEFAULT;
-    elements.financialFramework.dataset.lastFramework = FINANCIAL_FRAMEWORK_DEFAULT;
-  }
-  setFinancialInputsToForm({});
-  toggleFinancialFrameworkFields(FINANCIAL_FRAMEWORK_DEFAULT);
-  if (elements.roadmapCurrency) elements.roadmapCurrency.value = "";
-  if (elements.roadmapType) elements.roadmapType.value = "";
-  if (elements.roadmapStatus) elements.roadmapStatus.value = "";
-  if (elements.roadmapTshirtSize) elements.roadmapTshirtSize.value = "";
-  if (elements.roadmapDeadline) elements.roadmapDeadline.value = "";
-  if (elements.roadmapDeadlineBulkMode) elements.roadmapDeadlineBulkMode.innerHTML = "";
-  if (elements.roadmapDeadlineBulkModeWrap) elements.roadmapDeadlineBulkModeWrap.hidden = true;
-  if (elements.roadmapDeadlineEditorWrap) elements.roadmapDeadlineEditorWrap.hidden = false;
-  if (elements.roadmapMoscow) elements.roadmapMoscow.value = "";
-  setRoadmapKanoSelection(null, null, { readonly: false });
-  renderRoadmapPeriodControls([], { containerEl: elements.roadmapPeriodsContainer });
-  renderCountriesControls([]);
-  renderRoadmapLabelsControls([]);
-  renderRoadmapLinksControls([]);
-  renderRoadmapTasksControls([], { skipDefaultRow: true });
-  renderRoadmapRaciControls(getEmptyRoadmapRaci());
-}
-
 function setRoadmapFormBulkRichTextRequired(required) {
   document.querySelectorAll("#roadmapForm [data-rich-text-editor]").forEach((host) => {
     if (required) {
@@ -21023,41 +21034,6 @@ function prepareRoadmapFormForBulkMode() {
   syncRoadmapDeadlineBulkEditorVisibility();
   if (elements.roadmapOwnerProfileWrap) {
     elements.roadmapOwnerProfileWrap.hidden = true;
-  }
-}
-
-function restoreRoadmapFormFromBulkMode() {
-  if (elements.roadmapForm) {
-    elements.roadmapForm.removeAttribute("novalidate");
-  }
-  setRoadmapFormBulkRichTextRequired(true);
-  ROADMAP_BULK_SELECT_IDS.forEach((id) => {
-    restoreNativeSelectFromBulkMode(document.getElementById(id));
-  });
-  if (typeof ensureRoadmapKanoAxisSelects === "function") {
-    ensureRoadmapKanoAxisSelects();
-  }
-  if (elements.roadmapPeriodsBulkMode) {
-    elements.roadmapPeriodsBulkMode.innerHTML = "";
-  }
-  if (elements.roadmapPeriodsBulkModeWrap) {
-    elements.roadmapPeriodsBulkModeWrap.hidden = true;
-  }
-  if (elements.roadmapPeriodsEditorWrap) {
-    elements.roadmapPeriodsEditorWrap.hidden = false;
-  }
-  if (elements.roadmapDeadlineBulkMode) {
-    elements.roadmapDeadlineBulkMode.innerHTML = "";
-  }
-  if (elements.roadmapDeadlineBulkModeWrap) {
-    elements.roadmapDeadlineBulkModeWrap.hidden = true;
-  }
-  if (elements.roadmapDeadlineEditorWrap) {
-    elements.roadmapDeadlineEditorWrap.hidden = false;
-  }
-  if (elements.roadmapTitle) {
-    elements.roadmapTitle.setAttribute("required", "required");
-    elements.roadmapTitle.placeholder = "e.g. Onboarding email sequence revamp";
   }
 }
 
@@ -21541,6 +21517,14 @@ async function completeProfileUnlockSuccess(profileId) {
     action.roadmapIds.length
   ) {
     openRoadmapModal("bulk", null, { roadmapIds: action.roadmapIds });
+  } else if (action && action.type === "viewRoadmap" && action.roadmapId) {
+    if (action.view && action.view !== state.roadmapsView) {
+      switchRoadmapsView(action.view);
+    }
+    openRoadmapModal("view", action.roadmapId, { fromShareLink: true });
+    if (typeof ShareLink !== "undefined" && typeof ShareLink.highlightRoadmapInPortfolio === "function") {
+      ShareLink.highlightRoadmapInPortfolio(action.roadmapId);
+    }
   }
   showToast("Profile unlocked.");
 }
@@ -23393,19 +23377,42 @@ function openRoadmapModal(mode, roadmapId, options = {}) {
     elements.roadmapFormError.textContent = "";
   }
 
+  if ((isView || isEdit) && roadmapId && !isSuperAdminModeActive()) {
+    const locatedForProfile = findRoadmapWithOwner(roadmapId);
+    if (locatedForProfile.profile && locatedForProfile.profile.id !== state.activeProfileId) {
+      setActiveProfile(locatedForProfile.profile.id);
+    }
+  }
+
   const activeProfile = getActiveProfile();
   if (!activeProfile) return;
-  if (!isProfileUnlocked(activeProfile.id)) {
+
+  let unlockProfileId = activeProfile.id;
+  if ((isView || isEdit) && roadmapId) {
+    const locatedForUnlock = findRoadmapWithOwner(roadmapId);
+    if (locatedForUnlock.profile) unlockProfileId = locatedForUnlock.profile.id;
+  }
+
+  if (!isProfileUnlocked(unlockProfileId)) {
     pendingUnlockAction = isBulk
       ? { type: "bulkEdit", profileId: activeProfile.id, roadmapIds: bulkIds.slice() }
-      : { type: "activate", profileId: activeProfile.id };
-    openProfileUnlockModal(activeProfile.id);
-    showToast(isBulk ? "Unlock this profile to bulk edit roadmaps." : "Unlock this profile to add or edit roadmaps.");
+      : isView && roadmapId
+        ? { type: "viewRoadmap", profileId: unlockProfileId, roadmapId, view: state.roadmapsView }
+        : { type: "activate", profileId: unlockProfileId };
+    openProfileUnlockModal(unlockProfileId);
+    showToast(
+      isBulk
+        ? "Unlock this profile to bulk edit roadmaps."
+        : isView
+          ? "Unlock this profile to view this roadmap."
+          : "Unlock this profile to add or edit roadmaps."
+    );
     return;
   }
 
   roadmapModalMode = mode;
   editingRoadmapId = isEdit ? roadmapId : null;
+  viewingRoadmapId = isView && roadmapId ? roadmapId : null;
   bulkEditingRoadmapIds = isBulk ? bulkIds.slice() : null;
 
   let roadmap = null;
@@ -23604,6 +23611,7 @@ function openRoadmapModal(mode, roadmapId, options = {}) {
     }
     hideRoadmapBulkPreviewChrome();
   }
+  notifyShareLinkStateChanged();
 }
 
 function closeRoadmapModal({ immediate = false, force = false } = {}) {
@@ -23637,11 +23645,13 @@ function closeRoadmapModal({ immediate = false, force = false } = {}) {
   resetRoadmapSummaryUi();
   setRichDescriptionFieldsReadonly(false);
   editingRoadmapId = null;
+  viewingRoadmapId = null;
   bulkEditingRoadmapIds = null;
   bulkPreviewRoadmapIndex = 0;
   if (roadmapModalMode === "bulk") {
     roadmapModalMode = "create";
   }
+  notifyShareLinkStateChanged();
 }
 
 function collectRoadmapRawFromForm({ validate = true } = {}) {

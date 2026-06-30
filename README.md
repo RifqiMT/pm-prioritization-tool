@@ -8,7 +8,7 @@
 |---|---|
 | **Production** | [pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app) |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui196` (per-asset `?v=` tags in `index.html`) |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui197` (per-asset `?v=` tags in `index.html`) |
 | **Docs hub** | [docs/README.md](docs/README.md) |
 
 > Do not use `pm-prioritization-tool.vercel.app` — that hostname serves a legacy React app. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
@@ -41,7 +41,7 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 - **Data ownership** — export anytime; merge import; per-browser cache with optional cloud sync  
 - **Planning flexibility** — filter by country, quarter, framework, status, labels, links; map by count, RICE, or EUR  
 - **Meeting-ready on any device** — compact layout uses vertical stacks, FAB, touch-friendly controls, and quadrant nav pills  
-- **Optional AI assistance** — three-paragraph LLM briefings and iterative 5 Why question chains via Tavily + Groq using your own API keys (BYOK)  
+- **Shareable deep links** — URL hash reflects active profile, view, and opened roadmap; recipients with the same workspace data can open the exact context  
 
 ---
 
@@ -142,15 +142,15 @@ pm-prioritization-tool/
 │   └── modules/            # storage, profile-security, exchange-rates, fullscreen, overlay-manager,
 │                           # description-format, rich-text-editor, board-drag, board-card-interaction,
 │                           # byok-api-keys, roadmap-llm-summary, roadmap-5why-framework,
-│                           # roadmap-periods, gantt-view, export-payload
+│                           # roadmap-periods, gantt-view, export-payload, share-link
 ├── api/                    # health, config, state, byok/validate-* + _lib (Vercel)
-├── scripts/                # verify-deployment; 11 test suites (storage … gantt)
+├── scripts/                # verify-deployment; 12 test suites (storage … share)
 ├── docs/                   # Product documentation suite
 ├── vercel.json
 └── package.json
 ```
 
-### CSS layers (load order in `index.html` — 40 files)
+### CSS layers (load order in `index.html` — 41 files)
 
 | # | File | Role |
 |---|------|------|
@@ -160,9 +160,9 @@ pm-prioritization-tool/
 | 18–23 | `views-density` … `table-compact-cards` | Density, layout, table structure |
 | 24–28 | `super-admin` … `view-toolbars-compact-row` | Workspace mode, map tooltips, board DnD |
 | 29–33 | `filters-compact-bar` … `view-tabs-compact-menu` | Filters sheet, mobile command deck, profile picker, view overflow menu |
-| 34–40 | `rich-description-content` … `filter-combobox-fix` | Rich text, KANO matrix, Gantt timeline, confirm dialogs, combobox fixes |
+| 34–41 | `rich-description-content` … `filter-combobox-fix` | Rich text, KANO, Gantt, share-link focus, confirm dialogs, combobox fixes |
 
-Full numbered list: [docs/TECH_GUIDELINES.md](docs/TECH_GUIDELINES.md) §3.1 (must match `index.html` lines 15–54).
+Full numbered list: [docs/TECH_GUIDELINES.md](docs/TECH_GUIDELINES.md) §3.1 (must match `index.html` lines 15–55).
 
 ### Layout breakpoint
 
@@ -203,7 +203,7 @@ npm run verify:production
 ## Testing
 
 ```bash
-npm test                    # 11 automated suites (storage, metadata, persistence, export, byok, kano, llm, 5why, periods, gantt)
+npm test                    # 12 automated suites (storage … gantt, share)
 npm run verify:production   # Smoke test production deploy
 ```
 
@@ -261,4 +261,4 @@ UNLICENSED (private). See `package.json`.
 - GitHub: [RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool)  
 - Article: [Effort–impact confusion to clear-cut priorities](https://rifqi-tjahyono.com/%f0%9f%93%8a-effort-impact-confusion-to-clear-cut-priorities-replace-tab-hopping-with-visual-roadmap-sanity-%f0%9f%a7%ad%e2%9c%a8/)
 
-**Documentation last comprehensively audited:** 2026-05-28 (baseline `20260528-ui196`).
+**Documentation last comprehensively audited:** 2026-05-28 (baseline `20260528-ui197`).

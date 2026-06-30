@@ -7,7 +7,7 @@
 | **Audience** | Product, engineering, design, QA, and stakeholders |
 | **Maintainer** | Product Team |
 | **Last updated** | 2026-05-28 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui196` |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui197` |
 
 This document is the **collaborative cross-feature reference** for how the app behaves end-to-end. It explains **logic** (what the system does), **rules** (what inputs and workflows are allowed), and **constraints** (what the product must not do or cannot guarantee). Use it in planning reviews, QA test design, and cross-team alignment.
 
@@ -89,7 +89,7 @@ flowchart LR
 
 | Aspect | Detail |
 |--------|--------|
-| **Purpose** | One filtered roadmap set drives Table, Board, MoSCoW, Map, RACI, and KANO |
+| **Purpose** | One filtered roadmap set drives all seven portfolio views |
 | **Logic** | Resolve scope → `applyFilters(roadmaps)` → view-specific sort/render |
 | **Rules** | Filters combine with AND semantics; empty filter = no constraint; title/label use case-insensitive substring; owner profile filter only in privileged mode |
 | **Constraints** | Autocomplete max **12** suggestions; filters drawer collapsed by default on compact |
@@ -114,6 +114,17 @@ flowchart LR
 | T-shirt | Exact or `__none__` |
 | MoSCoW | Exact stored category |
 | Owner profile | Exact `ownerProfileId` (privileged mode only) |
+
+### F-04 Shareable deep links (ShareLink)
+
+| Aspect | Detail |
+|--------|--------|
+| **Purpose** | Let users bookmark or share the exact portfolio context (profile, view, roadmap) via URL |
+| **Logic** | `ShareLink` writes `#pm/?roadmap=&view=&profile=` hash via `history.replaceState` when app state changes; on boot `applyAfterBoot()` reads hash (or legacy `?query`) and switches profile/view, opens roadmap view modal |
+| **Rules** | Valid views: table, board, moscow, map, raci, kano, gantt; roadmap id must exist in loaded workspace; locked profile queues unlock before opening modal |
+| **Constraints** | Does not sync workspace data across devices — recipient needs same MongoDB workspace or import; no server-side share tokens; hash not persisted to cloud |
+| **Code** | `src/modules/share-link.js`, `getShareLinkSnapshot()`, `notifyShareLinkStateChanged()`, `css/share-link.css` |
+| **See also** | [PRD.md](PRD.md) FR-9.8, `npm run test:share`, [GUARDRAILS.md](GUARDRAILS.md) |
 
 ---
 
@@ -506,7 +517,7 @@ flowchart LR
 
 | Feature ID | Primary modules |
 |------------|-----------------|
-| F-00–F-03 | `app.js`, `constants.js`, `storage.js` |
+| F-00–F-04 | `app.js`, `constants.js`, `storage.js`, `share-link.js` |
 | F-10–F-12 | `app.js`, `utils.js`, `roadmap-metadata.js` |
 | F-13 | `rice.js` |
 | F-15 | `app.js` (financial helpers) |
@@ -539,6 +550,7 @@ flowchart LR
 | Date | Change |
 |------|--------|
 | 2026-05-28 | Initial collaborative cross-feature logic and constraints reference |
-| 2026-05-28 | Seven views (Gantt); 40 CSS; roadmapDeadline; ganttZoom; baseline `20260528-ui196` |
+| 2026-05-28 | ShareLink deep links; 41 CSS; 12 tests; baseline `20260528-ui197` |
+| 2026-05-28 | Seven views (Gantt); roadmapDeadline; ganttZoom; baseline `20260528-ui197` |
 | 2026-05-28 | roadmapPeriods; ExportPayload; compact filters sheet |
 | 2026-06-06 | Added `roadmap.note`, six rich-text surfaces, optional collapsibles, in-modal KANO, dev seed |

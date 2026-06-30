@@ -5,7 +5,7 @@ Engineering standards for the Product Management Prioritization Tool codebase.
 | Field | Value |
 |-------|-------|
 | **Last updated** | 2026-05-28 |
-| **APP_ASSET_VERSION** | `20260528-ui196` |
+| **APP_ASSET_VERSION** | `20260528-ui197` |
 | **COMPACT_LAYOUT_MAX_WIDTH_PX** | `1400` |
 
 ---
@@ -47,7 +47,8 @@ Defined in `index.html` (order matters — globals, not ES modules):
 17. `src/modules/roadmap-periods.js` — `RoadmapPeriods` global (multi-quarter periods)
 18. `src/modules/gantt-view.js` — `GanttView` global (Gantt timeline)
 19. `src/modules/export-payload.js` — `ExportPayload` global (JSON/CSV export builders)
-20. `src/app.js` — defines `init()` and runs on `DOMContentLoaded`
+20. `src/modules/share-link.js` — `ShareLink` global (URL hash deep links)
+21. `src/app.js` — defines `init()` and runs on `DOMContentLoaded`
 
 All shared symbols are **global functions and constants**. Do not introduce ES module imports without a planned migration.
 
@@ -99,8 +100,9 @@ Later files win for equal specificity. Each stylesheet in `index.html` uses a **
 | 36 | `rich-text-editor.css` | Rich-text toolbar and fields |
 | 37 | `portfolio-kano-modern.css` | KANO portfolio matrix and cards |
 | 38 | `gantt-view.css` | Gantt timeline grid, bars, deadline markers, tooltips |
-| 39 | `confirm-modals-modern.css` | Delete/confirm dialogs |
-| 40 | `filter-combobox-fix.css` | Profile picker and filter combobox alignment fixes |
+| 39 | `share-link.css` | Deep-link focus ring on portfolio cards (`.portfolio-roadmap--deep-link-focus`) |
+| 40 | `confirm-modals-modern.css` | Delete/confirm dialogs |
+| 41 | `filter-combobox-fix.css` | Profile picker and filter combobox alignment fixes |
 
 ### 3.2 Compact layout
 
@@ -128,7 +130,7 @@ Later files win for equal specificity. Each stylesheet in `index.html` uses a **
 | Constant | Role |
 |----------|------|
 | `STORAGE_KEY` | `localStorage` key (`rice_prioritizer_v1`) |
-| `APP_ASSET_VERSION` | Cache buster (`20260528-ui196`) |
+| `APP_ASSET_VERSION` | Cache buster (`20260528-ui197`) |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | `1400` — single compact breakpoint |
 | `moscowList` | Stored MoSCoW values |
 | `moscowDisplayNames` | UI labels (Must Have, …) |
@@ -282,6 +284,7 @@ Export: `getExportableProfiles()` → `sanitizeProfilesForExport()` → download
 | `test:export` | Full JSON/CSV export payload round-trip |
 | `test:periods` | Multi-quarter `roadmapPeriods` normalization |
 | `test:gantt` | Gantt ISO weeks, quarter ranges, month zoom, deadline state |
+| `test:share` | ShareLink URL hash parse/build and legacy query migration |
 
 Also: `npm run verify:production` — smoke test deployed URL (`scripts/verify-deployment.js`).
 

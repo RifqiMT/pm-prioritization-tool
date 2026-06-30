@@ -4,7 +4,7 @@
 
 **Purpose:** Map PRD requirements to concrete implementation evidence and verification steps.  
 **Standard:** Requirement IDs must remain synchronized with [PRD.md](PRD.md).  
-**Last audited:** 2026-05-28 · **Baseline:** `APP_ASSET_VERSION` = `20260528-ui196`
+**Last audited:** 2026-05-28 · **Baseline:** `APP_ASSET_VERSION` = `20260528-ui197`
 
 ---
 
@@ -101,6 +101,7 @@
 | FR-5.10 | Locked profile blocks data | `getUnlockedActiveProfile()`; view guards | No roadmap leakage when locked |
 | FR-5.11 | Compact layout ≤1400px | `COMPACT_LAYOUT_MAX_WIDTH_PX`; `initCompactLayoutClass()` | At 1024px and 375px: compact classes; no horizontal board/MoSCoW scroll |
 | US-D3 | Gantt timeline stories | `gantt-view.js`; `#roadmapsGanttView` | US-D3 acceptance |
+| US-F4 | Share deep links | `share-link.js`; `getShareLinkSnapshot` | US-F4 acceptance |
 | US-R1 / US-R2 | RACI stories | `renderRaciMatrix`; roadmap modal RACI section | Epic R acceptance |
 | US-S1 / US-S2 | KANO stories | `renderKanoPortfolioMatrix`; `portfolio-kano-modern.css` | Epic S acceptance |
 
@@ -156,6 +157,7 @@
 | FR-9.5 | Delete confirmations | Delete modals | Destructive actions require confirm |
 | FR-9.6 | Site footer links | `index.html` `.app-site-footer`; `app-footer.css` | LinkedIn, website, GitHub, article open correctly |
 | FR-9.7 | Card visual + action parity | `portfolio-cards-compact.css`; `roadmap-actions-modern.css` | 12px radius; single action row on desktop board/MoSCoW |
+| FR-9.8 | Shareable deep links | `share-link.js`; `getShareLinkSnapshot`; `#pm/` hash | Profile/view switch; roadmap opens when unlocked |
 
 ---
 

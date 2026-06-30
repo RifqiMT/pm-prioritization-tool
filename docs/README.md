@@ -6,7 +6,7 @@
 | **Version** | 2.0.0 |
 | **Maintainer** | Product Team |
 | **Last audited** | 2026-05-28 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui196` |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui197` |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
 
 This folder is the **single source of product truth** for engineering, design, product management, and stakeholders (**17 documents** + root [README.md](../README.md) = **18-file suite**). Documents are maintained against the **current** implementation in `index.html`, `css/`, `src/`, and `api/`.
@@ -72,7 +72,7 @@ This folder is the **single source of product truth** for engineering, design, p
 ```
 pm-prioritization-tool/
 ├── index.html                      # Shell, modals, filters, seven views, BYOK, footer
-├── css/                            # 40 layered stylesheets (see TECH_GUIDELINES.md §3.1)
+├── css/                            # 41 layered stylesheets (see TECH_GUIDELINES.md §3.1)
 │   ├── main.css … export-modals-modern.css
 │   ├── byok-api-keys.css
 │   ├── view-toolbars-modern.css … app-footer.css
@@ -86,6 +86,7 @@ pm-prioritization-tool/
 │   ├── rich-text-editor.css
 │   ├── portfolio-kano-modern.css
 │   ├── gantt-view.css              # Gantt timeline grid and bars
+│   ├── share-link.css              # Deep-link focus ring on portfolio cards
 │   ├── confirm-modals-modern.css   # Delete/confirm dialogs
 │   └── filter-combobox-fix.css     # Profile/filter combobox alignment
 ├── src/
@@ -109,7 +110,8 @@ pm-prioritization-tool/
 │       ├── roadmap-5why-framework.js # Iterative WHY 1→5 questions
 │       ├── roadmap-periods.js      # Multi-quarter roadmapPeriods
 │       ├── gantt-view.js           # Gantt timeline view
-│       └── export-payload.js       # JSON/CSV export builders
+│       ├── export-payload.js       # JSON/CSV export builders
+│       └── share-link.js           # URL hash deep links
 ├── api/
 │   ├── health.js                   # GET storage probe
 │   ├── config.js                   # GET client config (same probe as health)
@@ -137,6 +139,7 @@ pm-prioritization-tool/
 │   ├── test-export-payload.js      # npm run test:export
 │   ├── test-roadmap-periods.js     # npm run test:periods
 │   └── test-gantt-view.js          # npm run test:gantt
+│   └── test-share-link.js          # npm run test:share
 │   └── disable-vercel-deployment-protection.sh
 ├── .github/workflows/              # ci.yml, vercel-production.yml, fix-vercel-protection.yml
 ├── docs/                           # This documentation suite

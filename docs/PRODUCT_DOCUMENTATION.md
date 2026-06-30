@@ -6,7 +6,7 @@
 | **Version** | 2.0.0 |
 | **Document owner** | Product Team |
 | **Last audited** | 2026-05-28 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui196` |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui197` |
 
 ---
 
@@ -127,7 +127,15 @@ When `html.is-compact-layout` and table view:
 - Legacy JSON keys (`profile.projects`, `projectsView`, `projectType`, `projectStatus`, `projectPeriod`) migrate to roadmap equivalents on load; saves write only canonical keys.
 - Merge on load by document `updatedAt` and profile-count heuristics; local cache under `rice_prioritizer_v1`.
 
-### 3.10 Site chrome
+### 3.11 Shareable deep links
+
+- URL hash format: `#pm/?roadmap={id}&view={tab}&profile={id}` (canonical).
+- Legacy query parameters (`?roadmap=…`) are read on load then migrated to hash.
+- Opening a link switches active profile and view, opens the roadmap in **view** mode when unlocked, and briefly highlights the card (`.portfolio-roadmap--deep-link-focus`).
+- Locked profiles queue the standard unlock flow before opening the roadmap.
+- Recipients must have the **same workspace data** (cloud sync or import) — links do not embed roadmap payloads.
+
+### 3.12 Site chrome
 
 - **Header**: title, storage status, export/import, FX, cloud, compact actions menu.
 - **Footer**: year, maintainer, LinkedIn, website, **GitHub repo**, **prioritization article** (`app-footer.css`).
@@ -241,9 +249,9 @@ See [ARCHITECTURE.md](ARCHITECTURE.md).
 
 | Layer | Technology |
 |-------|------------|
-| UI | `index.html`, **40** layered CSS files (see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) §3.1) |
+| UI | `index.html`, **41** layered CSS files (see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) §3.1) |
 | Logic | `src/app.js` (~24k lines), `src/rice.js`, `src/constants.js`, `src/utils.js` |
-| Modules | `storage`, `profile-security`, `exchange-rates`, `fullscreen`, `overlay-manager`, `description-format`, `rich-text-editor`, `board-drag`, `board-card-interaction`, `byok-api-keys`, `roadmap-llm-summary`, `roadmap-5why-framework`, `roadmap-periods`, `gantt-view`, `export-payload`; dev seed: `dev-seed-workspace.js` (localhost only) |
+| Modules | `storage`, `profile-security`, `exchange-rates`, `fullscreen`, `overlay-manager`, `description-format`, `rich-text-editor`, `board-drag`, `board-card-interaction`, `byok-api-keys`, `roadmap-llm-summary`, `roadmap-5why-framework`, `roadmap-periods`, `gantt-view`, `export-payload`, `share-link`; dev seed: `dev-seed-workspace.js` (localhost only) |
 | API | `api/health.js`, `api/config.js`, `api/state.js`, `api/byok/validate-*.js`, `api/_lib/*` (auth, mongo, roadmap-metadata, export-payload, byok-validate) |
 | Database | MongoDB Atlas (optional) |
 | Map | Leaflet 1.9.4 (CDN) |

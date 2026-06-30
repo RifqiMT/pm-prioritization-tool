@@ -310,6 +310,36 @@ Each story includes:
 
 ---
 
+### US-F4 — Share portfolio context via URL
+
+- **Persona:** Product Manager  
+- **Goal:** Send a colleague a link that opens the same profile, view, and roadmap.
+
+**Acceptance criteria**
+
+1. **URL sync**  
+   - **Given** the user changes active profile, view tab, or opens a roadmap in the modal  
+   - **When** navigation completes  
+   - **Then** the browser URL updates to `#pm/?roadmap=&view=&profile=` when applicable.
+
+2. **Incoming link**  
+   - **Given** a valid share URL and matching workspace data  
+   - **When** the page loads  
+   - **Then** the app activates the profile and view  
+   - **And** opens the roadmap in view mode when the profile is unlocked.
+
+3. **Locked profile**  
+   - **Given** the link targets a password-protected locked profile  
+   - **When** the page loads  
+   - **Then** the unlock flow runs before opening the roadmap.
+
+4. **Missing roadmap**  
+   - **Given** the roadmap id is not in the workspace  
+   - **When** the link loads  
+   - **Then** the user sees a toast explaining import/sync is required.
+
+---
+
 ## Epic G — Compact layout (≤1400px)
 
 ### US-G1 — Unified phone/tablet UI

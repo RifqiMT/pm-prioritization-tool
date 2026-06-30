@@ -3,7 +3,7 @@
 **Purpose:** Authoritative dictionary of application variables — technical name, friendly name, definition, formula, UI location, and examples.  
 **Audience:** Product, engineering, QA, analytics.  
 **Last audited:** 2026-05-28  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260528-ui196`
+**Implementation baseline:** `APP_ASSET_VERSION` = `20260528-ui197`
 
 > Privileged cross-profile workspace variables (workspace-wide mode, owner filter, owner metadata) are specified in [GUARDRAILS.md](GUARDRAILS.md) §7 only. This dictionary uses neutral names below.
 
@@ -64,7 +64,14 @@ Persisted to `localStorage` under `rice_prioritizer_v1` unless noted.
 | `FIVE_WHY_MAX_LEVELS` | Five Why Depth | Maximum iterative WHY levels. | Constant `5` in `roadmap-5why-framework.js`. | Generate button label | `5` |
 | `WHY_LEVEL_LENS` | Five Why Level Lens | Per-level analytical framing (DMAIC phase + plain label). | Indexed by level 1–5; drives prompt and UI labels. | Five Why output list items | Define → Measure → Analyze → Improve → Control |
 
-### BYOK storage (`ByokApiKeys` — not in workspace payload)
+### URL deep-link parameters (`ShareLink` — not persisted to cloud)
+
+| Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
+|----------------|---------------|------------|-----------------|--------------|---------|
+| `roadmap` (hash param) | Share Roadmap ID | Roadmap to open in view modal when link loads. | Must match `roadmap.id` in workspace. | URL `#pm/?roadmap=…` | `roadmap_abc123` |
+| `view` (hash param) | Share View Tab | Portfolio tab to activate on load. | One of `table`, `board`, `moscow`, `map`, `raci`, `kano`, `gantt`. | URL `#pm/?view=…` | `board` |
+| `profile` (hash param) | Share Profile ID | Profile to activate on load. | Must match `profile.id`; auto-set from roadmap owner when `roadmap` present. | URL `#pm/?profile=…` | `profile_xyz` |
+| `HASH_PREFIX` | Share Hash Prefix | Canonical hash namespace. | Constant `pm` in `share-link.js`. | Browser location hash | `#pm/` |
 
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
@@ -478,13 +485,29 @@ flowchart TD
   TODAY[Jump to today] --> SCROLL[scrollToToday ISO week]
 ```
 
+### 8.18 ShareLink deep-link flow
+
+```mermaid
+flowchart TD
+  STATE[Profile + view + roadmap modal] --> SNAP[getShareLinkSnapshot]
+  SNAP --> HASH[history.replaceState #pm/?roadmap&view&profile]
+  LOAD[Page load / popstate] --> READ[readShareParamsFromLocation]
+  READ --> APPLY[ShareLink.applyAfterBoot]
+  APPLY --> PROF[setActiveProfile if needed]
+  PROF --> VIEW[switchView if needed]
+  VIEW --> LOCK{Profile unlocked?}
+  LOCK -->|No| QUEUE[queueUnlockViewRoadmap]
+  LOCK -->|Yes| MODAL[openRoadmapModal view mode]
+  MODAL --> HIGH[highlightRoadmapInPortfolio]
+```
+
 ---
 
 ## 9. Layout, DOM, and build constants
 
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
-| `APP_ASSET_VERSION` | Asset Cache Version | Documentation baseline for cache-bust releases. Individual CSS/JS links in `index.html` may use per-asset `?v=` suffixes that include this baseline plus feature tags. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260528-ui196"` |
+| `APP_ASSET_VERSION` | Asset Cache Version | Documentation baseline for cache-bust releases. Individual CSS/JS links in `index.html` may use per-asset `?v=` suffixes that include this baseline plus feature tags. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260528-ui197"` |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | Compact Breakpoint (px) | Max viewport width for phone/tablet UI. | Constant in `constants.js`. | `src/constants.js` | `1400` |
 | `is-compact-layout` | Compact Layout Class | Viewport ≤1400px; enables compact CSS. | Set on `<html>` by `initCompactLayoutClass()`. | Global layout | class present |
 | `is-phone-layout` | Phone Layout Class | Same threshold as compact (unified phone UI). | Set together with compact class. | Global layout | class present |

@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|-------|
 | **Last updated** | 2026-05-28 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui196` |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui197` |
 
 The app is a **static UI** plus **Vercel serverless API** routes under `/api`. Portfolio data is stored in **MongoDB Atlas** when `MONGODB_URI` is configured; the browser keeps a **local cache** for faster reload and offline fallback.
 
@@ -121,7 +121,17 @@ Verify:
 npm run verify:deploy -- https://YOUR-DOMAIN
 ```
 
-**CLI:** `./scripts/disable-vercel-deployment-protection.sh` (needs `VERCEL_TOKEN` + project id).
+**CLI:** `./scripts/disable-vercel-deployment-protection.sh`
+
+Requires environment variables:
+
+| Variable | Required | Source |
+|----------|----------|--------|
+| `VERCEL_TOKEN` | Yes | [vercel.com/account/tokens](https://vercel.com/account/tokens) |
+| `VERCEL_PROJECT_ID` | Yes | Vercel → Project → Settings → General → Project ID (`prj_…`) |
+| `VERCEL_TEAM_ID` | No | Team settings if project is under a team |
+
+The script PATCHes `ssoProtection: null` on the project, then you must **redeploy Production** and run `npm run verify:deploy`.
 
 **GitHub Actions:** Add secrets `VERCEL_TOKEN`, `VERCEL_PROJECT_ID` (and optional `VERCEL_ORG_ID`) → run **Actions → Fix Vercel Deployment Protection** → redeploy.
 
@@ -170,7 +180,7 @@ GitHub Actions workflow `.github/workflows/ci.yml` runs on every push/PR to `mai
 
 1. `npm ci`
 2. `npm run build` — validates static root + `api/state.js`
-3. `npm test` — eleven script suites (storage, metadata, persistence, export, byok, byok-validate, kano, llm, 5why, periods, gantt)
+3. `npm test` — twelve script suites (storage, metadata, persistence, export, byok, byok-validate, kano, llm, 5why, periods, gantt, share)
 
 Post-deploy smoke: `npm run verify:production` (or `verify:deploy` with your URL).
 

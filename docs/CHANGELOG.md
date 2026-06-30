@@ -27,14 +27,23 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Docs — Full product documentation standard audit — 2026-05-28 (pass 2) — Product Team — Impact: documentation
+
+- Re-audited codebase vs 18-doc suite; baseline `APP_ASSET_VERSION` = `20260528-ui197`.
+- **ShareLink** deep links: URL hash `#pm/?roadmap=&view=&profile=` syncs with portfolio state; module `share-link.js`, `share-link.css`.
+- **41 CSS layers**; **21** modules before `app.js`; **12** `npm test` suites (`test:share`).
+- Updated PRD FR-9.8, FEATURE_LOGIC F-27, VARIABLES §8.18, USER_STORIES US-F3, TRACEABILITY, GUARDRAILS, TECH, README.
+
+### Feature — Shareable portfolio deep links — 2026-06-30 — Product Team — Impact: user-visible
+
+- `ShareLink` module syncs URL hash with active profile, view tab, and opened roadmap modal.
+- Incoming links switch profile/view, open roadmap in view mode, highlight card; locked profiles queue unlock flow.
+- Legacy `?roadmap=&view=&profile=` query params still read; canonical format is hash `#pm/...`.
+- `npm run test:share`; styles `css/share-link.css` (deep-link focus ring).
+
 ### Docs — Full product documentation standard audit — 2026-05-28 — Product Team — Impact: documentation
 
-- Re-audited codebase vs 18-doc suite; baseline `APP_ASSET_VERSION` = `20260528-ui196`.
-- **Seven portfolio views** (Table, Board, MoSCoW, Map, RACI, KANO, **Gantt**); **40 CSS layers** including `gantt-view.css`, `filter-combobox-fix.css`.
-- **20 `src/` modules** before `app.js` (incl. `gantt-view.js`, `roadmap-periods.js`, `export-payload.js`); **11** `npm test` suites (`test:gantt`).
-- `app.js` ~24k lines; `roadmapDeadline` + `roadmapPeriods` drive Gantt bars; `ganttZoom` persisted in workspace state.
-- Added VARIABLES §8.17 Gantt relationship chart; Gantt tokens in DESIGN_GUIDELINES; BUSINESS_GUIDELINES Gantt calibration.
-- Verified all 11 test suites pass; fixed stale README audit footer and PRODUCT_DOCUMENTATION tech summary.
+- Prior pass: seven views, Gantt, 40 CSS; baseline `20260528-ui196`.
 
 ### Feature — Gantt timeline view — 2026-06-30 — Product Team — Impact: user-visible
 

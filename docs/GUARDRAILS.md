@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|-------|
 | **Last updated** | 2026-05-28 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui196` |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui197` |
 
 Cross-feature behavior summaries live in [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md). This file defines **hard limits** and policies that must not be violated.
 
@@ -90,6 +90,12 @@ Cross-feature behavior summaries live in [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEAT
 - CSV export must use `ExportPayload.CSV_COLUMN_IDS`; unknown entity keys serialize via `profileExtraData` / `roadmapExtraData` JSON columns.
 - `roadmapPeriods`, `roadmapRaci`, and workspace filter state must survive export → import without loss when profiles are exportable.
 - BYOK API keys and LLM/Five Why session output must never appear in export files.
+
+### 6.6 ShareLink deep-link constraints
+- Share URLs encode **references only** (profile id, view name, roadmap id) — never embed roadmap content or passwords.
+- Recipients must already have the same workspace data (MongoDB sync, import, or shared machine); links are not a data-transfer mechanism.
+- Locked profiles must not expose roadmap content until unlock succeeds; deep links queue the standard unlock flow.
+- Legacy `?roadmap=&view=&profile=` query params are migrated to hash format; do not rely on query strings for new shares.
 
 ## 6. Production (Vercel) Guardrails
 

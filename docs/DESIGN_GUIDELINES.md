@@ -2,7 +2,7 @@
 
 **Product:** Product Management Prioritization Tool  
 **Last updated:** 2026-05-28  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260528-ui196`  
+**Implementation baseline:** `APP_ASSET_VERSION` = `20260528-ui197`  
 **Layout breakpoint:** `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** (`html.is-compact-layout` + `html.is-phone-layout`)
 
 Visual and interaction standards for the local-first prioritization workspace.
@@ -121,6 +121,14 @@ Scoped on `.roadmaps-view--gantt`:
 | `--gantt-bar-h` | 18–26px | Period bar thickness |
 
 Bar segment colors reuse **roadmap status** semantics (§3). Module: `src/modules/gantt-view.js` (`GanttView` global).
+
+### 2.10 Share-link focus (`share-link.css`)
+
+| Class | Usage |
+|-------|--------|
+| `.portfolio-roadmap--deep-link-focus` | Temporary outline + glow when navigating from a share URL; removed after ~2.4s |
+
+Module: `src/modules/share-link.js` (`ShareLink` global). URL format: `#pm/?roadmap=&view=&profile=`.
 
 ---
 

@@ -131,6 +131,7 @@ Among workspaces that had ≥3 roadmaps 30 days ago, count those with ≥1 sessi
 | KR6.3 | RACI view adoption | ≥ 20% of portfolio sessions open RACI tab |
 | KR6.4 | KANO view adoption | ≥ 15% of portfolio sessions open KANO tab |
 | KR6.5 | Gantt view adoption | ≥ 20% of portfolio sessions open Gantt tab for timeline planning |
+| KR6.6 | Share-link usage | ≥ 10% of portfolio sessions produce a non-empty `#pm/` hash (profile/view/roadmap context) |
 
 ### Objective 7 — Optional AI assistance (BYOK)
 

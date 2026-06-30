@@ -6,7 +6,7 @@
 | **Version** | 2.0.0 |
 | **Status** | Implemented (local-first static app) |
 | **Last updated** | 2026-05-28 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui196` |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui197` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -233,6 +233,7 @@ Manual refresh; rates cached in state; EUR conversion for table/map financial di
 | FR-9.5 | Delete confirmations |
 | FR-9.6 | Site footer | Year, maintainer, LinkedIn, website, **GitHub repository**, **article** link; readable on all breakpoints |
 | FR-9.7 | Board/MoSCoW cards | Consistent radius, border, shadow; action row on one line; structured tooltips on meta fields |
+| FR-9.8 | Shareable deep links | URL hash `#pm/?roadmap=&view=&profile=` syncs with portfolio state via `ShareLink`; opens roadmap view modal when unlocked; legacy `?query` params supported on load |
 
 ### FR-10 Privileged workspace mode (cross-profile)
 

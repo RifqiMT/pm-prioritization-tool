@@ -7,7 +7,7 @@
 
 | Baseline | Value |
 |----------|-------|
-| **APP_ASSET_VERSION** | `20260528-ui196` |
+| **APP_ASSET_VERSION** | `20260528-ui197` |
 | **Compact breakpoint** | **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) |
 
 ---
@@ -113,11 +113,11 @@ When performing a comprehensive audit:
 8. Set **Last audited** / **Last updated** dates to audit date (YYYY-MM-DD).
 9. Verify **Roadmap** terminology (not Project) in user-facing docs; document legacy `projects` migration in VARIABLES §8.16 only.
 10. Confirm all **seven views** (Table, Board, MoSCoW, Map, RACI, KANO, Gantt) are documented in PRD FR-5, personas, and user stories.
-11. Confirm **40 CSS layers** in README, DESIGN_GUIDELINES, TECH_GUIDELINES, and ARCHITECTURE match `index.html` lines 15–54.
+11. Confirm **41 CSS layers** in README, DESIGN_GUIDELINES, TECH_GUIDELINES, and ARCHITECTURE match `index.html` lines 15–55.
 12. Document **BYOK**, **LLM analysis**, and **5 Why Framework** in PRD FR-11/FR-2.12/FR-2.13, GUARDRAILS §8, VARIABLES §8.14–8.16, and traceability matrix.
 13. Verify CSS load order in TECH_GUIDELINES §3.1 and ARCHITECTURE §10 against `index.html` lines 15–47 exactly.
-14. Ensure `TECH_GUIDELINES.md` script load order matches `index.html` exactly (**20** modules before `app.js`, including `gantt-view.js`).
-15. Confirm **`npm test`** runs **11** suites (storage, metadata, persistence, export, byok, byok-validate, kano, llm, 5why, periods, gantt).
+14. Ensure `TECH_GUIDELINES.md` script load order matches `index.html` exactly (**21** modules before `app.js`, including `share-link.js`).
+15. Confirm **`npm test`** runs **12** suites (storage, metadata, persistence, export, byok, byok-validate, kano, llm, 5why, periods, gantt, share).
 16. Update [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md) when any feature’s logic, validation rules, or cross-feature constraints change.
 
 ### 3.7 Feature logic documentation format

@@ -5,7 +5,7 @@
 | Field | Value |
 |-------|-------|
 | **Last audited** | 2026-05-28 |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui196` |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui197` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -59,6 +59,7 @@ The UI is a **static SPA** (`index.html` + `src/`). On Vercel, **serverless rout
 | `src/modules/roadmap-periods.js` | Multi-quarter `roadmapPeriods` normalize/validate (`RoadmapPeriods`) |
 | `src/modules/gantt-view.js` | Gantt ISO-week timeline, period bars, deadline markers (`GanttView`) |
 | `src/modules/export-payload.js` | JSON/CSV export builders (`ExportPayload`) |
+| `src/modules/share-link.js` | URL hash deep links for profile/view/roadmap (`ShareLink`) |
 | `api/health.js` | Storage backend probe |
 | `api/config.js` | Client config probe (same as health) |
 | `api/state.js` | GET/PUT workspace document |
@@ -217,14 +218,14 @@ On compact layout (≤1400px), the MoSCoW board uses a single-column quadrant st
 
 ## 10. CSS layering (compact-aware)
 
-Load order in `index.html` lines 15–54 (later wins at equal specificity). Each file uses a **per-asset** `?v=` tag; see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) §3.1 for the full 40-file table.
+Load order in `index.html` lines 15–55 (later wins at equal specificity). Each file uses a **per-asset** `?v=` tag; see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) §3.1 for the full 41-file table.
 
 | # | File | Role |
 |---|------|------|
 | 1–17 | `main.css` … `app-footer.css` | Base shell through footer |
 | 18–28 | `views-density.css` … `view-toolbars-compact-row.css` | Density, tables, board, toolbars |
 | 29–34 | `filters-compact-bar.css` … `view-tabs-compact-menu.css` | Filters sheet, mobile command deck, profile picker, view overflow |
-| 35–40 | `rich-description-content.css` … `filter-combobox-fix.css` | Rich text, KANO, Gantt, confirm dialogs, combobox fixes |
+| 35–41 | `rich-description-content.css` … `filter-combobox-fix.css` | Rich text, KANO, Gantt, share-link, confirm dialogs |
 
 ---
 
