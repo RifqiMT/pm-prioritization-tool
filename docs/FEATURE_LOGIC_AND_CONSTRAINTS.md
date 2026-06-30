@@ -227,7 +227,7 @@ flowchart LR
 | Aspect | Detail |
 |--------|--------|
 | **Purpose** | Formatted narrative on roadmap core fields and RICE context |
-| **Logic** | `RichTextEditor` mounts six `data-surface-id` fields: `roadmapDescription`, `roadmapNote`, and four RICE `*Description` fields; `description-format.js` sanitizes for view, tooltips, LLM, and Five Why context |
+| **Logic** | `RichTextEditor` mounts six `data-surface-id` fields: `roadmapDescription`, `roadmapNote`, and four RICE `*Description` fields; `description-format.js` sanitizes HTML (allowed tags, safe colors, bullet styles) for view, tooltips, LLM, and Five Why context |
 | **Rules** | Roadmap **Description** required (plain text after sanitize); **Note** optional; RICE descriptions optional; view mode hides toolbar |
 | **Constraints** | CSV export strips all six to plain text; `normalizeRoadmapNote` on save and cloud write |
 | **Code** | `src/modules/rich-text-editor.js`, `css/rich-description-content.css`, `api/_lib/roadmap-metadata.js` |

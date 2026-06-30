@@ -122,6 +122,7 @@ pm-prioritization-tool/
 │       ├── mongo.js                # Mongo client
 │       ├── http.js                 # JSON helpers
 │       ├── roadmap-metadata.js     # Server-side labels/links normalize
+│       ├── export-payload.js       # Server-side export helpers (shared with client)
 │       └── byok-validate.js        # Shared BYOK validation helpers
 ├── scripts/
 │   ├── verify-deployment.js        # Production smoke test

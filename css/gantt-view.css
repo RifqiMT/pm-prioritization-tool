@@ -1699,20 +1699,93 @@ html.is-compact-layout .roadmaps-gantt-card[data-gantt-today-card="1"] {
   line-height: 1.35;
 }
 
+html.is-compact-layout .roadmaps-view--gantt {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+html.is-compact-layout .roadmaps-view--gantt .roadmaps-gantt-wrap {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden !important;
+  box-sizing: border-box;
+}
+
 html.is-compact-layout .roadmaps-gantt-meta {
   padding: 0.45rem 0.55rem;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 html.is-compact-layout .roadmaps-gantt-legend {
-  flex-wrap: nowrap;
-  gap: 0.55rem;
-  min-width: min-content;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.55rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 html.is-compact-layout .roadmaps-gantt-legend__item {
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+html.is-compact-layout .roadmaps-gantt-legend__label {
+  overflow-wrap: anywhere;
+}
+
+html.is-compact-layout .roadmaps-gantt-cards {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+html.is-compact-layout .roadmaps-gantt-card {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+html.is-compact-layout .roadmaps-gantt-card__title {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+html.is-compact-layout .roadmaps-gantt-card__period {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+html.is-compact-layout .roadmaps-gantt-card__period-content {
+  min-width: 0;
+  overflow: hidden;
+}
+
+html.is-compact-layout .roadmaps-gantt-card__period-head {
+  flex-wrap: wrap;
+  row-gap: 0.25rem;
+}
+
+html.is-compact-layout .roadmaps-gantt-card__period-meta {
+  flex-wrap: wrap;
+  row-gap: 0.2rem;
+}
+
+html.is-compact-layout .roadmaps-gantt-card__period-hint {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+html.is-compact-layout .roadmaps-gantt-card__bar-track {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 html.is-compact-layout .roadmaps-gantt-cards {
@@ -1782,25 +1855,63 @@ html.is-compact-layout .roadmaps-gantt-cards {
   }
 
   html.is-compact-layout .roadmaps-gantt-cards {
-    padding: 0.35rem 0.2rem calc(0.55rem + env(safe-area-inset-bottom));
+    padding: 0.35rem 0.15rem calc(0.55rem + env(safe-area-inset-bottom));
     gap: 0.65rem;
   }
 
+  html.is-compact-layout .roadmaps-gantt-meta {
+    padding: 0.4rem 0.45rem;
+  }
+
+  html.is-compact-layout .roadmaps-gantt-legend {
+    gap: 0.25rem 0.4rem;
+  }
+
+  html.is-compact-layout .roadmaps-gantt-legend__item--deadline,
+  html.is-compact-layout .roadmaps-gantt-legend__item--today,
+  html.is-compact-layout .roadmaps-gantt-legend__item--overdue {
+    padding: 0.1rem 0.28rem;
+  }
+
   .roadmaps-gantt-card__header {
-    padding: 0.65rem 0.65rem 0.5rem;
+    padding: 0.65rem 0.6rem 0.5rem;
   }
 
   .roadmaps-gantt-card__body {
-    padding: 0.5rem 0.55rem 0.6rem;
+    padding: 0.5rem 0.5rem 0.6rem;
   }
 
   .roadmaps-gantt-card__period {
-    padding: 0.5rem;
+    padding: 0.5rem 0.45rem;
     gap: 0.45rem;
   }
 
   .roadmaps-gantt-card__title {
     font-size: 0.9rem !important;
+  }
+
+  html.is-compact-layout .roadmaps-gantt-card__period-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  html.is-compact-layout .roadmaps-gantt-card__status {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 360px) {
+  html.is-compact-layout .roadmaps-gantt-legend__label {
+    font-size: 0.58rem;
+  }
+
+  html.is-compact-layout .roadmaps-gantt-card__period-label {
+    font-size: 0.74rem;
+  }
+
+  html.is-compact-layout .roadmaps-gantt-card__period-hint,
+  html.is-compact-layout .roadmaps-gantt-card__period-weeks {
+    font-size: 0.62rem;
   }
 }
 

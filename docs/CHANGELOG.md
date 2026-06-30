@@ -33,7 +33,8 @@ When updating this file after a change:
 - **Seven portfolio views** (Table, Board, MoSCoW, Map, RACI, KANO, **Gantt**); **40 CSS layers** including `gantt-view.css`, `filter-combobox-fix.css`.
 - **20 `src/` modules** before `app.js` (incl. `gantt-view.js`, `roadmap-periods.js`, `export-payload.js`); **11** `npm test` suites (`test:gantt`).
 - `app.js` ~24k lines; `roadmapDeadline` + `roadmapPeriods` drive Gantt bars; `ganttZoom` persisted in workspace state.
-- Updated full documentation suite: README, PRD, PRODUCT_DOCUMENTATION, FEATURE_LOGIC, VARIABLES, USER_STORIES, DESIGN_GUIDELINES, TRACEABILITY, TECH, ARCHITECTURE, GUARDRAILS, METRICS, CHANGELOG, hub.
+- Added VARIABLES §8.17 Gantt relationship chart; Gantt tokens in DESIGN_GUIDELINES; BUSINESS_GUIDELINES Gantt calibration.
+- Verified all 11 test suites pass; fixed stale README audit footer and PRODUCT_DOCUMENTATION tech summary.
 
 ### Feature — Gantt timeline view — 2026-06-30 — Product Team — Impact: user-visible
 

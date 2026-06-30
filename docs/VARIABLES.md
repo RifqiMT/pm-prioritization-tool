@@ -229,6 +229,8 @@ Full input field whitelists: `sanitizeFinancialImpactInputs` in `src/app.js`.
 | `KANO_ZONE_MATRIX` | KANO Zone Matrix | 5×5 lookup from satisfaction (row) × functionality (col) to zone id. | `getKanoZoneIdFromPosition(f, s)` | `src/constants.js`, KANO portfolio | Zone `"attractive"` at F5/S5 |
 | `getKanoZoneIdFromPosition` | KANO Zone Resolver | Maps axis pair to zone id string. | Matrix lookup | KANO view, tests | `"must-be"` |
 | `getKanoCategoryFromPosition` | KANO Category Resolver | Full legend entry + position description for a matrix cell. | Uses zone matrix + legend | KANO portfolio tooltips | `{ id, label, hint, description }` |
+| `DESCRIPTION_ALLOWED_TAGS` | Rich-Text Allowed Tags | HTML tags permitted after sanitize (`description-format.js`). | Whitelist: P, DIV, BR, STRONG, headings, lists, etc. | Rich-text save pipeline | `P`, `UL`, `LI`, … |
+| `DESCRIPTION_ALLOWED_BULLET_STYLES` | Rich-Text Bullet Styles | Custom list marker styles in sanitized HTML. | disc, circle, square, dash, check, arrow, diamond, star | `description-format.js` | `"check"` |
 | `EXPORT_JSON_VERSION` | Export JSON Version | Schema version in JSON export payloads. | Constant `1` | Export modal, `export-payload.js` | `1` |
 | `EXPORT_CSV_KNOWN_PROFILE_KEYS` | CSV Profile Column Registry | Allowed profile keys for CSV import/export round-trip. | Whitelist in `constants.js` | CSV export/import | `name`, `team`, `roadmaps`, … |
 | `EXPORT_CSV_KNOWN_ROADMAP_KEYS` | CSV Roadmap Column Registry | Allowed roadmap keys for CSV import/export round-trip. | Whitelist in `constants.js` | CSV export/import | `title`, `reachValue`, `roadmapPeriods`, … |
@@ -459,6 +461,21 @@ flowchart LR
   M2 --> NORM
   M3 --> NORM
   NORM --> SAVE[serialize writes only roadmaps canonical keys]
+```
+
+### 8.17 Gantt timeline (periods + deadline)
+
+```mermaid
+flowchart TD
+  FILT[applyFilters → filtered roadmaps] --> GANTT[GanttView.render]
+  PER[roadmapPeriods array] --> RANGE[periodToDateRange YYYY-Qn]
+  RANGE --> BAR[Colored bar segments per period status]
+  DL[roadmapDeadline YYYY-MM-DD] --> MARKER[Deadline diamond on timeline]
+  ZOOM[state.ganttZoom] --> GRID[Weekly or monthly column grid]
+  GANTT --> BAR
+  GANTT --> MARKER
+  GANTT --> GRID
+  TODAY[Jump to today] --> SCROLL[scrollToToday ISO week]
 ```
 
 ---

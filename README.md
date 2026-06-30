@@ -261,4 +261,4 @@ UNLICENSED (private). See `package.json`.
 - GitHub: [RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool)  
 - Article: [Effort–impact confusion to clear-cut priorities](https://rifqi-tjahyono.com/%f0%9f%93%8a-effort-impact-confusion-to-clear-cut-priorities-replace-tab-hopping-with-visual-roadmap-sanity-%f0%9f%a7%ad%e2%9c%a8/)
 
-**Documentation last comprehensively audited:** 2026-06-29 (baseline `20260629-ui195`).
+**Documentation last comprehensively audited:** 2026-05-28 (baseline `20260528-ui196`).

@@ -17,7 +17,7 @@ The application supports **portfolio-level prioritization** in the browser, with
 - Ranking with **RICE**
 - Expressing delivery intent with **MoSCoW** (presented as **Must Have**, **Should Have**, **Could Have**, **Won't Have** in the UI)
 - Estimating value with **financial frameworks** (planning-grade, not accounting)
-- Communicating through **Table**, **Board**, **MoSCoW**, and **Map** views
+- Communicating through **seven portfolio views**: **Table**, **Board**, **MoSCoW**, **Map**, **RACI**, **KANO**, and **Gantt**
 - Filtering and grouping work by metadata including **labels** and **links**
 
 Cross-profile workspace behavior for the designated trust profile is defined in **[GUARDRAILS.md §7](GUARDRAILS.md)**.
@@ -153,6 +153,17 @@ Frameworks produce a **planning estimate** in roadmap currency, with optional **
 - **MoSCoW:** four-quadrant narrative with full category names.
 - **RACI:** portfolio accountability matrix; toggle **Business** vs **Tech** perspective before governance reviews.
 - **KANO:** portfolio value map; use **Positioned** / **Not positioned** to close gaps before roadmap sign-off.
+- **Gantt:** quarter-based timeline with per-period status bars and optional deadline markers; use **Jump to today** in planning reviews; set `roadmapPeriods[]` and `roadmapDeadline` in the roadmap modal.
+
+### Gantt calibration
+
+| Input | Guidance |
+|-------|----------|
+| **roadmapPeriods[]** | One or more `YYYY-Qn` entries with status; drives colored bar segments on the timeline |
+| **roadmapDeadline** | Optional `YYYY-MM-DD` milestone; shows as a diamond marker independent of quarter bars |
+| **ganttZoom** | Monthly for executive overviews; Standard/Wide for delivery planning sessions |
+
+Treat Gantt as a **schedule communication** view — it does not auto-schedule work or validate resource capacity.
 
 ### RACI calibration
 

@@ -886,7 +886,8 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--mosc
   min-height: 0;
   height: auto !important;
   max-height: none !important;
-  overflow: visible !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
 }html.has-view-fullscreen .roadmaps-view--gantt .roadmaps-gantt-wrap,
 .roadmaps-view.view-pseudo-fullscreen.roadmaps-view--gantt .roadmaps-gantt-wrap {
   flex: 1 1 auto;

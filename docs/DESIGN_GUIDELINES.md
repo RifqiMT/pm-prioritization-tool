@@ -103,15 +103,24 @@ Breakpoints align with `COMPACT_LAYOUT_MAX_WIDTH` (1400px) in `constants.js`.
 
 ### 2.9 Gantt timeline (`gantt-view.css`)
 
-| Token / element | Usage |
-|-----------------|-------|
-| `.roadmaps-gantt-wrap` | Scrollable timeline host; sticky week/month header |
-| `.gantt-bar` | Period segment; `data-status` drives status color (same semantics as §3) |
-| `.gantt-deadline-marker` | Diamond marker for `roadmapDeadline` |
-| `.roadmaps-gantt-zoom-toggle` | Monthly / Standard / Wide density control |
-| Status colors | Reuse roadmap status palette (Not Started → Cancelled) |
+Scoped on `.roadmaps-view--gantt`:
 
-Module: `src/modules/gantt-view.js` (`GanttView` global).
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--gantt-accent` | `#b91c1c` | Today line, primary accents |
+| `--gantt-accent-soft` | `rgba(185, 28, 28, 0.12)` | Hover/focus backgrounds |
+| `--gantt-today` | `#d97706` | Current-week column highlight |
+| `--gantt-surface` | `#fffdf9` | Chart background |
+| `--gantt-surface-elevated` | `#fffaf3` | Sticky header row |
+| `--gantt-border` | `rgba(212, 175, 55, 0.32)` | Grid lines, panel edges |
+| `--gantt-text` | `#1f2937` | Row labels, bar text |
+| `--gantt-text-soft` | `#6b7280` | Secondary labels, week hints |
+| `--gantt-week-w` / `--gantt-col-w` | 30–60px | Column width per zoom preset |
+| `--gantt-label-w` | 108–248px | Sticky roadmap name column |
+| `--gantt-row-h` | 72–84px | Row height |
+| `--gantt-bar-h` | 18–26px | Period bar thickness |
+
+Bar segment colors reuse **roadmap status** semantics (§3). Module: `src/modules/gantt-view.js` (`GanttView` global).
 
 ---
 

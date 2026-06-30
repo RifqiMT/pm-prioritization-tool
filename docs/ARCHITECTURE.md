@@ -65,6 +65,7 @@ The UI is a **static SPA** (`index.html` + `src/`). On Vercel, **serverless rout
 | `api/byok/validate-groq.js` | POST validate Groq BYOK key |
 | `api/byok/validate-tavily.js` | POST validate Tavily BYOK key |
 | `api/_lib/roadmap-metadata.js` | Server-side normalize: labels, links, tasks, RACI, KANO, note; legacy migration |
+| `api/_lib/export-payload.js` | Shared export payload helpers (parity with client `ExportPayload`) |
 | `api/_lib/byok-validate.js` | Shared BYOK key normalization and provider probes |
 | `src/app.js` | Bootstrap, `state`, events, rendering, filters, autocomplete, import/export, bulk transfer |
 | `css/*` | Layered presentation (see §10) |

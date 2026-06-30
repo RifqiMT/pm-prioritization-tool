@@ -241,10 +241,10 @@ See [ARCHITECTURE.md](ARCHITECTURE.md).
 
 | Layer | Technology |
 |-------|------------|
-| UI | `index.html`, 33 layered CSS files |
-| Logic | `src/app.js`, `src/rice.js`, `src/constants.js`, `src/utils.js` |
-| Modules | `storage`, `profile-security`, `exchange-rates`, `fullscreen`, `overlay-manager`, `description-format`, `rich-text-editor`, `board-drag`, `board-card-interaction`, `byok-api-keys`, `roadmap-llm-summary`, `roadmap-5why-framework`; dev seed: `dev-seed-workspace.js` (localhost only) |
-| API | `api/health.js`, `api/config.js`, `api/state.js`, `api/byok/validate-*.js` |
+| UI | `index.html`, **40** layered CSS files (see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) §3.1) |
+| Logic | `src/app.js` (~24k lines), `src/rice.js`, `src/constants.js`, `src/utils.js` |
+| Modules | `storage`, `profile-security`, `exchange-rates`, `fullscreen`, `overlay-manager`, `description-format`, `rich-text-editor`, `board-drag`, `board-card-interaction`, `byok-api-keys`, `roadmap-llm-summary`, `roadmap-5why-framework`, `roadmap-periods`, `gantt-view`, `export-payload`; dev seed: `dev-seed-workspace.js` (localhost only) |
+| API | `api/health.js`, `api/config.js`, `api/state.js`, `api/byok/validate-*.js`, `api/_lib/*` (auth, mongo, roadmap-metadata, export-payload, byok-validate) |
 | Database | MongoDB Atlas (optional) |
 | Map | Leaflet 1.9.4 (CDN) |
 

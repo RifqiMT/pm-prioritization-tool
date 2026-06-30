@@ -238,7 +238,26 @@
   }
 
   html.is-compact-layout .workspace-panel--v2 .portfolio-view-tabs-track .view-tab-text {
-    max-width: 5.5rem;
+    max-width: 4.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 400px) {
+  html.is-compact-layout .workspace-panel--v2 .portfolio-view-tabs-track .view-toggle-btn .view-tab-text {
+    display: none !important;
+  }
+
+  html.is-compact-layout .workspace-panel--v2 .portfolio-view-tabs-track .view-toggle-btn {
+    min-width: calc(var(--cockpit-touch, 32px) - 2px) !important;
+    padding: 0.22rem !important;
+  }
+
+  html.is-compact-layout .mobile-workspace-chrome {
+    grid-template-columns: minmax(0, 0.78fr) minmax(0, 1fr) auto;
+    gap: 0.14rem 0.18rem;
   }
 }
 
