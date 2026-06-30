@@ -105,6 +105,17 @@ function buildJsonExportDocument(options) {
   return doc;
 }
 
+function parseJsonArrayCell(raw) {
+  const text = raw != null ? String(raw).trim() : "";
+  if (!text) return null;
+  try {
+    const parsed = JSON.parse(text);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 function mergeExtraFieldsIntoEntity(entity, extra) {
   if (!entity || typeof entity !== "object" || Array.isArray(entity)) return entity;
   if (!extra || typeof extra !== "object" || Array.isArray(extra)) return entity;
@@ -118,5 +129,6 @@ module.exports = {
   parseExtraDataJson,
   buildWorkspaceStateSnapshot,
   buildJsonExportDocument,
+  parseJsonArrayCell,
   mergeExtraFieldsIntoEntity
 };

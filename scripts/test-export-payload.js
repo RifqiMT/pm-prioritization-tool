@@ -10,6 +10,7 @@ const {
   buildWorkspaceStateSnapshot,
   buildJsonExportDocument,
   parseExtraDataJson,
+  parseJsonArrayCell,
   mergeExtraFieldsIntoEntity
 } = require("../api/_lib/export-payload");
 
@@ -18,6 +19,8 @@ const appSrc = fs.readFileSync(path.join(__dirname, "../src/app.js"), "utf8");
 
 assert.ok(appSrc.includes("buildExportJsonPayload"), "app.js must define buildExportJsonPayload");
 assert.ok(appSrc.includes("buildExportCsvRows"), "app.js must define buildExportCsvRows");
+assert.ok(appSrc.includes("parseRoadmapPeriodsFromImport"), "app.js must define parseRoadmapPeriodsFromImport");
+assert.ok(appSrc.includes("serializeRoadmapPeriodsForExport"), "app.js must define serializeRoadmapPeriodsForExport");
 assert.ok(fs.existsSync(path.join(__dirname, "../src/modules/export-payload.js")), "export-payload module must exist");
 
 const workspaceKeysMatch = constantsSrc.match(/const WORKSPACE_PERSISTED_STATE_KEYS = \[([\s\S]*?)\];/);
@@ -58,12 +61,31 @@ assert.strictEqual(jsonDoc.profiles.length, 1);
 assert.strictEqual(jsonDoc.roadmapsView, "board");
 assert.strictEqual(jsonDoc.activeProfileId, "profile_a");
 
+assert.ok(CSV_COLUMN_IDS.includes("roadmapPeriods"));
 assert.ok(CSV_COLUMN_IDS.includes("roadmapRaci"));
 assert.ok(CSV_COLUMN_IDS.includes("profileBoardOrder"));
 assert.ok(CSV_COLUMN_IDS.includes("profileMoscowOrder"));
 assert.ok(CSV_COLUMN_IDS.includes("profileExtraData"));
 assert.ok(CSV_COLUMN_IDS.includes("roadmapExtraData"));
 assert.ok(CSV_COLUMN_IDS.includes("workspaceState"));
+
+const knownRoadmapMatch = constantsSrc.match(/const EXPORT_CSV_KNOWN_ROADMAP_KEYS = \[([\s\S]*?)\];/);
+assert.ok(knownRoadmapMatch, "EXPORT_CSV_KNOWN_ROADMAP_KEYS required");
+const knownRoadmapKeys = knownRoadmapMatch[1]
+  .split("\n")
+  .map((line) => line.replace(/\/\/.*/, "").trim())
+  .filter(Boolean)
+  .map((line) => line.replace(/["',]/g, "").trim())
+  .filter(Boolean);
+assert.ok(knownRoadmapKeys.includes("roadmapPeriods"), "roadmapPeriods must be a known CSV roadmap key");
+assert.ok(knownRoadmapKeys.includes("roadmapPeriod"), "roadmapPeriod must be a known CSV roadmap key");
+assert.ok(knownRoadmapKeys.includes("note"), "note must be a known CSV roadmap key");
+assert.ok(knownRoadmapKeys.includes("tasks"), "tasks must be a known CSV roadmap key");
+assert.ok(knownRoadmapKeys.includes("raci"), "raci must be a known CSV roadmap key");
+
+const parsedArray = parseJsonArrayCell('[{"period":"2026-Q1","status":"Done"}]');
+assert.ok(Array.isArray(parsedArray));
+assert.strictEqual(parsedArray.length, 1);
 
 const parsedExtra = parseExtraDataJson('{"beta":1}');
 assert.deepStrictEqual(parsedExtra, { beta: 1 });

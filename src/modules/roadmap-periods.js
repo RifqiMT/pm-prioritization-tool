@@ -97,8 +97,8 @@ const RoadmapPeriods = (function () {
   }
 
   function deriveLegacyPeriod(periods) {
-    const list = Array.isArray(periods) ? periods : [];
-    return list.length ? list[0].period : null;
+    const latest = getLatestPeriodEntry(periods);
+    return latest ? latest.period : null;
   }
 
   function getLatestPeriodEntry(periods) {
@@ -155,11 +155,42 @@ const RoadmapPeriods = (function () {
     return "";
   }
 
+  function coercePeriodsField(value) {
+    if (Array.isArray(value)) return value.length ? value : null;
+    if (typeof value !== "string" || !value.trim()) return null;
+    const trimmed = value.trim();
+    if (trimmed.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (_) {
+        return null;
+      }
+    }
+    if (/[,|;]/.test(trimmed)) return trimmed;
+    const compact = trimmed.toUpperCase().replace(/\s+/g, "");
+    if (PERIOD_PATTERN.test(compact)) return compact;
+    return null;
+  }
+
+  function parseImportPeriods(raw, { legacyPeriod = null, legacyStatus = null, statusOptions = null } = {}) {
+    const coerced = coercePeriodsField(raw);
+    if (coerced) return normalizePeriods(coerced, { legacyStatus, statusOptions });
+    return normalizePeriods(null, { legacyPeriod, legacyStatus, statusOptions });
+  }
+
+  function serializeExportPeriods(periods, { statusOptions = null } = {}) {
+    return JSON.stringify(normalizePeriods(periods, { statusOptions }));
+  }
+
   return {
     getCurrentPeriod,
     buildDefaultPeriodEntry,
     buildOptions,
     normalizePeriods,
+    coercePeriodsField,
+    parseImportPeriods,
+    serializeExportPeriods,
     deriveLegacyPeriod,
     getLatestPeriodEntry,
     deriveRoadmapStatus,
