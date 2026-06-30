@@ -1,0 +1,115 @@
+/**
+ * Filter combobox spacing — final cascade overrides.
+ * Sheet is portaled to documentElement (html), not body — selectors must match both.
+ */
+html.is-compact-layout > .portfolio-filters-sheet .filter-autocomplete__control,
+html > .portfolio-filters-sheet .filter-autocomplete__control,
+html.is-compact-layout .portfolio-filters-sheet .filter-autocomplete__control,
+.portfolio-filters-body .filter-autocomplete__control,
+.workspace-panel--v2 .filter-autocomplete__control {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.55rem !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 42px !important;
+  padding: 0.55rem 0.75rem !important;
+  border-radius: 12px !important;
+}
+
+html.is-compact-layout > .portfolio-filters-sheet .filter-autocomplete__icon,
+html > .portfolio-filters-sheet .filter-autocomplete__icon,
+html.is-compact-layout .portfolio-filters-sheet .filter-autocomplete__icon,
+.portfolio-filters-body .filter-autocomplete__icon,
+.workspace-panel--v2 .filter-autocomplete__icon {
+  flex: 0 0 auto !important;
+  flex-shrink: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 1.75rem !important;
+  min-width: 1.75rem !important;
+  height: 1.75rem !important;
+  min-height: 1.75rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+html.is-compact-layout > .portfolio-filters-sheet .filter-autocomplete__control input[type="search"],
+html.is-compact-layout > .portfolio-filters-sheet .filter-autocomplete__control .filter-autocomplete__input,
+html > .portfolio-filters-sheet .filter-autocomplete__control input[type="search"],
+html > .portfolio-filters-sheet .filter-autocomplete__control .filter-autocomplete__input,
+html.is-compact-layout .portfolio-filters-sheet .filter-autocomplete__control input[type="search"],
+html.is-compact-layout .portfolio-filters-sheet .filter-autocomplete__control .filter-autocomplete__input,
+.portfolio-filters-body .filter-autocomplete__control input[type="search"],
+.portfolio-filters-body .filter-autocomplete__control .filter-autocomplete__input,
+html.is-compact-layout .filters-row--search .filter-autocomplete__control input[type="search"],
+html.is-compact-layout .filters-row--search .filter-autocomplete__control .filter-autocomplete__input,
+html.is-compact-layout .filters-row--leads .filter-autocomplete__control input[type="search"],
+html.is-compact-layout .filters-row--leads .filter-autocomplete__control .filter-autocomplete__input,
+html.is-compact-layout .filters-row--search .filter-autocomplete input[type="search"],
+html.is-compact-layout .filters-row--search .filter-autocomplete .filter-autocomplete__input,
+html.is-compact-layout .filters-row--leads .filter-autocomplete input[type="search"],
+html.is-compact-layout .filters-row--leads .filter-autocomplete .filter-autocomplete__input,
+.workspace-panel--v2 .filter-autocomplete__control input[type="search"],
+.workspace-panel--v2 .filter-autocomplete__control .filter-autocomplete__input,
+.workspace-panel--v2 .filters-row input.filter-autocomplete__input,
+.workspace-panel--v2 .filters-row input[type="search"].filter-autocomplete__input {
+  flex: 1 1 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  padding-inline: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  line-height: 1.25 !important;
+  text-align: center !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+
+html.is-compact-layout > .portfolio-filters-sheet .filter-autocomplete__control input[type="search"]::-webkit-search-decoration,
+html.is-compact-layout > .portfolio-filters-sheet .filter-autocomplete__control input[type="search"]::-webkit-search-cancel-button,
+.portfolio-filters-body .filter-autocomplete__control input[type="search"]::-webkit-search-decoration,
+.portfolio-filters-body .filter-autocomplete__control input[type="search"]::-webkit-search-cancel-button,
+.workspace-panel--v2 .filter-autocomplete__control input[type="search"]::-webkit-search-decoration,
+.workspace-panel--v2 .filter-autocomplete__control input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  display: none !important;
+}
+
+html.is-compact-layout > .portfolio-filters-sheet .filter-autocomplete__chevron,
+html > .portfolio-filters-sheet .filter-autocomplete__chevron,
+.portfolio-filters-body .filter-autocomplete__chevron,
+.workspace-panel--v2 .filter-autocomplete__chevron {
+  flex: 0 0 auto !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+}
+
+html.is-compact-layout > .portfolio-filters-sheet .filter-autocomplete__control input[type="search"]:focus,
+html.is-compact-layout > .portfolio-filters-sheet .filter-autocomplete__control .filter-autocomplete__input:focus,
+.portfolio-filters-body .filter-autocomplete__control input[type="search"]:focus,
+.portfolio-filters-body .filter-autocomplete__control .filter-autocomplete__input:focus,
+.workspace-panel--v2 .filter-autocomplete__control input[type="search"]:focus,
+.workspace-panel--v2 .filter-autocomplete__control .filter-autocomplete__input:focus {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.workspace-panel--v2 .filter-group--search,
+.workspace-panel--v2 .filter-group--autocomplete {
+  padding-inline: 0 !important;
+}

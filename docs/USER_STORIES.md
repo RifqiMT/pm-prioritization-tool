@@ -4,7 +4,7 @@
 |-------|-------|
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
-| **Last updated** | 2026-06-29 |
+| **Last updated** | 2026-05-28 |
 | **Compact breakpoint** | ≤ **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) |
 
 **Purpose:** Epics and user-story contracts with **Given / When / Then** acceptance criteria, including edge cases and error handling.
@@ -177,18 +177,18 @@ Each story includes:
 
 ## Epic D — Multi-view planning
 
-### US-D1 — Switch among six portfolio views
+### US-D1 — Switch among seven portfolio views
 
 - **Persona:** Delivery Lead  
-- **Goal:** Use the right visualization for the meeting (Table, Board, MoSCoW, Map, RACI, KANO).
+- **Goal:** Use the right visualization for the meeting (Table, Board, MoSCoW, Map, RACI, KANO, Gantt).
 
 **Acceptance criteria**
 
 1. **View toggle**  
    - **Given** an unlocked profile with roadmaps  
-   - **When** the user selects a view tab (Table, Board, MoSCoW, Map, RACI, or KANO)  
+   - **When** the user selects a view tab (Table, Board, MoSCoW, Map, RACI, KANO, or Gantt)  
    - **Then** only that view is visible  
-   - **And** filters continue to apply across all six views.
+   - **And** filters continue to apply across all seven views.
 
 2. **Fullscreen**  
    - **Given** the user enables fullscreen on a view  
@@ -213,6 +213,31 @@ Each story includes:
    - **Given** the filters sheet is open  
    - **When** the user taps backdrop, close control, or presses Esc  
    - **Then** the sheet dismisses and filter state persists.
+
+---
+
+### US-D3 — Plan delivery on the Gantt timeline
+
+- **Persona:** Delivery Lead  
+- **Goal:** See when initiatives run across quarters and when they are due.
+
+**Acceptance criteria**
+
+1. **Period bars**  
+   - **Given** roadmaps with `roadmapPeriods[]` entries  
+   - **When** the user opens the Gantt view  
+   - **Then** each roadmap row shows colored bar segments aligned to quarter date ranges  
+   - **And** segment color reflects per-period status.
+
+2. **Deadline marker**  
+   - **Given** a roadmap with `roadmapDeadline` set to `YYYY-MM-DD`  
+   - **When** Gantt renders  
+   - **Then** a deadline marker appears on the timeline for that date.
+
+3. **Zoom and today**  
+   - **Given** the Gantt toolbar  
+   - **When** the user selects Monthly / Standard / Wide or taps Jump to today  
+   - **Then** `ganttZoom` updates and the viewport scrolls to the current week when requested.
 
 ---
 

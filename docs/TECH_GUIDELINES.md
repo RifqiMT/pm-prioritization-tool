@@ -4,8 +4,8 @@ Engineering standards for the Product Management Prioritization Tool codebase.
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-06-29 |
-| **APP_ASSET_VERSION** | `20260629-ui195` |
+| **Last updated** | 2026-05-28 |
+| **APP_ASSET_VERSION** | `20260528-ui196` |
 | **COMPACT_LAYOUT_MAX_WIDTH_PX** | `1400` |
 
 ---
@@ -45,8 +45,9 @@ Defined in `index.html` (order matters — globals, not ES modules):
 15. `src/modules/roadmap-llm-summary.js` — `RoadmapLlmSummary` global
 16. `src/modules/roadmap-5why-framework.js` — `RoadmapFiveWhyFramework` global
 17. `src/modules/roadmap-periods.js` — `RoadmapPeriods` global (multi-quarter periods)
-18. `src/modules/export-payload.js` — `ExportPayload` global (JSON/CSV export builders)
-19. `src/app.js` — defines `init()` and runs on `DOMContentLoaded`
+18. `src/modules/gantt-view.js` — `GanttView` global (Gantt timeline)
+19. `src/modules/export-payload.js` — `ExportPayload` global (JSON/CSV export builders)
+20. `src/app.js` — defines `init()` and runs on `DOMContentLoaded`
 
 All shared symbols are **global functions and constants**. Do not introduce ES module imports without a planned migration.
 
@@ -68,7 +69,7 @@ Later files win for equal specificity. Each stylesheet in `index.html` uses a **
 | 6 | `profile-modals-modern.css` | Profile modals |
 | 7 | `export-modals-modern.css` | Import/export modals |
 | 8 | `byok-api-keys.css` | BYOK API keys modal |
-| 9 | `view-toolbars-modern.css` | View toolbars (six views) |
+| 9 | `view-toolbars-modern.css` | View toolbars (seven views) |
 | 10 | `compact-modern.css` | Compact chrome (≤1400px) |
 | 11 | `moscow-compact.css` | MoSCoW compact |
 | 12 | `board-compact.css` | Board compact |
@@ -97,7 +98,9 @@ Later files win for equal specificity. Each stylesheet in `index.html` uses a **
 | 35 | `rich-description-content.css` | Rendered rich-text typography |
 | 36 | `rich-text-editor.css` | Rich-text toolbar and fields |
 | 37 | `portfolio-kano-modern.css` | KANO portfolio matrix and cards |
-| 38 | `confirm-modals-modern.css` | Delete/confirm dialogs |
+| 38 | `gantt-view.css` | Gantt timeline grid, bars, deadline markers, tooltips |
+| 39 | `confirm-modals-modern.css` | Delete/confirm dialogs |
+| 40 | `filter-combobox-fix.css` | Profile picker and filter combobox alignment fixes |
 
 ### 3.2 Compact layout
 
@@ -125,7 +128,7 @@ Later files win for equal specificity. Each stylesheet in `index.html` uses a **
 | Constant | Role |
 |----------|------|
 | `STORAGE_KEY` | `localStorage` key (`rice_prioritizer_v1`) |
-| `APP_ASSET_VERSION` | Cache buster (`20260629-ui195`) |
+| `APP_ASSET_VERSION` | Cache buster (`20260528-ui196`) |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | `1400` — single compact breakpoint |
 | `moscowList` | Stored MoSCoW values |
 | `moscowDisplayNames` | UI labels (Must Have, …) |
@@ -278,6 +281,7 @@ Export: `getExportableProfiles()` → `sanitizeProfilesForExport()` → download
 | `test:5why` | Five Why framework helpers |
 | `test:export` | Full JSON/CSV export payload round-trip |
 | `test:periods` | Multi-quarter `roadmapPeriods` normalization |
+| `test:gantt` | Gantt ISO weeks, quarter ranges, month zoom, deadline state |
 
 Also: `npm run verify:production` — smoke test deployed URL (`scripts/verify-deployment.js`).
 
@@ -285,7 +289,7 @@ Also: `npm run verify:production` — smoke test deployed URL (`scripts/verify-d
 
 1. Create profile (with and without password)
 2. CRUD roadmap with each financial framework; save **Note** rich-text field
-3. All **six views** + fullscreen at **375px, 768px, 1400px, 1600px**
+3. All **seven views** + fullscreen at **375px, 768px, 1400px, 1600px**
 4. Title/label autocomplete; labels/links filters
 5. Table group-by on compact card list
 6. MoSCoW display names and compact nav pills

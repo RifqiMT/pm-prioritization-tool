@@ -34,6 +34,7 @@ const ExportPayload = (function () {
     "tshirtSize",
     "roadmapPeriod",
     "roadmapPeriods",
+    "roadmapDeadline",
     "moscowCategory",
     "kanoFunctionality",
     "kanoSatisfaction",

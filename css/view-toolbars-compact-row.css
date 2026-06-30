@@ -9,7 +9,8 @@
   html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--moscow .moscow-view-header.view-toolbar,
   html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--map .roadmaps-map-toolbar.view-toolbar,
   html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--raci .roadmaps-raci-toolbar.view-toolbar,
-  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--kano .portfolio-kano-toolbar.view-toolbar {
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--kano .portfolio-kano-toolbar.view-toolbar,
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--gantt .roadmaps-gantt-toolbar.view-toolbar {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
@@ -25,7 +26,8 @@
   html.is-compact-layout .view-toolbar--moscow .view-toolbar__row--primary,
   html.is-compact-layout .view-toolbar--map .view-toolbar__row--primary,
   html.is-compact-layout .view-toolbar--raci .view-toolbar__row--primary,
-  html.is-compact-layout .view-toolbar--kano .view-toolbar__row--primary {
+  html.is-compact-layout .view-toolbar--kano .view-toolbar__row--primary,
+  html.is-compact-layout .view-toolbar--gantt .view-toolbar__row--primary {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
@@ -44,7 +46,8 @@
   html.is-compact-layout .view-toolbar--map .view-toolbar__cluster--compact-controls,
   html.is-compact-layout .view-toolbar--map .view-toolbar__cluster--actions.view-toolbar__cluster--compact-controls,
   html.is-compact-layout .view-toolbar--raci .view-toolbar__cluster--compact-controls,
-  html.is-compact-layout .view-toolbar--kano .view-toolbar__cluster--compact-controls {
+  html.is-compact-layout .view-toolbar--kano .view-toolbar__cluster--compact-controls,
+  html.is-compact-layout .view-toolbar--gantt .view-toolbar__cluster--compact-controls {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
@@ -242,6 +245,13 @@
     flex: 0 0 auto !important;
     min-width: 44px !important;
     margin-left: auto !important;
+  }
+
+  html.is-compact-layout .view-toolbar--gantt .view-toolbar__compact-fullscreen {
+    order: 2 !important;
+    flex: 0 0 auto !important;
+    min-width: 44px !important;
+    margin-left: 0 !important;
   }
 
   html.is-compact-layout .view-toolbar--raci .raci-matrix-domain-toggle__buttons,

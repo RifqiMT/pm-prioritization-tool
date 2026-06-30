@@ -14,12 +14,13 @@
       ? `(max-width: ${Number(COMPACT_LAYOUT_MAX_WIDTH_PX)}px)`
       : "(max-width: 1400px)";
 
-  const VIEW_KEYS = ["table", "board", "moscow", "map", "raci", "kano"];
+  const VIEW_KEYS = ["table", "board", "moscow", "gantt", "map", "raci", "kano"];
 
   const VIEW_TAB_ARIA = {
     table: "Table view",
     board: "Board view",
     moscow: "MoSCoW view",
+    gantt: "Gantt timeline view",
     map: "Map view",
     raci: "RACI matrix view"
   };
@@ -28,6 +29,7 @@
     table: "Switch to Table view",
     board: "Switch to Board view",
     moscow: "Switch to MoSCoW view",
+    gantt: "Switch to Gantt timeline view",
     map: "Switch to Map view",
     raci: "Switch to RACI matrix view",
     kano: "Switch to KANO model view"
@@ -37,6 +39,7 @@
     table: "Table",
     board: "Board",
     moscow: "MoSCoW",
+    gantt: "Gantt",
     map: "Map",
     raci: "RACI",
     kano: "KANO"
@@ -46,6 +49,7 @@
     table: '<svg class="view-fullscreen-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/></svg>',
     board: '<svg class="view-fullscreen-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="12" rx="1"/></svg>',
     moscow: '<svg class="view-fullscreen-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>',
+    gantt: '<svg class="view-fullscreen-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 5h8"/><path d="M3 12h14"/><path d="M3 19h11"/><path d="M16 8v8"/><path d="M20 6v12"/></svg>',
     map: '<svg class="view-fullscreen-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></svg>',
     raci: '<svg class="view-fullscreen-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 0 1-6.75 0 3.375 3.375 0 0 1 6.75 0zm8.25 2.25a2.625 2.625 0 0 1-5.25 0 2.625 2.625 0 0 1 5.25 0z"/></svg>',
     kano: '<svg class="view-fullscreen-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 5 5-9"/></svg>'
@@ -78,7 +82,7 @@
   ];
 
   const VIEW_SHELL_SELECTOR =
-    ".view-toolbar, .roadmaps-map-container, .roadmaps-map-legend, .scrum-board, .moscow-grid, .table-wrapper, .raci-matrix-wrap, .portfolio-kano-body";
+    ".view-toolbar, .roadmaps-map-container, .roadmaps-map-legend, .scrum-board, .moscow-grid, .table-wrapper, .raci-matrix-wrap, .roadmaps-gantt-wrap, .portfolio-kano-body";
 
   function isCompactViewport() {
     return window.matchMedia(COMPACT_MQ).matches;
@@ -86,7 +90,7 @@
 
   function getViewRoots() {
     const els = getElements();
-    return [els.roadmapsTableView, els.roadmapsBoardView, els.roadmapsMoscowView, els.roadmapsMapView, els.roadmapsRaciView, els.roadmapsKanoView].filter(Boolean);
+    return [els.roadmapsTableView, els.roadmapsBoardView, els.roadmapsMoscowView, els.roadmapsGanttView, els.roadmapsMapView, els.roadmapsRaciView, els.roadmapsKanoView].filter(Boolean);
   }
 
   function getViewTabButtons() {
@@ -95,6 +99,7 @@
       [els.roadmapsViewTableBtn, "table"],
       [els.roadmapsViewBoardBtn, "board"],
       [els.roadmapsViewMoscowBtn, "moscow"],
+      [els.roadmapsViewGanttBtn, "gantt"],
       [els.roadmapsViewMapBtn, "map"],
       [els.roadmapsViewRaciBtn, "raci"],
       [els.roadmapsViewKanoBtn, "kano"]
@@ -160,6 +165,7 @@
     const showMap = view === "map";
     const showRaci = view === "raci";
     const showKano = view === "kano";
+    const showGantt = view === "gantt";
 
     if (els.roadmapsTableView && els.roadmapsTableView.parentNode !== fullscreenStage) {
       els.roadmapsTableView.style.display = showTable ? "flex" : "none";
@@ -178,6 +184,9 @@
     }
     if (els.roadmapsKanoView && els.roadmapsKanoView.parentNode !== fullscreenStage) {
       els.roadmapsKanoView.style.display = showKano ? "flex" : "none";
+    }
+    if (els.roadmapsGanttView && els.roadmapsGanttView.parentNode !== fullscreenStage) {
+      els.roadmapsGanttView.style.display = showGantt ? "flex" : "none";
     }
   }
 
@@ -591,11 +600,13 @@
     updateBtn(els.tableFullscreenBtn, els.roadmapsTableView, "Full screen", "Exit full screen");
     updateBtn(els.raciMatrixFullscreenBtn, els.roadmapsRaciView, "Full screen", "Exit full screen");
     updateBtn(els.portfolioKanoFullscreenBtn, els.roadmapsKanoView, "Full screen", "Exit full screen");
+    updateBtn(els.roadmapsGanttFullscreenBtn, els.roadmapsGanttView, "Full screen", "Exit full screen");
 
     document.documentElement.classList.toggle("has-view-fullscreen", !!(
       activeEl === els.roadmapsTableView ||
       activeEl === els.roadmapsBoardView ||
       activeEl === els.roadmapsMoscowView ||
+      activeEl === els.roadmapsGanttView ||
       activeEl === els.roadmapsMapView ||
       activeEl === els.roadmapsRaciView ||
       activeEl === els.roadmapsKanoView
@@ -766,7 +777,7 @@
     const els = getElements();
     const isAny = el === els.roadmapsMapView || el === els.roadmapsBoardView ||
       el === els.roadmapsMoscowView || el === els.roadmapsTableView || el === els.roadmapsRaciView ||
-      el === els.roadmapsKanoView;
+      el === els.roadmapsKanoView || el === els.roadmapsGanttView;
 
     if (isAny && el) {
       currentFullscreenEl = el;
@@ -804,7 +815,7 @@
     const els = getElements();
     return el === els.roadmapsTableView || el === els.roadmapsBoardView ||
       el === els.roadmapsMoscowView || el === els.roadmapsMapView || el === els.roadmapsRaciView ||
-      el === els.roadmapsKanoView;
+      el === els.roadmapsKanoView || el === els.roadmapsGanttView;
   }
 
   function switchViewWhileFullscreen(view) {

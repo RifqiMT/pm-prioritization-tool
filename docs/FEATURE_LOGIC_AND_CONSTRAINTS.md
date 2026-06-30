@@ -6,8 +6,8 @@
 | **Version** | 2.0.0 |
 | **Audience** | Product, engineering, design, QA, and stakeholders |
 | **Maintainer** | Product Team |
-| **Last updated** | 2026-06-29 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260629-ui195` |
+| **Last updated** | 2026-05-28 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui196` |
 
 This document is the **collaborative cross-feature reference** for how the app behaves end-to-end. It explains **logic** (what the system does), **rules** (what inputs and workflows are allowed), and **constraints** (what the product must not do or cannot guarantee). Use it in planning reviews, QA test design, and cross-team alignment.
 
@@ -262,13 +262,13 @@ flowchart LR
 | **Purpose** | Sample data for local demos without manual entry |
 | **Logic** | `dev-seed-workspace.js` gated to localhost; `?resetDevSeed=1` clears and re-seeds |
 | **Rules** | Never runs on production origin |
-| **Constraints** | `DEV_SEED_WORKSPACE_VERSION` independent of `APP_ASSET_VERSION` |
+| **Constraints** | Seed payload uses `clientId: "dev_seed"` in `_storageMeta`; never runs when cloud storage is active |
 | **Code** | `src/dev-seed-workspace.js`, seed gate in `app.js` init |
 | **See also** | [TECH_GUIDELINES.md](TECH_GUIDELINES.md) §2 |
 
 ---
 
-## Portfolio views (six)
+## Portfolio views (seven)
 
 All views consume the **same filtered roadmap set** unless noted.
 
@@ -327,6 +327,17 @@ All views consume the **same filtered roadmap set** unless noted.
 | **Code** | `renderKanoPortfolioMatrix()`, `css/portfolio-kano-modern.css` |
 | **See also** | [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md) KANO section |
 
+### F-26 Gantt timeline view
+
+| Aspect | Detail |
+|--------|--------|
+| **Purpose** | Calendar planning: when initiatives run across quarters and when they are due |
+| **Logic** | `GanttView.render()` builds ISO-week grid; each `roadmapPeriods[]` entry maps to quarter date range as colored bar segments; `roadmapDeadline` shows marker when set |
+| **Rules** | Timeline spans filtered roadmaps ± padding weeks (min 52); zoom: `compact` (monthly), `standard` / `comfortable` (weekly); `state.ganttZoom` persisted |
+| **Constraints** | Tooltips show period status and deadline hints; compact layout may default zoom to monthly |
+| **Code** | `src/modules/gantt-view.js`, `css/gantt-view.css`, `#roadmapsGanttView` |
+| **See also** | F-14b periods, `npm run test:gantt`, [PRD.md](PRD.md) FR-5.8 |
+
 ```mermaid
 flowchart TB
   SCOPE[getPortfolioRoadmapsBaseList]
@@ -338,6 +349,7 @@ flowchart TB
   FILT --> MAP[Map]
   FILT --> R[RACI]
   FILT --> K[KANO]
+  FILT --> G[Gantt]
 ```
 
 ---
@@ -499,7 +511,7 @@ flowchart LR
 | F-13 | `rice.js` |
 | F-15 | `app.js` (financial helpers) |
 | F-17 | `rich-text-editor.js`, `description-format.js` |
-| F-20–F-25 | `app.js` renderers + view CSS |
+| F-20–F-26 | `app.js` renderers + view CSS; F-26 → `gantt-view.js` |
 | F-14b | `roadmap-periods.js` |
 | F-30 | `export-payload.js`, export modals |
 | F-30–F-32 | `app.js`, `storage.js`, `api/state.js` |
@@ -527,5 +539,6 @@ flowchart LR
 | Date | Change |
 |------|--------|
 | 2026-05-28 | Initial collaborative cross-feature logic and constraints reference |
-| 2026-06-29 | 38 CSS layers; roadmapPeriods; ExportPayload; compact filters sheet; baseline `20260629-ui195` |
+| 2026-05-28 | Seven views (Gantt); 40 CSS; roadmapDeadline; ganttZoom; baseline `20260528-ui196` |
+| 2026-05-28 | roadmapPeriods; ExportPayload; compact filters sheet |
 | 2026-06-06 | Added `roadmap.note`, six rich-text surfaces, optional collapsibles, in-modal KANO, dev seed |

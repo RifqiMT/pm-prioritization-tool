@@ -2,8 +2,8 @@
 
 **Purpose:** Authoritative dictionary of application variables — technical name, friendly name, definition, formula, UI location, and examples.  
 **Audience:** Product, engineering, QA, analytics.  
-**Last audited:** 2026-06-29  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260629-ui195`
+**Last audited:** 2026-05-28  
+**Implementation baseline:** `APP_ASSET_VERSION` = `20260528-ui196`
 
 > Privileged cross-profile workspace variables (workspace-wide mode, owner filter, owner metadata) are specified in [GUARDRAILS.md](GUARDRAILS.md) §7 only. This dictionary uses neutral names below.
 
@@ -32,7 +32,7 @@ Persisted to `localStorage` under `rice_prioritizer_v1` unless noted.
 | `activeProfileId` | Active Profile | ID of portfolio currently selected for workspace views. | String; must match a profile `id`. | Profiles panel + portfolio header | `"profile_abc"` |
 | `sortField` | Table Sort Column | Active sort key for table view. | Enum used by `sortRoadmaps`. | Table view | `"riceScore"` |
 | `sortDirection` | Sort Direction | Ascending or descending table sort. | `"asc"` \| `"desc"`. | Table view | `"desc"` |
-| `roadmapsView` | Active Planning View | Which workspace tab is visible. | `table` \| `board` \| `moscow` \| `map` \| `raci` \| `kano`. | View tabs (six planning views) | `"board"` |
+| `roadmapsView` | Active Planning View | Which workspace tab is visible. | `table` \| `board` \| `moscow` \| `map` \| `raci` \| `kano` \| `gantt`. | View tabs (seven planning views) | `"board"` |
 | `raciMatrixDomain` | RACI Perspective | Filters RACI matrix entries by stakeholder domain. | `Business` \| `Tech`; persisted in workspace. | RACI view toolbar | `"Business"` |
 | `kanoPortfolioPanel` | KANO Portfolio Panel | Which KANO sub-panel is active. | `positioned` \| `unpositioned`; persisted. | KANO view toolbar | `"positioned"` |
 | `tableSortByRice` | Table RICE Sort | When true, table rows sorted by RICE score. | Boolean; persisted. | Table toolbar | `true` |
@@ -168,7 +168,8 @@ Full input field whitelists: `sanitizeFinancialImpactInputs` in `src/app.js`.
 | `moscowCategory` | MoSCoW Category | Delivery priority class. | One of `moscowList`. | MoSCoW view | `"Must have"` |
 | `tshirtSize` | T-Shirt Size | Rough sizing. | XS–XL. | Table | `"M"` |
 | `roadmapPeriod` | Roadmap Period (legacy) | Single planning quarter; superseded by `roadmapPeriods` when present. | `YYYY-Q[1-4]`. | Filters, table (fallback) | `"2026-Q2"` |
-| `roadmapPeriods` | Roadmap Periods | Ordered quarter/status history; latest entry drives derived status. | `{ period, status }[]` via `RoadmapPeriods.normalizePeriods`. | Roadmap modal Periods section; CSV `roadmapPeriods` | `[{"period":"2026-Q1","status":"Done"},{"period":"2026-Q2","status":"In Progress"}]` |
+| `roadmapPeriods` | Roadmap Periods | Ordered quarter/status history; latest entry drives derived status. | `{ period, status }[]` via `RoadmapPeriods.normalizePeriods`. | Roadmap modal Periods section; Gantt bars; CSV `roadmapPeriods` | `[{"period":"2026-Q1","status":"Done"},{"period":"2026-Q2","status":"In Progress"}]` |
+| `roadmapDeadline` | Roadmap Deadline | Optional calendar due date for delivery milestone. | `YYYY-MM-DD` via `normalizeRoadmapDeadline`; relative hints via `formatRoadmapDeadlineRelativeHint`. | Roadmap modal Meta; Gantt deadline marker; table/cards | `"2026-06-30"` |
 | `ownerProfileId` | Owner Profile ID | Home profile uuid (Super Admin cross-profile views). | Attached when `isSuperAdminModeActive()`. | Table Profile column, filters | Profile uuid |
 | `ownerProfileName` | Owner Profile Name | Display name of home profile (Super Admin). | Attached with `ownerProfileId`. | Table cards, map tooltips | `"Growth"` |
 | `countries` | Countries | Geo tags (normalized names). | Array; drives map. | Roadmap modal, map | `["Germany","France"]` |
@@ -218,7 +219,8 @@ Full input field whitelists: `sanitizeFinancialImpactInputs` in `src/app.js`.
 | `tshirtSizeList` | T-Shirt Enum | Allowed sizes. | XS–XL |
 | `currencyList` | Currency List | Selectable currencies. | EUR, USD, IDR, … |
 | `LEGACY_WORKSPACE_FIELDS` | Legacy Workspace Keys | Deprecated workspace JSON keys stripped on load/import/persist. | `["boardHiddenStatuses"]` |
-| `WORKSPACE_PERSISTED_STATE_KEYS` | Persisted UI State Keys | Registry of top-level workspace fields saved to `localStorage` and MongoDB. | Listed in `src/constants.js`; used by `serializeStatePayload()` | Storage layer | Includes `roadmapsView`, `raciMatrixDomain`, `kanoPortfolioPanel` |
+| `WORKSPACE_PERSISTED_STATE_KEYS` | Persisted UI State Keys | Registry of top-level workspace fields saved to `localStorage` and MongoDB. | Listed in `src/constants.js`; used by `serializeStatePayload()` | Storage layer | Includes `roadmapsView`, `ganttZoom`, `raciMatrixDomain`, `kanoPortfolioPanel` |
+| `ganttZoom` | Gantt Zoom Level | Timeline density in Gantt view. | One of `compact` (monthly), `standard`, `comfortable` (weekly). | Gantt toolbar; `WORKSPACE_PERSISTED_STATE_KEYS` | `"standard"` |
 | `raciMatrixDomain` | RACI Perspective | Active domain filter in RACI view. | `Business` or `Tech`. | RACI matrix toolbar | `"Business"` |
 | `kanoPortfolioPanel` | KANO Panel | Active KANO portfolio tab. | `positioned` or `unpositioned`. | KANO view toolbar | `"positioned"` |
 | `kanoFunctionalityLevels` | KANO Functionality Scale | Five functionality depth labels (Absent → Full). | Levels 1–5 | Roadmap modal KANO section | Level 4 = Enhanced |
@@ -465,7 +467,7 @@ flowchart LR
 
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
-| `APP_ASSET_VERSION` | Asset Cache Version | Documentation baseline for cache-bust releases. Individual CSS/JS links in `index.html` may use per-asset `?v=` suffixes that include this baseline plus feature tags. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260629-ui195"` |
+| `APP_ASSET_VERSION` | Asset Cache Version | Documentation baseline for cache-bust releases. Individual CSS/JS links in `index.html` may use per-asset `?v=` suffixes that include this baseline plus feature tags. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260528-ui196"` |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | Compact Breakpoint (px) | Max viewport width for phone/tablet UI. | Constant in `constants.js`. | `src/constants.js` | `1400` |
 | `is-compact-layout` | Compact Layout Class | Viewport ≤1400px; enables compact CSS. | Set on `<html>` by `initCompactLayoutClass()`. | Global layout | class present |
 | `is-phone-layout` | Phone Layout Class | Same threshold as compact (unified phone UI). | Set together with compact class. | Global layout | class present |

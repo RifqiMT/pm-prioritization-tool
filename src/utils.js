@@ -34,6 +34,83 @@ function compareDatesDesc(aIso, bIso) {
   return a > b ? -1 : 1;
 }
 
+/** Normalizes optional roadmap deadline to YYYY-MM-DD or null. */
+function normalizeRoadmapDeadline(value) {
+  if (value == null || value === "") return null;
+  const text = String(value).trim();
+  if (!text) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    const parts = text.split("-").map((part) => Number(part));
+    const dt = new Date(parts[0], parts[1] - 1, parts[2]);
+    if (
+      Number.isNaN(dt.getTime()) ||
+      dt.getFullYear() !== parts[0] ||
+      dt.getMonth() !== parts[1] - 1 ||
+      dt.getDate() !== parts[2]
+    ) {
+      return null;
+    }
+    return text;
+  }
+  const dt = new Date(text);
+  if (Number.isNaN(dt.getTime())) return null;
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, "0");
+  const d = String(dt.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/** Value for &lt;input type="date"&gt; from stored roadmap deadline. */
+function roadmapDeadlineToDateInputValue(deadline) {
+  return normalizeRoadmapDeadline(deadline) || "";
+}
+
+/** User-facing date label for roadmap deadline (no time). */
+function formatRoadmapDeadlineForDisplay(deadline) {
+  const normalized = normalizeRoadmapDeadline(deadline);
+  if (!normalized) return "";
+  const parts = normalized.split("-").map((part) => Number(part));
+  const dt = new Date(parts[0], parts[1] - 1, parts[2]);
+  if (Number.isNaN(dt.getTime())) return "";
+  return dt.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit"
+  });
+}
+
+function getRoadmapDeadlineDayDelta(deadline) {
+  const normalized = normalizeRoadmapDeadline(deadline);
+  if (!normalized) return null;
+  const parts = normalized.split("-").map((part) => Number(part));
+  const due = new Date(parts[0], parts[1] - 1, parts[2]);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  due.setHours(0, 0, 0, 0);
+  return Math.round((due.getTime() - today.getTime()) / 86400000);
+}
+
+/** Short relative hint for deadline tooltips and summaries. */
+function formatRoadmapDeadlineRelativeHint(deadline) {
+  const delta = getRoadmapDeadlineDayDelta(deadline);
+  if (delta == null) return "";
+  if (delta === 0) return "Due today";
+  if (delta === 1) return "Due tomorrow";
+  if (delta === -1) return "1 day overdue";
+  if (delta > 1) return `Due in ${delta} days`;
+  return `${Math.abs(delta)} days overdue`;
+}
+
+/** Visual tone for deadline hints: upcoming | soon | today | overdue | neutral */
+function getRoadmapDeadlineHintTone(deadline) {
+  const delta = getRoadmapDeadlineDayDelta(deadline);
+  if (delta == null) return "neutral";
+  if (delta < 0) return "overdue";
+  if (delta === 0) return "today";
+  if (delta <= 7) return "soon";
+  return "upcoming";
+}
+
 function generateId(prefix) {
   return prefix + "_" + Math.random().toString(36).substring(2, 10) + "_" + Date.now().toString(36);
 }

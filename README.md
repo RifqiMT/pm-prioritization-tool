@@ -8,7 +8,7 @@
 |---|---|
 | **Production** | [pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app) |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260629-ui195` (per-asset `?v=` tags in `index.html`) |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui196` (per-asset `?v=` tags in `index.html`) |
 | **Docs hub** | [docs/README.md](docs/README.md) |
 
 > Do not use `pm-prioritization-tool.vercel.app` — that hostname serves a legacy React app. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
@@ -27,7 +27,7 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 | **RICE** | `(Reach × Impact × Confidence) ÷ Effort` with explainable tooltips |
 | **MoSCoW** | Must Have / Should Have / Could Have / Won't Have quadrants |
 | **Financial frameworks** | Custom, CLV, NPS, Risk, Headcount, Operational |
-| **Views** | Table, Scrum board, MoSCoW, world map (Leaflet), RACI matrix, KANO portfolio matrix |
+| **Views** | Table, Scrum board, MoSCoW, world map (Leaflet), RACI matrix, KANO portfolio matrix, **Gantt timeline** |
 | **Filters** | Search, quick filters, advanced filters (including labels and links) |
 | **Portability** | JSON full backup + CSV export; merge import |
 | **Responsive UI** | Desktop (>1400px); unified phone/tablet UI (≤1400px) |
@@ -61,7 +61,7 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 - Full CRUD via modal (create, edit, read-only view) with section navigation  
 - **Rich-text descriptions** on roadmap, **Note**, and four RICE fields — six surfaces total (sanitized HTML; plain text in CSV export)  
 - RICE validation and live score calculation  
-- Metadata: type, status, MoSCoW, quarter (`YYYY-Qn`), countries, t-shirt size, **labels**, **links**, **tasks**, **RACI** assignments, **KANO** scores (functionality × satisfaction)  
+- Metadata: type, status, MoSCoW, multi-quarter **periods** (`roadmapPeriods[]`), optional **deadline** (`YYYY-MM-DD`), countries, t-shirt size, **labels**, **links**, **tasks**, **RACI** assignments, **KANO** scores (functionality × satisfaction)  
 - Six financial frameworks with computed impact  
 - Bulk delete in table (toolbar on desktop; **floating selection bar** on compact)  
 - **Bulk duplicate / move** across profiles when privileged workspace mode is active (see [docs/GUARDRAILS.md](docs/GUARDRAILS.md) §7)  
@@ -96,6 +96,7 @@ Active filter count appears in the portfolio filters badge. Reset restores defau
 | **Map** | Leaflet choropleth | Metric pills: count, RICE sum/avg, financial EUR sum/avg |
 | **RACI** | 5-column matrix (Responsible, Accountable, Consulted, Informed) | Business/Tech perspective toggle; compact card-per-roadmap layout |
 | **KANO** | Portfolio matrix (functionality × satisfaction) | Positioned / Not positioned panels; drag tiles on desktop; score in roadmap modal |
+| **Gantt** | ISO-week timeline; bars from `roadmapPeriods[]`; deadline marker | Zoom: Monthly / Standard / Wide; Jump to today; sticky header |
 | **Fullscreen** | Per-view expand | Same compact layouts inside fullscreen host |
 
 ### Data transfer
@@ -141,15 +142,15 @@ pm-prioritization-tool/
 │   └── modules/            # storage, profile-security, exchange-rates, fullscreen, overlay-manager,
 │                           # description-format, rich-text-editor, board-drag, board-card-interaction,
 │                           # byok-api-keys, roadmap-llm-summary, roadmap-5why-framework,
-│                           # roadmap-periods, export-payload
+│                           # roadmap-periods, gantt-view, export-payload
 ├── api/                    # health, config, state, byok/validate-* + _lib (Vercel)
-├── scripts/                # verify-deployment; test:storage, metadata, persistence, byok, kano, llm, 5why
+├── scripts/                # verify-deployment; 11 test suites (storage … gantt)
 ├── docs/                   # Product documentation suite
 ├── vercel.json
 └── package.json
 ```
 
-### CSS layers (load order in `index.html` — 38 files)
+### CSS layers (load order in `index.html` — 40 files)
 
 | # | File | Role |
 |---|------|------|
@@ -159,9 +160,9 @@ pm-prioritization-tool/
 | 18–23 | `views-density` … `table-compact-cards` | Density, layout, table structure |
 | 24–28 | `super-admin` … `view-toolbars-compact-row` | Workspace mode, map tooltips, board DnD |
 | 29–33 | `filters-compact-bar` … `view-tabs-compact-menu` | Filters sheet, mobile command deck, profile picker, view overflow menu |
-| 34–38 | `rich-description-content` … `confirm-modals-modern` | Rich text, KANO matrix, confirm dialogs |
+| 34–40 | `rich-description-content` … `filter-combobox-fix` | Rich text, KANO matrix, Gantt timeline, confirm dialogs, combobox fixes |
 
-Full numbered list: [docs/TECH_GUIDELINES.md](docs/TECH_GUIDELINES.md) §3.1 (must match `index.html` lines 15–52).
+Full numbered list: [docs/TECH_GUIDELINES.md](docs/TECH_GUIDELINES.md) §3.1 (must match `index.html` lines 15–54).
 
 ### Layout breakpoint
 
@@ -202,7 +203,7 @@ npm run verify:production
 ## Testing
 
 ```bash
-npm test                    # 10 automated suites (storage, metadata, persistence, export, byok, kano, llm, 5why, periods)
+npm test                    # 11 automated suites (storage, metadata, persistence, export, byok, kano, llm, 5why, periods, gantt)
 npm run verify:production   # Smoke test production deploy
 ```
 

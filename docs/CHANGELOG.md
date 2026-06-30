@@ -27,13 +27,23 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Docs — Full product documentation standard audit — 2026-05-28 — Product Team — Impact: documentation
+
+- Re-audited codebase vs 18-doc suite; baseline `APP_ASSET_VERSION` = `20260528-ui196`.
+- **Seven portfolio views** (Table, Board, MoSCoW, Map, RACI, KANO, **Gantt**); **40 CSS layers** including `gantt-view.css`, `filter-combobox-fix.css`.
+- **20 `src/` modules** before `app.js` (incl. `gantt-view.js`, `roadmap-periods.js`, `export-payload.js`); **11** `npm test` suites (`test:gantt`).
+- `app.js` ~24k lines; `roadmapDeadline` + `roadmapPeriods` drive Gantt bars; `ganttZoom` persisted in workspace state.
+- Updated full documentation suite: README, PRD, PRODUCT_DOCUMENTATION, FEATURE_LOGIC, VARIABLES, USER_STORIES, DESIGN_GUIDELINES, TRACEABILITY, TECH, ARCHITECTURE, GUARDRAILS, METRICS, CHANGELOG, hub.
+
+### Feature — Gantt timeline view — 2026-06-30 — Product Team — Impact: user-visible
+
+- New **Gantt** portfolio view: ISO-week timeline with continuous bars from `roadmapPeriods[]` and optional `roadmapDeadline` marker.
+- Zoom presets: Monthly (compact), Standard (weekly), Wide (comfortable); **Jump to today**; fullscreen; `state.ganttZoom` persisted.
+- Module `src/modules/gantt-view.js`; styles `css/gantt-view.css`; `npm run test:gantt`.
+
 ### Docs — Full product documentation standard audit — 2026-06-29 — Product Team — Impact: documentation
 
-- Re-audited codebase vs 18-doc suite; baseline `APP_ASSET_VERSION` = `20260629-ui195`.
-- **38 CSS layers** (filters sheet, mobile command deck, profile picker, view tabs menu, confirm modals); per-asset `?v=` cache-bust documented in TECH §3.1.
-- **19 `src/` modules** including `roadmap-periods.js`, `export-payload.js`; **10** `npm test` suites.
-- `app.js` ~23k lines; multi-quarter `roadmapPeriods` with per-period status; full export via `ExportPayload`.
-- Updated FEATURE_LOGIC, ARCHITECTURE, VARIABLES, TRACEABILITY, DESIGN_GUIDELINES, PRD, PRODUCT_DOCUMENTATION, USER_STORIES, DEPLOYMENT, README, and documentation hub.
+- Prior audit: roadmapPeriods, ExportPayload, compact filters sheet; baseline `20260629-ui195`.
 
 ### Data — Full JSON/CSV export for all workspace variables — 2026-06-08 — Product Team — Impact: user-visible
 

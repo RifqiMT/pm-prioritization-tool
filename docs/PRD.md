@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Status** | Implemented (local-first static app) |
-| **Last updated** | 2026-06-29 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260629-ui195` |
+| **Last updated** | 2026-05-28 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui196` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -70,6 +70,7 @@ See [USER_PERSONAS.md](USER_PERSONAS.md).
 | FR-2.2 | RICE inputs with validation | See FR-3 |
 | FR-2.3 | Metadata: type, status, MoSCoW, periods, countries, t-shirt, labels, links, tasks, note | Saved on roadmap; `roadmapPeriods[]` with per-quarter status; legacy `roadmapPeriod` migrated |
 | FR-2.14 | Multi-quarter periods | `roadmapPeriods`: `{ period: YYYY-Qn, status }[]`; latest period drives derived `roadmapStatus`; bulk quarter editor in modal |
+| FR-2.15 | Roadmap deadline | Optional `roadmapDeadline` as `YYYY-MM-DD`; relative hints (due today, overdue); Gantt deadline marker; CSV round-trip |
 | FR-2.4 | Bulk delete (table) | Confirmation; selection respected (toolbar desktop; selection bar compact) |
 | FR-2.5 | Roadmap ID in modal footer | Stable id visible in footer metadata |
 | FR-2.6 | Modal footer disclosure (compact) | At ≤1400px: metadata in `<details>` collapsed by default; desktop forces open |
@@ -115,9 +116,10 @@ See [USER_PERSONAS.md](USER_PERSONAS.md).
 | FR-5.5 | Map | Leaflet choropleth; metric: count / RICE / EUR |
 | FR-5.6 | RACI | Desktop: 5-column matrix per filtered roadmaps; **Business** / **Tech** perspective toggle; compact: one card per roadmap |
 | FR-5.7 | KANO | Portfolio matrix (functionality × satisfaction); **Positioned** / **Not positioned** panels; drag tiles on desktop; open roadmap KANO section from cards |
-| FR-5.8 | All | Fullscreen mode (compact layouts preserved in fullscreen host) |
-| FR-5.9 | Locked profile | No roadmap data in any view |
-| FR-5.10 | Compact layout | ≤1400px: unified phone UI; no horizontal scroll on board/MoSCoW; table uses card list |
+| FR-5.8 | Gantt | ISO-week timeline; bars from `roadmapPeriods[]` with per-segment status color; optional `roadmapDeadline` diamond; zoom Monthly/Standard/Wide; Jump to today; fullscreen |
+| FR-5.9 | All | Fullscreen mode (compact layouts preserved in fullscreen host) |
+| FR-5.10 | Locked profile | No roadmap data in any view |
+| FR-5.11 | Compact layout | ≤1400px: unified phone UI; no horizontal scroll on board/MoSCoW; table uses card list |
 
 #### FR-5.1 Semantic table columns (desktop)
 

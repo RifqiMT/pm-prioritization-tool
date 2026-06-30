@@ -40,12 +40,13 @@ and narrow screens (≤1400px).
 
   /* ── Unified profile chip ─────────────────────────────── */
   html.is-compact-layout .profile-picker__control {
-    display: flex;
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.55rem;
     width: 100%;
     min-height: var(--cockpit-touch, 40px) !important;
-    padding: 0.28rem 0.62rem 0.28rem 0.28rem !important;
+    padding: 0.35rem 0.62rem 0.35rem 0.58rem !important;
     border-radius: 999px !important;
     border: 1px solid rgba(202, 138, 4, 0.24) !important;
     background: rgba(255, 255, 255, 0.96) !important;
@@ -74,6 +75,8 @@ and narrow screens (≤1400px).
   }
 
   html.is-compact-layout .profile-picker__avatar {
+    grid-column: 1;
+    grid-row: 1;
     flex: 0 0 auto;
     width: 28px !important;
     height: 28px !important;
@@ -103,18 +106,21 @@ and narrow screens (≤1400px).
   }
 
   html.is-compact-layout .profile-picker__display {
+    grid-column: 2;
+    grid-row: 1;
     flex: 1 1 auto;
     min-width: 0;
-    display: flex;
-    flex-direction: row;
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: space-between;
-    gap: 0.45rem;
+    gap: 0.35rem;
+    position: relative;
     margin: 0;
     padding: 0;
     border: none;
     background: transparent !important;
-    text-align: left;
+    text-align: center;
     cursor: pointer;
     font: inherit;
     color: inherit;
@@ -136,13 +142,19 @@ and narrow screens (≤1400px).
   }
 
   html.is-compact-layout .profile-picker__display-copy {
+    grid-column: 1;
+    justify-self: center;
     flex: 1 1 auto;
     min-width: 0;
+    width: max-content;
+    max-width: 100%;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
     gap: 0;
+    padding-inline: 0.15rem;
+    text-align: center;
   }
 
   html.is-compact-layout .profile-picker__name {
@@ -158,6 +170,7 @@ and narrow screens (≤1400px).
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    text-align: center;
   }
 
   html.is-compact-layout .profile-picker__meta {
@@ -165,6 +178,10 @@ and narrow screens (≤1400px).
   }
 
   html.is-compact-layout .profile-picker__chevron {
+    grid-column: 2;
+    position: static;
+    top: auto;
+    right: auto;
     flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
@@ -174,6 +191,7 @@ and narrow screens (≤1400px).
     border-radius: 999px;
     color: #78716c;
     background: rgba(254, 243, 199, 0.45);
+    transform: none;
     transition: transform 0.18s ease, color 0.15s ease, background 0.15s ease;
   }
 
@@ -209,10 +227,12 @@ and narrow screens (≤1400px).
   }
 
   html.is-compact-layout .profile-picker__field--search .profile-picker__input {
+    grid-column: 2;
+    grid-row: 1;
+    position: static !important;
     flex: 1 1 auto;
     min-width: 0;
-    position: static !important;
-    width: auto !important;
+    width: 100% !important;
     height: auto !important;
     margin: 0 !important;
     clip: auto !important;
@@ -223,7 +243,8 @@ and narrow screens (≤1400px).
     box-shadow: none !important;
     font-size: 0.84rem !important;
     font-weight: 650 !important;
-    padding: 0.12rem 0.2rem !important;
+    padding: 0 !important;
+    text-align: center !important;
     color: var(--pf-text, #3f0f19) !important;
   }
 
@@ -342,7 +363,7 @@ and narrow screens (≤1400px).
 
   html.is-compact-layout .profile-picker__control {
     min-height: 38px !important;
-    padding-inline: 0.55rem 0.5rem !important;
+    padding: 0.35rem 0.58rem 0.35rem 0.55rem !important;
   }
 }
 

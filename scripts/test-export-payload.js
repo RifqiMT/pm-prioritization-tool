@@ -62,6 +62,7 @@ assert.strictEqual(jsonDoc.roadmapsView, "board");
 assert.strictEqual(jsonDoc.activeProfileId, "profile_a");
 
 assert.ok(CSV_COLUMN_IDS.includes("roadmapPeriods"));
+assert.ok(CSV_COLUMN_IDS.includes("roadmapDeadline"));
 assert.ok(CSV_COLUMN_IDS.includes("roadmapRaci"));
 assert.ok(CSV_COLUMN_IDS.includes("profileBoardOrder"));
 assert.ok(CSV_COLUMN_IDS.includes("profileMoscowOrder"));
@@ -79,6 +80,7 @@ const knownRoadmapKeys = knownRoadmapMatch[1]
   .filter(Boolean);
 assert.ok(knownRoadmapKeys.includes("roadmapPeriods"), "roadmapPeriods must be a known CSV roadmap key");
 assert.ok(knownRoadmapKeys.includes("roadmapPeriod"), "roadmapPeriod must be a known CSV roadmap key");
+assert.ok(knownRoadmapKeys.includes("roadmapDeadline"), "roadmapDeadline must be a known CSV roadmap key");
 assert.ok(knownRoadmapKeys.includes("note"), "note must be a known CSV roadmap key");
 assert.ok(knownRoadmapKeys.includes("tasks"), "tasks must be a known CSV roadmap key");
 assert.ok(knownRoadmapKeys.includes("raci"), "raci must be a known CSV roadmap key");

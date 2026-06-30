@@ -2,8 +2,6 @@
  * Sample workspace for local dev when no persisted data exists (localhost / 127.0.0.1).
  * Loaded before app.js; provides buildDevSeedWorkspacePayload().
  */
-const DEV_SEED_WORKSPACE_VERSION = "20260606-kano-v1";
-
 function buildDevSeedWorkspacePayload() {
   const now = new Date().toISOString();
   const profileId = "dev_profile_test";
@@ -193,8 +191,7 @@ function buildDevSeedWorkspacePayload() {
     kanoPortfolioPanel: "positioned",
     _storageMeta: {
       updatedAt: now,
-      clientId: "dev_seed",
-      devSeedVersion: DEV_SEED_WORKSPACE_VERSION
+      clientId: "dev_seed"
     }
   };
 }

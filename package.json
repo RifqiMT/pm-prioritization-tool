@@ -23,7 +23,8 @@
     "test:llm": "node scripts/test-roadmap-llm-summary.js",
     "test:5why": "node scripts/test-roadmap-5why-framework.js",
     "test:periods": "node scripts/test-roadmap-periods.js",
-    "test": "npm run test:storage && npm run test:metadata && npm run test:persistence && npm run test:export && npm run test:byok && npm run test:byok-validate && npm run test:kano && npm run test:llm && npm run test:5why && npm run test:periods"
+    "test:gantt": "node scripts/test-gantt-view.js",
+    "test": "npm run test:storage && npm run test:metadata && npm run test:persistence && npm run test:export && npm run test:byok && npm run test:byok-validate && npm run test:kano && npm run test:llm && npm run test:5why && npm run test:periods && npm run test:gantt"
   },
   "keywords": [
     "product-management",

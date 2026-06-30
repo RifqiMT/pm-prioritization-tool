@@ -29,6 +29,7 @@ and Map.
 .workspace-panel .roadmaps-view--map,
 .workspace-panel .roadmaps-view--raci,
 .workspace-panel .roadmaps-view--kano,
+.workspace-panel .roadmaps-view--gantt,
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view,
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .portfolio-view,
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--table,
@@ -36,7 +37,8 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .ro
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--moscow,
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--map,
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--raci,
-html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--kano {
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--kano,
+html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--gantt {
   padding: 0 0.45rem 0.45rem !important;
   gap: 0.35rem !important;
 }/* ── View toolbars — compact spacing only (desktop: view-toolbars-modern.css) ─ */
@@ -47,7 +49,8 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .ro
   html.is-compact-layout .scrum-board-toolbar.view-toolbar,
   html.is-compact-layout .moscow-view-header.view-toolbar,
   html.is-compact-layout .roadmaps-raci-toolbar.view-toolbar,
-  html.is-compact-layout .portfolio-kano-toolbar.view-toolbar {
+  html.is-compact-layout .portfolio-kano-toolbar.view-toolbar,
+  html.is-compact-layout .roadmaps-gantt-toolbar.view-toolbar {
     padding: 0.4rem 0.5rem !important;
     margin: 0 0 0.3rem !important;
     min-height: auto !important;
@@ -168,7 +171,10 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .ro
   html.is-compact-layout .workspace-panel .roadmaps-view--table,
   html.is-compact-layout .workspace-panel .roadmaps-view--board,
   html.is-compact-layout .workspace-panel .roadmaps-view--moscow,
-  html.is-compact-layout .workspace-panel .roadmaps-view--map {
+  html.is-compact-layout .workspace-panel .roadmaps-view--map,
+  html.is-compact-layout .workspace-panel .roadmaps-view--gantt,
+  html.is-compact-layout .workspace-panel .roadmaps-view--raci,
+  html.is-compact-layout .workspace-panel .roadmaps-view--kano {
     padding: 0 0.25rem 0.3rem !important;
     gap: 0.25rem !important;
   }
@@ -180,7 +186,8 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .ro
   html.is-compact-layout .view-toolbar--moscow,
   html.is-compact-layout .view-toolbar--map,
   html.is-compact-layout .view-toolbar--raci,
-  html.is-compact-layout .view-toolbar--kano {
+  html.is-compact-layout .view-toolbar--kano,
+  html.is-compact-layout .view-toolbar--gantt {
     padding: 0.25rem 0.35rem !important;
     margin: 0 0 0.18rem !important;
   }

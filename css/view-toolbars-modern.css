@@ -769,6 +769,8 @@ controls right */
 .roadmaps-view--moscow .moscow-view-header.view-toolbar,
 .roadmaps-raci-toolbar.view-toolbar,
 .roadmaps-view--raci .roadmaps-raci-toolbar.view-toolbar,
+.roadmaps-gantt-toolbar.view-toolbar,
+.roadmaps-view--gantt .roadmaps-gantt-toolbar.view-toolbar,
 .portfolio-kano-toolbar.view-toolbar,
 .roadmaps-view--kano .portfolio-kano-toolbar.view-toolbar {
   display: block !important;
@@ -866,6 +868,31 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--mosc
   height: auto;
   overflow-x: auto;
   overflow-y: auto;
+}html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--gantt {
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}html.is-desktop-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--gantt .roadmaps-gantt-wrap {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 280px;
+  max-height: min(72vh, 720px);
+  height: min(65vh, 640px);
+  overflow: hidden;
+}html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .roadmaps-view--gantt .roadmaps-gantt-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}html.has-view-fullscreen .roadmaps-view--gantt .roadmaps-gantt-wrap,
+.roadmaps-view.view-pseudo-fullscreen.roadmaps-view--gantt .roadmaps-gantt-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  height: auto;
 }html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .view-toolbar__legend:empty {
   min-height: 2.25rem;
 }html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .view-toolbar__legend:empty::after {

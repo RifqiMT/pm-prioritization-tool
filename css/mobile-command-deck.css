@@ -294,7 +294,8 @@ narrow screens (≤1400px).
   html.is-compact-layout .roadmaps-view--moscow .moscow-view-header.view-toolbar,
   html.is-compact-layout .roadmaps-view--map .roadmaps-map-toolbar.view-toolbar,
   html.is-compact-layout .roadmaps-view--raci .roadmaps-raci-toolbar.view-toolbar,
-  html.is-compact-layout .roadmaps-view--kano .portfolio-kano-toolbar.view-toolbar {
+  html.is-compact-layout .roadmaps-view--kano .portfolio-kano-toolbar.view-toolbar,
+  html.is-compact-layout .roadmaps-view--gantt .roadmaps-gantt-toolbar.view-toolbar {
     margin: 0.16rem 0 0.22rem !important;
     padding: 0.18rem 0.24rem !important;
     min-height: 0 !important;
@@ -430,5 +431,35 @@ narrow screens (≤1400px).
 
   html.is-compact-layout .workspace-panel--v2 .portfolio-view-tabs .view-toggle-btn {
     transition: none;
+  }
+}
+
+/* Locked profile — center unlock card in viewport below cockpit chrome */
+@media (max-width: 1400px) {
+  html.is-compact-layout .app-layout > .workspace-panel--v2.workspace-panel--profile-locked,
+  html.is-compact-layout .app-layout > section#workspacePanel.workspace-panel--profile-locked {
+    height: auto !important;
+    min-height: calc(
+      100dvh - var(--compact-cockpit-height, 5.5rem) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 0.75rem
+    ) !important;
+    max-height: none !important;
+  }
+
+  html.is-compact-layout .workspace-panel--profile-locked > .profile-unlock-panel,
+  html.is-compact-layout .workspace-panel--profile-locked .profile-unlock-panel[aria-hidden="false"] {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    align-self: stretch !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    border-bottom: none !important;
+  }
+
+  html.is-compact-layout .workspace-panel--profile-locked .profile-unlock-panel__card {
+    flex: 0 0 auto;
+    margin: auto;
   }
 }

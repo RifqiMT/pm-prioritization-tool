@@ -437,7 +437,7 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
   }
 
   html.is-compact-layout .portfolio-filters-body {
-    padding: 0.5rem 0.62rem 0.62rem !important;
+    padding: 0.55rem 0.82rem 0.72rem !important;
     animation: filters-compact-body-in 0.22s ease-out;
   }
 
@@ -490,15 +490,25 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
     max-width: 100% !important;
   }
 
-  html.is-compact-layout .filters-row--leads .filter-autocomplete input[type="search"] {
-    width: 100% !important;
-    max-width: 100% !important;
+  html.is-compact-layout .filters-row--leads .filter-autocomplete__control,
+  html.is-compact-layout .filters-row--search .filter-autocomplete__control {
+    min-height: 44px !important;
+    padding: 0.55rem 0.75rem !important;
+    gap: 0.55rem !important;
+  }
+
+  html.is-compact-layout .filters-row--leads .filter-autocomplete input[type="search"],
+  html.is-compact-layout .filters-row--search .filter-autocomplete input[type="search"],
+  html.is-compact-layout .filters-row--leads .filter-autocomplete .filter-autocomplete__input,
+  html.is-compact-layout .filters-row--search .filter-autocomplete .filter-autocomplete__input {
+    width: auto !important;
+    max-width: none !important;
     min-width: 0 !important;
-    min-height: 40px !important;
+    min-height: 0 !important;
     font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     font-size: 0.88rem !important;
-    font-weight: 400 !important;
-    padding: 0.42rem 0.55rem !important;
+    font-weight: 500 !important;
+    padding: 0 !important;
     box-sizing: border-box;
   }
 

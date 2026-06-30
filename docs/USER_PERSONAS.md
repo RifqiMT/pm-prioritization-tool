@@ -4,7 +4,7 @@ Target users for the Product Management Prioritization Tool.
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-06-29 |
+| **Last updated** | 2026-05-28 |
 | **Layout baseline** | Compact UI at viewport ≤ **1400px** |
 
 ## How to use personas
@@ -36,7 +36,7 @@ Target users for the Product Management Prioritization Tool.
 | **Role** | Weekly execution and status tracking |
 | **Goals** | Fast board/table views; clear status transitions; bulk cleanup of cancelled work |
 | **Pain points** | Too many clicks to update status; hidden work in wrong columns; bulk delete buried on small screens |
-| **Key workflows** | **Board** with status columns (desktop) or vertical stack + **Move to** (compact); RICE sort within columns; **Table** bulk select (toolbar desktop, selection bar compact); filter by status and t-shirt in advanced drawer |
+| **Key workflows** | **Board** with status columns (desktop) or vertical stack + **Move to** (compact); **Gantt** timeline for quarter planning and deadline visibility; RICE sort within columns; **Table** bulk select (toolbar desktop, selection bar compact); filter by status and t-shirt in advanced drawer |
 | **Device usage** | Laptop in stand-ups (>1400px); tablet on the floor (≤1400px) with touch-friendly board cards and one-row action buttons |
 | **Success** | Stand-ups run from the board without exporting to another tool |
 

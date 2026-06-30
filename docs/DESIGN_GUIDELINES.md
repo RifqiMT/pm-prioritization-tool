@@ -1,8 +1,8 @@
 # Design Guidelines
 
 **Product:** Product Management Prioritization Tool  
-**Last updated:** 2026-06-29  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260629-ui195`  
+**Last updated:** 2026-05-28  
+**Implementation baseline:** `APP_ASSET_VERSION` = `20260528-ui196`  
 **Layout breakpoint:** `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** (`html.is-compact-layout` + `html.is-phone-layout`)
 
 Visual and interaction standards for the local-first prioritization workspace.
@@ -97,8 +97,21 @@ Typography for sanitized HTML in roadmap descriptions, tooltips, and LLM summary
 | `view-tabs-compact-menu.css` | Overflow view tabs into “More” menu |
 | `compact-view-gutter.css` | Reduced horizontal padding on table/board in compact mode |
 | `confirm-modals-modern.css` | Destructive-action confirms aligned with export/import modal chrome |
+| `filter-combobox-fix.css` | Profile picker and filter combobox alignment |
 
 Breakpoints align with `COMPACT_LAYOUT_MAX_WIDTH` (1400px) in `constants.js`.
+
+### 2.9 Gantt timeline (`gantt-view.css`)
+
+| Token / element | Usage |
+|-----------------|-------|
+| `.roadmaps-gantt-wrap` | Scrollable timeline host; sticky week/month header |
+| `.gantt-bar` | Period segment; `data-status` drives status color (same semantics as §3) |
+| `.gantt-deadline-marker` | Diamond marker for `roadmapDeadline` |
+| `.roadmaps-gantt-zoom-toggle` | Monthly / Standard / Wide density control |
+| Status colors | Reuse roadmap status palette (Not Started → Cancelled) |
+
+Module: `src/modules/gantt-view.js` (`GanttView` global).
 
 ---
 

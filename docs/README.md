@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Maintainer** | Product Team |
-| **Last audited** | 2026-06-29 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260629-ui195` |
+| **Last audited** | 2026-05-28 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui196` |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
 
 This folder is the **single source of product truth** for engineering, design, product management, and stakeholders (**17 documents** + root [README.md](../README.md) = **18-file suite**). Documents are maintained against the **current** implementation in `index.html`, `css/`, `src/`, and `api/`.
@@ -67,12 +67,12 @@ This folder is the **single source of product truth** for engineering, design, p
 
 ---
 
-## Source code map (audited 2026-06-29)
+## Source code map (audited 2026-05-28)
 
 ```
 pm-prioritization-tool/
-├── index.html                      # Shell, modals, filters, six views, BYOK, footer
-├── css/                            # 38 layered stylesheets (see TECH_GUIDELINES.md §3.1)
+├── index.html                      # Shell, modals, filters, seven views, BYOK, footer
+├── css/                            # 40 layered stylesheets (see TECH_GUIDELINES.md §3.1)
 │   ├── main.css … export-modals-modern.css
 │   ├── byok-api-keys.css
 │   ├── view-toolbars-modern.css … app-footer.css
@@ -85,7 +85,9 @@ pm-prioritization-tool/
 │   ├── rich-description-content.css
 │   ├── rich-text-editor.css
 │   ├── portfolio-kano-modern.css
-│   └── confirm-modals-modern.css   # Delete/confirm dialogs
+│   ├── gantt-view.css              # Gantt timeline grid and bars
+│   ├── confirm-modals-modern.css   # Delete/confirm dialogs
+│   └── filter-combobox-fix.css     # Profile/filter combobox alignment
 ├── src/
 │   ├── app.js                      # State, render, CRUD, filters, import/export
 │   ├── constants.js                # Enums, tooltips, APP_ASSET_VERSION
@@ -106,6 +108,7 @@ pm-prioritization-tool/
 │       ├── roadmap-llm-summary.js  # Tavily research + Groq summary
 │       ├── roadmap-5why-framework.js # Iterative WHY 1→5 questions
 │       ├── roadmap-periods.js      # Multi-quarter roadmapPeriods
+│       ├── gantt-view.js           # Gantt timeline view
 │       └── export-payload.js       # JSON/CSV export builders
 ├── api/
 │   ├── health.js                   # GET storage probe
@@ -132,6 +135,7 @@ pm-prioritization-tool/
 │   ├── test-roadmap-5why-framework.js # npm run test:5why
 │   ├── test-export-payload.js      # npm run test:export
 │   ├── test-roadmap-periods.js     # npm run test:periods
+│   └── test-gantt-view.js          # npm run test:gantt
 │   └── disable-vercel-deployment-protection.sh
 ├── .github/workflows/              # ci.yml, vercel-production.yml, fix-vercel-protection.yml
 ├── docs/                           # This documentation suite

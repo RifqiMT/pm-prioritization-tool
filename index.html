@@ -16,12 +16,12 @@
   <link href="css/workspace-modern.css?v=20260629-table-actions-unified-v1" rel="stylesheet" />
   <link href="css/header-modern.css?v=20260607-header-cockpit-restore-v1" rel="stylesheet" />
   <link href="css/profiles-modern.css?v=20260607-compact-modal-explicit-close-v1" rel="stylesheet" />
-  <link href="css/portfolio-modern.css?v=20260608-filter-search-stable-v2" rel="stylesheet" />
+  <link href="css/portfolio-modern.css?v=20260630-profile-unlock-compact-center-v1" rel="stylesheet" />
   <link href="css/profile-modals-modern.css?v=20260607-profile-security-polish-v1" rel="stylesheet" />
   <link href="css/export-modals-modern.css?v=20260607-modal-solo-primary-v1" rel="stylesheet" />
   <link href="css/byok-api-keys.css?v=20260528-ui194" rel="stylesheet" />
-  <link href="css/view-toolbars-modern.css?v=20260607-view-toolbar-standard-v1" rel="stylesheet" />
-  <link href="css/compact-modern.css?v=20260607-profile-picker-unified-v2" rel="stylesheet" />
+  <link href="css/view-toolbars-modern.css?v=20260630-gantt-compact-v2" rel="stylesheet" />
+  <link href="css/compact-modern.css?v=20260630-profile-unlock-compact-center-v1" rel="stylesheet" />
   <link href="css/moscow-compact.css?v=20260607-compact-gutter-prod-v1" rel="stylesheet" />
   <link href="css/board-compact.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/table-compact.css?v=20260528-ui194" rel="stylesheet" />
@@ -39,17 +39,19 @@
   <link href="css/map-tooltip-modern.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/board-drag.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/board-card-interaction.css?v=20260528-ui194" rel="stylesheet" />
-  <link href="css/view-toolbars-compact-row.css?v=20260528-ui194" rel="stylesheet" />
-  <link href="css/filters-compact-bar.css?v=20260608-filter-search-font-v1" rel="stylesheet" />
-  <link href="css/filters-sheet-modern.css?v=20260608-filter-search-stable-v2" rel="stylesheet" />
-  <link href="css/mobile-command-deck.css?v=20260607-filters-trigger-revamp-v1" rel="stylesheet" />
+  <link href="css/view-toolbars-compact-row.css?v=20260630-gantt-compact-v3" rel="stylesheet" />
+  <link href="css/filters-compact-bar.css?v=20260630-filter-combobox-v7" rel="stylesheet" />
+  <link href="css/filters-sheet-modern.css?v=20260630-filter-combobox-v7" rel="stylesheet" />
+  <link href="css/mobile-command-deck.css?v=20260630-profile-unlock-compact-center-v1" rel="stylesheet" />
   <link href="css/compact-view-gutter.css?v=20260607-compact-gutter-prod-v1" rel="stylesheet" />
-  <link href="css/profile-picker-compact.css?v=20260607-profile-picker-unified-v2" rel="stylesheet" />
+  <link href="css/profile-picker-compact.css?v=20260630-profile-picker-center-v2" rel="stylesheet" />
   <link href="css/view-tabs-compact-menu.css?v=20260607-view-tabs-compact-v2" rel="stylesheet" />
   <link href="css/rich-description-content.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/rich-text-editor.css?v=20260607-rte-compose-all-v1" rel="stylesheet" />
   <link href="css/portfolio-kano-modern.css?v=20260607-kano-intro-hide-compact-v1" rel="stylesheet" />
+  <link href="css/gantt-view.css?v=20260630-gantt-sticky-v11" rel="stylesheet" />
   <link href="css/confirm-modals-modern.css?v=20260629-confirm-modals-v2" rel="stylesheet" />
+  <link href="css/filter-combobox-fix.css?v=20260630-profile-picker-center-v1" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 <body>
@@ -398,6 +400,10 @@
                 <svg class="view-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
                 <span class="view-tab-text">MoSCoW</span>
               </button>
+              <button type="button" id="roadmapsViewGanttBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="gantt" aria-label="Gantt timeline view">
+                <svg class="view-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h8"/><path d="M3 12h14"/><path d="M3 19h11"/><path d="M16 8v8"/><path d="M20 6v12"/></svg>
+                <span class="view-tab-text">Gantt</span>
+              </button>
               <button type="button" id="roadmapsViewRaciBtn" class="view-toggle-btn" role="tab" aria-selected="false" data-view="raci" aria-label="RACI matrix view">
                 <svg class="view-tab-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 0 1-6.75 0 3.375 3.375 0 0 1 6.75 0zm8.25 2.25a2.625 2.625 0 0 1-5.25 0 2.625 2.625 0 0 1 5.25 0z"/></svg>
                 <span class="view-tab-text">RACI</span>
@@ -524,17 +530,26 @@
                 <div class="filter-group filter-group--search">
                   <label for="filterTitle">Roadmap title</label>
                   <div class="filter-autocomplete" id="filterTitleAutocomplete">
-                    <input
-                      id="filterTitle"
-                      type="search"
-                      role="combobox"
-                      aria-expanded="false"
-                      aria-controls="filterTitleListbox"
-                      aria-autocomplete="list"
-                      autocomplete="off"
-                      spellcheck="false"
-                      placeholder="Search or pick a title…"
-                    />
+                    <div class="filter-autocomplete__control">
+                      <span class="filter-autocomplete__icon" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                      </span>
+                      <input
+                        id="filterTitle"
+                        class="filter-autocomplete__input"
+                        type="search"
+                        role="combobox"
+                        aria-expanded="false"
+                        aria-controls="filterTitleListbox"
+                        aria-autocomplete="list"
+                        autocomplete="off"
+                        spellcheck="false"
+                        placeholder="Search or pick a title…"
+                      />
+                      <button type="button" class="filter-autocomplete__chevron" tabindex="-1" aria-label="Show title suggestions" aria-expanded="false">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                      </button>
+                    </div>
                     <div id="filterTitleDropdown" class="filter-autocomplete__dropdown" hidden>
                       <ul id="filterTitleListbox" class="filter-autocomplete__list" role="listbox" aria-label="Roadmap title suggestions"></ul>
                       <p id="filterTitleAutocompleteEmpty" class="filter-autocomplete__empty" hidden>No matching titles</p>
@@ -544,17 +559,26 @@
                 <div class="filter-group filter-group--search">
                   <label for="filterLabel">Label</label>
                   <div class="filter-autocomplete" id="filterLabelAutocomplete">
-                    <input
-                      id="filterLabel"
-                      type="search"
-                      role="combobox"
-                      aria-expanded="false"
-                      aria-controls="filterLabelListbox"
-                      aria-autocomplete="list"
-                      autocomplete="off"
-                      spellcheck="false"
-                      placeholder="Search or pick a label…"
-                    />
+                    <div class="filter-autocomplete__control">
+                      <span class="filter-autocomplete__icon" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.41 0l6.58-6.58a1 1 0 0 0 0-1.41Z"/><path d="M7 7h.01"/></svg>
+                      </span>
+                      <input
+                        id="filterLabel"
+                        class="filter-autocomplete__input"
+                        type="search"
+                        role="combobox"
+                        aria-expanded="false"
+                        aria-controls="filterLabelListbox"
+                        aria-autocomplete="list"
+                        autocomplete="off"
+                        spellcheck="false"
+                        placeholder="Search or pick a label…"
+                      />
+                      <button type="button" class="filter-autocomplete__chevron" tabindex="-1" aria-label="Show label suggestions" aria-expanded="false">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                      </button>
+                    </div>
                     <div id="filterLabelDropdown" class="filter-autocomplete__dropdown" hidden>
                       <ul id="filterLabelListbox" class="filter-autocomplete__list" role="listbox" aria-label="Label suggestions"></ul>
                       <p id="filterLabelAutocompleteEmpty" class="filter-autocomplete__empty" hidden>No matching labels</p>
@@ -619,17 +643,26 @@
                   <div class="filter-group filter-group--compact filter-group--autocomplete">
                     <label for="filterBusinessLead">Business lead</label>
                     <div class="filter-autocomplete" id="filterBusinessLeadAutocomplete">
-                      <input
-                        id="filterBusinessLead"
-                        type="search"
-                        role="combobox"
-                        aria-expanded="false"
-                        aria-controls="filterBusinessLeadListbox"
-                        aria-autocomplete="list"
-                        autocomplete="off"
-                        spellcheck="false"
-                        placeholder="Search or pick an actor…"
-                      />
+                      <div class="filter-autocomplete__control">
+                        <span class="filter-autocomplete__icon" aria-hidden="true">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </span>
+                        <input
+                          id="filterBusinessLead"
+                          class="filter-autocomplete__input"
+                          type="search"
+                          role="combobox"
+                          aria-expanded="false"
+                          aria-controls="filterBusinessLeadListbox"
+                          aria-autocomplete="list"
+                          autocomplete="off"
+                          spellcheck="false"
+                          placeholder="Search or pick an actor…"
+                        />
+                        <button type="button" class="filter-autocomplete__chevron" tabindex="-1" aria-label="Show business lead suggestions" aria-expanded="false">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                      </div>
                       <div id="filterBusinessLeadDropdown" class="filter-autocomplete__dropdown" hidden>
                         <ul id="filterBusinessLeadListbox" class="filter-autocomplete__list" role="listbox" aria-label="Business lead suggestions"></ul>
                         <p id="filterBusinessLeadAutocompleteEmpty" class="filter-autocomplete__empty" hidden>No matching business leads</p>
@@ -639,17 +672,26 @@
                   <div class="filter-group filter-group--compact filter-group--autocomplete">
                     <label for="filterTechLead">Tech lead</label>
                     <div class="filter-autocomplete" id="filterTechLeadAutocomplete">
-                      <input
-                        id="filterTechLead"
-                        type="search"
-                        role="combobox"
-                        aria-expanded="false"
-                        aria-controls="filterTechLeadListbox"
-                        aria-autocomplete="list"
-                        autocomplete="off"
-                        spellcheck="false"
-                        placeholder="Search or pick an actor…"
-                      />
+                      <div class="filter-autocomplete__control">
+                        <span class="filter-autocomplete__icon" aria-hidden="true">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </span>
+                        <input
+                          id="filterTechLead"
+                          class="filter-autocomplete__input"
+                          type="search"
+                          role="combobox"
+                          aria-expanded="false"
+                          aria-controls="filterTechLeadListbox"
+                          aria-autocomplete="list"
+                          autocomplete="off"
+                          spellcheck="false"
+                          placeholder="Search or pick an actor…"
+                        />
+                        <button type="button" class="filter-autocomplete__chevron" tabindex="-1" aria-label="Show tech lead suggestions" aria-expanded="false">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                      </div>
                       <div id="filterTechLeadDropdown" class="filter-autocomplete__dropdown" hidden>
                         <ul id="filterTechLeadListbox" class="filter-autocomplete__list" role="listbox" aria-label="Tech lead suggestions"></ul>
                         <p id="filterTechLeadAutocompleteEmpty" class="filter-autocomplete__empty" hidden>No matching tech leads</p>
@@ -1043,6 +1085,41 @@
           </div>
           <div class="roadmaps-map-legend" id="roadmapsMapLegend" aria-label="Map legend"></div>
           <div id="roadmapsMapContainer" class="roadmaps-map-container" aria-label="World map of roadmaps by country"></div>
+        </div>
+
+        <div id="roadmapsGanttView" class="roadmaps-view roadmaps-view--gantt portfolio-view" aria-hidden="true" style="display:none;">
+          <div class="view-toolbar view-toolbar--gantt roadmaps-gantt-toolbar" role="region" aria-label="Gantt timeline controls">
+            <div class="view-toolbar__row view-toolbar__row--primary">
+              <div class="view-toolbar__identity">
+                <span class="view-toolbar__icon" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h8"/><path d="M3 12h14"/><path d="M3 19h11"/><path d="M16 8v8"/><path d="M20 6v12"/></svg>
+                </span>
+                <div class="view-toolbar__copy">
+                  <h3 class="view-toolbar__title">Gantt timeline</h3>
+                  <p class="view-toolbar__desc">Continuous period bars across ISO weeks — zoom, scroll, and jump to today.</p>
+                </div>
+              </div>
+              <div class="view-toolbar__cluster view-toolbar__cluster--compact-controls">
+                <span id="roadmapsGanttStats" class="roadmaps-gantt-stats" aria-live="polite">0 roadmaps</span>
+                <div class="roadmaps-gantt-zoom-toggle view-toolbar__field" id="roadmapsGanttZoomToggle" role="group" aria-label="Timeline density" data-active-zoom="standard">
+                  <span class="roadmaps-gantt-zoom-indicator" aria-hidden="true"></span>
+                  <button type="button" class="roadmaps-gantt-zoom-btn" data-gantt-zoom="compact" aria-selected="false">Monthly</button>
+                  <button type="button" class="roadmaps-gantt-zoom-btn roadmaps-gantt-zoom-btn--active" data-gantt-zoom="standard" aria-selected="true">Standard</button>
+                  <button type="button" class="roadmaps-gantt-zoom-btn" data-gantt-zoom="comfortable" aria-selected="false">Wide</button>
+                </div>
+                <button type="button" id="roadmapsGanttTodayBtn" class="roadmaps-gantt-today-btn view-toolbar__btn" aria-label="Jump to today on timeline" title="Jump to today">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                  <span class="view-toolbar__btn-label">Today</span>
+                </button>
+                <button type="button" id="roadmapsGanttFullscreenBtn" class="view-toolbar__btn view-fullscreen-btn view-toolbar__compact-fullscreen" aria-label="Expand Gantt view to full screen" title="Full screen">
+                  <svg class="view-fullscreen-icon icon-expand" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                  <svg class="view-fullscreen-icon icon-compress" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v3a2 2 0 0 1 2 2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+                  <span class="view-toolbar__btn-label view-fullscreen-label">Expand</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div id="roadmapsGanttContainer" class="roadmaps-gantt-wrap" aria-live="polite" aria-label="Roadmap Gantt timeline"></div>
         </div>
 
         <div id="roadmapsRaciView" class="roadmaps-view roadmaps-view--raci portfolio-view" aria-hidden="true" style="display:none;">
@@ -1833,6 +1910,21 @@
                       <div class="cell-type-tooltip">
                         <div class="cell-type-tooltip-title">T-shirt size</div>
                         <div class="cell-type-tooltip-body">Relative size from XS to XL for planning.</div>
+                      </div>
+                    </div>
+
+                    <div class="roadmap-field-tooltip-wrap" style="margin-top:0.55rem;">
+                      <span id="roadmapDeadlineLabel" class="roadmap-field-label">Roadmap deadline</span>
+                      <div id="roadmapDeadlineBulkModeWrap" class="roadmap-bulk-field-mode-wrap" hidden>
+                        <label for="roadmapDeadlineBulkMode" class="roadmap-field-label" style="margin-top:0.35rem;">Deadline update</label>
+                        <select id="roadmapDeadlineBulkMode" name="roadmapDeadlineBulkMode"></select>
+                      </div>
+                      <div id="roadmapDeadlineEditorWrap">
+                        <input type="date" id="roadmapDeadline" name="roadmapDeadline" aria-labelledby="roadmapDeadlineLabel" />
+                      </div>
+                      <div class="cell-type-tooltip">
+                        <div class="cell-type-tooltip-title">Roadmap deadline</div>
+                        <div class="cell-type-tooltip-body">Optional target completion date for this roadmap. Leave empty if not set.</div>
                       </div>
                     </div>
 
@@ -3138,8 +3230,9 @@
   <script src="src/modules/roadmap-llm-summary.js?v=20260528-ui194"></script>
   <script src="src/modules/roadmap-5why-framework.js?v=20260528-ui194"></script>
   <script src="src/modules/roadmap-periods.js?v=20260629-roadmap-period-unique-v1"></script>
+  <script src="src/modules/gantt-view.js?v=20260630-gantt-row-v10"></script>
   <script src="src/modules/export-payload.js?v=20260608-export-full-v1"></script>
-  <script src="src/app.js?v=20260608-custom-framework-icon-v1"></script>
+  <script src="src/app.js?v=20260630-profile-picker-center-v2"></script>
 </body>
 </html>
 

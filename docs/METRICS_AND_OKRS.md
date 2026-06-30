@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-06-29 |
+| **Last updated** | 2026-05-28 |
 | **Measurement** | Local-first — no default telemetry; manual QA + optional instrumentation |
 
 ---
@@ -130,6 +130,7 @@ Among workspaces that had ≥3 roadmaps 30 days ago, count those with ≥1 sessi
 | KR6.2 | PM-12 KANO positioning | ≥ 40% |
 | KR6.3 | RACI view adoption | ≥ 20% of portfolio sessions open RACI tab |
 | KR6.4 | KANO view adoption | ≥ 15% of portfolio sessions open KANO tab |
+| KR6.5 | Gantt view adoption | ≥ 20% of portfolio sessions open Gantt tab for timeline planning |
 
 ### Objective 7 — Optional AI assistance (BYOK)
 

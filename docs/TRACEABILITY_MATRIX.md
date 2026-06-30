@@ -4,7 +4,7 @@
 
 **Purpose:** Map PRD requirements to concrete implementation evidence and verification steps.  
 **Standard:** Requirement IDs must remain synchronized with [PRD.md](PRD.md).  
-**Last audited:** 2026-06-29 · **Baseline:** `APP_ASSET_VERSION` = `20260629-ui195`
+**Last audited:** 2026-05-28 · **Baseline:** `APP_ASSET_VERSION` = `20260528-ui196`
 
 ---
 
@@ -50,6 +50,7 @@
 | FR-2.10 | RACI assignments | Roadmap modal RACI section; `normalizeRoadmapRaci`; `renderRaciMatrix` | Names persist; Business/Tech filter works |
 | FR-2.11 | KANO scores | Roadmap modal KANO section; `renderKanoPortfolioMatrix` | Scores 1–5 place roadmaps on matrix |
 | FR-2.14 | Multi-quarter periods | `roadmap-periods.js`; `roadmapPeriods[]` in modal | Periods validate; latest drives status |
+| FR-2.15 | Roadmap deadline | `normalizeRoadmapDeadline` in `utils.js`; modal date input | `YYYY-MM-DD`; Gantt marker; CSV round-trip |
 
 ---
 
@@ -95,9 +96,11 @@
 | FR-5.5 | Map metrics | `renderRoadmapsMap`; metric pills | Count/RICE/financial switch updates legend |
 | FR-5.6 | RACI matrix | `renderRaciMatrix`; `#roadmapsRaciView`; `raciMatrixDomain` | Desktop matrix; compact cards; domain toggle |
 | FR-5.7 | KANO portfolio | `renderKanoPortfolioMatrix`; `portfolio-kano-modern.css`; `kanoPortfolioPanel` | Positioned/unpositioned panels; drag on desktop |
-| FR-5.8 | Fullscreen all views | `src/modules/fullscreen.js`; `fullscreen-compact.css` | Fullscreen preserves compact layout |
-| FR-5.9 | Locked profile blocks data | `getUnlockedActiveProfile()`; view guards | No roadmap leakage when locked |
-| FR-5.10 | Compact layout ≤1400px | `COMPACT_LAYOUT_MAX_WIDTH_PX`; `initCompactLayoutClass()` | At 1024px and 375px: compact classes; no horizontal board/MoSCoW scroll |
+| FR-5.8 | Gantt timeline | `GanttView.render`; `gantt-view.js`; `gantt-view.css`; `ganttZoom` | Period bars; deadline marker; zoom + today |
+| FR-5.9 | Fullscreen all views | `src/modules/fullscreen.js`; `fullscreen-compact.css` | Fullscreen preserves compact layout |
+| FR-5.10 | Locked profile blocks data | `getUnlockedActiveProfile()`; view guards | No roadmap leakage when locked |
+| FR-5.11 | Compact layout ≤1400px | `COMPACT_LAYOUT_MAX_WIDTH_PX`; `initCompactLayoutClass()` | At 1024px and 375px: compact classes; no horizontal board/MoSCoW scroll |
+| US-D3 | Gantt timeline stories | `gantt-view.js`; `#roadmapsGanttView` | US-D3 acceptance |
 | US-R1 / US-R2 | RACI stories | `renderRaciMatrix`; roadmap modal RACI section | Epic R acceptance |
 | US-S1 / US-S2 | KANO stories | `renderKanoPortfolioMatrix`; `portfolio-kano-modern.css` | Epic S acceptance |
 
@@ -107,7 +110,7 @@
 
 | Requirement ID | Requirement Summary | Code Evidence | Verification |
 |---|---|---|---|
-| FR-6 | Filters apply to all views | `applyFilters`; `getPortfolioRoadmapsBaseList` | Table/board/MoSCoW/map/RACI/KANO share filtered set |
+| FR-6 | Filters apply to all views | `applyFilters`; `getPortfolioRoadmapsBaseList` | All seven views share filtered set |
 | FR-6.1.1 | Title substring filter | `filterTitle` | Typing narrows roadmaps |
 | FR-6.1.2 | Title autocomplete | Title listbox in filters drawer | Keyboard navigation; max suggestions |
 | FR-6.1.3 | Label substring filter | `filterLabel` | Matches any label on roadmap |

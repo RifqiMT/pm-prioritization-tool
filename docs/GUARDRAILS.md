@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-06-29 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260629-ui195` |
+| **Last updated** | 2026-05-28 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui196` |
 
 Cross-feature behavior summaries live in [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md). This file defines **hard limits** and policies that must not be violated.
 

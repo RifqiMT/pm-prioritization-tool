@@ -34,12 +34,26 @@ touch-first.
     gap: var(--compact-gap) !important;
   }
 
-  html.is-compact-layout .workspace-panel--v2 {
+  html.is-compact-layout .workspace-panel--v2:not(.workspace-panel--profile-locked) {
     border-radius: 0 !important;
     min-height: auto !important;
     padding-bottom: calc(4.75rem + env(safe-area-inset-bottom)) !important;
     box-shadow: none !important;
     border: none !important;
+  }
+
+  html.is-compact-layout .workspace-panel--v2.workspace-panel--profile-locked,
+  html.is-compact-layout #workspacePanel.workspace-panel--profile-locked {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto;
+    align-self: stretch !important;
+    width: 100%;
+    min-height: calc(
+      100dvh - var(--compact-cockpit-height, 5.5rem) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 0.75rem
+    ) !important;
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)) !important;
+    box-sizing: border-box;
   }
 
   html.is-compact-layout .profiles-panel--v2 {
@@ -450,16 +464,24 @@ touch-first.
     flex-direction: column !important;
     flex: 1 1 auto;
     align-items: center !important;
-    justify-content: flex-start;
-    width: 100%;
-    min-height: min(44vh, 420px);
-    padding: 0.85rem 0.75rem 1rem;
+    justify-content: center !important;
+    align-self: stretch !important;
+    width: 100% !important;
+    min-height: 0;
+    padding: 1rem 0.85rem 1.25rem;
     border-top: none !important;
+    border-bottom: none !important;
+    background: linear-gradient(180deg, #fffdf8 0%, #ffffff 100%) !important;
     box-sizing: border-box;
   }
 
-  html.is-compact-layout .profile-unlock-panel {
-    padding: 0.65rem 0.75rem 0.75rem;
+  html.is-compact-layout .workspace-panel--profile-locked .profile-unlock-panel__card {
+    flex: 0 0 auto;
+    margin: auto;
+  }
+
+  html.is-compact-layout .workspace-panel--profile-locked .profile-unlock-panel {
+    padding: 1rem 0.85rem 1.25rem;
   }
 
   html.is-compact-layout .profile-unlock-panel__card {

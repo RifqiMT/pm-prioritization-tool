@@ -4,8 +4,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last audited** | 2026-06-29 |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260629-ui195` |
+| **Last audited** | 2026-05-28 |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui196` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -57,6 +57,7 @@ The UI is a **static SPA** (`index.html` + `src/`). On Vercel, **serverless rout
 | `src/modules/roadmap-llm-summary.js` | Tavily research + Groq roadmap briefing (`RoadmapLlmSummary`) |
 | `src/modules/roadmap-5why-framework.js` | Iterative WHY 1→5 questions (`RoadmapFiveWhyFramework`) |
 | `src/modules/roadmap-periods.js` | Multi-quarter `roadmapPeriods` normalize/validate (`RoadmapPeriods`) |
+| `src/modules/gantt-view.js` | Gantt ISO-week timeline, period bars, deadline markers (`GanttView`) |
 | `src/modules/export-payload.js` | JSON/CSV export builders (`ExportPayload`) |
 | `api/health.js` | Storage backend probe |
 | `api/config.js` | Client config probe (same as health) |
@@ -215,14 +216,14 @@ On compact layout (≤1400px), the MoSCoW board uses a single-column quadrant st
 
 ## 10. CSS layering (compact-aware)
 
-Load order in `index.html` lines 15–52 (later wins at equal specificity). Each file uses a **per-asset** `?v=` tag; see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) §3.1 for the full 38-file table.
+Load order in `index.html` lines 15–54 (later wins at equal specificity). Each file uses a **per-asset** `?v=` tag; see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) §3.1 for the full 40-file table.
 
 | # | File | Role |
 |---|------|------|
 | 1–17 | `main.css` … `app-footer.css` | Base shell through footer |
 | 18–28 | `views-density.css` … `view-toolbars-compact-row.css` | Density, tables, board, toolbars |
 | 29–34 | `filters-compact-bar.css` … `view-tabs-compact-menu.css` | Filters sheet, mobile command deck, profile picker, view overflow |
-| 35–38 | `rich-description-content.css` … `confirm-modals-modern.css` | Rich text, KANO, confirm dialogs |
+| 35–40 | `rich-description-content.css` … `filter-combobox-fix.css` | Rich text, KANO, Gantt, confirm dialogs, combobox fixes |
 
 ---
 
@@ -344,7 +345,7 @@ flowchart TD
 
 ## 16. Known architectural constraints
 
-- Monolithic `app.js` (~23k lines) — acceptable for static app; split only with clear module boundaries if growth continues.
+- Monolithic `app.js` (~24k lines) — acceptable for static app; split only with clear module boundaries if growth continues.
 - Global namespace — naming collisions require discipline.
 - Full re-render on state change — optimize only if measured pain at scale.
 

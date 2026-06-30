@@ -24,8 +24,10 @@
 
   html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--raci,
   html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--kano,
+  html.is-compact-layout:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .roadmaps-view--gantt,
   html.is-compact-layout .workspace-panel .roadmaps-view--raci,
-  html.is-compact-layout .workspace-panel .roadmaps-view--kano {
+  html.is-compact-layout .workspace-panel .roadmaps-view--kano,
+  html.is-compact-layout .workspace-panel .roadmaps-view--gantt {
     padding-left: 0.45rem !important;
     padding-right: 0.45rem !important;
     padding-bottom: 0.45rem !important;

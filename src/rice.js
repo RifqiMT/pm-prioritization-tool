@@ -109,5 +109,11 @@ function validateRoadmapInput(raw) {
     }
   }
 
+  if (raw.roadmapDeadline != null && raw.roadmapDeadline !== "") {
+    if (typeof normalizeRoadmapDeadline === "function" && !normalizeRoadmapDeadline(raw.roadmapDeadline)) {
+      return "Roadmap deadline must be a valid date (YYYY-MM-DD).";
+    }
+  }
+
   return "";
 }

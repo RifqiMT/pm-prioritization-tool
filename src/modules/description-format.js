@@ -40,8 +40,6 @@ const DESCRIPTION_ALLOWED_BULLET_STYLES = new Set([
   "star"
 ]);
 
-const DESCRIPTION_DEFAULT_BULLET_STYLE = "disc";
-
 function isAllowedBulletStyle(value) {
   return DESCRIPTION_ALLOWED_BULLET_STYLES.has(String(value || "").trim());
 }

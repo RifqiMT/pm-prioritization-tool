@@ -191,7 +191,7 @@ narrow screens (≤1400px).
 
   html.is-compact-layout .portfolio-filters-sheet .portfolio-filters-body {
     max-height: none !important;
-    padding: 0.55rem 1rem 1.1rem !important;
+    padding: 0.65rem 1.1rem 1.15rem !important;
     overflow: visible !important;
   }
 
@@ -402,15 +402,21 @@ narrow screens (≤1400px).
   font-weight: 400 !important;
   font-style: italic !important;
 }html.is-compact-layout .filters-row--leads .filter-autocomplete input[type="search"],
-html.is-compact-layout .filters-row--search .filter-autocomplete input[type="search"] {
+html.is-compact-layout .filters-row--search .filter-autocomplete input[type="search"],
+html.is-compact-layout .filters-row--leads .filter-autocomplete .filter-autocomplete__input,
+html.is-compact-layout .filters-row--search .filter-autocomplete .filter-autocomplete__input {
   font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
   font-size: 0.88rem !important;
-  font-weight: 400 !important;
+  font-weight: 500 !important;
+  padding: 0 !important;
 }.filter-autocomplete__field--open {
   position: relative;
   z-index: 120;
 }.filter-autocomplete__field--open .filter-autocomplete__dropdown {
   z-index: 121;
+}.filter-autocomplete__control {
+  width: 100%;
+  min-width: 0;
 }.portfolio-filters-sheet .filters-row--search,
 .portfolio-filters-sheet .filters-row--leads,
 .portfolio-filters-sheet .filter-group--autocomplete {

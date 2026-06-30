@@ -31,6 +31,8 @@ let state = {
   raciMatrixDomain: "Business",
   /** Portfolio KANO view: matrix (`positioned`) vs unplaced roadmap cards (`unpositioned`). */
   kanoPortfolioPanel: "positioned",
+  /** Gantt timeline column width: compact | standard | comfortable */
+  ganttZoom: "standard",
   exchangeRatesToEUR: {},
   exchangeRatesDate: null,
   exchangeRatesLastSource: null,
@@ -672,6 +674,7 @@ function buildExportCsvCellValues(profile, roadmap, workspaceStateJson) {
     tshirtSize: serializedRoadmap.tshirtSize || "",
     roadmapPeriod: serializedRoadmap.roadmapPeriod || formatRoadmapPeriodEntriesForDisplay(serializedRoadmap),
     roadmapPeriods: serializeRoadmapPeriodsForExport(serializedRoadmap),
+    roadmapDeadline: normalizeRoadmapDeadline(serializedRoadmap.roadmapDeadline) || "",
     moscowCategory: serializedRoadmap.moscowCategory || "",
     kanoFunctionality: serializedRoadmap.kanoFunctionality != null ? String(serializedRoadmap.kanoFunctionality) : "",
     kanoSatisfaction: serializedRoadmap.kanoSatisfaction != null ? String(serializedRoadmap.kanoSatisfaction) : "",
@@ -4023,6 +4026,7 @@ async function init() {
       if (view === "map") return elements.roadmapsMapView;
       if (view === "raci") return elements.roadmapsRaciView;
       if (view === "kano") return elements.roadmapsKanoView;
+      if (view === "gantt") return elements.roadmapsGanttView;
       return null;
     },
     onExitFullscreen: refreshWorkspaceAfterFullscreenExit,
@@ -4255,6 +4259,7 @@ function cacheElements() {
   elements.roadmapsViewTableBtn = $("roadmapsViewTableBtn");
   elements.roadmapsViewBoardBtn = $("roadmapsViewBoardBtn");
   elements.roadmapsViewMoscowBtn = $("roadmapsViewMoscowBtn");
+  elements.roadmapsViewGanttBtn = $("roadmapsViewGanttBtn");
   elements.roadmapsViewMapBtn = $("roadmapsViewMapBtn");
   elements.roadmapsViewRaciBtn = $("roadmapsViewRaciBtn");
   elements.roadmapsViewKanoBtn = $("roadmapsViewKanoBtn");
@@ -4271,6 +4276,9 @@ function cacheElements() {
   elements.raciMatrixDomainToggle = document.querySelector(".raci-matrix-domain-toggle__buttons");
   elements.raciMatrixFullscreenBtn = $("raciMatrixFullscreenBtn");
   elements.roadmapsKanoView = $("roadmapsKanoView");
+  elements.roadmapsGanttView = $("roadmapsGanttView");
+  elements.roadmapsGanttContainer = $("roadmapsGanttContainer");
+  elements.roadmapsGanttFullscreenBtn = $("roadmapsGanttFullscreenBtn");
   elements.portfolioKanoPanelToggle = document.querySelector(".portfolio-kano-panel-toggle__buttons");
   elements.portfolioKanoLegend = $("portfolioKanoLegend");
   elements.portfolioKanoMatrix = $("portfolioKanoMatrix");
@@ -4405,6 +4413,10 @@ function cacheElements() {
   elements.roadmapStatusFieldWrap = $("roadmapStatusFieldWrap");
   elements.roadmapStatusCentralizedHint = $("roadmapStatusCentralizedHint");
   elements.roadmapTshirtSize = $("roadmapTshirtSize");
+  elements.roadmapDeadline = $("roadmapDeadline");
+  elements.roadmapDeadlineBulkModeWrap = $("roadmapDeadlineBulkModeWrap");
+  elements.roadmapDeadlineBulkMode = $("roadmapDeadlineBulkMode");
+  elements.roadmapDeadlineEditorWrap = $("roadmapDeadlineEditorWrap");
   elements.roadmapPeriodsContainer = $("roadmapPeriodsContainer");
   elements.roadmapPeriodsBulkModeWrap = $("roadmapPeriodsBulkModeWrap");
   elements.roadmapPeriodsBulkMode = $("roadmapPeriodsBulkMode");
@@ -4899,6 +4911,8 @@ function initCompactLayoutClass() {
       renderScrumBoard();
     } else if (state.roadmapsView === "raci") {
       renderRaciMatrix();
+    } else if (state.roadmapsView === "gantt") {
+      renderRoadmapsGantt();
     } else if (state.roadmapsView === "kano") {
       renderKanoPortfolioMatrix();
     } else if (state.roadmapsView === "table") {
@@ -5037,6 +5051,7 @@ function attachEventListeners() {
     elements.portfolioSelectionEditBtn.addEventListener("click", handleBulkEdit);
   }
   initRoadmapBulkPeriodControls();
+  initRoadmapBulkDeadlineControls();
   initRoadmapBulkPreviewControls();
   if (elements.portfolioSelectionDuplicateBtn) {
     elements.portfolioSelectionDuplicateBtn.addEventListener("click", () => handleBulkRoadmapTransfer("duplicate"));
@@ -5102,8 +5117,17 @@ function attachEventListeners() {
       }
     });
   }
+  if (elements.roadmapsViewGanttBtn) {
+    elements.roadmapsViewGanttBtn.addEventListener("click", () => {
+      if (Fullscreen.isViewFullscreen() && state.roadmapsView !== "gantt") {
+        Fullscreen.switchViewWhileFullscreen("gantt");
+      } else {
+        switchRoadmapsView("gantt");
+      }
+    });
+  }
 
-  [elements.roadmapsViewTableBtn, elements.roadmapsViewBoardBtn, elements.roadmapsViewMoscowBtn, elements.roadmapsViewMapBtn, elements.roadmapsViewRaciBtn, elements.roadmapsViewKanoBtn]
+  [elements.roadmapsViewTableBtn, elements.roadmapsViewBoardBtn, elements.roadmapsViewMoscowBtn, elements.roadmapsViewMapBtn, elements.roadmapsViewRaciBtn, elements.roadmapsViewKanoBtn, elements.roadmapsViewGanttBtn]
     .filter(Boolean)
     .forEach((btn) => {
       btn.addEventListener("touchend", () => {
@@ -5144,6 +5168,9 @@ function attachEventListeners() {
 
   if (elements.raciMatrixFullscreenBtn && elements.roadmapsRaciView) {
     elements.raciMatrixFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.roadmapsRaciView));
+  }
+  if (elements.roadmapsGanttFullscreenBtn && elements.roadmapsGanttView) {
+    elements.roadmapsGanttFullscreenBtn.addEventListener("click", () => Fullscreen.toggle(elements.roadmapsGanttView));
   }
   if (elements.roadmapsRaciMatrixTable) {
     elements.roadmapsRaciMatrixTable.addEventListener("click", (event) => {
@@ -6200,14 +6227,77 @@ const filterAutocompleteState = {
 };
 
 let filterAutocompletePointerGuard = false;
+let filterAutocompleteGlobalHandlersBound = false;
 
 function isFilterAutocompleteInteractionTarget(node) {
   if (!node || typeof node.closest !== "function") return false;
+  if (filterAutocompletePointerGuard) return true;
   return !!node.closest(".filter-autocomplete");
 }
 
 function isFilterAutocompleteDropdownNode(node) {
   return isFilterAutocompleteInteractionTarget(node);
+}
+
+function isAnyFilterAutocompleteOpen() {
+  return FILTER_AUTOCOMPLETE_KINDS.some((kind) => filterAutocompleteState[kind].open);
+}
+
+function syncFilterAutocompleteValueState(kind) {
+  const field = getFilterAutocompleteField(kind);
+  if (!field?.wrapper || !field.input) return;
+  const hasValue = Boolean((field.input.value || "").trim());
+  field.wrapper.classList.toggle("filter-autocomplete--has-value", hasValue);
+}
+
+function applyFilterAutocompleteOpenState(kind) {
+  const field = getFilterAutocompleteField(kind);
+  const state = filterAutocompleteState[kind];
+  if (!field || !state || !field.input) return;
+  const open = !!state.open;
+  if (field.wrapper) {
+    field.wrapper.classList.toggle("filter-autocomplete__field--open", open);
+  }
+  const control = field.wrapper?.querySelector(".filter-autocomplete__control");
+  if (control) {
+    control.classList.toggle("filter-autocomplete__control--open", open);
+  }
+  const chevron = field.wrapper?.querySelector(".filter-autocomplete__chevron");
+  if (chevron) {
+    chevron.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+  if (field.dropdown) {
+    field.dropdown.hidden = !open;
+  }
+  field.input.setAttribute("aria-expanded", open ? "true" : "false");
+  syncFilterAutocompleteValueState(kind);
+}
+
+function bindFilterAutocompleteGlobalHandlers() {
+  if (filterAutocompleteGlobalHandlersBound) return;
+  filterAutocompleteGlobalHandlersBound = true;
+
+  document.addEventListener(
+    "pointerdown",
+    (event) => {
+      if (isFilterAutocompleteInteractionTarget(event.target)) return;
+      if (isAnyFilterAutocompleteOpen()) {
+        closeAllFilterAutocompleteDropdowns();
+      }
+    },
+    true
+  );
+
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (event.key !== "Escape" || !isAnyFilterAutocompleteOpen()) return;
+      closeAllFilterAutocompleteDropdowns();
+      event.preventDefault();
+      event.stopPropagation();
+    },
+    true
+  );
 }
 
 function bindFilterAutocompleteDropdownInteraction(kind) {
@@ -6374,6 +6464,8 @@ function setFilterAutocompleteOpen(kind, open, { silent = false } = {}) {
   if (!state) return;
 
   if (open) {
+    closeFilterCountriesPopup();
+    closeFilterRoadmapPeriodPopup();
     FILTER_AUTOCOMPLETE_KINDS.forEach((otherKind) => {
       if (otherKind !== kind) setFilterAutocompleteOpen(otherKind, false, { silent: true });
     });
@@ -6387,17 +6479,11 @@ function setFilterAutocompleteOpen(kind, open, { silent = false } = {}) {
     state.highlightIndex = -1;
   }
 
-  if (field.wrapper) {
-    field.wrapper.classList.toggle("filter-autocomplete__field--open", state.open);
+  applyFilterAutocompleteOpenState(kind);
+  if (state.open) {
+    bindFilterAutocompleteDropdownInteraction(kind);
+    mountFilterAutocompleteDropdown(kind);
   }
-  if (field.dropdown) {
-    field.dropdown.hidden = !state.open;
-    if (state.open) {
-      bindFilterAutocompleteDropdownInteraction(kind);
-      mountFilterAutocompleteDropdown(kind);
-    }
-  }
-  field.input.setAttribute("aria-expanded", state.open ? "true" : "false");
 }
 
 function closeAllFilterAutocompleteDropdowns() {
@@ -6417,6 +6503,7 @@ function selectFilterAutocompleteSuggestion(kind, value) {
   if (!field || !field.input) return;
   field.input.value = value;
   setFilterAutocompleteOpen(kind, false);
+  syncFilterAutocompleteValueState(kind);
   applyPortfolioFiltersNow();
   field.input.focus();
 }
@@ -6483,13 +6570,107 @@ function listboxAppend(listbox, option) {
   listbox.appendChild(li);
 }
 
+/** Inline combobox shell layout — survives portaled filter sheet + dev CSS cascade fights. */
+function applyFilterAutocompleteControlLayout(kind) {
+  const field = getFilterAutocompleteField(kind);
+  if (!field?.wrapper || !field.input) return;
+  const control = field.wrapper.querySelector(".filter-autocomplete__control");
+  if (!control) return;
+  const icon = control.querySelector(".filter-autocomplete__icon");
+  const chevron = control.querySelector(".filter-autocomplete__chevron");
+  const set = (el, prop, value) => {
+    if (!el) return;
+    el.style.setProperty(prop, value, "important");
+  };
+
+  set(control, "display", "flex");
+  set(control, "flex-direction", "row");
+  set(control, "align-items", "center");
+  set(control, "gap", "0.55rem");
+  set(control, "box-sizing", "border-box");
+  set(control, "width", "100%");
+  set(control, "min-width", "0");
+  set(control, "min-height", "42px");
+  set(control, "padding", "0.55rem 0.75rem");
+
+  set(icon, "flex", "0 0 auto");
+  set(icon, "flex-shrink", "0");
+  set(icon, "display", "grid");
+  set(icon, "place-items", "center");
+  set(icon, "width", "1.75rem");
+  set(icon, "min-width", "1.75rem");
+  set(icon, "height", "1.75rem");
+  set(icon, "margin", "0");
+  set(icon, "padding", "0");
+
+  set(field.input, "flex", "1 1 auto");
+  set(field.input, "width", "auto");
+  set(field.input, "min-width", "0");
+  set(field.input, "max-width", "none");
+  set(field.input, "min-height", "0");
+  set(field.input, "height", "auto");
+  set(field.input, "margin", "0");
+  set(field.input, "padding", "0");
+  set(field.input, "padding-inline", "0");
+  set(field.input, "border", "none");
+  set(field.input, "border-radius", "0");
+  set(field.input, "box-shadow", "none");
+  set(field.input, "background", "transparent");
+  set(field.input, "line-height", "1.25");
+  set(field.input, "text-align", "center");
+  set(field.input, "-webkit-appearance", "none");
+  set(field.input, "appearance", "none");
+
+  set(chevron, "flex", "0 0 auto");
+  set(chevron, "flex-shrink", "0");
+  set(chevron, "margin", "0");
+}
+
+function applyAllFilterAutocompleteControlLayouts() {
+  FILTER_AUTOCOMPLETE_KINDS.forEach((kind) => applyFilterAutocompleteControlLayout(kind));
+}
+
+function bindFilterAutocompleteControl(kind) {
+  const field = getFilterAutocompleteField(kind);
+  if (!field?.wrapper || field.wrapper.dataset.controlBound === "1") return;
+  field.wrapper.dataset.controlBound = "1";
+
+  applyFilterAutocompleteControlLayout(kind);
+
+  const chevron = field.wrapper.querySelector(".filter-autocomplete__chevron");
+  if (chevron) {
+    chevron.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (filterAutocompleteState[kind].open) {
+        setFilterAutocompleteOpen(kind, false);
+        field.input?.blur();
+      } else {
+        setFilterAutocompleteOpen(kind, true);
+        renderFilterAutocompleteOptions(kind);
+        field.input?.focus({ preventScroll: true });
+      }
+    });
+  }
+
+  syncFilterAutocompleteValueState(kind);
+}
+
 function initFilterAutocompleteField(kind) {
   const field = getFilterAutocompleteField(kind);
   if (!field || !field.input) return;
+  if (field.input.dataset.filterAutocompleteBound === "1") return;
+  field.input.dataset.filterAutocompleteBound = "1";
 
-  field.input.addEventListener("focus", () => {
+  bindFilterAutocompleteControl(kind);
+
+  field.input.addEventListener("pointerdown", () => {
     setFilterAutocompleteOpen(kind, true);
     renderFilterAutocompleteOptions(kind);
+  });
+
+  field.input.addEventListener("click", (event) => {
+    event.stopPropagation();
   });
 
   field.input.addEventListener("input", () => {
@@ -6498,6 +6679,7 @@ function initFilterAutocompleteField(kind) {
     }
     filterAutocompleteState[kind].highlightIndex = -1;
     renderFilterAutocompleteOptions(kind);
+    syncFilterAutocompleteValueState(kind);
     schedulePortfolioFilterApply();
   });
 
@@ -6557,23 +6739,49 @@ function initFilterAutocompleteField(kind) {
         e.preventDefault();
         const selected = options[state.highlightIndex].dataset.value || "";
         if (selected) selectFilterAutocompleteSuggestion(kind, selected);
+      } else if (state.open) {
+        setFilterAutocompleteOpen(kind, false);
       }
     }
   });
+}
 
-  field.input.addEventListener("blur", () => {
-    window.setTimeout(() => {
-      if (shouldKeepFilterAutocompleteOpen(kind)) return;
-      setFilterAutocompleteOpen(kind, false);
-    }, 180);
+function bindFilterAutocompleteDismissOnScroll() {
+  const scrollRoots = new Set();
+  [
+    elements.portfolioFiltersBody,
+    elements.portfolioFiltersSheet,
+    elements.portfolioFiltersDrawer,
+    document.getElementById("portfolioFiltersBody"),
+    document.getElementById("portfolioFiltersSheet"),
+    document.querySelector(".portfolio-filters-body")
+  ].forEach((node) => {
+    if (node) scrollRoots.add(node);
+  });
+  scrollRoots.forEach((node) => {
+    if (node.dataset.filterAutocompleteScrollBound === "1") return;
+    node.dataset.filterAutocompleteScrollBound = "1";
+    node.addEventListener(
+      "scroll",
+      () => {
+        if (isAnyFilterAutocompleteOpen()) {
+          closeAllFilterAutocompleteDropdowns();
+        }
+      },
+      { passive: true }
+    );
   });
 }
 
 function initFilterAutocompletes() {
+  bindFilterAutocompleteGlobalHandlers();
   FILTER_AUTOCOMPLETE_KINDS.forEach((kind) => {
     bindFilterAutocompleteDropdownInteraction(kind);
     initFilterAutocompleteField(kind);
+    setFilterAutocompleteOpen(kind, false, { silent: true });
   });
+  applyAllFilterAutocompleteControlLayouts();
+  bindFilterAutocompleteDismissOnScroll();
 }
 
 // --- Export / import (JSON & CSV, merge logic) ---
@@ -7897,6 +8105,7 @@ function buildProfilesFromCsvRows(header, rows) {
           legacyStatus: (cells[colIndex.roadmapStatus] ?? "").toString().trim() || null
         }
       ),
+      roadmapDeadline: normalizeRoadmapDeadline(cells[colIndex.roadmapDeadline]),
       moscowCategory: (cells[colIndex.moscowCategory] ?? "").toString().trim() || null,
       kanoFunctionality: normalizeKanoAxisLevel(cells[colIndex.kanoFunctionality]),
       kanoSatisfaction: normalizeKanoAxisLevel(cells[colIndex.kanoSatisfaction]),
@@ -8000,6 +8209,7 @@ function normalizeImportedRoadmap(roadmap) {
     tshirtSize: (roadmap.tshirtSize != null && String(roadmap.tshirtSize).trim() !== "") ? String(roadmap.tshirtSize).trim() : null,
     roadmapPeriod: normalizedLegacyPeriod,
     roadmapPeriods,
+    roadmapDeadline: normalizeRoadmapDeadline(roadmap.roadmapDeadline),
     moscowCategory: (roadmap.moscowCategory != null && String(roadmap.moscowCategory).trim() !== "" && typeof moscowList !== "undefined" && moscowList.includes(roadmap.moscowCategory)) ? String(roadmap.moscowCategory).trim() : null,
     kanoFunctionality: normalizeKanoAxisLevel(roadmap.kanoFunctionality),
     kanoSatisfaction: normalizeKanoAxisLevel(roadmap.kanoSatisfaction),
@@ -10030,6 +10240,86 @@ function renderRaciMatrix() {
   elements.roadmapsRaciMatrixTable.appendChild(board);
 }
 
+function buildRoadmapsGanttPayload(roadmaps) {
+  const list = Array.isArray(roadmaps) ? roadmaps : [];
+  const showOwner = typeof isSuperAdminModeActive === "function" && isSuperAdminModeActive();
+  return list.map((roadmap) => ({
+    id: roadmap.id,
+    title: (roadmap.title || roadmap.name || "Untitled roadmap").trim() || "Untitled roadmap",
+    periods: getRoadmapPeriodEntries(roadmap),
+    deadline: roadmap.roadmapDeadline || null,
+    ownerProfileName: showOwner ? (roadmap.ownerProfileName || "").trim() : ""
+  }));
+}
+
+function renderRoadmapsGanttEmpty(message, hint) {
+  const icon =
+    '<div class="roadmaps-gantt-empty__icon" aria-hidden="true">' +
+    '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5h8"/><path d="M3 12h14"/><path d="M3 19h11"/><path d="M16 8v8"/><path d="M20 6v12"/></svg>' +
+    "</div>";
+  elements.roadmapsGanttContainer.innerHTML =
+    '<div class="roadmaps-gantt-empty empty-state" role="status">' +
+    icon +
+    `<p class="roadmaps-gantt-empty__title">${message}</p>` +
+    `<p class="roadmaps-gantt-empty__hint">${hint}</p>` +
+    "</div>";
+  if (typeof GanttView !== "undefined" && typeof GanttView.syncGanttToolbarForLayout === "function") {
+    GanttView.syncGanttToolbarForLayout();
+  }
+  if (typeof GanttView !== "undefined" && typeof GanttView.bindGanttTodayButton === "function") {
+    GanttView.bindGanttTodayButton();
+  }
+}
+
+function resolveGanttZoomForViewport(savedZoom) {
+  const saved =
+    savedZoom === "compact" || savedZoom === "standard" || savedZoom === "comfortable"
+      ? savedZoom
+      : "standard";
+  if (typeof window !== "undefined" && window.matchMedia) {
+    if (window.matchMedia("(max-width: 768px)").matches) {
+      return saved === "comfortable" ? "standard" : saved === "standard" ? "compact" : saved;
+    }
+  }
+  return saved;
+}
+
+function renderRoadmapsGantt() {
+  if (!elements.roadmapsGanttContainer || typeof GanttView === "undefined") return;
+
+  const activeProfile = getActiveProfile();
+  if (!activeProfile) {
+    renderRoadmapsGanttEmpty(
+      "Create or select a profile",
+      "Choose a profile to plot roadmap periods on the timeline."
+    );
+    return;
+  }
+  if (!isProfileUnlocked(activeProfile.id)) {
+    renderRoadmapsGanttEmpty(
+      "Profile locked",
+      "Unlock this profile to view the Gantt timeline."
+    );
+    return;
+  }
+
+  const baseRoadmaps = getPortfolioRoadmapsBaseList();
+  initFilterRoadmapPeriodOptions(baseRoadmaps);
+  const roadmaps = sortRoadmaps(applyFilters(baseRoadmaps));
+  const zoom = resolveGanttZoomForViewport(state.ganttZoom);
+  GanttView.render(elements.roadmapsGanttContainer, {
+    roadmaps: buildRoadmapsGanttPayload(roadmaps),
+    escapeHtml,
+    zoom,
+    onOpenRoadmap: (roadmapId) => openRoadmapModal("view", roadmapId),
+    onZoomChange: (nextZoom) => {
+      state.ganttZoom = nextZoom;
+      saveState();
+      renderRoadmapsGantt();
+    }
+  });
+}
+
 function renderNonTableRoadmapsView() {
   if (state.roadmapsView === "board" && elements.scrumBoardContainer) {
     renderScrumBoard();
@@ -10039,6 +10329,8 @@ function renderNonTableRoadmapsView() {
     renderRoadmapsMap();
   } else if (state.roadmapsView === "raci" && elements.roadmapsRaciMatrixTable) {
     renderRaciMatrix();
+  } else if (state.roadmapsView === "gantt" && elements.roadmapsGanttContainer) {
+    renderRoadmapsGantt();
   } else if (state.roadmapsView === "kano" && elements.portfolioKanoMatrix) {
     renderKanoPortfolioMatrix();
   }
@@ -11461,6 +11753,151 @@ function formatRoadmapLatestPeriodForTableDisplay(roadmap) {
   return latest && latest.period ? latest.period : "";
 }
 
+const ROADMAP_PERIOD_TOOLTIP_SCROLL_THRESHOLD = 3;
+
+function formatRoadmapDeadlineLabelForTable(roadmap) {
+  return formatRoadmapDeadlineForDisplay(roadmap?.roadmapDeadline);
+}
+
+function buildRoadmapPeriodTableTooltipAriaLabel(roadmap, periodInlineValue, periodFullValue, periodEntries) {
+  const deadlineLabel = formatRoadmapDeadlineLabelForTable(roadmap);
+  const deadlineHint = formatRoadmapDeadlineRelativeHint(roadmap?.roadmapDeadline);
+  const deadlineSuffix = deadlineLabel
+    ? `. Deadline: ${deadlineLabel}${deadlineHint ? ` (${deadlineHint})` : ""}`
+    : "";
+  if (periodEntries.length > 1) {
+    return `Roadmap periods: ${periodFullValue}. Showing latest: ${periodInlineValue}${deadlineSuffix}`;
+  }
+  return `Roadmap period: ${periodInlineValue}${deadlineSuffix}`;
+}
+
+function buildRoadmapPeriodTableTooltipBody(roadmap, meta) {
+  const periodEntries = getRoadmapPeriodEntries(roadmap);
+  const deadlineLabel = formatRoadmapDeadlineLabelForTable(roadmap);
+
+  const bodyEl = document.createElement("div");
+  bodyEl.className = "cell-type-tooltip-body cell-period-tooltip-body";
+
+  if (periodEntries.length) {
+    const periodsEl = document.createElement("div");
+    periodsEl.className = "cell-period-tooltip-periods";
+    if (periodEntries.length > ROADMAP_PERIOD_TOOLTIP_SCROLL_THRESHOLD) {
+      periodsEl.classList.add("cell-period-tooltip-periods--scroll");
+    }
+    periodEntries.forEach((entry) => {
+      const periodMatch = String(entry.period).trim().match(/^(\d{4})-Q([1-4])$/i);
+      let bodyText = `${entry.period} (${entry.status})`;
+      if (periodMatch) {
+        const year = periodMatch[1];
+        const q = periodMatch[2];
+        const quarterMonths = { "1": "Jan - Mar", "2": "Apr - Jun", "3": "Jul - Sep", "4": "Oct - Dec" };
+        const range = quarterMonths[q] || "";
+        bodyText = `${entry.period} (${entry.status}) → ${range} ${year}`;
+      }
+      const block = document.createElement("p");
+      block.textContent = bodyText;
+      if (block.textContent) periodsEl.appendChild(block);
+    });
+    bodyEl.appendChild(periodsEl);
+    const scrollablePeriods = periodsEl.classList.contains("cell-period-tooltip-periods--scroll")
+      ? periodsEl
+      : null;
+    if (scrollablePeriods) {
+      scrollablePeriods.addEventListener(
+        "wheel",
+        (e) => {
+          e.stopPropagation();
+        },
+        { passive: true }
+      );
+    }
+  }
+
+  if (deadlineLabel) {
+    const deadlineEl = document.createElement("div");
+    deadlineEl.className = "cell-period-tooltip-deadline";
+    deadlineEl.setAttribute("role", "note");
+
+    const rowEl = document.createElement("div");
+    rowEl.className = "cell-period-tooltip-deadline-row";
+
+    const iconEl = document.createElement("span");
+    iconEl.className = "cell-period-tooltip-deadline-icon";
+    iconEl.setAttribute("aria-hidden", "true");
+    iconEl.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">' +
+      '<path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M4.5 9.75h15M4.5 7.5a1.5 1.5 0 011.5-1.5h12a1.5 1.5 0 011.5 1.5v11.25a1.5 1.5 0 01-1.5 1.5h-12a1.5 1.5 0 01-1.5-1.5V7.5z"/>' +
+      "</svg>";
+
+    const textEl = document.createElement("div");
+    textEl.className = "cell-period-tooltip-deadline-text";
+
+    const labelEl = document.createElement("span");
+    labelEl.className = "cell-period-tooltip-deadline-label";
+    labelEl.textContent = "Deadline";
+
+    const valueEl = document.createElement("span");
+    valueEl.className = "cell-period-tooltip-deadline-value";
+    valueEl.textContent = deadlineLabel;
+
+    textEl.appendChild(labelEl);
+    textEl.appendChild(valueEl);
+
+    const relativeHint = formatRoadmapDeadlineRelativeHint(roadmap?.roadmapDeadline);
+    if (relativeHint) {
+      const hintEl = document.createElement("span");
+      const tone = getRoadmapDeadlineHintTone(roadmap?.roadmapDeadline);
+      hintEl.className = `cell-period-tooltip-deadline-hint cell-period-tooltip-deadline-hint--${tone}`;
+      hintEl.textContent = relativeHint;
+      textEl.appendChild(hintEl);
+    }
+
+    rowEl.appendChild(iconEl);
+    rowEl.appendChild(textEl);
+    deadlineEl.appendChild(rowEl);
+    bodyEl.appendChild(deadlineEl);
+  }
+
+  if (!periodEntries.length && !deadlineLabel && meta?.tooltipBodyDescription) {
+    const block = document.createElement("p");
+    block.className = "cell-period-tooltip-empty";
+    block.textContent = meta.tooltipBodyDescription;
+    bodyEl.appendChild(block);
+  }
+
+  return bodyEl;
+}
+
+/** Caps the periods list to exactly three visible rows; inner scroll only (not the whole tooltip). */
+function measureRoadmapPeriodTooltipListHeight(periodsEl, visibleCount) {
+  const rows = periodsEl.querySelectorAll("p");
+  const count = Math.min(visibleCount, rows.length);
+  if (count <= 0) return 0;
+  const containerStyle = window.getComputedStyle(periodsEl);
+  const paddingTop = parseFloat(containerStyle.paddingTop) || 0;
+  const paddingBottom = parseFloat(containerStyle.paddingBottom) || 0;
+  const firstRow = rows[0];
+  const lastRow = rows[count - 1];
+  if (!firstRow || !lastRow) return 0;
+  const contentHeight = lastRow.offsetTop + lastRow.offsetHeight - firstRow.offsetTop;
+  return paddingTop + contentHeight + paddingBottom + 6;
+}
+
+function syncRoadmapPeriodTooltipScrollLayout(tooltip) {
+  if (!tooltip?.classList.contains("cell-type-tooltip--period")) return;
+  tooltip.style.maxHeight = "";
+  const periodsEl = tooltip.querySelector(".cell-period-tooltip-periods--scroll");
+  if (!periodsEl) return;
+  const rows = periodsEl.querySelectorAll("p");
+  if (rows.length <= ROADMAP_PERIOD_TOOLTIP_SCROLL_THRESHOLD) {
+    periodsEl.style.maxHeight = "";
+    return;
+  }
+  periodsEl.style.maxHeight = `${Math.ceil(
+    measureRoadmapPeriodTooltipListHeight(periodsEl, ROADMAP_PERIOD_TOOLTIP_SCROLL_THRESHOLD)
+  )}px`;
+}
+
 function roadmapHasPeriodFilterMatch(roadmap, selectedPeriods) {
   if (!selectedPeriods || !selectedPeriods.length) return true;
   const entries = getRoadmapPeriodEntries(roadmap);
@@ -11653,7 +12090,8 @@ function serializeRoadmapForStorage(roadmap) {
     note: normalizeRoadmapNote(roadmap.note),
     roadmapPeriods,
     roadmapPeriod,
-    roadmapStatus
+    roadmapStatus,
+    roadmapDeadline: normalizeRoadmapDeadline(roadmap.roadmapDeadline)
   });
 }
 
@@ -11715,7 +12153,8 @@ function applyPersistedWorkspaceUiState(parsed) {
     savedRoadmapsView === "moscow" ||
     savedRoadmapsView === "map" ||
     savedRoadmapsView === "raci" ||
-    savedRoadmapsView === "kano"
+    savedRoadmapsView === "kano" ||
+    savedRoadmapsView === "gantt"
   ) {
     state.roadmapsView = savedRoadmapsView;
   }
@@ -11724,6 +12163,9 @@ function applyPersistedWorkspaceUiState(parsed) {
   }
   if (parsed.kanoPortfolioPanel === "positioned" || parsed.kanoPortfolioPanel === "unpositioned") {
     state.kanoPortfolioPanel = parsed.kanoPortfolioPanel;
+  }
+  if (parsed.ganttZoom === "compact" || parsed.ganttZoom === "standard" || parsed.ganttZoom === "comfortable") {
+    state.ganttZoom = parsed.ganttZoom;
   }
   if (typeof parsed.tableSortByRice === "boolean") {
     state.tableSortByRice = parsed.tableSortByRice;
@@ -11888,6 +12330,7 @@ function normalizeLoadedRoadmap(roadmap) {
     tshirtSize: (roadmap.tshirtSize != null && String(roadmap.tshirtSize).trim() !== "") ? String(roadmap.tshirtSize).trim() : null,
     roadmapPeriod: normalizedLegacyPeriod,
     roadmapPeriods,
+    roadmapDeadline: normalizeRoadmapDeadline(roadmap.roadmapDeadline),
     moscowCategory: (roadmap.moscowCategory != null && String(roadmap.moscowCategory).trim() !== "" && typeof moscowList !== "undefined" && moscowList.includes(roadmap.moscowCategory)) ? String(roadmap.moscowCategory).trim() : null,
     kanoFunctionality: normalizeKanoAxisLevel(roadmap.kanoFunctionality),
     kanoSatisfaction: normalizeKanoAxisLevel(roadmap.kanoSatisfaction),
@@ -12245,6 +12688,7 @@ function syncRoadmapsViewVisibility() {
   const showMap = view === "map";
   const showRaci = view === "raci";
   const showKano = view === "kano";
+  const showGantt = view === "gantt";
 
   elements.roadmapsTableView.style.display = showTable ? "flex" : "none";
   elements.roadmapsBoardView.style.display = showBoard ? "flex" : "none";
@@ -12265,6 +12709,10 @@ function syncRoadmapsViewVisibility() {
     elements.roadmapsKanoView.style.display = showKano ? "flex" : "none";
     elements.roadmapsKanoView.setAttribute("aria-hidden", String(!showKano));
   }
+  if (elements.roadmapsGanttView) {
+    elements.roadmapsGanttView.style.display = showGantt ? "flex" : "none";
+    elements.roadmapsGanttView.setAttribute("aria-hidden", String(!showGantt));
+  }
 }
 
 function getActiveRoadmapsViewRoot() {
@@ -12274,6 +12722,7 @@ function getActiveRoadmapsViewRoot() {
   if (state.roadmapsView === "map") return elements.roadmapsMapView;
   if (state.roadmapsView === "raci") return elements.roadmapsRaciView;
   if (state.roadmapsView === "kano") return elements.roadmapsKanoView;
+  if (state.roadmapsView === "gantt") return elements.roadmapsGanttView;
   return null;
 }
 
@@ -12612,6 +13061,7 @@ function compactTooltipUsesBackdrop(tooltip) {
   }
   if (!tooltip.classList.contains("cell-type-tooltip-visible")) return false;
   if (tooltip.classList.contains("cell-type-tooltip--scroll")) return true;
+  if (tooltip.querySelector(".cell-period-tooltip-periods--scroll")) return true;
   if (tooltip.classList.contains("cell-type-tooltip--raci")) return true;
   return false;
 }
@@ -12815,7 +13265,9 @@ function finalizeTooltipViewportPosition(tooltip, anchorRect, options = {}) {
   if (!tooltip || !anchorRect) return;
   const margin = 12;
   const vh = window.innerHeight;
-  const isScroll = tooltip.classList.contains("cell-type-tooltip--scroll");
+  const isScroll =
+    tooltip.classList.contains("cell-type-tooltip--scroll") &&
+    !tooltip.classList.contains("cell-type-tooltip--period");
   const pointerAnchored = options.pointerAnchored === true;
 
   if (pointerAnchored) {
@@ -12912,6 +13364,7 @@ function positionProfileTooltip(wrap, anchorPoint) {
   returnTooltipsToOwner();
   getTooltipRoot().appendChild(tooltip);
   tooltip._ownerWrap = wrap;
+  tooltip.style.maxHeight = "";
   tooltip.classList.add("cell-type-tooltip-visible", "cell-type-tooltip--floating");
   activeTooltipWrap = wrap;
   syncCompactTooltipBackdrop(tooltip);
@@ -12956,6 +13409,18 @@ function positionProfileTooltip(wrap, anchorPoint) {
 
   clampTooltipHorizontal(tooltip, centerX);
   finalizeTooltipViewportPosition(tooltip, rect, { pointerAnchored: usePointerAnchor });
+  if (tooltip.classList.contains("cell-type-tooltip--period")) {
+    tooltip.style.maxHeight = "";
+    const syncPeriodLayout = () => {
+      if (!tooltip.classList.contains("cell-type-tooltip-visible")) return;
+      syncRoadmapPeriodTooltipScrollLayout(tooltip);
+      tooltip.style.maxHeight = "";
+    };
+    requestAnimationFrame(() => {
+      syncPeriodLayout();
+      requestAnimationFrame(syncPeriodLayout);
+    });
+  }
 }
 
 function toggleCompactTableTooltip(wrap, anchorPoint) {
@@ -13046,6 +13511,7 @@ function mountFiltersSheetToScrimRoot() {
   if (!sheet || sheet.parentNode === root) return;
   root.appendChild(sheet);
   sheet.dataset.filtersSheetPortaled = "1";
+  applyAllFilterAutocompleteControlLayouts();
 }
 
 function restoreFiltersSheetToDrawer() {
@@ -13073,6 +13539,7 @@ function openFiltersSheet() {
     drawer.open = true;
     syncPortfolioFiltersDrawerState();
     syncCompactFiltersChrome();
+    applyAllFilterAutocompleteControlLayouts();
     return;
   }
 
@@ -13091,6 +13558,9 @@ function openFiltersSheet() {
     backdrop.classList.add("filters-sheet-backdrop--visible");
   }
   if (summary) summary.setAttribute("aria-expanded", "true");
+
+  applyAllFilterAutocompleteControlLayouts();
+  requestAnimationFrame(() => applyAllFilterAutocompleteControlLayouts());
 
   lockAppScroll();
   syncPortfolioFiltersDrawerState();
@@ -13211,6 +13681,7 @@ function initPortfolioFiltersDrawer() {
     if (!drawer.open) {
       closeFilterCountriesPopup();
       closeFilterRoadmapPeriodPopup();
+      closeAllFilterAutocompleteDropdowns();
       if (elements.filtersAdvanced) {
         elements.filtersAdvanced.classList.remove("visible");
         syncCompactFilterButtonLabels();
@@ -13675,7 +14146,7 @@ function updatePortfolioHeaderSubtitle(text, { hideWhenEmpty = true, hideWhenSam
 const PORTFOLIO_VIEW_TAB_PIN_TO_END = "map";
 
 /** Preferred order for portfolio views. Do not include {@link PORTFOLIO_VIEW_TAB_PIN_TO_END} — it is appended last. */
-const PORTFOLIO_VIEW_TAB_ORDER = ["table", "board", "moscow", "raci", "kano"];
+const PORTFOLIO_VIEW_TAB_ORDER = ["table", "board", "moscow", "gantt", "raci", "kano"];
 
 function getPortfolioViewTabOrder() {
   const pin = PORTFOLIO_VIEW_TAB_PIN_TO_END;
@@ -13702,6 +14173,7 @@ function getPortfolioViewTabButton(view) {
     table: elements.roadmapsViewTableBtn,
     board: elements.roadmapsViewBoardBtn,
     moscow: elements.roadmapsViewMoscowBtn,
+    gantt: elements.roadmapsViewGanttBtn,
     map: elements.roadmapsViewMapBtn,
     raci: elements.roadmapsViewRaciBtn,
     kano: elements.roadmapsViewKanoBtn
@@ -13888,16 +14360,9 @@ function blurPortfolioViewTabs() {
 
 function syncPortfolioViewTabState(view) {
   const activeView = view || state.roadmapsView;
-  const tabMap = [
-    [elements.roadmapsViewTableBtn, "table"],
-    [elements.roadmapsViewBoardBtn, "board"],
-    [elements.roadmapsViewMoscowBtn, "moscow"],
-    [elements.roadmapsViewMapBtn, "map"],
-    [elements.roadmapsViewRaciBtn, "raci"],
-    [elements.roadmapsViewKanoBtn, "kano"]
-  ];
 
-  tabMap.forEach(([btn, name]) => {
+  getPortfolioViewTabOrder().forEach((name) => {
+    const btn = getPortfolioViewTabButton(name);
     if (!btn) return;
     const isActive = activeView === name;
     btn.classList.toggle("view-toggle-btn--active", isActive);
@@ -13906,6 +14371,7 @@ function syncPortfolioViewTabState(view) {
     btn.removeAttribute("title");
     if (!isActive && document.activeElement === btn) btn.blur();
   });
+
   layoutPortfolioViewTabs();
 }
 
@@ -14429,6 +14895,62 @@ function getProfilePickerQuery() {
   return (elements.profilePickerInput?.value || "").trim().toLowerCase();
 }
 
+function applyProfilePickerControlLayout() {
+  const control = elements.profilePickerControl || $("profilePickerControl");
+  const input = elements.profilePickerInput || $("profilePickerInput");
+  const avatar = elements.profilePickerAvatar || $("profilePickerAvatar");
+  const display = elements.profilePickerDisplay || $("profilePickerDisplay");
+  const displayCopy = display?.querySelector(".profile-picker__display-copy");
+  if (!control) return;
+  const set = (el, prop, value) => {
+    if (!el) return;
+    el.style.setProperty(prop, value, "important");
+  };
+
+  set(control, "display", "grid");
+  set(control, "grid-template-columns", "auto minmax(0, 1fr)");
+  set(control, "align-items", "center");
+  set(control, "gap", "0.55rem");
+  set(control, "box-sizing", "border-box");
+  set(control, "width", "100%");
+  set(control, "padding", "0.35rem 0.62rem 0.35rem 0.58rem");
+
+  set(avatar, "grid-column", "1");
+  set(avatar, "grid-row", "1");
+  set(avatar, "flex", "0 0 auto");
+  set(avatar, "flex-shrink", "0");
+
+  set(display, "grid-column", "2");
+  set(display, "grid-row", "1");
+  set(display, "display", "grid");
+  set(display, "grid-template-columns", "minmax(0, 1fr) auto");
+  set(display, "align-items", "center");
+  set(display, "width", "100%");
+  set(display, "min-width", "0");
+
+  set(displayCopy, "justify-self", "center");
+  set(displayCopy, "text-align", "center");
+  set(displayCopy, "max-width", "100%");
+
+  if (input) {
+    set(input, "grid-column", "2");
+    set(input, "grid-row", "1");
+    set(input, "flex", "1 1 auto");
+    set(input, "min-width", "0");
+    set(input, "width", "100%");
+    set(input, "margin", "0");
+    set(input, "padding", "0");
+    set(input, "border", "none");
+    set(input, "background", "transparent");
+    set(input, "box-shadow", "none");
+    set(input, "min-height", "0");
+    set(input, "text-align", "center");
+  }
+
+  const nameEl = elements.profilePickerName || $("profilePickerName");
+  set(nameEl, "text-align", "center");
+}
+
 function syncProfilePickerInputDisplay() {
   const input = elements.profilePickerInput || $("profilePickerInput");
   const avatar = elements.profilePickerAvatar || $("profilePickerAvatar");
@@ -14490,6 +15012,8 @@ function syncProfilePickerInputDisplay() {
   } else if (avatar && activeProfile) {
     avatar.textContent = getProfileInitials(activeProfile.name);
   }
+
+  applyProfilePickerControlLayout();
 }
 
 function setProfilePickerOpen(open) {
@@ -15353,16 +15877,14 @@ function renderRoadmaps() {
       wrap.className = "cell-period-with-tooltip";
       wrap.setAttribute(
         "aria-label",
-        periodEntries.length > 1
-          ? `Roadmap periods: ${periodFullValue}. Showing latest: ${periodInlineValue}`
-          : `Roadmap period: ${periodInlineValue}`
+        buildRoadmapPeriodTableTooltipAriaLabel(roadmap, periodInlineValue, periodFullValue, periodEntries)
       );
       const textSpan = document.createElement("span");
       textSpan.className = "cell-meta cell-period-text";
       textSpan.textContent = periodInlineValue;
       wrap.appendChild(textSpan);
       const tooltipEl = document.createElement("div");
-      tooltipEl.className = "cell-type-tooltip";
+      tooltipEl.className = "cell-type-tooltip cell-type-tooltip--period";
       tooltipEl.setAttribute("role", "tooltip");
       if (meta.tooltipTitle != null) {
         const titleEl = document.createElement("div");
@@ -15370,30 +15892,7 @@ function renderRoadmaps() {
         titleEl.textContent = meta.tooltipTitle;
         tooltipEl.appendChild(titleEl);
       }
-      if (meta.tooltipBodyDescription != null) {
-        const bodyEl = document.createElement("div");
-        bodyEl.className = "cell-type-tooltip-body";
-        periodEntries.forEach((entry) => {
-          const periodMatch = String(entry.period).trim().match(/^(\d{4})-Q([1-4])$/i);
-          let bodyText = `${entry.period} (${entry.status})`;
-          if (periodMatch) {
-            const year = periodMatch[1];
-            const q = periodMatch[2];
-            const quarterMonths = { "1": "Jan - Mar", "2": "Apr - Jun", "3": "Jul - Sep", "4": "Oct - Dec" };
-            const range = quarterMonths[q] || "";
-            bodyText = `${entry.period} (${entry.status}) → ${range} ${year}`;
-          }
-          const block = document.createElement("p");
-          block.textContent = bodyText;
-          if (block.textContent) bodyEl.appendChild(block);
-        });
-        if (!bodyEl.childNodes.length) {
-          const block = document.createElement("p");
-          block.textContent = meta.tooltipBodyDescription;
-          bodyEl.appendChild(block);
-        }
-        tooltipEl.appendChild(bodyEl);
-      }
+      tooltipEl.appendChild(buildRoadmapPeriodTableTooltipBody(roadmap, meta));
       wrap.appendChild(tooltipEl);
       tdPeriod.appendChild(wrap);
     } else {
@@ -15683,6 +16182,9 @@ function renderRoadmaps() {
 function switchRoadmapsView(view) {
   closePortfolioViewTabsMenu();
   hideCellTypeTooltips();
+  if (typeof GanttView !== "undefined" && typeof GanttView.hideTooltip === "function") {
+    GanttView.hideTooltip();
+  }
   state.roadmapsView = view;
   saveState();
   if (!elements.roadmapsTableView || !elements.roadmapsBoardView) return;
@@ -15693,6 +16195,7 @@ function switchRoadmapsView(view) {
   const showMap = view === "map";
   const showRaci = view === "raci";
   const showKano = view === "kano";
+  const showGantt = view === "gantt";
 
   elements.roadmapsTableView.style.display = showTable ? "flex" : "none";
   elements.roadmapsBoardView.style.display = showBoard ? "flex" : "none";
@@ -15712,6 +16215,10 @@ function switchRoadmapsView(view) {
   if (elements.roadmapsKanoView) {
     elements.roadmapsKanoView.style.display = showKano ? "flex" : "none";
     elements.roadmapsKanoView.setAttribute("aria-hidden", String(!showKano));
+  }
+  if (elements.roadmapsGanttView) {
+    elements.roadmapsGanttView.style.display = showGantt ? "flex" : "none";
+    elements.roadmapsGanttView.setAttribute("aria-hidden", String(!showGantt));
   }
 
   if (!showTable) {
@@ -19553,6 +20060,7 @@ function clearFilters() {
   if (elements.filterLabel) elements.filterLabel.value = "";
   if (elements.filterBusinessLead) elements.filterBusinessLead.value = "";
   if (elements.filterTechLead) elements.filterTechLead.value = "";
+  FILTER_AUTOCOMPLETE_KINDS.forEach((kind) => syncFilterAutocompleteValueState(kind));
   if (elements.filterLabels) elements.filterLabels.value = "";
   if (elements.filterLinks) elements.filterLinks.value = "";
   if (elements.filterOwnerProfile) elements.filterOwnerProfile.value = "";
@@ -19735,7 +20243,7 @@ function handleBulkDelete() {
 const BULK_EDIT_NO_CHANGE = "";
 const BULK_EDIT_CLEAR = "__clear__";
 const BULK_PERIODS_REPLACE = "replace";
-const ROADMAP_TYPE_OPTIONS = ["New Product", "Improvement", "Tech Debt", "Market Expansion"];
+const BULK_DEADLINE_SET = "set";
 const ROADMAP_BULK_SELECT_IDS = [
   "roadmapType",
   "roadmapStatus",
@@ -19808,6 +20316,89 @@ function populateBulkEditPeriodsModeSelect(selectEl) {
   clear.textContent = "Clear periods";
   selectEl.appendChild(clear);
   selectEl.value = BULK_EDIT_NO_CHANGE;
+}
+
+function populateBulkEditDeadlineModeSelect(selectEl) {
+  if (!selectEl) return;
+  selectEl.innerHTML = "";
+  const noChange = document.createElement("option");
+  noChange.value = BULK_EDIT_NO_CHANGE;
+  noChange.textContent = "No change";
+  selectEl.appendChild(noChange);
+  const setDeadline = document.createElement("option");
+  setDeadline.value = BULK_DEADLINE_SET;
+  setDeadline.textContent = "Set deadline";
+  selectEl.appendChild(setDeadline);
+  const clear = document.createElement("option");
+  clear.value = BULK_EDIT_CLEAR;
+  clear.textContent = "Clear deadline";
+  selectEl.appendChild(clear);
+  selectEl.value = BULK_EDIT_NO_CHANGE;
+}
+
+function isRoadmapDeadlineEditorVisible() {
+  return !!(elements.roadmapDeadlineEditorWrap && !elements.roadmapDeadlineEditorWrap.hidden);
+}
+
+function syncRoadmapDeadlineBulkEditorVisibility() {
+  if (!isRoadmapModalBulkMode()) {
+    if (elements.roadmapDeadlineBulkModeWrap) elements.roadmapDeadlineBulkModeWrap.hidden = true;
+    if (elements.roadmapDeadlineEditorWrap) elements.roadmapDeadlineEditorWrap.hidden = false;
+    return;
+  }
+  const mode = (elements.roadmapDeadlineBulkMode?.value || BULK_EDIT_NO_CHANGE).trim();
+  if (elements.roadmapDeadlineBulkModeWrap) elements.roadmapDeadlineBulkModeWrap.hidden = false;
+  const editorWrap = elements.roadmapDeadlineEditorWrap;
+  if (!editorWrap) return;
+  if (mode === BULK_DEADLINE_SET) {
+    editorWrap.hidden = false;
+    return;
+  }
+  editorWrap.hidden = true;
+  if (mode === BULK_EDIT_CLEAR && elements.roadmapDeadline) {
+    elements.roadmapDeadline.value = "";
+  }
+}
+
+function resolveRoadmapDeadlineForFormCollect() {
+  if (!isRoadmapModalBulkMode()) {
+    return normalizeRoadmapDeadline(elements.roadmapDeadline?.value);
+  }
+  if (isRoadmapDeadlineEditorVisible()) {
+    return normalizeRoadmapDeadline(elements.roadmapDeadline?.value);
+  }
+  const mode = (elements.roadmapDeadlineBulkMode?.value || BULK_EDIT_NO_CHANGE).trim();
+  if (mode === BULK_DEADLINE_SET) {
+    return normalizeRoadmapDeadline(elements.roadmapDeadline?.value);
+  }
+  if (mode === BULK_EDIT_CLEAR) {
+    return null;
+  }
+  const located = findRoadmapWithOwner(getBulkActiveRoadmapId());
+  return located.roadmap ? normalizeRoadmapDeadline(located.roadmap.roadmapDeadline) : null;
+}
+
+function syncRoadmapDeadlineControlsForModal(roadmap, { isView = false } = {}) {
+  if (isRoadmapModalBulkMode()) {
+    if (elements.roadmapDeadlineBulkModeWrap) {
+      elements.roadmapDeadlineBulkModeWrap.hidden = false;
+    }
+    if (elements.roadmapDeadlineBulkMode && !elements.roadmapDeadlineBulkMode.options.length) {
+      populateBulkEditDeadlineModeSelect(elements.roadmapDeadlineBulkMode);
+    }
+    syncRoadmapDeadlineBulkEditorVisibility();
+    if (isRoadmapDeadlineEditorVisible() && elements.roadmapDeadline) {
+      elements.roadmapDeadline.value = roadmapDeadlineToDateInputValue(roadmap?.roadmapDeadline);
+      elements.roadmapDeadline.disabled = !!isView;
+    }
+  } else {
+    if (elements.roadmapDeadlineBulkModeWrap) elements.roadmapDeadlineBulkModeWrap.hidden = true;
+    if (elements.roadmapDeadlineEditorWrap) elements.roadmapDeadlineEditorWrap.hidden = false;
+    if (elements.roadmapDeadline) {
+      elements.roadmapDeadline.value = roadmapDeadlineToDateInputValue(roadmap?.roadmapDeadline);
+      elements.roadmapDeadline.disabled = !!isView;
+    }
+  }
 }
 
 function syncRoadmapBulkPeriodsEditorVisibility() {
@@ -19942,6 +20533,7 @@ function roadmapEntityToEditableRaw(roadmap) {
     tshirtSize: roadmap.tshirtSize || null,
     roadmapPeriod: periodFields.roadmapPeriod,
     roadmapPeriods,
+    roadmapDeadline: normalizeRoadmapDeadline(roadmap.roadmapDeadline),
     moscowCategory: roadmap.moscowCategory || null,
     kanoFunctionality: roadmap.kanoFunctionality != null ? roadmap.kanoFunctionality : null,
     kanoSatisfaction: roadmap.kanoSatisfaction != null ? roadmap.kanoSatisfaction : null,
@@ -20069,6 +20661,7 @@ function populateRoadmapFormFromRoadmap(roadmap, { isView = false } = {}) {
     coalesceLegacyRoadmapStringField(roadmap, "roadmapType", "projectType") || "";
   elements.roadmapStatus.value = getEffectiveRoadmapStatus(roadmap) || "";
   elements.roadmapTshirtSize.value = roadmap.tshirtSize || "";
+  syncRoadmapDeadlineControlsForModal(roadmap, { isView });
   syncRoadmapPeriodControlsForModal(roadmap, { isView });
   elements.roadmapMoscow.value = roadmap.moscowCategory || "";
   setRoadmapKanoSelection(roadmap.kanoFunctionality, roadmap.kanoSatisfaction, { readonly: isView });
@@ -20385,6 +20978,10 @@ function resetRoadmapFormFieldForBulkEdit() {
   if (elements.roadmapType) elements.roadmapType.value = "";
   if (elements.roadmapStatus) elements.roadmapStatus.value = "";
   if (elements.roadmapTshirtSize) elements.roadmapTshirtSize.value = "";
+  if (elements.roadmapDeadline) elements.roadmapDeadline.value = "";
+  if (elements.roadmapDeadlineBulkMode) elements.roadmapDeadlineBulkMode.innerHTML = "";
+  if (elements.roadmapDeadlineBulkModeWrap) elements.roadmapDeadlineBulkModeWrap.hidden = true;
+  if (elements.roadmapDeadlineEditorWrap) elements.roadmapDeadlineEditorWrap.hidden = false;
   if (elements.roadmapMoscow) elements.roadmapMoscow.value = "";
   setRoadmapKanoSelection(null, null, { readonly: false });
   renderRoadmapPeriodControls([], { containerEl: elements.roadmapPeriodsContainer });
@@ -20421,7 +21018,9 @@ function prepareRoadmapFormForBulkMode() {
     decorateNativeSelectForBulkMode(selectEl);
   });
   populateBulkEditPeriodsModeSelect(elements.roadmapPeriodsBulkMode);
+  populateBulkEditDeadlineModeSelect(elements.roadmapDeadlineBulkMode);
   syncRoadmapBulkPeriodsEditorVisibility();
+  syncRoadmapDeadlineBulkEditorVisibility();
   if (elements.roadmapOwnerProfileWrap) {
     elements.roadmapOwnerProfileWrap.hidden = true;
   }
@@ -20446,6 +21045,15 @@ function restoreRoadmapFormFromBulkMode() {
   }
   if (elements.roadmapPeriodsEditorWrap) {
     elements.roadmapPeriodsEditorWrap.hidden = false;
+  }
+  if (elements.roadmapDeadlineBulkMode) {
+    elements.roadmapDeadlineBulkMode.innerHTML = "";
+  }
+  if (elements.roadmapDeadlineBulkModeWrap) {
+    elements.roadmapDeadlineBulkModeWrap.hidden = true;
+  }
+  if (elements.roadmapDeadlineEditorWrap) {
+    elements.roadmapDeadlineEditorWrap.hidden = false;
   }
   if (elements.roadmapTitle) {
     elements.roadmapTitle.setAttribute("required", "required");
@@ -20472,6 +21080,15 @@ function restoreRoadmapFormForSingleEditPresentation() {
   }
   if (elements.roadmapPeriodsEditorWrap) {
     elements.roadmapPeriodsEditorWrap.hidden = false;
+  }
+  if (elements.roadmapDeadlineBulkMode) {
+    elements.roadmapDeadlineBulkMode.innerHTML = "";
+  }
+  if (elements.roadmapDeadlineBulkModeWrap) {
+    elements.roadmapDeadlineBulkModeWrap.hidden = true;
+  }
+  if (elements.roadmapDeadlineEditorWrap) {
+    elements.roadmapDeadlineEditorWrap.hidden = false;
   }
   if (elements.roadmapTitle) {
     elements.roadmapTitle.setAttribute("required", "required");
@@ -20550,6 +21167,7 @@ function applyRoadmapRawToExistingRoadmap(roadmap, raw) {
   roadmap.roadmapPeriod = periodFields.roadmapPeriod;
   roadmap.roadmapStatus = resolveRoadmapStatusForSave(periodFields.roadmapPeriods, raw.roadmapStatus || null);
   roadmap.tshirtSize = raw.tshirtSize || null;
+  roadmap.roadmapDeadline = normalizeRoadmapDeadline(raw.roadmapDeadline);
   roadmap.moscowCategory = raw.moscowCategory || null;
   roadmap.kanoFunctionality = raw.kanoFunctionality != null ? raw.kanoFunctionality : null;
   roadmap.kanoSatisfaction = raw.kanoSatisfaction != null ? raw.kanoSatisfaction : null;
@@ -20665,6 +21283,26 @@ function handleRoadmapBulkPeriodsModeChange() {
 function initRoadmapBulkPeriodControls() {
   if (elements.roadmapPeriodsBulkMode) {
     elements.roadmapPeriodsBulkMode.addEventListener("change", handleRoadmapBulkPeriodsModeChange);
+  }
+}
+
+function handleRoadmapBulkDeadlineModeChange() {
+  syncRoadmapDeadlineBulkEditorVisibility();
+  if (!isRoadmapModalBulkMode() || !isRoadmapDeadlineEditorVisible()) return;
+  const roadmapId = getBulkActiveRoadmapId();
+  if (!roadmapId) return;
+  const located = findRoadmapWithOwner(roadmapId);
+  if (!located.roadmap) return;
+  const draft = bulkEditDraftsByRoadmapId.get(roadmapId);
+  const roadmapShape = draft?.raw ? { ...located.roadmap, ...draft.raw } : located.roadmap;
+  if (elements.roadmapDeadline) {
+    elements.roadmapDeadline.value = roadmapDeadlineToDateInputValue(roadmapShape.roadmapDeadline);
+  }
+}
+
+function initRoadmapBulkDeadlineControls() {
+  if (elements.roadmapDeadlineBulkMode) {
+    elements.roadmapDeadlineBulkMode.addEventListener("change", handleRoadmapBulkDeadlineModeChange);
   }
 }
 
@@ -22834,6 +23472,7 @@ function openRoadmapModal(mode, roadmapId, options = {}) {
     elements.roadmapType.value = "";
     elements.roadmapStatus.value = "";
     elements.roadmapTshirtSize.value = "";
+    if (elements.roadmapDeadline) elements.roadmapDeadline.value = "";
     renderRoadmapPeriodControls([], { readonly: false });
     elements.roadmapMoscow.value = "";
     setRoadmapKanoSelection(null, null, { readonly: false });
@@ -23051,6 +23690,7 @@ function collectRoadmapRawFromForm({ validate = true } = {}) {
     roadmapType: (elements.roadmapType.value || "").trim() || null,
     roadmapStatus: resolveRoadmapStatusForSave(roadmapPeriods, (elements.roadmapStatus.value || "").trim() || null),
     tshirtSize: (elements.roadmapTshirtSize.value || "").trim() || null,
+    roadmapDeadline: resolveRoadmapDeadlineForFormCollect(),
     roadmapPeriod,
     roadmapPeriods,
     moscowCategory:
@@ -23196,6 +23836,7 @@ function handleRoadmapFormSubmit(e) {
       roadmapType: raw.roadmapType || null,
       roadmapStatus: resolveRoadmapStatusForSave(periodFields.roadmapPeriods, raw.roadmapStatus || null),
       tshirtSize: raw.tshirtSize || null,
+      roadmapDeadline: normalizeRoadmapDeadline(raw.roadmapDeadline),
       roadmapPeriod: periodFields.roadmapPeriod,
       roadmapPeriods: periodFields.roadmapPeriods,
       moscowCategory: raw.moscowCategory || null,

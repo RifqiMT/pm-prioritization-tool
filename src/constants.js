@@ -9,7 +9,7 @@
 const STORAGE_KEY = "rice_prioritizer_v1";
 
 /** Bump when shipping client changes so browsers fetch fresh JS (Vercel caches /src with long TTL). */
-const APP_ASSET_VERSION = "20260629-ui195";
+const APP_ASSET_VERSION = "20260528-ui196";
 
 /**
  * Viewports at or below this width use the unified phone/tablet UI
@@ -380,6 +380,7 @@ const WORKSPACE_PERSISTED_STATE_KEYS = [
   "mapMetric",
   "raciMatrixDomain",
   "kanoPortfolioPanel",
+  "ganttZoom",
   "exchangeRatesToEUR",
   "exchangeRatesDate",
   "exchangeRatesLastSource",
@@ -436,6 +437,7 @@ const EXPORT_CSV_KNOWN_ROADMAP_KEYS = [
   "tshirtSize",
   "roadmapPeriod",
   "roadmapPeriods",
+  "roadmapDeadline",
   "projectPeriod",
   "moscowCategory",
   "kanoFunctionality",

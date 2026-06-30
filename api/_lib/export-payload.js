@@ -32,6 +32,7 @@ const CSV_COLUMN_IDS = [
   "tshirtSize",
   "roadmapPeriod",
   "roadmapPeriods",
+  "roadmapDeadline",
   "moscowCategory",
   "kanoFunctionality",
   "kanoSatisfaction",
