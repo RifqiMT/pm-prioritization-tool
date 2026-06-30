@@ -16,12 +16,14 @@
     "test:storage": "node scripts/test-storage-sync-logic.js",
     "test:metadata": "node scripts/test-roadmap-metadata.js",
     "test:persistence": "node scripts/test-persistence-keys.js",
+    "test:export": "node scripts/test-export-payload.js",
     "test:byok": "node scripts/test-byok-encryption.js",
     "test:byok-validate": "node scripts/test-byok-validate.js",
     "test:kano": "node scripts/test-kano-zones.js",
     "test:llm": "node scripts/test-roadmap-llm-summary.js",
     "test:5why": "node scripts/test-roadmap-5why-framework.js",
-    "test": "npm run test:storage && npm run test:metadata && npm run test:persistence && npm run test:byok && npm run test:byok-validate && npm run test:kano && npm run test:llm && npm run test:5why"
+    "test:periods": "node scripts/test-roadmap-periods.js",
+    "test": "npm run test:storage && npm run test:metadata && npm run test:persistence && npm run test:export && npm run test:byok && npm run test:byok-validate && npm run test:kano && npm run test:llm && npm run test:5why && npm run test:periods"
   },
   "keywords": [
     "product-management",

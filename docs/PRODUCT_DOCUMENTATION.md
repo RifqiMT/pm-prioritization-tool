@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Document owner** | Product Team |
-| **Last audited** | 2026-06-06 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui194` |
+| **Last audited** | 2026-06-29 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260629-ui195` |
 
 ---
 
@@ -53,7 +53,7 @@ The application is a **static single-page app** (HTML, layered CSS, vanilla Java
 - Full CRUD via modal (create, edit, read-only view) with section navigation (Roadmap, RICE, MoSCoW, KANO, Meta, RACI, Financial, Details).
 - **RICE** with validation (`src/rice.js`).
 - **Rich-text descriptions** on **Description**, optional **Note**, and all four RICE description fields — **six surfaces** (`RichTextEditor`); sanitized HTML; view mode hides toolbar; CSV strips to plain text.
-- Metadata: type, status, MoSCoW, quarter (`YYYY-Qn`), countries (including **EU** region shortcut), t-shirt size, **labels**, **links**, **tasks**, **note**.
+- Metadata: type, status, MoSCoW, quarter (`YYYY-Qn`), **multi-quarter periods** (`roadmapPeriods[]` with per-quarter status), countries (including **EU** region shortcut), t-shirt size, **labels**, **links**, **tasks**, **note**.
 - **Labels** — optional multi-value tags (multi-word allowed); normalized on save and cloud sync (`normalizeRoadmapLabels`).
 - **Links** — optional named hyperlinks (`{ label, url }`); http/https only; legacy import shapes (`name`, `href`, string URLs) normalized on load.
 - **Tasks** — optional checklist items with name + status (uses `roadmapStatusList` values); persisted as `tasks[]`; CSV column `roadmapTasks` (JSON).

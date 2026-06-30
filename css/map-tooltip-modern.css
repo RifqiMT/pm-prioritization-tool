@@ -20,6 +20,9 @@
   margin: 0;
   pointer-events: none !important;
   max-width: min(22rem, calc(100vw - 2rem));
+  font-family: var(--app-font-family) !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }/* Hover preview: never capture pointer — map countries stay hoverable underneath */
 .leaflet-tooltip.map-country-tooltip-host--passthrough,
 .leaflet-tooltip.map-country-tooltip-host--passthrough * {
@@ -38,7 +41,7 @@
   min-width: min(14.5rem, calc(100vw - 2.5rem));
   max-width: min(21rem, calc(100vw - 2rem));
 }.map-country-tooltip {
-  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-family: var(--app-font-family);
   font-size: 0.8125rem;
   line-height: 1.45;
   color: var(--map-tip-text);

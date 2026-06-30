@@ -1043,18 +1043,11 @@ const RichTextEditor = (function () {
     });
   }
 
-  function clear(surfaceId) {
-    setValue(surfaceId, "");
-  }
-
   return {
-    mount,
     mountAllFromDom,
-    init,
     getValue,
     setValue,
-    setReadonly,
-    clear
+    setReadonly
   };
 })();
 
@@ -1080,11 +1073,8 @@ function getRichDescriptionValue(fieldId) {
 
 function setRichDescriptionValue(fieldId, value) {
   if (typeof RichTextEditor !== "undefined" && RichTextEditor.setValue) {
-    const surface = getRichDescriptionSurface(fieldId);
-    if (surface) {
-      RichTextEditor.setValue(fieldId, value || "");
-      return;
-    }
+    RichTextEditor.setValue(fieldId, value || "");
+    return;
   }
   const el = document.getElementById(fieldId);
   if (!el) return;

@@ -12,11 +12,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="css/main.css?v=20260607-view-section-nav-v2" rel="stylesheet" />
-  <link href="css/workspace-modern.css?v=20260528-ui194" rel="stylesheet" />
+  <link href="css/main.css?v=20260629-roadmap-row-reorder-v1" rel="stylesheet" />
+  <link href="css/workspace-modern.css?v=20260629-table-actions-unified-v1" rel="stylesheet" />
   <link href="css/header-modern.css?v=20260607-header-cockpit-restore-v1" rel="stylesheet" />
   <link href="css/profiles-modern.css?v=20260607-compact-modal-explicit-close-v1" rel="stylesheet" />
-  <link href="css/portfolio-modern.css?v=20260607-filters-leads-symmetry-v1" rel="stylesheet" />
+  <link href="css/portfolio-modern.css?v=20260608-filter-search-stable-v2" rel="stylesheet" />
   <link href="css/profile-modals-modern.css?v=20260607-profile-security-polish-v1" rel="stylesheet" />
   <link href="css/export-modals-modern.css?v=20260607-modal-solo-primary-v1" rel="stylesheet" />
   <link href="css/byok-api-keys.css?v=20260528-ui194" rel="stylesheet" />
@@ -25,7 +25,7 @@
   <link href="css/moscow-compact.css?v=20260607-compact-gutter-prod-v1" rel="stylesheet" />
   <link href="css/board-compact.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/table-compact.css?v=20260528-ui194" rel="stylesheet" />
-  <link href="css/roadmap-actions-modern.css?v=20260607-profile-actions-clarity-v1" rel="stylesheet" />
+  <link href="css/roadmap-actions-modern.css?v=20260629-table-actions-unified-v1" rel="stylesheet" />
   <link href="css/fullscreen-modern.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/fullscreen-compact.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/app-footer.css?v=20260528-ui194" rel="stylesheet" />
@@ -34,14 +34,14 @@
   <link href="css/portfolio-cards-compact.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/table-rows-modern.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/table-revamp-modern.css?v=20260607-table-prod-align-v1" rel="stylesheet" />
-  <link href="css/table-compact-cards.css?v=20260607-compact-scroll-lock-v1" rel="stylesheet" />
+  <link href="css/table-compact-cards.css?v=20260629-table-actions-unified-v1" rel="stylesheet" />
   <link href="css/super-admin-modern.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/map-tooltip-modern.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/board-drag.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/board-card-interaction.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/view-toolbars-compact-row.css?v=20260528-ui194" rel="stylesheet" />
-  <link href="css/filters-compact-bar.css?v=20260607-filters-leads-stack-v1" rel="stylesheet" />
-  <link href="css/filters-sheet-modern.css?v=20260607-compact-modal-explicit-close-v1" rel="stylesheet" />
+  <link href="css/filters-compact-bar.css?v=20260608-filter-search-font-v1" rel="stylesheet" />
+  <link href="css/filters-sheet-modern.css?v=20260608-filter-search-stable-v2" rel="stylesheet" />
   <link href="css/mobile-command-deck.css?v=20260607-filters-trigger-revamp-v1" rel="stylesheet" />
   <link href="css/compact-view-gutter.css?v=20260607-compact-gutter-prod-v1" rel="stylesheet" />
   <link href="css/profile-picker-compact.css?v=20260607-profile-picker-unified-v2" rel="stylesheet" />
@@ -49,6 +49,7 @@
   <link href="css/rich-description-content.css?v=20260528-ui194" rel="stylesheet" />
   <link href="css/rich-text-editor.css?v=20260607-rte-compose-all-v1" rel="stylesheet" />
   <link href="css/portfolio-kano-modern.css?v=20260607-kano-intro-hide-compact-v1" rel="stylesheet" />
+  <link href="css/confirm-modals-modern.css?v=20260629-confirm-modals-v2" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 <body>
@@ -585,7 +586,7 @@
                       <span class="filter-countries-toggle-icon">▾</span>
                     </button>
                     <div id="filterCountriesPopup" class="filter-countries-popup">
-                      <input id="filterCountriesSearch" type="text" placeholder="Search countries..." aria-label="Search countries" />
+                      <input id="filterCountriesSearch" type="search" placeholder="Type to filter roadmaps by country…" aria-label="Search countries" />
                       <div id="filterCountriesList" class="filter-countries-list"></div>
                     </div>
                   </div>
@@ -600,8 +601,8 @@
                     <div id="filterRoadmapPeriodPopup" class="filter-countries-popup">
                       <input
                         id="filterRoadmapPeriodSearch"
-                        type="text"
-                        placeholder="Search periods..."
+                        type="search"
+                        placeholder="Type to filter roadmaps by period…"
                         aria-label="Search roadmap periods"
                       />
                       <div id="filterRoadmapPeriodList" class="filter-countries-list"></div>
@@ -1447,11 +1448,37 @@
   <div id="roadmapModal" class="modal-backdrop" aria-hidden="true">
     <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="roadmapModalTitle">
       <header class="modal-header">
-        <div class="modal-title-group">
-          <h3 id="roadmapModalTitle" class="modal-title">New roadmap</h3>
-          <p id="roadmapModalSubtitle" class="modal-subtitle">
-            Define reach, impact, confidence, effort, and optional financial upside.
-          </p>
+        <div class="modal-header-main">
+          <div class="modal-title-group">
+            <h3 id="roadmapModalTitle" class="modal-title">New roadmap</h3>
+            <p id="roadmapModalSubtitle" class="modal-subtitle">
+              Define reach, impact, confidence, effort, and optional financial upside.
+            </p>
+          </div>
+          <div id="roadmapBulkPreviewBar" class="roadmap-bulk-nav" hidden role="region" aria-label="Browse selected roadmaps">
+            <div class="roadmap-bulk-nav__header">
+              <div class="roadmap-bulk-nav__heading">
+                <svg class="roadmap-bulk-nav__icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+                <span class="roadmap-bulk-nav__label">Switch roadmap</span>
+              </div>
+              <span id="roadmapBulkPreviewCounter" class="roadmap-bulk-nav__badge" aria-live="polite"></span>
+            </div>
+            <div class="roadmap-bulk-nav__rail">
+              <button type="button" id="roadmapBulkPreviewPrev" class="roadmap-bulk-nav__arrow" aria-label="Previous roadmap">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <div class="roadmap-bulk-nav__select-shell">
+                <select id="roadmapBulkPreviewSelect" class="roadmap-bulk-nav__select" aria-label="Roadmap in selection"></select>
+                <svg class="roadmap-bulk-nav__select-chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <button type="button" id="roadmapBulkPreviewNext" class="roadmap-bulk-nav__arrow" aria-label="Next roadmap">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+            </div>
+            <div class="roadmap-bulk-nav__track" aria-hidden="true">
+              <div class="roadmap-bulk-nav__track-fill"></div>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -1777,7 +1804,7 @@
                 <span class="form-section-hint">Snapshot values and classification</span>
               </div>
               <div class="form-grid form-grid-full">
-                <div class="countries-section">
+                <div class="roadmap-meta-fields-stack">
                     <div class="roadmap-field-tooltip-wrap">
                       <label for="roadmapType">Roadmap type</label>
                       <select id="roadmapType" name="roadmapType">
@@ -1790,22 +1817,6 @@
                       <div class="cell-type-tooltip">
                         <div class="cell-type-tooltip-title">Roadmap type</div>
                         <div class="cell-type-tooltip-body">Category: New Product, Improvement, Tech Debt, Market Expansion.</div>
-                      </div>
-                    </div>
-
-                    <div class="roadmap-field-tooltip-wrap" style="margin-top:0.55rem;">
-                      <label for="roadmapStatus">Roadmap status</label>
-                      <select id="roadmapStatus" name="roadmapStatus">
-                        <option value="">—</option>
-                        <option value="Not Started">Not Started</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="On Hold">On Hold</option>
-                        <option value="Done">Done</option>
-                        <option value="Cancelled">Cancelled</option>
-                      </select>
-                      <div class="cell-type-tooltip">
-                        <div class="cell-type-tooltip-title">Roadmap status</div>
-                        <div class="cell-type-tooltip-body">Current state: Not Started, In Progress, On Hold, Done, or Cancelled.</div>
                       </div>
                     </div>
 
@@ -1827,16 +1838,41 @@
 
                     <div class="roadmap-field-tooltip-wrap" style="margin-top:0.55rem;">
                       <span id="roadmapPeriodsLabel" class="roadmap-field-label">Roadmap periods (YYYY-QX)</span>
-                      <p class="roadmap-dynamic-field-hint">Add one or more quarters from 2020 through 20 years ahead. Set a status for each quarter, same options as roadmap status.</p>
-                      <div class="roadmap-dynamic-field-panel">
-                        <div id="roadmapPeriodsContainer" class="roadmap-periods-list" role="group" aria-labelledby="roadmapPeriodsLabel" aria-live="polite"></div>
+                      <div id="roadmapPeriodsBulkModeWrap" class="roadmap-bulk-field-mode-wrap" hidden>
+                        <label for="roadmapPeriodsBulkMode" class="roadmap-field-label" style="margin-top:0.35rem;">Period update</label>
+                        <select id="roadmapPeriodsBulkMode" name="roadmapPeriodsBulkMode"></select>
                       </div>
-                      <button type="button" id="addRoadmapPeriodBtn" class="btn-secondary roadmap-dynamic-add-btn">
-                        + Add quarter
-                      </button>
+                      <p class="roadmap-dynamic-field-hint">Add one or more quarters from 2020 through 20 years ahead. Set a status for each quarter, same options as roadmap status.</p>
+                      <div id="roadmapPeriodsEditorWrap">
+                        <div class="roadmap-dynamic-field-panel">
+                          <div id="roadmapPeriodsContainer" class="roadmap-periods-list" role="group" aria-labelledby="roadmapPeriodsLabel" aria-live="polite"></div>
+                        </div>
+                        <button type="button" id="addRoadmapPeriodBtn" class="btn-secondary roadmap-dynamic-add-btn">
+                          + Add quarter
+                        </button>
+                      </div>
                       <div class="cell-type-tooltip">
                         <div class="cell-type-tooltip-title">Roadmap periods</div>
                         <div class="cell-type-tooltip-body">Planning quarters such as 2026-Q1. You can assign multiple quarters, each with its own status.</div>
+                      </div>
+                    </div>
+
+                    <div id="roadmapStatusFieldWrap" class="roadmap-field-tooltip-wrap roadmap-status-field-wrap" style="margin-top:0.55rem;">
+                      <label for="roadmapStatus">Roadmap status</label>
+                      <select id="roadmapStatus" name="roadmapStatus">
+                        <option value="">—</option>
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="On Hold">On Hold</option>
+                        <option value="Done">Done</option>
+                        <option value="Cancelled">Cancelled</option>
+                      </select>
+                      <p id="roadmapStatusCentralizedHint" class="roadmap-dynamic-field-hint roadmap-status-centralized-hint" hidden>
+                        Follows the latest quarter above. Edit that quarter's status to change roadmap status.
+                      </p>
+                      <div class="cell-type-tooltip">
+                        <div class="cell-type-tooltip-title">Roadmap status</div>
+                        <div class="cell-type-tooltip-body">When quarters are set, status follows the latest quarter. Without quarters, set status here directly.</div>
                       </div>
                     </div>
 
@@ -1855,10 +1891,13 @@
                       </div>
                     </div>
 
-                    <div class="roadmap-field-tooltip-wrap" style="margin-top:0.55rem;">
-                      <label style="margin-top:0;">Target countries</label>
-                      <div id="countriesContainer" class="countries-list"></div>
-                      <button type="button" id="addCountryBtn" class="btn-secondary" style="align-self:flex-start;min-height:32px;font-size:0.72rem;padding-inline:0.6rem;margin-top:0.15rem;">
+                    <div class="roadmap-field-tooltip-wrap roadmap-meta-dynamic-field roadmap-countries-collapsible-wrap" data-roadmap-countries-collapsible style="margin-top:0.55rem;">
+                      <span id="roadmapCountriesLabel" class="roadmap-field-label">Target countries</span>
+                      <p class="roadmap-dynamic-field-hint">Markets this roadmap applies to. Select EU to add all member states at once. Used for portfolio filtering.</p>
+                      <div class="roadmap-dynamic-field-panel">
+                        <div id="countriesContainer" class="countries-list roadmap-countries-list" role="group" aria-labelledby="roadmapCountriesLabel" aria-live="polite"></div>
+                      </div>
+                      <button type="button" id="addCountryBtn" class="btn-secondary roadmap-dynamic-add-btn">
                         + Add country
                       </button>
                       <div class="cell-type-tooltip">
@@ -2760,78 +2799,35 @@
   </div>
 
   <!-- Profile delete confirm modal -->
-  <div id="profileDeleteModal" class="modal-backdrop modal-backdrop--profile" aria-hidden="true">
-    <div class="modal-panel modal-panel--profile profile-delete-modal" role="dialog" aria-modal="true" aria-labelledby="profileDeleteModalTitle">
-      <header class="modal-header">
-        <div class="modal-title-group">
-          <h3 id="profileDeleteModalTitle" class="modal-title">Delete profile</h3>
-          <p class="modal-subtitle">
-            <span class="modal-subtitle-strong" id="profileDeleteNameLabel"></span>
-            <span id="profileDeleteSummaryLabel"></span>
+  <div id="profileDeleteModal" class="modal-backdrop modal-backdrop--confirm" aria-hidden="true">
+    <div class="modal-panel confirm-modal confirm-modal--danger profile-delete-modal" role="dialog" aria-modal="true" aria-labelledby="profileDeleteModalTitle">
+      <div class="confirm-modal__content">
+        <div class="confirm-modal__mark" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+        </div>
+        <div class="confirm-modal__copy">
+          <h3 id="profileDeleteModalTitle" class="confirm-modal__title">Delete profile?</h3>
+          <p class="confirm-modal__subject">
+            <span id="profileDeleteNameLabel"></span>
+            <span class="confirm-modal__subject-meta" id="profileDeleteSummaryLabel"></span>
           </p>
         </div>
-      </header>
-
-      <div class="modal-body">
-        <p class="modal-subtitle" id="profileDeleteWarningText">
-          This will permanently remove this profile and all of its roadmaps from this browser. This action cannot be undone.
-        </p>
-        <div id="profileDeletePasswordWrap" class="profile-delete-password-wrap" style="display:none;">
+      </div>
+      <p class="confirm-modal__message" id="profileDeleteWarningText">
+        This will permanently remove this profile and all of its roadmaps from this browser. This action cannot be undone.
+      </p>
+      <div class="confirm-modal__extras">
+        <div id="profileDeletePasswordWrap" class="confirm-modal__field profile-delete-password-wrap" style="display:none;">
           <label for="profileDeletePassword">Profile password</label>
           <input id="profileDeletePassword" type="password" autocomplete="current-password" placeholder="Enter password to enable delete" />
-          <p id="profileDeletePasswordHint" class="profile-password-hint">Delete is disabled until the correct password is entered.</p>
+          <p id="profileDeletePasswordHint" class="confirm-modal__hint profile-password-hint">Delete is disabled until the correct password is entered.</p>
         </div>
-        <p id="profileDeletePasswordError" class="field-error profile-password-error" role="alert" style="display:none;"></p>
-        <div class="form-actions" style="margin-top:1rem;justify-content:flex-end;">
-          <button type="button" class="btn-ghost" id="profileDeleteCancelBtn">Keep profile</button>
-          <button type="button" class="btn-danger" id="profileDeleteConfirmBtn" disabled>Delete profile</button>
-        </div>
+        <p id="profileDeletePasswordError" class="confirm-modal__error profile-password-error" role="alert" style="display:none;"></p>
       </div>
-    </div>
-  </div>
-
-  <!-- Bulk edit modal (table multi-select) -->
-  <div id="roadmapBulkEditModal" class="modal-backdrop modal-backdrop--profile" aria-hidden="true">
-    <div class="modal-panel modal-panel--profile" role="dialog" aria-modal="true" aria-labelledby="roadmapBulkEditModalTitle">
-      <header class="modal-header profile-modal-header">
-        <div class="modal-title-group">
-          <h3 id="roadmapBulkEditModalTitle" class="profile-modal-title">Edit selected roadmaps</h3>
-          <p id="roadmapBulkEditModalSubtitle" class="profile-modal-subtitle">
-            <span class="modal-subtitle-strong" id="roadmapBulkEditCountLabel"></span>
-          </p>
-        </div>
-      </header>
-      <div class="modal-body profile-modal-body">
-        <p class="modal-subtitle" id="roadmapBulkEditHelpText">
-          Choose the fields you want to update. Leave a field on “No change” to keep existing values on each roadmap.
-        </p>
-        <div class="form-grid form-grid-full">
-          <label class="form-field" for="roadmapBulkEditStatus">
-            <span class="form-label">Roadmap status</span>
-            <select id="roadmapBulkEditStatus" class="form-input"></select>
-          </label>
-          <label class="form-field" for="roadmapBulkEditType">
-            <span class="form-label">Roadmap type</span>
-            <select id="roadmapBulkEditType" class="form-input"></select>
-          </label>
-          <label class="form-field" for="roadmapBulkEditMoscow">
-            <span class="form-label">MoSCoW category</span>
-            <select id="roadmapBulkEditMoscow" class="form-input"></select>
-          </label>
-          <label class="form-field" for="roadmapBulkEditTshirtSize">
-            <span class="form-label">T-shirt size</span>
-            <select id="roadmapBulkEditTshirtSize" class="form-input"></select>
-          </label>
-          <label class="form-field" for="roadmapBulkEditPeriod">
-            <span class="form-label">Roadmap period (YYYY-QX)</span>
-            <select id="roadmapBulkEditPeriod" class="form-input"></select>
-          </label>
-        </div>
-        <div class="form-actions">
-          <button type="button" class="btn-ghost" id="roadmapBulkEditCancelBtn">Cancel</button>
-          <button type="button" class="btn-primary" id="roadmapBulkEditConfirmBtn">Apply changes</button>
-        </div>
-      </div>
+      <footer class="confirm-modal__footer">
+        <button type="button" class="confirm-modal__btn confirm-modal__btn--ghost" id="profileDeleteCancelBtn">Keep profile</button>
+        <button type="button" class="confirm-modal__btn confirm-modal__btn--danger" id="profileDeleteConfirmBtn" disabled>Delete profile</button>
+      </footer>
     </div>
   </div>
 
@@ -2863,26 +2859,46 @@
   </div>
 
   <!-- Roadmap delete confirm modal -->
-  <div id="roadmapDeleteModal" class="modal-backdrop" aria-hidden="true">
-    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="roadmapDeleteModalTitle">
-      <header class="modal-header">
-        <div class="modal-title-group">
-          <h3 id="roadmapDeleteModalTitle" class="modal-title">Delete roadmap</h3>
-          <p class="modal-subtitle">
-            <span class="modal-subtitle-strong" id="roadmapDeleteNameLabel"></span>
-          </p>
+  <div id="roadmapDeleteModal" class="modal-backdrop modal-backdrop--confirm" aria-hidden="true">
+    <div class="modal-panel confirm-modal confirm-modal--danger" role="dialog" aria-modal="true" aria-labelledby="roadmapDeleteModalTitle">
+      <div class="confirm-modal__content">
+        <div class="confirm-modal__mark" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
         </div>
-      </header>
-
-      <div class="modal-body">
-        <p class="modal-subtitle" id="roadmapDeleteWarningText">
-          This will permanently remove this roadmap from this profile. This action cannot be undone.
-        </p>
-        <div class="form-actions">
-          <button type="button" class="btn-ghost" id="roadmapDeleteCancelBtn">Keep roadmap</button>
-          <button type="button" class="btn-danger" id="roadmapDeleteConfirmBtn">Delete roadmap</button>
+        <div class="confirm-modal__copy">
+          <h3 id="roadmapDeleteModalTitle" class="confirm-modal__title">Delete roadmap?</h3>
+          <p class="confirm-modal__subject" id="roadmapDeleteNameLabel"></p>
         </div>
       </div>
+      <p class="confirm-modal__message" id="roadmapDeleteWarningText">
+        This will permanently remove this roadmap from this profile. This action cannot be undone.
+      </p>
+      <footer class="confirm-modal__footer">
+        <button type="button" class="confirm-modal__btn confirm-modal__btn--ghost" id="roadmapDeleteCancelBtn">Keep roadmap</button>
+        <button type="button" class="confirm-modal__btn confirm-modal__btn--danger" id="roadmapDeleteConfirmBtn">Delete roadmap</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Bulk edit discard confirm modal -->
+  <div id="roadmapBulkDiscardModal" class="modal-backdrop modal-backdrop--confirm" aria-hidden="true">
+    <div class="modal-panel confirm-modal confirm-modal--warning" role="dialog" aria-modal="true" aria-labelledby="roadmapBulkDiscardModalTitle">
+      <div class="confirm-modal__content">
+        <div class="confirm-modal__mark" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="confirm-modal__copy">
+          <h3 id="roadmapBulkDiscardModalTitle" class="confirm-modal__title">Discard changes?</h3>
+          <p class="confirm-modal__subject" id="roadmapBulkDiscardCountLabel"></p>
+        </div>
+      </div>
+      <p class="confirm-modal__message" id="roadmapBulkDiscardWarningText">
+        Your edits have not been saved. If you leave now, those changes will be lost.
+      </p>
+      <footer class="confirm-modal__footer">
+        <button type="button" class="confirm-modal__btn confirm-modal__btn--ghost" id="roadmapBulkDiscardCancelBtn">Keep editing</button>
+        <button type="button" class="confirm-modal__btn confirm-modal__btn--warning" id="roadmapBulkDiscardConfirmBtn">Discard changes</button>
+      </footer>
     </div>
   </div>
 
@@ -3115,14 +3131,15 @@
   <script src="src/modules/storage.js?v=20260528-ui194"></script>
   <script src="src/dev-seed-workspace.js?v=20260528-ui194"></script>
   <script src="src/modules/description-format.js?v=20260528-ui194"></script>
-  <script src="src/modules/rich-text-editor.js?v=20260607-rte-compose-all-v1"></script>
+  <script src="src/modules/rich-text-editor.js?v=20260608-bulk-edit-fix-v1"></script>
   <script src="src/modules/board-drag.js?v=20260528-ui194"></script>
   <script src="src/modules/board-card-interaction.js?v=20260528-ui194"></script>
   <script src="src/modules/byok-api-keys.js?v=20260528-ui194"></script>
   <script src="src/modules/roadmap-llm-summary.js?v=20260528-ui194"></script>
   <script src="src/modules/roadmap-5why-framework.js?v=20260528-ui194"></script>
-  <script src="src/modules/roadmap-periods.js?v=20260607-roadmap-periods-v2"></script>
-  <script src="src/app.js?v=20260607-roadmap-periods-v2"></script>
+  <script src="src/modules/roadmap-periods.js?v=20260629-roadmap-period-unique-v1"></script>
+  <script src="src/modules/export-payload.js?v=20260608-export-full-v1"></script>
+  <script src="src/app.js?v=20260608-custom-framework-icon-v1"></script>
 </body>
 </html>
 

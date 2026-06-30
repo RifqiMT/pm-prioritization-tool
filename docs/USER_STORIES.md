@@ -4,7 +4,7 @@
 |-------|-------|
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
-| **Last updated** | 2026-06-06 |
+| **Last updated** | 2026-06-29 |
 | **Compact breakpoint** | ≤ **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) |
 
 **Purpose:** Epics and user-story contracts with **Given / When / Then** acceptance criteria, including edge cases and error handling.
@@ -129,6 +129,31 @@ Each story includes:
 
 ---
 
+### US-B3 — Track multi-quarter delivery periods
+
+- **Persona:** Delivery Lead  
+- **Goal:** Represent when an initiative spans multiple planning quarters with per-quarter status.
+
+**Acceptance criteria**
+
+1. **Add periods**  
+   - **Given** the user edits a roadmap  
+   - **When** they add one or more `YYYY-Q[1-4]` entries with status in the Periods section  
+   - **Then** `roadmapPeriods[]` persists on save  
+   - **And** the chronologically latest period drives derived `roadmapStatus`.
+
+2. **Filter match**  
+   - **Given** a portfolio filter includes a quarter  
+   - **When** any period on a roadmap matches  
+   - **Then** the roadmap appears in filtered views.
+
+3. **Legacy migration**  
+   - **Given** a roadmap has only legacy `roadmapPeriod`  
+   - **When** it loads  
+   - **Then** it normalizes into `roadmapPeriods` without data loss.
+
+---
+
 ## Epic C — Financial frameworks
 
 ### US-C1 — Select framework and see planning value
@@ -172,6 +197,25 @@ Each story includes:
 
 ---
 
+### US-D2 — Use compact filters sheet on tablet/phone
+
+- **Persona:** Product Manager (mobile)  
+- **Goal:** Apply portfolio filters without horizontal clutter at ≤1400px.
+
+**Acceptance criteria**
+
+1. **Open sheet**  
+   - **Given** viewport width ≤1400px  
+   - **When** the user taps Filters in the mobile command deck  
+   - **Then** the portfolio filters bottom sheet opens with active filter count on the trigger.
+
+2. **Close sheet**  
+   - **Given** the filters sheet is open  
+   - **When** the user taps backdrop, close control, or presses Esc  
+   - **Then** the sheet dismisses and filter state persists.
+
+---
+
 ## Epic E — Data portability
 
 ### US-E1 — Export and import workspace data
@@ -184,9 +228,14 @@ Each story includes:
 1. **Export JSON**  
    - **Given** exportable profiles (unlocked or unprotected)  
    - **When** the user exports JSON  
-   - **Then** a file downloads with profiles, roadmaps, and preferences.
+   - **Then** a file downloads via `ExportPayload.buildJsonExportDocument` including all `WORKSPACE_PERSISTED_STATE_KEYS`, profiles, and roadmaps.
 
-2. **Import merge**  
+2. **Export CSV**  
+   - **Given** exportable roadmaps  
+   - **When** the user exports CSV  
+   - **Then** rows use `ExportPayload.CSV_COLUMN_IDS` including `roadmapPeriods`, `roadmapRaci`, and `*ExtraData` columns for round-trip.
+
+3. **Import merge**  
    - **Given** a valid JSON export  
    - **When** the user imports  
    - **Then** profiles/roadmaps merge by id without wiping unrelated data.

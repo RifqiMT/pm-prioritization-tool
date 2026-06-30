@@ -101,6 +101,31 @@ const RoadmapPeriods = (function () {
     return list.length ? list[0].period : null;
   }
 
+  function getLatestPeriodEntry(periods) {
+    const list = Array.isArray(periods) ? periods.filter((entry) => entry && normalizeKey(entry.period)) : [];
+    if (!list.length) return null;
+    const sorted = list
+      .map((entry) => ({
+        period: normalizeKey(entry.period),
+        status: entry.status
+      }))
+      .sort((a, b) => {
+        const [ay, aq] = a.period.split("-Q").map(Number);
+        const [by, bq] = b.period.split("-Q").map(Number);
+        if (ay !== by) return ay - by;
+        return aq - bq;
+      });
+    return sorted[sorted.length - 1];
+  }
+
+  /** When quarters exist, roadmap status follows the chronologically latest quarter. */
+  function deriveRoadmapStatus(periods, { fallbackStatus = null, statusOptions = null } = {}) {
+    const latest = getLatestPeriodEntry(periods);
+    if (latest) return normalizeStatus(latest.status, statusOptions);
+    const fallback = String(fallbackStatus || "").trim();
+    return fallback ? normalizeStatus(fallback, statusOptions) : null;
+  }
+
   function formatDisplay(periods) {
     const list = Array.isArray(periods) ? periods : [];
     return list.map((entry) => entry.period).join(", ");
@@ -116,18 +141,29 @@ const RoadmapPeriods = (function () {
     return "";
   }
 
+  function validateUniquePeriods(periods) {
+    const list = Array.isArray(periods) ? periods : [];
+    const seen = new Set();
+    for (const entry of list) {
+      const period = normalizeKey(entry && entry.period != null ? entry.period : entry);
+      if (!period) continue;
+      if (seen.has(period)) {
+        return `Each quarter can only appear once. Remove the duplicate ${period} entry.`;
+      }
+      seen.add(period);
+    }
+    return "";
+  }
+
   return {
-    START_YEAR,
-    FUTURE_YEARS,
-    getEndYear,
-    getCurrentQuarter,
     getCurrentPeriod,
     buildDefaultPeriodEntry,
     buildOptions,
-    normalizeKey,
     normalizePeriods,
     deriveLegacyPeriod,
-    formatDisplay,
-    validatePeriods
+    getLatestPeriodEntry,
+    deriveRoadmapStatus,
+    validatePeriods,
+    validateUniquePeriods
   };
 })();

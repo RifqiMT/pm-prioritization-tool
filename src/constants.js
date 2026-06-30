@@ -9,7 +9,7 @@
 const STORAGE_KEY = "rice_prioritizer_v1";
 
 /** Bump when shipping client changes so browsers fetch fresh JS (Vercel caches /src with long TTL). */
-const APP_ASSET_VERSION = "20260528-ui194";
+const APP_ASSET_VERSION = "20260629-ui195";
 
 /**
  * Viewports at or below this width use the unified phone/tablet UI
@@ -20,9 +20,6 @@ const COMPACT_LAYOUT_MAX_WIDTH_PX = 1400;
 
 /** Workspace trust profile label token (internal persistence key). */
 const WORKSPACE_TRUST_PROFILE_LABEL = "UmlmcWkgVGphaHlvbm8=";
-
-/** Team label that grants super-admin capability when paired with the trust profile name. */
-const SUPER_ADMIN_TEAM_LABEL = "Super Admin";
 
 /** Demo profile: read-only (no edits or deletions) when active. */
 const DEMO_PROFILE_NAME = "Test";
@@ -239,12 +236,6 @@ const KANO_ZONE_MATRIX = {
   1: ["indifferent", "indifferent", "reverse", "reverse", "reverse"]
 };
 
-function getKanoLevelMetaFromList(levels, level) {
-  if (!Array.isArray(levels)) return null;
-  const n = Number(level);
-  return levels.find((row) => row.level === n) || null;
-}
-
 function getKanoZoneIdFromPosition(functionality, satisfaction) {
   const f = Number(functionality);
   const s = Number(satisfaction);
@@ -255,17 +246,23 @@ function getKanoZoneIdFromPosition(functionality, satisfaction) {
   return row && row[f - 1] ? row[f - 1] : "indifferent";
 }
 
-function buildKanoCategoryPositionDescription(entry, functionality, satisfaction) {
-  if (!entry) return "";
-  const fMeta = getKanoLevelMetaFromList(kanoFunctionalityLevels, functionality);
-  const sMeta = getKanoLevelMetaFromList(kanoSatisfactionLevels, satisfaction);
-  const fLabel = fMeta ? fMeta.label : `level ${functionality}`;
-  const sLabel = sMeta ? sMeta.label : `level ${satisfaction}`;
-  return `${entry.description} (${fLabel} · ${sLabel})`;
-}
-
 /** Interpretive KANO category from a matrix position (display only; axes are persisted). */
 function getKanoCategoryFromPosition(functionality, satisfaction) {
+  function getLevelMeta(levels, level) {
+    if (!Array.isArray(levels)) return null;
+    const n = Number(level);
+    return levels.find((row) => row.level === n) || null;
+  }
+
+  function buildPositionDescription(entry, f, s) {
+    if (!entry) return "";
+    const fMeta = getLevelMeta(kanoFunctionalityLevels, f);
+    const sMeta = getLevelMeta(kanoSatisfactionLevels, s);
+    const fLabel = fMeta ? fMeta.label : `level ${f}`;
+    const sLabel = sMeta ? sMeta.label : `level ${s}`;
+    return `${entry.description} (${fLabel} · ${sLabel})`;
+  }
+
   const f = Number(functionality);
   const s = Number(satisfaction);
   if (!Number.isInteger(f) || !Number.isInteger(s) || f < 1 || f > 5 || s < 1 || s > 5) {
@@ -283,7 +280,7 @@ function getKanoCategoryFromPosition(functionality, satisfaction) {
     id: entry.id,
     label: entry.label,
     hint: entry.hint,
-    description: buildKanoCategoryPositionDescription(entry, f, s)
+    description: buildPositionDescription(entry, f, s)
   };
 }
 
@@ -387,6 +384,70 @@ const WORKSPACE_PERSISTED_STATE_KEYS = [
   "exchangeRatesDate",
   "exchangeRatesLastSource",
   "superAdminMode"
+];
+
+/** JSON export format version (add fields freely; importers ignore unknown keys). */
+const EXPORT_JSON_VERSION = 1;
+
+/**
+ * Profile keys mapped to explicit CSV columns or nested roadmaps[].
+ * Any other profile property is written to profileExtraData as JSON.
+ */
+const EXPORT_CSV_KNOWN_PROFILE_KEYS = [
+  "id",
+  "name",
+  "team",
+  "createdAt",
+  "roadmaps",
+  "projects",
+  "boardOrder",
+  "moscowOrder",
+  "passwordSalt",
+  "passwordHash"
+];
+
+/**
+ * Roadmap keys mapped to explicit CSV columns.
+ * Any other roadmap property is written to roadmapExtraData as JSON.
+ */
+const EXPORT_CSV_KNOWN_ROADMAP_KEYS = [
+  "id",
+  "title",
+  "description",
+  "note",
+  "createdAt",
+  "modifiedAt",
+  "reachValue",
+  "reachDescription",
+  "impactValue",
+  "impactDescription",
+  "confidenceValue",
+  "confidenceDescription",
+  "effortValue",
+  "effortDescription",
+  "financialImpactValue",
+  "financialImpactCurrency",
+  "financialImpactFramework",
+  "financialImpactInputs",
+  "roadmapType",
+  "roadmapStatus",
+  "projectType",
+  "projectStatus",
+  "tshirtSize",
+  "roadmapPeriod",
+  "roadmapPeriods",
+  "projectPeriod",
+  "moscowCategory",
+  "kanoFunctionality",
+  "kanoSatisfaction",
+  "countries",
+  "labels",
+  "links",
+  "tasks",
+  "raci",
+  "riceScore",
+  "ownerProfileId",
+  "ownerProfileName"
 ];
 
 /** ISO currency code → display symbol for profile view and summaries. */

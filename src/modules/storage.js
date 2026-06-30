@@ -979,21 +979,14 @@ const AppStorage = (function () {
   return {
     bootstrap,
     persistState,
-    flushPersistState,
     connectWithApiSecret,
     forceSyncNow,
     pullFromCloud,
-    pullFromCloudIfNewer,
     getCloudDiagnostics,
-    reconcileWithRemoteAfterLoad,
-    flushPendingSave,
-    getMode,
     getStatus,
     isCloudActive,
     shouldSeedDefaultProfile,
-    isRemoteWorkspacePopulated,
     isOfflineDevOrigin,
-    getApiSecret,
-    setApiSecret
+    getApiSecret
   };
 })();

@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-06-06 |
+| **Last updated** | 2026-06-29 |
 | **Measurement** | Local-first — no default telemetry; manual QA + optional instrumentation |
 
 ---

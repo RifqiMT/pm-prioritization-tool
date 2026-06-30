@@ -8,7 +8,7 @@
 |---|---|
 | **Production** | [pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app) |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui194` (cache-bust all CSS/JS) |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260629-ui195` (per-asset `?v=` tags in `index.html`) |
 | **Docs hub** | [docs/README.md](docs/README.md) |
 
 > Do not use `pm-prioritization-tool.vercel.app` — that hostname serves a legacy React app. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
@@ -140,7 +140,8 @@ pm-prioritization-tool/
 │   ├── dev-seed-workspace.js  # Localhost sample workspace (gated)
 │   └── modules/            # storage, profile-security, exchange-rates, fullscreen, overlay-manager,
 │                           # description-format, rich-text-editor, board-drag, board-card-interaction,
-│                           # byok-api-keys, roadmap-llm-summary, roadmap-5why-framework
+│                           # byok-api-keys, roadmap-llm-summary, roadmap-5why-framework,
+│                           # roadmap-periods, export-payload
 ├── api/                    # health, config, state, byok/validate-* + _lib (Vercel)
 ├── scripts/                # verify-deployment; test:storage, metadata, persistence, byok, kano, llm, 5why
 ├── docs/                   # Product documentation suite
@@ -148,20 +149,19 @@ pm-prioritization-tool/
 └── package.json
 ```
 
-### CSS layers (load order in `index.html` — 33 files)
+### CSS layers (load order in `index.html` — 38 files)
 
 | # | File | Role |
 |---|------|------|
-| 1 | `main.css` | Base design system, legacy modals, Five Why section |
-| 2–7 | `workspace` … `export-modals` | Workspace shell through export modals |
+| 1–7 | `main` … `export-modals` | Base tokens, workspace, header, profiles, portfolio, modals |
 | 8 | `byok-api-keys.css` | BYOK API keys modal |
-| 9 | `view-toolbars-modern.css` | Toolbars for all six views |
-| 10–16 | `compact` … `app-footer` | Compact layouts, fullscreen, footer |
-| 17–23 | `views-density` … `table-compact-cards` | Density, table structure, compact cards |
-| 24–29 | `super-admin` … `filters-compact-bar` | Workspace mode, map tooltips, board DnD, filters |
-| 30–33 | `rich-description-content` … `portfolio-kano-modern` | Rich-text, descriptions, KANO matrix |
+| 9–17 | `view-toolbars` … `app-footer` | Toolbars, compact views, fullscreen, footer |
+| 18–23 | `views-density` … `table-compact-cards` | Density, layout, table structure |
+| 24–28 | `super-admin` … `view-toolbars-compact-row` | Workspace mode, map tooltips, board DnD |
+| 29–33 | `filters-compact-bar` … `view-tabs-compact-menu` | Filters sheet, mobile command deck, profile picker, view overflow menu |
+| 34–38 | `rich-description-content` … `confirm-modals-modern` | Rich text, KANO matrix, confirm dialogs |
 
-Full numbered list: [docs/TECH_GUIDELINES.md](docs/TECH_GUIDELINES.md) §3.1 (must match `index.html` lines 15–47).
+Full numbered list: [docs/TECH_GUIDELINES.md](docs/TECH_GUIDELINES.md) §3.1 (must match `index.html` lines 15–52).
 
 ### Layout breakpoint
 
@@ -202,7 +202,7 @@ npm run verify:production
 ## Testing
 
 ```bash
-npm test                    # 8 automated suites (storage, metadata, persistence, byok, kano, llm, 5why)
+npm test                    # 10 automated suites (storage, metadata, persistence, export, byok, kano, llm, 5why, periods)
 npm run verify:production   # Smoke test production deploy
 ```
 
@@ -260,4 +260,4 @@ UNLICENSED (private). See `package.json`.
 - GitHub: [RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool)  
 - Article: [Effort–impact confusion to clear-cut priorities](https://rifqi-tjahyono.com/%f0%9f%93%8a-effort-impact-confusion-to-clear-cut-priorities-replace-tab-hopping-with-visual-roadmap-sanity-%f0%9f%a7%ad%e2%9c%a8/)
 
-**Documentation last comprehensively audited:** 2026-06-06 (baseline `20260528-ui194`).
+**Documentation last comprehensively audited:** 2026-06-29 (baseline `20260629-ui195`).

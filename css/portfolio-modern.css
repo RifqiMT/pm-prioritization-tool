@@ -644,8 +644,17 @@ label) */
 }.filter-autocomplete input[type="search"] {
   width: 100%;
   min-width: 0;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.88rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  -webkit-font-smoothing: antialiased;
   -webkit-appearance: none;
   appearance: none;
+}.filter-autocomplete__dropdown,
+.filter-autocomplete__dropdown--portaled {
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }.filter-autocomplete input[type="search"]::-webkit-search-cancel-button {
   -webkit-appearance: none;
   appearance: none;
@@ -653,6 +662,11 @@ label) */
 }.filter-autocomplete__field--open input[type="search"] {
   border-color: rgba(217, 119, 6, 0.75) !important;
   box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.22) !important;
+}.filter-autocomplete__field--open {
+  position: relative;
+  z-index: 120;
+}.filter-autocomplete__field--open .filter-autocomplete__dropdown {
+  z-index: 121;
 }.filter-autocomplete__dropdown {
   position: absolute;
   top: calc(100% + 0.35rem);

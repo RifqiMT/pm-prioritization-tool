@@ -195,6 +195,14 @@ narrow screens (≤1400px).
     overflow: visible !important;
   }
 
+  html.is-compact-layout .portfolio-filters-sheet .filters-block--search,
+  html.is-compact-layout .portfolio-filters-sheet .filters-row--search,
+  html.is-compact-layout .portfolio-filters-sheet .filter-group--search,
+  html.is-compact-layout .portfolio-filters-sheet .filter-group--autocomplete {
+    overflow: visible;
+    position: relative;
+  }
+
   html.is-compact-layout .portfolio-filters-sheet .portfolio-filters-toolbar {
     display: block !important;
     margin: 0 0 0.55rem !important;
@@ -344,4 +352,67 @@ narrow screens (≤1400px).
   .filters-sheet-backdrop {
     transition: none !important;
   }
+}/**
+ * Filter search typography — match app Inter stack everywhere in filters UI.
+ * Safari/WebKit uses a distinct system UI font on input[type="search"] by default.
+ */
+.portfolio-filters-body,
+.portfolio-filters-sheet,
+.portfolio-filters-drawer,
+#portfolioFiltersDrawer {
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}.filter-autocomplete,
+.filter-autocomplete input[type="search"],
+.filter-countries-popup input[type="search"],
+.filter-countries-popup input[type="text"],
+.workspace-panel--v2 .filters-row input[type="search"],
+.workspace-panel--v2 .filters-row input[type="text"],
+.portfolio-filters-body .filters-row input[type="search"],
+.portfolio-filters-body .filters-row input[type="text"],
+.portfolio-filters-body .filters-row select {
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  font-style: normal !important;
+}.filter-autocomplete input[type="search"],
+.filter-countries-popup input[type="search"],
+.filter-countries-popup input[type="text"],
+.workspace-panel--v2 .filters-row input[type="search"],
+.workspace-panel--v2 .filters-row input[type="text"] {
+  font-size: 0.88rem !important;
+  font-weight: 400 !important;
+}.filter-autocomplete__dropdown,
+.filter-autocomplete__dropdown--portaled,
+.filter-autocomplete__option,
+.filter-autocomplete__option-text,
+.filter-autocomplete__empty,
+.filter-country-option,
+.filter-country-option label,
+.filter-countries-summary,
+.filter-countries-chip {
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+}.filter-autocomplete__option,
+.filter-autocomplete__option-text {
+  font-weight: 500 !important;
+}.filter-autocomplete__empty {
+  font-weight: 400 !important;
+  font-style: italic !important;
+}html.is-compact-layout .filters-row--leads .filter-autocomplete input[type="search"],
+html.is-compact-layout .filters-row--search .filter-autocomplete input[type="search"] {
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-size: 0.88rem !important;
+  font-weight: 400 !important;
+}.filter-autocomplete__field--open {
+  position: relative;
+  z-index: 120;
+}.filter-autocomplete__field--open .filter-autocomplete__dropdown {
+  z-index: 121;
+}.portfolio-filters-sheet .filters-row--search,
+.portfolio-filters-sheet .filters-row--leads,
+.portfolio-filters-sheet .filter-group--autocomplete {
+  overflow: visible;
 }

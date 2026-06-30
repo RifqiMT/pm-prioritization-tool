@@ -4,7 +4,7 @@
 
 **Purpose:** Map PRD requirements to concrete implementation evidence and verification steps.  
 **Standard:** Requirement IDs must remain synchronized with [PRD.md](PRD.md).  
-**Last audited:** 2026-06-06 · **Baseline:** `APP_ASSET_VERSION` = `20260528-ui194`
+**Last audited:** 2026-06-29 · **Baseline:** `APP_ASSET_VERSION` = `20260629-ui195`
 
 ---
 
@@ -49,6 +49,7 @@
 | FR-2.9 | Labels/links cloud persistence | `serializeRoadmapForStorage`; `storage.js` flush; `roadmap-metadata.js` | Labels/links survive prod reload |
 | FR-2.10 | RACI assignments | Roadmap modal RACI section; `normalizeRoadmapRaci`; `renderRaciMatrix` | Names persist; Business/Tech filter works |
 | FR-2.11 | KANO scores | Roadmap modal KANO section; `renderKanoPortfolioMatrix` | Scores 1–5 place roadmaps on matrix |
+| FR-2.14 | Multi-quarter periods | `roadmap-periods.js`; `roadmapPeriods[]` in modal | Periods validate; latest drives status |
 
 ---
 
@@ -116,6 +117,7 @@
 | FR-6.4 | Labels presence filter | `filterLabels` with/without | With/without/any behaviors |
 | FR-6.5 | Links presence filter | `filterLinks` with/without | With/without/any behaviors |
 | FR-6.6 | Active filter summary pill | Filter summary renderer | Pill lists labels/links filters |
+| FR-6.7 | Compact filters sheet | `#portfolioFiltersSheet`; `filters-sheet-modern.css`; mobile command deck | At ≤1400px: sheet opens/closes; filters persist |
 
 ---
 
@@ -131,8 +133,8 @@
 
 | Requirement ID | Requirement Summary | Code Evidence | Verification |
 |---|---|---|---|
-| FR-8.1 | Export JSON | `sanitizeProfilesForExport`; `getExportableProfiles` | Download; protected profiles omitted without unlock |
-| FR-8.2 | Export CSV | CSV row builder | One row per roadmap; headers correct |
+| FR-8.1 | Export JSON | `export-payload.js` `buildJsonExportDocument`; `sanitizeProfilesForExport` | Download; protected profiles omitted without unlock |
+| FR-8.2 | Export CSV | `export-payload.js` `CSV_COLUMN_IDS`; `*ExtraData` round-trip columns | One row per roadmap; full metadata columns |
 | FR-8.3 | Export password gate | Export unlock modal | Wrong password omits profile |
 | FR-8.4 | Import JSON merge | `handleImportJsonFile`; `mergeImportedProfiles` | Update by id; no duplicates |
 | FR-8.5 | Import CSV merge | `handleImportCsvFile` | Rows merge safely |

@@ -190,7 +190,6 @@ const BoardDrag = (function () {
     setColumnHighlight,
     clearColumnHighlights,
     end,
-    getSession,
-    isDesktopEnhanced
+    getSession
   };
 })();

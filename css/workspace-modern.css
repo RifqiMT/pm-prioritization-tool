@@ -289,15 +289,15 @@ and portfolio chrome.
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   color: #9a3412 !important;
-}/* Action buttons — horizontal compact row on desktop */
-.table-wrapper--modern .cell-actions {
+}/* Action buttons — horizontal compact row on desktop (legacy non-roadmap cells) */
+.table-wrapper--modern .cell-actions:not(.roadmap-row-actions) {
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: wrap !important;
   gap: 0.28rem !important;
   align-items: center !important;
   justify-content: flex-start !important;
-}.table-wrapper--modern .cell-actions .btn-secondary {
+}.table-wrapper--modern .cell-actions:not(.roadmap-row-actions) .btn-secondary {
   width: auto !important;
   min-width: 0 !important;
   min-height: 28px !important;
@@ -802,12 +802,12 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .ro
     max-height: min(58vh, 520px);
   }
 
-  .table-wrapper--modern .cell-actions {
+  .table-wrapper--modern .cell-actions:not(.roadmap-row-actions) {
     flex-direction: column !important;
     align-items: stretch !important;
   }
 
-  .table-wrapper--modern .cell-actions .btn-secondary {
+  .table-wrapper--modern .cell-actions:not(.roadmap-row-actions) .btn-secondary {
     width: 100% !important;
   }
 

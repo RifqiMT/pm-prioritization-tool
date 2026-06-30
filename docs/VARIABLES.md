@@ -2,8 +2,8 @@
 
 **Purpose:** Authoritative dictionary of application variables — technical name, friendly name, definition, formula, UI location, and examples.  
 **Audience:** Product, engineering, QA, analytics.  
-**Last audited:** 2026-06-06  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260528-ui194`
+**Last audited:** 2026-06-29  
+**Implementation baseline:** `APP_ASSET_VERSION` = `20260629-ui195`
 
 > Privileged cross-profile workspace variables (workspace-wide mode, owner filter, owner metadata) are specified in [GUARDRAILS.md](GUARDRAILS.md) §7 only. This dictionary uses neutral names below.
 
@@ -164,10 +164,13 @@ Full input field whitelists: `sanitizeFinancialImpactInputs` in `src/app.js`.
 | `financialImpactValue` | Financial Impact | Computed or manual amount. | From framework or custom. | Table, map | `166500` |
 | `financialImpactCurrency` | Currency | ISO-like currency code. | Required if value non-zero. | Roadmap modal | `"EUR"` |
 | `roadmapStatus` | Roadmap Status | Workflow state. | One of `roadmapStatusList`. | Table, board column | `"In Progress"` |
-| `roadmapType` | Roadmap Type | Initiative category. | Team-defined list. | Table Type column | `"Regulatory"` |
+| `roadmapType` | Roadmap Type | Initiative category. | Team-defined list. | Table Type column | `"Improvement"` |
 | `moscowCategory` | MoSCoW Category | Delivery priority class. | One of `moscowList`. | MoSCoW view | `"Must have"` |
 | `tshirtSize` | T-Shirt Size | Rough sizing. | XS–XL. | Table | `"M"` |
-| `roadmapPeriod` | Roadmap Period | Planning quarter. | `YYYY-Q[1-4]`. | Filters, table | `"2026-Q2"` |
+| `roadmapPeriod` | Roadmap Period (legacy) | Single planning quarter; superseded by `roadmapPeriods` when present. | `YYYY-Q[1-4]`. | Filters, table (fallback) | `"2026-Q2"` |
+| `roadmapPeriods` | Roadmap Periods | Ordered quarter/status history; latest entry drives derived status. | `{ period, status }[]` via `RoadmapPeriods.normalizePeriods`. | Roadmap modal Periods section; CSV `roadmapPeriods` | `[{"period":"2026-Q1","status":"Done"},{"period":"2026-Q2","status":"In Progress"}]` |
+| `ownerProfileId` | Owner Profile ID | Home profile uuid (Super Admin cross-profile views). | Attached when `isSuperAdminModeActive()`. | Table Profile column, filters | Profile uuid |
+| `ownerProfileName` | Owner Profile Name | Display name of home profile (Super Admin). | Attached with `ownerProfileId`. | Table cards, map tooltips | `"Growth"` |
 | `countries` | Countries | Geo tags (normalized names). | Array; drives map. | Roadmap modal, map | `["Germany","France"]` |
 | `labels` | Labels | Free-form tags (multi-word allowed). | `normalizeRoadmapLabels`; pipe-separated in CSV; comma/pipe string on import. | Roadmap modal (create/edit/view) | `["Growth bet","Platform"]` |
 | `links` | Links | Named hyperlinks. | `{ label, url }[]`; accepts legacy `name`/`href`/`text`; JSON in CSV. | Roadmap modal (create/edit/view) | `[{"label":"PRD","url":"https://example.com/prd"}]` |
@@ -221,6 +224,12 @@ Full input field whitelists: `sanitizeFinancialImpactInputs` in `src/app.js`.
 | `kanoFunctionalityLevels` | KANO Functionality Scale | Five functionality depth labels (Absent → Full). | Levels 1–5 | Roadmap modal KANO section | Level 4 = Enhanced |
 | `kanoSatisfactionLevels` | KANO Satisfaction Scale | Five satisfaction response labels. | Levels 1–5 | Roadmap modal KANO section | Level 5 = Delighted |
 | `kanoCategoryLegend` | KANO Category Legend | Attractive / One-dimensional / Must-be / Indifferent / Reverse definitions. | Derived from axis pair | KANO modal + portfolio view | Attractive (A) |
+| `KANO_ZONE_MATRIX` | KANO Zone Matrix | 5×5 lookup from satisfaction (row) × functionality (col) to zone id. | `getKanoZoneIdFromPosition(f, s)` | `src/constants.js`, KANO portfolio | Zone `"attractive"` at F5/S5 |
+| `getKanoZoneIdFromPosition` | KANO Zone Resolver | Maps axis pair to zone id string. | Matrix lookup | KANO view, tests | `"must-be"` |
+| `getKanoCategoryFromPosition` | KANO Category Resolver | Full legend entry + position description for a matrix cell. | Uses zone matrix + legend | KANO portfolio tooltips | `{ id, label, hint, description }` |
+| `EXPORT_JSON_VERSION` | Export JSON Version | Schema version in JSON export payloads. | Constant `1` | Export modal, `export-payload.js` | `1` |
+| `EXPORT_CSV_KNOWN_PROFILE_KEYS` | CSV Profile Column Registry | Allowed profile keys for CSV import/export round-trip. | Whitelist in `constants.js` | CSV export/import | `name`, `team`, `roadmaps`, … |
+| `EXPORT_CSV_KNOWN_ROADMAP_KEYS` | CSV Roadmap Column Registry | Allowed roadmap keys for CSV import/export round-trip. | Whitelist in `constants.js` | CSV export/import | `title`, `reachValue`, `roadmapPeriods`, … |
 | `countryList` | Country List | Normalized country names for geo. | `"Germany"` |
 | `COUNTRY_OPTION_EU` | EU Region Option | Pseudo-value `EU` in target-country selects; expands to all EU members on selection. | `"EU"` |
 | `EU_MEMBER_COUNTRIES` | EU Member States | 27 canonical `countryList` names filled when `EU` is chosen. | `["Germany", "France", …]` |
@@ -456,12 +465,11 @@ flowchart LR
 
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
-| `APP_ASSET_VERSION` | Asset Cache Version | Query-string cache buster for CSS/JS in `index.html`. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260528-ui194"` |
+| `APP_ASSET_VERSION` | Asset Cache Version | Documentation baseline for cache-bust releases. Individual CSS/JS links in `index.html` may use per-asset `?v=` suffixes that include this baseline plus feature tags. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260629-ui195"` |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | Compact Breakpoint (px) | Max viewport width for phone/tablet UI. | Constant in `constants.js`. | `src/constants.js` | `1400` |
 | `is-compact-layout` | Compact Layout Class | Viewport ≤1400px; enables compact CSS. | Set on `<html>` by `initCompactLayoutClass()`. | Global layout | class present |
 | `is-phone-layout` | Phone Layout Class | Same threshold as compact (unified phone UI). | Set together with compact class. | Global layout | class present |
 | `is-desktop-layout` | Desktop Layout Class | Viewport >1400px. | Mutually exclusive with compact. | Global layout | class present |
-| `moscowCompactNav` | MoSCoW Compact Navigator | 2×2 pill bar to jump between quadrants on compact. | `syncMoscowCompactNav()` updates active pill. | MoSCoW view (compact) | DOM `#moscowCompactNav` |
 | `portfolioSelectionBar` | Portfolio Selection Bar | Floating bar for bulk delete when rows selected on compact table. | Shown when `selectedRoadmapIds` non-empty. | Table view (compact) | DOM element |
 | `view-in-fullscreen-host` | Fullscreen Host Class | Body class when a view is fullscreen. | `fullscreen.js` + `fullscreen-compact.css`. | Fullscreen | class on `body` |
 | `PRODUCTION_APP_ORIGIN` | Production URL | Canonical deployed origin for links/docs. | Constant string. | `src/constants.js` | `https://pm-prioritization-tool-six.vercel.app` |

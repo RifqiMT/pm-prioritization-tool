@@ -769,7 +769,7 @@
     max-width: 100%;
   }
 
-  html.is-compact-layout .roadmaps-table-card__country-chip {
+  html.is-compact-layout .roadmaps-table-card__countries-row .countries-badge__chip {
     display: inline-flex;
     align-items: center;
     gap: 0.2rem;
@@ -785,93 +785,77 @@
     white-space: nowrap;
   }
 
-  html.is-compact-layout .roadmaps-table-card__country-chip--eu {
+  html.is-compact-layout .roadmaps-table-card__countries-row .countries-badge__chip--others {
+    font-weight: 650;
+    color: #78716c;
+    background: #fafaf9;
+    border-color: #e7e5e4;
+  }
+
+  html.is-compact-layout .roadmaps-table-card__countries-row .countries-badge--eu .countries-badge__chip {
     color: #1e3a8a;
     background: rgba(239, 246, 255, 0.95);
     border-color: rgba(59, 130, 246, 0.4);
   }
 
-  html.is-compact-layout .roadmaps-table-card__country-flag {
+  html.is-compact-layout .roadmaps-table-card__countries-row .countries-badge__flag {
     font-size: 0.95rem;
     line-height: 1;
   }
 
-  html.is-compact-layout .roadmaps-table-card__country-code {
+  html.is-compact-layout .roadmaps-table-card__countries-row .countries-badge__code {
     letter-spacing: 0.02em;
   }
 
-  html.is-compact-layout .roadmaps-table-card__country-chip--more {
-    font-weight: 800;
-    color: #78716c;
-    background: rgba(241, 245, 249, 0.9);
-    border-color: rgba(226, 232, 240, 0.95);
-  }
-
-  /* One row of actions — overrides board footer grid (move + actions) on .portfolio-card-footer */
+  /* Compact card footer — same grouped toolbar as desktop table */
   html.is-compact-layout .roadmaps-table-card__actions.portfolio-card-footer,
   html.is-compact-layout .roadmaps-view--table .roadmaps-table-card__actions.portfolio-card-footer {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    grid-template-rows: auto !important;
-    grid-auto-flow: column !important;
-    align-items: stretch !important;
-    gap: 0.4rem !important;
+    display: flex !important;
+    flex-direction: row !important;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
+    grid-auto-flow: unset !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    gap: 0 !important;
     width: 100% !important;
-    padding: 0.55rem 0.65rem 0.65rem;
-    border-top: 1px solid rgba(241, 245, 249, 0.95);
-    background: linear-gradient(180deg, rgba(248, 250, 252, 0.55), rgba(255, 255, 255, 0.92));
+    padding: 0.5rem 0.65rem 0.6rem !important;
+    border-top: 1px solid rgba(241, 245, 249, 0.95) !important;
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.55), rgba(255, 255, 255, 0.92)) !important;
   }
 
-  html.is-compact-layout .roadmaps-table-card__actions .roadmap-action-btn {
-    flex: none !important;
-    width: 100% !important;
+  html.is-compact-layout .roadmaps-table-card__actions.roadmap-row-actions .roadmap-action-btn--toolbar {
+    flex: 1 1 0 !important;
+    width: 28px !important;
     min-width: 0 !important;
-    max-width: none !important;
-    grid-column: auto !important;
-    grid-row: auto !important;
-    min-height: 44px;
-    justify-content: center;
-    gap: 0.28rem;
-    border-radius: 11px;
-    border: 1px solid transparent;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    max-width: 28px !important;
+    min-height: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+    justify-content: center !important;
+    gap: 0 !important;
+    border-radius: 6px !important;
+    border: none !important;
+    box-shadow: none !important;
     transform: none !important;
+    background: transparent !important;
   }
 
-  html.is-compact-layout .roadmaps-table-card__actions .roadmap-action-btn--view {
-    background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
-    border-color: rgba(59, 130, 246, 0.28);
-    color: #1d4ed8;
+  html.is-compact-layout .roadmaps-table-card__actions.roadmap-row-actions .roadmap-action-btn--toolbar .roadmap-action-btn__label {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
   }
 
-  html.is-compact-layout .roadmaps-table-card__actions .roadmap-action-btn--edit {
-    background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
-    border-color: rgba(245, 158, 11, 0.32);
-    color: #b45309;
-  }
-
-  html.is-compact-layout .roadmaps-table-card__actions .roadmap-action-btn--delete {
-    background: linear-gradient(180deg, #fff1f2 0%, #ffe4e6 100%);
-    border-color: rgba(244, 63, 94, 0.28);
-    color: #be123c;
-  }
-
-  html.is-compact-layout .roadmaps-table-card__actions .roadmap-action-btn__label {
-    display: inline;
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.02em;
-  }
-
-  /* Narrow phones: icon-only, still one row */
   @media (max-width: 420px) {
     html.is-compact-layout .roadmaps-table-card__actions.portfolio-card-footer {
-      gap: 0.35rem !important;
-    }
-
-    html.is-compact-layout .roadmaps-table-card__actions .roadmap-action-btn {
-      min-height: 42px;
-      padding: 0.38rem !important;
+      padding: 0.45rem 0.55rem 0.55rem !important;
     }
   }
 

@@ -311,7 +311,6 @@
     scheduleDailyRefresh,
     updateLabel,
     convertToEUR,
-    hasRate,
-    getTodayGermanyDateString
+    hasRate
   };
 })(typeof window !== "undefined" ? window : this);

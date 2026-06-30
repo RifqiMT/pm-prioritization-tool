@@ -6,7 +6,7 @@
   const PORTAL_IDS = [
     "exportFormatModal", "importFormatModal", "roadmapModal",
     "profileViewModal", "profileEditModal", "profileCreateModal", "profileDeleteModal",
-    "roadmapDeleteModal", "roadmapBulkTransferModal", "toastContainer"
+    "roadmapDeleteModal", "roadmapBulkDiscardModal", "roadmapBulkTransferModal", "toastContainer"
   ];
 
   const COMPACT_MQ =
@@ -903,17 +903,12 @@
     toggle,
     onChange,
     isViewFullscreen,
-    getViewElement: () => getViewElement,
     switchViewWhileFullscreen,
-    exit: exitFullscreen,
     restoreWorkspaceChrome: restoreChromeToContainer,
     restoreViewShell: restoreViewShellPresentation,
     resetPortfolioStageScroll,
-    schedulePostExitLayoutPasses,
     getPseudoFullscreenElement: () => pseudoFullscreenEl,
-    isHostMode: () => useHostMode,
     updateHostLayoutClass: updateFullscreenHostLayoutClass,
-    syncChromeContext: syncFullscreenChromeContext,
-    scheduleCompactLayoutRefresh
+    syncChromeContext: syncFullscreenChromeContext
   };
 })(typeof window !== "undefined" ? window : this);

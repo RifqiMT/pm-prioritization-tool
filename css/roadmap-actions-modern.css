@@ -133,21 +133,98 @@ profiles.
   clip: rect(0, 0, 0, 0) !important;
   white-space: nowrap !important;
   border: 0 !important;
-}/* ── Table row actions ────────────────────────────────────── */
+}/* ── Table row actions — grouped icon toolbar (all profiles) ─ */
 .roadmap-row-actions,
-.cell-actions--roadmap,
-.table-wrapper--modern .cell-actions--roadmap,
-.table-wrapper .cell-actions--roadmap {
+.cell-actions--roadmap.roadmap-row-actions,
+.table-wrapper--modern .cell-actions--roadmap.roadmap-row-actions,
+.table-wrapper .cell-actions--roadmap.roadmap-row-actions {
   display: inline-flex !important;
   flex-direction: row !important;
-  flex-wrap: wrap !important;
+  flex-wrap: nowrap !important;
   align-items: center !important;
-  justify-content: flex-start !important;
-  gap: 0.35rem !important;
+  justify-content: center !important;
+  gap: 0.06rem !important;
   min-width: 0 !important;
+  width: auto !important;
+  max-width: 100% !important;
+  padding: 0.1rem !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  background: var(--action-group-bg) !important;
+  border: 1px solid var(--action-group-border) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+  vertical-align: middle !important;
+}.roadmap-row-actions .roadmap-action-btn,
+.roadmap-action-btn--toolbar {
+  flex: 1 1 0 !important;
+  width: 28px !important;
+  min-width: 0 !important;
+  max-width: 28px !important;
+  min-height: 28px !important;
+  height: 28px !important;
   padding: 0 !important;
-  background: transparent !important;
+  margin: 0 !important;
+  gap: 0 !important;
   border: none !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  transform: none !important;
+}.roadmap-row-actions .roadmap-action-btn__icon,
+.roadmap-row-actions .roadmap-action-btn__icon svg,
+.roadmap-action-btn--toolbar .roadmap-action-btn__icon,
+.roadmap-action-btn--toolbar .roadmap-action-btn__icon svg {
+  width: 14px !important;
+  height: 14px !important;
+}.roadmap-row-actions .roadmap-action-btn--view,
+.roadmap-action-btn--toolbar.roadmap-action-btn--view {
+  color: var(--action-view) !important;
+  background: transparent !important;
+  border-color: transparent !important;
+}.roadmap-row-actions .roadmap-action-btn--edit,
+.roadmap-action-btn--toolbar.roadmap-action-btn--edit {
+  color: var(--action-edit) !important;
+  background: transparent !important;
+  border-color: transparent !important;
+}.roadmap-row-actions .roadmap-action-btn--delete,
+.roadmap-action-btn--toolbar.roadmap-action-btn--delete {
+  color: var(--action-delete) !important;
+  background: transparent !important;
+  border-color: transparent !important;
+}.roadmap-row-actions .roadmap-action-btn:hover:not(:disabled),
+.roadmap-action-btn--toolbar:hover:not(:disabled) {
+  transform: none !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}.roadmap-row-actions .roadmap-action-btn--view:hover:not(:disabled),
+.roadmap-row-actions .roadmap-action-btn--edit:hover:not(:disabled),
+.roadmap-row-actions .roadmap-action-btn--delete:hover:not(:disabled),
+.roadmap-action-btn--toolbar.roadmap-action-btn--view:hover:not(:disabled),
+.roadmap-action-btn--toolbar.roadmap-action-btn--edit:hover:not(:disabled),
+.roadmap-action-btn--toolbar.roadmap-action-btn--delete:hover:not(:disabled) {
+  background: #ffffff !important;
+  border-color: transparent !important;
+}.roadmap-row-actions .roadmap-action-btn__label,
+.roadmap-action-btn--toolbar .roadmap-action-btn__label {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}.roadmap-row-actions .roadmap-action-btn:disabled,
+.roadmap-action-btn--toolbar:disabled {
+  opacity: 0.48 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+  filter: none !important;
 }.profiles-panel--v2 .profiles-select__actions .profile-action-chip--view,
 .profiles-panel-sheet .profiles-select__actions .profile-action-chip--view {
   color: var(--action-view) !important;
@@ -247,21 +324,21 @@ html.is-desktop-layout .moscow-board-card-btn--order {
   flex: 0 0 auto !important;
   min-width: 1.65rem !important;
   padding: 0.22rem 0.38rem !important;
-}/* ── Compact / touch layouts ─────────────────────────────── */
+}/* ── Compact / touch layouts (board & profile actions; table toolbar unchanged) ── */
 @media (max-width: 1400px) {
-  html.is-compact-layout .cell-actions--roadmap {
+  html.is-compact-layout .cell-actions--roadmap:not(.roadmap-row-actions) {
     flex-direction: row !important;
     align-items: center !important;
     gap: 0.3rem !important;
   }
 
-  html.is-compact-layout .roadmap-action-btn {
+  html.is-compact-layout .roadmap-action-btn:not(.roadmap-action-btn--toolbar) {
     flex: 1 1 0 !important;
     min-width: 0 !important;
     padding: 0.38rem 0.35rem !important;
   }
 
-  html.is-compact-layout .roadmap-action-btn__label {
+  html.is-compact-layout .roadmap-action-btn:not(.roadmap-action-btn--toolbar) .roadmap-action-btn__label {
     font-size: 0.68rem !important;
   }
 
@@ -299,7 +376,7 @@ html.is-desktop-layout .moscow-board-card-btn--order {
 }
 
 @media (max-width: 420px) {
-  html.is-compact-layout .roadmap-action-btn__label,
+  html.is-compact-layout .roadmap-action-btn:not(.roadmap-action-btn--toolbar) .roadmap-action-btn__label,
   html.is-compact-layout .portfolio-card-action-text {
     position: absolute !important;
     width: 1px !important;
@@ -312,7 +389,7 @@ html.is-desktop-layout .moscow-board-card-btn--order {
     border: 0 !important;
   }
 
-  html.is-compact-layout .roadmap-action-btn,
+  html.is-compact-layout .roadmap-action-btn:not(.roadmap-action-btn--toolbar),
   html.is-compact-layout .portfolio-card-action-btn,
   html.is-compact-layout .moscow-board-card-btn,
   html.is-compact-layout .scrum-board-card-btn {

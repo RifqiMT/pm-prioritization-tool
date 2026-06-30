@@ -1,8 +1,8 @@
 # Design Guidelines
 
 **Product:** Product Management Prioritization Tool  
-**Last updated:** 2026-06-06  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260528-ui194`  
+**Last updated:** 2026-06-29  
+**Implementation baseline:** `APP_ASSET_VERSION` = `20260629-ui195`  
 **Layout breakpoint:** `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** (`html.is-compact-layout` + `html.is-phone-layout`)
 
 Visual and interaction standards for the local-first prioritization workspace.
@@ -86,6 +86,19 @@ Typography for sanitized HTML in roadmap descriptions, tooltips, and LLM summary
 | `--vt-gold` | Section labels (e.g. “Show by”) |
 | `--vt-text` | Toolbar titles |
 | `--vt-accent` | Toggle track active |
+
+### 2.8 Compact layout and mobile command deck (≤1400px)
+
+| Stylesheet | Role |
+|------------|------|
+| `filters-sheet-modern.css` | Bottom sheet for portfolio filters; backdrop, drag handle, badge count |
+| `mobile-command-deck.css` | Sticky compact toolbar: filters trigger, view switcher, profile affordances |
+| `profile-picker-compact.css` | Condensed profile dropdown in command deck |
+| `view-tabs-compact-menu.css` | Overflow view tabs into “More” menu |
+| `compact-view-gutter.css` | Reduced horizontal padding on table/board in compact mode |
+| `confirm-modals-modern.css` | Destructive-action confirms aligned with export/import modal chrome |
+
+Breakpoints align with `COMPACT_LAYOUT_MAX_WIDTH` (1400px) in `constants.js`.
 
 ---
 

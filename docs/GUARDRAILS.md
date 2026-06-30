@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-06-06 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui194` |
+| **Last updated** | 2026-06-29 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260629-ui195` |
 
 Cross-feature behavior summaries live in [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md). This file defines **hard limits** and policies that must not be violated.
 
@@ -85,6 +85,12 @@ Cross-feature behavior summaries live in [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEAT
   - support mobile/tablet layout consistently
   - avoid legacy all-caps or dark-background overrides that reduce usability.
 
+### 6.5 Export payload integrity
+- JSON export must use `ExportPayload.buildJsonExportDocument` so all `WORKSPACE_PERSISTED_STATE_KEYS` round-trip.
+- CSV export must use `ExportPayload.CSV_COLUMN_IDS`; unknown entity keys serialize via `profileExtraData` / `roadmapExtraData` JSON columns.
+- `roadmapPeriods`, `roadmapRaci`, and workspace filter state must survive export → import without loss when profiles are exportable.
+- BYOK API keys and LLM/Five Why session output must never appear in export files.
+
 ## 6. Production (Vercel) Guardrails
 
 - Deploy as **static assets only**; do not add server-side secrets to the repository.
@@ -104,7 +110,7 @@ Cross-feature behavior summaries live in [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEAT
 ### 7.1 Super Admin profile (who may use it)
 
 - **Super Admin profile** = the workspace **trust profile** whose display name matches the decoded `WORKSPACE_TRUST_PROFILE_LABEL` constant in `src/constants.js` (currently **Rifqi Tjahyono**).
-- Only that profile may see the **Super admin** toggle (`#superAdminModeToggle`). Other profiles must never show the toggle, even if team is labeled **Super Admin** (`SUPER_ADMIN_TEAM_LABEL` does **not** grant access).
+- Only that profile may see the **Super admin** toggle (`#superAdminModeToggle`). Other profiles must never show the toggle, even if team is labeled **Super Admin** — team label alone does **not** grant access.
 - The toggle requires the trust profile to be **unlocked** (password satisfied for the session) before Super Admin mode can turn on.
 - Class `html.is-workspace-trust-profile` on `<html>` gates visibility in CSS; `isSuperAdminProfile()` in `src/app.js` gates runtime logic.
 

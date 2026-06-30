@@ -6,7 +6,7 @@
   const STORAGE_KEY = "pm_byok_v1";
   const DEVICE_SALT_KEY = "pm_byok_device_salt_v1";
   const PBKDF2_ITERATIONS = 120000;
-  const ENvelope_VERSION = 1;
+  const ENVELOPE_VERSION = 1;
 
   const PROVIDERS = {
     groq: {
@@ -133,7 +133,7 @@
     const enc = new TextEncoder();
     const cipher = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, enc.encode(plaintext));
     return {
-      v: ENvelope_VERSION,
+      v: ENVELOPE_VERSION,
       iv: bytesToHex(iv),
       data: bytesToHex(new Uint8Array(cipher))
     };

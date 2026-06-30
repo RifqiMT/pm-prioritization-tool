@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Maintainer** | Product Team |
-| **Last audited** | 2026-06-06 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui194` |
+| **Last audited** | 2026-06-29 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260629-ui195` |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
 
 This folder is the **single source of product truth** for engineering, design, product management, and stakeholders (**17 documents** + root [README.md](../README.md) = **18-file suite**). Documents are maintained against the **current** implementation in `index.html`, `css/`, `src/`, and `api/`.
@@ -67,45 +67,25 @@ This folder is the **single source of product truth** for engineering, design, p
 
 ---
 
-## Source code map (audited 2026-06-06)
+## Source code map (audited 2026-06-29)
 
 ```
 pm-prioritization-tool/
 ├── index.html                      # Shell, modals, filters, six views, BYOK, footer
-├── css/                            # 33 layered stylesheets (see DESIGN_GUIDELINES.md §4)
-│   ├── main.css                    # Base tokens, global buttons, status/framework pills
-│   ├── workspace-modern.css        # Workspace panel, table, board columns
-│   ├── header-modern.css           # App header, compact actions menu
-│   ├── profiles-modern.css         # Profile panel v2, bottom sheet
-│   ├── portfolio-modern.css        # Command bar, FAB, filters, selection bar
-│   ├── profile-modals-modern.css   # Profile CRUD modals
-│   ├── export-modals-modern.css    # Export / import / unlock modals
-│   ├── view-toolbars-modern.css    # Table, board, MoSCoW, map toolbars
-│   ├── view-toolbars-compact-row.css
-│   ├── compact-modern.css          # Compact chrome (≤1400px)
-│   ├── moscow-compact.css          # MoSCoW compact nav + quadrants
-│   ├── board-compact.css           # Board compact stack
-│   ├── table-compact.css           # Table compact toolbar
-│   ├── table-compact-cards.css     # Compact table card list + grouping
-│   ├── table-rows-modern.css       # Desktop table rows
-│   ├── table-revamp-modern.css     # Semantic column layout
-│   ├── roadmap-actions-modern.css  # View / Edit / Delete actions
-│   ├── rich-description-content.css # RTE / description HTML rendering
-│   ├── rich-text-editor.css        # Rich-text toolbar + fields
-│   ├── rich-description-content.css # Rendered description typography (modal, tooltips)
-│   ├── byok-api-keys.css           # BYOK API keys modal
-│   ├── super-admin-modern.css      # Workspace-wide mode (GUARDRAILS §7)
-│   ├── map-tooltip-modern.css      # Map hover / pinned tooltips
-│   ├── board-drag.css              # Board DnD visuals
-│   ├── board-card-interaction.css  # Card press feedback
-│   ├── filters-compact-bar.css     # Filters drawer compact bar
-│   ├── portfolio-kano-modern.css   # KANO portfolio matrix + cards
-│   ├── portfolio-cards-compact.css # Board/MoSCoW card shells
-│   ├── fullscreen-modern.css       # Fullscreen host
-│   ├── fullscreen-compact.css      # Fullscreen + compact
-│   ├── views-density.css           # Density scaling
-│   ├── layout-flow.css             # Flat dividers (compact)
-│   └── app-footer.css              # Site footer
+├── css/                            # 38 layered stylesheets (see TECH_GUIDELINES.md §3.1)
+│   ├── main.css … export-modals-modern.css
+│   ├── byok-api-keys.css
+│   ├── view-toolbars-modern.css … app-footer.css
+│   ├── filters-compact-bar.css
+│   ├── filters-sheet-modern.css    # Bottom-sheet filters (compact)
+│   ├── mobile-command-deck.css     # Compact portfolio command deck
+│   ├── compact-view-gutter.css
+│   ├── profile-picker-compact.css  # Profile combobox (compact)
+│   ├── view-tabs-compact-menu.css  # View tab overflow menu
+│   ├── rich-description-content.css
+│   ├── rich-text-editor.css
+│   ├── portfolio-kano-modern.css
+│   └── confirm-modals-modern.css   # Delete/confirm dialogs
 ├── src/
 │   ├── app.js                      # State, render, CRUD, filters, import/export
 │   ├── constants.js                # Enums, tooltips, APP_ASSET_VERSION
@@ -124,7 +104,9 @@ pm-prioritization-tool/
 │       ├── board-card-interaction.js
 │       ├── byok-api-keys.js        # Encrypted local Groq/Tavily keys
 │       ├── roadmap-llm-summary.js  # Tavily research + Groq summary
-│       └── roadmap-5why-framework.js # Iterative WHY 1→5 questions
+│       ├── roadmap-5why-framework.js # Iterative WHY 1→5 questions
+│       ├── roadmap-periods.js      # Multi-quarter roadmapPeriods
+│       └── export-payload.js       # JSON/CSV export builders
 ├── api/
 │   ├── health.js                   # GET storage probe
 │   ├── config.js                   # GET client config (same probe as health)
@@ -148,6 +130,8 @@ pm-prioritization-tool/
 │   ├── test-kano-zones.js          # npm run test:kano
 │   ├── test-roadmap-llm-summary.js # npm run test:llm
 │   ├── test-roadmap-5why-framework.js # npm run test:5why
+│   ├── test-export-payload.js      # npm run test:export
+│   ├── test-roadmap-periods.js     # npm run test:periods
 │   └── disable-vercel-deployment-protection.sh
 ├── .github/workflows/              # ci.yml, vercel-production.yml, fix-vercel-protection.yml
 ├── docs/                           # This documentation suite

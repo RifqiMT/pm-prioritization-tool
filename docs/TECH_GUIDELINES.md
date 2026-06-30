@@ -4,8 +4,8 @@ Engineering standards for the Product Management Prioritization Tool codebase.
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-06-06 |
-| **APP_ASSET_VERSION** | `20260528-ui194` |
+| **Last updated** | 2026-06-29 |
+| **APP_ASSET_VERSION** | `20260629-ui195` |
 | **COMPACT_LAYOUT_MAX_WIDTH_PX** | `1400` |
 
 ---
@@ -44,7 +44,9 @@ Defined in `index.html` (order matters — globals, not ES modules):
 14. `src/modules/byok-api-keys.js` — `ByokApiKeys` global
 15. `src/modules/roadmap-llm-summary.js` — `RoadmapLlmSummary` global
 16. `src/modules/roadmap-5why-framework.js` — `RoadmapFiveWhyFramework` global
-17. `src/app.js` — defines `init()` and runs on `DOMContentLoaded`
+17. `src/modules/roadmap-periods.js` — `RoadmapPeriods` global (multi-quarter periods)
+18. `src/modules/export-payload.js` — `ExportPayload` global (JSON/CSV export builders)
+19. `src/app.js` — defines `init()` and runs on `DOMContentLoaded`
 
 All shared symbols are **global functions and constants**. Do not introduce ES module imports without a planned migration.
 
@@ -54,7 +56,7 @@ All shared symbols are **global functions and constants**. Do not introduce ES m
 
 ### 3.1 Load order
 
-Later files win for equal specificity (all query `?v=APP_ASSET_VERSION`):
+Later files win for equal specificity. Each stylesheet in `index.html` uses a **per-asset** `?v=` query string (often `APP_ASSET_VERSION` plus a feature tag, e.g. `20260629-table-actions-unified-v1`). Bump `APP_ASSET_VERSION` in `constants.js` on major releases; bump individual asset tags when shipping that file only.
 
 | # | File | Purpose |
 |---|------|---------|
@@ -62,11 +64,11 @@ Later files win for equal specificity (all query `?v=APP_ASSET_VERSION`):
 | 2 | `workspace-modern.css` | Workspace shell |
 | 3 | `header-modern.css` | App header |
 | 4 | `profiles-modern.css` | Profiles + compact bottom sheet |
-| 5 | `portfolio-modern.css` | Portfolio, filters, autocomplete |
+| 5 | `portfolio-modern.css` | Portfolio command bar, filters trigger |
 | 6 | `profile-modals-modern.css` | Profile modals |
 | 7 | `export-modals-modern.css` | Import/export modals |
 | 8 | `byok-api-keys.css` | BYOK API keys modal |
-| 9 | `view-toolbars-modern.css` | View toolbars (table, board, MoSCoW, map, RACI, KANO) |
+| 9 | `view-toolbars-modern.css` | View toolbars (six views) |
 | 10 | `compact-modern.css` | Compact chrome (≤1400px) |
 | 11 | `moscow-compact.css` | MoSCoW compact |
 | 12 | `board-compact.css` | Board compact |
@@ -86,11 +88,16 @@ Later files win for equal specificity (all query `?v=APP_ASSET_VERSION`):
 | 26 | `board-drag.css` | Board drag-and-drop |
 | 27 | `board-card-interaction.css` | Card press feedback |
 | 28 | `view-toolbars-compact-row.css` | Single-row compact toolbars |
-| 29 | `filters-compact-bar.css` | Filters drawer compact bar |
-| 30 | `rich-description-content.css` | RTE and sanitized description HTML |
-| 31 | `rich-description-content.css` | Rendered rich-text typography |
-| 32 | `rich-text-editor.css` | Rich-text toolbar and fields |
-| 33 | `portfolio-kano-modern.css` | KANO portfolio matrix and cards |
+| 29 | `filters-compact-bar.css` | Filters trigger bar (compact) |
+| 30 | `filters-sheet-modern.css` | Bottom-sheet filters panel |
+| 31 | `mobile-command-deck.css` | Compact portfolio command deck |
+| 32 | `compact-view-gutter.css` | Compact view horizontal gutters |
+| 33 | `profile-picker-compact.css` | Compact profile picker combobox |
+| 34 | `view-tabs-compact-menu.css` | View tab overflow “more” menu |
+| 35 | `rich-description-content.css` | Rendered rich-text typography |
+| 36 | `rich-text-editor.css` | Rich-text toolbar and fields |
+| 37 | `portfolio-kano-modern.css` | KANO portfolio matrix and cards |
+| 38 | `confirm-modals-modern.css` | Delete/confirm dialogs |
 
 ### 3.2 Compact layout
 
@@ -118,7 +125,7 @@ Later files win for equal specificity (all query `?v=APP_ASSET_VERSION`):
 | Constant | Role |
 |----------|------|
 | `STORAGE_KEY` | `localStorage` key (`rice_prioritizer_v1`) |
-| `APP_ASSET_VERSION` | Cache buster (`20260528-ui194`) |
+| `APP_ASSET_VERSION` | Cache buster (`20260629-ui195`) |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | `1400` — single compact breakpoint |
 | `moscowList` | Stored MoSCoW values |
 | `moscowDisplayNames` | UI labels (Must Have, …) |
@@ -137,6 +144,8 @@ Central object: `state` in `src/app.js`.
 Persisted via `saveState()` → `AppStorage` → `localStorage` + optional cloud PUT.
 
 **Adding a new workspace-level variable:** extend `state` in `app.js`, append the key to `WORKSPACE_PERSISTED_STATE_KEYS` in `constants.js`, add validation in `applyPersistedWorkspaceUiState()`, and document in `docs/VARIABLES.md`. Roadmap/profile fields should merge via `Object.assign` in `normalizeLoadedRoadmap` / `normalizeLoadedProfile` (unknown keys round-trip). Cloud writes run `normalizeWorkspacePayload()` in `api/_lib/roadmap-metadata.js`.
+
+**Export:** JSON uses `buildExportJsonPayload()` (all `WORKSPACE_PERSISTED_STATE_KEYS` + serialized profiles). CSV uses `ExportPayload.CSV_COLUMN_IDS`; unknown profile/roadmap keys go to `profileExtraData` / `roadmapExtraData`; workspace prefs go to `workspaceState`. Add explicit CSV columns in `src/modules/export-payload.js` and `EXPORT_CSV_KNOWN_*_KEYS` when a field should be spreadsheet-native.
 
 | Field | Persisted | Notes |
 |-------|-----------|-------|
@@ -199,7 +208,7 @@ Active filter pill text includes human labels for labels/links constraints.
 
 ## 9. MoSCoW display
 
-- Use `getMoscowDisplayName(category)` for headers and compact nav — not raw `moscowList` strings in customer-facing chrome.
+- Use `getMoscowDisplayName(category)` for quadrant headers — not raw `moscowList` strings in customer-facing chrome.
 - Compact nav: `renderMoscowCompactNav`, `syncMoscowCompactNav`, `IntersectionObserver` on `#moscowBoardContainer`.
 
 ---
@@ -267,6 +276,8 @@ Export: `getExportableProfiles()` → `sanitizeProfilesForExport()` → download
 | `test:kano` | KANO zone matrix (25 cells) |
 | `test:llm` | LLM summary module helpers |
 | `test:5why` | Five Why framework helpers |
+| `test:export` | Full JSON/CSV export payload round-trip |
+| `test:periods` | Multi-quarter `roadmapPeriods` normalization |
 
 Also: `npm run verify:production` — smoke test deployed URL (`scripts/verify-deployment.js`).
 

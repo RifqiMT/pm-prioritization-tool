@@ -33,23 +33,23 @@ function formatRice(value) {
   });
 }
 
-function roadmapDescriptionPlainText(raw) {
-  if (typeof descriptionToPlainText === "function") {
-    return descriptionToPlainText(raw || "");
-  }
-  return String(raw || "")
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 function validateRoadmapInput(raw) {
+  function descriptionPlainText(description) {
+    if (typeof descriptionToPlainText === "function") {
+      return descriptionToPlainText(description || "");
+    }
+    return String(description || "")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
   if (!raw.title || !String(raw.title).trim()) {
     return "Roadmap title is required.";
   }
 
-  if (!roadmapDescriptionPlainText(raw.description)) {
+  if (!descriptionPlainText(raw.description)) {
     return "Roadmap description is required.";
   }
 

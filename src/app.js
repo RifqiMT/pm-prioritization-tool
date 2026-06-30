@@ -39,6 +39,16 @@ let state = {
 };
 
 let editingRoadmapId = null;
+let bulkEditingRoadmapIds = null;
+let bulkPreviewRoadmapIndex = 0;
+/** Per-roadmap unsaved edit payloads while multi-edit modal is open. */
+let bulkEditDraftsByRoadmapId = new Map();
+/** Roadmap IDs whose form differs from the saved record. */
+let bulkEditModifiedRoadmapIds = new Set();
+let bulkEditSuppressDirtyTracking = false;
+let bulkEditFormWatchBound = false;
+let bulkEditDraftSyncTimer = null;
+let bulkPreviewSyncGeneration = 0;
 let roadmapModalMode = "create";
 let roadmapSummaryGenerating = false;
 let roadmapSummarySimplifiedGenerating = false;
@@ -166,6 +176,50 @@ function isEuRegionOption(name) {
   return typeof COUNTRY_OPTION_EU !== "undefined" && name === COUNTRY_OPTION_EU;
 }
 
+function getCountryCodeForDisplayName(countryName) {
+  const canonical = getCanonicalCountryName(countryName);
+  if (isEuRegionOption(canonical)) return COUNTRY_OPTION_EU;
+  if (typeof countryCodeByName !== "undefined") {
+    if (countryCodeByName[canonical]) return countryCodeByName[canonical];
+    if (countryCodeByName[countryName]) return countryCodeByName[countryName];
+  }
+  return "";
+}
+
+/** Profile/table label: "🇺🇸 - US - United States" (flag, ISO code, full name). */
+function formatTargetCountryDisplayLabel(countryName) {
+  if (!countryName) return "";
+  const canonical = getCanonicalCountryName(countryName);
+  const isEu = isEuRegionOption(canonical);
+  const displayName = isEu ? "European Union" : canonical || String(countryName).trim();
+  const code = getCountryCodeForDisplayName(countryName);
+  const flag =
+    code && typeof countryCodeToFlag === "function"
+      ? isEu
+        ? getEuRegionFlagEmoji()
+        : countryCodeToFlag(code)
+      : "";
+  if (flag && code && displayName) return `${flag} - ${code} - ${displayName}`;
+  if (code && displayName) return `${code} - ${displayName}`;
+  return displayName || String(countryName).trim();
+}
+
+/** Table/country-list tooltip line (prod style): "🇩🇪 DE — Germany". */
+function formatTargetCountryTooltipLine(countryName) {
+  if (!countryName) return "";
+  const canonical = getCanonicalCountryName(countryName);
+  if (isEuRegionOption(canonical)) {
+    return `${getEuRegionFlagEmoji()} EU — European Union`;
+  }
+  const displayName = canonical || String(countryName).trim();
+  const code = getCountryCodeForDisplayName(countryName);
+  const flag =
+    code && typeof countryCodeToFlag === "function" ? countryCodeToFlag(code) : "";
+  if (flag && code) return `${flag} ${code} — ${displayName}`;
+  if (code) return `${code} — ${displayName}`;
+  return displayName;
+}
+
 /** Expands EU pseudo-option into all EU member countries; dedupes and keeps only countryList entries. */
 function expandEuRegionInCountryNames(names) {
   const result = [];
@@ -213,7 +267,7 @@ const FINANCIAL_FRAMEWORKS = ["custom", "clv", "headcount", "operational", "nps"
 const FINANCIAL_FRAMEWORK_ICONS = {
   custom: {
     label: "Custom",
-    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 20h4l10-10-4-4L4 16v4z"/><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l4 4"/></svg>',
+    svg: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.5" stroke-linecap="round" stroke-linejoin="round"/><path stroke-linecap="round" d="M6 10h.01M18 14h.01"/></svg>',
     tooltipTitle: "Custom (direct amount)",
     tooltipBody: "Manual financial impact entered directly by the user."
   },
@@ -476,17 +530,184 @@ function sanitizeFinancialImpactInputs(framework, inputs) {
 
 function sanitizeProfilesForExport(profiles) {
   return (Array.isArray(profiles) ? profiles : []).map((profile) => {
-    const safeProfile = { ...profile };
-    safeProfile.roadmaps = (Array.isArray(profile.roadmaps) ? profile.roadmaps : []).map((roadmap) => {
+    const serialized = serializeProfileForStorage(profile);
+    serialized.roadmaps = (Array.isArray(serialized.roadmaps) ? serialized.roadmaps : []).map((roadmap) => {
       const framework = normalizeFinancialFramework(roadmap.financialImpactFramework);
-      return {
-        ...roadmap,
+      return Object.assign({}, roadmap, {
         financialImpactFramework: framework,
         financialImpactInputs: sanitizeFinancialImpactInputs(framework, roadmap.financialImpactInputs || {})
-      };
+      });
     });
-    return safeProfile;
+    return serialized;
   });
+}
+
+function resolveExportActiveProfileId(profiles) {
+  const list = Array.isArray(profiles) ? profiles : [];
+  if (list.some((p) => p.id === state.activeProfileId)) return state.activeProfileId;
+  return (list[0] && list[0].id) || null;
+}
+
+function buildWorkspaceStateForExport(exportActiveProfileId) {
+  const keys =
+    typeof ExportPayload !== "undefined" && typeof ExportPayload.getWorkspacePersistedKeys === "function"
+      ? ExportPayload.getWorkspacePersistedKeys()
+      : typeof WORKSPACE_PERSISTED_STATE_KEYS !== "undefined" && Array.isArray(WORKSPACE_PERSISTED_STATE_KEYS)
+        ? WORKSPACE_PERSISTED_STATE_KEYS
+        : [];
+  const readField =
+    typeof readPersistedWorkspaceField === "function"
+      ? readPersistedWorkspaceField
+      : (key) => (Object.prototype.hasOwnProperty.call(state, key) ? state[key] : undefined);
+  if (typeof ExportPayload !== "undefined" && typeof ExportPayload.buildWorkspaceStateSnapshot === "function") {
+    return ExportPayload.buildWorkspaceStateSnapshot(keys, readField, {
+      activeProfileId: exportActiveProfileId
+    });
+  }
+  const workspace = {};
+  keys.forEach((key) => {
+    const value = key === "activeProfileId" ? exportActiveProfileId : readField(key);
+    if (value !== undefined) workspace[key] = value;
+  });
+  return workspace;
+}
+
+function buildExportJsonPayload(profilesForExport) {
+  const profiles = sanitizeProfilesForExport(profilesForExport);
+  const exportActiveId = resolveExportActiveProfileId(profiles);
+  const workspace = buildWorkspaceStateForExport(exportActiveId);
+  if (typeof ExportPayload !== "undefined" && typeof ExportPayload.buildJsonExportDocument === "function") {
+    return ExportPayload.buildJsonExportDocument({
+      version: typeof EXPORT_JSON_VERSION !== "undefined" ? EXPORT_JSON_VERSION : 1,
+      exportedAt: new Date().toISOString(),
+      profiles,
+      workspace
+    });
+  }
+  return Object.assign(
+    {
+      version: typeof EXPORT_JSON_VERSION !== "undefined" ? EXPORT_JSON_VERSION : 1,
+      exportedAt: new Date().toISOString(),
+      profiles
+    },
+    workspace
+  );
+}
+
+function buildExportCsvCellValues(profile, roadmap, workspaceStateJson) {
+  const profileId = profile.id || "";
+  const profileName = profile.name || "";
+  const profileTeam = profile.team || "";
+  const profileCreatedAt = profile.createdAt || "";
+  const knownProfileKeys =
+    typeof ExportPayload !== "undefined" && typeof ExportPayload.getKnownProfileKeys === "function"
+      ? ExportPayload.getKnownProfileKeys()
+      : new Set();
+  const knownRoadmapKeys =
+    typeof ExportPayload !== "undefined" && typeof ExportPayload.getKnownRoadmapKeys === "function"
+      ? ExportPayload.getKnownRoadmapKeys()
+      : new Set();
+  const serializeExtra =
+    typeof ExportPayload !== "undefined" && typeof ExportPayload.serializeExtraDataJson === "function"
+      ? ExportPayload.serializeExtraDataJson
+      : (extra) => (extra ? JSON.stringify(extra) : "");
+  const pickExtra =
+    typeof ExportPayload !== "undefined" && typeof ExportPayload.pickExtraEntityFields === "function"
+      ? ExportPayload.pickExtraEntityFields
+      : () => null;
+
+  if (!roadmap) {
+    return {
+      profileId,
+      profileName,
+      profileTeam,
+      profileCreatedAt,
+      profileBoardOrder: serializeExtra(profile.boardOrder || null),
+      profileMoscowOrder: serializeExtra(profile.moscowOrder || null),
+      profileExtraData: serializeExtra(pickExtra(profile, knownProfileKeys)),
+      workspaceState: workspaceStateJson || ""
+    };
+  }
+
+  const rice = calculateRiceScore(roadmap);
+  const countries = Array.isArray(roadmap.countries) ? roadmap.countries.join("|") : "";
+  const roadmapLabels = Array.isArray(roadmap.labels) ? roadmap.labels.join("|") : "";
+  const serializedRoadmap = serializeRoadmapForStorage(roadmap);
+
+  return {
+    profileId,
+    profileName,
+    profileTeam,
+    profileCreatedAt,
+    profileBoardOrder: serializeExtra(profile.boardOrder || null),
+    profileMoscowOrder: serializeExtra(profile.moscowOrder || null),
+    profileExtraData: serializeExtra(pickExtra(profile, knownProfileKeys)),
+    roadmapId: serializedRoadmap.id || "",
+    roadmapTitle: serializedRoadmap.title || "",
+    roadmapDescription: richDescriptionToPlainText(serializedRoadmap.description || ""),
+    roadmapNote: richDescriptionToPlainText(serializedRoadmap.note || ""),
+    roadmapCreatedAt: serializedRoadmap.createdAt || "",
+    roadmapModifiedAt: serializedRoadmap.modifiedAt || "",
+    reachValue: serializedRoadmap.reachValue != null ? String(serializedRoadmap.reachValue) : "",
+    reachDescription: richDescriptionToPlainText(serializedRoadmap.reachDescription || ""),
+    impactValue: serializedRoadmap.impactValue != null ? String(serializedRoadmap.impactValue) : "",
+    impactDescription: richDescriptionToPlainText(serializedRoadmap.impactDescription || ""),
+    confidenceValue: serializedRoadmap.confidenceValue != null ? String(serializedRoadmap.confidenceValue) : "",
+    confidenceDescription: richDescriptionToPlainText(serializedRoadmap.confidenceDescription || ""),
+    effortValue: serializedRoadmap.effortValue != null ? String(serializedRoadmap.effortValue) : "",
+    effortDescription: richDescriptionToPlainText(serializedRoadmap.effortDescription || ""),
+    financialImpactValue:
+      serializedRoadmap.financialImpactValue != null ? String(serializedRoadmap.financialImpactValue) : "",
+    financialImpactCurrency: serializedRoadmap.financialImpactCurrency || "",
+    financialImpactFramework: normalizeFinancialFramework(serializedRoadmap.financialImpactFramework),
+    financialImpactInputs: JSON.stringify(
+      sanitizeFinancialImpactInputs(
+        serializedRoadmap.financialImpactFramework,
+        serializedRoadmap.financialImpactInputs || {}
+      )
+    ),
+    roadmapType: serializedRoadmap.roadmapType || "",
+    roadmapStatus: getEffectiveRoadmapStatus(serializedRoadmap) || "",
+    tshirtSize: serializedRoadmap.tshirtSize || "",
+    roadmapPeriod: serializedRoadmap.roadmapPeriod || formatRoadmapPeriodEntriesForDisplay(serializedRoadmap),
+    roadmapPeriods: JSON.stringify(getRoadmapPeriodEntries(serializedRoadmap)),
+    moscowCategory: serializedRoadmap.moscowCategory || "",
+    kanoFunctionality: serializedRoadmap.kanoFunctionality != null ? String(serializedRoadmap.kanoFunctionality) : "",
+    kanoSatisfaction: serializedRoadmap.kanoSatisfaction != null ? String(serializedRoadmap.kanoSatisfaction) : "",
+    countries,
+    roadmapLabels,
+    roadmapLinks: JSON.stringify(normalizeRoadmapLinks(serializedRoadmap.links || [])),
+    roadmapTasks: JSON.stringify(normalizeRoadmapTasks(serializedRoadmap.tasks || [])),
+    roadmapRaci: JSON.stringify(normalizeRoadmapRaci(serializedRoadmap.raci || {})),
+    roadmapExtraData: serializeExtra(pickExtra(serializedRoadmap, knownRoadmapKeys)),
+    riceScore: String(rice),
+    workspaceState: workspaceStateJson || ""
+  };
+}
+
+function buildExportCsvRows(profilesForExport) {
+  const profiles = Array.isArray(profilesForExport) ? profilesForExport : [];
+  const columnIds =
+    typeof ExportPayload !== "undefined" && Array.isArray(ExportPayload.CSV_COLUMN_IDS)
+      ? ExportPayload.CSV_COLUMN_IDS
+      : [];
+  const workspaceStateJson = JSON.stringify(buildWorkspaceStateForExport(resolveExportActiveProfileId(profiles)));
+  const rows = [columnIds.join(",")];
+
+  profiles.forEach((profile) => {
+    const roadmapsArray = Array.isArray(profile.roadmaps) ? profile.roadmaps : [];
+    if (!roadmapsArray.length) {
+      const cells = buildExportCsvCellValues(profile, null, workspaceStateJson);
+      rows.push(columnIds.map((id) => escapeCsvCell(cells[id] != null ? String(cells[id]) : "")).join(","));
+      return;
+    }
+    roadmapsArray.forEach((roadmap) => {
+      const cells = buildExportCsvCellValues(profile, roadmap, workspaceStateJson);
+      rows.push(columnIds.map((id) => escapeCsvCell(cells[id] != null ? String(cells[id]) : "")).join(","));
+    });
+  });
+
+  return rows;
 }
 
 function getFinancialInputsFromForm() {
@@ -1497,7 +1718,7 @@ function buildRoadmapSummaryContextFromViewForm() {
     description: richDescriptionToPlainText(getRichDescriptionValue("roadmapDescription")),
     note: richDescriptionToPlainText(getRichDescriptionValue("roadmapNote")),
     roadmapType: (elements.roadmapType?.value || "").trim() || null,
-    roadmapStatus: (elements.roadmapStatus?.value || "").trim() || null,
+    roadmapStatus: resolveRoadmapStatusForSave(getRoadmapPeriodsFromControls(), (elements.roadmapStatus?.value || "").trim() || null),
     tshirtSize: (elements.roadmapTshirtSize?.value || "").trim() || null,
     roadmapPeriods: getRoadmapPeriodsFromControls(),
     roadmapPeriod:
@@ -2166,17 +2387,78 @@ function getOptionalFieldSummaryText(labelEl) {
   return (clone.textContent || "").replace(/\s*\(optional[^)]*\)\s*/gi, "").replace(/\s+/g, " ").trim();
 }
 
+function resetElementScrollPosition(el) {
+  if (!el || typeof el.scrollTop !== "number") return;
+  el.scrollTop = 0;
+  if (typeof el.scrollLeft === "number") el.scrollLeft = 0;
+}
+
+function resetDisclosureScrollTree(root) {
+  if (!root) return;
+  resetElementScrollPosition(root);
+  root.querySelectorAll("*").forEach((el) => {
+    if (typeof el.scrollTop !== "number") return;
+    if (el.scrollTop === 0 && el.scrollLeft === 0) return;
+    const style = window.getComputedStyle(el);
+    const overflowY = style.overflowY;
+    const overflowX = style.overflowX;
+    const scrollableY =
+      (overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay") &&
+      el.scrollHeight > el.clientHeight + 1;
+    const scrollableX =
+      (overflowX === "auto" || overflowX === "scroll" || overflowX === "overlay") &&
+      el.scrollWidth > el.clientWidth + 1;
+    if (scrollableY) el.scrollTop = 0;
+    if (scrollableX) el.scrollLeft = 0;
+  });
+}
+
+function scheduleDisclosureScrollReset(root) {
+  if (!root) return;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => resetDisclosureScrollTree(root));
+  });
+}
+
+function getRoadmapOptionalDisclosureBody(disclosureEl) {
+  return (
+    disclosureEl?.querySelector(
+      ":scope > .roadmap-optional-field-body, :scope > .roadmap-optional-section-body, :scope > .roadmap-tasks-disclosure-body, :scope > .roadmap-countries-disclosure-body"
+    ) || null
+  );
+}
+
+function getNativeDetailsPanel(detailsEl) {
+  if (!detailsEl) return null;
+  return (
+    detailsEl.querySelector(
+      ":scope > .profile-view-expandable-panel, :scope > .profile-view-currency-panel, :scope > .roadmap-modal-footer-meta-group"
+    ) || detailsEl.querySelector(":scope > :not(summary)")
+  );
+}
+
+function handleCollapsibleDetailsScrollReset(detailsEl) {
+  if (!detailsEl) return;
+  const panel = getNativeDetailsPanel(detailsEl);
+  if (!detailsEl.open) {
+    resetDisclosureScrollTree(panel);
+    return;
+  }
+  scheduleDisclosureScrollReset(panel);
+}
+
 function isRoadmapOptionalDisclosureOpen(disclosureEl) {
   return !!(disclosureEl && disclosureEl.classList.contains("is-open"));
 }
 
 function setRoadmapOptionalDisclosureOpen(disclosureEl, open) {
   if (!disclosureEl) return;
+  const wasOpen = isRoadmapOptionalDisclosureOpen(disclosureEl);
+  const body = getRoadmapOptionalDisclosureBody(disclosureEl);
+  if (!open && body) resetDisclosureScrollTree(body);
   disclosureEl.classList.toggle("is-open", !!open);
-  const body = disclosureEl.querySelector(
-    ":scope > .roadmap-optional-field-body, :scope > .roadmap-optional-section-body, :scope > .roadmap-tasks-disclosure-body"
-  );
   if (body) body.toggleAttribute("hidden", !open);
+  if (open && !wasOpen && body) scheduleDisclosureScrollReset(body);
 }
 
 function findRoadmapOptionalDisclosureTrigger(disclosureEl) {
@@ -2187,6 +2469,10 @@ function syncRoadmapOptionalDisclosureAfterToggle(disclosure) {
   if (!disclosure) return;
   if (disclosure.classList.contains("roadmap-tasks-disclosure")) {
     syncRoadmapTasksDisclosure();
+    return;
+  }
+  if (disclosure.classList.contains("roadmap-countries-disclosure")) {
+    syncRoadmapCountriesDisclosure();
     return;
   }
   if (disclosure.classList.contains("roadmap-optional-field-details")) {
@@ -2385,6 +2671,7 @@ function ensureRoadmapOptionalDisclosures() {
     roadmapForm.querySelectorAll("[data-optional-collapsible]").forEach(wrapOptionalRoadmapField);
     wrapOptionalRoadmapSections();
     ensureRoadmapTasksDisclosure();
+    ensureRoadmapCountriesDisclosure();
     ensureRoadmapKanoAxisSelects();
     ensureRoadmapKanoAxisMeters();
     ensureRoadmapKanoLegend();
@@ -2542,10 +2829,27 @@ function getKanoLevelMeta(levels, level) {
   return levels.find((item) => item.level === level) || null;
 }
 
+function roadmapKanoAxisSelectNeedsLevelOptions(selectEl) {
+  if (!selectEl) return true;
+  return !Array.from(selectEl.options).some((option) => normalizeKanoAxisLevel(option.value) != null);
+}
+
 function populateRoadmapKanoAxisSelect(selectEl, levels) {
-  if (!selectEl || selectEl.dataset.kanoOptionsReady === "1") return;
-  if (!Array.isArray(levels)) return;
-  selectEl.dataset.kanoOptionsReady = "1";
+  if (!selectEl || !Array.isArray(levels)) return;
+  if (selectEl.dataset.kanoOptionsReady === "1" && !roadmapKanoAxisSelectNeedsLevelOptions(selectEl)) {
+    return;
+  }
+
+  const currentValue = selectEl.value;
+  const emptyOption = selectEl.querySelector('option[value=""]');
+  const emptyLabel = emptyOption?.textContent?.trim() || "— Not set —";
+
+  selectEl.innerHTML = "";
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = emptyLabel;
+  selectEl.appendChild(placeholder);
+
   levels.forEach((meta) => {
     const opt = document.createElement("option");
     opt.value = String(meta.level);
@@ -2553,6 +2857,11 @@ function populateRoadmapKanoAxisSelect(selectEl, levels) {
     if (meta.description) opt.title = meta.description;
     selectEl.appendChild(opt);
   });
+
+  selectEl.dataset.kanoOptionsReady = "1";
+  if (normalizeKanoAxisLevel(currentValue) != null) {
+    selectEl.value = currentValue;
+  }
 }
 
 function ensureRoadmapKanoAxisSelects() {
@@ -2569,10 +2878,6 @@ function ensureRoadmapKanoAxisSelects() {
       if (roadmapModalMode === "view") return;
       const f = normalizeKanoAxisLevel(elements.roadmapKanoFunctionalitySelect?.value);
       const s = normalizeKanoAxisLevel(elements.roadmapKanoSatisfactionSelect?.value);
-      if (f == null || s == null) {
-        setRoadmapKanoSelection(null, null);
-        return;
-      }
       setRoadmapKanoSelection(f, s);
     });
   };
@@ -3123,10 +3428,25 @@ function syncRoadmapKanoSummary(functionality, satisfaction) {
   const f = normalizeKanoAxisLevel(functionality);
   const s = normalizeKanoAxisLevel(satisfaction);
   const hasSelection = f != null && s != null;
+  const hasPartial = (f != null) !== (s != null);
 
   if (resultEl) {
-    resultEl.classList.toggle("roadmap-kano-result--empty", !hasSelection);
+    resultEl.classList.toggle("roadmap-kano-result--empty", !hasSelection && !hasPartial);
+    resultEl.classList.toggle("roadmap-kano-result--partial", hasPartial);
     resultEl.classList.toggle("roadmap-kano-result--filled", hasSelection);
+  }
+
+  if (hasPartial) {
+    const missingAxis = f == null ? "functionality (x-axis)" : "satisfaction (y-axis)";
+    summaryEl.textContent = `Select ${missingAxis} to complete the KANO position.`;
+    summaryEl.title = "Both axis levels are required to classify and save a KANO position.";
+    if (categoryEl) {
+      categoryEl.hidden = true;
+      categoryEl.textContent = "";
+      categoryEl.className = "roadmap-kano-result__category roadmap-kano-category-badge";
+    }
+    if (clearBtn) clearBtn.hidden = roadmapModalMode === "view";
+    return;
   }
 
   if (!hasSelection) {
@@ -3178,6 +3498,7 @@ function setRoadmapKanoSelection(functionality, satisfaction, { readonly = false
   ensureRoadmapKanoMatrixMounted();
   const f = normalizeKanoAxisLevel(functionality);
   const s = normalizeKanoAxisLevel(satisfaction);
+  const hasFullSelection = f != null && s != null;
 
   if (elements.roadmapKanoFunctionalitySelect) {
     elements.roadmapKanoFunctionalitySelect.value = f != null ? String(f) : "";
@@ -3189,11 +3510,11 @@ function setRoadmapKanoSelection(functionality, satisfaction, { readonly = false
   const host = elements.roadmapKanoMatrix || $("roadmapKanoMatrix");
   if (host) {
     host.classList.toggle("roadmap-kano-matrix-host--readonly", !!readonly);
-    host.classList.toggle("roadmap-kano-matrix-host--has-selection", f != null && s != null);
+    host.classList.toggle("roadmap-kano-matrix-host--has-selection", hasFullSelection);
     host.querySelectorAll(".roadmap-kano-matrix-cell").forEach((cell) => {
       const cellF = Number(cell.dataset.functionality);
       const cellS = Number(cell.dataset.satisfaction);
-      const selected = f != null && s != null && cellF === f && cellS === s;
+      const selected = hasFullSelection && cellF === f && cellS === s;
       cell.classList.toggle("is-selected", selected);
       cell.classList.toggle("is-readonly", !!readonly);
       cell.setAttribute("aria-selected", selected ? "true" : "false");
@@ -3212,7 +3533,7 @@ function setRoadmapKanoSelection(functionality, satisfaction, { readonly = false
   if (section) {
     const details = section.querySelector(".roadmap-optional-section-details");
     if (details) {
-      details.classList.toggle("roadmap-optional--has-data", f != null && s != null);
+      details.classList.toggle("roadmap-optional--has-data", hasFullSelection);
     }
   }
 }
@@ -3795,7 +4116,6 @@ function cacheElements() {
   elements.profilesEmptyState = $("profilesEmptyState");
   elements.profilesCountBadge = $("profilesCountBadge");
   elements.profilesCreateOpenBtn = $("profilesCreateOpenBtn");
-  elements.profilesSheetTabs = $("profilesSheetTabs");
   elements.profilesSheetPanelBrowse = $("profilesSheetPanelBrowse");
   elements.profilesPanelSheet = $("profilesPanelSheet");
   elements.profilesSheetCountBadge = $("profilesSheetCountBadge");
@@ -3818,7 +4138,6 @@ function cacheElements() {
   elements.profilePickerListbox = $("profilePickerListbox");
   elements.profilePickerEmpty = $("profilePickerEmpty");
   elements.mobileProfileManageBtn = $("mobileProfileManageBtn");
-  elements.profilesSearchInput = $("profilesSelectSearch");
   elements.profilesSelect = $("profilesSelect");
   elements.profilesSelectTrigger = $("profilesSelectTrigger");
   elements.profilesSelectAvatar = $("profilesSelectAvatar");
@@ -3834,7 +4153,6 @@ function cacheElements() {
   elements.profilesSelectListbox = $("profilesSelectListbox");
   elements.profilesSelectEmpty = $("profilesSelectEmpty");
   elements.profilesSelectActions = $("profilesSelectActions");
-  elements.profilesNoResults = $("profilesNoResults");
   elements.portfolioFiltersDrawer = $("portfolioFiltersDrawer");
   elements.portfolioFiltersSheet = $("portfolioFiltersSheet");
   elements.filtersSheetBackdrop = $("filtersSheetBackdrop");
@@ -3861,7 +4179,6 @@ function cacheElements() {
   elements.profileCreateLockBadge = $("profileCreateLockBadge");
   elements.profileCreateLockStatus = $("profileCreateLockStatus");
   elements.profileCreateCancelBtn = $("profileCreateCancelBtn");
-  elements.profileCreateSaveBtn = $("profileCreateSaveBtn");
   elements.profileCreatePasswordError = $("profileCreatePasswordError");
 
   elements.profileLockedBanner = $("profileLockedBanner");
@@ -3885,21 +4202,8 @@ function cacheElements() {
   elements.portfolioSelectionEditBtn = $("portfolioSelectionEditBtn");
   elements.portfolioSelectionDuplicateBtn = $("portfolioSelectionDuplicateBtn");
   elements.portfolioSelectionMoveBtn = $("portfolioSelectionMoveBtn");
-  elements.roadmapBulkEditModal = $("roadmapBulkEditModal");
-  elements.roadmapBulkEditModalTitle = $("roadmapBulkEditModalTitle");
-  elements.roadmapBulkEditModalSubtitle = $("roadmapBulkEditModalSubtitle");
-  elements.roadmapBulkEditCountLabel = $("roadmapBulkEditCountLabel");
-  elements.roadmapBulkEditHelpText = $("roadmapBulkEditHelpText");
-  elements.roadmapBulkEditStatus = $("roadmapBulkEditStatus");
-  elements.roadmapBulkEditType = $("roadmapBulkEditType");
-  elements.roadmapBulkEditMoscow = $("roadmapBulkEditMoscow");
-  elements.roadmapBulkEditTshirtSize = $("roadmapBulkEditTshirtSize");
-  elements.roadmapBulkEditPeriod = $("roadmapBulkEditPeriod");
-  elements.roadmapBulkEditCancelBtn = $("roadmapBulkEditCancelBtn");
-  elements.roadmapBulkEditConfirmBtn = $("roadmapBulkEditConfirmBtn");
   elements.roadmapBulkTransferModal = $("roadmapBulkTransferModal");
   elements.roadmapBulkTransferModalTitle = $("roadmapBulkTransferModalTitle");
-  elements.roadmapBulkTransferModalSubtitle = $("roadmapBulkTransferModalSubtitle");
   elements.roadmapBulkTransferCountLabel = $("roadmapBulkTransferCountLabel");
   elements.roadmapBulkTransferHelpText = $("roadmapBulkTransferHelpText");
   elements.roadmapBulkTransferTargetProfile = $("roadmapBulkTransferTargetProfile");
@@ -3948,7 +4252,6 @@ function cacheElements() {
 
   elements.roadmapsTableBody = $("roadmapsTableBody");
   elements.roadmapsTableCardsList = $("roadmapsTableCardsList");
-  elements.roadmapsTableCardsShell = $("roadmapsTableCardsShell");
   elements.selectAllRoadmaps = $("selectAllRoadmaps");
   elements.roadmapsViewTableBtn = $("roadmapsViewTableBtn");
   elements.roadmapsViewBoardBtn = $("roadmapsViewBoardBtn");
@@ -3994,7 +4297,6 @@ function cacheElements() {
   elements.refreshExchangeRatesBtn = $("refreshExchangeRatesBtn");
   elements.exchangeRatesDateLabel = $("exchangeRatesDateLabel");
   elements.tableSortByRiceToggle = $("tableSortByRiceToggle");
-  elements.tableSortByRiceLabel = $("tableSortByRiceLabel");
   elements.tableGroupBySelect = $("tableGroupBySelect");
   elements.tableGroupBySummary = $("tableGroupBySummary");
   elements.roadmapsTableGroupBar = $("roadmapsTableGroupBar");
@@ -4002,15 +4304,12 @@ function cacheElements() {
   elements.scrumBoardSortByRiceToggle = $("scrumBoardSortByRiceToggle");
   elements.scrumBoardStatusColumnsToggle = $("scrumBoardStatusColumnsToggle");
   elements.scrumBoardStatusColumnsSummary = $("scrumBoardStatusColumnsSummary");
-  elements.scrumBoardStatusColumnsPopup = $("scrumBoardStatusColumnsPopup");
   elements.scrumBoardStatusColumnsList = $("scrumBoardStatusColumnsList");
   elements.scrumBoardStatusColumnsSelectAll = $("scrumBoardStatusColumnsSelectAll");
   elements.scrumBoardFullscreenBtn = $("scrumBoardFullscreenBtn");
   elements.moscowBoardContainer = $("moscowBoardContainer");
-  elements.moscowCompactNav = $("moscowCompactNav");
   elements.moscowFullscreenBtn = $("moscowFullscreenBtn");
   elements.moscowSortByRiceToggle = $("moscowSortByRiceToggle");
-  elements.moscowSortByRiceLabel = $("moscowSortByRiceLabel");
 
   elements.roadmapModal = $("roadmapModal");
   elements.roadmapModalTitle = $("roadmapModalTitle");
@@ -4021,19 +4320,13 @@ function cacheElements() {
   elements.roadmapFormError = $("roadmapFormError");
 
   elements.roadmapTitle = $("roadmapTitle");
-  elements.roadmapDescription = $("roadmapDescription");
-  elements.reachDescription = $("reachDescription");
   elements.reachValue = $("reachValue");
-  elements.impactDescription = $("impactDescription");
   elements.impactValue = $("impactValue");
-  elements.confidenceDescription = $("confidenceDescription");
   elements.confidenceValue = $("confidenceValue");
-  elements.effortDescription = $("effortDescription");
   elements.effortValue = $("effortValue");
   elements.financialImpactValue = $("financialImpactValue");
   elements.financialFramework = $("financialFramework");
   elements.financialFrameworkFormulaHint = $("financialFrameworkFormulaHint");
-  elements.financialFrameworkFields = $("financialFrameworkFields");
   elements.financialCustomNotes = $("financialCustomNotes");
   elements.financialClvCustomers = $("financialClvCustomers");
   elements.financialClvMargin = $("financialClvMargin");
@@ -4110,8 +4403,13 @@ function cacheElements() {
   elements.roadmapCurrency = $("roadmapCurrency");
   elements.roadmapType = $("roadmapType");
   elements.roadmapStatus = $("roadmapStatus");
+  elements.roadmapStatusFieldWrap = $("roadmapStatusFieldWrap");
+  elements.roadmapStatusCentralizedHint = $("roadmapStatusCentralizedHint");
   elements.roadmapTshirtSize = $("roadmapTshirtSize");
   elements.roadmapPeriodsContainer = $("roadmapPeriodsContainer");
+  elements.roadmapPeriodsBulkModeWrap = $("roadmapPeriodsBulkModeWrap");
+  elements.roadmapPeriodsBulkMode = $("roadmapPeriodsBulkMode");
+  elements.roadmapPeriodsEditorWrap = $("roadmapPeriodsEditorWrap");
   elements.addRoadmapPeriodBtn = $("addRoadmapPeriodBtn");
   elements.roadmapMoscow = $("roadmapMoscow");
   elements.roadmapKanoFunctionalitySelect = $("roadmapKanoFunctionalitySelect");
@@ -4132,6 +4430,11 @@ function cacheElements() {
   elements.roadmapMetaRice = $("roadmapMetaRice");
   elements.roadmapMetaFinancialEur = $("roadmapMetaFinancialEur");
   elements.roadmapMetaExchangeRate = $("roadmapMetaExchangeRate");
+  elements.roadmapBulkPreviewBar = $("roadmapBulkPreviewBar");
+  elements.roadmapBulkPreviewPrev = $("roadmapBulkPreviewPrev");
+  elements.roadmapBulkPreviewNext = $("roadmapBulkPreviewNext");
+  elements.roadmapBulkPreviewSelect = $("roadmapBulkPreviewSelect");
+  elements.roadmapBulkPreviewCounter = $("roadmapBulkPreviewCounter");
   elements.roadmapModalFooterMetaDetails = $("roadmapModalFooterMetaDetails");
   elements.roadmapModalSectionFiveWhy = $("roadmapModalSectionFiveWhy");
   elements.roadmapFiveWhyGenerateBtn = $("roadmapFiveWhyGenerateBtn");
@@ -4169,6 +4472,7 @@ function cacheElements() {
   elements.addRoadmapLinkBtn = $("addRoadmapLinkBtn");
   elements.roadmapTasksContainer = $("roadmapTasksContainer");
   elements.roadmapTasksCollapsibleWrap = document.querySelector("[data-roadmap-tasks-collapsible]");
+  elements.roadmapCountriesCollapsibleWrap = document.querySelector("[data-roadmap-countries-collapsible]");
   elements.addRoadmapTaskBtn = $("addRoadmapTaskBtn");
   elements.roadmapRaciSection = $("roadmapModalSectionRaci");
 
@@ -4255,10 +4559,17 @@ function cacheElements() {
   elements.profileEditPasswordHint = $("profileEditPasswordHint");
 
   elements.roadmapDeleteModal = $("roadmapDeleteModal");
+  elements.roadmapDeleteModalTitle = $("roadmapDeleteModalTitle");
   elements.roadmapDeleteNameLabel = $("roadmapDeleteNameLabel");
   elements.roadmapDeleteWarningText = $("roadmapDeleteWarningText");
   elements.roadmapDeleteCancelBtn = $("roadmapDeleteCancelBtn");
   elements.roadmapDeleteConfirmBtn = $("roadmapDeleteConfirmBtn");
+
+  elements.roadmapBulkDiscardModal = $("roadmapBulkDiscardModal");
+  elements.roadmapBulkDiscardCountLabel = $("roadmapBulkDiscardCountLabel");
+  elements.roadmapBulkDiscardWarningText = $("roadmapBulkDiscardWarningText");
+  elements.roadmapBulkDiscardCancelBtn = $("roadmapBulkDiscardCancelBtn");
+  elements.roadmapBulkDiscardConfirmBtn = $("roadmapBulkDiscardConfirmBtn");
 
   elements.exportFormatModal = $("exportFormatModal");
   elements.exportFormatModalSubtitle = $("exportFormatModalSubtitle");
@@ -4585,7 +4896,6 @@ function initCompactLayoutClass() {
     }
     if (state.roadmapsView === "moscow") {
       renderMoscowBoard();
-      syncMoscowCompactNav();
     } else if (state.roadmapsView === "board") {
       renderScrumBoard();
     } else if (state.roadmapsView === "raci") {
@@ -4727,6 +5037,8 @@ function attachEventListeners() {
   if (elements.portfolioSelectionEditBtn) {
     elements.portfolioSelectionEditBtn.addEventListener("click", handleBulkEdit);
   }
+  initRoadmapBulkPeriodControls();
+  initRoadmapBulkPreviewControls();
   if (elements.portfolioSelectionDuplicateBtn) {
     elements.portfolioSelectionDuplicateBtn.addEventListener("click", () => handleBulkRoadmapTransfer("duplicate"));
   }
@@ -4985,16 +5297,19 @@ function attachEventListeners() {
   if (elements.profileViewCurrencyDetails) {
     elements.profileViewCurrencyDetails.addEventListener("toggle", () => {
       syncProfileViewCurrencyDetails();
+      handleCollapsibleDetailsScrollReset(elements.profileViewCurrencyDetails);
     });
   }
   if (elements.profileViewCountryDetails) {
     elements.profileViewCountryDetails.addEventListener("toggle", () => {
       syncProfileViewCountryDetails();
+      handleCollapsibleDetailsScrollReset(elements.profileViewCountryDetails);
     });
   }
   if (elements.roadmapModalFooterMetaDetails) {
     elements.roadmapModalFooterMetaDetails.addEventListener("toggle", () => {
       syncRoadmapModalFooterMetaDetails();
+      handleCollapsibleDetailsScrollReset(elements.roadmapModalFooterMetaDetails);
     });
   }
   if (elements.roadmapForm) {
@@ -5102,7 +5417,7 @@ function attachEventListeners() {
       event.stopPropagation();
       openPortfolioFiltersDrawerIfClosed();
       clearFilters();
-      renderRoadmaps();
+      applyPortfolioFiltersNow();
     });
   }
 
@@ -5112,7 +5427,10 @@ function attachEventListeners() {
       const container = elements.filterCountriesToggle.closest(".filter-countries");
       if (!container) return;
       const willOpen = !container.classList.contains("open");
-      if (willOpen) prepareAppOverlay("filterCountries");
+      if (willOpen) {
+        closeAllFilterAutocompleteDropdowns();
+        prepareAppOverlay("filterCountries");
+      }
       container.classList.toggle("open");
       if (willOpen && elements.filterCountriesSearch) {
         elements.filterCountriesSearch.focus();
@@ -5127,7 +5445,10 @@ function attachEventListeners() {
       const container = elements.filterRoadmapPeriodToggle.closest(".filter-countries");
       if (!container) return;
       const willOpen = !container.classList.contains("open");
-      if (willOpen) prepareAppOverlay("filterRoadmapPeriod");
+      if (willOpen) {
+        closeAllFilterAutocompleteDropdowns();
+        prepareAppOverlay("filterRoadmapPeriod");
+      }
       container.classList.toggle("open");
       if (willOpen && elements.filterRoadmapPeriodSearch) {
         elements.filterRoadmapPeriodSearch.focus();
@@ -5177,22 +5498,25 @@ function attachEventListeners() {
     });
   }
 
-  document.addEventListener("click", (event) => {
+  document.addEventListener("pointerdown", (event) => {
+    const target = event.target;
+    if (isFilterAutocompleteDropdownNode(target)) return;
+
     if (elements.filterCountriesToggle) {
       const countriesContainer = elements.filterCountriesToggle.closest(".filter-countries");
-      if (countriesContainer && !countriesContainer.contains(event.target)) {
+      if (countriesContainer?.classList.contains("open") && !countriesContainer.contains(target)) {
         countriesContainer.classList.remove("open");
       }
     }
     if (elements.filterRoadmapPeriodToggle) {
       const periodContainer = elements.filterRoadmapPeriodToggle.closest(".filter-countries");
-      if (periodContainer && !periodContainer.contains(event.target)) {
+      if (periodContainer?.classList.contains("open") && !periodContainer.contains(target)) {
         periodContainer.classList.remove("open");
       }
     }
     if (elements.scrumBoardStatusColumnsToggle) {
       const statusContainer = elements.scrumBoardStatusColumnsToggle.closest(".filter-countries");
-      if (statusContainer && !statusContainer.contains(event.target)) {
+      if (statusContainer && !statusContainer.contains(target)) {
         closeScrumBoardStatusColumnsPopup();
       }
     }
@@ -5222,9 +5546,15 @@ function attachEventListeners() {
   if (elements.filterCountriesSearch) {
     elements.filterCountriesSearch.addEventListener("input", () => {
       filterFilterCountriesBySearchTerm();
-      renderRoadmaps();
-      updateFiltersActivePill();
       updateFilterCountriesSummary();
+      schedulePortfolioFilterApply();
+    });
+    elements.filterCountriesSearch.addEventListener("change", applyPortfolioFiltersNow);
+    elements.filterCountriesSearch.addEventListener("search", applyPortfolioFiltersNow);
+    elements.filterCountriesSearch.addEventListener("compositionend", () => {
+      filterFilterCountriesBySearchTerm();
+      updateFilterCountriesSummary();
+      schedulePortfolioFilterApply();
     });
   }
 
@@ -5233,8 +5563,7 @@ function attachEventListeners() {
       const target = event.target;
       if (target && target.type === "checkbox") {
         syncFilterEuRegionCheckbox(target);
-        renderRoadmaps();
-        updateFiltersActivePill();
+        applyPortfolioFiltersNow();
         updateFilterCountriesSummary();
       }
     });
@@ -5243,9 +5572,15 @@ function attachEventListeners() {
   if (elements.filterRoadmapPeriodSearch) {
     elements.filterRoadmapPeriodSearch.addEventListener("input", () => {
       filterFilterRoadmapPeriodsBySearchTerm();
-      renderRoadmaps();
-      updateFiltersActivePill();
       updateFilterRoadmapPeriodsSummary();
+      schedulePortfolioFilterApply();
+    });
+    elements.filterRoadmapPeriodSearch.addEventListener("change", applyPortfolioFiltersNow);
+    elements.filterRoadmapPeriodSearch.addEventListener("search", applyPortfolioFiltersNow);
+    elements.filterRoadmapPeriodSearch.addEventListener("compositionend", () => {
+      filterFilterRoadmapPeriodsBySearchTerm();
+      updateFilterRoadmapPeriodsSummary();
+      schedulePortfolioFilterApply();
     });
   }
 
@@ -5253,8 +5588,7 @@ function attachEventListeners() {
     elements.filterRoadmapPeriodList.addEventListener("change", (event) => {
       const target = event.target;
       if (target && target.type === "checkbox") {
-        renderRoadmaps();
-        updateFiltersActivePill();
+        applyPortfolioFiltersNow();
         updateFilterRoadmapPeriodsSummary();
       }
     });
@@ -5264,6 +5598,7 @@ function attachEventListeners() {
     elements.addCountryBtn.addEventListener("click", () => {
       if (roadmapModalMode === "view") return;
       addCountryRow();
+      scheduleRoadmapCountriesDisclosureSync();
     });
     elements.countriesContainer.addEventListener("click", (event) => {
       if (roadmapModalMode === "view") return;
@@ -5275,11 +5610,15 @@ function attachEventListeners() {
       if (!elements.countriesContainer.querySelector(".country-row")) {
         addCountryRow();
       }
+      refreshRoadmapListReorderControls(elements.countriesContainer, ".country-row");
+      scheduleRoadmapCountriesDisclosureSync();
     });
     elements.countriesContainer.addEventListener("change", (event) => {
       if (roadmapModalMode === "view") return;
       const select = event.target.closest(".country-row select");
-      if (!select || !isEuRegionOption(select.value)) return;
+      if (!select) return;
+      scheduleRoadmapCountriesDisclosureSync();
+      if (!isEuRegionOption(select.value)) return;
       applyEuRegionToRoadmapCountries();
     });
   }
@@ -5299,6 +5638,7 @@ function attachEventListeners() {
       if (!elements.roadmapLabelsContainer.querySelector(".roadmap-label-row")) {
         addRoadmapLabelRow();
       }
+      refreshRoadmapListReorderControls(elements.roadmapLabelsContainer, ".roadmap-label-row");
       scheduleRoadmapModalSectionNavSync();
     });
   }
@@ -5318,6 +5658,7 @@ function attachEventListeners() {
       if (!elements.roadmapLinksContainer.querySelector(".roadmap-link-row")) {
         addRoadmapLinkRow();
       }
+      refreshRoadmapListReorderControls(elements.roadmapLinksContainer, ".roadmap-link-row");
       scheduleRoadmapModalSectionNavSync();
     });
   }
@@ -5338,6 +5679,7 @@ function attachEventListeners() {
       if (!elements.roadmapTasksContainer.querySelector(".roadmap-task-row")) {
         addRoadmapTaskRow();
       }
+      refreshRoadmapListReorderControls(elements.roadmapTasksContainer, ".roadmap-task-row");
       scheduleRoadmapTasksDisclosureSync();
     });
   }
@@ -5346,6 +5688,7 @@ function attachEventListeners() {
     elements.addRoadmapPeriodBtn.addEventListener("click", () => {
       if (roadmapModalMode === "view") return;
       addRoadmapPeriodRow();
+      syncRoadmapStatusControlFromPeriods();
     });
     elements.roadmapPeriodsContainer.addEventListener("click", (event) => {
       if (roadmapModalMode === "view") return;
@@ -5357,7 +5700,16 @@ function attachEventListeners() {
       if (!elements.roadmapPeriodsContainer.querySelector(".roadmap-period-row")) {
         addRoadmapPeriodRow();
       }
+      syncRoadmapPeriodSelectOptions(elements.roadmapPeriodsContainer);
+      syncRoadmapStatusControlFromPeriods();
       scheduleRoadmapModalSectionNavSync();
+    });
+    elements.roadmapPeriodsContainer.addEventListener("change", (event) => {
+      if (roadmapModalMode === "view") return;
+      if (event.target.closest(".roadmap-period-select")) {
+        syncRoadmapPeriodSelectOptions(elements.roadmapPeriodsContainer);
+      }
+      syncRoadmapStatusControlFromPeriods();
     });
   }
 
@@ -5379,11 +5731,12 @@ function attachEventListeners() {
       if (!container.querySelector(".roadmap-raci-row")) {
         addRoadmapRaciRow(container.getAttribute("data-raci-role"));
       }
+      refreshRoadmapListReorderControls(container, ".roadmap-raci-row");
       scheduleRoadmapModalSectionNavSync();
     });
   }
 
-  const filterInputs = [
+  const filterSelectInputs = [
     elements.filterImpact,
     elements.filterEffort,
     elements.filterCurrency,
@@ -5395,18 +5748,10 @@ function attachEventListeners() {
     elements.filterLabels,
     elements.filterRoadmapType,
     elements.filterOwnerProfile
-  ].filter(Boolean); // guard against missing DOM nodes so we never throw while wiring listeners
+  ].filter(Boolean);
 
-  const applyFiltersAndUpdateUI = () => {
-    renderRoadmaps();
-    updateFiltersActivePill();
-  };
-  const debouncedApplyFilters = typeof debounce === "function" ? debounce(applyFiltersAndUpdateUI, 200) : applyFiltersAndUpdateUI;
-
-  filterInputs.forEach((input) => {
-    if (!input) return;
-    input.addEventListener("input", applyFiltersAndUpdateUI);
-    input.addEventListener("change", applyFiltersAndUpdateUI);
+  filterSelectInputs.forEach((input) => {
+    input.addEventListener("change", applyPortfolioFiltersNow);
   });
 
   if (elements.selectAllRoadmaps) {
@@ -5525,6 +5870,23 @@ function attachEventListeners() {
     positionProfileTooltip(wrap, getTooltipPointerAnchor(wrap, e));
   }, true);
 
+  document.body.addEventListener(
+    "mousemove",
+    (e) => {
+      if (!activeTooltipWrap || isCompactLayoutViewport()) return;
+      if (!shouldAllowTooltipForWrap(activeTooltipWrap)) return;
+      const trigger = findTooltipHoverTrigger(e.target);
+      const floatingTooltip = getFloatingTooltipForWrap(activeTooltipWrap);
+      const stillHovering =
+        trigger === activeTooltipWrap ||
+        activeTooltipWrap.contains(e.target) ||
+        (floatingTooltip && floatingTooltip.contains(e.target));
+      if (!stillHovering) return;
+      positionProfileTooltip(activeTooltipWrap, getTooltipPointerAnchor(activeTooltipWrap, e));
+    },
+    { passive: true }
+  );
+
   document.body.addEventListener("focusin", (e) => {
     const raciWrap = e.target.closest(".raci-matrix-with-tooltip");
     if (raciWrap && isRaciMatrixDesktopLayout()) {
@@ -5605,8 +5967,19 @@ function attachEventListeners() {
       const wrap = e.target.closest(".roadmap-field-tooltip-wrap");
       if (!wrap) return;
       if (activeTooltipWrap === wrap) return;
-      positionProfileTooltip(wrap);
+      positionProfileTooltip(wrap, getTooltipPointerAnchor(wrap, e));
     }, true);
+    elements.roadmapModal.addEventListener("mousemove", (e) => {
+      if (!activeTooltipWrap || !isRoadmapFieldTooltipWrap(activeTooltipWrap)) return;
+      const wrap = e.target.closest(".roadmap-field-tooltip-wrap");
+      const floatingTooltip = getFloatingTooltipForWrap(activeTooltipWrap);
+      const stillHovering =
+        wrap === activeTooltipWrap ||
+        activeTooltipWrap.contains(e.target) ||
+        (floatingTooltip && floatingTooltip.contains(e.target));
+      if (!stillHovering) return;
+      positionProfileTooltip(activeTooltipWrap, getTooltipPointerAnchor(activeTooltipWrap, e));
+    }, { passive: true });
     elements.roadmapModal.addEventListener("mouseleave", () => {
       hideCellTypeTooltips();
     });
@@ -5623,6 +5996,15 @@ function attachEventListeners() {
       }, { passive: true });
     }
   }
+
+  [elements.profileEditModal, elements.profileCreateModal].forEach((modal) => {
+    if (!modal) return;
+    const scrollRegion = modal.querySelector(".profile-view-scroll");
+    if (scrollRegion) {
+      scrollRegion.addEventListener("scroll", () => hideCellTypeTooltips(), { passive: true });
+    }
+    modal.addEventListener("mouseleave", () => hideCellTypeTooltips());
+  });
 
   // Prevent accidental wheel-based increments on number inputs.
   document.addEventListener("wheel", (e) => {
@@ -5648,6 +6030,19 @@ function attachEventListeners() {
     elements.roadmapFormCancelBtn.addEventListener("click", (e) => {
       e.preventDefault();
       closeRoadmapModal();
+    });
+  }
+
+  if (elements.roadmapBulkDiscardCancelBtn) {
+    elements.roadmapBulkDiscardCancelBtn.addEventListener("click", () => {
+      closeRoadmapBulkDiscardModal();
+    });
+  }
+
+  if (elements.roadmapBulkDiscardConfirmBtn) {
+    elements.roadmapBulkDiscardConfirmBtn.addEventListener("click", () => {
+      closeRoadmapBulkDiscardModal();
+      closeRoadmapModal({ force: true });
     });
   }
 
@@ -5719,31 +6114,30 @@ function attachEventListeners() {
 
 function updateFiltersActivePill() {
   const activeFilters = [];
-  if ((elements.filterTitle.value || "").trim()) activeFilters.push("Title");
-  if (elements.filterRoadmapType.value) activeFilters.push("Type");
-  if (getSelectedFilterCountries().length) activeFilters.push("Countries");
-  if (getSelectedFilterRoadmapPeriods().length) activeFilters.push("Roadmap period");
-  if (elements.filterImpact.value) activeFilters.push("Impact");
-  if (elements.filterEffort.value) activeFilters.push("Effort");
-  if (elements.filterCurrency.value) activeFilters.push("Currency");
-  if (elements.filterFinancialFramework && elements.filterFinancialFramework.value) activeFilters.push("Framework");
-  if (elements.filterStatus.value) activeFilters.push("Status");
-  if (elements.filterTshirtSize.value) activeFilters.push("T-shirt size");
-  if (elements.filterMoscow && elements.filterMoscow.value) activeFilters.push("MOSCOW");
-  if (elements.filterLabel && (elements.filterLabel.value || "").trim()) activeFilters.push("Label");
-  if (elements.filterBusinessLead && (elements.filterBusinessLead.value || "").trim()) {
-    activeFilters.push("Business lead");
+  const criteria = readPortfolioFilterCriteria();
+  if (criteria.titleQuery) activeFilters.push("Title");
+  if (criteria.labelQuery) activeFilters.push("Label");
+  if (criteria.businessLeadQuery) activeFilters.push("Business lead");
+  if (criteria.techLeadQuery) activeFilters.push("Tech lead");
+  if (elements.filterRoadmapType && criteria.roadmapTypeFilter) activeFilters.push("Type");
+  if (criteria.selectedCountries.length) activeFilters.push("Countries");
+  else if (criteria.countriesSearchQuery) activeFilters.push("Countries");
+  if (criteria.selectedPeriods.length) activeFilters.push("Roadmap period");
+  else if (criteria.periodsSearchQuery) activeFilters.push("Roadmap period");
+  if (criteria.impactFilter) activeFilters.push("Impact");
+  if (criteria.effortFilter) activeFilters.push("Effort");
+  if (criteria.currencyFilter) activeFilters.push("Currency");
+  if (criteria.frameworkFilter) activeFilters.push("Framework");
+  if (criteria.statusFilter) activeFilters.push("Status");
+  if (criteria.tshirtFilter) activeFilters.push("T-shirt size");
+  if (criteria.moscowFilter) activeFilters.push("MOSCOW");
+  if (criteria.labelsFilter) {
+    activeFilters.push(criteria.labelsFilter === "with" ? "With labels" : "Without labels");
   }
-  if (elements.filterTechLead && (elements.filterTechLead.value || "").trim()) {
-    activeFilters.push("Tech lead");
+  if (criteria.linksFilter) {
+    activeFilters.push(criteria.linksFilter === "with" ? "With links" : "Without links");
   }
-  if (elements.filterLabels && elements.filterLabels.value) {
-    activeFilters.push(elements.filterLabels.value === "with" ? "With labels" : "Without labels");
-  }
-  if (elements.filterLinks && elements.filterLinks.value) {
-    activeFilters.push(elements.filterLinks.value === "with" ? "With links" : "Without links");
-  }
-  if (elements.filterOwnerProfile && elements.filterOwnerProfile.value) {
+  if (criteria.ownerProfileFilter && elements.filterOwnerProfile) {
     const opt = elements.filterOwnerProfile.selectedOptions[0];
     activeFilters.push(opt ? `Profile: ${opt.textContent}` : "Owner profile");
   }
@@ -5806,16 +6200,38 @@ const filterAutocompleteState = {
   techLead: { open: false, highlightIndex: -1 }
 };
 
-const debouncedFilterTextApply =
-  typeof debounce === "function"
-    ? debounce(() => {
-        renderRoadmaps();
-        updateFiltersActivePill();
-      }, 200)
-    : () => {
-        renderRoadmaps();
-        updateFiltersActivePill();
-      };
+let filterAutocompletePointerGuard = false;
+
+function isFilterAutocompleteInteractionTarget(node) {
+  if (!node || typeof node.closest !== "function") return false;
+  return !!node.closest(".filter-autocomplete");
+}
+
+function isFilterAutocompleteDropdownNode(node) {
+  return isFilterAutocompleteInteractionTarget(node);
+}
+
+function bindFilterAutocompleteDropdownInteraction(kind) {
+  const field = getFilterAutocompleteField(kind);
+  if (!field?.dropdown || field.dropdown.dataset.interactionBound === "1") return;
+  field.dropdown.dataset.interactionBound = "1";
+  const markPointerGuard = () => {
+    filterAutocompletePointerGuard = true;
+    window.setTimeout(() => {
+      filterAutocompletePointerGuard = false;
+    }, 280);
+  };
+  field.dropdown.addEventListener("pointerdown", (event) => {
+    markPointerGuard();
+    if (event.pointerType === "mouse" && event.button === 0) {
+      event.preventDefault();
+    }
+  });
+  field.dropdown.addEventListener("mousedown", (event) => {
+    markPointerGuard();
+    if (event.button === 0) event.preventDefault();
+  });
+}
 
 function getFilterAutocompleteField(kind) {
   if (kind === "title") {
@@ -5948,7 +6364,11 @@ function highlightFilterAutocompleteMatch(text, query) {
   );
 }
 
-function setFilterAutocompleteOpen(kind, open) {
+function mountFilterAutocompleteDropdown(kind) {
+  bindFilterAutocompleteDropdownInteraction(kind);
+}
+
+function setFilterAutocompleteOpen(kind, open, { silent = false } = {}) {
   const field = getFilterAutocompleteField(kind);
   if (!field || !field.input) return;
   const state = filterAutocompleteState[kind];
@@ -5956,9 +6376,11 @@ function setFilterAutocompleteOpen(kind, open) {
 
   if (open) {
     FILTER_AUTOCOMPLETE_KINDS.forEach((otherKind) => {
-      if (otherKind !== kind) setFilterAutocompleteOpen(otherKind, false);
+      if (otherKind !== kind) setFilterAutocompleteOpen(otherKind, false, { silent: true });
     });
-    prepareAppOverlay("filterAutocomplete");
+    if (!state.open && !silent) {
+      prepareAppOverlay("filterAutocomplete");
+    }
   }
 
   state.open = !!open;
@@ -5971,12 +6393,16 @@ function setFilterAutocompleteOpen(kind, open) {
   }
   if (field.dropdown) {
     field.dropdown.hidden = !state.open;
+    if (state.open) {
+      bindFilterAutocompleteDropdownInteraction(kind);
+      mountFilterAutocompleteDropdown(kind);
+    }
   }
   field.input.setAttribute("aria-expanded", state.open ? "true" : "false");
 }
 
 function closeAllFilterAutocompleteDropdowns() {
-  FILTER_AUTOCOMPLETE_KINDS.forEach((kind) => setFilterAutocompleteOpen(kind, false));
+  FILTER_AUTOCOMPLETE_KINDS.forEach((kind) => setFilterAutocompleteOpen(kind, false, { silent: true }));
 }
 
 function refreshFilterAutocompleteDropdowns() {
@@ -5992,7 +6418,7 @@ function selectFilterAutocompleteSuggestion(kind, value) {
   if (!field || !field.input) return;
   field.input.value = value;
   setFilterAutocompleteOpen(kind, false);
-  debouncedFilterTextApply();
+  applyPortfolioFiltersNow();
   field.input.focus();
 }
 
@@ -6073,7 +6499,19 @@ function initFilterAutocompleteField(kind) {
     }
     filterAutocompleteState[kind].highlightIndex = -1;
     renderFilterAutocompleteOptions(kind);
-    debouncedFilterTextApply();
+    schedulePortfolioFilterApply();
+  });
+
+  if (field.input.type === "search") {
+    field.input.addEventListener("search", () => {
+      renderFilterAutocompleteOptions(kind);
+      applyPortfolioFiltersNow();
+    });
+  }
+
+  field.input.addEventListener("compositionend", () => {
+    renderFilterAutocompleteOptions(kind);
+    schedulePortfolioFilterApply();
   });
 
   field.input.addEventListener("keydown", (e) => {
@@ -6126,15 +6564,17 @@ function initFilterAutocompleteField(kind) {
 
   field.input.addEventListener("blur", () => {
     window.setTimeout(() => {
-      if (!field.wrapper || !field.wrapper.matches(":focus-within")) {
-        setFilterAutocompleteOpen(kind, false);
-      }
-    }, 120);
+      if (shouldKeepFilterAutocompleteOpen(kind)) return;
+      setFilterAutocompleteOpen(kind, false);
+    }, 180);
   });
 }
 
 function initFilterAutocompletes() {
-  FILTER_AUTOCOMPLETE_KINDS.forEach((kind) => initFilterAutocompleteField(kind));
+  FILTER_AUTOCOMPLETE_KINDS.forEach((kind) => {
+    bindFilterAutocompleteDropdownInteraction(kind);
+    initFilterAutocompleteField(kind);
+  });
 }
 
 // --- Export / import (JSON & CSV, merge logic) ---
@@ -7101,18 +7541,7 @@ function handleExportData(profilesForExport, exportMeta) {
         : state.profiles.length - profiles.length;
     const failedNames = (exportMeta && exportMeta.failedNames) || [];
 
-    const exportActiveId = profiles.some((p) => p.id === state.activeProfileId)
-      ? state.activeProfileId
-      : (profiles[0] && profiles[0].id) || null;
-
-    const payload = {
-      version: 1,
-      exportedAt: new Date().toISOString(),
-      profiles: sanitizeProfilesForExport(profiles),
-      activeProfileId: exportActiveId,
-      sortField: state.sortField,
-      sortDirection: state.sortDirection
-    };
+    const payload = buildExportJsonPayload(profiles);
     const json = JSON.stringify(payload, null, 2);
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -7149,145 +7578,7 @@ function handleExportCsv(profilesForExport, exportMeta) {
         : state.profiles.length - profiles.length;
     const failedNames = (exportMeta && exportMeta.failedNames) || [];
 
-    const header = [
-      "profileId",
-      "profileName",
-      "profileTeam",
-      "profileCreatedAt",
-      "roadmapId",
-      "roadmapTitle",
-      "roadmapDescription",
-      "roadmapNote",
-      "roadmapCreatedAt",
-      "roadmapModifiedAt",
-      "reachValue",
-      "reachDescription",
-      "impactValue",
-      "impactDescription",
-      "confidenceValue",
-      "confidenceDescription",
-      "effortValue",
-      "effortDescription",
-      "financialImpactValue",
-      "financialImpactCurrency",
-      "financialImpactFramework",
-      "financialImpactInputs",
-      "roadmapType",
-      "roadmapStatus",
-      "tshirtSize",
-      "roadmapPeriod",
-      "roadmapPeriods",
-      "moscowCategory",
-      "kanoFunctionality",
-      "kanoSatisfaction",
-      "countries",
-      "roadmapLabels",
-      "roadmapLinks",
-      "roadmapTasks",
-      "riceScore"
-    ];
-
-    const rows = [header.join(",")];
-
-    profiles.forEach((profile) => {
-      const profileId = profile.id || "";
-      const profileName = profile.name || "";
-      const profileTeam = profile.team || "";
-      const profileCreatedAt = profile.createdAt || "";
-      const roadmapsArray = Array.isArray(profile.roadmaps) ? profile.roadmaps : [];
-      if (!roadmapsArray.length) {
-        const emptyRow = [
-          escapeCsvCell(profileId),
-          escapeCsvCell(profileName),
-          escapeCsvCell(profileTeam),
-          escapeCsvCell(profileCreatedAt),
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          ""
-        ];
-        rows.push(emptyRow.join(","));
-        return;
-      }
-      roadmapsArray.forEach((roadmap) => {
-        const rice = calculateRiceScore(roadmap);
-        const countries = Array.isArray(roadmap.countries) ? roadmap.countries.join("|") : "";
-        const roadmapLabels = Array.isArray(roadmap.labels) ? roadmap.labels.join("|") : "";
-        const roadmapLinks = JSON.stringify(normalizeRoadmapLinks(roadmap.links || []));
-        const roadmapTasks = JSON.stringify(normalizeRoadmapTasks(roadmap.tasks || []));
-        const row = [
-          escapeCsvCell(profileId),
-          escapeCsvCell(profileName),
-          escapeCsvCell(profileTeam),
-          escapeCsvCell(profileCreatedAt),
-          escapeCsvCell(roadmap.id || ""),
-          escapeCsvCell(roadmap.title || ""),
-          escapeCsvCell(richDescriptionToPlainText(roadmap.description || "")),
-          escapeCsvCell(richDescriptionToPlainText(roadmap.note || "")),
-          escapeCsvCell(roadmap.createdAt || ""),
-          escapeCsvCell(roadmap.modifiedAt || ""),
-          escapeCsvCell(roadmap.reachValue != null ? String(roadmap.reachValue) : ""),
-          escapeCsvCell(richDescriptionToPlainText(roadmap.reachDescription || "")),
-          escapeCsvCell(roadmap.impactValue != null ? String(roadmap.impactValue) : ""),
-          escapeCsvCell(richDescriptionToPlainText(roadmap.impactDescription || "")),
-          escapeCsvCell(roadmap.confidenceValue != null ? String(roadmap.confidenceValue) : ""),
-          escapeCsvCell(richDescriptionToPlainText(roadmap.confidenceDescription || "")),
-          escapeCsvCell(roadmap.effortValue != null ? String(roadmap.effortValue) : ""),
-          escapeCsvCell(richDescriptionToPlainText(roadmap.effortDescription || "")),
-          escapeCsvCell(roadmap.financialImpactValue != null ? String(roadmap.financialImpactValue) : ""),
-          escapeCsvCell(roadmap.financialImpactCurrency || ""),
-          escapeCsvCell(normalizeFinancialFramework(roadmap.financialImpactFramework)),
-          escapeCsvCell(JSON.stringify(
-            sanitizeFinancialImpactInputs(
-              roadmap.financialImpactFramework,
-              roadmap.financialImpactInputs || {}
-            )
-          )),
-          escapeCsvCell(roadmap.roadmapType || ""),
-          escapeCsvCell(roadmap.roadmapStatus || ""),
-          escapeCsvCell(roadmap.tshirtSize || ""),
-          escapeCsvCell(roadmap.roadmapPeriod || formatRoadmapPeriodEntriesForDisplay(roadmap)),
-          escapeCsvCell(JSON.stringify(getRoadmapPeriodEntries(roadmap))),
-          escapeCsvCell(roadmap.moscowCategory || ""),
-          escapeCsvCell(roadmap.kanoFunctionality != null ? String(roadmap.kanoFunctionality) : ""),
-          escapeCsvCell(roadmap.kanoSatisfaction != null ? String(roadmap.kanoSatisfaction) : ""),
-          escapeCsvCell(countries),
-          escapeCsvCell(roadmapLabels),
-          escapeCsvCell(roadmapLinks),
-          escapeCsvCell(roadmapTasks),
-          escapeCsvCell(String(rice))
-        ];
-        rows.push(row.join(","));
-      });
-    });
-
-    const csv = rows.join("\n");
+    const csv = buildExportCsvRows(profiles).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -7404,6 +7695,9 @@ function handleImportJsonFile(file) {
         return;
       }
       const { addedProfiles, mergedProfiles, addedRoadmaps, mergedRoadmaps } = mergeImportedProfiles(importedProfiles);
+      if (!Array.isArray(parsed) && typeof applyPersistedWorkspaceUiState === "function") {
+        applyPersistedWorkspaceUiState(parsed);
+      }
       if (!state.activeProfileId && state.profiles.length) {
         state.activeProfileId = resolveFallbackActiveProfileId();
       }
@@ -7449,12 +7743,16 @@ function handleImportCsvFile(file) {
         window.alert("Import file contains no data rows.");
         return;
       }
-      const importedProfiles = buildProfilesFromCsvRows(header, dataRows);
+      const imported = buildProfilesFromCsvRows(header, dataRows);
+      const importedProfiles = imported.profiles;
       if (!importedProfiles.length) {
         window.alert("No valid data found in CSV file.");
         return;
       }
       const { addedProfiles, mergedProfiles, addedRoadmaps, mergedRoadmaps } = mergeImportedProfiles(importedProfiles);
+      if (imported.workspaceState && typeof applyPersistedWorkspaceUiState === "function") {
+        applyPersistedWorkspaceUiState(imported.workspaceState);
+      }
       if (!state.activeProfileId && state.profiles.length) {
         state.activeProfileId = resolveFallbackActiveProfileId();
       }
@@ -7489,9 +7787,33 @@ function buildProfilesFromCsvRows(header, rows) {
     if (key) colIndex[key] = idx;
   });
 
+  const parseJsonCell =
+    typeof ExportPayload !== "undefined" && typeof ExportPayload.parseExtraDataJson === "function"
+      ? ExportPayload.parseExtraDataJson
+      : (raw) => {
+          const text = raw != null ? String(raw).trim() : "";
+          if (!text) return null;
+          try {
+            const parsed = JSON.parse(text);
+            return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : null;
+          } catch {
+            return null;
+          }
+        };
+  const mergeExtra =
+    typeof ExportPayload !== "undefined" && typeof ExportPayload.mergeExtraFieldsIntoEntity === "function"
+      ? ExportPayload.mergeExtraFieldsIntoEntity
+      : (entity, extra) => (extra ? Object.assign({}, entity, extra) : entity);
+
   const byProfileKey = new Map();
+  let importedWorkspaceState = null;
 
   rows.forEach((cells) => {
+    if (!importedWorkspaceState && colIndex.workspaceState != null) {
+      const workspace = parseJsonCell(cells[colIndex.workspaceState]);
+      if (workspace) importedWorkspaceState = workspace;
+    }
+
     const profileName = (cells[colIndex.profileName] ?? "").toString().trim();
     if (!profileName) return;
     const profileIdFromCsv = (cells[colIndex.profileId] ?? "").toString().trim();
@@ -7500,13 +7822,26 @@ function buildProfilesFromCsvRows(header, rows) {
     const key = profileIdFromCsv || profileName;
 
     if (!byProfileKey.has(key)) {
-      byProfileKey.set(key, {
+      const profile = {
         id: profileIdFromCsv || generateId("profile"),
         name: profileName,
         team: profileTeam || "",
         createdAt: profileCreatedAt || new Date().toISOString(),
         roadmaps: []
-      });
+      };
+      if (colIndex.profileBoardOrder != null) {
+        const boardOrder = parseJsonCell(cells[colIndex.profileBoardOrder]);
+        if (boardOrder) profile.boardOrder = boardOrder;
+      }
+      if (colIndex.profileMoscowOrder != null) {
+        const moscowOrder = parseJsonCell(cells[colIndex.profileMoscowOrder]);
+        if (moscowOrder) profile.moscowOrder = moscowOrder;
+      }
+      if (colIndex.profileExtraData != null) {
+        const profileExtra = parseJsonCell(cells[colIndex.profileExtraData]);
+        if (profileExtra) mergeExtra(profile, profileExtra);
+      }
+      byProfileKey.set(key, profile);
     }
 
     const profile = byProfileKey.get(key);
@@ -7590,13 +7925,31 @@ function buildProfilesFromCsvRows(header, rows) {
         } catch (_) {
           return [];
         }
+      })(),
+      raci: (() => {
+        const raw = (cells[colIndex.roadmapRaci] ?? "").toString().trim();
+        if (!raw) return undefined;
+        try {
+          const parsed = JSON.parse(raw);
+          return normalizeRoadmapRaci(parsed && typeof parsed === "object" ? parsed : {});
+        } catch (_) {
+          return undefined;
+        }
       })()
     };
+    if (colIndex.roadmapExtraData != null) {
+      const roadmapExtra = parseJsonCell(cells[colIndex.roadmapExtraData]);
+      if (roadmapExtra) mergeExtra(roadmap, roadmapExtra);
+    }
+    if (roadmap.raci === undefined) delete roadmap.raci;
     roadmap.riceScore = calculateRiceScore(roadmap);
     profile.roadmaps.push(roadmap);
   });
 
-  return Array.from(byProfileKey.values());
+  return {
+    profiles: Array.from(byProfileKey.values()),
+    workspaceState: importedWorkspaceState
+  };
 }
 
 function normalizeImportedProfile(profile) {
@@ -7664,7 +8017,10 @@ function normalizeImportedRoadmap(roadmap) {
     financialImpactFramework,
     financialImpactInputs,
     roadmapType: coalesceLegacyRoadmapStringField(roadmap, "roadmapType", "projectType"),
-    roadmapStatus: coalesceLegacyRoadmapStringField(roadmap, "roadmapStatus", "projectStatus"),
+    roadmapStatus: deriveRoadmapStatusFromPeriods(
+      roadmapPeriods,
+      coalesceLegacyRoadmapStringField(roadmap, "roadmapStatus", "projectStatus")
+    ),
     tshirtSize: (roadmap.tshirtSize != null && String(roadmap.tshirtSize).trim() !== "") ? String(roadmap.tshirtSize).trim() : null,
     roadmapPeriod: normalizedLegacyPeriod,
     roadmapPeriods,
@@ -7680,6 +8036,126 @@ function normalizeImportedRoadmap(roadmap) {
   normalized.riceScore = calculateRiceScore(normalized);
   return normalized;
 }
+
+function getFilterInputValue(el) {
+  if (!el || el.value == null) return "";
+  return String(el.value).trim();
+}
+
+function getFilterSearchInputValue(el) {
+  return getFilterInputValue(el).toLowerCase();
+}
+
+function getFilterCountriesSearchQuery() {
+  return getFilterSearchInputValue(elements.filterCountriesSearch);
+}
+
+function getFilterRoadmapPeriodSearchQuery() {
+  return getFilterSearchInputValue(elements.filterRoadmapPeriodSearch);
+}
+
+function roadmapCountryNamesForFilter(roadmap) {
+  return normalizeRoadmapCountriesList(Array.isArray(roadmap?.countries) ? roadmap.countries : []);
+}
+
+function roadmapMatchesCountrySearchQuery(roadmap, query) {
+  const searchQuery = (query || "").trim().toLowerCase();
+  if (!searchQuery) return true;
+
+  const countries = Array.isArray(roadmap?.countries) ? roadmap.countries : [];
+  if (roadmapCountriesRepresentEuRegion(countries)) {
+    if ("european union".includes(searchQuery) || searchQuery === "eu") {
+      return true;
+    }
+  }
+
+  const normalized = roadmapCountryNamesForFilter(roadmap);
+  return normalized.some((name) => {
+    const lower = name.toLowerCase();
+    if (lower.includes(searchQuery)) return true;
+    if (typeof countryCodeByName !== "undefined" && countryCodeByName[name]) {
+      const code = String(countryCodeByName[name]).toLowerCase();
+      if (code.includes(searchQuery)) return true;
+    }
+    return false;
+  });
+}
+
+function roadmapMatchesCountryFilter(roadmap, selectedCountries, searchQuery) {
+  if (selectedCountries.length) {
+    const projCountries = Array.isArray(roadmap?.countries) ? roadmap.countries : [];
+    if (roadmapCountriesRepresentEuRegion(projCountries)) {
+      const selectedSet = new Set(selectedCountries);
+      if (typeof COUNTRY_OPTION_EU !== "undefined" && selectedSet.has(COUNTRY_OPTION_EU)) {
+        return true;
+      }
+      if (
+        typeof EU_MEMBER_COUNTRIES !== "undefined" &&
+        EU_MEMBER_COUNTRIES.some((member) => selectedSet.has(member))
+      ) {
+        return true;
+      }
+    }
+    const normalized = roadmapCountryNamesForFilter(roadmap);
+    return normalized.some((country) => selectedCountries.includes(country));
+  }
+  return roadmapMatchesCountrySearchQuery(roadmap, searchQuery);
+}
+
+function roadmapMatchesPeriodSearchQuery(roadmap, query) {
+  const searchQuery = (query || "").trim().toLowerCase();
+  if (!searchQuery) return true;
+  const entries = getRoadmapPeriodEntries(roadmap);
+  if (!entries.length) return false;
+  return entries.some((entry) => {
+    const period = String(entry.period || "").toLowerCase();
+    const status = String(entry.status || "").toLowerCase();
+    return period.includes(searchQuery) || status.includes(searchQuery);
+  });
+}
+
+function roadmapMatchesPeriodFilter(roadmap, selectedPeriods, searchQuery) {
+  if (selectedPeriods.length) {
+    return roadmapHasPeriodFilterMatch(roadmap, selectedPeriods);
+  }
+  return roadmapMatchesPeriodSearchQuery(roadmap, searchQuery);
+}
+
+function readPortfolioFilterCriteria() {
+  return {
+    titleQuery: getFilterSearchInputValue(elements.filterTitle),
+    labelQuery: getFilterSearchInputValue(elements.filterLabel),
+    businessLeadQuery: getFilterSearchInputValue(elements.filterBusinessLead),
+    techLeadQuery: getFilterSearchInputValue(elements.filterTechLead),
+    countriesSearchQuery: getFilterCountriesSearchQuery(),
+    periodsSearchQuery: getFilterRoadmapPeriodSearchQuery(),
+    selectedPeriods: getSelectedFilterRoadmapPeriods(),
+    selectedCountries: getSelectedFilterCountries(),
+    impactFilter: getFilterInputValue(elements.filterImpact),
+    effortFilter: getFilterInputValue(elements.filterEffort),
+    currencyFilter: getFilterInputValue(elements.filterCurrency),
+    frameworkFilter: getFilterInputValue(elements.filterFinancialFramework),
+    statusFilter: getFilterInputValue(elements.filterStatus),
+    tshirtFilter: getFilterInputValue(elements.filterTshirtSize),
+    moscowFilter: getFilterInputValue(elements.filterMoscow),
+    roadmapTypeFilter: getFilterInputValue(elements.filterRoadmapType),
+    labelsFilter: getFilterInputValue(elements.filterLabels),
+    linksFilter: getFilterInputValue(elements.filterLinks),
+    ownerProfileFilter:
+      elements.filterOwnerProfile && isSuperAdminModeActive()
+        ? getFilterInputValue(elements.filterOwnerProfile)
+        : ""
+  };
+}
+
+function applyPortfolioFiltersNow() {
+  renderRoadmaps();
+  updateFiltersActivePill();
+  refreshFilterAutocompleteDropdowns();
+}
+
+const schedulePortfolioFilterApply =
+  typeof debounce === "function" ? debounce(applyPortfolioFiltersNow, 150) : applyPortfolioFiltersNow;
 
 // --- Filters (country options, filter UI, clear) ---
 function getSelectedFilterCountriesRaw() {
@@ -7824,6 +8300,7 @@ function renderCountriesControls(countries) {
   const normalized = normalizeCountryNames(Array.isArray(countries) ? countries : []);
   const list = normalized.length ? normalized : [""];
   list.forEach((country) => addCountryRow(country));
+  scheduleRoadmapCountriesDisclosureSync();
 }
 
 function populateRoadmapCountrySelect(select, selectedCountry) {
@@ -7871,6 +8348,7 @@ function addCountryRow(selectedCountry) {
   row.appendChild(select);
   row.appendChild(removeBtn);
   elements.countriesContainer.appendChild(row);
+  attachRoadmapRowReorderControls(row, elements.countriesContainer, ".country-row");
 }
 
 function applyEuRegionToRoadmapCountries() {
@@ -8034,6 +8512,105 @@ function normalizeRoadmapLinks(raw) {
   return out;
 }
 
+function getRoadmapListRows(container, rowSelector) {
+  if (!container || !rowSelector) return [];
+  return Array.from(container.children).filter((child) => child.matches && child.matches(rowSelector));
+}
+
+function moveRoadmapListRow(row, direction, rowSelector) {
+  const container = row && row.parentElement;
+  if (!container || !rowSelector) return false;
+  const rows = getRoadmapListRows(container, rowSelector);
+  const index = rows.indexOf(row);
+  if (index < 0) return false;
+  if (direction === "up") {
+    if (index === 0) return false;
+    container.insertBefore(row, rows[index - 1]);
+    return true;
+  }
+  if (index >= rows.length - 1) return false;
+  const next = rows[index + 1];
+  const after = next.nextElementSibling;
+  if (after) container.insertBefore(row, after);
+  else container.appendChild(row);
+  return true;
+}
+
+function syncRoadmapRowReorderControls(container, rowSelector) {
+  const rows = getRoadmapListRows(container, rowSelector);
+  rows.forEach((row, index) => {
+    const controls = row.querySelector(".roadmap-row-reorder");
+    if (!controls) return;
+    const upBtn = controls.querySelector('.roadmap-row-reorder-btn[data-reorder-direction="up"]');
+    const downBtn = controls.querySelector('.roadmap-row-reorder-btn[data-reorder-direction="down"]');
+    const solo = rows.length <= 1;
+    if (upBtn) upBtn.disabled = solo || index === 0;
+    if (downBtn) downBtn.disabled = solo || index === rows.length - 1;
+  });
+}
+
+function runRoadmapRowReorderSideEffects(rowSelector, container) {
+  if (rowSelector === ".roadmap-task-row") {
+    scheduleRoadmapTasksDisclosureSync();
+  } else if (rowSelector === ".country-row") {
+    scheduleRoadmapCountriesDisclosureSync();
+  }
+  scheduleRoadmapModalSectionNavSync();
+}
+
+function buildRoadmapRowReorderControls(container, rowSelector) {
+  const wrap = document.createElement("div");
+  wrap.className = "roadmap-row-reorder";
+  wrap.setAttribute("role", "group");
+  wrap.setAttribute("aria-label", "Reorder row");
+
+  ["up", "down"].forEach((direction) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `roadmap-row-reorder-btn roadmap-row-reorder-btn--${direction}`;
+    btn.dataset.reorderDirection = direction;
+    btn.setAttribute("aria-label", direction === "up" ? "Move up" : "Move down");
+    btn.title = direction === "up" ? "Move up" : "Move down";
+    btn.innerHTML = direction === "up" ? "↑" : "↓";
+    btn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (roadmapModalMode === "view") return;
+      const row = btn.closest("[data-reorder-row-selector]");
+      if (!row) return;
+      if (!moveRoadmapListRow(row, direction, rowSelector)) return;
+      syncRoadmapRowReorderControls(container, rowSelector);
+      runRoadmapRowReorderSideEffects(rowSelector, container);
+    });
+    wrap.appendChild(btn);
+  });
+
+  return wrap;
+}
+
+function appendRoadmapRowHeaderReorderSpacer(header) {
+  const spacer = document.createElement("span");
+  spacer.className = "roadmap-row-reorder-header-spacer";
+  spacer.setAttribute("aria-hidden", "true");
+  header.appendChild(spacer);
+}
+
+function attachRoadmapRowReorderControls(row, container, rowSelector) {
+  if (!row || !container || !rowSelector || roadmapModalMode === "view") return;
+  row.dataset.reorderRowSelector = rowSelector;
+  const controls = buildRoadmapRowReorderControls(container, rowSelector);
+  const removeBtn = row.querySelector(
+    ".roadmap-label-remove-btn, .roadmap-link-remove-btn, .roadmap-task-remove-btn, .roadmap-period-remove-btn, .roadmap-raci-remove-btn, .country-remove-btn"
+  );
+  if (removeBtn) row.insertBefore(controls, removeBtn);
+  else row.appendChild(controls);
+  syncRoadmapRowReorderControls(container, rowSelector);
+}
+
+function refreshRoadmapListReorderControls(container, rowSelector) {
+  syncRoadmapRowReorderControls(container, rowSelector);
+}
+
 function renderRoadmapLabelsControls(labels, { readonly = false } = {}) {
   if (!elements.roadmapLabelsContainer) return;
   elements.roadmapLabelsContainer.innerHTML = "";
@@ -8079,6 +8656,7 @@ function addRoadmapLabelRow(value) {
   row.appendChild(input);
   row.appendChild(removeBtn);
   elements.roadmapLabelsContainer.appendChild(row);
+  attachRoadmapRowReorderControls(row, elements.roadmapLabelsContainer, ".roadmap-label-row");
 }
 
 function getRoadmapLabelsFromControls() {
@@ -8103,6 +8681,7 @@ function ensureRoadmapLinkRowHeader() {
   const colAction = document.createElement("span");
   header.appendChild(colLabel);
   header.appendChild(colUrl);
+  appendRoadmapRowHeaderReorderSpacer(header);
   header.appendChild(colAction);
   elements.roadmapLinksContainer.appendChild(header);
 }
@@ -8192,6 +8771,7 @@ function addRoadmapLinkRow(link) {
   row.appendChild(fields);
   row.appendChild(removeBtn);
   elements.roadmapLinksContainer.appendChild(row);
+  attachRoadmapRowReorderControls(row, elements.roadmapLinksContainer, ".roadmap-link-row");
 }
 
 function getRoadmapLinksFromControls() {
@@ -8543,6 +9123,139 @@ function ensureRoadmapTasksDisclosure() {
   }
 }
 
+function getRoadmapCountriesSnapshotForSummary() {
+  if (!elements.countriesContainer) return { total: 0 };
+  const values = getCountriesFromControlsRaw();
+  return { total: values.length };
+}
+
+function renderRoadmapCountriesSummaryCount(disclosureEl, snapshot) {
+  const countEl = disclosureEl?.querySelector(".roadmap-countries-summary-count");
+  if (!countEl) return;
+  const total = snapshot?.total || 0;
+  countEl.hidden = total <= 0;
+  countEl.textContent = total === 1 ? "1 country" : `${total} countries`;
+}
+
+function syncRoadmapCountriesDisclosureAria(disclosureEl) {
+  syncRoadmapOptionalDisclosureAria(disclosureEl);
+}
+
+function syncRoadmapCountriesDisclosure({ resetCollapsed = false } = {}) {
+  const wrap =
+    document.querySelector("[data-roadmap-countries-collapsible]") || elements.roadmapCountriesCollapsibleWrap;
+  if (!wrap) return;
+  const disclosureEl = wrap.querySelector(".roadmap-countries-disclosure");
+  if (!disclosureEl) return;
+
+  if (resetCollapsed) {
+    setRoadmapOptionalDisclosureOpen(disclosureEl, false);
+  }
+
+  const snapshot = getRoadmapCountriesSnapshotForSummary();
+  disclosureEl.classList.toggle("roadmap-countries-disclosure--has-countries", snapshot.total > 0);
+  renderRoadmapCountriesSummaryCount(disclosureEl, snapshot);
+  syncRoadmapCountriesDisclosureAria(disclosureEl);
+}
+
+function scheduleRoadmapCountriesDisclosureSync() {
+  if (roadmapCountriesDisclosureSyncFrame != null) {
+    cancelAnimationFrame(roadmapCountriesDisclosureSyncFrame);
+  }
+  roadmapCountriesDisclosureSyncFrame = requestAnimationFrame(() => {
+    roadmapCountriesDisclosureSyncFrame = null;
+    syncRoadmapCountriesDisclosure();
+  });
+}
+
+let roadmapCountriesDisclosureSyncFrame = null;
+
+function wrapRoadmapCountriesField(wrap) {
+  if (!wrap || wrap.dataset.countriesDisclosureWrapped === "1") return;
+  if (!wrap.hasAttribute("data-roadmap-countries-collapsible")) return;
+
+  const labelEl = wrap.querySelector(":scope > .roadmap-field-label") || wrap.querySelector(".roadmap-field-label");
+  if (!labelEl) return;
+
+  const titleText = getOptionalFieldSummaryText(labelEl) || "Target countries";
+  const hintEl = wrap.querySelector(":scope > .roadmap-dynamic-field-hint");
+  const subtitle = hintEl ? hintEl.textContent.trim() : "";
+
+  const disclosure = document.createElement("div");
+  disclosure.className = "roadmap-countries-disclosure roadmap-optional-disclosure";
+
+  const trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className =
+    "roadmap-countries-disclosure-summary roadmap-optional-field-summary roadmap-optional-disclosure-trigger";
+
+  const row = document.createElement("div");
+  row.className = "roadmap-optional-summary-row roadmap-countries-summary-row";
+
+  const lead = document.createElement("span");
+  lead.className = "roadmap-optional-summary-lead roadmap-countries-summary-lead";
+  lead.setAttribute("aria-hidden", "true");
+
+  const copy = document.createElement("div");
+  copy.className = "roadmap-optional-summary-copy";
+
+  const titleSpan = document.createElement("span");
+  titleSpan.className = "roadmap-optional-field-summary-title roadmap-countries-summary-title";
+  titleSpan.textContent = titleText;
+  copy.appendChild(titleSpan);
+
+  if (subtitle) {
+    const subtitleSpan = document.createElement("span");
+    subtitleSpan.className = "roadmap-optional-field-summary-subtitle roadmap-countries-summary-subtitle";
+    subtitleSpan.textContent = subtitle.length > 72 ? `${subtitle.slice(0, 69)}…` : subtitle;
+    copy.appendChild(subtitleSpan);
+  }
+
+  const countBadge = document.createElement("span");
+  countBadge.className = "roadmap-countries-summary-count roadmap-dynamic-summary-count";
+  countBadge.hidden = true;
+
+  const chevron = document.createElement("span");
+  chevron.className = "roadmap-optional-summary-chevron";
+  chevron.setAttribute("aria-hidden", "true");
+
+  row.appendChild(lead);
+  row.appendChild(copy);
+  row.appendChild(countBadge);
+  row.appendChild(chevron);
+
+  trigger.appendChild(row);
+  trigger.setAttribute("aria-expanded", "false");
+  trigger.setAttribute("aria-label", `Expand ${titleText}`);
+  bindRoadmapOptionalDisclosureTrigger(trigger);
+
+  const body = document.createElement("div");
+  body.className = "roadmap-countries-disclosure-body roadmap-optional-field-body";
+  body.hidden = true;
+
+  Array.from(wrap.childNodes).forEach((child) => {
+    if (child === labelEl) return;
+    body.appendChild(child);
+  });
+
+  labelEl.remove();
+  disclosure.appendChild(trigger);
+  disclosure.appendChild(body);
+  wrap.appendChild(disclosure);
+  wrap.dataset.countriesDisclosureWrapped = "1";
+}
+
+function ensureRoadmapCountriesDisclosure() {
+  const wrap = document.querySelector("#roadmapForm [data-roadmap-countries-collapsible]");
+  if (!wrap) return;
+  try {
+    wrapRoadmapCountriesField(wrap);
+    syncRoadmapCountriesDisclosure({ resetCollapsed: true });
+  } catch (err) {
+    console.error("Roadmap countries disclosure failed to initialize:", err);
+  }
+}
+
 const RACI_ROLES = ["responsible", "accountable", "consulted", "informed"];
 const RACI_DOMAIN_OPTIONS = ["Business", "Tech"];
 const RACI_MATRIX_DOMAIN_OPTIONS = ["Business", "Tech", "All"];
@@ -8647,6 +9360,7 @@ function ensureRoadmapRaciRowHeader(container) {
   const colAction = document.createElement("span");
   header.appendChild(colName);
   header.appendChild(colDomain);
+  appendRoadmapRowHeaderReorderSpacer(header);
   header.appendChild(colAction);
   container.appendChild(header);
 }
@@ -8740,6 +9454,7 @@ function addRoadmapRaciRow(role, entry) {
   row.appendChild(fields);
   row.appendChild(removeBtn);
   container.appendChild(row);
+  attachRoadmapRowReorderControls(row, container, ".roadmap-raci-row");
 }
 
 function getRoadmapRaciFromControls() {
@@ -10031,7 +10746,7 @@ function buildPortfolioKanoUnpositionedCard(roadmap) {
   titleEl.textContent = title;
 
   const metaParts = [];
-  const statusVal = roadmap.roadmapStatus || roadmap.status;
+  const statusVal = getEffectiveRoadmapStatus(roadmap) || roadmap.status;
   if (statusVal) metaParts.push(String(statusVal));
   if (roadmap.moscowCategory) metaParts.push(String(roadmap.moscowCategory));
   if (
@@ -10342,11 +11057,12 @@ function ensureRoadmapTaskRowHeader() {
   const colAction = document.createElement("span");
   header.appendChild(colName);
   header.appendChild(colStatus);
+  appendRoadmapRowHeaderReorderSpacer(header);
   header.appendChild(colAction);
   elements.roadmapTasksContainer.appendChild(header);
 }
 
-function renderRoadmapTasksControls(tasks, { readonly = false } = {}) {
+function renderRoadmapTasksControls(tasks, { readonly = false, skipDefaultRow = false } = {}) {
   if (!elements.roadmapTasksContainer) return;
   elements.roadmapTasksContainer.innerHTML = "";
   const normalized = normalizeRoadmapTasks(tasks);
@@ -10394,7 +11110,7 @@ function renderRoadmapTasksControls(tasks, { readonly = false } = {}) {
     return;
   }
   ensureRoadmapTaskRowHeader();
-  const list = normalized.length ? normalized : [{ name: "", status: "Not Started" }];
+  const list = normalized.length ? normalized : skipDefaultRow ? [] : [{ name: "", status: "Not Started" }];
   list.forEach((task) => addRoadmapTaskRow(task));
   syncRoadmapTasksDisclosure();
 }
@@ -10428,6 +11144,7 @@ function addRoadmapTaskRow(task) {
   row.appendChild(fields);
   row.appendChild(removeBtn);
   elements.roadmapTasksContainer.appendChild(row);
+  attachRoadmapRowReorderControls(row, elements.roadmapTasksContainer, ".roadmap-task-row");
   scheduleRoadmapTasksDisclosureSync();
 }
 
@@ -10451,18 +11168,6 @@ function getRoadmapPeriodEntries(roadmap) {
     return RoadmapPeriods.normalizePeriods(roadmap.roadmapPeriods, { legacyStatus, statusOptions });
   }
   return RoadmapPeriods.normalizePeriods(null, { legacyPeriod, legacyStatus, statusOptions });
-}
-
-function syncRoadmapLegacyPeriodFields(roadmap) {
-  if (!roadmap || typeof roadmap !== "object") return;
-  const entries = getRoadmapPeriodEntries(roadmap);
-  roadmap.roadmapPeriods = entries;
-  roadmap.roadmapPeriod =
-    typeof RoadmapPeriods !== "undefined"
-      ? RoadmapPeriods.deriveLegacyPeriod(entries)
-      : entries.length
-        ? entries[0].period
-        : null;
 }
 
 function getDefaultRoadmapPeriodEntry() {
@@ -10493,9 +11198,103 @@ function buildRoadmapPeriodSelect(selectedPeriod) {
   return select;
 }
 
-function ensureRoadmapPeriodRowHeader() {
-  if (!elements.roadmapPeriodsContainer) return;
-  if (elements.roadmapPeriodsContainer.querySelector(".roadmap-period-row-header")) return;
+function getRoadmapPeriodSelectionsFromControls(containerEl) {
+  const container = resolveRoadmapPeriodsContainer(containerEl);
+  if (!container) return [];
+  const rows = container.querySelectorAll(".roadmap-period-row");
+  const out = [];
+  rows.forEach((row) => {
+    let period = (row.querySelector(".roadmap-period-select")?.value || "").trim();
+    if (!period && typeof RoadmapPeriods !== "undefined") {
+      period = RoadmapPeriods.getCurrentPeriod();
+    }
+    if (period) out.push(period);
+  });
+  return out;
+}
+
+function validateRoadmapPeriodControlsUnique(containerEl) {
+  const selections = getRoadmapPeriodSelectionsFromControls(containerEl);
+  if (typeof RoadmapPeriods !== "undefined" && typeof RoadmapPeriods.validateUniquePeriods === "function") {
+    return RoadmapPeriods.validateUniquePeriods(selections.map((period) => ({ period })));
+  }
+  const seen = new Set();
+  for (const period of selections) {
+    const key = String(period || "").trim().toUpperCase();
+    if (!key) continue;
+    if (seen.has(key)) {
+      return `Each quarter can only appear once. Remove the duplicate ${key} entry.`;
+    }
+    seen.add(key);
+  }
+  return "";
+}
+
+function getNextAvailableRoadmapPeriod(containerEl, excludeSelect) {
+  const container = resolveRoadmapPeriodsContainer(containerEl);
+  if (!container || typeof RoadmapPeriods === "undefined") {
+    return typeof RoadmapPeriods !== "undefined" ? RoadmapPeriods.getCurrentPeriod() : "";
+  }
+  const used = new Set();
+  container.querySelectorAll(".roadmap-period-row .roadmap-period-select").forEach((select) => {
+    if (select === excludeSelect) return;
+    const value = (select.value || "").trim();
+    if (value) used.add(value);
+  });
+  for (const period of RoadmapPeriods.buildOptions()) {
+    if (!used.has(period)) return period;
+  }
+  return RoadmapPeriods.getCurrentPeriod();
+}
+
+function syncRoadmapPeriodSelectOptions(containerEl) {
+  const container = resolveRoadmapPeriodsContainer(containerEl);
+  if (!container) return;
+  const rows = Array.from(container.querySelectorAll(".roadmap-period-row"));
+  const rowStates = rows.map((row) => {
+    const select = row.querySelector(".roadmap-period-select");
+    const period = (select?.value || "").trim();
+    return { row, select, period };
+  });
+
+  rowStates.forEach(({ row, select, period }) => {
+    if (!select) return;
+    Array.from(select.options).forEach((option) => {
+      const value = (option.value || "").trim();
+      if (!value) return;
+      const usedElsewhere = rowStates.some(
+        (other) => other.select !== select && other.period === value
+      );
+      option.disabled = usedElsewhere;
+    });
+    const duplicateCount = period ? rowStates.filter((other) => other.period === period).length : 0;
+    const isDuplicate = duplicateCount > 1;
+    row.classList.toggle("roadmap-period-row--duplicate", isDuplicate);
+    if (period) {
+      select.setAttribute("aria-invalid", isDuplicate ? "true" : "false");
+    } else {
+      select.removeAttribute("aria-invalid");
+    }
+  });
+}
+
+function resolveRoadmapPeriodsContainer(containerEl) {
+  return containerEl || elements.roadmapPeriodsContainer;
+}
+
+function sortRoadmapPeriodEntriesDescending(entries) {
+  return (Array.isArray(entries) ? entries : []).slice().sort((a, b) => {
+    const [ay, aq] = String(a.period).split("-Q").map(Number);
+    const [by, bq] = String(b.period).split("-Q").map(Number);
+    if (ay !== by) return by - ay;
+    return bq - aq;
+  });
+}
+
+function ensureRoadmapPeriodRowHeader(containerEl) {
+  const container = resolveRoadmapPeriodsContainer(containerEl);
+  if (!container) return;
+  if (container.querySelector(".roadmap-period-row-header")) return;
   const header = document.createElement("div");
   header.className = "roadmap-period-row-header";
   header.setAttribute("aria-hidden", "true");
@@ -10507,12 +11306,16 @@ function ensureRoadmapPeriodRowHeader() {
   header.appendChild(colPeriod);
   header.appendChild(colStatus);
   header.appendChild(colAction);
-  elements.roadmapPeriodsContainer.appendChild(header);
+  container.appendChild(header);
 }
 
-function renderRoadmapPeriodControls(periods, { readonly = false, legacyPeriod = null, legacyStatus = null } = {}) {
-  if (!elements.roadmapPeriodsContainer) return;
-  elements.roadmapPeriodsContainer.innerHTML = "";
+function renderRoadmapPeriodControls(
+  periods,
+  { readonly = false, legacyPeriod = null, legacyStatus = null, containerEl = null } = {}
+) {
+  const container = resolveRoadmapPeriodsContainer(containerEl);
+  if (!container) return;
+  container.innerHTML = "";
   const statusOptions = getRoadmapPeriodStatusOptions();
   const normalized =
     typeof RoadmapPeriods !== "undefined"
@@ -10524,13 +11327,13 @@ function renderRoadmapPeriodControls(periods, { readonly = false, legacyPeriod =
       const hint = document.createElement("p");
       hint.className = "roadmap-field-empty-hint";
       hint.textContent = "No quarters added";
-      elements.roadmapPeriodsContainer.appendChild(hint);
+      container.appendChild(hint);
       return;
     }
     const wrap = document.createElement("div");
     wrap.className = "roadmap-tasks-readonly";
     wrap.setAttribute("role", "list");
-    normalized.forEach((entry) => {
+    sortRoadmapPeriodEntriesDescending(normalized).forEach((entry) => {
       const row = document.createElement("article");
       row.className = "roadmap-task-card";
       row.setAttribute("role", "listitem");
@@ -10558,22 +11361,32 @@ function renderRoadmapPeriodControls(periods, { readonly = false, legacyPeriod =
       row.appendChild(statusEl);
       wrap.appendChild(row);
     });
-    elements.roadmapPeriodsContainer.appendChild(wrap);
+    container.appendChild(wrap);
     return;
   }
 
-  ensureRoadmapPeriodRowHeader();
-  const list = normalized.length ? normalized : [getDefaultRoadmapPeriodEntry()];
-  list.forEach((entry) => addRoadmapPeriodRow(entry));
+  ensureRoadmapPeriodRowHeader(container);
+  const sorted = sortRoadmapPeriodEntriesDescending(normalized);
+  const list = sorted.length ? sorted : [getDefaultRoadmapPeriodEntry()];
+  list.forEach((entry) => addRoadmapPeriodRow(entry, container));
+  syncRoadmapPeriodSelectOptions(container);
+  syncRoadmapStatusControlFromPeriods();
 }
 
-function addRoadmapPeriodRow(entry) {
-  if (!elements.roadmapPeriodsContainer) return;
-  ensureRoadmapPeriodRowHeader();
+function addRoadmapPeriodRow(entry, containerEl) {
+  const container = resolveRoadmapPeriodsContainer(containerEl);
+  if (!container) return;
+  ensureRoadmapPeriodRowHeader(container);
   const defaults = getDefaultRoadmapPeriodEntry();
+  const manualStatus = (elements.roadmapStatus?.value || "").trim();
+  let period = (entry && entry.period) || defaults.period;
+  const usedBeforeAdd = new Set(getRoadmapPeriodSelectionsFromControls(container));
+  if (period && usedBeforeAdd.has(period)) {
+    period = getNextAvailableRoadmapPeriod(container);
+  }
   const resolvedEntry = {
-    period: (entry && entry.period) || defaults.period,
-    status: (entry && entry.status) || defaults.status
+    period,
+    status: (entry && entry.status) || manualStatus || defaults.status
   };
   const row = document.createElement("div");
   row.className = "roadmap-period-row";
@@ -10596,14 +11409,18 @@ function addRoadmapPeriodRow(entry) {
   fields.appendChild(statusSelect);
   row.appendChild(fields);
   row.appendChild(removeBtn);
-  elements.roadmapPeriodsContainer.appendChild(row);
-  scheduleRoadmapModalSectionNavSync();
+  container.appendChild(row);
+  syncRoadmapPeriodSelectOptions(container);
+  if (!containerEl || containerEl === elements.roadmapPeriodsContainer) {
+    scheduleRoadmapModalSectionNavSync();
+  }
 }
 
-function getRoadmapPeriodsFromControls() {
-  if (!elements.roadmapPeriodsContainer) return [];
+function getRoadmapPeriodsFromControls(containerEl) {
+  const container = resolveRoadmapPeriodsContainer(containerEl);
+  if (!container) return [];
   const statusOptions = getRoadmapPeriodStatusOptions();
-  const rows = elements.roadmapPeriodsContainer.querySelectorAll(".roadmap-period-row");
+  const rows = container.querySelectorAll(".roadmap-period-row");
   const raw = [];
   rows.forEach((row) => {
     let period = (row.querySelector(".roadmap-period-select")?.value || "").trim();
@@ -10618,32 +11435,25 @@ function getRoadmapPeriodsFromControls() {
   return RoadmapPeriods.normalizePeriods(raw, { statusOptions });
 }
 
-function populateBulkEditPeriodSelect(selectEl) {
-  if (!selectEl) return;
-  selectEl.innerHTML = "";
-  const noChange = document.createElement("option");
-  noChange.value = BULK_EDIT_NO_CHANGE;
-  noChange.textContent = "No change";
-  selectEl.appendChild(noChange);
-  const clear = document.createElement("option");
-  clear.value = BULK_EDIT_CLEAR;
-  clear.textContent = "Clear periods";
-  selectEl.appendChild(clear);
-  if (typeof RoadmapPeriods !== "undefined") {
-    RoadmapPeriods.buildOptions().forEach((period) => {
-      const option = document.createElement("option");
-      option.value = period;
-      option.textContent = period;
-      selectEl.appendChild(option);
-    });
-  }
-  selectEl.value = BULK_EDIT_NO_CHANGE;
-}
-
 function formatRoadmapPeriodEntriesForDisplay(roadmap) {
   const entries = getRoadmapPeriodEntries(roadmap);
   if (!entries.length) return "";
   return entries.map((entry) => entry.period).join(", ");
+}
+
+function getLatestRoadmapPeriodEntry(roadmap) {
+  const entries = getRoadmapPeriodEntries(roadmap);
+  if (!entries.length) return null;
+  if (typeof RoadmapPeriods !== "undefined" && typeof RoadmapPeriods.getLatestPeriodEntry === "function") {
+    return RoadmapPeriods.getLatestPeriodEntry(entries);
+  }
+  return entries[entries.length - 1];
+}
+
+/** Table cell: show only the chronologically latest quarter; full list stays in tooltip. */
+function formatRoadmapLatestPeriodForTableDisplay(roadmap) {
+  const latest = getLatestRoadmapPeriodEntry(roadmap);
+  return latest && latest.period ? latest.period : "";
 }
 
 function roadmapHasPeriodFilterMatch(roadmap, selectedPeriods) {
@@ -10656,6 +11466,73 @@ function roadmapHasPeriodFilterMatch(roadmap, selectedPeriods) {
 
 function roadmapHasAnyPeriod(roadmap) {
   return getRoadmapPeriodEntries(roadmap).length > 0;
+}
+
+function resolveRoadmapStatusForSave(roadmapPeriods, manualStatus) {
+  return deriveRoadmapStatusFromPeriods(roadmapPeriods, manualStatus);
+}
+
+function deriveRoadmapStatusFromPeriods(roadmapPeriods, fallbackStatus) {
+  const manual = (fallbackStatus || "").trim() || null;
+  if (typeof RoadmapPeriods !== "undefined" && Array.isArray(roadmapPeriods) && roadmapPeriods.length) {
+    return RoadmapPeriods.deriveRoadmapStatus(roadmapPeriods, {
+      fallbackStatus: manual,
+      statusOptions: getRoadmapPeriodStatusOptions()
+    });
+  }
+  return manual;
+}
+
+function getEffectiveRoadmapStatus(roadmap) {
+  const fallback = coalesceLegacyRoadmapStringField(roadmap || {}, "roadmapStatus", "projectStatus");
+  return deriveRoadmapStatusFromPeriods(getRoadmapPeriodEntries(roadmap), fallback);
+}
+
+function assignRoadmapStatus(roadmap, newStatus) {
+  if (!roadmap || !newStatus) return false;
+  let periods = getRoadmapPeriodEntries(roadmap);
+  if (periods.length && typeof RoadmapPeriods !== "undefined") {
+    const latest = RoadmapPeriods.getLatestPeriodEntry(periods);
+    if (latest) {
+      periods = periods.map((entry) =>
+        entry.period === latest.period ? { period: entry.period, status: newStatus } : entry
+      );
+      roadmap.roadmapPeriods = periods;
+    }
+  }
+  roadmap.roadmapStatus = normalizeRoadmapTaskStatus(newStatus);
+  return true;
+}
+
+function roadmapFormHasPeriodEntries() {
+  return getRoadmapPeriodsFromControls().length > 0;
+}
+
+function syncRoadmapStatusControlFromPeriods() {
+  if (!elements.roadmapStatus) return;
+  const periods = getRoadmapPeriodsFromControls();
+  const hasPeriods = periods.length > 0;
+  const derived = resolveRoadmapStatusForSave(periods, elements.roadmapStatus.value || null);
+  const latest =
+    hasPeriods && typeof RoadmapPeriods !== "undefined" ? RoadmapPeriods.getLatestPeriodEntry(periods) : null;
+
+  if (hasPeriods && derived) {
+    elements.roadmapStatus.value = derived;
+  }
+
+  const viewMode = roadmapModalMode === "view";
+  elements.roadmapStatus.disabled = viewMode || hasPeriods;
+
+  if (elements.roadmapStatusCentralizedHint) {
+    elements.roadmapStatusCentralizedHint.hidden = !hasPeriods;
+    elements.roadmapStatusCentralizedHint.textContent = latest
+      ? `Follows the latest quarter (${latest.period}). Change that quarter's status to update roadmap status.`
+      : "Follows the latest quarter above. Change that quarter's status to update roadmap status.";
+  }
+
+  if (elements.roadmapStatusFieldWrap) {
+    elements.roadmapStatusFieldWrap.classList.toggle("roadmap-status-field-wrap--centralized", hasPeriods);
+  }
 }
 
 /** Preserves password hashes, drag order maps, and forward-compatible profile fields on load. */
@@ -10924,7 +11801,10 @@ function normalizeLoadedRoadmap(roadmap) {
     financialImpactFramework,
     financialImpactInputs,
     roadmapType: coalesceLegacyRoadmapStringField(roadmap, "roadmapType", "projectType"),
-    roadmapStatus: coalesceLegacyRoadmapStringField(roadmap, "roadmapStatus", "projectStatus"),
+    roadmapStatus: deriveRoadmapStatusFromPeriods(
+      roadmapPeriods,
+      coalesceLegacyRoadmapStringField(roadmap, "roadmapStatus", "projectStatus")
+    ),
     tshirtSize: (roadmap.tshirtSize != null && String(roadmap.tshirtSize).trim() !== "") ? String(roadmap.tshirtSize).trim() : null,
     roadmapPeriod: normalizedLegacyPeriod,
     roadmapPeriods,
@@ -11234,7 +12114,37 @@ function getTooltipRoot() {
   const pseudo = typeof Fullscreen !== "undefined" && Fullscreen.getPseudoFullscreenElement
     ? Fullscreen.getPseudoFullscreenElement()
     : document.querySelector(".roadmaps-view.view-pseudo-fullscreen");
-  return document.fullscreenElement || document.webkitFullscreenElement || pseudo || document.body;
+  const fullscreen = document.fullscreenElement || document.webkitFullscreenElement || pseudo;
+  if (fullscreen) return fullscreen;
+  // Scroll-lock sets body to position:fixed; fixed tooltips on body can misalign to viewport origin.
+  if (document.body.style.position === "fixed") {
+    return document.documentElement;
+  }
+  return document.body;
+}
+
+function getTooltipAnchorRect(wrap) {
+  if (!wrap) return null;
+  if (wrap.classList.contains("roadmap-field-tooltip-wrap")) {
+    const labelEl = wrap.querySelector(":scope > label, :scope > .roadmap-field-label");
+    if (labelEl) {
+      const labelRect = labelEl.getBoundingClientRect();
+      if (labelRect.width > 0 || labelRect.height > 0) return labelRect;
+    }
+    const control = wrap.querySelector("input, select, textarea");
+    if (control) {
+      const controlRect = control.getBoundingClientRect();
+      if (controlRect.width > 0 || controlRect.height > 0) return controlRect;
+    }
+    const panel = wrap.querySelector(".roadmap-dynamic-field-panel");
+    if (panel) {
+      const panelRect = panel.getBoundingClientRect();
+      if (panelRect.width > 0 || panelRect.height > 0) return panelRect;
+    }
+  }
+  const wrapRect = wrap.getBoundingClientRect();
+  if (wrapRect.width > 0 || wrapRect.height > 0) return wrapRect;
+  return null;
 }
 
 function invalidateMapSizeAfterFullscreenExit() {
@@ -11347,10 +12257,6 @@ function scrollActiveViewToolbarIntoView() {
 function refreshCompactFullscreenEnter() {
   if (!document.documentElement.classList.contains("pseudo-view-fullscreen")) return;
 
-  if (state.roadmapsView === "moscow") {
-    syncMoscowCompactNav();
-  }
-
   if (state.roadmapsView === "map") {
     invalidateMapSizeAfterFullscreenExit();
   }
@@ -11377,11 +12283,6 @@ function refreshWorkspaceAfterFullscreenExit() {
   syncRoadmapsViewVisibility();
   syncPortfolioViewTabState();
   updateBulkSelectionActions();
-
-  const view = state.roadmapsView;
-  if (view === "moscow") {
-    syncMoscowCompactNav();
-  }
 
   resetPortfolioScrollAfterFullscreen();
   scrollActiveViewToolbarIntoView();
@@ -11791,13 +12692,12 @@ function findCompactCardTooltipTrigger(target) {
   return wrap;
 }
 
-function isRoadmapDetailsTooltipWrap() {
-  return false;
+function isRoadmapFieldTooltipWrap(wrap) {
+  return !!(wrap && wrap.classList.contains("roadmap-field-tooltip-wrap"));
 }
 
 function getTooltipPointerAnchor(wrap, event) {
-  if (!isRoadmapDetailsTooltipWrap(wrap) || !event) return null;
-  if (!Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) return null;
+  if (!event || !Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) return null;
   return { x: event.clientX, y: event.clientY };
 }
 
@@ -11831,11 +12731,31 @@ function clampTooltipHorizontal(tooltip, centerX) {
 }
 
 /** Keeps fixed tooltips inside the viewport; scrollable variant for long country lists (desktop + compact). */
-function finalizeTooltipViewportPosition(tooltip, anchorRect) {
+function finalizeTooltipViewportPosition(tooltip, anchorRect, options = {}) {
   if (!tooltip || !anchorRect) return;
   const margin = 12;
   const vh = window.innerHeight;
   const isScroll = tooltip.classList.contains("cell-type-tooltip--scroll");
+  const pointerAnchored = options.pointerAnchored === true;
+
+  if (pointerAnchored) {
+    const centerX = parseFloat(tooltip.style.left);
+    let rect = tooltip.getBoundingClientRect();
+    if (rect.bottom > vh - margin) {
+      const pointerY = anchorRect.top;
+      tooltip.classList.remove("cell-type-tooltip--below");
+      tooltip.style.top = `${Math.max(margin, pointerY - 8)}px`;
+      rect = tooltip.getBoundingClientRect();
+    }
+    if (rect.top < margin) {
+      tooltip.classList.add("cell-type-tooltip--below");
+      tooltip.style.top = `${Math.max(margin, anchorRect.top + 14)}px`;
+    }
+    if (Number.isFinite(centerX)) {
+      clampTooltipHorizontal(tooltip, centerX);
+    }
+    return;
+  }
 
   if (isScroll) {
     tooltip.classList.add("cell-type-tooltip--below");
@@ -11881,6 +12801,10 @@ function finalizeTooltipViewportPosition(tooltip, anchorRect) {
 function positionProfileTooltip(wrap, anchorPoint) {
   const tooltip = wrap.querySelector(".cell-type-tooltip");
   if (!tooltip) return;
+  if (!shouldAllowTooltipForWrap(wrap)) {
+    hideCellTypeTooltips();
+    return;
+  }
   cancelTooltipHoverHide();
   document.body.classList.remove("cell-type-tooltip-hidden");
 
@@ -11888,12 +12812,20 @@ function positionProfileTooltip(wrap, anchorPoint) {
     hideTooltipForWrap(activeTooltipWrap);
   }
 
+  const usePointerAnchor =
+    anchorPoint && Number.isFinite(anchorPoint.x) && Number.isFinite(anchorPoint.y);
   let rect;
-  if (wrap.classList.contains("roadmap-field-tooltip-wrap")) {
-    const control = wrap.querySelector("input, select, textarea");
-    rect = control ? control.getBoundingClientRect() : wrap.getBoundingClientRect();
+  if (usePointerAnchor) {
+    rect = {
+      top: anchorPoint.y,
+      bottom: anchorPoint.y,
+      left: anchorPoint.x,
+      right: anchorPoint.x,
+      width: 0,
+      height: 0
+    };
   } else {
-    rect = wrap.getBoundingClientRect();
+    rect = getTooltipAnchorRect(wrap) || wrap.getBoundingClientRect();
   }
 
   hideAllTooltipsExcept(tooltip);
@@ -11909,7 +12841,9 @@ function positionProfileTooltip(wrap, anchorPoint) {
   const spaceBelow = viewportHeight - rect.bottom;
   const minSpace = 200;
   let showBelow;
-  if (spaceBelow < minSpace && spaceAbove > spaceBelow) {
+  if (usePointerAnchor) {
+    showBelow = true;
+  } else if (spaceBelow < minSpace && spaceAbove > spaceBelow) {
     showBelow = false;
   } else if (spaceAbove < minSpace && spaceBelow > spaceAbove) {
     showBelow = true;
@@ -11917,14 +12851,12 @@ function positionProfileTooltip(wrap, anchorPoint) {
     showBelow = spaceBelow >= spaceAbove;
   }
 
-  const centerX = anchorPoint && Number.isFinite(anchorPoint.x)
-    ? anchorPoint.x
-    : (rect.left + rect.width / 2);
+  const centerX = usePointerAnchor ? anchorPoint.x : rect.left + rect.width / 2;
   tooltip.style.left = centerX + "px";
 
   if (showBelow) {
     tooltip.classList.add("cell-type-tooltip--below");
-    tooltip.style.top = (rect.bottom + 8) + "px";
+    tooltip.style.top = (usePointerAnchor ? anchorPoint.y + 14 : rect.bottom + 8) + "px";
   } else {
     tooltip.classList.remove("cell-type-tooltip--below");
     tooltip.style.top = (rect.top - 8) + "px";
@@ -11943,7 +12875,7 @@ function positionProfileTooltip(wrap, anchorPoint) {
   tooltip.classList.toggle("cell-type-tooltip--wide", useWideTooltip);
 
   clampTooltipHorizontal(tooltip, centerX);
-  finalizeTooltipViewportPosition(tooltip, rect);
+  finalizeTooltipViewportPosition(tooltip, rect, { pointerAnchored: usePointerAnchor });
 }
 
 function toggleCompactTableTooltip(wrap, anchorPoint) {
@@ -12310,7 +13242,7 @@ const BLOCKING_MODAL_OVERLAY_IDS = new Set([
   "profileDeleteModal",
   "profileUnlockModal",
   "roadmapDeleteModal",
-  "roadmapBulkEditModal",
+  "roadmapBulkDiscardModal",
   "roadmapBulkTransferModal",
   "exportFormatModal",
   "importFormatModal",
@@ -12328,7 +13260,7 @@ function getBlockingModalCandidates() {
     ["profileDeleteModal", elements.profileDeleteModal],
     ["profileUnlockModal", elements.profileUnlockModal],
     ["roadmapDeleteModal", elements.roadmapDeleteModal],
-    ["roadmapBulkEditModal", elements.roadmapBulkEditModal],
+    ["roadmapBulkDiscardModal", elements.roadmapBulkDiscardModal],
     ["roadmapBulkTransferModal", elements.roadmapBulkTransferModal],
     ["exportFormatModal", elements.exportFormatModal],
     ["importFormatModal", elements.importFormatModal],
@@ -12376,6 +13308,19 @@ function getActiveBlockingModalOverlayId() {
   return activeId;
 }
 
+function getActiveBlockingModalElement() {
+  const id = getActiveBlockingModalOverlayId();
+  return id ? document.getElementById(id) : null;
+}
+
+/** Block tooltips triggered outside the open modal (e.g. profile action chips over create/edit). */
+function shouldAllowTooltipForWrap(wrap) {
+  if (!wrap) return false;
+  const activeModal = getActiveBlockingModalElement();
+  if (!activeModal) return true;
+  return activeModal.contains(wrap);
+}
+
 function isBlockingModalOpen(el) {
   return !!(el && el.classList.contains("active"));
 }
@@ -12396,6 +13341,7 @@ function activateBlockingModal(el, overlayId) {
   syncBlockingModalOpenClass();
   el.setAttribute("aria-hidden", "false");
   el.classList.add("active");
+  hideCellTypeTooltips();
 }
 
 function deactivateBlockingModal(el, { immediate = false } = {}) {
@@ -12430,8 +13376,8 @@ function closeTopBlockingModal() {
     case "roadmapDeleteModal":
       closeRoadmapDeleteModal();
       break;
-    case "roadmapBulkEditModal":
-      closeRoadmapBulkEditModal();
+    case "roadmapBulkDiscardModal":
+      closeRoadmapBulkDiscardModal();
       break;
     case "roadmapBulkTransferModal":
       closeRoadmapBulkTransferModal();
@@ -12517,8 +13463,12 @@ function prepareAppOverlay(id) {
     return;
   }
 
-  if (isFiltersSheetOpen() && FILTERS_SHEET_NESTED_OVERLAY_IDS.has(id)) {
-    OverlayManager.closeAllExcept(["filtersSheet", id]);
+  if (isFiltersSheetOpen()) {
+    const keepOpen = ["filtersSheet"];
+    if (FILTERS_SHEET_NESTED_OVERLAY_IDS.has(id) || id === "filterAutocomplete") {
+      keepOpen.push(id);
+    }
+    OverlayManager.closeAllExcept(keepOpen);
     return;
   }
 
@@ -12564,14 +13514,14 @@ function registerAppOverlays() {
   OverlayManager.register("profileDeleteModal", closeNow(closeProfileDeleteModal));
   OverlayManager.register("profileUnlockModal", closeNow(closeProfileUnlockModal));
   OverlayManager.register("roadmapDeleteModal", closeNow(closeRoadmapDeleteModal));
-  OverlayManager.register("roadmapBulkEditModal", closeNow(closeRoadmapBulkEditModal));
+  OverlayManager.register("roadmapBulkDiscardModal", closeNow(closeRoadmapBulkDiscardModal));
   OverlayManager.register("roadmapBulkTransferModal", closeNow(closeRoadmapBulkTransferModal));
   OverlayManager.register("exportFormatModal", closeNow(closeExportFormatModal));
   OverlayManager.register("importFormatModal", closeNow(closeImportFormatModal));
   OverlayManager.register("exportUnlockModal", closeNow(closeExportUnlockModal));
   OverlayManager.register("cloudStorage", closeNow(closeCloudStorageModal));
   OverlayManager.register("byokApiKeysModal", closeNow(closeByokApiKeysModal));
-  OverlayManager.register("filterAutocomplete", () => {});
+  OverlayManager.register("filterAutocomplete", closeAllFilterAutocompleteDropdowns);
 }
 
 /** Expand “New profile” on wide layouts; keep collapsed on phones by default. */
@@ -14181,41 +15131,8 @@ function renderRoadmaps() {
     titleDiv.textContent = roadmap.title || "";
     titleBlock.appendChild(titleDiv);
     if (countries.length) {
-      const normalizedCountries = normalizeRoadmapCountriesList(countries);
-      const isEuRegion = roadmapCountriesRepresentEuRegion(normalizedCountries);
-      const countriesWrap = document.createElement("span");
-      countriesWrap.className = "cell-countries-with-tooltip";
-      countriesWrap.setAttribute(
-        "aria-label",
-        isEuRegion
-          ? "European Union; hover for member countries"
-          : "Target countries; hover for full list"
-      );
-      const badge = document.createElement("div");
-      badge.className = isEuRegion ? "countries-badge countries-badge--eu" : "countries-badge";
-      const badgeSpan = document.createElement("span");
-      if (isEuRegion) {
-        const flagEl = document.createElement("span");
-        flagEl.className = "countries-badge__flag";
-        flagEl.setAttribute("aria-hidden", "true");
-        flagEl.textContent = getEuRegionFlagEmoji();
-        badgeSpan.appendChild(flagEl);
-        const labelEl = document.createElement("span");
-        labelEl.className = "countries-badge__code";
-        labelEl.textContent = "EU";
-        badgeSpan.appendChild(labelEl);
-      } else {
-        const maxToShow = 3;
-        const shown = normalizedCountries.slice(0, maxToShow);
-        const moreCount = normalizedCountries.length - shown.length;
-        const shownCodes = shown.map((name) => countryCodeByName[name] || name);
-        badgeSpan.textContent =
-          shownCodes.join(", ") + (moreCount > 0 ? " +" + moreCount + " more" : "");
-      }
-      badge.appendChild(badgeSpan);
-      countriesWrap.appendChild(badge);
-      countriesWrap.appendChild(buildCountriesListTooltip(normalizedCountries));
-      titleBlock.appendChild(countriesWrap);
+      const countriesDisplay = buildRoadmapCountriesInlineDisplay(countries);
+      if (countriesDisplay) titleBlock.appendChild(countriesDisplay);
     }
     tdTitle.appendChild(titleBlock);
     tr.appendChild(tdTitle);
@@ -14267,14 +15184,15 @@ function renderRoadmaps() {
 
     const tdStatus = document.createElement("td");
     stampRoadmapsTableCol(tdStatus, "status");
-    if (roadmap.roadmapStatus) {
-      const meta = roadmapStatusIcons && roadmapStatusIcons[roadmap.roadmapStatus];
+    const effectiveStatus = getEffectiveRoadmapStatus(roadmap);
+    if (effectiveStatus) {
+      const meta = roadmapStatusIcons && roadmapStatusIcons[effectiveStatus];
       const wrapper = document.createElement("span");
       wrapper.className = "cell-type-icon-wrap cell-type-pill cell-status-icon-wrap";
-      wrapper.dataset.status = roadmap.roadmapStatus;
+      wrapper.dataset.status = effectiveStatus;
       wrapper.dataset.iconKind = "status";
       wrapper.setAttribute("role", "img");
-      wrapper.setAttribute("aria-label", roadmap.roadmapStatus);
+      wrapper.setAttribute("aria-label", effectiveStatus);
       if (meta && meta.svg) {
         wrapper.innerHTML = meta.svg;
         if (meta.tooltipTitle != null || meta.tooltipBody != null) {
@@ -14301,7 +15219,7 @@ function renderRoadmaps() {
           wrapper.appendChild(tooltipEl);
         }
       } else {
-        wrapper.textContent = roadmap.roadmapStatus;
+        wrapper.textContent = effectiveStatus;
       }
       tdStatus.appendChild(wrapper);
     } else {
@@ -14346,16 +15264,22 @@ function renderRoadmaps() {
 
     const tdPeriod = document.createElement("td");
     stampRoadmapsTableCol(tdPeriod, "period");
-    const periodValue = formatRoadmapPeriodEntriesForDisplay(roadmap);
     const periodEntries = getRoadmapPeriodEntries(roadmap);
-    if (periodValue && typeof roadmapPeriodTooltip !== "undefined") {
+    const periodInlineValue = formatRoadmapLatestPeriodForTableDisplay(roadmap);
+    const periodFullValue = formatRoadmapPeriodEntriesForDisplay(roadmap);
+    if (periodInlineValue && typeof roadmapPeriodTooltip !== "undefined") {
       const meta = roadmapPeriodTooltip;
       const wrap = document.createElement("span");
       wrap.className = "cell-period-with-tooltip";
-      wrap.setAttribute("aria-label", `Roadmap period: ${periodValue}`);
+      wrap.setAttribute(
+        "aria-label",
+        periodEntries.length > 1
+          ? `Roadmap periods: ${periodFullValue}. Showing latest: ${periodInlineValue}`
+          : `Roadmap period: ${periodInlineValue}`
+      );
       const textSpan = document.createElement("span");
       textSpan.className = "cell-meta cell-period-text";
-      textSpan.textContent = periodValue;
+      textSpan.textContent = periodInlineValue;
       wrap.appendChild(textSpan);
       const tooltipEl = document.createElement("div");
       tooltipEl.className = "cell-type-tooltip";
@@ -14395,7 +15319,7 @@ function renderRoadmaps() {
     } else {
       const periodSpan = document.createElement("span");
       periodSpan.className = "cell-meta cell-period-text";
-      periodSpan.textContent = periodValue || "—";
+      periodSpan.textContent = periodInlineValue || "—";
       tdPeriod.appendChild(periodSpan);
     }
     tr.appendChild(tdPeriod);
@@ -14735,7 +15659,6 @@ function switchRoadmapsView(view) {
       invalidateMapSizeAfterFullscreenExit();
     });
   }
-  syncMoscowCompactNav();
 }
 
 /** Returns a map of ISO 2-letter country code -> number of roadmaps that target that country (active profile, filtered). */
@@ -16398,6 +17321,7 @@ function initTableGroupDisclosureControls() {
       const summary = details.querySelector("summary.roadmaps-table-card-group__header");
       if (!summary) return;
       summary.setAttribute("aria-expanded", details.open ? "true" : "false");
+      handleCollapsibleDetailsScrollReset(details);
     },
     true
   );
@@ -16419,7 +17343,7 @@ function getTableGroupByValue(roadmap, groupBy) {
         normalizeKanoAxisLevel(roadmap.kanoSatisfaction)
       );
     case "roadmapStatus":
-      return (roadmap.roadmapStatus || "").toString().trim() || getTableGroupByUnsetKey();
+      return (getEffectiveRoadmapStatus(roadmap) || "").toString().trim() || getTableGroupByUnsetKey();
     case "moscowCategory":
       return (roadmap.moscowCategory || "").toString().trim() || getTableGroupByUnsetKey();
     case "tshirtSize":
@@ -16607,23 +17531,24 @@ function buildRoadmapTableCardBadges(roadmap, groupBy) {
   badges.className = "roadmaps-table-card__badges";
   const candidates = [];
 
-  if (roadmap.roadmapStatus && groupBy !== "roadmapStatus") {
-    const statusMeta = roadmapStatusIcons && roadmapStatusIcons[roadmap.roadmapStatus];
+  const effectiveStatus = getEffectiveRoadmapStatus(roadmap);
+  if (effectiveStatus && groupBy !== "roadmapStatus") {
+    const statusMeta = roadmapStatusIcons && roadmapStatusIcons[effectiveStatus];
     const statusPill = document.createElement("span");
     statusPill.className = "roadmaps-table-card__status-pill";
-    statusPill.setAttribute("aria-label", roadmap.roadmapStatus);
+    statusPill.setAttribute("aria-label", effectiveStatus);
     if (statusMeta && statusMeta.svg) {
       statusPill.innerHTML =
         statusMeta.svg +
         '<span class="roadmaps-table-card__status-label">' +
-        escapeHtml(roadmap.roadmapStatus) +
+        escapeHtml(effectiveStatus) +
         "</span>";
     } else {
-      statusPill.textContent = roadmap.roadmapStatus;
+      statusPill.textContent = effectiveStatus;
     }
     statusPill.setAttribute("tabindex", "0");
     appendIconMetaTooltip(statusPill, statusMeta);
-    candidates.push({ priority: 1, label: roadmap.roadmapStatus, el: statusPill });
+    candidates.push({ priority: 1, label: effectiveStatus, el: statusPill });
   }
 
   if (roadmap.moscowCategory && groupBy !== "moscowCategory") {
@@ -16670,7 +17595,8 @@ function buildRoadmapTableCardBadges(roadmap, groupBy) {
 
   const periodEntries = getRoadmapPeriodEntries(roadmap);
   if (periodEntries.length) {
-    const periodLabel = periodEntries.map((entry) => entry.period).join(", ");
+    const latestPeriod = getLatestRoadmapPeriodEntry(roadmap);
+    const periodLabel = latestPeriod && latestPeriod.period ? latestPeriod.period : periodEntries[0].period;
     const periodChip = document.createElement("span");
     periodChip.className = "roadmaps-table-card__chip roadmaps-table-card__chip--period";
     periodChip.textContent = periodLabel;
@@ -16735,10 +17661,47 @@ function getCountriesTooltipTitle(countries) {
   return list.length > 1 ? `Target countries (${list.length})` : "Target country";
 }
 
+function buildCountriesTooltipLineElement(countryName) {
+  const row = document.createElement("div");
+  row.className = "countries-tooltip-line";
+
+  const canonical = getCanonicalCountryName(countryName);
+  const displayName = canonical || String(countryName).trim();
+  const code = getCountryCodeForDisplayName(countryName);
+  const flag =
+    code && typeof countryCodeToFlag === "function" ? countryCodeToFlag(code) : "";
+
+  if (flag) {
+    const flagEl = document.createElement("span");
+    flagEl.className = "countries-tooltip-line__flag";
+    flagEl.setAttribute("aria-hidden", "true");
+    flagEl.textContent = flag;
+    row.appendChild(flagEl);
+  }
+  if (code) {
+    const codeEl = document.createElement("span");
+    codeEl.className = "countries-tooltip-line__code";
+    codeEl.textContent = code;
+    row.appendChild(codeEl);
+  }
+  const sepEl = document.createElement("span");
+  sepEl.className = "countries-tooltip-line__sep";
+  sepEl.setAttribute("aria-hidden", "true");
+  sepEl.textContent = "—";
+  row.appendChild(sepEl);
+  const nameEl = document.createElement("span");
+  nameEl.className = "countries-tooltip-line__name";
+  nameEl.textContent = displayName;
+  row.appendChild(nameEl);
+
+  return row;
+}
+
 function buildCountriesListTooltip(countries) {
   const list = normalizeRoadmapCountriesList(countries);
   const tooltipEl = document.createElement("div");
-  tooltipEl.className = "cell-type-tooltip cell-type-tooltip--wide";
+  tooltipEl.className =
+    "cell-type-tooltip cell-type-tooltip--wide cell-type-tooltip--countries";
   if (list.length > COUNTRIES_TOOLTIP_SCROLL_THRESHOLD) {
     tooltipEl.classList.add("cell-type-tooltip--scroll");
   }
@@ -16748,22 +17711,9 @@ function buildCountriesListTooltip(countries) {
   tooltipTitle.textContent = getCountriesTooltipTitle(list);
   tooltipEl.appendChild(tooltipTitle);
   const tooltipBody = document.createElement("div");
-  tooltipBody.className = "cell-type-tooltip-body";
+  tooltipBody.className = "cell-type-tooltip-body countries-tooltip-body";
   list.forEach((name) => {
-    const code =
-      typeof countryCodeByName !== "undefined" && countryCodeByName[name]
-        ? countryCodeByName[name]
-        : "";
-    const flag = code && typeof countryCodeToFlag === "function" ? countryCodeToFlag(code) : "";
-    const p = document.createElement("p");
-    if (flag && code) {
-      p.textContent = `${flag} ${code} — ${name}`;
-    } else if (code) {
-      p.textContent = `${code} — ${name}`;
-    } else {
-      p.textContent = name;
-    }
-    tooltipBody.appendChild(p);
+    tooltipBody.appendChild(buildCountriesTooltipLineElement(name));
   });
   tooltipEl.appendChild(tooltipBody);
   tooltipBody.addEventListener(
@@ -16776,69 +17726,85 @@ function buildCountriesListTooltip(countries) {
   return tooltipEl;
 }
 
-function buildRoadmapTableCardCountriesRow(countries) {
+/** Inline roadmap countries: one flag + code, remaining as "+N others"; full list in tooltip. */
+function buildRoadmapCountriesInlineDisplay(countries, options = {}) {
   const normalizedCountries = normalizeRoadmapCountriesList(countries);
+  if (!normalizedCountries.length) return null;
+
   const isEuRegion = roadmapCountriesRepresentEuRegion(normalizedCountries);
-  const row = document.createElement("div");
-  row.className = "roadmaps-table-card__countries-row cell-countries-with-tooltip";
-  row.setAttribute(
+  const wrap = document.createElement(options.wrapTag || "span");
+  wrap.className = options.wrapClass || "cell-countries-with-tooltip";
+  if (options.interactive) wrap.setAttribute("tabindex", "0");
+  wrap.setAttribute(
     "aria-label",
-    isEuRegion ? "European Union; tap for member countries" : "Target countries; tap for full list"
+    isEuRegion
+      ? "European Union; hover for member countries"
+      : normalizedCountries.length > 1
+        ? `${normalizedCountries.length} target countries; hover for full list`
+        : `Target country; hover for details`
   );
-  row.setAttribute("tabindex", "0");
-  row.dataset.countryCount = String(normalizedCountries.length);
+  if (options.datasetCountryCount) {
+    wrap.dataset.countryCount = String(normalizedCountries.length);
+  }
+
+  const badge = document.createElement("div");
+  badge.className = isEuRegion ? "countries-badge countries-badge--eu" : "countries-badge";
 
   if (isEuRegion) {
     const chip = document.createElement("span");
-    chip.className = "roadmaps-table-card__country-chip roadmaps-table-card__country-chip--eu";
+    chip.className = "countries-badge__chip";
     const flagEl = document.createElement("span");
-    flagEl.className = "roadmaps-table-card__country-flag";
+    flagEl.className = "countries-badge__flag";
     flagEl.setAttribute("aria-hidden", "true");
     flagEl.textContent = getEuRegionFlagEmoji();
     chip.appendChild(flagEl);
     const labelEl = document.createElement("span");
-    labelEl.className = "roadmaps-table-card__country-code";
+    labelEl.className = "countries-badge__code";
     labelEl.textContent = "EU";
     chip.appendChild(labelEl);
-    row.appendChild(chip);
+    badge.appendChild(chip);
   } else {
-    const maxToShow = 4;
-    const shown = normalizedCountries.slice(0, maxToShow);
-    const moreCount = normalizedCountries.length - shown.length;
-    shown.forEach((name) => {
-      const code =
-        typeof countryCodeByName !== "undefined" && countryCodeByName[name]
-          ? countryCodeByName[name]
-          : "";
-      const flag = code && typeof countryCodeToFlag === "function" ? countryCodeToFlag(code) : "";
-      const chip = document.createElement("span");
-      chip.className = "roadmaps-table-card__country-chip";
-      chip.title = code ? `${name} (${code})` : String(name);
-      if (flag) {
-        const flagEl = document.createElement("span");
-        flagEl.className = "roadmaps-table-card__country-flag";
-        flagEl.setAttribute("aria-hidden", "true");
-        flagEl.textContent = flag;
-        chip.appendChild(flagEl);
-      }
-      const labelEl = document.createElement("span");
-      labelEl.className = "roadmaps-table-card__country-code";
-      labelEl.textContent = code || String(name);
-      chip.appendChild(labelEl);
-      row.appendChild(chip);
-    });
+    const firstName = normalizedCountries[0];
+    const code = getCountryCodeForDisplayName(firstName);
+    const flag =
+      code && typeof countryCodeToFlag === "function" ? countryCodeToFlag(code) : "";
+
+    const chip = document.createElement("span");
+    chip.className = "countries-badge__chip";
+    if (flag) {
+      const flagEl = document.createElement("span");
+      flagEl.className = "countries-badge__flag";
+      flagEl.setAttribute("aria-hidden", "true");
+      flagEl.textContent = flag;
+      chip.appendChild(flagEl);
+    }
+    const labelEl = document.createElement("span");
+    labelEl.className = "countries-badge__code";
+    labelEl.textContent = code || firstName;
+    chip.appendChild(labelEl);
+    badge.appendChild(chip);
+
+    const moreCount = normalizedCountries.length - 1;
     if (moreCount > 0) {
-      const moreChip = document.createElement("span");
-      moreChip.className = "roadmaps-table-card__country-chip roadmaps-table-card__country-chip--more";
-      moreChip.textContent = "+" + moreCount;
-      moreChip.title = normalizedCountries.slice(maxToShow).join(", ");
-      row.appendChild(moreChip);
+      const othersChip = document.createElement("span");
+      othersChip.className = "countries-badge__chip countries-badge__chip--others";
+      othersChip.textContent = `+${moreCount} other${moreCount === 1 ? "" : "s"}`;
+      badge.appendChild(othersChip);
     }
   }
 
-  row.appendChild(buildCountriesListTooltip(normalizedCountries));
+  wrap.appendChild(badge);
+  wrap.appendChild(buildCountriesListTooltip(normalizedCountries));
+  return wrap;
+}
 
-  return row;
+function buildRoadmapTableCardCountriesRow(countries) {
+  return buildRoadmapCountriesInlineDisplay(countries, {
+    wrapTag: "div",
+    wrapClass: "roadmaps-table-card__countries-row cell-countries-with-tooltip",
+    interactive: true,
+    datasetCountryCount: true
+  });
 }
 
 function buildRoadmapTableCard(roadmap, demoReadOnly, options = {}) {
@@ -16847,7 +17813,7 @@ function buildRoadmapTableCard(roadmap, demoReadOnly, options = {}) {
   card.className = "roadmaps-table-card portfolio-board-card--structured";
   card.setAttribute("role", "listitem");
   card.dataset.roadmapId = roadmap.id;
-  const statusLabel = (roadmap.roadmapStatus || "Not Started").toString().trim();
+  const statusLabel = (getEffectiveRoadmapStatus(roadmap) || "Not Started").toString().trim();
   card.setAttribute("data-status", statusLabel);
   if (
     isSuperAdminModeActive() &&
@@ -16924,7 +17890,7 @@ function buildRoadmapTableCard(roadmap, demoReadOnly, options = {}) {
 
   const actions = document.createElement("div");
   actions.className =
-    "roadmaps-table-card__actions portfolio-card-footer board-card-section board-card-section--footer";
+    "roadmaps-table-card__actions portfolio-card-footer board-card-section board-card-section--footer roadmap-row-actions";
 
   const viewBtn = document.createElement("button");
   viewBtn.type = "button";
@@ -17186,7 +18152,7 @@ function renderScrumBoard() {
     byStatus[status] = [];
   });
   roadmaps.forEach((p) => {
-    const status = (p.roadmapStatus || "Not Started").toString().trim();
+    const status = (getEffectiveRoadmapStatus(p) || "Not Started").toString().trim();
     if (!byStatus[status]) byStatus[status] = [];
     byStatus[status].push(p);
   });
@@ -17276,7 +18242,7 @@ function renderScrumBoard() {
       meta.appendChild(buildBoardCardMetricsRow(roadmap, "scrum-board-card"));
       appendPortfolioCardBody(card, titleRow, meta);
 
-      const cardStatus = (roadmap.roadmapStatus || "Not Started").toString().trim();
+      const cardStatus = (getEffectiveRoadmapStatus(roadmap) || "Not Started").toString().trim();
       const moveEl = isCompactPortfolioLayout()
         ? buildBoardCardMoveSelect(roadmap, cardStatus, { disabled: demoReadOnly })
         : null;
@@ -17476,7 +18442,7 @@ function bindScrumBoardDragAndDrop() {
       const ownerProfile = located.profile;
       const roadmap = located.roadmap;
       if (!ownerProfile || !roadmap) return;
-      const currentStatus = (roadmap.roadmapStatus || "Not Started").toString().trim();
+      const currentStatus = (getEffectiveRoadmapStatus(roadmap) || "Not Started").toString().trim();
 
       if (currentStatus === newStatus) {
         if (!state.scrumBoardSortByRice && dropColumn) {
@@ -17497,7 +18463,7 @@ function bindScrumBoardDragAndDrop() {
         return;
       }
 
-      roadmap.roadmapStatus = newStatus;
+      assignRoadmapStatus(roadmap, newStatus);
       roadmap.modifiedAt = new Date().toISOString();
 
       if (!state.scrumBoardSortByRice && dropColumn) {
@@ -17530,7 +18496,7 @@ function getBoardOrderedList(profile, status) {
   base.forEach((p) => { p.riceScore = p.riceScore != null ? p.riceScore : calculateRiceScore(p); });
   initFilterRoadmapPeriodOptions(base);
   const filtered = applyFilters(base);
-  const list = filtered.filter((p) => (p.roadmapStatus || "Not Started").toString().trim() === status);
+  const list = filtered.filter((p) => (getEffectiveRoadmapStatus(p) || "Not Started").toString().trim() === status);
   if (state.scrumBoardSortByRice) {
     list.sort((a, b) => {
       const scoreA = a.riceScore != null ? a.riceScore : calculateRiceScore(a);
@@ -17640,8 +18606,6 @@ function getMoscowOrderedList(profile, quadrant) {
   return list;
 }
 
-let moscowCompactNavObserver = null;
-
 function setRoadmapMoscowCategory(roadmapId, newMoscow) {
   if (!requireWritableActiveProfile("Move roadmap")) return false;
   if (!getUnlockedActiveProfile() || !newMoscow) return false;
@@ -17665,10 +18629,10 @@ function setRoadmapBoardStatus(roadmapId, newStatus) {
   const ownerProfile = located.profile;
   const roadmap = located.roadmap;
   if (!ownerProfile || !roadmap) return false;
-  const currentStatus = (roadmap.roadmapStatus || "Not Started").toString().trim();
+  const currentStatus = (getEffectiveRoadmapStatus(roadmap) || "Not Started").toString().trim();
   if (currentStatus === newStatus) return false;
 
-  roadmap.roadmapStatus = newStatus;
+  assignRoadmapStatus(roadmap, newStatus);
   roadmap.modifiedAt = new Date().toISOString();
 
   if (!state.scrumBoardSortByRice) {
@@ -17871,7 +18835,7 @@ function moscowTablePillSlug(category) {
 
 function setRoadmapTableActionButton(btn, kind, label, { disabled = false, title = "" } = {}) {
   const action = ROADMAP_TABLE_ACTION_MAP[kind] || kind;
-  btn.className = `roadmap-action-btn roadmap-action-btn--${kind} roadmap-action-btn--icon-only`;
+  btn.className = `roadmap-action-btn roadmap-action-btn--${kind} roadmap-action-btn--icon-only roadmap-action-btn--toolbar`;
   btn.dataset.action = action;
   btn.setAttribute("aria-label", label);
   btn.title = disabled ? title || DEMO_READ_ONLY_ACTION_TITLE : title || label;
@@ -17904,18 +18868,6 @@ function getMoscowDisplayName(moscowKey) {
     return moscowDisplayNames[moscowKey];
   }
   return moscowKey || "";
-}
-
-/** Compact MoSCoW quadrant jump nav removed — users scroll the board directly. */
-function syncMoscowCompactNav() {
-  if (moscowCompactNavObserver) {
-    moscowCompactNavObserver.disconnect();
-    moscowCompactNavObserver = null;
-  }
-  const nav = elements.moscowCompactNav;
-  if (!nav) return;
-  nav.hidden = true;
-  nav.innerHTML = "";
 }
 
 function moveMoscowRoadmapUp(roadmapId, quadrant) {
@@ -17978,14 +18930,12 @@ function renderMoscowBoard() {
 
   if (!activeProfile) {
     elements.moscowBoardContainer.innerHTML = '<div class="moscow-board-empty">Select a profile to see the MOSCOW grid.</div>';
-    syncMoscowCompactNav();
     return;
   }
 
   if (!unlockedProfile) {
     elements.moscowBoardContainer.innerHTML =
       '<div class="moscow-board-empty">Unlock this profile to use the MOSCOW view.</div>';
-    syncMoscowCompactNav();
     return;
   }
 
@@ -18205,7 +19155,6 @@ function renderMoscowBoard() {
   if (typeof BoardCardInteraction !== "undefined") {
     BoardCardInteraction.bindContainer(elements.moscowBoardContainer);
   }
-  syncMoscowCompactNav();
 }
 
 function bindMoscowBoardDragAndDrop() {
@@ -18299,28 +19248,28 @@ function bindMoscowBoardDragAndDrop() {
 }
 
 function applyFilters(roadmaps) {
-  const titleQuery = (elements.filterTitle.value || "").trim().toLowerCase();
-  const selectedPeriodsFilter = getSelectedFilterRoadmapPeriods();
-  const impactFilter = elements.filterImpact.value;
-  const effortFilter = elements.filterEffort.value;
-  const currencyFilter = elements.filterCurrency.value;
-  const frameworkFilter = elements.filterFinancialFramework ? elements.filterFinancialFramework.value : "";
-  const statusFilter = elements.filterStatus ? elements.filterStatus.value : "";
-  const tshirtFilter = elements.filterTshirtSize ? elements.filterTshirtSize.value : "";
-  const moscowFilter = elements.filterMoscow ? elements.filterMoscow.value : "";
-  const roadmapTypeFilter = elements.filterRoadmapType.value;
-  const selectedCountriesFilter = getSelectedFilterCountries();
-  const labelQuery = elements.filterLabel ? (elements.filterLabel.value || "").trim().toLowerCase() : "";
-  const businessLeadQuery = elements.filterBusinessLead
-    ? (elements.filterBusinessLead.value || "").trim().toLowerCase()
-    : "";
-  const techLeadQuery = elements.filterTechLead ? (elements.filterTechLead.value || "").trim().toLowerCase() : "";
-  const labelsFilter = elements.filterLabels ? elements.filterLabels.value : "";
-  const linksFilter = elements.filterLinks ? elements.filterLinks.value : "";
-  const ownerProfileFilter =
-    elements.filterOwnerProfile && isSuperAdminModeActive()
-      ? (elements.filterOwnerProfile.value || "").trim()
-      : "";
+  const criteria = readPortfolioFilterCriteria();
+  const {
+    titleQuery,
+    labelQuery,
+    businessLeadQuery,
+    techLeadQuery,
+    countriesSearchQuery,
+    periodsSearchQuery,
+    selectedPeriods,
+    selectedCountries,
+    impactFilter,
+    effortFilter,
+    currencyFilter,
+    frameworkFilter,
+    statusFilter,
+    tshirtFilter,
+    moscowFilter,
+    roadmapTypeFilter,
+    labelsFilter,
+    linksFilter,
+    ownerProfileFilter
+  } = criteria;
 
   return roadmaps.filter((p) => {
     if (titleQuery) {
@@ -18328,8 +19277,8 @@ function applyFilters(roadmaps) {
       if (!title.includes(titleQuery)) return false;
     }
 
-    if (selectedPeriodsFilter.length) {
-      if (!roadmapHasPeriodFilterMatch(p, selectedPeriodsFilter)) return false;
+    if (!roadmapMatchesPeriodFilter(p, selectedPeriods, periodsSearchQuery)) {
+      return false;
     }
 
     if (impactFilter) {
@@ -18350,7 +19299,7 @@ function applyFilters(roadmaps) {
     }
 
     if (statusFilter) {
-      if ((p.roadmapStatus || "") !== statusFilter) return false;
+      if ((getEffectiveRoadmapStatus(p) || "") !== statusFilter) return false;
     }
 
     if (tshirtFilter) {
@@ -18375,10 +19324,8 @@ function applyFilters(roadmaps) {
       }
     }
 
-    if (selectedCountriesFilter.length) {
-      const projCountries = Array.isArray(p.countries) ? p.countries : [];
-      const hasMatch = projCountries.some((c) => selectedCountriesFilter.includes(c));
-      if (!hasMatch) return false;
+    if (!roadmapMatchesCountryFilter(p, selectedCountries, countriesSearchQuery)) {
+      return false;
     }
 
     if (labelQuery && !roadmapMatchesLabelFilter(p, labelQuery)) {
@@ -18514,12 +19461,12 @@ function updateSortIndicators() {
 
 function clearFilters() {
   closeAllFilterAutocompleteDropdowns();
-  elements.filterTitle.value = "";
-  elements.filterImpact.value = "";
-  elements.filterEffort.value = "";
-  elements.filterCurrency.value = "";
+  if (elements.filterTitle) elements.filterTitle.value = "";
+  if (elements.filterImpact) elements.filterImpact.value = "";
+  if (elements.filterEffort) elements.filterEffort.value = "";
+  if (elements.filterCurrency) elements.filterCurrency.value = "";
   if (elements.filterFinancialFramework) elements.filterFinancialFramework.value = "";
-  elements.filterRoadmapType.value = "";
+  if (elements.filterRoadmapType) elements.filterRoadmapType.value = "";
   if (elements.filterStatus) elements.filterStatus.value = "";
   if (elements.filterTshirtSize) elements.filterTshirtSize.value = "";
   if (elements.filterMoscow) elements.filterMoscow.value = "";
@@ -18645,18 +19592,33 @@ function syncHeaderCheckbox() {
 }
 
 function handleBulkDelete() {
-  if (state.roadmapsView !== "table") return;
+  if (state.roadmapsView !== "table") {
+    showToast("Switch to the table view to delete multiple roadmaps.");
+    return;
+  }
   if (!requireWritableActiveProfile("Bulk delete")) return;
   if (!getUnlockedActiveProfile() || !elements.roadmapDeleteModal) return;
   const ids = getSelectedRoadmapIdsFromTable();
-  if (!ids.length) return;
+  if (!ids.length) {
+    showToast("Select one or more roadmaps using the checkboxes, then choose Delete selected.");
+    return;
+  }
 
   activateBlockingModal(elements.roadmapDeleteModal, "roadmapDeleteModal");
   elements.roadmapDeleteModal.setAttribute("data-delete-mode", "bulk");
   elements.roadmapDeleteModal.setAttribute("data-roadmap-ids", ids.join(","));
 
+  if (elements.roadmapDeleteModalTitle) {
+    elements.roadmapDeleteModalTitle.textContent =
+      ids.length === 1 ? "Delete roadmap?" : "Delete selected roadmaps?";
+  }
   if (elements.roadmapDeleteNameLabel) {
-    elements.roadmapDeleteNameLabel.textContent = `${ids.length} roadmap${ids.length === 1 ? "" : "s"} selected`;
+    elements.roadmapDeleteNameLabel.textContent =
+      ids.length === 1 ? "1 roadmap selected" : `${ids.length} roadmaps selected`;
+  }
+  if (elements.roadmapDeleteConfirmBtn) {
+    elements.roadmapDeleteConfirmBtn.textContent =
+      ids.length === 1 ? "Delete roadmap" : "Delete roadmaps";
   }
   if (elements.roadmapDeleteWarningText) {
     elements.roadmapDeleteWarningText.textContent = isSuperAdminModeActive()
@@ -18692,10 +19654,34 @@ function handleBulkDelete() {
 
 const BULK_EDIT_NO_CHANGE = "";
 const BULK_EDIT_CLEAR = "__clear__";
+const BULK_PERIODS_REPLACE = "replace";
 const ROADMAP_TYPE_OPTIONS = ["New Product", "Improvement", "Tech Debt", "Market Expansion"];
+const ROADMAP_BULK_SELECT_IDS = [
+  "roadmapType",
+  "roadmapStatus",
+  "roadmapTshirtSize",
+  "roadmapMoscow",
+  "impactValue",
+  "effortValue",
+  "financialFramework",
+  "roadmapCurrency"
+];
 
-function populateBulkEditSelect(selectEl, options) {
-  if (!selectEl) return;
+function isRoadmapModalBulkMode() {
+  return roadmapModalMode === "bulk";
+}
+
+function rememberSelectOptions(selectEl) {
+  if (!selectEl || selectEl.dataset.bulkOriginalHtml != null) return;
+  selectEl.dataset.bulkOriginalHtml = selectEl.innerHTML;
+}
+
+function decorateNativeSelectForBulkMode(selectEl) {
+  if (!selectEl || selectEl.tagName !== "SELECT") return;
+  rememberSelectOptions(selectEl);
+  const preserved = Array.from(selectEl.options).filter(
+    (option) => option.value !== BULK_EDIT_NO_CHANGE && option.value !== BULK_EDIT_CLEAR
+  );
   selectEl.innerHTML = "";
   const noChange = document.createElement("option");
   noChange.value = BULK_EDIT_NO_CHANGE;
@@ -18705,172 +19691,889 @@ function populateBulkEditSelect(selectEl, options) {
   clearOpt.value = BULK_EDIT_CLEAR;
   clearOpt.textContent = "Clear value";
   selectEl.appendChild(clearOpt);
-  (Array.isArray(options) ? options : []).forEach((value) => {
-    const opt = document.createElement("option");
-    opt.value = value;
-    opt.textContent = value;
-    selectEl.appendChild(opt);
+  preserved.forEach((option) => {
+    const next = document.createElement("option");
+    next.value = option.value;
+    next.textContent = option.textContent;
+    selectEl.appendChild(next);
   });
+  selectEl.value = BULK_EDIT_NO_CHANGE;
 }
 
-function resetRoadmapBulkEditForm() {
-  populateBulkEditSelect(elements.roadmapBulkEditStatus, roadmapStatusList);
-  populateBulkEditSelect(elements.roadmapBulkEditType, ROADMAP_TYPE_OPTIONS);
-  populateBulkEditSelect(elements.roadmapBulkEditMoscow, moscowList);
-  populateBulkEditSelect(elements.roadmapBulkEditTshirtSize, tshirtSizeList);
-  populateBulkEditPeriodSelect(elements.roadmapBulkEditPeriod);
+function restoreNativeSelectFromBulkMode(selectEl) {
+  if (!selectEl || selectEl.tagName !== "SELECT" || selectEl.dataset.bulkOriginalHtml == null) return;
+  selectEl.innerHTML = selectEl.dataset.bulkOriginalHtml;
+  delete selectEl.dataset.bulkOriginalHtml;
+  if (
+    selectEl.id === "roadmapKanoFunctionalitySelect" ||
+    selectEl.id === "roadmapKanoSatisfactionSelect"
+  ) {
+    delete selectEl.dataset.kanoOptionsReady;
+  }
 }
 
-function resolveBulkEditFieldValue(rawValue) {
-  const value = (rawValue || "").trim();
-  if (!value || value === BULK_EDIT_NO_CHANGE) return undefined;
-  if (value === BULK_EDIT_CLEAR) return null;
-  return value;
+function populateBulkEditPeriodsModeSelect(selectEl) {
+  if (!selectEl) return;
+  selectEl.innerHTML = "";
+  const noChange = document.createElement("option");
+  noChange.value = BULK_EDIT_NO_CHANGE;
+  noChange.textContent = "No change";
+  selectEl.appendChild(noChange);
+  const replace = document.createElement("option");
+  replace.value = BULK_PERIODS_REPLACE;
+  replace.textContent = "Set periods (replace on each roadmap)";
+  selectEl.appendChild(replace);
+  const clear = document.createElement("option");
+  clear.value = BULK_EDIT_CLEAR;
+  clear.textContent = "Clear periods";
+  selectEl.appendChild(clear);
+  selectEl.value = BULK_EDIT_NO_CHANGE;
 }
 
-function buildBulkEditPatchFromForm() {
-  const patch = {};
-  const status = resolveBulkEditFieldValue(elements.roadmapBulkEditStatus?.value);
-  if (status !== undefined) patch.roadmapStatus = status;
-  const type = resolveBulkEditFieldValue(elements.roadmapBulkEditType?.value);
-  if (type !== undefined) patch.roadmapType = type;
-  const moscow = resolveBulkEditFieldValue(elements.roadmapBulkEditMoscow?.value);
-  if (moscow !== undefined) patch.moscowCategory = moscow;
-  const tshirtSize = resolveBulkEditFieldValue(elements.roadmapBulkEditTshirtSize?.value);
-  if (tshirtSize !== undefined) patch.tshirtSize = tshirtSize;
+function syncRoadmapBulkPeriodsEditorVisibility() {
+  if (!isRoadmapModalBulkMode()) {
+    if (elements.roadmapPeriodsBulkModeWrap) elements.roadmapPeriodsBulkModeWrap.hidden = true;
+    if (elements.roadmapPeriodsEditorWrap) elements.roadmapPeriodsEditorWrap.hidden = false;
+    return;
+  }
+  const mode = (elements.roadmapPeriodsBulkMode?.value || "").trim();
+  if (elements.roadmapPeriodsBulkModeWrap) elements.roadmapPeriodsBulkModeWrap.hidden = false;
+  const editorWrap = elements.roadmapPeriodsEditorWrap;
+  const container = elements.roadmapPeriodsContainer;
+  if (!editorWrap || !container) return;
+  if (mode === BULK_PERIODS_REPLACE) {
+    editorWrap.hidden = false;
+    if (!container.querySelector(".roadmap-period-row")) {
+      renderRoadmapPeriodControls([], { containerEl: container });
+    }
+    return;
+  }
+  editorWrap.hidden = true;
+  container.innerHTML = "";
+}
 
-  const periodValue = resolveBulkEditFieldValue(elements.roadmapBulkEditPeriod?.value);
-  if (periodValue !== undefined) {
-    patch.roadmapPeriod = periodValue;
+function getBulkPreviewRoadmapRecord() {
+  const roadmaps = getBulkEditingRoadmapsResolved();
+  if (!roadmaps.length) return null;
+  if (bulkPreviewRoadmapIndex < 0) bulkPreviewRoadmapIndex = 0;
+  if (bulkPreviewRoadmapIndex >= roadmaps.length) bulkPreviewRoadmapIndex = roadmaps.length - 1;
+  const roadmap = roadmaps[bulkPreviewRoadmapIndex];
+  if (!roadmap?.id) return null;
+  return findRoadmapWithOwner(roadmap.id);
+}
+
+function getBulkEditingRoadmapsResolved() {
+  const ids = Array.isArray(bulkEditingRoadmapIds) ? bulkEditingRoadmapIds.filter(Boolean) : [];
+  return ids
+    .map((id) => {
+      const located = findRoadmapWithOwner(id);
+      return located.roadmap ? located.roadmap : null;
+    })
+    .filter(Boolean);
+}
+
+function getBulkActiveRoadmapId() {
+  const roadmaps = getBulkEditingRoadmapsResolved();
+  if (!roadmaps.length) return null;
+  if (bulkPreviewRoadmapIndex < 0) bulkPreviewRoadmapIndex = 0;
+  if (bulkPreviewRoadmapIndex >= roadmaps.length) bulkPreviewRoadmapIndex = roadmaps.length - 1;
+  return roadmaps[bulkPreviewRoadmapIndex]?.id || null;
+}
+
+function resetBulkEditSessionState() {
+  bulkEditDraftsByRoadmapId = new Map();
+  bulkEditModifiedRoadmapIds = new Set();
+  if (bulkEditDraftSyncTimer) {
+    clearTimeout(bulkEditDraftSyncTimer);
+    bulkEditDraftSyncTimer = null;
+  }
+  syncBulkEditModifiedIndicators();
+}
+
+function syncRoadmapBulkPreviewContextHint(roadmap) {
+  if (!elements.roadmapModalSubtitle || !roadmap || !isRoadmapModalBulkMode()) return;
+  const count = getBulkEditingRoadmapsResolved().length;
+  const title = (roadmap.title || "Untitled roadmap").trim();
+  const editedCount = bulkEditModifiedRoadmapIds.size;
+  const editedSuffix =
+    editedCount > 0 ? ` · ${editedCount} roadmap${editedCount === 1 ? "" : "s"} with unsaved edits` : "";
+  elements.roadmapModalSubtitle.textContent =
+    count === 1
+      ? `Editing “${title}”. Changes apply only to this roadmap${editedSuffix}.`
+      : `Editing “${title}” (${bulkPreviewRoadmapIndex + 1} of ${count}). Each roadmap keeps its own edits — switch using the arrows${editedSuffix}.`;
+}
+
+function syncBulkEditModifiedIndicators() {
+  if (!isRoadmapModalBulkMode()) return;
+  const modifiedCount = bulkEditModifiedRoadmapIds.size;
+  const activeId = getBulkActiveRoadmapId();
+  if (elements.roadmapForm) {
+    elements.roadmapForm.classList.toggle(
+      "roadmap-form--bulk-item-dirty",
+      !!(activeId && bulkEditModifiedRoadmapIds.has(activeId))
+    );
+  }
+  if (elements.roadmapFormSubmitBtn) {
+    elements.roadmapFormSubmitBtn.textContent =
+      modifiedCount > 0
+        ? `Save all changes (${modifiedCount})`
+        : "Save all changes";
+  }
+  if (elements.roadmapBulkPreviewBar) {
+    elements.roadmapBulkPreviewBar.classList.toggle(
+      "roadmap-bulk-nav--has-edits",
+      modifiedCount > 0
+    );
+  }
+  const activeRoadmap = getBulkPreviewRoadmapRecord()?.roadmap;
+  if (activeRoadmap) syncRoadmapBulkPreviewContextHint(activeRoadmap);
+}
+
+function roadmapEntityToEditableRaw(roadmap) {
+  if (!roadmap) return null;
+  const roadmapPeriods = getRoadmapPeriodEntries(roadmap);
+  return {
+    title: (roadmap.title || "").trim(),
+    description: roadmap.description || "",
+    note: normalizeRoadmapNote(roadmap.note || ""),
+    reachDescription: roadmap.reachDescription || "",
+    reachValue: roadmap.reachValue != null ? roadmap.reachValue : null,
+    impactDescription: roadmap.impactDescription || "",
+    impactValue: roadmap.impactValue != null ? roadmap.impactValue : null,
+    confidenceDescription: roadmap.confidenceDescription || "",
+    confidenceValue: roadmap.confidenceValue != null ? roadmap.confidenceValue : null,
+    effortDescription: roadmap.effortDescription || "",
+    effortValue: roadmap.effortValue != null ? roadmap.effortValue : null,
+    financialImpactValue: roadmap.financialImpactValue != null ? roadmap.financialImpactValue : null,
+    financialImpactCurrency: normalizeCurrency(roadmap.financialImpactCurrency),
+    financialImpactFramework: normalizeFinancialFramework(roadmap.financialImpactFramework),
+    financialImpactInputs: sanitizeFinancialImpactInputs(
+      normalizeFinancialFramework(roadmap.financialImpactFramework),
+      roadmap.financialImpactInputs || {}
+    ),
+    roadmapType: coalesceLegacyRoadmapStringField(roadmap, "roadmapType", "projectType") || null,
+    roadmapStatus: resolveRoadmapStatusForSave(
+      roadmapPeriods,
+      coalesceLegacyRoadmapStringField(roadmap, "roadmapStatus", "projectStatus") || null
+    ),
+    tshirtSize: roadmap.tshirtSize || null,
+    roadmapPeriod:
+      typeof RoadmapPeriods !== "undefined"
+        ? RoadmapPeriods.deriveLegacyPeriod(roadmapPeriods)
+        : roadmapPeriods[0]?.period || roadmap.roadmapPeriod || null,
+    roadmapPeriods,
+    moscowCategory: roadmap.moscowCategory || null,
+    kanoFunctionality: roadmap.kanoFunctionality != null ? roadmap.kanoFunctionality : null,
+    kanoSatisfaction: roadmap.kanoSatisfaction != null ? roadmap.kanoSatisfaction : null,
+    countries: Array.isArray(roadmap.countries) ? roadmap.countries.slice() : [],
+    labels: normalizeRoadmapLabels(roadmap.labels),
+    links: normalizeRoadmapLinks(roadmap.links),
+    tasks: normalizeRoadmapTasks(roadmap.tasks),
+    raci: normalizeRoadmapRaci(roadmap.raci)
+  };
+}
+
+function roadmapEditableRawSignature(raw) {
+  if (!raw) return "";
+  return JSON.stringify(raw);
+}
+
+function roadmapEditableRawEquals(a, b) {
+  return roadmapEditableRawSignature(a) === roadmapEditableRawSignature(b);
+}
+
+function populateRoadmapFormFromEditableRaw(raw, metaRoadmap, { isView = false } = {}) {
+  if (!raw) return;
+  const roadmapShape = metaRoadmap ? { ...metaRoadmap, ...raw } : raw;
+  populateRoadmapFormFromRoadmap(roadmapShape, { isView });
+}
+
+function loadBulkEditActiveRoadmapIntoForm() {
+  const roadmapId = getBulkActiveRoadmapId();
+  if (!roadmapId) return;
+  const located = findRoadmapWithOwner(roadmapId);
+  const roadmap = located.roadmap;
+  if (!roadmap) return;
+
+  bulkEditSuppressDirtyTracking = true;
+  try {
+    const draft = bulkEditDraftsByRoadmapId.get(roadmapId);
+    if (draft?.raw) {
+      populateRoadmapFormFromEditableRaw(draft.raw, roadmap, { isView: false });
+    } else {
+      populateRoadmapFormFromRoadmap(roadmap, { isView: false });
+    }
+    syncBulkEditModifiedIndicators();
+  } finally {
+    bulkEditSuppressDirtyTracking = false;
+  }
+}
+
+function flushBulkEditDraftFromForm() {
+  if (!isRoadmapModalBulkMode() || bulkEditSuppressDirtyTracking) return;
+  const roadmapId = getBulkActiveRoadmapId();
+  if (!roadmapId) return;
+  const located = findRoadmapWithOwner(roadmapId);
+  if (!located.roadmap) return;
+
+  const collected = collectRoadmapRawFromForm({ validate: false });
+  if (!collected.raw) return;
+
+  const baseline = roadmapEntityToEditableRaw(located.roadmap);
+  if (roadmapEditableRawEquals(baseline, collected.raw)) {
+    bulkEditDraftsByRoadmapId.delete(roadmapId);
+    bulkEditModifiedRoadmapIds.delete(roadmapId);
+  } else {
+    bulkEditDraftsByRoadmapId.set(roadmapId, { raw: collected.raw });
+    bulkEditModifiedRoadmapIds.add(roadmapId);
+  }
+  syncBulkEditModifiedIndicators();
+}
+
+function scheduleBulkEditDraftSync() {
+  if (!isRoadmapModalBulkMode() || bulkEditSuppressDirtyTracking) return;
+  if (bulkEditDraftSyncTimer) clearTimeout(bulkEditDraftSyncTimer);
+  bulkEditDraftSyncTimer = window.setTimeout(() => {
+    bulkEditDraftSyncTimer = null;
+    flushBulkEditDraftFromForm();
+  }, 140);
+}
+
+function handleBulkEditFormDirtyEvent() {
+  scheduleBulkEditDraftSync();
+}
+
+function bindBulkEditFormDirtyTracking() {
+  if (bulkEditFormWatchBound || !elements.roadmapForm) return;
+  bulkEditFormWatchBound = true;
+  elements.roadmapForm.addEventListener("input", handleBulkEditFormDirtyEvent, true);
+  elements.roadmapForm.addEventListener("change", handleBulkEditFormDirtyEvent, true);
+}
+
+function populateRoadmapFormFromRoadmap(roadmap, { isView = false } = {}) {
+  if (!roadmap) return;
+
+  bulkEditSuppressDirtyTracking = true;
+  try {
+  elements.roadmapTitle.value = roadmap.title || "";
+  const richFieldValues = [
+    ["roadmapDescription", roadmap.description || ""],
+    ["roadmapNote", roadmap.note || ""],
+    ["reachDescription", roadmap.reachDescription || ""],
+    ["impactDescription", roadmap.impactDescription || ""],
+    ["confidenceDescription", roadmap.confidenceDescription || ""],
+    ["effortDescription", roadmap.effortDescription || ""]
+  ];
+  richFieldValues.forEach(([fieldId, fieldValue]) => setRichDescriptionValue(fieldId, fieldValue));
+  elements.reachValue.value = roadmap.reachValue != null ? roadmap.reachValue : "";
+  elements.impactValue.value = roadmap.impactValue != null ? String(roadmap.impactValue) : "";
+  elements.confidenceValue.value = roadmap.confidenceValue != null ? roadmap.confidenceValue : "";
+  elements.effortValue.value = roadmap.effortValue != null ? String(roadmap.effortValue) : "";
+  elements.financialImpactValue.value = roadmap.financialImpactValue != null ? roadmap.financialImpactValue : "";
+  const framework = normalizeFinancialFramework(roadmap.financialImpactFramework);
+  if (elements.financialFramework) elements.financialFramework.value = framework;
+  if (elements.financialFramework) elements.financialFramework.dataset.lastFramework = framework;
+  setFinancialInputsToForm(roadmap.financialImpactInputs || {});
+  toggleFinancialFrameworkFields(framework);
+  ensureCurrencyOption(elements.roadmapCurrency, roadmap.financialImpactCurrency);
+  const currencyVal = roadmap.financialImpactCurrency ? String(roadmap.financialImpactCurrency).trim() : "";
+  if (currencyVal) {
+    const opt = Array.from(elements.roadmapCurrency.options).find(
+      (o) => (o.value || "").toUpperCase() === currencyVal.toUpperCase()
+    );
+    if (opt) elements.roadmapCurrency.value = opt.value;
+  } else {
+    elements.roadmapCurrency.value = "";
+  }
+  elements.roadmapType.value =
+    coalesceLegacyRoadmapStringField(roadmap, "roadmapType", "projectType") || "";
+  elements.roadmapStatus.value = getEffectiveRoadmapStatus(roadmap) || "";
+  elements.roadmapTshirtSize.value = roadmap.tshirtSize || "";
+  if (elements.roadmapPeriodsBulkModeWrap) elements.roadmapPeriodsBulkModeWrap.hidden = true;
+  if (elements.roadmapPeriodsEditorWrap) elements.roadmapPeriodsEditorWrap.hidden = false;
+  renderRoadmapPeriodControls(getRoadmapPeriodEntries(roadmap), { readonly: isView });
+  elements.roadmapMoscow.value = roadmap.moscowCategory || "";
+  setRoadmapKanoSelection(roadmap.kanoFunctionality, roadmap.kanoSatisfaction, { readonly: isView });
+  renderCountriesControls(Array.isArray(roadmap.countries) ? roadmap.countries : []);
+  renderRoadmapLabelsControls(roadmap.labels, { readonly: isView });
+  renderRoadmapLinksControls(roadmap.links, { readonly: isView });
+  renderRoadmapTasksControls(roadmap.tasks, { readonly: isView });
+  renderRoadmapRaciControls(roadmap.raci, { readonly: isView });
+
+  if (elements.roadmapMetaId) {
+    elements.roadmapMetaId.textContent = roadmap.id || "—";
+  }
+  if (elements.roadmapMetaCreated) {
+    elements.roadmapMetaCreated.textContent = formatDateTime(roadmap.createdAt);
+  }
+  if (elements.roadmapMetaModified) {
+    elements.roadmapMetaModified.textContent = formatDateTime(roadmap.modifiedAt || roadmap.createdAt);
+  }
+  if (elements.roadmapMetaRice) {
+    elements.roadmapMetaRice.textContent = formatRice(calculateRiceScore(roadmap));
+  }
+  populateRoadmapModalMetaFromRoadmap(roadmap);
+  updateModalRicePreview();
+  syncRoadmapOptionalDisclosures({ resetCollapsed: false });
+  syncRoadmapTasksDisclosure({ resetCollapsed: false });
+  syncRoadmapCountriesDisclosure({ resetCollapsed: false });
+  syncRoadmapModalSectionNavIndicators();
+  if (isRoadmapModalBulkMode()) {
+    syncRoadmapBulkPreviewContextHint(roadmap);
   }
 
-  return patch;
-}
-
-function applyBulkRoadmapEdits(roadmapIds, patch) {
-  let count = 0;
-  const now = new Date().toISOString();
-  (Array.isArray(roadmapIds) ? roadmapIds : []).forEach((roadmapId) => {
-    const located = findRoadmapWithOwner(roadmapId);
-    const roadmap = located.roadmap;
-    if (!roadmap) return;
-    let changed = false;
-    if (Object.prototype.hasOwnProperty.call(patch, "roadmapStatus")) {
-      roadmap.roadmapStatus = patch.roadmapStatus;
-      changed = true;
-    }
-    if (Object.prototype.hasOwnProperty.call(patch, "roadmapType")) {
-      roadmap.roadmapType = patch.roadmapType;
-      changed = true;
-    }
-    if (Object.prototype.hasOwnProperty.call(patch, "moscowCategory")) {
-      roadmap.moscowCategory = patch.moscowCategory;
-      changed = true;
-    }
-    if (Object.prototype.hasOwnProperty.call(patch, "tshirtSize")) {
-      roadmap.tshirtSize = patch.tshirtSize;
-      changed = true;
-    }
-    if (Object.prototype.hasOwnProperty.call(patch, "roadmapPeriod")) {
-      roadmap.roadmapPeriod = patch.roadmapPeriod;
-      const status =
-        patch.roadmapStatus !== undefined
-          ? patch.roadmapStatus
-          : coalesceLegacyRoadmapStringField(roadmap, "roadmapStatus", "projectStatus") || "Not Started";
-      if (patch.roadmapPeriod && typeof RoadmapPeriods !== "undefined") {
-        roadmap.roadmapPeriods = RoadmapPeriods.normalizePeriods(
-          [{ period: patch.roadmapPeriod, status }],
-          { statusOptions: getRoadmapPeriodStatusOptions() }
-        );
-      } else {
-        roadmap.roadmapPeriods = [];
-      }
-      changed = true;
-    }
-    if (changed) {
-      roadmap.modifiedAt = now;
-      roadmap.riceScore = calculateRiceScore(roadmap);
-      count += 1;
+  requestAnimationFrame(() => {
+    bulkEditSuppressDirtyTracking = true;
+    try {
+      richFieldValues.forEach(([fieldId, fieldValue]) => setRichDescriptionValue(fieldId, fieldValue));
+    } finally {
+      bulkEditSuppressDirtyTracking = false;
     }
   });
-  return count;
+  } finally {
+    bulkEditSuppressDirtyTracking = false;
+  }
 }
 
-function closeRoadmapBulkEditModal({ immediate = false } = {}) {
-  if (!elements.roadmapBulkEditModal) return;
-  deactivateBlockingModal(elements.roadmapBulkEditModal, { immediate });
-  elements.roadmapBulkEditModal.removeAttribute("data-roadmap-ids");
+function hideRoadmapBulkPreviewChrome() {
+  bulkPreviewSyncGeneration += 1;
+  if (elements.roadmapBulkPreviewBar) {
+    elements.roadmapBulkPreviewBar.hidden = true;
+    elements.roadmapBulkPreviewBar.setAttribute("aria-hidden", "true");
+    elements.roadmapBulkPreviewBar.classList.remove("roadmap-bulk-nav--pulse");
+    elements.roadmapBulkPreviewBar.style.removeProperty("--bulk-preview-index");
+    elements.roadmapBulkPreviewBar.style.removeProperty("--bulk-preview-count");
+  }
+  if (elements.roadmapBulkPreviewSelect) {
+    elements.roadmapBulkPreviewSelect.innerHTML = "";
+    elements.roadmapBulkPreviewSelect.removeAttribute("title");
+  }
+  if (elements.roadmapBulkPreviewCounter) {
+    elements.roadmapBulkPreviewCounter.textContent = "";
+  }
+}
+
+function pulseRoadmapBulkPreviewBar() {
+  const bar = elements.roadmapBulkPreviewBar;
+  if (!bar || bar.hidden) return;
+  bar.classList.remove("roadmap-bulk-nav--pulse");
+  void bar.offsetWidth;
+  bar.classList.add("roadmap-bulk-nav--pulse");
+  window.setTimeout(() => bar.classList.remove("roadmap-bulk-nav--pulse"), 340);
+}
+
+function scheduleRoadmapBulkPreviewSync() {
+  if (!isRoadmapModalBulkMode()) {
+    hideRoadmapBulkPreviewChrome();
+    return;
+  }
+  const generation = bulkPreviewSyncGeneration + 1;
+  bulkPreviewSyncGeneration = generation;
+  syncRoadmapBulkPreviewNavigator({ forcePopulate: true });
+  requestAnimationFrame(() => {
+    if (generation !== bulkPreviewSyncGeneration || !isRoadmapModalBulkMode()) {
+      hideRoadmapBulkPreviewChrome();
+      return;
+    }
+    syncRoadmapBulkPreviewNavigator({ forcePopulate: true });
+    syncRoadmapModalSectionNavIndicators();
+  });
+}
+
+function populateRoadmapModalMetaFromRoadmap(roadmap) {
+  if (!roadmap) {
+    if (elements.roadmapMetaId) elements.roadmapMetaId.textContent = "—";
+    if (elements.roadmapMetaCreated) elements.roadmapMetaCreated.textContent = "—";
+    if (elements.roadmapMetaModified) elements.roadmapMetaModified.textContent = "—";
+    if (elements.roadmapMetaRice) elements.roadmapMetaRice.textContent = "—";
+    if (elements.roadmapMetaFinancialEur) elements.roadmapMetaFinancialEur.textContent = "—";
+    if (elements.roadmapMetaExchangeRate) elements.roadmapMetaExchangeRate.textContent = "—";
+    return;
+  }
+
+  if (elements.roadmapMetaId) elements.roadmapMetaId.textContent = roadmap.id || "—";
+  if (elements.roadmapMetaCreated) elements.roadmapMetaCreated.textContent = formatDateTime(roadmap.createdAt);
+  if (elements.roadmapMetaModified) {
+    elements.roadmapMetaModified.textContent = formatDateTime(roadmap.modifiedAt || roadmap.createdAt);
+  }
+  if (elements.roadmapMetaRice) {
+    elements.roadmapMetaRice.textContent = formatRice(calculateRiceScore(roadmap));
+  }
+
+  const currency = roadmap.financialImpactCurrency
+    ? String(roadmap.financialImpactCurrency).trim().toUpperCase()
+    : "";
+  const amount = roadmap.financialImpactValue;
+  if (elements.roadmapMetaFinancialEur) {
+    if (Number.isFinite(amount) && currency.length === 3) {
+      const amountEur =
+        typeof ExchangeRates !== "undefined" && typeof ExchangeRates.convertToEUR === "function"
+          ? ExchangeRates.convertToEUR(amount, currency)
+          : NaN;
+      if (Number.isFinite(amountEur)) {
+        const short =
+          typeof formatFinancialShort === "function" ? formatFinancialShort(amountEur) : amountEur.toFixed(0);
+        elements.roadmapMetaFinancialEur.textContent = "€" + short;
+      } else {
+        elements.roadmapMetaFinancialEur.textContent = "— (rate unavailable)";
+      }
+    } else {
+      elements.roadmapMetaFinancialEur.textContent = "—";
+    }
+  }
+  if (elements.roadmapMetaExchangeRate) {
+    if (currency && currency !== "EUR") {
+      const rates = state.exchangeRatesToEUR || {};
+      const rate = rates[currency];
+      if (rate != null && Number.isFinite(rate)) {
+        const localPerEur = rate > 0 ? 1 / Number(rate) : NaN;
+        if (Number.isFinite(localPerEur)) {
+          elements.roadmapMetaExchangeRate.textContent = `1 EUR = ${Number(localPerEur).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
+        } else {
+          elements.roadmapMetaExchangeRate.textContent = "— (rate unavailable)";
+        }
+      } else {
+        elements.roadmapMetaExchangeRate.textContent = "— (rate unavailable)";
+      }
+    } else if (currency === "EUR") {
+      elements.roadmapMetaExchangeRate.textContent = "1 EUR = 1.00 EUR";
+    } else {
+      elements.roadmapMetaExchangeRate.textContent = "—";
+    }
+  }
+}
+
+function syncRoadmapBulkPreviewNavigator(options = {}) {
+  if (!isRoadmapModalBulkMode()) {
+    hideRoadmapBulkPreviewChrome();
+    return;
+  }
+
+  const roadmaps = getBulkEditingRoadmapsResolved();
+  const count = roadmaps.length;
+  const show = count > 1;
+
+  if (elements.roadmapBulkPreviewBar) {
+    elements.roadmapBulkPreviewBar.hidden = !show;
+    elements.roadmapBulkPreviewBar.setAttribute("aria-hidden", show ? "false" : "true");
+  }
+  if (!show) {
+    syncBulkEditModifiedIndicators();
+    return;
+  }
+
+  if (bulkPreviewRoadmapIndex < 0) bulkPreviewRoadmapIndex = 0;
+  if (bulkPreviewRoadmapIndex >= count) bulkPreviewRoadmapIndex = count - 1;
+
+  const resolvedIds = roadmaps.map((roadmap) => roadmap.id);
+
+  if (elements.roadmapBulkPreviewBar) {
+    elements.roadmapBulkPreviewBar.style.setProperty("--bulk-preview-index", String(bulkPreviewRoadmapIndex + 1));
+    elements.roadmapBulkPreviewBar.style.setProperty("--bulk-preview-count", String(count));
+  }
+
+  if (elements.roadmapBulkPreviewSelect) {
+    const activeId = resolvedIds[bulkPreviewRoadmapIndex] || resolvedIds[0] || "";
+    elements.roadmapBulkPreviewSelect.innerHTML = "";
+    roadmaps.forEach((roadmap) => {
+      const opt = document.createElement("option");
+      opt.value = roadmap.id;
+      const titleText = (roadmap.title || "Untitled roadmap").trim();
+      const editedPrefix = bulkEditModifiedRoadmapIds.has(roadmap.id) ? "● " : "";
+      const displayTitle = editedPrefix + titleText;
+      opt.textContent = displayTitle.length > 72 ? displayTitle.slice(0, 71).trimEnd() + "…" : displayTitle;
+      elements.roadmapBulkPreviewSelect.appendChild(opt);
+    });
+    if (activeId) {
+      elements.roadmapBulkPreviewSelect.value = activeId;
+    }
+  }
+
+  if (elements.roadmapBulkPreviewBar) {
+    elements.roadmapBulkPreviewBar.style.setProperty("--bulk-preview-index", String(bulkPreviewRoadmapIndex + 1));
+  }
+
+  const activeRoadmap = roadmaps[bulkPreviewRoadmapIndex] || roadmaps[0] || null;
+  if (elements.roadmapBulkPreviewSelect && activeRoadmap) {
+    elements.roadmapBulkPreviewSelect.title = (activeRoadmap.title || "Untitled roadmap").trim();
+  }
+
+  if (elements.roadmapBulkPreviewCounter) {
+    elements.roadmapBulkPreviewCounter.textContent = `${bulkPreviewRoadmapIndex + 1} / ${count}`;
+  }
+  if (elements.roadmapBulkPreviewPrev) {
+    elements.roadmapBulkPreviewPrev.disabled = bulkPreviewRoadmapIndex <= 0;
+  }
+  if (elements.roadmapBulkPreviewNext) {
+    elements.roadmapBulkPreviewNext.disabled = bulkPreviewRoadmapIndex >= count - 1;
+  }
+
+  syncBulkEditModifiedIndicators();
+
+  if (options.pulse) {
+    pulseRoadmapBulkPreviewBar();
+  }
+}
+
+function setBulkPreviewRoadmapIndex(nextIndex) {
+  const count = getBulkEditingRoadmapsResolved().length;
+  if (!count) return;
+  const clamped = Math.max(0, Math.min(Number(nextIndex) || 0, count - 1));
+  if (clamped === bulkPreviewRoadmapIndex) return;
+  flushBulkEditDraftFromForm();
+  bulkPreviewRoadmapIndex = clamped;
+  loadBulkEditActiveRoadmapIntoForm();
+  syncRoadmapBulkPreviewNavigator({ pulse: true });
+}
+
+function setBulkPreviewRoadmapById(roadmapId) {
+  const resolvedIds = getBulkEditingRoadmapsResolved().map((roadmap) => roadmap.id);
+  const index = resolvedIds.indexOf(roadmapId);
+  if (index < 0 || index === bulkPreviewRoadmapIndex) return;
+  flushBulkEditDraftFromForm();
+  bulkPreviewRoadmapIndex = index;
+  loadBulkEditActiveRoadmapIntoForm();
+  syncRoadmapBulkPreviewNavigator({ pulse: true });
+}
+
+function initRoadmapBulkPreviewControls() {
+  const handleBulkPreviewKeydown = (event) => {
+    if (!isRoadmapModalBulkMode() || elements.roadmapBulkPreviewBar?.hidden) return;
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      setBulkPreviewRoadmapIndex(bulkPreviewRoadmapIndex - 1);
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      setBulkPreviewRoadmapIndex(bulkPreviewRoadmapIndex + 1);
+    }
+  };
+
+  if (elements.roadmapBulkPreviewPrev) {
+    elements.roadmapBulkPreviewPrev.addEventListener("click", () => {
+      setBulkPreviewRoadmapIndex(bulkPreviewRoadmapIndex - 1);
+    });
+    elements.roadmapBulkPreviewPrev.addEventListener("keydown", handleBulkPreviewKeydown);
+  }
+  if (elements.roadmapBulkPreviewNext) {
+    elements.roadmapBulkPreviewNext.addEventListener("click", () => {
+      setBulkPreviewRoadmapIndex(bulkPreviewRoadmapIndex + 1);
+    });
+    elements.roadmapBulkPreviewNext.addEventListener("keydown", handleBulkPreviewKeydown);
+  }
+  if (elements.roadmapBulkPreviewSelect) {
+    elements.roadmapBulkPreviewSelect.addEventListener("change", () => {
+      const roadmapId = elements.roadmapBulkPreviewSelect.value;
+      if (!roadmapId) return;
+      setBulkPreviewRoadmapById(roadmapId);
+    });
+    elements.roadmapBulkPreviewSelect.addEventListener("keydown", handleBulkPreviewKeydown);
+  }
+}
+
+function resetRoadmapModalBulkState() {
+  bulkEditingRoadmapIds = null;
+  bulkPreviewRoadmapIndex = 0;
+  resetBulkEditSessionState();
+  hideRoadmapBulkPreviewChrome();
+  if (roadmapModalMode === "bulk") {
+    roadmapModalMode = "create";
+  }
+}
+
+function resetRoadmapFormFieldForBulkEdit() {
+  if (elements.roadmapTitle) {
+    elements.roadmapTitle.value = "";
+    elements.roadmapTitle.removeAttribute("required");
+    elements.roadmapTitle.placeholder = "Leave blank for no change";
+  }
+  setRichDescriptionValue("roadmapDescription", "");
+  setRichDescriptionValue("roadmapNote", "");
+  setRichDescriptionValue("reachDescription", "");
+  if (elements.reachValue) elements.reachValue.value = "";
+  setRichDescriptionValue("impactDescription", "");
+  if (elements.impactValue) elements.impactValue.value = "";
+  setRichDescriptionValue("confidenceDescription", "");
+  if (elements.confidenceValue) elements.confidenceValue.value = "";
+  setRichDescriptionValue("effortDescription", "");
+  if (elements.effortValue) elements.effortValue.value = "";
+  if (elements.financialImpactValue) elements.financialImpactValue.value = "";
+  if (elements.financialFramework) {
+    elements.financialFramework.value = FINANCIAL_FRAMEWORK_DEFAULT;
+    elements.financialFramework.dataset.lastFramework = FINANCIAL_FRAMEWORK_DEFAULT;
+  }
+  setFinancialInputsToForm({});
+  toggleFinancialFrameworkFields(FINANCIAL_FRAMEWORK_DEFAULT);
+  if (elements.roadmapCurrency) elements.roadmapCurrency.value = "";
+  if (elements.roadmapType) elements.roadmapType.value = "";
+  if (elements.roadmapStatus) elements.roadmapStatus.value = "";
+  if (elements.roadmapTshirtSize) elements.roadmapTshirtSize.value = "";
+  if (elements.roadmapMoscow) elements.roadmapMoscow.value = "";
+  setRoadmapKanoSelection(null, null, { readonly: false });
+  renderRoadmapPeriodControls([], { containerEl: elements.roadmapPeriodsContainer });
+  renderCountriesControls([]);
+  renderRoadmapLabelsControls([]);
+  renderRoadmapLinksControls([]);
+  renderRoadmapTasksControls([], { skipDefaultRow: true });
+  renderRoadmapRaciControls(getEmptyRoadmapRaci());
+}
+
+function setRoadmapFormBulkRichTextRequired(required) {
+  document.querySelectorAll("#roadmapForm [data-rich-text-editor]").forEach((host) => {
+    if (required) {
+      if (host.dataset.bulkHadRequired === "1") {
+        host.setAttribute("data-required", "true");
+      }
+    } else {
+      if (host.hasAttribute("data-required")) {
+        host.dataset.bulkHadRequired = "1";
+        host.removeAttribute("data-required");
+      }
+    }
+  });
+}
+
+function prepareRoadmapFormForBulkMode() {
+  if (elements.roadmapForm) {
+    elements.roadmapForm.setAttribute("novalidate", "novalidate");
+  }
+  setRoadmapFormBulkRichTextRequired(false);
+  ROADMAP_BULK_SELECT_IDS.forEach((id) => {
+    const selectEl = document.getElementById(id);
+    restoreNativeSelectFromBulkMode(selectEl);
+    decorateNativeSelectForBulkMode(selectEl);
+  });
+  populateBulkEditPeriodsModeSelect(elements.roadmapPeriodsBulkMode);
+  syncRoadmapBulkPeriodsEditorVisibility();
+  if (elements.roadmapOwnerProfileWrap) {
+    elements.roadmapOwnerProfileWrap.hidden = true;
+  }
+}
+
+function restoreRoadmapFormFromBulkMode() {
+  if (elements.roadmapForm) {
+    elements.roadmapForm.removeAttribute("novalidate");
+  }
+  setRoadmapFormBulkRichTextRequired(true);
+  ROADMAP_BULK_SELECT_IDS.forEach((id) => {
+    restoreNativeSelectFromBulkMode(document.getElementById(id));
+  });
+  if (typeof ensureRoadmapKanoAxisSelects === "function") {
+    ensureRoadmapKanoAxisSelects();
+  }
+  if (elements.roadmapPeriodsBulkMode) {
+    elements.roadmapPeriodsBulkMode.innerHTML = "";
+  }
+  if (elements.roadmapPeriodsBulkModeWrap) {
+    elements.roadmapPeriodsBulkModeWrap.hidden = true;
+  }
+  if (elements.roadmapPeriodsEditorWrap) {
+    elements.roadmapPeriodsEditorWrap.hidden = false;
+  }
+  if (elements.roadmapTitle) {
+    elements.roadmapTitle.setAttribute("required", "required");
+    elements.roadmapTitle.placeholder = "e.g. Onboarding email sequence revamp";
+  }
+}
+
+function restoreRoadmapFormForSingleEditPresentation() {
+  if (elements.roadmapForm) {
+    elements.roadmapForm.removeAttribute("novalidate");
+  }
+  setRoadmapFormBulkRichTextRequired(true);
+  ROADMAP_BULK_SELECT_IDS.forEach((id) => {
+    restoreNativeSelectFromBulkMode(document.getElementById(id));
+  });
+  if (typeof ensureRoadmapKanoAxisSelects === "function") {
+    ensureRoadmapKanoAxisSelects();
+  }
+  if (elements.roadmapPeriodsBulkMode) {
+    elements.roadmapPeriodsBulkMode.innerHTML = "";
+  }
+  if (elements.roadmapPeriodsBulkModeWrap) {
+    elements.roadmapPeriodsBulkModeWrap.hidden = true;
+  }
+  if (elements.roadmapPeriodsEditorWrap) {
+    elements.roadmapPeriodsEditorWrap.hidden = false;
+  }
+  if (elements.roadmapTitle) {
+    elements.roadmapTitle.setAttribute("required", "required");
+    elements.roadmapTitle.placeholder = "e.g. Onboarding email sequence revamp";
+  }
+}
+
+function syncRoadmapModalSubtitleForMode(mode, selectedCount = 0) {
+  if (!elements.roadmapModalSubtitle) return;
+  if (mode === "bulk") {
+    const count = Number(selectedCount) || 0;
+    elements.roadmapModalSubtitle.textContent =
+      count === 1
+        ? "Edit this roadmap below. Changes apply only to this roadmap."
+        : `Edit ${count} roadmaps one at a time — use the switcher to move between them. Each roadmap keeps its own changes.`;
+    return;
+  }
+  elements.roadmapModalSubtitle.textContent =
+    "Define reach, impact, confidence, effort, and optional financial upside.";
+}
+
+function populateRoadmapModalForBulkEdit(selectedCount) {
+  const count = Number(selectedCount) || 0;
+  if (elements.roadmapModalTitle) {
+    elements.roadmapModalTitle.textContent =
+      count === 1 ? "Edit 1 selected roadmap" : `Edit ${count} selected roadmaps`;
+  }
+  syncRoadmapModalSubtitleForMode("bulk", count);
+  restoreRoadmapFormForSingleEditPresentation();
+  if (elements.roadmapOwnerProfileWrap) {
+    elements.roadmapOwnerProfileWrap.hidden = true;
+  }
+  if (elements.roadmapTitle) {
+    elements.roadmapTitle.setAttribute("required", "required");
+    elements.roadmapTitle.placeholder = "e.g. Onboarding email sequence revamp";
+  }
+  setRoadmapFormBulkRichTextRequired(true);
+  resetBulkEditSessionState();
+  bindBulkEditFormDirtyTracking();
+  bulkPreviewRoadmapIndex = 0;
+  loadBulkEditActiveRoadmapIntoForm();
+  syncRoadmapBulkPreviewNavigator();
+  if (elements.roadmapFormSubmitBtn) elements.roadmapFormSubmitBtn.textContent = "Save all changes";
+  const roadmapSectionHint = elements.roadmapModal?.querySelector(
+    "#roadmapModalSectionRoadmap .form-section-hint"
+  );
+  if (roadmapSectionHint) {
+    roadmapSectionHint.textContent =
+      "Each selected roadmap is edited independently — use the switcher above to move between them";
+    roadmapSectionHint.dataset.bulkHintActive = "1";
+  }
+}
+
+function applyRoadmapRawToExistingRoadmap(roadmap, raw) {
+  if (!roadmap || !raw) return false;
+  roadmap.title = raw.title;
+  roadmap.description = raw.description;
+  roadmap.note = raw.note;
+  roadmap.reachDescription = raw.reachDescription;
+  roadmap.reachValue = raw.reachValue;
+  roadmap.impactDescription = raw.impactDescription;
+  roadmap.impactValue = raw.impactValue;
+  roadmap.confidenceDescription = raw.confidenceDescription;
+  roadmap.confidenceValue = raw.confidenceValue;
+  roadmap.effortDescription = raw.effortDescription;
+  roadmap.effortValue = raw.effortValue;
+  roadmap.financialImpactValue = raw.financialImpactValue;
+  roadmap.financialImpactCurrency = raw.financialImpactCurrency;
+  roadmap.financialImpactFramework = raw.financialImpactFramework;
+  roadmap.financialImpactInputs = raw.financialImpactInputs;
+  roadmap.roadmapType = raw.roadmapType || null;
+  roadmap.roadmapStatus = resolveRoadmapStatusForSave(
+    Array.isArray(raw.roadmapPeriods) ? raw.roadmapPeriods : [],
+    raw.roadmapStatus || null
+  );
+  roadmap.tshirtSize = raw.tshirtSize || null;
+  roadmap.roadmapPeriod = raw.roadmapPeriod || null;
+  roadmap.roadmapPeriods = Array.isArray(raw.roadmapPeriods) ? raw.roadmapPeriods.slice() : [];
+  roadmap.moscowCategory = raw.moscowCategory || null;
+  roadmap.kanoFunctionality = raw.kanoFunctionality != null ? raw.kanoFunctionality : null;
+  roadmap.kanoSatisfaction = raw.kanoSatisfaction != null ? raw.kanoSatisfaction : null;
+  roadmap.countries = Array.isArray(raw.countries) ? raw.countries.slice() : [];
+  roadmap.labels = normalizeRoadmapLabels(raw.labels);
+  roadmap.links = normalizeRoadmapLinks(raw.links);
+  roadmap.tasks = normalizeRoadmapTasks(raw.tasks);
+  roadmap.raci = normalizeRoadmapRaci(raw.raci);
+  roadmap.modifiedAt = new Date().toISOString();
+  roadmap.riceScore = calculateRiceScore(roadmap);
+  return true;
+}
+
+function validateCollectedRoadmapRaw(raw) {
+  if (!raw) return "Could not read roadmap form.";
+  const validationError = validateRoadmapInput(raw);
+  if (validationError) return validationError;
+  if (typeof RoadmapPeriods !== "undefined" && Array.isArray(raw.roadmapPeriods) && raw.roadmapPeriods.length) {
+    const periodError = RoadmapPeriods.validatePeriods(raw.roadmapPeriods);
+    if (periodError) return periodError;
+    const uniqueError = RoadmapPeriods.validateUniquePeriods(raw.roadmapPeriods);
+    if (uniqueError) return uniqueError;
+  }
+  if (raw.financialImpactFramework !== FINANCIAL_FRAMEWORK_DEFAULT && !Number.isFinite(raw.financialImpactValue)) {
+    const financialError = getFinancialFrameworkValidationMessage(
+      raw.financialImpactFramework,
+      raw.financialImpactInputs || {}
+    );
+    if (financialError && roadmapFormHasFinancialInput(raw)) return financialError;
+  }
+  return "";
+}
+
+function handleBulkRoadmapFormSubmit() {
+  flushBulkEditDraftFromForm();
+
+  const modifiedIds = Array.from(bulkEditModifiedRoadmapIds);
+  if (!modifiedIds.length) {
+    elements.roadmapFormError.textContent =
+      "No changes to save. Edit one or more roadmaps, then click Save all changes.";
+    elements.roadmapFormError.style.display = "block";
+    return;
+  }
+
+  for (const roadmapId of modifiedIds) {
+    const draft = bulkEditDraftsByRoadmapId.get(roadmapId);
+    const located = findRoadmapWithOwner(roadmapId);
+    const title = (located.roadmap?.title || "Untitled roadmap").trim();
+    if (!draft?.raw) continue;
+    const validationError = validateCollectedRoadmapRaw(draft.raw);
+    if (validationError) {
+      elements.roadmapFormError.textContent = `“${title}”: ${validationError}`;
+      elements.roadmapFormError.style.display = "block";
+      const index = getBulkEditingRoadmapsResolved().findIndex((roadmap) => roadmap.id === roadmapId);
+      if (index >= 0) {
+        bulkPreviewRoadmapIndex = index;
+        loadBulkEditActiveRoadmapIntoForm();
+        syncRoadmapBulkPreviewNavigator();
+      }
+      return;
+    }
+  }
+
+  let count = 0;
+  modifiedIds.forEach((roadmapId) => {
+    const draft = bulkEditDraftsByRoadmapId.get(roadmapId);
+    const located = findRoadmapWithOwner(roadmapId);
+    if (!draft?.raw || !located.roadmap) return;
+    if (applyRoadmapRawToExistingRoadmap(located.roadmap, draft.raw)) count += 1;
+  });
+
+  if (!count) {
+    showToast("No roadmaps were updated.");
+    return;
+  }
+
+  saveState({ flush: true });
+  clearRoadmapSelection();
+  renderRoadmaps();
+  closeRoadmapModal({ force: true });
+  showToast(
+    count === 1 ? "1 roadmap updated successfully." : `${count} roadmaps updated successfully.`
+  );
 }
 
 function handleBulkEdit() {
-  if (state.roadmapsView !== "table") return;
+  if (state.roadmapsView !== "table") {
+    showToast("Switch to the table view to bulk edit roadmaps.");
+    return;
+  }
   if (!requireWritableActiveProfile("Bulk edit")) return;
-  if (!getUnlockedActiveProfile() || !elements.roadmapBulkEditModal) return;
-
   const ids = getSelectedRoadmapIdsFromTable();
-  if (!ids.length) return;
-
-  resetRoadmapBulkEditForm();
-
-  activateBlockingModal(elements.roadmapBulkEditModal, "roadmapBulkEditModal");
-  elements.roadmapBulkEditModal.setAttribute("data-roadmap-ids", ids.join(","));
-
-  const countLabel = `${ids.length} roadmap${ids.length === 1 ? "" : "s"} selected`;
-  if (elements.roadmapBulkEditCountLabel) {
-    elements.roadmapBulkEditCountLabel.textContent = countLabel;
+  if (!ids.length) {
+    showToast("Select one or more roadmaps using the checkboxes, then choose Edit selected.");
+    return;
   }
-  if (elements.roadmapBulkEditHelpText) {
-    elements.roadmapBulkEditHelpText.textContent = isSuperAdminModeActive()
-      ? "Updates apply to every selected roadmap across owner profiles. Leave a field on “No change” to keep existing values."
-      : "Choose the fields you want to update. Leave a field on “No change” to keep existing values on each roadmap.";
-  }
+  openRoadmapModal("bulk", null, { roadmapIds: ids });
+}
 
-  if (elements.roadmapBulkEditConfirmBtn) {
-    elements.roadmapBulkEditConfirmBtn.onclick = () => {
-      const idsAttr = elements.roadmapBulkEditModal.getAttribute("data-roadmap-ids") || "";
-      const idList = idsAttr ? idsAttr.split(",").filter(Boolean) : [];
-      if (!idList.length) {
-        closeRoadmapBulkEditModal();
-        return;
-      }
-
-      const patch = buildBulkEditPatchFromForm();
-      if (!Object.keys(patch).length) {
-        showToast("Choose at least one field to update.");
-        return;
-      }
-
-      if (patch.roadmapPeriod) {
-        const periodError = validateRoadmapInput({
-          title: "Bulk edit",
-          description: "Bulk edit",
-          roadmapPeriod: patch.roadmapPeriod
-        });
-        if (periodError) {
-          showToast(periodError);
-          elements.roadmapBulkEditPeriod?.focus();
-          return;
-        }
-      }
-
-      const count = applyBulkRoadmapEdits(idList, patch);
-      if (!count) {
-        showToast("No roadmaps were updated.");
-        return;
-      }
-
-      saveState({ flush: true });
-      clearRoadmapSelection();
-      renderRoadmaps();
-      closeRoadmapBulkEditModal();
-      showToast(count === 1 ? "1 roadmap updated successfully." : `${count} roadmaps updated successfully.`);
-    };
-  }
-
-  if (elements.roadmapBulkEditCancelBtn) {
-    elements.roadmapBulkEditCancelBtn.onclick = () => {
-      closeRoadmapBulkEditModal();
-    };
+function initRoadmapBulkPeriodControls() {
+  if (elements.roadmapPeriodsBulkMode) {
+    elements.roadmapPeriodsBulkMode.addEventListener("change", syncRoadmapBulkPeriodsEditorVisibility);
   }
 }
 
@@ -18882,14 +20585,20 @@ function closeRoadmapBulkTransferModal({ immediate = false } = {}) {
 }
 
 function handleBulkRoadmapTransfer(mode) {
-  if (state.roadmapsView !== "table") return;
+  if (state.roadmapsView !== "table") {
+    showToast("Switch to the table view to move or duplicate roadmaps.");
+    return;
+  }
   if (!isSuperAdminModeActive()) return;
   const actionLabel = mode === "move" ? "Move roadmaps" : "Duplicate roadmaps";
   if (!requireWritableActiveProfile(actionLabel)) return;
   if (!getUnlockedActiveProfile() || !elements.roadmapBulkTransferModal) return;
 
   const ids = getSelectedRoadmapIdsFromTable();
-  if (!ids.length) return;
+  if (!ids.length) {
+    showToast("Select one or more roadmaps using the checkboxes first.");
+    return;
+  }
 
   activateBlockingModal(elements.roadmapBulkTransferModal, "roadmapBulkTransferModal");
   elements.roadmapBulkTransferModal.setAttribute("data-transfer-mode", mode);
@@ -18978,6 +20687,27 @@ function closeRoadmapDeleteModal({ immediate = false } = {}) {
   elements.roadmapDeleteModal.removeAttribute("data-roadmap-id");
   elements.roadmapDeleteModal.removeAttribute("data-roadmap-ids");
   elements.roadmapDeleteModal.removeAttribute("data-delete-mode");
+}
+
+function openRoadmapBulkDiscardModal(editedCount) {
+  if (!elements.roadmapBulkDiscardModal) return;
+  const count = Math.max(1, Number(editedCount) || 1);
+  if (elements.roadmapBulkDiscardCountLabel) {
+    elements.roadmapBulkDiscardCountLabel.textContent =
+      count === 1 ? "1 roadmap with unsaved edits" : `${count} roadmaps with unsaved edits`;
+  }
+  if (elements.roadmapBulkDiscardWarningText) {
+    elements.roadmapBulkDiscardWarningText.textContent =
+      count === 1
+        ? "Your edits to this roadmap have not been saved. If you leave now, those changes will be lost."
+        : "Your edits to these roadmaps have not been saved. If you leave now, those changes will be lost.";
+  }
+  activateBlockingModal(elements.roadmapBulkDiscardModal, "roadmapBulkDiscardModal");
+}
+
+function closeRoadmapBulkDiscardModal({ immediate = false } = {}) {
+  if (!elements.roadmapBulkDiscardModal) return;
+  deactivateBlockingModal(elements.roadmapBulkDiscardModal, { immediate });
 }
 
 function closeProfileDeleteModal({ immediate = false } = {}) {
@@ -19074,6 +20804,14 @@ async function completeProfileUnlockSuccess(profileId) {
     openProfileEditModal(profileId);
   } else if (action && action.type === "view") {
     openProfileViewModal(profileId);
+  } else if (
+    action &&
+    action.type === "bulkEdit" &&
+    action.profileId === profileId &&
+    Array.isArray(action.roadmapIds) &&
+    action.roadmapIds.length
+  ) {
+    openRoadmapModal("bulk", null, { roadmapIds: action.roadmapIds });
   }
   showToast("Profile unlocked.");
 }
@@ -19667,26 +21405,14 @@ function buildProfileViewCountryCounts(roadmaps) {
 
 function getProfileViewCountryChipLabel(countryName) {
   if (countryName === PROFILE_VIEW_NO_COUNTRIES_KEY) return countryName;
-  const code =
-    typeof countryCodeByName !== "undefined" && countryCodeByName[countryName]
-      ? countryCodeByName[countryName]
-      : "";
-  const flag = code && typeof countryCodeToFlag === "function" ? countryCodeToFlag(code) : "";
-  if (flag && code) return `${flag} ${code}`;
-  if (code) return code;
-  return countryName;
+  return formatTargetCountryDisplayLabel(countryName);
 }
 
 function getProfileViewCountryChipTitle(countryName) {
   if (countryName === PROFILE_VIEW_NO_COUNTRIES_KEY) {
     return "Roadmaps without any target country set";
   }
-  const code =
-    typeof countryCodeByName !== "undefined" && countryCodeByName[countryName]
-      ? countryCodeByName[countryName]
-      : "";
-  if (code) return `${countryName} (${code}) — roadmaps targeting this country`;
-  return `${countryName} — roadmaps targeting this country`;
+  return `${formatTargetCountryDisplayLabel(countryName)} — roadmaps targeting this country`;
 }
 
 const PROFILE_VIEW_NO_CURRENCY_KEY = "Not set";
@@ -20251,7 +21977,7 @@ function renderProfileViewContent(contextProfile, roadmaps, options = {}) {
   const frameworkCounts = {};
   const riceScores = [];
   roadmaps.forEach((p) => {
-    const statusKey = (p.roadmapStatus || "Not set").toString();
+    const statusKey = (getEffectiveRoadmapStatus(p) || "Not set").toString();
     statusCounts[statusKey] = (statusCounts[statusKey] || 0) + 1;
     const typeKey = (p.roadmapType || "Not set").toString();
     typeCounts[typeKey] = (typeCounts[typeKey] || 0) + 1;
@@ -20778,9 +22504,10 @@ function deleteProfile(profileId) {
   }
   if (elements.profileDeleteSummaryLabel) {
     if (roadmapCount > 0) {
-      elements.profileDeleteSummaryLabel.textContent = ` • ${roadmapCount} roadmap${roadmapCount === 1 ? "" : "s"} attached`;
+      elements.profileDeleteSummaryLabel.textContent =
+        `${roadmapCount} roadmap${roadmapCount === 1 ? "" : "s"} attached`;
     } else {
-      elements.profileDeleteSummaryLabel.textContent = " • No roadmaps yet";
+      elements.profileDeleteSummaryLabel.textContent = "No roadmaps yet";
     }
   }
   if (elements.profileDeleteWarningText) {
@@ -20874,8 +22601,14 @@ function handleSingleDelete(roadmapId) {
   elements.roadmapDeleteModal.setAttribute("data-delete-mode", "single");
   elements.roadmapDeleteModal.setAttribute("data-roadmap-id", roadmapId);
   elements.roadmapDeleteModal.removeAttribute("data-roadmap-ids");
+  if (elements.roadmapDeleteModalTitle) {
+    elements.roadmapDeleteModalTitle.textContent = "Delete roadmap?";
+  }
   if (elements.roadmapDeleteNameLabel) {
     elements.roadmapDeleteNameLabel.textContent = roadmap.title || "Untitled roadmap";
+  }
+  if (elements.roadmapDeleteConfirmBtn) {
+    elements.roadmapDeleteConfirmBtn.textContent = "Delete roadmap";
   }
   if (elements.roadmapDeleteWarningText) {
     const ownerNote = isSuperAdminModeActive()
@@ -20912,20 +22645,39 @@ function handleSingleDelete(roadmapId) {
 function openRoadmapModal(mode, roadmapId, options = {}) {
   const isEdit = mode === "edit";
   const isView = mode === "view";
-  if (!isView && !requireWritableActiveProfile(isEdit ? "Edit" : "Add roadmap")) return;
-  roadmapModalMode = mode;
-  editingRoadmapId = isEdit ? roadmapId : null;
-  elements.roadmapFormError.style.display = "none";
-  elements.roadmapFormError.textContent = "";
+  const isBulk = mode === "bulk";
+  hideRoadmapBulkPreviewChrome();
+  const bulkIds =
+    isBulk && Array.isArray(options.roadmapIds)
+      ? options.roadmapIds.filter((id) => id && findRoadmapWithOwner(id).roadmap)
+      : [];
+
+  if (!isView && !isBulk && !requireWritableActiveProfile(isEdit ? "Edit" : "Add roadmap")) return;
+  if (isBulk && !requireWritableActiveProfile("Bulk edit")) return;
+  if (isBulk && !bulkIds.length) {
+    showToast("Could not find the selected roadmaps.");
+    return;
+  }
+
+  if (elements.roadmapFormError) {
+    elements.roadmapFormError.style.display = "none";
+    elements.roadmapFormError.textContent = "";
+  }
 
   const activeProfile = getActiveProfile();
   if (!activeProfile) return;
   if (!isProfileUnlocked(activeProfile.id)) {
-    pendingUnlockAction = { type: "activate", profileId: activeProfile.id };
+    pendingUnlockAction = isBulk
+      ? { type: "bulkEdit", profileId: activeProfile.id, roadmapIds: bulkIds.slice() }
+      : { type: "activate", profileId: activeProfile.id };
     openProfileUnlockModal(activeProfile.id);
-    showToast("Unlock this profile to add or edit roadmaps.");
+    showToast(isBulk ? "Unlock this profile to bulk edit roadmaps." : "Unlock this profile to add or edit roadmaps.");
     return;
   }
+
+  roadmapModalMode = mode;
+  editingRoadmapId = isEdit ? roadmapId : null;
+  bulkEditingRoadmapIds = isBulk ? bulkIds.slice() : null;
 
   let roadmap = null;
   let ownerProfile = activeProfile;
@@ -20935,7 +22687,7 @@ function openRoadmapModal(mode, roadmapId, options = {}) {
     roadmap = located.roadmap;
   }
 
-  const showOwnerPicker = !isView && isSuperAdminModeActive() && elements.roadmapOwnerProfileWrap;
+  const showOwnerPicker = !isView && !isBulk && isSuperAdminModeActive() && elements.roadmapOwnerProfileWrap;
   if (elements.roadmapOwnerProfileWrap) {
     elements.roadmapOwnerProfileWrap.hidden = !showOwnerPicker;
   }
@@ -20943,59 +22695,28 @@ function openRoadmapModal(mode, roadmapId, options = {}) {
     populateRoadmapOwnerProfileSelect(ownerProfile ? ownerProfile.id : state.activeProfileId);
   }
 
-  if (roadmap) {
+  if (isBulk) {
+    try {
+      populateRoadmapModalForBulkEdit(bulkEditingRoadmapIds.length);
+    } catch (err) {
+      console.error("Failed to open bulk roadmap editor", err);
+      resetRoadmapModalBulkState();
+      resetBulkEditSessionState();
+      if (elements.roadmapForm) elements.roadmapForm.removeAttribute("novalidate");
+      showToast("Could not open bulk edit. Please try again.");
+      return;
+    }
+  } else if (roadmap) {
+    syncRoadmapModalSubtitleForMode("edit");
     const ownerSuffix =
       isSuperAdminModeActive() && ownerProfile && ownerProfile.id !== activeProfile.id
         ? ` · ${ownerProfile.name}`
         : "";
     elements.roadmapModalTitle.textContent = (isView ? "View roadmap" : "Edit roadmap") + ownerSuffix;
-    elements.roadmapTitle.value = roadmap.title || "";
-    setRichDescriptionValue("roadmapDescription", roadmap.description || "");
-    setRichDescriptionValue("roadmapNote", roadmap.note || "");
-    setRichDescriptionValue("reachDescription", roadmap.reachDescription || "");
-    elements.reachValue.value = roadmap.reachValue != null ? roadmap.reachValue : "";
-    setRichDescriptionValue("impactDescription", roadmap.impactDescription || "");
-    elements.impactValue.value = roadmap.impactValue != null ? String(roadmap.impactValue) : "";
-    setRichDescriptionValue("confidenceDescription", roadmap.confidenceDescription || "");
-    elements.confidenceValue.value = roadmap.confidenceValue != null ? roadmap.confidenceValue : "";
-    setRichDescriptionValue("effortDescription", roadmap.effortDescription || "");
-    elements.effortValue.value = roadmap.effortValue != null ? String(roadmap.effortValue) : "";
-    elements.financialImpactValue.value = roadmap.financialImpactValue != null ? roadmap.financialImpactValue : "";
-    const framework = normalizeFinancialFramework(roadmap.financialImpactFramework);
-    if (elements.financialFramework) elements.financialFramework.value = framework;
-    if (elements.financialFramework) elements.financialFramework.dataset.lastFramework = framework;
-    setFinancialInputsToForm(roadmap.financialImpactInputs || {});
-    toggleFinancialFrameworkFields(framework);
-    ensureCurrencyOption(elements.roadmapCurrency, roadmap.financialImpactCurrency);
-    const currencyVal = roadmap.financialImpactCurrency ? String(roadmap.financialImpactCurrency).trim() : "";
-    if (currencyVal) {
-      const opt = Array.from(elements.roadmapCurrency.options).find(
-        (o) => (o.value || "").toUpperCase() === currencyVal.toUpperCase()
-      );
-      if (opt) elements.roadmapCurrency.value = opt.value;
-    } else {
-      elements.roadmapCurrency.value = "";
-    }
-    elements.roadmapType.value = roadmap.roadmapType || "";
-    elements.roadmapStatus.value = roadmap.roadmapStatus || "";
-    elements.roadmapTshirtSize.value = roadmap.tshirtSize || "";
-    renderRoadmapPeriodControls(getRoadmapPeriodEntries(roadmap), { readonly: isView });
-    elements.roadmapMoscow.value = roadmap.moscowCategory || "";
-    setRoadmapKanoSelection(roadmap.kanoFunctionality, roadmap.kanoSatisfaction, { readonly: isView });
-    renderCountriesControls(Array.isArray(roadmap.countries) ? roadmap.countries : []);
-    renderRoadmapLabelsControls(roadmap.labels, { readonly: isView });
-    renderRoadmapLinksControls(roadmap.links, { readonly: isView });
-    renderRoadmapTasksControls(roadmap.tasks, { readonly: isView });
-    renderRoadmapRaciControls(roadmap.raci, { readonly: isView });
-
-    if (elements.roadmapMetaId) {
-      elements.roadmapMetaId.textContent = roadmap.id || "—";
-    }
-    elements.roadmapMetaCreated.textContent = formatDateTime(roadmap.createdAt);
-    elements.roadmapMetaModified.textContent = formatDateTime(roadmap.modifiedAt || roadmap.createdAt);
-    elements.roadmapMetaRice.textContent = formatRice(calculateRiceScore(roadmap));
+    populateRoadmapFormFromRoadmap(roadmap, { isView });
     elements.roadmapFormSubmitBtn.textContent = isView ? "Close" : "Update roadmap";
   } else {
+    syncRoadmapModalSubtitleForMode("create");
     elements.roadmapModalTitle.textContent = isSuperAdminModeActive()
       ? "New roadmap (choose owner profile)"
       : "New roadmap";
@@ -21049,18 +22770,20 @@ function openRoadmapModal(mode, roadmapId, options = {}) {
     forceOpenSectionIds: options.scrollToSection ? [options.scrollToSection] : []
   });
   syncRoadmapTasksDisclosure({ resetCollapsed: true });
+  syncRoadmapCountriesDisclosure({ resetCollapsed: true });
   syncRoadmapModalFooterMetaDetails({ resetCollapsed: true });
   resetRoadmapSummaryUi();
   activateBlockingModal(elements.roadmapModal, "roadmapModal");
   elements.roadmapModal.classList.toggle("roadmap-modal--view", isView);
-  syncRoadmapSummarySectionVisibility(isView);
+  elements.roadmapModal.classList.toggle("roadmap-modal--bulk", isBulk);
+  syncRoadmapSummarySectionVisibility(isView && !isBulk);
   if (isView) {
     requestAnimationFrame(() => {
       syncRoadmapModalSectionNavIndicators();
       syncRoadmapModalSectionActiveIndicator(elements.roadmapModal);
     });
   }
-  if (!isView && !options.scrollToSection) {
+  if (!isView && !isBulk && !options.scrollToSection) {
     elements.roadmapTitle.focus();
   }
 
@@ -21112,7 +22835,13 @@ function openRoadmapModal(mode, roadmapId, options = {}) {
     periodRemoveButtons.forEach((btn) => {
       btn.style.display = isView ? "none" : "";
     });
+    elements.roadmapPeriodsContainer.querySelectorAll(".roadmap-row-reorder").forEach((controls) => {
+      controls.style.display = isView ? "none" : "";
+    });
   }
+  elements.roadmapForm.querySelectorAll(".roadmap-row-reorder").forEach((controls) => {
+    controls.style.display = isView ? "none" : "";
+  });
 
   if (elements.roadmapFormCancelBtn) {
     elements.roadmapFormCancelBtn.style.display = isView ? "none" : "";
@@ -21133,18 +22862,156 @@ function openRoadmapModal(mode, roadmapId, options = {}) {
       });
     }, 80);
   }
+
+  if (isBulk) {
+    if (elements.roadmapForm) {
+      elements.roadmapForm.setAttribute("novalidate", "novalidate");
+    }
+    scheduleRoadmapBulkPreviewSync();
+  } else {
+    if (elements.roadmapForm) {
+      elements.roadmapForm.removeAttribute("novalidate");
+    }
+    hideRoadmapBulkPreviewChrome();
+  }
 }
 
-function closeRoadmapModal({ immediate = false } = {}) {
+function closeRoadmapModal({ immediate = false, force = false } = {}) {
   hideCellTypeTooltips();
+  if (isRoadmapModalBulkMode() && !force) {
+    flushBulkEditDraftFromForm();
+    if (bulkEditModifiedRoadmapIds.size > 0) {
+      openRoadmapBulkDiscardModal(bulkEditModifiedRoadmapIds.size);
+      return;
+    }
+  }
+  hideRoadmapBulkPreviewChrome();
+  if (isRoadmapModalBulkMode()) {
+    resetBulkEditSessionState();
+    restoreRoadmapFormForSingleEditPresentation();
+  }
+  const bulkHint = elements.roadmapModal?.querySelector(
+    "#roadmapModalSectionRoadmap .form-section-hint[data-bulk-hint-active='1']"
+  );
+  if (bulkHint) {
+    bulkHint.textContent = "Title and description required · everything else optional";
+    delete bulkHint.dataset.bulkHintActive;
+  }
+  syncRoadmapModalSubtitleForMode("create");
   deactivateBlockingModal(elements.roadmapModal, { immediate });
   if (elements.roadmapModal) {
     elements.roadmapModal.classList.remove("roadmap-modal--view");
+    elements.roadmapModal.classList.remove("roadmap-modal--bulk");
   }
   syncRoadmapSummarySectionVisibility(false);
   resetRoadmapSummaryUi();
   setRichDescriptionFieldsReadonly(false);
   editingRoadmapId = null;
+  bulkEditingRoadmapIds = null;
+  bulkPreviewRoadmapIndex = 0;
+  if (roadmapModalMode === "bulk") {
+    roadmapModalMode = "create";
+  }
+}
+
+function collectRoadmapRawFromForm({ validate = true } = {}) {
+  if (validate) {
+    const duplicatePeriodError = validateRoadmapPeriodControlsUnique(elements.roadmapPeriodsContainer);
+    if (duplicatePeriodError) {
+      return { raw: null, error: duplicatePeriodError };
+    }
+  }
+  let roadmapPeriods = getRoadmapPeriodsFromControls();
+  if (validate && typeof RoadmapPeriods !== "undefined") {
+    const periodValidationError = RoadmapPeriods.validatePeriods(roadmapPeriods);
+    if (periodValidationError) {
+      return { raw: null, error: periodValidationError };
+    }
+    const uniquePeriodError = RoadmapPeriods.validateUniquePeriods(roadmapPeriods);
+    if (uniquePeriodError) {
+      return { raw: null, error: uniquePeriodError };
+    }
+  }
+  const roadmapPeriod =
+    typeof RoadmapPeriods !== "undefined"
+      ? RoadmapPeriods.deriveLegacyPeriod(roadmapPeriods)
+      : roadmapPeriods[0]?.period || null;
+
+  const raw = {
+    title: (elements.roadmapTitle.value || "").trim(),
+    description: getRichDescriptionValue("roadmapDescription"),
+    note: normalizeRoadmapNote(getRichDescriptionValue("roadmapNote")),
+    reachDescription: getRichDescriptionValue("reachDescription"),
+    reachValue: elements.reachValue.value !== "" ? Number(elements.reachValue.value) : null,
+    impactDescription: getRichDescriptionValue("impactDescription"),
+    impactValue: elements.impactValue.value !== "" ? Number(elements.impactValue.value) : null,
+    confidenceDescription: getRichDescriptionValue("confidenceDescription"),
+    confidenceValue: elements.confidenceValue.value !== "" ? Number(elements.confidenceValue.value) : null,
+    effortDescription: getRichDescriptionValue("effortDescription"),
+    effortValue: elements.effortValue.value !== "" ? Number(elements.effortValue.value) : null,
+    financialImpactValue:
+      elements.financialImpactValue.value !== "" ? Number(elements.financialImpactValue.value) : null,
+    financialImpactCurrency: normalizeCurrency(elements.roadmapCurrency.value),
+    financialImpactFramework: normalizeFinancialFramework(
+      elements.financialFramework && elements.financialFramework.value
+    ),
+    financialImpactInputs: sanitizeFinancialImpactInputs(
+      normalizeFinancialFramework(elements.financialFramework && elements.financialFramework.value),
+      mergeFinancialImpactInputsForCompute()
+    ),
+    roadmapType: (elements.roadmapType.value || "").trim() || null,
+    roadmapStatus: resolveRoadmapStatusForSave(roadmapPeriods, (elements.roadmapStatus.value || "").trim() || null),
+    tshirtSize: (elements.roadmapTshirtSize.value || "").trim() || null,
+    roadmapPeriod,
+    roadmapPeriods,
+    moscowCategory:
+      elements.roadmapMoscow && elements.roadmapMoscow.value
+        ? (elements.roadmapMoscow.value || "").trim() || null
+        : null,
+    kanoFunctionality: getRoadmapKanoFromControls().kanoFunctionality,
+    kanoSatisfaction: getRoadmapKanoFromControls().kanoSatisfaction,
+    countries: getCountriesFromControls(),
+    labels: getRoadmapLabelsFromControls(),
+    tasks: getRoadmapTasksFromControls(),
+    raci: getRoadmapRaciFromControls()
+  };
+
+  const linkResult = getRoadmapLinksFromControls();
+  if (linkResult.error) {
+    return { raw: null, error: linkResult.error };
+  }
+  raw.links = linkResult.links;
+
+  raw.financialImpactValue = computeFrameworkFinancialImpact(
+    raw.financialImpactFramework,
+    raw.financialImpactInputs,
+    raw.financialImpactValue
+  );
+
+  if (
+    validate &&
+    raw.financialImpactFramework !== FINANCIAL_FRAMEWORK_DEFAULT &&
+    !Number.isFinite(raw.financialImpactValue) &&
+    roadmapFormHasFinancialInput(raw)
+  ) {
+    return {
+      raw: null,
+      error: getFinancialFrameworkValidationMessage(raw.financialImpactFramework, raw.financialImpactInputs)
+    };
+  }
+
+  if (!Number.isFinite(raw.financialImpactValue)) {
+    raw.financialImpactValue = null;
+  }
+
+  if (validate) {
+    const validationError = validateRoadmapInput(raw);
+    if (validationError) {
+      return { raw: null, error: validationError };
+    }
+  }
+
+  return { raw, error: "" };
 }
 
 function roadmapFormHasFinancialInput(raw) {
@@ -21167,6 +23034,11 @@ function handleRoadmapFormSubmit(e) {
     return;
   }
 
+  if (isRoadmapModalBulkMode()) {
+    handleBulkRoadmapFormSubmit();
+    return;
+  }
+
   if (!requireWritableActiveProfile("Save roadmap")) return;
 
   if (!getUnlockedActiveProfile()) {
@@ -21174,134 +23046,26 @@ function handleRoadmapFormSubmit(e) {
     return;
   }
 
-  let roadmapPeriods = getRoadmapPeriodsFromControls();
-  if (typeof RoadmapPeriods !== "undefined") {
-    const periodValidationError = RoadmapPeriods.validatePeriods(roadmapPeriods);
-    if (periodValidationError) {
-      elements.roadmapFormError.textContent = periodValidationError;
-      elements.roadmapFormError.style.display = "block";
-      return;
-    }
-  }
-  const roadmapPeriod =
-    typeof RoadmapPeriods !== "undefined"
-      ? RoadmapPeriods.deriveLegacyPeriod(roadmapPeriods)
-      : roadmapPeriods[0]?.period || null;
-
-  const raw = {
-    title: (elements.roadmapTitle.value || "").trim(),
-    description: getRichDescriptionValue("roadmapDescription"),
-    note: normalizeRoadmapNote(getRichDescriptionValue("roadmapNote")),
-    reachDescription: getRichDescriptionValue("reachDescription"),
-    reachValue: elements.reachValue.value !== "" ? Number(elements.reachValue.value) : null,
-    impactDescription: getRichDescriptionValue("impactDescription"),
-    impactValue: elements.impactValue.value !== "" ? Number(elements.impactValue.value) : null,
-    confidenceDescription: getRichDescriptionValue("confidenceDescription"),
-    confidenceValue: elements.confidenceValue.value !== "" ? Number(elements.confidenceValue.value) : null,
-    effortDescription: getRichDescriptionValue("effortDescription"),
-    effortValue: elements.effortValue.value !== "" ? Number(elements.effortValue.value) : null,
-    financialImpactValue: elements.financialImpactValue.value !== "" ? Number(elements.financialImpactValue.value) : null,
-    financialImpactCurrency: normalizeCurrency(elements.roadmapCurrency.value),
-    financialImpactFramework: normalizeFinancialFramework(elements.financialFramework && elements.financialFramework.value),
-    financialImpactInputs: sanitizeFinancialImpactInputs(
-      normalizeFinancialFramework(elements.financialFramework && elements.financialFramework.value),
-      mergeFinancialImpactInputsForCompute()
-    ),
-    roadmapType: (elements.roadmapType.value || "").trim() || null,
-    roadmapStatus: (elements.roadmapStatus.value || "").trim() || null,
-    tshirtSize: (elements.roadmapTshirtSize.value || "").trim() || null,
-    roadmapPeriod,
-    roadmapPeriods,
-    moscowCategory: (elements.roadmapMoscow && elements.roadmapMoscow.value)
-      ? (elements.roadmapMoscow.value || "").trim() || null
-      : null,
-    kanoFunctionality: getRoadmapKanoFromControls().kanoFunctionality,
-    kanoSatisfaction: getRoadmapKanoFromControls().kanoSatisfaction,
-    countries: getCountriesFromControls(),
-    labels: getRoadmapLabelsFromControls(),
-    tasks: getRoadmapTasksFromControls(),
-    raci: getRoadmapRaciFromControls()
-  };
-
-  const linkResult = getRoadmapLinksFromControls();
-  if (linkResult.error) {
-    elements.roadmapFormError.textContent = linkResult.error;
+  const collected = collectRoadmapRawFromForm({ validate: true });
+  if (collected.error) {
+    elements.roadmapFormError.textContent = collected.error;
     elements.roadmapFormError.style.display = "block";
-    return;
-  }
-  raw.links = linkResult.links;
-
-  raw.financialImpactValue = computeFrameworkFinancialImpact(
-    raw.financialImpactFramework,
-    raw.financialImpactInputs,
-    raw.financialImpactValue
-  );
-
-  if (
-    raw.financialImpactFramework !== FINANCIAL_FRAMEWORK_DEFAULT &&
-    !Number.isFinite(raw.financialImpactValue) &&
-    roadmapFormHasFinancialInput(raw)
-  ) {
-    elements.roadmapFormError.textContent = getFinancialFrameworkValidationMessage(
-      raw.financialImpactFramework,
-      raw.financialImpactInputs
-    );
-    elements.roadmapFormError.style.display = "block";
-    return;
-  }
-
-  if (!Number.isFinite(raw.financialImpactValue)) {
-    raw.financialImpactValue = null;
-  }
-
-  const validationError = validateRoadmapInput(raw);
-  if (validationError) {
-    elements.roadmapFormError.textContent = validationError;
-    elements.roadmapFormError.style.display = "block";
-    if (validationError === "Roadmap title is required.") {
+    if (collected.error === "Roadmap title is required.") {
       elements.roadmapTitle?.focus();
-    } else if (validationError === "Roadmap description is required.") {
+    } else if (collected.error === "Roadmap description is required.") {
       const surface = getRichDescriptionSurface("roadmapDescription");
       if (surface) surface.focus();
     }
     return;
   }
+  const raw = collected.raw;
 
   if (editingRoadmapId) {
     const located = findRoadmapWithOwner(editingRoadmapId);
     const ownerProfile = located.profile;
     const roadmap = located.roadmap;
     if (!ownerProfile || !roadmap) return;
-    roadmap.title = raw.title;
-    roadmap.description = raw.description;
-    roadmap.note = raw.note;
-    roadmap.reachDescription = raw.reachDescription;
-    roadmap.reachValue = raw.reachValue;
-    roadmap.impactDescription = raw.impactDescription;
-    roadmap.impactValue = raw.impactValue;
-    roadmap.confidenceDescription = raw.confidenceDescription;
-    roadmap.confidenceValue = raw.confidenceValue;
-    roadmap.effortDescription = raw.effortDescription;
-    roadmap.effortValue = raw.effortValue;
-    roadmap.financialImpactValue = raw.financialImpactValue;
-    roadmap.financialImpactCurrency = raw.financialImpactCurrency;
-    roadmap.financialImpactFramework = raw.financialImpactFramework;
-    roadmap.financialImpactInputs = raw.financialImpactInputs;
-    roadmap.roadmapType = raw.roadmapType || null;
-    roadmap.roadmapStatus = raw.roadmapStatus || null;
-    roadmap.tshirtSize = raw.tshirtSize || null;
-    roadmap.roadmapPeriod = raw.roadmapPeriod || null;
-    roadmap.roadmapPeriods = Array.isArray(raw.roadmapPeriods) ? raw.roadmapPeriods : [];
-    roadmap.moscowCategory = raw.moscowCategory || null;
-    roadmap.kanoFunctionality = raw.kanoFunctionality != null ? raw.kanoFunctionality : null;
-    roadmap.kanoSatisfaction = raw.kanoSatisfaction != null ? raw.kanoSatisfaction : null;
-    roadmap.countries = Array.isArray(raw.countries) ? raw.countries : [];
-    roadmap.labels = normalizeRoadmapLabels(raw.labels);
-    roadmap.links = normalizeRoadmapLinks(raw.links);
-    roadmap.tasks = normalizeRoadmapTasks(raw.tasks);
-    roadmap.raci = normalizeRoadmapRaci(raw.raci);
-    roadmap.modifiedAt = new Date().toISOString();
-    roadmap.riceScore = calculateRiceScore(roadmap);
+    applyRoadmapRawToExistingRoadmap(roadmap, raw);
     saveState({ flush: true });
     closeRoadmapModal();
     renderRoadmaps();

@@ -129,7 +129,6 @@
   }
 
   global.ProfileSecurity = {
-    MIN_PASSWORD_LENGTH,
     generateSalt,
     hashProfilePassword,
     verifyProfilePassword,

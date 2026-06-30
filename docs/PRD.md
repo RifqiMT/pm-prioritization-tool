@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Status** | Implemented (local-first static app) |
-| **Last updated** | 2026-06-06 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui194` |
+| **Last updated** | 2026-06-29 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260629-ui195` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -68,7 +68,8 @@ See [USER_PERSONAS.md](USER_PERSONAS.md).
 |----|-------------|------------|
 | FR-2.1 | CRUD roadmaps | Modal create/edit; view read-only |
 | FR-2.2 | RICE inputs with validation | See FR-3 |
-| FR-2.3 | Metadata: type, status, MoSCoW, period, countries, t-shirt, labels, links, tasks | Saved on roadmap; normalized on load/save |
+| FR-2.3 | Metadata: type, status, MoSCoW, periods, countries, t-shirt, labels, links, tasks, note | Saved on roadmap; `roadmapPeriods[]` with per-quarter status; legacy `roadmapPeriod` migrated |
+| FR-2.14 | Multi-quarter periods | `roadmapPeriods`: `{ period: YYYY-Qn, status }[]`; latest period drives derived `roadmapStatus`; bulk quarter editor in modal |
 | FR-2.4 | Bulk delete (table) | Confirmation; selection respected (toolbar desktop; selection bar compact) |
 | FR-2.5 | Roadmap ID in modal footer | Stable id visible in footer metadata |
 | FR-2.6 | Modal footer disclosure (compact) | At ≤1400px: metadata in `<details>` collapsed by default; desktop forces open |

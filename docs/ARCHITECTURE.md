@@ -4,8 +4,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last audited** | 2026-06-06 |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui194` |
+| **Last audited** | 2026-06-29 |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260629-ui195` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -56,6 +56,8 @@ The UI is a **static SPA** (`index.html` + `src/`). On Vercel, **serverless rout
 | `src/modules/byok-api-keys.js` | Encrypted local Groq/Tavily API keys (`ByokApiKeys`) |
 | `src/modules/roadmap-llm-summary.js` | Tavily research + Groq roadmap briefing (`RoadmapLlmSummary`) |
 | `src/modules/roadmap-5why-framework.js` | Iterative WHY 1→5 questions (`RoadmapFiveWhyFramework`) |
+| `src/modules/roadmap-periods.js` | Multi-quarter `roadmapPeriods` normalize/validate (`RoadmapPeriods`) |
+| `src/modules/export-payload.js` | JSON/CSV export builders (`ExportPayload`) |
 | `api/health.js` | Storage backend probe |
 | `api/config.js` | Client config probe (same as health) |
 | `api/state.js` | GET/PUT workspace document |
@@ -205,51 +207,22 @@ flowchart TD
 
 ---
 
-## 9. MoSCoW compact navigation
+## 9. MoSCoW compact layout
 
-On compact layout, `#moscowCompactNav` renders 2×2 pills with display names from `getMoscowDisplayName()`. `syncMoscowCompactNav()` + `IntersectionObserver` syncs active pill to visible quadrant while scrolling.
+On compact layout (≤1400px), the MoSCoW board uses a single-column quadrant stack in `moscow-compact.css`. Quadrant headers use display names from `getMoscowDisplayName()` (**Must Have**, **Should Have**, etc.). Users scroll the board directly; the legacy compact jump-nav was removed.
 
 ---
 
 ## 10. CSS layering (compact-aware)
 
-Load order in `index.html` (later wins at equal specificity). All linked with `?v=APP_ASSET_VERSION`.
+Load order in `index.html` lines 15–52 (later wins at equal specificity). Each file uses a **per-asset** `?v=` tag; see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) §3.1 for the full 38-file table.
 
 | # | File | Role |
 |---|------|------|
-| 1 | `main.css` | Base tokens, legacy modals |
-| 2 | `workspace-modern.css` | Workspace shell |
-| 3 | `header-modern.css` | App header |
-| 4 | `profiles-modern.css` | Profiles panel + compact bottom sheet |
-| 5 | `portfolio-modern.css` | Portfolio, filters, autocomplete |
-| 6 | `profile-modals-modern.css` | Profile modals |
-| 7 | `export-modals-modern.css` | Import/export modals |
-| 8 | `byok-api-keys.css` | BYOK modal |
-| 9 | `view-toolbars-modern.css` | View toolbars (six views) |
-| 10 | `compact-modern.css` | Compact chrome (≤1400px) |
-| 11 | `moscow-compact.css` | MoSCoW compact layout |
-| 12 | `board-compact.css` | Board compact layout |
-| 13 | `table-compact.css` | Table compact toolbar |
-| 14 | `roadmap-actions-modern.css` | Row/card actions |
-| 15 | `fullscreen-modern.css` | Fullscreen desktop |
-| 16 | `fullscreen-compact.css` | Fullscreen compact |
-| 17 | `app-footer.css` | Site footer |
-| 18 | `views-density.css` | Density tokens |
-| 19 | `layout-flow.css` | Flat workspace flow (≤1400px) |
-| 20 | `portfolio-cards-compact.css` | Board/MoSCoW card shells |
-| 21 | `table-rows-modern.css` | Table row styling |
-| 22 | `table-revamp-modern.css` | Semantic column widths |
-| 23 | `table-compact-cards.css` | Table card list (≤1400px) |
-| 24 | `super-admin-modern.css` | Workspace-wide mode chrome (see GUARDRAILS §7) |
-| 25 | `map-tooltip-modern.css` | Map country tooltips |
-| 26 | `board-drag.css` | Board drag-and-drop |
-| 27 | `board-card-interaction.css` | Card press feedback |
-| 28 | `view-toolbars-compact-row.css` | Single-row compact toolbars |
-| 29 | `filters-compact-bar.css` | Filters drawer compact bar |
-| 30 | `rich-description-content.css` | RTE and sanitized description HTML |
-| 31 | `rich-description-content.css` | Rich HTML typography |
-| 32 | `rich-text-editor.css` | Rich-text toolbar and fields |
-| 33 | `portfolio-kano-modern.css` | KANO portfolio matrix and cards |
+| 1–17 | `main.css` … `app-footer.css` | Base shell through footer |
+| 18–28 | `views-density.css` … `view-toolbars-compact-row.css` | Density, tables, board, toolbars |
+| 29–34 | `filters-compact-bar.css` … `view-tabs-compact-menu.css` | Filters sheet, mobile command deck, profile picker, view overflow |
+| 35–38 | `rich-description-content.css` … `confirm-modals-modern.css` | Rich text, KANO, confirm dialogs |
 
 ---
 
@@ -371,7 +344,7 @@ flowchart TD
 
 ## 16. Known architectural constraints
 
-- Monolithic `app.js` (~19.5k lines) — acceptable for static app; split only with clear module boundaries if growth continues.
+- Monolithic `app.js` (~23k lines) — acceptable for static app; split only with clear module boundaries if growth continues.
 - Global namespace — naming collisions require discipline.
 - Full re-render on state change — optimize only if measured pain at scale.
 

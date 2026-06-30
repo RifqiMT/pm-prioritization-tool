@@ -1117,6 +1117,9 @@ delete).
   box-sizing: border-box;
 }.profile-view-card--country .profile-view-country-panel {
   padding: 0.15rem 0.95rem 0.85rem;
+}.profile-view-card--country .profile-view-chip-label {
+  line-height: 1.35;
+  word-break: break-word;
 }.profile-view-currency-details {
   margin: 0.1rem 0 0;
 }.profile-view-chips--column {

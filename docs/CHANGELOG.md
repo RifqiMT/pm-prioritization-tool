@@ -27,6 +27,28 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Docs — Full product documentation standard audit — 2026-06-29 — Product Team — Impact: documentation
+
+- Re-audited codebase vs 18-doc suite; baseline `APP_ASSET_VERSION` = `20260629-ui195`.
+- **38 CSS layers** (filters sheet, mobile command deck, profile picker, view tabs menu, confirm modals); per-asset `?v=` cache-bust documented in TECH §3.1.
+- **19 `src/` modules** including `roadmap-periods.js`, `export-payload.js`; **10** `npm test` suites.
+- `app.js` ~23k lines; multi-quarter `roadmapPeriods` with per-period status; full export via `ExportPayload`.
+- Updated FEATURE_LOGIC, ARCHITECTURE, VARIABLES, TRACEABILITY, DESIGN_GUIDELINES, PRD, PRODUCT_DOCUMENTATION, USER_STORIES, DEPLOYMENT, README, and documentation hub.
+
+### Data — Full JSON/CSV export for all workspace variables — 2026-06-08 — Product Team — Impact: user-visible
+
+- JSON export includes every `WORKSPACE_PERSISTED_STATE_KEYS` field (views, filters, FX rates, KANO/RACI prefs, etc.).
+- CSV adds `profileBoardOrder`, `profileMoscowOrder`, `roadmapRaci`, `profileExtraData`, `roadmapExtraData`, and `workspaceState` for full round-trip including future fields.
+- Added `src/modules/export-payload.js` and `npm run test:export`.
+
+### Removed — Dead code and legacy CSS cleanup (pass 2) — 2026-06-03 — Product Team — Impact: developer
+
+- Removed legacy filter-autocomplete portaling helpers and no-op viewport listeners from `src/app.js`.
+- Removed unused `syncRoadmapLegacyPeriodFields`, `syncMoscowCompactNav`, and 15 unused `elements.*` cache entries.
+- Trimmed unused public exports from `board-drag.js`, `roadmap-periods.js`, `exchange-rates.js`, `rich-text-editor.js`, and `fullscreen.js`.
+- Deleted orphan `api/_lib/portfolio-filters.js` and unreferenced test scripts `test-portfolio-filters.js`, `test-profile-view-raci-leads.js`.
+- Pruned remaining dead CSS selectors (`profiles-card`, `export-format-option`, `roadmap-details-tooltip`, etc.).
+
 ### Removed — Dead code and legacy CSS cleanup — 2026-06-03 — Product Team — Impact: developer
 
 - Removed unused functions from `src/app.js` (deprecated super-admin aliases, legacy table-card metric builders, unused modal/profile helpers).
@@ -37,7 +59,7 @@ When updating this file after a change:
 
 ### Docs — Full product documentation standard audit — 2026-06-06 — Product Team — Impact: documentation
 
-- Re-audited codebase vs 18-doc suite (`APP_ASSET_VERSION` = `20260528-ui194`).
+- Re-audited codebase vs 18-doc suite (`APP_ASSET_VERSION` = `20260629-ui195`).
 - Documented **`roadmap.note`** (six rich-text surfaces); fixed VARIABLES §8 numbering (§8.1–8.16).
 - Corrected **CSS load order** in TECH_GUIDELINES §3.1, ARCHITECTURE §10, README (matches `index.html`).
 - Restructured TRACEABILITY_MATRIX (FR-9.6/9.7, FR-11.1–5, FR-2.6/2.12/2.13 sections).
@@ -51,7 +73,7 @@ When updating this file after a change:
 
 ### Docs — Full product documentation standard audit — 2026-05-28 — Product Team — Impact: documentation
 
-- Re-audited entire repository against `APP_ASSET_VERSION` = `20260528-ui194`.
+- Re-audited entire repository against `APP_ASSET_VERSION` = `20260629-ui195`.
 - Documented **5 Why Framework** (`roadmap-5why-framework.js`, FR-2.13, Epic V, GUARDRAILS §8.3, VARIABLES §8.14, PM-15).
 - **Roadmap** terminology, six views, legacy `projects` migration, RACI/KANO (Epics R–S), **BYOK** + **LLM** (Epics T–U).
 - **33 CSS layers**; unified all `index.html` cache-bust query strings; `npm test` now includes `test:llm` and `test:5why`.
@@ -63,7 +85,7 @@ When updating this file after a change:
 - Persistence key `profile.projects` migrated to `profile.roadmaps` on load and save; legacy `projects` and `projectsView` keys still accepted on import.
 - Renamed files: `roadmap-metadata.js`, `roadmap-actions-modern.css`, `roadmap-details-tooltip.css`, `test-roadmap-metadata.js`.
 - Vercel infrastructure names (`VERCEL_PROJECT_ID`, `/v9/projects`) preserved in deployment scripts and workflows.
-- Cache bust: `APP_ASSET_VERSION` = `20260528-ui194`.
+- Cache bust: `APP_ASSET_VERSION` = `20260629-ui195`.
 
 ### Data — Workspace persistence registry and round-trip fixes — 2026-06-06 — Product Team — Impact: user-visible
 
@@ -74,7 +96,7 @@ When updating this file after a change:
 
 ### Docs — Full documentation audit (product standard) — 2026-05-31 — Product Team — Impact: documentation
 
-- Re-audited repository against `APP_ASSET_VERSION` = `20260528-ui194`.
+- Re-audited repository against `APP_ASSET_VERSION` = `20260629-ui195`.
 - Updated README, documentation hub, PRD, product documentation, personas, user stories, variables (with relationship charts), metrics/OKRs, design guidelines, traceability matrix, guardrails, architecture, and tech guidelines.
 - Documented rich-text descriptions, roadmap tasks, labels/links cloud persistence, bulk duplicate/move, and complete source/CSS/module map.
 
@@ -85,7 +107,7 @@ When updating this file after a change:
 - Skip automatic cloud pull while local edits are pending or newer than the last applied remote snapshot.
 - Server-side normalization in `api/state` before MongoDB upsert.
 - GitHub `fix-vercel-protection` workflow no longer fails when Vercel secrets are missing (skips with notice).
-- Cache bust: `APP_ASSET_VERSION` = `20260528-ui194`.
+- Cache bust: `APP_ASSET_VERSION` = `20260629-ui195`.
 
 ### Feature — Bulk duplicate and move across profiles — 2026-06-06 — Product Team — Impact: user-visible
 
@@ -294,12 +316,12 @@ When updating this file after a change:
 - Aligned layout breakpoint documentation to **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) across PRD, architecture, tech guidelines, variables, and design guidelines.
 - Traceability matrix expanded for FR-5.2 group-by, FR-5.4 MoSCoW display names, FR-6 labels/links filters, FR-9.6–9.7, and FR-10 (cross-references GUARDRAILS §7).
 - Variables dictionary: `tableGroupBy`, filter extensions, layout constants, filter pipeline and privileged-mode charts (neutral naming; policy in GUARDRAILS §7 only).
-- Asset baseline documented: `APP_ASSET_VERSION` = `20260528-ui194`.
+- Asset baseline documented: `APP_ASSET_VERSION` = `20260629-ui195`.
 
 ### UI — Site footer GitHub & article links — 2026-06-06 — Product Team — Impact: user-visible
 
 - Footer icon row: GitHub repo and prioritization article links alongside LinkedIn and website.
-- Cache bust: `APP_ASSET_VERSION` = `20260528-ui194`.
+- Cache bust: `APP_ASSET_VERSION` = `20260629-ui195`.
 
 ### UI — Compact profile bar controls on one row — 2026-06-06 — Product Team — Impact: user-visible
 

@@ -6,8 +6,8 @@
 | **Version** | 2.0.0 |
 | **Audience** | Product, engineering, design, QA, and stakeholders |
 | **Maintainer** | Product Team |
-| **Last updated** | 2026-06-06 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui194` |
+| **Last updated** | 2026-06-29 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260629-ui195` |
 
 This document is the **collaborative cross-feature reference** for how the app behaves end-to-end. It explains **logic** (what the system does), **rules** (what inputs and workflows are allowed), and **constraints** (what the product must not do or cannot guarantee). Use it in planning reviews, QA test design, and cross-team alignment.
 
@@ -189,6 +189,17 @@ flowchart LR
 | **Code** | `renderMoscowBoard()`, `moscowOrder` on profile, `css/moscow-compact.css` |
 | **See also** | [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md) §3 |
 
+### F-14b Multi-quarter roadmap periods
+
+| Aspect | Detail |
+|--------|--------|
+| **Purpose** | Track initiative delivery across multiple planning quarters with per-quarter status |
+| **Logic** | `roadmapPeriods[]` of `{ period, status }`; `RoadmapPeriods.normalizePeriods`; chronologically latest entry drives `deriveRoadmapStatus` |
+| **Rules** | Each period must match `YYYY-Q[1-4]`; duplicate quarters collapsed; legacy single `roadmapPeriod` migrates on load |
+| **Constraints** | Filter still matches any period on roadmap; display shows comma-separated quarters |
+| **Code** | `src/modules/roadmap-periods.js`, roadmap modal Periods section, `rice.js` validatePeriods |
+| **See also** | [VARIABLES.md](VARIABLES.md) §5, `npm run test:periods` |
+
 ### F-15 Financial frameworks
 
 | Aspect | Detail |
@@ -337,11 +348,12 @@ flowchart TB
 
 | Aspect | Detail |
 |--------|--------|
-| **Logic** | JSON full workspace or CSV roadmaps; password gate for protected profiles |
+| **Purpose** | Full workspace backup for disaster recovery and migration |
+| **Logic** | JSON via `ExportPayload.buildJsonExportDocument` (all `WORKSPACE_PERSISTED_STATE_KEYS` + profiles); CSV via `ExportPayload.CSV_COLUMN_IDS` including `roadmapPeriods`, `roadmapRaci`, `workspaceState`, `profileExtraData`, `roadmapExtraData` |
 | **Rules** | Locked profiles omitted unless unlocked or verified; success message reports omissions |
-| **Constraints** | BYOK keys never exported; LLM/Five Why session state never exported |
-| **Code** | Export modals, `sanitizeProfilesForExport()` |
-| **See also** | [GUARDRAILS.md](GUARDRAILS.md) §6 |
+| **Constraints** | BYOK keys never exported; LLM/Five Why session state never exported; unknown entity keys round-trip via `*ExtraData` JSON columns |
+| **Code** | `src/modules/export-payload.js`, export modals, `sanitizeProfilesForExport()` |
+| **See also** | [GUARDRAILS.md](GUARDRAILS.md) §6, `npm run test:export` |
 
 ### F-31 Import (merge)
 
@@ -449,6 +461,17 @@ flowchart LR
 | **Constraints** | Intended for sandbox demos only |
 | **Code** | `isDemoProfileActive()` guards in `app.js` |
 
+### F-55 Compact filters and command deck (≤1400px)
+
+| Aspect | Detail |
+|--------|--------|
+| **Purpose** | Touch-first filters and portfolio controls on phone/tablet |
+| **Logic** | Filters open in bottom sheet (`filters-sheet-modern.css` + `#portfolioFiltersSheet`); trigger in `mobile-command-deck.css`; profile via `profile-picker-compact.css`; view overflow via `view-tabs-compact-menu.css` |
+| **Rules** | Sheet closes via backdrop, close button, or Esc; active filter count on sheet badge |
+| **Constraints** | Desktop uses inline filters drawer; sheet is compact-only |
+| **Code** | `overlay-manager.js`, `filters-compact-bar.css`, `compact-view-gutter.css` |
+| **See also** | [DESIGN_GUIDELINES.md](DESIGN_GUIDELINES.md) |
+
 ---
 
 ## Feature constraint matrix (quick reference)
@@ -477,7 +500,10 @@ flowchart LR
 | F-15 | `app.js` (financial helpers) |
 | F-17 | `rich-text-editor.js`, `description-format.js` |
 | F-20–F-25 | `app.js` renderers + view CSS |
+| F-14b | `roadmap-periods.js` |
+| F-30 | `export-payload.js`, export modals |
 | F-30–F-32 | `app.js`, `storage.js`, `api/state.js` |
+| F-55 | `filters-sheet-modern.css`, `mobile-command-deck.css`, `profile-picker-compact.css` |
 | F-33 | `exchange-rates.js` |
 | F-40–F-42 | `byok-api-keys.js`, `roadmap-llm-summary.js`, `roadmap-5why-framework.js` |
 | F-50–F-51 | `overlay-manager.js`, `fullscreen.js` |
@@ -501,4 +527,5 @@ flowchart LR
 | Date | Change |
 |------|--------|
 | 2026-05-28 | Initial collaborative cross-feature logic and constraints reference |
-| 2026-06-06 | Added `roadmap.note`, six rich-text surfaces, optional collapsibles, in-modal KANO, dev seed; synced CSS order refs |
+| 2026-06-29 | 38 CSS layers; roadmapPeriods; ExportPayload; compact filters sheet; baseline `20260629-ui195` |
+| 2026-06-06 | Added `roadmap.note`, six rich-text surfaces, optional collapsibles, in-modal KANO, dev seed |

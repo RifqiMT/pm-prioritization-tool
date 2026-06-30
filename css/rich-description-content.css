@@ -14,10 +14,6 @@ and read-only previews.
   --rdc-heading-gap: 0.35rem;
   color: var(--rdc-text);
   word-break: break-word;
-}.roadmap-details-tooltip__rich.rich-description-content {
-  --rdc-h2-size: 0.95rem;
-  --rdc-h3-size: 0.88rem;
-  --rdc-heading-gap: 0.28rem;
 }.rich-description-content h2,
 .rich-description-content h3 {
   margin: 0;
@@ -81,9 +77,4 @@ and read-only previews.
   background: rgba(254, 243, 199, 0.28);
   color: var(--rdc-muted);
   font-style: italic;
-}.roadmap-details-tooltip__rich.rich-description-content blockquote {
-  margin-top: 0.18rem;
-  padding: 0.25rem 0.45rem;
-  border: 1px solid rgba(202, 138, 4, 0.2);
-  border-radius: 6px;
 }
