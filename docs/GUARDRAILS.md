@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-05-28 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui197` |
+| **Last updated** | 2026-07-08 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260708-ui198` |
 
 Cross-feature behavior summaries live in [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md). This file defines **hard limits** and policies that must not be violated.
 
@@ -96,6 +96,13 @@ Cross-feature behavior summaries live in [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEAT
 - Recipients must already have the same workspace data (MongoDB sync, import, or shared machine); links are not a data-transfer mechanism.
 - Locked profiles must not expose roadmap content until unlock succeeds; deep links queue the standard unlock flow.
 - Legacy `?roadmap=&view=&profile=` query params are migrated to hash format; do not rely on query strings for new shares.
+
+### 6.7 Concurrent cloud merge constraints
+- Cloud sync is **merge-based**, not locked transactions — simultaneous editors should expect last merged save to win on the same entity when timestamps are close.
+- `workspaceTombstones` must be included in every serialized workspace payload so deletes propagate; do not strip tombstones on export unless intentionally archiving.
+- Entities recreated with `modifiedAt` newer than a tombstone timestamp may reappear (intentional resurrection).
+- `WorkspaceMerge` deduplicates profiles with the same normalized name — avoid duplicate profile names in shared workspaces.
+- MongoDB document size limit (~16 MB) still applies; very large portfolios require export/archive.
 
 ## 6. Production (Vercel) Guardrails
 

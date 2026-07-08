@@ -37,7 +37,9 @@ let state = {
   exchangeRatesDate: null,
   exchangeRatesLastSource: null,
   /** When true and active profile is super-admin capable, portfolio shows all profiles' roadmaps. */
-  superAdminMode: false
+  superAdminMode: false,
+  /** Deleted profile/roadmap ids with ISO timestamps — synced for multi-user delete propagation. */
+  workspaceTombstones: { profiles: {}, roadmaps: {} }
 };
 
 let editingRoadmapId = null;
@@ -118,6 +120,48 @@ const MAP_METRIC_OPTIONS = [
     short: "Avg EUR",
     description: "Mean financial impact in EUR per roadmap in each country",
     keywords: ["financial", "eur", "average", "avg", "mean", "money", "impact", "euro"]
+  },
+  {
+    id: "businessLeads",
+    label: "Unique business leads",
+    short: "Biz leads",
+    description: "Distinct business RACI actors across roadmaps in each country",
+    keywords: ["business", "lead", "leads", "raci", "actor", "unique", "people"]
+  },
+  {
+    id: "techLeads",
+    label: "Unique tech leads",
+    short: "Tech leads",
+    description: "Distinct tech RACI actors across roadmaps in each country",
+    keywords: ["tech", "technical", "lead", "leads", "raci", "actor", "unique", "people"]
+  },
+  {
+    id: "kanoMajority",
+    label: "Roadmaps by KANO category",
+    short: "KANO",
+    description: "Roadmap count per country; map color reflects the majority KANO zone",
+    keywords: ["kano", "category", "matrix", "majority", "attractive", "must-be"]
+  },
+  {
+    id: "moscowMajority",
+    label: "Roadmaps by MoSCoW",
+    short: "MoSCoW",
+    description: "Roadmap count per country; map color reflects the majority MoSCoW priority",
+    keywords: ["moscow", "must", "should", "could", "wont", "priority", "majority"]
+  },
+  {
+    id: "roadmapTypeMajority",
+    label: "Roadmaps by type",
+    short: "Type",
+    description: "Roadmap count per country; map color reflects the majority roadmap type",
+    keywords: ["type", "new product", "improvement", "tech debt", "market", "majority"]
+  },
+  {
+    id: "financialFrameworkMajority",
+    label: "Roadmaps by financial framework",
+    short: "Framework",
+    description: "Roadmap count per country; map color reflects the majority financial framework",
+    keywords: ["financial", "framework", "clv", "nps", "risk", "headcount", "operational", "majority"]
   }
 ];
 
@@ -3711,6 +3755,12 @@ function showCloudWorkspaceToast(extra) {
       null
   );
   let msg = count + " profile" + (count !== 1 ? "s" : "");
+  if (extra && extra.merged) {
+    msg = "Workspace merged with cloud — " + msg;
+  }
+  if (extra && extra.source === "conflict-merge") {
+    msg = "Concurrent edits merged — " + msg;
+  }
   if (syncedLabel) {
     msg += " · synced " + syncedLabel;
   }
@@ -4062,7 +4112,7 @@ async function init() {
         if (typeof ShareLink !== "undefined" && typeof ShareLink.retryAfterDataRefresh === "function") {
           ShareLink.retryAfterDataRefresh();
         }
-        if (extra && (extra.updated || extra.source === "reconcile" || extra.source === "pull")) {
+        if (extra && (extra.updated || extra.source === "reconcile" || extra.source === "pull" || extra.source === "conflict-merge" || extra.source === "save-merge")) {
           showCloudWorkspaceToast(extra);
         }
       }
@@ -7229,7 +7279,11 @@ function removeRoadmapById(roadmapId) {
   if (!owner || !Array.isArray(owner.roadmaps)) return false;
   const before = owner.roadmaps.length;
   owner.roadmaps = owner.roadmaps.filter((p) => p.id !== roadmapId);
-  return owner.roadmaps.length < before;
+  if (owner.roadmaps.length < before) {
+    recordWorkspaceTombstone("roadmap", roadmapId);
+    return true;
+  }
+  return false;
 }
 
 function removeRoadmapsByIds(roadmapIds) {
@@ -12168,9 +12222,34 @@ function readPersistedWorkspaceField(key) {
   return undefined;
 }
 
+function ensureWorkspaceTombstones() {
+  if (!state.workspaceTombstones || typeof state.workspaceTombstones !== "object") {
+    state.workspaceTombstones = { profiles: {}, roadmaps: {} };
+  }
+  if (!state.workspaceTombstones.profiles || typeof state.workspaceTombstones.profiles !== "object") {
+    state.workspaceTombstones.profiles = {};
+  }
+  if (!state.workspaceTombstones.roadmaps || typeof state.workspaceTombstones.roadmaps !== "object") {
+    state.workspaceTombstones.roadmaps = {};
+  }
+}
+
+function recordWorkspaceTombstone(kind, id) {
+  if (!id) return;
+  ensureWorkspaceTombstones();
+  const at = new Date().toISOString();
+  if (kind === "profile") state.workspaceTombstones.profiles[id] = at;
+  if (kind === "roadmap") state.workspaceTombstones.roadmaps[id] = at;
+}
+
 function serializeStatePayload() {
+  ensureWorkspaceTombstones();
   const payload = {
-    profiles: state.profiles.map(serializeProfileForStorage)
+    profiles: state.profiles.map(serializeProfileForStorage),
+    workspaceTombstones: {
+      profiles: Object.assign({}, state.workspaceTombstones.profiles),
+      roadmaps: Object.assign({}, state.workspaceTombstones.roadmaps)
+    }
   };
   const keys =
     typeof WORKSPACE_PERSISTED_STATE_KEYS !== "undefined" && Array.isArray(WORKSPACE_PERSISTED_STATE_KEYS)
@@ -12287,19 +12366,32 @@ function applyStatePayload(parsed) {
   }
 
   try {
-    const rawProfiles = Array.isArray(parsed) ? parsed : parsed.profiles;
+    const source =
+      typeof WorkspaceMerge !== "undefined" && WorkspaceMerge.applyTombstones
+        ? WorkspaceMerge.applyTombstones(parsed)
+        : parsed;
+    const rawProfiles = Array.isArray(source) ? source : source.profiles;
     if (!Array.isArray(rawProfiles)) return;
+
+    if (!Array.isArray(source) && source.workspaceTombstones) {
+      state.workspaceTombstones = {
+        profiles: Object.assign({}, source.workspaceTombstones.profiles || {}),
+        roadmaps: Object.assign({}, source.workspaceTombstones.roadmaps || {})
+      };
+    } else {
+      ensureWorkspaceTombstones();
+    }
 
     state.profiles = rawProfiles.map(normalizeLoadedProfile).filter(Boolean);
 
-    const storedActiveId = !Array.isArray(parsed) ? parsed.activeProfileId : null;
+    const storedActiveId = !Array.isArray(source) ? source.activeProfileId : null;
     const validActiveId = state.profiles.some((p) => p.id === (storedActiveId || ""))
       ? storedActiveId
       : resolveFallbackActiveProfileId();
     state.activeProfileId = validActiveId;
 
-    if (!Array.isArray(parsed)) {
-      applyPersistedWorkspaceUiState(parsed);
+    if (!Array.isArray(source)) {
+      applyPersistedWorkspaceUiState(source);
     } else {
       state.sortField = "createdAt";
       state.sortDirection = "desc";
@@ -16411,6 +16503,325 @@ function isValidMapMetric(metric) {
   return MAP_METRIC_OPTIONS.some((opt) => opt.id === metric);
 }
 
+const MAP_CATEGORICAL_METRIC_IDS = new Set([
+  "kanoMajority",
+  "moscowMajority",
+  "roadmapTypeMajority",
+  "financialFrameworkMajority"
+]);
+
+function isMapMetricCategorical(metric) {
+  return MAP_CATEGORICAL_METRIC_IDS.has(metric);
+}
+
+const MAP_KANO_ZONE_COLORS = {
+  attractive: "#047857",
+  "one-dimensional": "#1d4ed8",
+  "must-be": "#b45309",
+  reverse: "#be123c",
+  indifferent: "#57534e",
+  unassigned: "#9ca3af"
+};
+
+const MAP_MOSCOW_COLORS = {
+  "Must have": "#ec4899",
+  "Should have": "#14b8a6",
+  "Could have": "#38bdf8",
+  "Won't have": "#a78bfa",
+  Unassigned: "#9ca3af"
+};
+
+const MAP_ROADMAP_TYPE_COLORS = {
+  "New Product": "#7c3aed",
+  Improvement: "#0f766e",
+  "Tech Debt": "#c2410c",
+  "Market Expansion": "#0369a1",
+  Unassigned: "#9ca3af"
+};
+
+const MAP_FINANCIAL_FRAMEWORK_COLORS = {
+  custom: "#64748b",
+  clv: "#2563eb",
+  headcount: "#7c3aed",
+  operational: "#0d9488",
+  nps: "#db2777",
+  risk: "#dc2626",
+  unassigned: "#9ca3af"
+};
+
+function getFilteredRoadmapsForMap() {
+  const baseRoadmaps = getPortfolioRoadmapsBaseList();
+  if (!baseRoadmaps.length) return [];
+  initFilterRoadmapPeriodOptions(baseRoadmaps);
+  return applyFilters(baseRoadmaps);
+}
+
+function getUniqueRaciActorKeysFromRoadmap(roadmap, domain) {
+  const targetDomain = normalizeRaciDomain(domain);
+  const raci = normalizeRoadmapRaci(roadmap && roadmap.raci);
+  const keys = new Set();
+  RACI_ROLES.forEach((role) => {
+    raci[role].forEach((entry) => {
+      if (entry.domain !== targetDomain) return;
+      const name = String(entry.name || "").trim();
+      if (name) keys.add(name.toLowerCase());
+    });
+  });
+  return keys;
+}
+
+/** ISO code -> count of unique RACI actors (Business or Tech) across filtered roadmaps in that country. */
+function getCountryUniqueRaciLeadsByCode(domain) {
+  const roadmaps = getFilteredRoadmapsForMap();
+  const actorsByCode = {};
+  roadmaps.forEach((p) => {
+    const actorKeys = getUniqueRaciActorKeysFromRoadmap(p, domain);
+    if (!actorKeys.size) return;
+    const countries = Array.isArray(p.countries) ? p.countries : [];
+    countries.forEach((name) => {
+      const code = typeof countryCodeByName !== "undefined" ? countryCodeByName[name] : null;
+      if (!code) return;
+      if (!actorsByCode[code]) actorsByCode[code] = new Set();
+      actorKeys.forEach((key) => actorsByCode[code].add(key));
+    });
+  });
+  const countByCode = {};
+  Object.keys(actorsByCode).forEach((code) => {
+    countByCode[code] = actorsByCode[code].size;
+  });
+  return countByCode;
+}
+
+function getRoadmapMapCategoryKey(roadmap, metric) {
+  if (metric === "kanoMajority") {
+    if (typeof getKanoZoneIdFromPosition === "function") {
+      const zoneId = getKanoZoneIdFromPosition(roadmap.kanoFunctionality, roadmap.kanoSatisfaction);
+      if (zoneId) return zoneId;
+    }
+    return "unassigned";
+  }
+  if (metric === "moscowMajority") {
+    const cat = String(roadmap.moscowCategory || "").trim();
+    if (cat && typeof moscowList !== "undefined" && moscowList.includes(cat)) return cat;
+    return "Unassigned";
+  }
+  if (metric === "roadmapTypeMajority") {
+    const type = String(roadmap.roadmapType || "").trim();
+    return type || "Unassigned";
+  }
+  if (metric === "financialFrameworkMajority") {
+    return normalizeFinancialFramework(roadmap.financialImpactFramework);
+  }
+  return "unassigned";
+}
+
+function getMapCategoryOrder(metric) {
+  if (metric === "kanoMajority" && typeof kanoCategoryLegend !== "undefined") {
+    return kanoCategoryLegend.map((entry) => entry.id).concat(["unassigned"]);
+  }
+  if (metric === "moscowMajority" && typeof moscowList !== "undefined") {
+    return moscowList.concat(["Unassigned"]);
+  }
+  if (metric === "roadmapTypeMajority" && typeof roadmapTypeIcons !== "undefined") {
+    return Object.keys(roadmapTypeIcons).concat(["Unassigned"]);
+  }
+  if (metric === "financialFrameworkMajority") {
+    return FINANCIAL_FRAMEWORKS.concat(["unassigned"]);
+  }
+  return [];
+}
+
+function pickMajorityCategory(tally, preferredOrder) {
+  if (!tally || typeof tally !== "object") return null;
+  const keys = Object.keys(tally);
+  if (!keys.length) return null;
+
+  let bestKey = keys[0];
+  let bestCount = tally[bestKey] || 0;
+
+  keys.forEach((key) => {
+    const count = tally[key] || 0;
+    if (count > bestCount) {
+      bestCount = count;
+      bestKey = key;
+      return;
+    }
+    if (count === bestCount && Array.isArray(preferredOrder) && preferredOrder.length) {
+      const newIdx = preferredOrder.indexOf(key);
+      const bestIdx = preferredOrder.indexOf(bestKey);
+      if (newIdx >= 0 && (bestIdx < 0 || newIdx < bestIdx)) bestKey = key;
+    }
+  });
+
+  return bestKey;
+}
+
+function getCountryCategoricalMajorityData(metric) {
+  const roadmaps = getFilteredRoadmapsForMap();
+  const countByCode = {};
+  const tallyByCode = {};
+
+  roadmaps.forEach((p) => {
+    const categoryKey = getRoadmapMapCategoryKey(p, metric);
+    const countries = Array.isArray(p.countries) ? p.countries : [];
+    countries.forEach((name) => {
+      const code = typeof countryCodeByName !== "undefined" ? countryCodeByName[name] : null;
+      if (!code) return;
+      countByCode[code] = (countByCode[code] || 0) + 1;
+      if (!tallyByCode[code]) tallyByCode[code] = {};
+      tallyByCode[code][categoryKey] = (tallyByCode[code][categoryKey] || 0) + 1;
+    });
+  });
+
+  const valueByCode = { ...countByCode };
+  const majorityByCode = {};
+  const order = getMapCategoryOrder(metric);
+  Object.keys(tallyByCode).forEach((code) => {
+    majorityByCode[code] = pickMajorityCategory(tallyByCode[code], order);
+  });
+
+  return { valueByCode, majorityByCode, countByCode, tallyByCode };
+}
+
+function getMapCategoryColor(metric, key) {
+  const palettes = {
+    kanoMajority: MAP_KANO_ZONE_COLORS,
+    moscowMajority: MAP_MOSCOW_COLORS,
+    roadmapTypeMajority: MAP_ROADMAP_TYPE_COLORS,
+    financialFrameworkMajority: MAP_FINANCIAL_FRAMEWORK_COLORS
+  };
+  const palette = palettes[metric];
+  if (palette && palette[key]) return palette[key];
+  return "#9ca3af";
+}
+
+function getMapMajorityDisplayLabel(metric, key) {
+  if (!key || key === "unassigned" || key === "Unassigned") return "Unassigned";
+  if (metric === "kanoMajority" && typeof kanoCategoryLegend !== "undefined") {
+    const entry = kanoCategoryLegend.find((row) => row.id === key);
+    return entry ? entry.label : key;
+  }
+  if (metric === "moscowMajority" && typeof moscowDisplayNames !== "undefined") {
+    return moscowDisplayNames[key] || key;
+  }
+  if (metric === "roadmapTypeMajority") return key;
+  if (metric === "financialFrameworkMajority") {
+    const meta = FINANCIAL_FRAMEWORK_ICONS[key];
+    return meta ? meta.label : key;
+  }
+  return key;
+}
+
+function renderMapCategoricalLegendHtml(metric, numCountries, totalHits) {
+  const esc = typeof escapeHtml === "function" ? escapeHtml : (s) => String(s || "");
+  const metricOption = getMapMetricOption(metric);
+  const label = metricOption ? metricOption.label : metric;
+  const summary =
+    totalHits > 0
+      ? `${label} — ${totalHits} assignment${totalHits !== 1 ? "s" : ""} across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"} (color = majority category)`
+      : `${label}. Add countries and matching roadmap data to see values on the map.`;
+  const swatches = getMapCategoryOrder(metric)
+    .map((key) => {
+      const color = getMapCategoryColor(metric, key);
+      const catLabel = getMapMajorityDisplayLabel(metric, key);
+      return `<span class="roadmaps-map-legend__item"><span class="roadmaps-map-legend__swatch" style="background:${esc(color)}" aria-hidden="true"></span>${esc(catLabel)}</span>`;
+    })
+    .join("");
+  return `<span class="roadmaps-map-legend__summary">${esc(summary)}</span><span class="roadmaps-map-legend__swatches" role="list">${swatches}</span>`;
+}
+
+function getMapCategoryBreakdownTitle(metric) {
+  const titles = {
+    kanoMajority: "By KANO category",
+    moscowMajority: "By MoSCoW priority",
+    roadmapTypeMajority: "By roadmap type",
+    financialFrameworkMajority: "By financial framework"
+  };
+  return titles[metric] || "By category";
+}
+
+/** Per-category roadmap counts for one country (categorical map metrics). */
+function getMapCountryCategoryBreakdown(countryCode, metric, countryTally) {
+  if (!countryCode || !countryTally || typeof countryTally !== "object") return [];
+
+  const total = Object.values(countryTally).reduce((sum, n) => sum + (Number(n) || 0), 0);
+  if (total <= 0) return [];
+
+  const order = getMapCategoryOrder(metric);
+  const rows = [];
+  const seenKeys = new Set();
+
+  order.forEach((key) => {
+    const count = Number(countryTally[key]) || 0;
+    if (count <= 0) return;
+    seenKeys.add(key);
+    rows.push({
+      categoryKey: key,
+      label: getMapMajorityDisplayLabel(metric, key),
+      color: getMapCategoryColor(metric, key),
+      count,
+      sharePct: Math.round((count / total) * 100)
+    });
+  });
+
+  Object.keys(countryTally).forEach((key) => {
+    if (seenKeys.has(key)) return;
+    const count = Number(countryTally[key]) || 0;
+    if (count <= 0) return;
+    rows.push({
+      categoryKey: key,
+      label: getMapMajorityDisplayLabel(metric, key),
+      color: getMapCategoryColor(metric, key),
+      count,
+      sharePct: Math.round((count / total) * 100)
+    });
+  });
+
+  return rows.sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+}
+
+function buildMapCountryCategoryBreakdownHtml(rows, metric, majorityKey) {
+  if (!rows || !rows.length) return "";
+  const esc = typeof escapeHtml === "function" ? escapeHtml : (s) => String(s || "");
+  const title = getMapCategoryBreakdownTitle(metric);
+  const totalCount = rows.reduce((sum, row) => sum + (row.count || 0), 0);
+  const maxCount = rows.reduce((max, row) => Math.max(max, row.count || 0), 0) || 1;
+
+  const rowsHtml = rows
+    .map((row, index) => {
+      const isMajority = majorityKey && row.categoryKey === majorityKey;
+      const barPct = Math.max(4, Math.round(((row.count || 0) / maxCount) * 100));
+      const majorityBadge = isMajority
+        ? `<span class="map-country-tooltip__category-majority" title="Majority category">Majority</span>`
+        : "";
+      return `<li class="map-country-tooltip__category-row${isMajority ? " map-country-tooltip__category-row--majority" : ""}" style="--map-tip-row-i:${index};--map-tip-bar-pct:${barPct}%;--map-tip-cat-color:${esc(row.color)}">
+      <span class="map-country-tooltip__category-swatch" aria-hidden="true" style="background:${esc(row.color)}"></span>
+      <div class="map-country-tooltip__category-body">
+        <div class="map-country-tooltip__category-top">
+          <span class="map-country-tooltip__category-name" title="${esc(row.label)}">${esc(row.label)}</span>
+          ${majorityBadge}
+          <span class="map-country-tooltip__category-value">${esc(String(row.count))}</span>
+        </div>
+        <div class="map-country-tooltip__category-bar-row">
+          <div class="map-country-tooltip__category-bar" aria-hidden="true" role="presentation">
+            <span class="map-country-tooltip__category-bar-fill"></span>
+          </div>
+          <span class="map-country-tooltip__category-share">${row.sharePct}%</span>
+        </div>
+      </div>
+    </li>`;
+    })
+    .join("");
+
+  return `<section class="map-country-tooltip__categories" aria-label="${esc(title)}">
+    <div class="map-country-tooltip__categories-head">
+      <span class="map-country-tooltip__categories-title">${esc(title)}</span>
+      <span class="map-country-tooltip__categories-count" title="${totalCount} roadmap${totalCount !== 1 ? "s" : ""}">${totalCount}</span>
+    </div>
+    <ul class="map-country-tooltip__category-rows" role="list">${rowsHtml}</ul>
+  </section>`;
+}
+
 function mapMetricUsesExchangeRates(metric) {
   return metric === "financial" || metric === "financialAvg";
 }
@@ -16421,7 +16832,49 @@ function getMapMetricValuesByCode(metric) {
   if (current === "riceAvg") return getCountryAverageRiceByCode();
   if (current === "financial") return getCountryFinancialImpactByCode();
   if (current === "financialAvg") return getCountryAverageFinancialImpactByCode();
+  if (current === "businessLeads") return getCountryUniqueRaciLeadsByCode("Business");
+  if (current === "techLeads") return getCountryUniqueRaciLeadsByCode("Tech");
+  if (isMapMetricCategorical(current)) return getCountryCategoricalMajorityData(current).valueByCode;
   return getRoadmapCountByCountryCode();
+}
+
+function getMapMetricRenderContext(metric) {
+  const current = isValidMapMetric(metric) ? metric : "roadmaps";
+  const countByCode = getRoadmapCountByCountryCode();
+
+  if (current === "businessLeads") {
+    return {
+      valueByCode: getCountryUniqueRaciLeadsByCode("Business"),
+      countByCode,
+      majorityByCode: null,
+      categorical: false
+    };
+  }
+  if (current === "techLeads") {
+    return {
+      valueByCode: getCountryUniqueRaciLeadsByCode("Tech"),
+      countByCode,
+      majorityByCode: null,
+      categorical: false
+    };
+  }
+  if (isMapMetricCategorical(current)) {
+    const data = getCountryCategoricalMajorityData(current);
+    return {
+      valueByCode: data.valueByCode,
+      countByCode: data.countByCode,
+      majorityByCode: data.majorityByCode,
+      tallyByCode: data.tallyByCode,
+      categorical: true
+    };
+  }
+
+  return {
+    valueByCode: getMapMetricValuesByCode(current),
+    countByCode,
+    majorityByCode: null,
+    categorical: false
+  };
 }
 
 function getWeightedMapMetricAverage(valueByCode, countByCode) {
@@ -16482,8 +16935,8 @@ function scheduleRenderRoadmapsMapWhenLeafletReady() {
 
 /** Compact stat line for map country tooltips (value + short unit; optional footnote). */
 function getMapCountryTooltipMetricBlock(metric, value, count, options = {}) {
-  const { hasProfileBreakdown = false } = options;
-  const hasData = count > 0;
+  const { hasProfileBreakdown = false, hasCategoryBreakdown = false, majorityLabel = "" } = options;
+  const hasData = count > 0 || (metric === "businessLeads" || metric === "techLeads" ? value > 0 : false);
 
   if (!hasData) {
     return {
@@ -16499,6 +16952,42 @@ function getMapCountryTooltipMetricBlock(metric, value, count, options = {}) {
     : count === 1
       ? "1 assignment in this country"
       : `${count} assignments in this country`;
+
+  if (metric === "businessLeads") {
+    const uniqueCount = Number(value) || 0;
+    return {
+      valueText: String(uniqueCount),
+      unit: uniqueCount === 1 ? "unique business lead" : "unique business leads",
+      footnote: hasProfileBreakdown ? "" : roadmapNote,
+      empty: false
+    };
+  }
+  if (metric === "techLeads") {
+    const uniqueCount = Number(value) || 0;
+    return {
+      valueText: String(uniqueCount),
+      unit: uniqueCount === 1 ? "unique tech lead" : "unique tech leads",
+      footnote: hasProfileBreakdown ? "" : roadmapNote,
+      empty: false
+    };
+  }
+  if (isMapMetricCategorical(metric)) {
+    const footnoteParts = [];
+    if (!hasProfileBreakdown && !hasCategoryBreakdown) {
+      if (roadmapNote) footnoteParts.push(roadmapNote);
+      if (majorityLabel) footnoteParts.push(`Majority: ${majorityLabel}`);
+    } else if (!hasProfileBreakdown && hasCategoryBreakdown && roadmapNote) {
+      footnoteParts.push(roadmapNote);
+    } else if (hasProfileBreakdown && !hasCategoryBreakdown && majorityLabel) {
+      footnoteParts.push(`Majority: ${majorityLabel}`);
+    }
+    return {
+      valueText: String(count),
+      unit: count === 1 ? "roadmap" : "roadmaps",
+      footnote: footnoteParts.join(" · "),
+      empty: false
+    };
+  }
 
   if (metric === "rice") {
     const riceText = typeof formatRice === "function" ? formatRice(value) : String(value);
@@ -16573,6 +17062,18 @@ function getMapCountryStatsForLayer(layer, countByCode, valueByCode) {
 }
 
 const MAP_COUNTRY_PROFILE_BREAKDOWN_MAX = 10;
+const MAP_COUNTRY_TOOLTIP_VISIBLE_SECTION_ROWS = 2;
+const MAP_COUNTRY_TOOLTIP_PROFILE_ROW_PX = 54;
+const MAP_COUNTRY_TOOLTIP_CATEGORY_ROW_PX = 54;
+const MAP_COUNTRY_TOOLTIP_SECTION_ROW_GAP_PX = 4;
+
+function getMapCountryTooltipSectionListMaxHeightPx(totalRows, rowPx = MAP_COUNTRY_TOOLTIP_PROFILE_ROW_PX) {
+  const rows = Math.max(
+    1,
+    Math.min(Math.max(totalRows || 0, 1), MAP_COUNTRY_TOOLTIP_VISIBLE_SECTION_ROWS)
+  );
+  return rows * rowPx + Math.max(0, rows - 1) * MAP_COUNTRY_TOOLTIP_SECTION_ROW_GAP_PX;
+}
 
 /** Per-profile metric for one country (workspace-wide mode only; see GUARDRAILS §7). */
 function getMapCountryProfileBreakdown(countryCode, metric, roadmapsInCountry) {
@@ -16619,13 +17120,24 @@ function getMapCountryProfileBreakdown(countryCode, metric, roadmapsInCountry) {
   });
 
   const metricKey = isValidMapMetric(metric) ? metric : "roadmaps";
+  const isLeadsMetric = metricKey === "businessLeads" || metricKey === "techLeads";
+  const leadsDomain = metricKey === "businessLeads" ? "Business" : "Tech";
 
   return Array.from(byProfile.values())
     .map((row) => {
       let displayValue = "—";
       let sortValue = 0;
 
-      if (metricKey === "rice") {
+      if (isLeadsMetric) {
+        const actorKeys = new Set();
+        roadmapsInCountry.forEach((p) => {
+          const profileId = (p.ownerProfileId || p.ownerProfileName || "unknown").toString();
+          if (profileId !== row.profileId) return;
+          getUniqueRaciActorKeysFromRoadmap(p, leadsDomain).forEach((key) => actorKeys.add(key));
+        });
+        sortValue = actorKeys.size;
+        displayValue = String(sortValue);
+      } else if (metricKey === "rice") {
         displayValue = typeof formatRice === "function" ? formatRice(row.riceSum) : String(row.riceSum);
         sortValue = row.riceSum;
       } else if (metricKey === "riceAvg") {
@@ -16651,8 +17163,8 @@ function getMapCountryProfileBreakdown(countryCode, metric, roadmapsInCountry) {
         linkCount: row.linkCount
       };
     })
-    .filter((row) => metricKey === "roadmaps" || row.sortValue > 0 || row.linkCount > 0)
-    .sort((a, b) => b.sortValue - a.sortValue);
+    .filter((row) => row.linkCount > 0 && (!isLeadsMetric || row.sortValue > 0 || row.displayValue !== "0"))
+    .sort((a, b) => b.sortValue - a.sortValue || a.profileName.localeCompare(b.profileName));
 }
 
 function getMapCountryProfileInitials(profileName) {
@@ -16670,41 +17182,46 @@ function getMapCountryProfileInitials(profileName) {
 function buildMapCountryProfileBreakdownHtml(breakdownRows, metric) {
   if (!breakdownRows || !breakdownRows.length) return "";
   const esc = typeof escapeHtml === "function" ? escapeHtml : (s) => String(s || "");
-  const metricOption = getMapMetricOption(metric);
-  const metricShort = metricOption ? metricOption.short : "";
 
   const visible = breakdownRows.slice(0, MAP_COUNTRY_PROFILE_BREAKDOWN_MAX);
-  const moreCount = breakdownRows.length - visible.length;
+  const totalCount = breakdownRows.length;
+  const moreCount = totalCount - visible.length;
   const maxSort = visible.reduce((max, row) => Math.max(max, row.sortValue || 0), 0) || 1;
+  const totalSort = visible.reduce((sum, row) => sum + (row.sortValue || 0), 0) || 1;
 
   const rowsHtml = visible
-    .map((row) => {
+    .map((row, index) => {
       const sharePct = Math.max(4, Math.round(((row.sortValue || 0) / maxSort) * 100));
+      const shareOfTotal = Math.max(1, Math.round(((row.sortValue || 0) / totalSort) * 100));
       const initials = getMapCountryProfileInitials(row.profileName);
-      return `<li class="map-country-tooltip__profile-row">
-      <span class="map-country-tooltip__profile-avatar" aria-hidden="true">${esc(initials)}</span>
+      const rank = index + 1;
+      const rankClass = rank <= 3 ? ` map-country-tooltip__profile-row--rank-${rank}` : "";
+      const rankBadge =
+        rank <= 3
+          ? `<span class="map-country-tooltip__profile-rank" aria-hidden="true">${rank}</span>`
+          : "";
+      return `<li class="map-country-tooltip__profile-row${rankClass}" style="--map-tip-row-i:${index};--map-tip-bar-pct:${sharePct}%">
+      <span class="map-country-tooltip__profile-avatar" aria-hidden="true">${rankBadge}${esc(initials)}</span>
       <div class="map-country-tooltip__profile-body">
         <div class="map-country-tooltip__profile-top">
           <span class="map-country-tooltip__profile-name" title="${esc(row.profileName)}">${esc(row.profileName)}</span>
           <span class="map-country-tooltip__profile-value">${esc(row.displayValue)}</span>
         </div>
-        <div class="map-country-tooltip__profile-bar" aria-hidden="true">
-          <span class="map-country-tooltip__profile-bar-fill" style="width:${sharePct}%"></span>
+        <div class="map-country-tooltip__profile-bar-row">
+          <div class="map-country-tooltip__profile-bar" aria-hidden="true" role="presentation">
+            <span class="map-country-tooltip__profile-bar-fill"></span>
+          </div>
+          <span class="map-country-tooltip__profile-share">${shareOfTotal}%</span>
         </div>
       </div>
     </li>`;
     })
     .join("");
 
-  const metricHint = metricShort
-    ? `<span class="map-country-tooltip__profiles-metric">${esc(metricShort)}</span>`
-    : "";
-
   return `<section class="map-country-tooltip__profiles" aria-label="Profile breakdown">
     <div class="map-country-tooltip__profiles-head">
-      <span class="map-country-tooltip__profiles-title">Profiles</span>
-      ${metricHint}
-      <span class="map-country-tooltip__profiles-count">${visible.length}</span>
+      <span class="map-country-tooltip__profiles-title">Top profiles</span>
+      <span class="map-country-tooltip__profiles-count" title="${totalCount} profile${totalCount !== 1 ? "s" : ""}">${totalCount}</span>
     </div>
     <ul class="map-country-tooltip__profile-rows" role="list">${rowsHtml}</ul>
     ${
@@ -16718,37 +17235,58 @@ function buildMapCountryProfileBreakdownHtml(breakdownRows, metric) {
 /** Map hover tooltip: country + aggregated value for the toolbar metric. */
 function buildMapCountryTooltipHtml(options) {
   const esc = typeof escapeHtml === "function" ? escapeHtml : (s) => String(s || "");
-  const { countryName, countryCode, flag, count, value, metric, profileBreakdown } = options;
+  const { countryName, countryCode, flag, count, value, metric, profileBreakdown, categoryBreakdown, majorityLabel = "" } = options;
 
   const code2 =
     countryCode && typeof countryCodeToTwoLetter === "function"
       ? countryCodeToTwoLetter(countryCode) || countryCode
       : countryCode || "";
   const hasProfiles = Boolean(profileBreakdown);
+  const hasCategories = Boolean(categoryBreakdown);
   const metricBlock = getMapCountryTooltipMetricBlock(metric, value, count, {
-    hasProfileBreakdown: hasProfiles
+    hasProfileBreakdown: hasProfiles,
+    hasCategoryBreakdown: hasCategories,
+    majorityLabel
   });
 
   const footnoteHtml = metricBlock.footnote
     ? `<p class="map-country-tooltip__footnote">${esc(metricBlock.footnote)}</p>`
     : "";
 
-  const tooltipMod = hasProfiles ? " map-country-tooltip--with-profiles" : "";
+  const tooltipMod =
+    (hasProfiles ? " map-country-tooltip--with-profiles" : "") +
+    (hasCategories ? " map-country-tooltip--with-categories" : "");
+  const metricOption = getMapMetricOption(metric);
+  const metricPill = metricOption && metricOption.short
+    ? `<span class="map-country-tooltip__metric-pill">${esc(metricOption.short)}</span>`
+    : "";
+  const ariaLabel = `${countryName || "Country"} — ${metricBlock.valueText} ${metricBlock.unit}`;
 
-  return `<div class="map-country-tooltip map-country-tooltip--hover${tooltipMod}" role="tooltip">
+  return `<div class="map-country-tooltip map-country-tooltip--hover${tooltipMod}" role="tooltip" aria-label="${esc(ariaLabel)}" tabindex="-1">
     <header class="map-country-tooltip__head">
-      <span class="map-country-tooltip__flag" aria-hidden="true">${flag ? esc(flag) : "🌍"}</span>
+      <div class="map-country-tooltip__flag-wrap" aria-hidden="true">
+        <span class="map-country-tooltip__flag">${flag ? esc(flag) : "🌍"}</span>
+      </div>
       <div class="map-country-tooltip__head-copy">
         <span class="map-country-tooltip__country">${esc(countryName || "Unknown")}</span>
-        ${code2 ? `<span class="map-country-tooltip__code">${esc(code2)}</span>` : ""}
+        <div class="map-country-tooltip__meta">
+          ${code2 ? `<span class="map-country-tooltip__code">${esc(code2)}</span>` : ""}
+          ${metricPill}
+        </div>
       </div>
+      <span class="map-country-tooltip__pin-hint" aria-hidden="true">Click to pin</span>
     </header>
-    <div class="map-country-tooltip__stat${metricBlock.empty ? " map-country-tooltip__stat--empty" : ""}">
-      <span class="map-country-tooltip__stat-value">${esc(metricBlock.valueText)}</span>
-      <span class="map-country-tooltip__stat-unit">${esc(metricBlock.unit)}</span>
+    <div class="map-country-tooltip__body">
+      <div class="map-country-tooltip__stat${metricBlock.empty ? " map-country-tooltip__stat--empty" : ""}">
+        <span class="map-country-tooltip__stat-label">${esc(metricBlock.unit)}</span>
+        <div class="map-country-tooltip__stat-inner">
+          <span class="map-country-tooltip__stat-value">${esc(metricBlock.valueText)}</span>
+        </div>
+      </div>
+      ${footnoteHtml}
+      ${categoryBreakdown || ""}
+      ${profileBreakdown || ""}
     </div>
-    ${footnoteHtml}
-    ${profileBreakdown || ""}
   </div>`;
 }
 
@@ -16760,6 +17298,22 @@ function buildMapCountryTooltipHtmlForLayer(layer) {
 
   const stats = getMapCountryStatsForLayer(layer, data.countByCode, data.valueByCode);
   const countryCode = stats.code || meta.countryCode;
+
+  let majorityLabel = "";
+  let majorityKey = "";
+  if (countryCode && data.majorityByCode && isMapMetricCategorical(data.metric)) {
+    majorityKey = data.majorityByCode[countryCode] || "";
+    if (majorityKey) {
+      majorityLabel = getMapMajorityDisplayLabel(data.metric, majorityKey);
+    }
+  }
+
+  let categoryBreakdown = "";
+  if (countryCode && data.tallyByCode && isMapMetricCategorical(data.metric)) {
+    const countryTally = data.tallyByCode[countryCode];
+    const categoryRows = getMapCountryCategoryBreakdown(countryCode, data.metric, countryTally);
+    categoryBreakdown = buildMapCountryCategoryBreakdownHtml(categoryRows, data.metric, majorityKey);
+  }
 
   let profileBreakdown = "";
   if (data.showProfileBreakdown && countryCode && data.roadmapsByCountryCode) {
@@ -16775,7 +17329,9 @@ function buildMapCountryTooltipHtmlForLayer(layer) {
     count: stats.count,
     value: stats.value,
     metric: data.metric,
-    profileBreakdown
+    profileBreakdown,
+    categoryBreakdown,
+    majorityLabel
   });
 }
 
@@ -16783,6 +17339,8 @@ let activeMapCountryTooltipLayer = null;
 let activeMapCountryHoverLayer = null;
 let mapCountryTooltipCloseTimer = null;
 let mapCountrySharedTooltip = null;
+let mapCountryTooltipLayoutToken = 0;
+let mapCountryTooltipPinned = false;
 
 const MAP_COUNTRY_HOVER_STYLE = {
   weight: 2.5,
@@ -16812,36 +17370,347 @@ function ensureMapCountrySharedTooltip() {
   return mapCountrySharedTooltip;
 }
 
-const MAP_COUNTRY_TOOLTIP_VIEWPORT_PAD_PX = 12;
+const MAP_COUNTRY_TOOLTIP_VIEWPORT_PAD_PX = 18;
+const MAP_COUNTRY_TOOLTIP_ARROW_GAP_PX = 12;
+const MAP_COUNTRY_TOOLTIP_ARROW_HEIGHT_PX = 11;
 
-/** Rough tooltip height so we can pick top vs bottom before paint. */
-function estimateMapCountryTooltipHeightPx(hasProfileBreakdown, profileRowCount) {
-  if (!hasProfileBreakdown) return 108;
-  const rows = Math.min(profileRowCount || 3, MAP_COUNTRY_PROFILE_BREAKDOWN_MAX);
-  return 132 + rows * 52 + (rows > 4 ? 8 : 0);
+/** Extra inset when the Leaflet arrow extends beyond the card edge. */
+function getMapCountryTooltipEdgePad(tip) {
+  const arrow = MAP_COUNTRY_TOOLTIP_ARROW_HEIGHT_PX;
+  const dir = tip && tip.options ? tip.options.direction : "top";
+  if (dir === "top") return MAP_COUNTRY_TOOLTIP_VIEWPORT_PAD_PX + arrow;
+  if (dir === "bottom") return MAP_COUNTRY_TOOLTIP_VIEWPORT_PAD_PX + arrow;
+  return MAP_COUNTRY_TOOLTIP_VIEWPORT_PAD_PX;
 }
 
-/** Shrink scrollable profile list when the tooltip would extend past the map bottom. */
-function fitMapCountryTooltipProfileListInView(tip, map) {
+/** Rough tooltip height so we can pick top vs bottom before paint. */
+function estimateMapCountryTooltipHeightPx(hasProfileBreakdown, profileRowCount, hasCategoryBreakdown, categoryRowCount) {
+  const headerAndStat = 138;
+  let extra = MAP_COUNTRY_TOOLTIP_ARROW_GAP_PX;
+  if (hasCategoryBreakdown) {
+    const rows = Math.min(Math.max(categoryRowCount || 1, 1), MAP_COUNTRY_TOOLTIP_VISIBLE_SECTION_ROWS);
+    extra += 40 + rows * MAP_COUNTRY_TOOLTIP_CATEGORY_ROW_PX;
+  }
+  if (hasProfileBreakdown) {
+    const rows = Math.min(Math.max(profileRowCount || 1, 1), MAP_COUNTRY_TOOLTIP_VISIBLE_SECTION_ROWS);
+    extra += 40 + rows * MAP_COUNTRY_TOOLTIP_PROFILE_ROW_PX + 20;
+  }
+  if (!hasProfileBreakdown && !hasCategoryBreakdown) return headerAndStat + MAP_COUNTRY_TOOLTIP_ARROW_GAP_PX;
+  return headerAndStat + extra;
+}
+
+function fitMapCountryTooltipSectionListInView(tip, map, config) {
+  const {
+    listSelector,
+    sectionSelector,
+    scrollableListClass,
+    scrollableSectionClass,
+    rowCount = 0,
+    rowPx = MAP_COUNTRY_TOOLTIP_PROFILE_ROW_PX
+  } = config;
   const el = tip && typeof tip.getElement === "function" ? tip.getElement() : null;
   const container = map && typeof map.getContainer === "function" ? map.getContainer() : null;
-  const list = el && el.querySelector(".map-country-tooltip__profile-rows");
+  const list = el && el.querySelector(listSelector);
+  const section = el && el.querySelector(sectionSelector);
   if (!el || !container || !list) return;
 
-  list.style.maxHeight = "";
-  const pad = MAP_COUNTRY_TOOLTIP_VIEWPORT_PAD_PX;
+  const rows = Math.max(rowCount || 0, list.querySelectorAll(":scope > li").length, 1);
+  const idealListH = getMapCountryTooltipSectionListMaxHeightPx(rows, rowPx);
+
+  list.style.maxHeight = `${Math.ceil(idealListH)}px`;
+  list.classList.remove(scrollableListClass);
+  if (section) section.classList.remove(scrollableSectionClass);
+
+  if (typeof tip._updatePosition === "function") tip._updatePosition();
+
+  const padBottom = MAP_COUNTRY_TOOLTIP_VIEWPORT_PAD_PX + MAP_COUNTRY_TOOLTIP_ARROW_HEIGHT_PX;
+  const padTop = getMapCountryTooltipEdgePad(tip);
   const cr = container.getBoundingClientRect();
   let tr = el.getBoundingClientRect();
-  let overflow = tr.bottom - (cr.bottom - pad);
 
-  if (overflow <= 0) return;
+  let overflowBottom = tr.bottom - (cr.bottom - padBottom);
+  let overflowTop = cr.top + padTop - tr.top;
+  if (overflowBottom <= 0 && overflowTop <= 0) {
+    syncMapCountryTooltipSectionListScrollState(list, section, scrollableListClass, scrollableSectionClass);
+    return;
+  }
 
-  const listRect = list.getBoundingClientRect();
-  const minList = 56;
-  const nextMax = Math.max(minList, listRect.height - overflow);
-  list.style.maxHeight = `${Math.floor(nextMax)}px`;
+  const minRowsVisible = Math.min(rows, MAP_COUNTRY_TOOLTIP_VISIBLE_SECTION_ROWS);
+  const minList =
+    minRowsVisible * rowPx + Math.max(0, minRowsVisible - 1) * MAP_COUNTRY_TOOLTIP_SECTION_ROW_GAP_PX;
+  let nextMax = idealListH;
 
-  clampMapCountryTooltipInView(tip, map, 3);
+  for (let pass = 0; pass < 6 && (overflowBottom > 0 || overflowTop > 0); pass++) {
+    const overflow = Math.max(overflowBottom, overflowTop);
+    nextMax = Math.max(minList, idealListH - overflow - 8);
+    list.style.maxHeight = `${Math.floor(nextMax)}px`;
+    if (typeof tip._updatePosition === "function") tip._updatePosition();
+    tr = el.getBoundingClientRect();
+    overflowBottom = tr.bottom - (cr.bottom - padBottom);
+    overflowTop = cr.top + padTop - tr.top;
+  }
+
+  syncMapCountryTooltipSectionListScrollState(list, section, scrollableListClass, scrollableSectionClass);
+}
+
+function syncMapCountryTooltipSectionListScrollState(
+  list,
+  section,
+  scrollableListClass,
+  scrollableSectionClass
+) {
+  if (!list) return;
+  const scrollable = list.scrollHeight > list.clientHeight + 2;
+  list.classList.toggle(scrollableListClass, scrollable);
+  if (section) section.classList.toggle(scrollableSectionClass, scrollable);
+}
+
+/** Cap profile + category lists to two visible rows; scroll for the rest. */
+function fitMapCountryTooltipSectionListsInView(tip, map, options = {}) {
+  const { profileRowCount = 0, categoryRowCount = 0 } = options;
+  const el = tip && typeof tip.getElement === "function" ? tip.getElement() : null;
+  if (!el) return;
+
+  if (el.querySelector(".map-country-tooltip__profile-rows")) {
+    fitMapCountryTooltipSectionListInView(tip, map, {
+      listSelector: ".map-country-tooltip__profile-rows",
+      sectionSelector: ".map-country-tooltip__profiles",
+      scrollableListClass: "map-country-tooltip__profile-rows--scrollable",
+      scrollableSectionClass: "map-country-tooltip__profiles--scrollable",
+      rowCount: profileRowCount,
+      rowPx: MAP_COUNTRY_TOOLTIP_PROFILE_ROW_PX
+    });
+  }
+
+  if (el.querySelector(".map-country-tooltip__category-rows")) {
+    fitMapCountryTooltipSectionListInView(tip, map, {
+      listSelector: ".map-country-tooltip__category-rows",
+      sectionSelector: ".map-country-tooltip__categories",
+      scrollableListClass: "map-country-tooltip__category-rows--scrollable",
+      scrollableSectionClass: "map-country-tooltip__categories--scrollable",
+      rowCount: categoryRowCount,
+      rowPx: MAP_COUNTRY_TOOLTIP_CATEGORY_ROW_PX
+    });
+  }
+
+  bindMapCountryTooltipSectionScrollInteraction(tip);
+}
+
+function isMapCountryTooltipPinned() {
+  return !!mapCountryTooltipPinned;
+}
+
+function setMapCountryTooltipPinned(pinned, layer) {
+  mapCountryTooltipPinned = !!pinned;
+  if (layer) activeMapCountryTooltipLayer = layer;
+  if (mapCountryTooltipCloseTimer) {
+    clearTimeout(mapCountryTooltipCloseTimer);
+    mapCountryTooltipCloseTimer = null;
+  }
+  syncMapCountryTooltipPinnedChrome(mapCountrySharedTooltip);
+}
+
+function syncMapCountryTooltipPinnedChrome(tip) {
+  const el = tip && typeof tip.getElement === "function" ? tip.getElement() : null;
+  const inner = el && el.querySelector(".map-country-tooltip");
+  const pinHint = el && el.querySelector(".map-country-tooltip__pin-hint");
+  if (!el) return;
+
+  const pinned = isMapCountryTooltipPinned();
+  el.classList.toggle("map-country-tooltip-host--pinned", pinned);
+  el.classList.toggle("map-country-tooltip-host--passthrough", !pinned);
+  if (inner) inner.classList.toggle("map-country-tooltip--pinned", pinned);
+  if (pinHint) {
+    pinHint.textContent = pinned ? "Pinned" : "Click to pin";
+    pinHint.classList.toggle("map-country-tooltip__pin-hint--active", pinned);
+  }
+
+  if (pinned) {
+    tip.options.interactive = true;
+    bindMapCountryTooltipPinnedInteraction(tip);
+  } else {
+    tip.options.interactive = false;
+    unbindMapCountryTooltipPinnedInteraction();
+    el.classList.add("map-country-tooltip-host--passthrough");
+  }
+}
+
+function unbindMapCountryTooltipPinnedInteraction() {
+  const tip = mapCountrySharedTooltip;
+  const el = tip && typeof tip.getElement === "function" ? tip.getElement() : null;
+  const card = el && el.querySelector(".map-country-tooltip");
+  if (card && card._mapCountryTooltipPinClick) {
+    card.removeEventListener("click", card._mapCountryTooltipPinClick);
+    card._mapCountryTooltipPinClick = null;
+  }
+}
+
+function bindMapCountryTooltipPinnedInteraction(tip) {
+  const el = tip && typeof tip.getElement === "function" ? tip.getElement() : null;
+  const card = el && el.querySelector(".map-country-tooltip");
+  if (!card) return;
+
+  unbindMapCountryTooltipPinnedInteraction();
+
+  card._mapCountryTooltipPinClick = (e) => {
+    if (e && typeof e.stopPropagation === "function") e.stopPropagation();
+    setMapCountryTooltipPinned(true, activeMapCountryTooltipLayer);
+  };
+  card.addEventListener("click", card._mapCountryTooltipPinClick);
+}
+
+function syncMapCountryTooltipInteractivity(tip) {
+  if (!tip) return;
+  syncMapCountryTooltipPinnedChrome(tip);
+  if (isMapCountryTooltipPinned()) return;
+  const el = typeof tip.getElement === "function" ? tip.getElement() : null;
+  if (!el) return;
+  el.classList.remove("map-country-tooltip-host--interactive");
+  el.classList.add("map-country-tooltip-host--passthrough");
+}
+
+function unbindMapCountryTooltipSectionScrollInteraction() {
+  unbindMapCountryTooltipWheelScroll();
+  const tip = mapCountrySharedTooltip;
+  const el = tip && typeof tip.getElement === "function" ? tip.getElement() : null;
+  if (!el) return;
+
+  el.querySelectorAll(
+    ".map-country-tooltip__profiles--scrollable, .map-country-tooltip__categories--scrollable"
+  ).forEach((section) => {
+    if (!section._mapCountrySectionScrollEnter) return;
+    section.removeEventListener("mouseenter", section._mapCountrySectionScrollEnter);
+    section.removeEventListener("mouseleave", section._mapCountrySectionScrollLeave);
+    section.removeEventListener("wheel", section._mapCountrySectionScrollWheel);
+    section._mapCountrySectionScrollEnter = null;
+    section._mapCountrySectionScrollLeave = null;
+    section._mapCountrySectionScrollWheel = null;
+  });
+}
+
+function getMapCountryTooltipScrollableListForSection(section) {
+  if (!section) return null;
+  if (section.matches(".map-country-tooltip__profiles--scrollable")) {
+    return section.querySelector(".map-country-tooltip__profile-rows--scrollable");
+  }
+  if (section.matches(".map-country-tooltip__categories--scrollable")) {
+    return section.querySelector(".map-country-tooltip__category-rows--scrollable");
+  }
+  return null;
+}
+
+function getMapCountryTooltipScrollableSectionAtPoint(tipEl, clientX, clientY) {
+  if (!tipEl) return null;
+  const sections = tipEl.querySelectorAll(
+    ".map-country-tooltip__profiles--scrollable, .map-country-tooltip__categories--scrollable"
+  );
+  for (let i = 0; i < sections.length; i++) {
+    const section = sections[i];
+    const rect = section.getBoundingClientRect();
+    if (
+      clientX >= rect.left &&
+      clientX <= rect.right &&
+      clientY >= rect.top &&
+      clientY <= rect.bottom
+    ) {
+      return section;
+    }
+  }
+  return null;
+}
+
+/** Enable wheel + pointer scroll on tooltip sections without blocking the rest of the map. */
+function bindMapCountryTooltipSectionScrollInteraction(tip) {
+  const el = tip && typeof tip.getElement === "function" ? tip.getElement() : null;
+  if (!el) return;
+
+  unbindMapCountryTooltipSectionScrollInteraction();
+
+  const card = el.querySelector(".map-country-tooltip");
+  const scrollableSections = el.querySelectorAll(
+    ".map-country-tooltip__profiles--scrollable, .map-country-tooltip__categories--scrollable"
+  );
+  if (!scrollableSections.length && !card) return;
+
+  scrollableSections.forEach((section) => {
+    const list = getMapCountryTooltipScrollableListForSection(section);
+    if (!list) return;
+
+    section._mapCountrySectionScrollEnter = () => {
+      if (mapCountryTooltipCloseTimer) {
+        clearTimeout(mapCountryTooltipCloseTimer);
+        mapCountryTooltipCloseTimer = null;
+      }
+    };
+    section._mapCountrySectionScrollLeave = () => {
+      if (isMapCountryTooltipPinned()) return;
+      scheduleCloseMapCountryTooltip(280);
+    };
+    section._mapCountrySectionScrollWheel = (e) => {
+      if (list.scrollHeight <= list.clientHeight + 2) return;
+      list.scrollTop += e.deltaY;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    section.addEventListener("mouseenter", section._mapCountrySectionScrollEnter);
+    section.addEventListener("mouseleave", section._mapCountrySectionScrollLeave);
+    section.addEventListener("wheel", section._mapCountrySectionScrollWheel, { passive: false });
+  });
+
+  bindMapCountryTooltipWheelScroll(tip);
+}
+
+function unbindMapCountryTooltipWheelScroll() {
+  const map = getRoadmapsLeafletMap();
+  const container = map && typeof map.getContainer === "function" ? map.getContainer() : null;
+  if (container && container._mapCountryTooltipWheel) {
+    container.removeEventListener("wheel", container._mapCountryTooltipWheel);
+    container._mapCountryTooltipWheel = null;
+  }
+}
+
+/** Wheel-scroll profile list while host stays pointer-passthrough (avoids hover flicker). */
+function bindMapCountryTooltipWheelScroll(tip) {
+  const map = getRoadmapsLeafletMap();
+  const container = map && typeof map.getContainer === "function" ? map.getContainer() : null;
+  const el = tip && typeof tip.getElement === "function" ? tip.getElement() : null;
+  if (!container || !el) return;
+
+  unbindMapCountryTooltipWheelScroll();
+
+  const card = el.querySelector(".map-country-tooltip");
+  const hasSections = el.querySelector(".map-country-tooltip__profiles, .map-country-tooltip__categories");
+  if (!hasSections && !card) return;
+
+  container._mapCountryTooltipWheel = (e) => {
+    if (!mapCountrySharedTooltip || !mapCountrySharedTooltip.isOpen || !mapCountrySharedTooltip.isOpen()) {
+      return;
+    }
+    const tipEl = mapCountrySharedTooltip.getElement && mapCountrySharedTooltip.getElement();
+    if (!tipEl) return;
+
+    const cardEl = tipEl.querySelector(".map-country-tooltip");
+    const sectionEl = getMapCountryTooltipScrollableSectionAtPoint(tipEl, e.clientX, e.clientY);
+    const hitTarget = isMapCountryTooltipPinned() ? cardEl : sectionEl || cardEl;
+    const listEl = sectionEl ? getMapCountryTooltipScrollableListForSection(sectionEl) : null;
+    if (!listEl || !hitTarget) return;
+
+    const rect = hitTarget.getBoundingClientRect();
+    if (
+      e.clientX < rect.left ||
+      e.clientX > rect.right ||
+      e.clientY < rect.top ||
+      e.clientY > rect.bottom
+    ) {
+      return;
+    }
+    if (listEl.scrollHeight <= listEl.clientHeight + 2) return;
+    listEl.scrollTop += e.deltaY;
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  container.addEventListener("wheel", container._mapCountryTooltipWheel, { passive: false });
 }
 
 /** Prefer opening below the anchor when there is not enough room above (avoids top clipping). */
@@ -16851,96 +17720,150 @@ function resolveMapCountryTooltipDirection(anchor, map, estimatedHeightPx) {
   const size = map.getSize();
   if (!size) return "top";
 
-  const pad = MAP_COUNTRY_TOOLTIP_VIEWPORT_PAD_PX;
-  const h = Math.max(72, estimatedHeightPx || 108);
+  const pad = MAP_COUNTRY_TOOLTIP_VIEWPORT_PAD_PX + MAP_COUNTRY_TOOLTIP_ARROW_HEIGHT_PX;
+  const h = Math.max(96, estimatedHeightPx || 138);
   const spaceAbove = pt.y;
   const spaceBelow = size.y - pt.y;
 
-  if (spaceAbove < h + pad && spaceBelow >= h + pad) return "bottom";
-  if (spaceBelow < h + pad && spaceAbove >= h + pad) return "top";
-  if (spaceAbove < h + pad && spaceBelow < h + pad) {
-    return spaceBelow >= spaceAbove ? "bottom" : "top";
-  }
-  return spaceAbove >= h + pad ? "top" : "bottom";
+  if (spaceAbove < h + pad) return "bottom";
+  if (spaceBelow < h + pad) return "top";
+  return spaceAbove >= spaceBelow ? "top" : "bottom";
 }
 
 function resetMapCountryTooltipOffset(tip) {
   if (!tip) return;
-  tip.options.offset = typeof L !== "undefined" ? L.point(0, 0) : { x: 0, y: 0 };
+  tip.options.offset =
+    typeof L !== "undefined"
+      ? L.point(0, MAP_COUNTRY_TOOLTIP_ARROW_GAP_PX)
+      : { x: 0, y: MAP_COUNTRY_TOOLTIP_ARROW_GAP_PX };
 }
 
-/** Apply screen-space nudge using Leaflet's direction-specific offset semantics. */
+/** Screen-space nudge — offset.x/y always move right/down in Leaflet tooltips. */
 function nudgeMapCountryTooltipOffset(tip, shiftX, shiftY) {
   if (!tip || (shiftX === 0 && shiftY === 0)) return;
   const base = tip.options.offset || (typeof L !== "undefined" ? L.point(0, 0) : { x: 0, y: 0 });
-  const dir = tip.options.direction || "top";
-  let dx = base.x || 0;
-  let dy = base.y || 0;
-
-  if (dir === "top") {
-    dx += shiftX;
-    dy -= shiftY;
-  } else if (dir === "bottom") {
-    dx += shiftX;
-    dy += shiftY;
-  } else if (dir === "left") {
-    dx -= shiftX;
-    dy += shiftY;
-  } else if (dir === "right") {
-    dx += shiftX;
-    dy += shiftY;
-  }
-
+  const dx = (base.x || 0) + shiftX;
+  const dy = (base.y || 0) + shiftY;
   tip.options.offset = typeof L !== "undefined" ? L.point(dx, dy) : { x: dx, y: dy };
 }
 
 /** Nudge tooltip inside the map container after layout (container uses overflow: hidden). */
-function clampMapCountryTooltipInView(tip, map, maxPasses = 5) {
+function clampMapCountryTooltipInView(tip, map, maxPasses = 8) {
   const el = tip && typeof tip.getElement === "function" ? tip.getElement() : null;
   const container = map && typeof map.getContainer === "function" ? map.getContainer() : null;
   if (!el || !container || typeof tip._updatePosition !== "function") return;
 
-  const pad = MAP_COUNTRY_TOOLTIP_VIEWPORT_PAD_PX;
+  const padTop = getMapCountryTooltipEdgePad(tip);
+  const padBottom = MAP_COUNTRY_TOOLTIP_VIEWPORT_PAD_PX + MAP_COUNTRY_TOOLTIP_ARROW_HEIGHT_PX;
+  const padX = MAP_COUNTRY_TOOLTIP_VIEWPORT_PAD_PX;
   const cr = container.getBoundingClientRect();
+  let directionFlipped = false;
 
   for (let pass = 0; pass < maxPasses; pass++) {
+    tip._updatePosition();
     const tr = el.getBoundingClientRect();
     let shiftX = 0;
     let shiftY = 0;
 
-    if (tr.top < cr.top + pad) {
-      if (tip.options.direction !== "bottom") {
-        tip.options.direction = "bottom";
-        resetMapCountryTooltipOffset(tip);
-        tip._updatePosition();
-        continue;
-      }
-      shiftY = cr.top + pad - tr.top;
-    } else if (tr.bottom > cr.bottom - pad) {
-      if (tip.options.direction !== "top") {
-        tip.options.direction = "top";
-        resetMapCountryTooltipOffset(tip);
-        tip._updatePosition();
-        continue;
-      }
-      shiftY = cr.bottom - pad - tr.bottom;
+    const overflowTop = tr.top < cr.top + padTop;
+    const overflowBottom = tr.bottom > cr.bottom - padBottom;
+
+    if (overflowTop && tip.options.direction === "top" && !directionFlipped) {
+      tip.options.direction = "bottom";
+      resetMapCountryTooltipOffset(tip);
+      directionFlipped = true;
+      continue;
+    }
+    if (overflowBottom && tip.options.direction === "bottom" && !directionFlipped) {
+      tip.options.direction = "top";
+      resetMapCountryTooltipOffset(tip);
+      directionFlipped = true;
+      continue;
     }
 
-    if (tr.left < cr.left + pad) shiftX = cr.left + pad - tr.left;
-    else if (tr.right > cr.right - pad) shiftX = cr.right - pad - tr.right;
+    if (overflowTop) {
+      shiftY = cr.top + padTop - tr.top;
+    } else if (overflowBottom) {
+      shiftY = cr.bottom - padBottom - tr.bottom;
+    }
+
+    if (tr.left < cr.left + padX) shiftX = cr.left + padX - tr.left;
+    else if (tr.right > cr.right - padX) shiftX = cr.right - padX - tr.right;
 
     if (shiftX === 0 && shiftY === 0) return;
 
     nudgeMapCountryTooltipOffset(tip, shiftX, shiftY);
-    tip._updatePosition();
   }
 }
 
-function scheduleClampMapCountryTooltipInView(tip, map) {
+/** Fade the inner tooltip card in after Leaflet positions the host (first show only). */
+function animateMapCountryTooltipIn(tip, { force = false } = {}) {
+  const el = tip && typeof tip.getElement === "function" ? tip.getElement() : null;
+  const inner = el && el.querySelector(".map-country-tooltip");
+  if (!inner) return;
+  if (!force && inner.classList.contains("map-country-tooltip--visible")) return;
+
+  const dir = (tip && tip.options && tip.options.direction) || "top";
+  inner.classList.remove(
+    "map-country-tooltip--visible",
+    "map-country-tooltip--from-top",
+    "map-country-tooltip--from-bottom"
+  );
+  inner.classList.add(dir === "bottom" ? "map-country-tooltip--from-bottom" : "map-country-tooltip--from-top");
+  void inner.offsetWidth;
+  inner.classList.add("map-country-tooltip--visible");
+}
+
+function scheduleClampMapCountryTooltipInView(tip, map, sectionOptions = {}, { animate = true } = {}) {
   if (!tip || !map) return;
+  const options =
+    typeof sectionOptions === "number"
+      ? { profileRowCount: sectionOptions }
+      : sectionOptions || {};
+  const { profileRowCount = 0, categoryRowCount = 0 } = options;
+  const layoutToken = ++mapCountryTooltipLayoutToken;
   const run = () => {
+    if (layoutToken !== mapCountryTooltipLayoutToken) return;
+
+    const el = tip.getElement && tip.getElement();
+    const inner = el && el.querySelector(".map-country-tooltip");
+    if (animate && inner) inner.classList.remove("map-country-tooltip--visible");
+
     clampMapCountryTooltipInView(tip, map);
-    fitMapCountryTooltipProfileListInView(tip, map);
+    fitMapCountryTooltipSectionListsInView(tip, map, { profileRowCount, categoryRowCount });
+    clampMapCountryTooltipInView(tip, map);
+
+    if (animate) {
+      animateMapCountryTooltipIn(tip, { force: true });
+    } else if (inner) {
+      inner.classList.add("map-country-tooltip--visible");
+    }
+
+    if (typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(() => {
+        if (layoutToken !== mapCountryTooltipLayoutToken) return;
+        clampMapCountryTooltipInView(tip, map, 4);
+        fitMapCountryTooltipSectionListsInView(tip, map, { profileRowCount, categoryRowCount });
+        const profileList = el && el.querySelector(".map-country-tooltip__profile-rows");
+        const profileSection = el && el.querySelector(".map-country-tooltip__profiles");
+        const categoryList = el && el.querySelector(".map-country-tooltip__category-rows");
+        const categorySection = el && el.querySelector(".map-country-tooltip__categories");
+        syncMapCountryTooltipSectionListScrollState(
+          profileList,
+          profileSection,
+          "map-country-tooltip__profile-rows--scrollable",
+          "map-country-tooltip__profiles--scrollable"
+        );
+        syncMapCountryTooltipSectionListScrollState(
+          categoryList,
+          categorySection,
+          "map-country-tooltip__category-rows--scrollable",
+          "map-country-tooltip__categories--scrollable"
+        );
+        bindMapCountryTooltipSectionScrollInteraction(tip);
+        syncMapCountryTooltipPinnedChrome(tip);
+      });
+    }
   };
   if (typeof requestAnimationFrame === "function") {
     requestAnimationFrame(() => requestAnimationFrame(run));
@@ -16951,6 +17874,10 @@ function scheduleClampMapCountryTooltipInView(tip, map) {
 
 /** Close the map country tooltip (single-tooltip policy). */
 function closeAllMapCountryTooltips() {
+  mapCountryTooltipLayoutToken += 1;
+  mapCountryTooltipPinned = false;
+  unbindMapCountryTooltipSectionScrollInteraction();
+  unbindMapCountryTooltipPinnedInteraction();
   if (mapCountryTooltipCloseTimer) {
     clearTimeout(mapCountryTooltipCloseTimer);
     mapCountryTooltipCloseTimer = null;
@@ -16966,23 +17893,17 @@ function closeAllMapCountryTooltips() {
       mapCountrySharedTooltip.remove();
     }
     resetMapCountryTooltipOffset(mapCountrySharedTooltip);
+    mapCountrySharedTooltip.options.offset =
+      typeof L !== "undefined" ? L.point(0, 0) : { x: 0, y: 0 };
     mapCountrySharedTooltip.options.direction = "top";
+    syncMapCountryTooltipInteractivity(mapCountrySharedTooltip);
   }
   activeMapCountryTooltipLayer = null;
   clearMapCountryHoverHighlight();
 }
 
-/** Reliable anchor for country tooltips (cursor > Natural Earth label > valid bounds center). */
+/** Stable anchor for country tooltips (label > bounds center > cursor fallback). */
 function getMapCountryTooltipLatLng(layer, eventLatLng, map) {
-  if (
-    eventLatLng &&
-    Number.isFinite(eventLatLng.lat) &&
-    Number.isFinite(eventLatLng.lng) &&
-    Math.abs(eventLatLng.lat) <= 90
-  ) {
-    return eventLatLng;
-  }
-
   const props = layer && layer.feature && layer.feature.properties;
   if (props) {
     const labelY = Number(props.LABEL_Y);
@@ -17008,6 +17929,15 @@ function getMapCountryTooltipLatLng(layer, eventLatLng, map) {
     }
   }
 
+  if (
+    eventLatLng &&
+    Number.isFinite(eventLatLng.lat) &&
+    Number.isFinite(eventLatLng.lng) &&
+    Math.abs(eventLatLng.lat) <= 90
+  ) {
+    return eventLatLng;
+  }
+
   return map && typeof map.getCenter === "function" ? map.getCenter() : L.latLng(20, 0);
 }
 
@@ -17026,25 +17956,60 @@ function setMapCountryHoverHighlight(layer) {
   activeMapCountryHoverLayer = layer;
 }
 
-function openMapCountryTooltip(layer, eventLatLng) {
+function openMapCountryTooltip(layer, eventLatLng, options = {}) {
+  const { pinned = false, force = false } = options;
   const map = getRoadmapsLeafletMap();
   if (!layer || !map) return;
+
+  if (mapCountryTooltipCloseTimer) {
+    clearTimeout(mapCountryTooltipCloseTimer);
+    mapCountryTooltipCloseTimer = null;
+  }
+
+  const tip = ensureMapCountrySharedTooltip();
+  if (!tip) return;
+
+  const isSameLayer = activeMapCountryTooltipLayer === layer;
+  const isOpen = mapCountrySharedTooltip && mapCountrySharedTooltip.isOpen && mapCountrySharedTooltip.isOpen();
+  if (isSameLayer && isOpen && !force && !pinned) return;
 
   const html = buildMapCountryTooltipHtmlForLayer(layer);
   if (!html) return;
 
   const anchor = getMapCountryTooltipLatLng(layer, eventLatLng, map);
-  const tip = ensureMapCountrySharedTooltip();
-  if (!tip) return;
 
-  if (mapCountrySharedTooltip && mapCountrySharedTooltip.isOpen && mapCountrySharedTooltip.isOpen()) {
+  if (isOpen && (!isSameLayer || force || pinned)) {
     mapCountrySharedTooltip.remove();
   }
 
   const host = elements.roadmapsMapContainer;
   const layerData = host && host._mapCountryLayerData;
   const hasProfileBreakdown = Boolean(layerData && layerData.showProfileBreakdown);
-  const estHeight = estimateMapCountryTooltipHeightPx(hasProfileBreakdown, 4);
+
+  let profileRowCount = 0;
+  let categoryRowCount = 0;
+  const hasCategoryBreakdown = Boolean(
+    layerData && isMapMetricCategorical(layerData.metric) && layerData.tallyByCode
+  );
+  const stats = getMapCountryStatsForLayer(layer, layerData.countByCode, layerData.valueByCode);
+  const countryCode = stats.code || (layer._mapCountryTooltipMeta && layer._mapCountryTooltipMeta.countryCode);
+
+  if (hasProfileBreakdown && layerData.roadmapsByCountryCode && countryCode) {
+    const roadmapsInCountry = layerData.roadmapsByCountryCode[countryCode] || [];
+    profileRowCount = getMapCountryProfileBreakdown(countryCode, layerData.metric, roadmapsInCountry).length;
+  }
+
+  if (hasCategoryBreakdown && countryCode) {
+    const countryTally = layerData.tallyByCode[countryCode];
+    categoryRowCount = getMapCountryCategoryBreakdown(countryCode, layerData.metric, countryTally).length;
+  }
+
+  const estHeight = estimateMapCountryTooltipHeightPx(
+    hasProfileBreakdown,
+    profileRowCount || 1,
+    hasCategoryBreakdown,
+    categoryRowCount || 1
+  );
 
   resetMapCountryTooltipOffset(tip);
   tip.options.direction = resolveMapCountryTooltipDirection(anchor, map, estHeight);
@@ -17052,17 +18017,30 @@ function openMapCountryTooltip(layer, eventLatLng) {
   tip.setContent(html);
   tip.setLatLng(anchor);
   tip.openOn(map);
-  scheduleClampMapCountryTooltipInView(tip, map);
   activeMapCountryTooltipLayer = layer;
+
+  if (pinned) {
+    setMapCountryTooltipPinned(true, layer);
+  } else {
+    syncMapCountryTooltipInteractivity(tip);
+  }
+
+  scheduleClampMapCountryTooltipInView(
+    tip,
+    map,
+    { profileRowCount, categoryRowCount },
+    { animate: !isSameLayer || force || pinned }
+  );
 }
 
 function scheduleCloseMapCountryTooltip(delayMs) {
+  if (isMapCountryTooltipPinned()) return;
   if (mapCountryTooltipCloseTimer) clearTimeout(mapCountryTooltipCloseTimer);
   mapCountryTooltipCloseTimer = setTimeout(() => {
     mapCountryTooltipCloseTimer = null;
     closeAllMapCountryTooltips();
     clearMapCountryHoverHighlight();
-  }, typeof delayMs === "number" ? delayMs : 100);
+  }, typeof delayMs === "number" ? delayMs : 220);
 }
 
 /** Store country metadata on the layer; tooltip HTML is built on hover from live map data. */
@@ -17083,13 +18061,76 @@ function attachMapCountryLayerHover(layer, geoLayer) {
         mapCountryTooltipCloseTimer = null;
       }
       const target = e.target;
-      setMapCountryHoverHighlight(target);
+      if (isMapCountryTooltipPinned()) {
+        if (activeMapCountryTooltipLayer === target) {
+          setMapCountryHoverHighlight(target);
+        }
+        return;
+      }
+      if (activeMapCountryHoverLayer !== target) {
+        setMapCountryHoverHighlight(target);
+      }
       openMapCountryTooltip(target, e.latlng);
     },
-    mouseout: () => {
-      scheduleCloseMapCountryTooltip(100);
+    mouseout: (e) => {
+      if (isMapCountryTooltipPinned()) return;
+      const related = e.originalEvent && e.originalEvent.relatedTarget;
+      if (related && e.target.getElement && e.target.getElement() === related) return;
+      scheduleCloseMapCountryTooltip(220);
+    },
+    click: (e) => {
+      if (typeof L !== "undefined" && L.DomEvent && typeof L.DomEvent.stopPropagation === "function") {
+        L.DomEvent.stopPropagation(e);
+      }
+      const target = e.target;
+      const isOpen =
+        mapCountrySharedTooltip &&
+        mapCountrySharedTooltip.isOpen &&
+        mapCountrySharedTooltip.isOpen();
+      if (isMapCountryTooltipPinned() && activeMapCountryTooltipLayer === target && isOpen) {
+        return;
+      }
+      setMapCountryHoverHighlight(target);
+      openMapCountryTooltip(target, e.latlng, { pinned: true, force: true });
     }
   });
+}
+
+function handleMapCountryTooltipOutsideClick(e) {
+  const originalEvent = e && e.originalEvent;
+  const target = originalEvent && originalEvent.target;
+  const clientX = originalEvent && originalEvent.clientX;
+  const clientY = originalEvent && originalEvent.clientY;
+  const tipEl =
+    mapCountrySharedTooltip &&
+    typeof mapCountrySharedTooltip.getElement === "function" &&
+    mapCountrySharedTooltip.getElement();
+  const tipOpen =
+    mapCountrySharedTooltip &&
+    mapCountrySharedTooltip.isOpen &&
+    mapCountrySharedTooltip.isOpen();
+
+  if (tipEl && tipOpen) {
+    if (target && tipEl.contains(target)) {
+      setMapCountryTooltipPinned(true, activeMapCountryTooltipLayer);
+      return;
+    }
+    if (Number.isFinite(clientX) && Number.isFinite(clientY)) {
+      const rect = tipEl.getBoundingClientRect();
+      if (
+        clientX >= rect.left &&
+        clientX <= rect.right &&
+        clientY >= rect.top &&
+        clientY <= rect.bottom
+      ) {
+        setMapCountryTooltipPinned(true, activeMapCountryTooltipLayer);
+        return;
+      }
+    }
+  }
+
+  closeAllMapCountryTooltips();
+  clearMapCountryHoverHighlight();
 }
 
 function ensureMapCountryTooltipMapListeners(map) {
@@ -17098,15 +18139,14 @@ function ensureMapCountryTooltipMapListeners(map) {
   if (host._mapCountryTooltipListenersBound) return;
   host._mapCountryTooltipListenersBound = true;
 
-  const onMapLeave = () => {
+  const onMapDismiss = () => {
     closeAllMapCountryTooltips();
     clearMapCountryHoverHighlight();
   };
 
-  map.on("click", onMapLeave);
-  map.on("zoomstart", onMapLeave);
-  map.on("movestart", onMapLeave);
-  map.on("mouseout", onMapLeave);
+  map.on("click", handleMapCountryTooltipOutsideClick);
+  map.on("zoomstart", onMapDismiss);
+  map.on("movestart", onMapDismiss);
 }
 
 /** Get 2-letter country code for a GeoJSON feature for matching to countByCode.
@@ -17430,7 +18470,10 @@ function renderRoadmapsMap() {
     return "€" + short;
   }
 
-  function renderMapWithValueByCode(valueByCode) {
+  function renderMapWithValueByCode(renderContext) {
+    const valueByCode = renderContext.valueByCode || renderContext;
+    const majorityByCode = renderContext.majorityByCode || null;
+    const categorical = Boolean(renderContext.categorical);
     const values = Object.values(valueByCode);
     const maxValue = values.length ? Math.max(...values) : 0;
     const totalRoadmapHits = Object.values(countByCode).reduce((a, b) => a + b, 0);
@@ -17438,7 +18481,11 @@ function renderRoadmapsMap() {
 
     if (elements.roadmapsMapLegend) {
       const metric = getCurrentMapMetric();
-      if (metric === "rice") {
+      elements.roadmapsMapLegend.classList.toggle("roadmaps-map-legend--categorical", categorical);
+
+      if (categorical) {
+        elements.roadmapsMapLegend.innerHTML = renderMapCategoricalLegendHtml(metric, numCountries, totalRoadmapHits);
+      } else if (metric === "rice") {
         const totalRice = Object.values(valueByCode).reduce((a, b) => a + b, 0);
         elements.roadmapsMapLegend.textContent = totalRice > 0
           ? `RICE score per country (sum) — total RICE ${typeof formatRice === "function" ? formatRice(totalRice) : totalRice} across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"}`
@@ -17458,6 +18505,16 @@ function renderRoadmapsMap() {
         elements.roadmapsMapLegend.textContent = meanEur > 0
           ? `Average financial impact (EUR) per country — ${formatEur(meanEur)} mean across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"} (rates refreshed daily)`
           : "Average financial impact (EUR) per country. Add countries and financial impact to roadmaps to see values on the map.";
+      } else if (metric === "businessLeads") {
+        const countriesWithLeads = Object.keys(valueByCode).filter((code) => (valueByCode[code] || 0) > 0).length;
+        elements.roadmapsMapLegend.textContent = countriesWithLeads > 0
+          ? `Unique business leads per country — ${countriesWithLeads} countr${countriesWithLeads !== 1 ? "ies" : "y"} with business RACI actors (${uniqueRoadmapCount} roadmap${uniqueRoadmapCount !== 1 ? "s" : ""} in scope)`
+          : "Unique business leads per country. Add business RACI actors to roadmaps to see them on the map.";
+      } else if (metric === "techLeads") {
+        const countriesWithLeads = Object.keys(valueByCode).filter((code) => (valueByCode[code] || 0) > 0).length;
+        elements.roadmapsMapLegend.textContent = countriesWithLeads > 0
+          ? `Unique tech leads per country — ${countriesWithLeads} countr${countriesWithLeads !== 1 ? "ies" : "y"} with tech RACI actors (${uniqueRoadmapCount} roadmap${uniqueRoadmapCount !== 1 ? "s" : ""} in scope)`
+          : "Unique tech leads per country. Add tech RACI actors to roadmaps to see them on the map.";
       } else {
         elements.roadmapsMapLegend.textContent = totalRoadmapHits > 0
           ? `Roadmaps per country — ${uniqueRoadmapCount} roadmap${uniqueRoadmapCount !== 1 ? "s" : ""} in scope, ${totalRoadmapHits} country assignment${totalRoadmapHits !== 1 ? "s" : ""} across ${numCountries} countr${numCountries !== 1 ? "ies" : "y"}`
@@ -17470,6 +18527,9 @@ function renderRoadmapsMap() {
     host._mapCountryLayerData = {
       countByCode,
       valueByCode,
+      majorityByCode,
+      tallyByCode: renderContext.tallyByCode || null,
+      categorical,
       metric: getCurrentMapMetric(),
       uniqueRoadmapCount,
       showProfileBreakdown: workspaceWide,
@@ -17505,8 +18565,15 @@ function renderRoadmapsMap() {
     function style(feature) {
       const code = getCountryCodeFromFeature(feature);
       const value = code ? (valueByCode[code] || 0) : 0;
+      let fillColor;
+      if (categorical) {
+        const majorityKey = code && majorityByCode ? majorityByCode[code] : null;
+        fillColor = value > 0 && majorityKey ? getMapCategoryColor(metric, majorityKey) : "#e0e0e0";
+      } else {
+        fillColor = getColor(value);
+      }
       return {
-        fillColor: getColor(value),
+        fillColor,
         weight: 1,
         opacity: 1,
         color: "#fff",
@@ -17558,18 +18625,18 @@ function renderRoadmapsMap() {
     if (elements.roadmapsMapLegend) elements.roadmapsMapLegend.textContent = "Loading exchange rates…";
     ExchangeRates.ensure()
       .then(() => {
-        renderMapWithValueByCode(getMapMetricValuesByCode(metric));
+        renderMapWithValueByCode(getMapMetricRenderContext(metric));
       })
       .catch(() => {
         if (elements.roadmapsMapLegend) {
           elements.roadmapsMapLegend.textContent = "Exchange rates unavailable; showing amounts in EUR only where applicable.";
         }
-        renderMapWithValueByCode(getMapMetricValuesByCode(metric));
+        renderMapWithValueByCode(getMapMetricRenderContext(metric));
       });
     return;
   }
 
-  renderMapWithValueByCode(getMapMetricValuesByCode(metric));
+  renderMapWithValueByCode(getMapMetricRenderContext(metric));
   if (state.roadmapsView === "map") {
     requestAnimationFrame(() => invalidateMapSizeAfterFullscreenExit());
   }
@@ -23253,6 +24320,13 @@ function deleteProfile(profileId) {
       const runDelete = () => {
         const idx = state.profiles.findIndex((p) => p.id === id);
         if (idx !== -1) {
+          const targetProfile = state.profiles[idx];
+          if (Array.isArray(targetProfile.roadmaps)) {
+            targetProfile.roadmaps.forEach((roadmap) => {
+              if (roadmap && roadmap.id) recordWorkspaceTombstone("roadmap", roadmap.id);
+            });
+          }
+          recordWorkspaceTombstone("profile", id);
           state.profiles.splice(idx, 1);
           markProfileLocked(id);
           if (state.profiles.length === 0) {

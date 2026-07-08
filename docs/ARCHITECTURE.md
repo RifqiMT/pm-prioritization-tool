@@ -4,8 +4,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last audited** | 2026-05-28 |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui197` |
+| **Last audited** | 2026-07-08 |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260708-ui198` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -48,7 +48,8 @@ The UI is a **static SPA** (`index.html` + `src/`). On Vercel, **serverless rout
 | `src/modules/exchange-rates.js` | Fetch/cache FX to EUR |
 | `src/modules/fullscreen.js` | Fullscreen API; compact media query uses `COMPACT_LAYOUT_MAX_WIDTH_PX` |
 | `src/modules/overlay-manager.js` | Single-popup coordination (modals, sheets, menus) |
-| `src/modules/storage.js` | MongoDB vs local persistence, debounced sync, flush on roadmap save, pull guard |
+| `src/modules/workspace-merge.js` | Concurrent cloud merge: union profiles/roadmaps, tombstones (`WorkspaceMerge`) |
+| `src/modules/storage.js` | MongoDB vs local persistence, debounced sync, pre-save merge, flush on roadmap save, pull guard |
 | `src/modules/description-format.js` | Sanitize/render description HTML |
 | `src/modules/rich-text-editor.js` | RichTextEditor mount for description fields |
 | `src/modules/board-drag.js` | Board drag-and-drop visuals |
@@ -284,15 +285,20 @@ Five Why is **view-only**, shares BYOK keys with LLM Summary, and stores output 
 ```mermaid
 sequenceDiagram
   participant App as app.js
+  participant Merge as workspace-merge.js
   participant Mod as storage.js
   participant API as /api/state
   participant DB as MongoDB
 
-  App->>Mod: saveState(payload)
+  App->>Mod: saveState(payload + tombstones)
   Mod->>Mod: write localStorage immediately
+  Mod->>API: GET remote (pre-save)
+  API->>DB: fetch workspace doc
+  Mod->>Merge: mergeWorkspacePayloads(local, remote)
+  Merge-->>Mod: merged payload
   Mod->>API: debounced PUT
   API->>DB: upsert workspace doc
-  Note over App,DB: On load: GET merges into local cache if newer
+  Note over App,DB: On load: GET + merge; applyTombstones filters deleted ids
 ```
 
 - **Local-first:** UI reads/writes `localStorage` key `rice_prioritizer_v1`.
@@ -347,7 +353,7 @@ flowchart TD
 
 ## 16. Known architectural constraints
 
-- Monolithic `app.js` (~24k lines) — acceptable for static app; split only with clear module boundaries if growth continues.
+- Monolithic `app.js` (~25k lines) — acceptable for static app; split only with clear module boundaries if growth continues.
 - Global namespace — naming collisions require discipline.
 - Full re-render on state change — optimize only if measured pain at scale.
 

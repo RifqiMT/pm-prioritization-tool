@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Maintainer** | Product Team |
-| **Last audited** | 2026-05-28 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui197` |
+| **Last audited** | 2026-07-08 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260708-ui198` |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
 
 This folder is the **single source of product truth** for engineering, design, product management, and stakeholders (**17 documents** + root [README.md](../README.md) = **18-file suite**). Documents are maintained against the **current** implementation in `index.html`, `css/`, `src/`, and `api/`.
@@ -67,7 +67,7 @@ This folder is the **single source of product truth** for engineering, design, p
 
 ---
 
-## Source code map (audited 2026-05-28)
+## Source code map (audited 2026-07-08)
 
 ```
 pm-prioritization-tool/
@@ -96,6 +96,7 @@ pm-prioritization-tool/
 │   ├── utils.js                    # Format, CSV, IDs, legacy field strip
 │   ├── dev-seed-workspace.js       # Localhost sample data (gated in app.js)
 │   └── modules/
+│       ├── workspace-merge.js      # Concurrent cloud merge + tombstones
 │       ├── storage.js              # localStorage + MongoDB sync
 │       ├── profile-security.js     # PBKDF2 profile passwords
 │       ├── exchange-rates.js       # FX to EUR
@@ -138,8 +139,9 @@ pm-prioritization-tool/
 │   ├── test-roadmap-5why-framework.js # npm run test:5why
 │   ├── test-export-payload.js      # npm run test:export
 │   ├── test-roadmap-periods.js     # npm run test:periods
-│   └── test-gantt-view.js          # npm run test:gantt
-│   └── test-share-link.js          # npm run test:share
+│   ├── test-gantt-view.js          # npm run test:gantt
+│   ├── test-share-link.js          # npm run test:share
+│   ├── test-workspace-merge.js     # npm run test:workspace-merge
 │   └── disable-vercel-deployment-protection.sh
 ├── .github/workflows/              # ci.yml, vercel-production.yml, fix-vercel-protection.yml
 ├── docs/                           # This documentation suite

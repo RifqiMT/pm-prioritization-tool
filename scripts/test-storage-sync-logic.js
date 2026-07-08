@@ -2,6 +2,7 @@
  * Lightweight checks for cloud load conflict resolution (no test runner required).
  */
 const assert = require("assert");
+const WorkspaceMerge = require("../src/modules/workspace-merge.js");
 
 function isEmptyPayload(payload) {
   if (!payload || typeof payload !== "object") return true;
@@ -9,177 +10,89 @@ function isEmptyPayload(payload) {
   return payload.profiles.length === 0;
 }
 
-function getPayloadUpdatedAtMs(payload, fallbackIso) {
-  const meta =
-    payload && payload._storageMeta && typeof payload._storageMeta === "object"
-      ? payload._storageMeta
-      : null;
-  if (meta && meta.updatedAt) {
-    const parsed = Date.parse(meta.updatedAt);
-    if (!Number.isNaN(parsed)) return parsed;
-  }
-  if (fallbackIso) {
-    const parsed = Date.parse(fallbackIso);
-    if (!Number.isNaN(parsed)) return parsed;
-  }
-  return 0;
-}
-
 function countProfiles(payload) {
-  if (!payload || !Array.isArray(payload.profiles)) return 0;
-  return payload.profiles.length;
+  return WorkspaceMerge.countProfiles(payload);
 }
 
 function countRoadmaps(payload) {
-  if (!payload || !Array.isArray(payload.profiles)) return 0;
-  return payload.profiles.reduce((total, profile) => {
-    const len = profile && Array.isArray(profile.roadmaps) ? profile.roadmaps.length : 0;
-    return total + len;
-  }, 0);
+  return WorkspaceMerge.countRoadmaps(payload);
 }
 
-function resolvePayloadForLoad(remoteBody, localPayload, localMeta) {
+function resolvePayloadForLoad(remoteBody, localPayload) {
   const remotePayload =
     remoteBody && remoteBody.payload ? remoteBody.payload : null;
   const remoteDocAt = remoteBody && remoteBody.updatedAt ? remoteBody.updatedAt : null;
-  const remoteAt = getPayloadUpdatedAtMs(remotePayload, remoteDocAt);
-  const remoteDocMs = remoteDocAt ? Date.parse(remoteDocAt) || remoteAt : remoteAt;
-  const lastLocalMs = localMeta.lastLocalModifiedAt
-    ? Date.parse(localMeta.lastLocalModifiedAt) || 0
-    : getPayloadUpdatedAtMs(localPayload, null);
-  const lastRemoteMs = localMeta.lastRemoteAppliedAt
-    ? Date.parse(localMeta.lastRemoteAppliedAt) || 0
-    : 0;
-  const remoteCount = countProfiles(remotePayload);
-  const localCount = countProfiles(localPayload);
-  const remoteRoadmaps = countRoadmaps(remotePayload);
-  const localRoadmaps = countRoadmaps(localPayload);
-
   const remoteEmpty = isEmptyPayload(remotePayload);
   const localEmpty = isEmptyPayload(localPayload);
 
   if (!remoteEmpty && !localEmpty) {
-    if (localRoadmaps > remoteRoadmaps) {
-      return { source: "local", pushToCloud: true };
-    }
-    if (remoteRoadmaps > localRoadmaps && remoteCount >= localCount) {
-      return { source: "remote", pushToCloud: false };
-    }
-    if (remoteCount > localCount) {
-      return { source: "remote", pushToCloud: false };
-    }
-    if (localCount > remoteCount && lastLocalMs > remoteDocMs) {
-      return { source: "local", pushToCloud: true };
-    }
-    if (!lastRemoteMs || remoteDocMs >= lastRemoteMs) {
-      return { source: "remote", pushToCloud: false };
-    }
-    if (lastLocalMs > remoteDocMs && lastLocalMs > lastRemoteMs) {
-      return { source: "local", pushToCloud: true };
-    }
-    return { source: "remote", pushToCloud: false };
+    const mergedPayload = WorkspaceMerge.mergeWorkspacePayloads(localPayload, remotePayload);
+    const mergedProfiles = countProfiles(mergedPayload);
+    const mergedRoadmaps = countRoadmaps(mergedPayload);
+    const remoteCount = countProfiles(remotePayload);
+    const localCount = countProfiles(localPayload);
+    const remoteRoadmaps = countRoadmaps(remotePayload);
+    const localRoadmaps = countRoadmaps(localPayload);
+    const differsFromRemote =
+      mergedProfiles !== remoteCount || mergedRoadmaps !== remoteRoadmaps;
+    const differsFromLocal =
+      mergedProfiles !== localCount || mergedRoadmaps !== localRoadmaps;
+
+    return {
+      source: differsFromLocal && differsFromRemote ? "merged" : differsFromRemote ? "merged" : "local",
+      pushToCloud: differsFromRemote || differsFromLocal,
+      mergedProfiles,
+      mergedRoadmaps
+    };
   }
   if (!remoteEmpty) return { source: "remote", pushToCloud: false };
   if (!localEmpty) return { source: "local", pushToCloud: true };
   return { source: "none", pushToCloud: false };
 }
 
-const remoteNewer = resolvePayloadForLoad(
+const bothSides = resolvePayloadForLoad(
   {
     payload: {
-      profiles: [{ id: "r1", name: "Remote", roadmaps: [] }],
+      profiles: [{ id: "r1", name: "Remote", roadmaps: [{ id: "p-remote", modifiedAt: "2026-06-02T00:00:00.000Z" }] }],
       _storageMeta: { updatedAt: "2026-05-26T16:00:00.000Z" }
     },
-    updatedAt: "2026-05-26T16:00:00.000Z"
+    updatedAt: "2026-05-26T16:00:00.000Z",
+    revision: 3
   },
   {
-    profiles: [{ id: "l1", name: "Local", roadmaps: [] }],
+    profiles: [{ id: "l1", name: "Local", roadmaps: [{ id: "p-local", modifiedAt: "2026-06-01T00:00:00.000Z" }] }],
     _storageMeta: { updatedAt: "2026-05-26T10:00:00.000Z" }
-  },
-  {}
-);
-assert.strictEqual(remoteNewer.source, "remote");
-assert.strictEqual(remoteNewer.pushToCloud, false);
-
-const localNewer = resolvePayloadForLoad(
-  {
-    payload: {
-      profiles: [
-        { id: "r1", name: "Remote", roadmaps: [] },
-        { id: "r2", name: "Remote 2", roadmaps: [] }
-      ],
-      _storageMeta: { updatedAt: "2026-05-26T10:00:00.000Z" }
-    },
-    updatedAt: "2026-05-26T10:00:00.000Z"
-  },
-  {
-    profiles: [
-      { id: "l1", name: "Local", roadmaps: [] },
-      { id: "l2", roadmaps: [] },
-      { id: "l3", roadmaps: [] }
-    ],
-    _storageMeta: { updatedAt: "2026-05-26T18:00:00.000Z" }
-  },
-  {
-    lastLocalModifiedAt: "2026-05-26T18:00:00.000Z",
-    lastRemoteAppliedAt: "2026-05-26T09:00:00.000Z"
   }
 );
-assert.strictEqual(localNewer.source, "local");
-assert.strictEqual(localNewer.pushToCloud, true);
+assert.strictEqual(bothSides.source, "merged");
+assert.strictEqual(bothSides.mergedProfiles, 2);
+assert.strictEqual(bothSides.mergedRoadmaps, 2);
+assert.strictEqual(bothSides.pushToCloud, true);
 
 const migrateLocal = resolvePayloadForLoad({ payload: null, updatedAt: null }, {
   profiles: [{ id: "l1", name: "Local", roadmaps: [] }]
-}, {});
+});
 assert.strictEqual(migrateLocal.source, "local");
 assert.strictEqual(migrateLocal.pushToCloud, true);
 
-const remoteRicher = resolvePayloadForLoad(
+const remoteOnly = resolvePayloadForLoad(
   {
     payload: {
       profiles: [
         { id: "r1", roadmaps: [] },
         { id: "r2", roadmaps: [] },
         { id: "r3", roadmaps: [] }
-      ],
-      _storageMeta: { updatedAt: "2026-05-26T10:00:00.000Z" }
+      ]
     },
     updatedAt: "2026-05-26T10:00:00.000Z"
   },
   {
     profiles: [{ id: "l1", name: "Local", roadmaps: [] }],
     _storageMeta: { updatedAt: "2026-05-26T18:00:00.000Z" }
-  },
-  { updatedAt: "2026-05-26T18:00:00.000Z", lastLocalModifiedAt: "2026-05-26T18:00:00.000Z" }
-);
-assert.strictEqual(remoteRicher.source, "remote");
-assert.strictEqual(remoteRicher.pushToCloud, false);
-
-const localMoreRoadmaps = resolvePayloadForLoad(
-  {
-    payload: {
-      profiles: [{ id: "r1", name: "Remote", roadmaps: [] }],
-      _storageMeta: { updatedAt: "2026-06-05T12:00:00.000Z" }
-    },
-    updatedAt: "2026-06-05T12:00:00.000Z"
-  },
-  {
-    profiles: [
-      {
-        id: "l1",
-        name: "Local",
-        roadmaps: [{ id: "p1" }, { id: "p2" }, { id: "p3" }]
-      }
-    ],
-    _storageMeta: { updatedAt: "2026-05-26T09:00:00.000Z" }
-  },
-  {
-    lastLocalModifiedAt: "2026-05-26T09:00:00.000Z",
-    lastRemoteAppliedAt: "2026-06-05T12:00:00.000Z"
   }
 );
-assert.strictEqual(localMoreRoadmaps.source, "local");
-assert.strictEqual(localMoreRoadmaps.pushToCloud, true);
+assert.strictEqual(remoteOnly.source, "merged");
+assert.strictEqual(remoteOnly.mergedProfiles, 4);
 
 function stripLegacyWorkspaceFields(payload) {
   const LEGACY_WORKSPACE_FIELDS = ["boardHiddenStatuses"];

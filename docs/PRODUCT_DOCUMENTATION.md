@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Document owner** | Product Team |
-| **Last audited** | 2026-05-28 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui197` |
+| **Last audited** | 2026-07-08 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260708-ui198` |
 
 ---
 
@@ -121,11 +121,12 @@ When `html.is-compact-layout` and table view:
 ### 3.9 Cloud storage (optional)
 
 - `AppStorage` (`src/modules/storage.js`): load/save workspace to MongoDB via `/api/state`.
+- `WorkspaceMerge` (`src/modules/workspace-merge.js`): merges local + remote payloads before cloud save; unions profiles/roadmaps by id; applies `workspaceTombstones` so deletes propagate across concurrent editors.
 - Header status, Cloud modal (connect, pull, push, diagnostics); debounced sync (250ms) with **immediate flush** after roadmap save.
 - Background pull skipped while local edits are pending or newer than last applied remote snapshot (prevents overwriting labels/links).
 - Server normalizes labels, links, tasks, RACI, KANO axes, and note on every MongoDB write (`api/_lib/roadmap-metadata.js`).
 - Legacy JSON keys (`profile.projects`, `projectsView`, `projectType`, `projectStatus`, `projectPeriod`) migrate to roadmap equivalents on load; saves write only canonical keys.
-- Merge on load by document `updatedAt` and profile-count heuristics; local cache under `rice_prioritizer_v1`.
+- Merge on load by document `updatedAt` and profile-count heuristics; `recordWorkspaceTombstone` on delete; local cache under `rice_prioritizer_v1`.
 
 ### 3.11 Shareable deep links
 
@@ -250,8 +251,8 @@ See [ARCHITECTURE.md](ARCHITECTURE.md).
 | Layer | Technology |
 |-------|------------|
 | UI | `index.html`, **41** layered CSS files (see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) §3.1) |
-| Logic | `src/app.js` (~24k lines), `src/rice.js`, `src/constants.js`, `src/utils.js` |
-| Modules | `storage`, `profile-security`, `exchange-rates`, `fullscreen`, `overlay-manager`, `description-format`, `rich-text-editor`, `board-drag`, `board-card-interaction`, `byok-api-keys`, `roadmap-llm-summary`, `roadmap-5why-framework`, `roadmap-periods`, `gantt-view`, `export-payload`, `share-link`; dev seed: `dev-seed-workspace.js` (localhost only) |
+| Logic | `src/app.js` (~25k lines), `src/rice.js`, `src/constants.js`, `src/utils.js` |
+| Modules | `workspace-merge`, `storage`, `profile-security`, `exchange-rates`, `fullscreen`, `overlay-manager`, `description-format`, `rich-text-editor`, `board-drag`, `board-card-interaction`, `byok-api-keys`, `roadmap-llm-summary`, `roadmap-5why-framework`, `roadmap-periods`, `gantt-view`, `export-payload`, `share-link`; dev seed: `dev-seed-workspace.js` (localhost only) |
 | API | `api/health.js`, `api/config.js`, `api/state.js`, `api/byok/validate-*.js`, `api/_lib/*` (auth, mongo, roadmap-metadata, export-payload, byok-validate) |
 | Database | MongoDB Atlas (optional) |
 | Map | Leaflet 1.9.4 (CDN) |

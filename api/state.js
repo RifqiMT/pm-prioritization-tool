@@ -15,6 +15,25 @@ function validatePayload(payload) {
   return { ok: true };
 }
 
+function getDocumentRevision(doc) {
+  if (!doc || typeof doc.revision !== "number" || !Number.isFinite(doc.revision)) {
+    return 0;
+  }
+  return doc.revision;
+}
+
+function buildConflictResponse(res, workspaceId, doc) {
+  return sendJson(res, 409, {
+    ok: false,
+    error: "Workspace was updated by another session. Merge and retry.",
+    conflict: true,
+    workspaceId,
+    revision: getDocumentRevision(doc),
+    updatedAt: doc && doc.updatedAt ? doc.updatedAt : null,
+    payload: doc && doc.payload ? doc.payload : null
+  });
+}
+
 async function handleWrite(req, res, workspaceId) {
   const body = await readJsonBody(req);
   const rawPayload = body && body.payload != null ? body.payload : body;
@@ -22,29 +41,64 @@ async function handleWrite(req, res, workspaceId) {
   if (!validation.ok) {
     return sendJson(res, 400, { ok: false, error: validation.error });
   }
+
   const payload = normalizeWorkspacePayload(rawPayload);
+  const expectedRevision =
+    body && body.expectedRevision != null && body.expectedRevision !== ""
+      ? Number(body.expectedRevision)
+      : null;
 
   const db = await getDb();
   const collection = db.collection(COLLECTION);
+  const existing = await collection.findOne({ workspaceId });
+  const currentRevision = getDocumentRevision(existing);
   const updatedAt = new Date().toISOString();
 
-  await collection.updateOne(
-    { workspaceId },
+  if (!existing) {
+    const revision = 1;
+    await collection.insertOne({
+      workspaceId,
+      payload,
+      updatedAt,
+      revision,
+      version: 1
+    });
+    return sendJson(res, 200, {
+      ok: true,
+      workspaceId,
+      updatedAt,
+      revision
+    });
+  }
+
+  if (expectedRevision != null && Number.isFinite(expectedRevision) && expectedRevision !== currentRevision) {
+    return buildConflictResponse(res, workspaceId, existing);
+  }
+
+  const nextRevision = currentRevision + 1;
+  const updateResult = await collection.updateOne(
+    { workspaceId, revision: currentRevision },
     {
       $set: {
         workspaceId,
         payload,
         updatedAt,
+        revision: nextRevision,
         version: 1
       }
-    },
-    { upsert: true }
+    }
   );
+
+  if (!updateResult.matchedCount) {
+    const fresh = await collection.findOne({ workspaceId });
+    return buildConflictResponse(res, workspaceId, fresh || existing);
+  }
 
   return sendJson(res, 200, {
     ok: true,
     workspaceId,
-    updatedAt
+    updatedAt,
+    revision: nextRevision
   });
 }
 
@@ -74,7 +128,8 @@ module.exports = async function handler(req, res) {
         ok: true,
         workspaceId,
         payload: doc && doc.payload ? doc.payload : null,
-        updatedAt: doc && doc.updatedAt ? doc.updatedAt : null
+        updatedAt: doc && doc.updatedAt ? doc.updatedAt : null,
+        revision: getDocumentRevision(doc)
       });
     }
 

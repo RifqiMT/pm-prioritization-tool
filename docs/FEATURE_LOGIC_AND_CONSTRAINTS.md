@@ -6,8 +6,8 @@
 | **Version** | 2.0.0 |
 | **Audience** | Product, engineering, design, QA, and stakeholders |
 | **Maintainer** | Product Team |
-| **Last updated** | 2026-05-28 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui197` |
+| **Last updated** | 2026-07-08 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260708-ui198` |
 
 This document is the **collaborative cross-feature reference** for how the app behaves end-to-end. It explains **logic** (what the system does), **rules** (what inputs and workflows are allowed), and **constraints** (what the product must not do or cannot guarantee). Use it in planning reviews, QA test design, and cross-team alignment.
 
@@ -46,10 +46,10 @@ This document is the **collaborative cross-feature reference** for how the app b
 | Aspect | Detail |
 |--------|--------|
 | **Purpose** | Hold all profiles, roadmaps, UI preferences, and FX cache in one workspace document |
-| **Logic** | `saveState()` serializes `state` → `localStorage` (`STORAGE_KEY` = `rice_prioritizer_v1`) → optional debounced `PUT /api/state` when MongoDB is configured |
-| **Rules** | Only keys in `WORKSPACE_PERSISTED_STATE_KEYS` plus `profiles[]` are written; session-only AI output is excluded |
-| **Constraints** | MongoDB document size ~16 MB; no multi-user locking; preview and production origins have separate browser caches unless same domain + workspace id |
-| **Code** | `src/modules/storage.js`, `api/state.js`, `src/constants.js` |
+| **Logic** | `saveState()` serializes `state` (+ `workspaceTombstones`) → `localStorage` → optional debounced `PUT /api/state`; pre-save fetches remote and merges via `WorkspaceMerge` |
+| **Rules** | `WORKSPACE_PERSISTED_STATE_KEYS` + `profiles[]` + `workspaceTombstones` written; session-only AI output excluded; deletes call `recordWorkspaceTombstone` |
+| **Constraints** | MongoDB document ~16 MB; no row-level locking — concurrent editors rely on merge + tombstones; separate browser caches per origin unless shared workspace id |
+| **Code** | `src/modules/storage.js`, `src/modules/workspace-merge.js`, `api/state.js`, `src/constants.js` |
 | **See also** | [DEPLOYMENT.md](DEPLOYMENT.md), [VARIABLES.md](VARIABLES.md) §1 |
 
 ```mermaid
@@ -60,7 +60,8 @@ flowchart LR
   API --> MDB[(MongoDB workspace)]
   LOAD[Page load] --> HEALTH[GET /api/health]
   HEALTH --> PULL[GET /api/state if mongodb]
-  PULL --> MERGE[Merge or migrate local once]
+  PULL --> MERGE[WorkspaceMerge.mergeWorkspacePayloads]
+  MERGE --> LS
 ```
 
 ### F-01 Layout and responsive behavior
@@ -392,11 +393,12 @@ flowchart TB
 
 | Aspect | Detail |
 |--------|--------|
-| **Logic** | `GET /api/state` on load; debounced `PUT` on change; optional Bearer `PM_API_SECRET` |
-| **Rules** | Empty cloud + local data triggers one-time migration upload |
-| **Constraints** | Vercel deployment protection must allow `/api`; wrong Vercel project serves legacy React app |
-| **Code** | `src/modules/storage.js`, `api/state.js` |
-| **See also** | [DEPLOYMENT.md](DEPLOYMENT.md) |
+| **Purpose** | Shared workspace document for teams on Vercel + MongoDB |
+| **Logic** | `GET /api/state` on load; debounced `PUT` on change; `preparePayloadForRemoteSave` fetches remote and `WorkspaceMerge.mergeWorkspacePayloads` before save |
+| **Rules** | Union profiles/roadmaps by id; newer `modifiedAt` wins per entity; duplicate profile names collapse; `workspaceTombstones` propagates deletes |
+| **Constraints** | Vercel deployment protection must allow `/api`; not true real-time CRDT — last merged save wins on conflicts; resurrect only if entity `modifiedAt` is newer than tombstone |
+| **Code** | `src/modules/storage.js`, `src/modules/workspace-merge.js`, `api/state.js` |
+| **See also** | [DEPLOYMENT.md](DEPLOYMENT.md), `npm run test:workspace-merge` |
 
 ### F-33 Exchange rates
 
@@ -517,7 +519,8 @@ flowchart LR
 
 | Feature ID | Primary modules |
 |------------|-----------------|
-| F-00–F-04 | `app.js`, `constants.js`, `storage.js`, `share-link.js` |
+| F-00–F-04 | `app.js`, `constants.js`, `storage.js`, `workspace-merge.js`, `share-link.js` |
+| F-32 | `storage.js`, `workspace-merge.js`, `api/state.js` |
 | F-10–F-12 | `app.js`, `utils.js`, `roadmap-metadata.js` |
 | F-13 | `rice.js` |
 | F-15 | `app.js` (financial helpers) |
@@ -550,6 +553,7 @@ flowchart LR
 | Date | Change |
 |------|--------|
 | 2026-05-28 | Initial collaborative cross-feature logic and constraints reference |
+| 2026-07-08 | WorkspaceMerge + tombstones; 13 tests; ~25k app.js; baseline `20260708-ui198` |
 | 2026-05-28 | ShareLink deep links; 41 CSS; 12 tests; baseline `20260528-ui197` |
 | 2026-05-28 | Seven views (Gantt); roadmapDeadline; ganttZoom; baseline `20260528-ui197` |
 | 2026-05-28 | roadmapPeriods; ExportPayload; compact filters sheet |

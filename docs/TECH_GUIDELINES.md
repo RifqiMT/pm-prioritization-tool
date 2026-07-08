@@ -4,8 +4,8 @@ Engineering standards for the Product Management Prioritization Tool codebase.
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-05-28 |
-| **APP_ASSET_VERSION** | `20260528-ui197` |
+| **Last updated** | 2026-07-08 |
+| **APP_ASSET_VERSION** | `20260708-ui198` |
 | **COMPACT_LAYOUT_MAX_WIDTH_PX** | `1400` |
 
 ---
@@ -35,20 +35,21 @@ Defined in `index.html` (order matters — globals, not ES modules):
 5. `src/modules/exchange-rates.js`
 6. `src/modules/fullscreen.js`
 7. `src/modules/overlay-manager.js`
-8. `src/modules/storage.js` — `AppStorage` global
-9. `src/dev-seed-workspace.js` — localhost sample data (gated in `app.js`)
-10. `src/modules/description-format.js`
-11. `src/modules/rich-text-editor.js`
-12. `src/modules/board-drag.js`
-13. `src/modules/board-card-interaction.js`
-14. `src/modules/byok-api-keys.js` — `ByokApiKeys` global
-15. `src/modules/roadmap-llm-summary.js` — `RoadmapLlmSummary` global
-16. `src/modules/roadmap-5why-framework.js` — `RoadmapFiveWhyFramework` global
-17. `src/modules/roadmap-periods.js` — `RoadmapPeriods` global (multi-quarter periods)
-18. `src/modules/gantt-view.js` — `GanttView` global (Gantt timeline)
-19. `src/modules/export-payload.js` — `ExportPayload` global (JSON/CSV export builders)
-20. `src/modules/share-link.js` — `ShareLink` global (URL hash deep links)
-21. `src/app.js` — defines `init()` and runs on `DOMContentLoaded`
+8. `src/modules/workspace-merge.js` — `WorkspaceMerge` global (concurrent cloud merge + tombstones); **must load before** `storage.js`
+9. `src/modules/storage.js` — `AppStorage` global
+10. `src/dev-seed-workspace.js` — localhost sample data (gated in `app.js`)
+11. `src/modules/description-format.js`
+12. `src/modules/rich-text-editor.js`
+13. `src/modules/board-drag.js`
+14. `src/modules/board-card-interaction.js`
+15. `src/modules/byok-api-keys.js` — `ByokApiKeys` global
+16. `src/modules/roadmap-llm-summary.js` — `RoadmapLlmSummary` global
+17. `src/modules/roadmap-5why-framework.js` — `RoadmapFiveWhyFramework` global
+18. `src/modules/roadmap-periods.js` — `RoadmapPeriods` global (multi-quarter periods)
+19. `src/modules/gantt-view.js` — `GanttView` global (Gantt timeline)
+20. `src/modules/export-payload.js` — `ExportPayload` global (JSON/CSV export builders)
+21. `src/modules/share-link.js` — `ShareLink` global (URL hash deep links)
+22. `src/app.js` — defines `init()` and runs on `DOMContentLoaded`
 
 All shared symbols are **global functions and constants**. Do not introduce ES module imports without a planned migration.
 
@@ -130,7 +131,7 @@ Later files win for equal specificity. Each stylesheet in `index.html` uses a **
 | Constant | Role |
 |----------|------|
 | `STORAGE_KEY` | `localStorage` key (`rice_prioritizer_v1`) |
-| `APP_ASSET_VERSION` | Cache buster (`20260528-ui197`) |
+| `APP_ASSET_VERSION` | Cache buster (`20260708-ui198`) |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | `1400` — single compact breakpoint |
 | `moscowList` | Stored MoSCoW values |
 | `moscowDisplayNames` | UI labels (Must Have, …) |
@@ -285,6 +286,7 @@ Export: `getExportableProfiles()` → `sanitizeProfilesForExport()` → download
 | `test:periods` | Multi-quarter `roadmapPeriods` normalization |
 | `test:gantt` | Gantt ISO weeks, quarter ranges, month zoom, deadline state |
 | `test:share` | ShareLink URL hash parse/build and legacy query migration |
+| `test:workspace-merge` | WorkspaceMerge union merge, conflict resolution, tombstones |
 
 Also: `npm run verify:production` — smoke test deployed URL (`scripts/verify-deployment.js`).
 

@@ -2,8 +2,8 @@
 
 **Purpose:** Authoritative dictionary of application variables — technical name, friendly name, definition, formula, UI location, and examples.  
 **Audience:** Product, engineering, QA, analytics.  
-**Last audited:** 2026-05-28  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260528-ui197`
+**Last audited:** 2026-07-08  
+**Implementation baseline:** `APP_ASSET_VERSION` = `20260708-ui198`
 
 > Privileged cross-profile workspace variables (workspace-wide mode, owner filter, owner metadata) are specified in [GUARDRAILS.md](GUARDRAILS.md) §7 only. This dictionary uses neutral names below.
 
@@ -29,6 +29,7 @@ Persisted to `localStorage` under `rice_prioritizer_v1` unless noted.
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
 | `profiles` | Profile Collection | All portfolio containers and their roadmaps. | Array of profile objects. | Global state | `[{ id: "profile_abc", name: "Growth", roadmaps: [...] }]` |
+| `workspaceTombstones` | Deletion Tombstones | ISO timestamps of deleted profile/roadmap ids for concurrent cloud sync. | `{ profiles: { id: deletedAt }, roadmaps: { id: deletedAt } }`; merged on pull/save; applied via `WorkspaceMerge.applyTombstones`. | Serialized with every workspace payload; `recordWorkspaceTombstone` on delete | `{ "profiles": {}, "roadmaps": { "roadmap_old": "2026-07-08T10:00:00.000Z" } }` |
 | `activeProfileId` | Active Profile | ID of portfolio currently selected for workspace views. | String; must match a profile `id`. | Profiles panel + portfolio header | `"profile_abc"` |
 | `sortField` | Table Sort Column | Active sort key for table view. | Enum used by `sortRoadmaps`. | Table view | `"riceScore"` |
 | `sortDirection` | Sort Direction | Ascending or descending table sort. | `"asc"` \| `"desc"`. | Table view | `"desc"` |
@@ -501,13 +502,29 @@ flowchart TD
   MODAL --> HIGH[highlightRoadmapInPortfolio]
 ```
 
+### 8.19 Concurrent cloud merge (WorkspaceMerge)
+
+```mermaid
+flowchart TD
+  SAVE[saveState / cloud PUT] --> FETCH[GET remote payload]
+  FETCH --> MERGE[WorkspaceMerge.mergeWorkspacePayloads]
+  LOCAL[local profiles + roadmaps] --> MERGE
+  REMOTE[remote profiles + roadmaps] --> MERGE
+  MERGE --> UNION[Union by id; modifiedAt wins]
+  MERGE --> TOMB[Merge workspaceTombstones]
+  TOMB --> APPLY[applyTombstones filters deleted ids]
+  APPLY --> PUT[PUT merged payload to MongoDB]
+  DEL[delete profile/roadmap] --> REC[recordWorkspaceTombstone]
+  REC --> SAVE
+```
+
 ---
 
 ## 9. Layout, DOM, and build constants
 
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
-| `APP_ASSET_VERSION` | Asset Cache Version | Documentation baseline for cache-bust releases. Individual CSS/JS links in `index.html` may use per-asset `?v=` suffixes that include this baseline plus feature tags. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260528-ui197"` |
+| `APP_ASSET_VERSION` | Asset Cache Version | Documentation baseline for cache-bust releases. Individual CSS/JS links in `index.html` may use per-asset `?v=` suffixes that include this baseline plus feature tags. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260708-ui198"` |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | Compact Breakpoint (px) | Max viewport width for phone/tablet UI. | Constant in `constants.js`. | `src/constants.js` | `1400` |
 | `is-compact-layout` | Compact Layout Class | Viewport ≤1400px; enables compact CSS. | Set on `<html>` by `initCompactLayoutClass()`. | Global layout | class present |
 | `is-phone-layout` | Phone Layout Class | Same threshold as compact (unified phone UI). | Set together with compact class. | Global layout | class present |

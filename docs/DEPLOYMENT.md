@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-05-28 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui197` |
+| **Last updated** | 2026-07-08 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260708-ui198` |
 
 The app is a **static UI** plus **Vercel serverless API** routes under `/api`. Portfolio data is stored in **MongoDB Atlas** when `MONGODB_URI` is configured; the browser keeps a **local cache** for faster reload and offline fallback.
 

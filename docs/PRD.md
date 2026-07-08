@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Status** | Implemented (local-first static app) |
-| **Last updated** | 2026-05-28 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260528-ui197` |
+| **Last updated** | 2026-07-08 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260708-ui198` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -221,6 +221,7 @@ Manual refresh; rates cached in state; EUR conversion for table/map financial di
 | FR-8.4 | Import JSON | Merge profiles/roadmaps by id |
 | FR-8.5 | Import CSV | Merge roadmap rows |
 | FR-8.6 | UI parity | Import/export modals share design system |
+| FR-8.7 | Concurrent cloud merge | `WorkspaceMerge.mergeWorkspacePayloads`; `workspaceTombstones`; pre-save merge in `storage.js` | Two editors: union profiles/roadmaps; deletes propagate; newer entity wins |
 
 ### FR-9 UX / accessibility
 

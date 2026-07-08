@@ -4,7 +4,7 @@
 |-------|-------|
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
-| **Last updated** | 2026-05-28 |
+| **Last updated** | 2026-07-08 |
 | **Compact breakpoint** | ≤ **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) |
 
 **Purpose:** Epics and user-story contracts with **Given / When / Then** acceptance criteria, including edge cases and error handling.
@@ -270,6 +270,34 @@ Each story includes:
 - **Given** a locked protected profile not verified  
 - **When** export runs  
 - **Then** that profile is omitted and the user is informed.
+
+### US-E2 — Concurrent cloud workspace merge
+
+- **Persona:** Product Manager (shared MongoDB workspace)  
+- **Goal:** Edit the same cloud workspace from multiple browsers without resurrecting deleted items or losing parallel work.
+
+**Acceptance criteria**
+
+1. **Union merge on save**  
+   - **Given** MongoDB is configured and two sessions have different profiles or roadmaps  
+   - **When** either session saves  
+   - **Then** `WorkspaceMerge.mergeWorkspacePayloads` unions entities by id and keeps the copy with the newer `modifiedAt`.
+
+2. **Tombstone propagation**  
+   - **Given** session A deletes a roadmap  
+   - **When** session B saves or pulls  
+   - **Then** `workspaceTombstones` prevents the deleted roadmap from reappearing unless recreated with a newer `modifiedAt`.
+
+3. **Pre-save remote fetch**  
+   - **Given** local edits are pending cloud sync  
+   - **When** `preparePayloadForRemoteSave` runs  
+   - **Then** remote state is fetched and merged before `PUT /api/state`.
+
+**Error / edge handling**
+
+- **Given** two sessions edit the **same** roadmap simultaneously  
+- **When** both save within seconds  
+- **Then** the version with the later `modifiedAt` wins (no row-level locking).
 
 ---
 

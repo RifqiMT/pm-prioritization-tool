@@ -1751,6 +1751,34 @@ hide table */
   font-size: 0.85rem;
   color: var(--muted);
   margin-bottom: 0.5rem;
+}.roadmaps-map-legend--categorical {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.85rem;
+  line-height: 1.45;
+}.roadmaps-map-legend__summary {
+  flex: 1 1 12rem;
+  min-width: 0;
+}.roadmaps-map-legend__swatches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.65rem;
+}.roadmaps-map-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--text);
+  white-space: nowrap;
+}.roadmaps-map-legend__swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
 }.roadmaps-map-container {
   position: relative;
   flex: 0 0 auto;
@@ -3640,12 +3668,15 @@ aligned to input */
 .map-country-tooltip :is(
   .map-country-tooltip__country,
   .map-country-tooltip__code,
+  .map-country-tooltip__metric-pill,
+  .map-country-tooltip__pin-hint,
+  .map-country-tooltip__stat-label,
   .map-country-tooltip__stat-value,
-  .map-country-tooltip__stat-unit,
   .map-country-tooltip__profiles-title,
-  .map-country-tooltip__profiles-metric,
   .map-country-tooltip__profile-name,
   .map-country-tooltip__profile-value,
+  .map-country-tooltip__profile-share,
+  .map-country-tooltip__profile-rank,
   .map-country-tooltip__more,
   .map-country-tooltip__footnote
 ) {

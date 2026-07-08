@@ -8,7 +8,7 @@
 |---|---|
 | **Production** | [pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app) |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260528-ui197` (per-asset `?v=` tags in `index.html`) |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260708-ui198` (per-asset `?v=` tags in `index.html`) |
 | **Docs hub** | [docs/README.md](docs/README.md) |
 
 > Do not use `pm-prioritization-tool.vercel.app` — that hostname serves a legacy React app. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
@@ -41,7 +41,8 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 - **Data ownership** — export anytime; merge import; per-browser cache with optional cloud sync  
 - **Planning flexibility** — filter by country, quarter, framework, status, labels, links; map by count, RICE, or EUR  
 - **Meeting-ready on any device** — compact layout uses vertical stacks, FAB, touch-friendly controls, and quadrant nav pills  
-- **Shareable deep links** — URL hash reflects active profile, view, and opened roadmap; recipients with the same workspace data can open the exact context  
+- **Shareable deep links** — URL hash reflects active profile, view, and opened roadmap for teammates on the same workspace  
+- **Concurrent cloud editing** — MongoDB saves merge local + remote workspace; tombstones prevent deleted profiles/roadmaps from reappearing  
 
 ---
 
@@ -107,7 +108,7 @@ Active filter count appears in the portfolio filters badge. Reset restores defau
 ### Exchange rates and cloud
 
 - Refresh FX to EUR for table, map, and profile currency breakdowns  
-- Optional **MongoDB** sync: header status, Cloud modal, pull/save (`src/modules/storage.js`)  
+- Optional **MongoDB** sync: header status, Cloud modal, pull/save (`src/modules/storage.js`); concurrent edits merged via `WorkspaceMerge` with deletion tombstones  
 
 ### Site chrome
 
@@ -139,12 +140,12 @@ pm-prioritization-tool/
 │   ├── rice.js             # RICE formula + validation
 │   ├── utils.js            # Formatting, CSV, IDs, flags
 │   ├── dev-seed-workspace.js  # Localhost sample workspace (gated)
-│   └── modules/            # storage, profile-security, exchange-rates, fullscreen, overlay-manager,
-│                           # description-format, rich-text-editor, board-drag, board-card-interaction,
-│                           # byok-api-keys, roadmap-llm-summary, roadmap-5why-framework,
-│                           # roadmap-periods, gantt-view, export-payload, share-link
+│   └── modules/            # workspace-merge, storage, profile-security, exchange-rates, fullscreen,
+│                           # overlay-manager, description-format, rich-text-editor, board-drag,
+│                           # board-card-interaction, byok-api-keys, roadmap-llm-summary,
+│                           # roadmap-5why-framework, roadmap-periods, gantt-view, export-payload, share-link
 ├── api/                    # health, config, state, byok/validate-* + _lib (Vercel)
-├── scripts/                # verify-deployment; 12 test suites (storage … share)
+├── scripts/                # verify-deployment; 13 test suites (storage … workspace-merge)
 ├── docs/                   # Product documentation suite
 ├── vercel.json
 └── package.json
@@ -203,7 +204,7 @@ npm run verify:production
 ## Testing
 
 ```bash
-npm test                    # 12 automated suites (storage … gantt, share)
+npm test                    # 13 automated suites (storage … share, workspace-merge)
 npm run verify:production   # Smoke test production deploy
 ```
 
@@ -261,4 +262,4 @@ UNLICENSED (private). See `package.json`.
 - GitHub: [RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool)  
 - Article: [Effort–impact confusion to clear-cut priorities](https://rifqi-tjahyono.com/%f0%9f%93%8a-effort-impact-confusion-to-clear-cut-priorities-replace-tab-hopping-with-visual-roadmap-sanity-%f0%9f%a7%ad%e2%9c%a8/)
 
-**Documentation last comprehensively audited:** 2026-05-28 (baseline `20260528-ui197`).
+**Documentation last comprehensively audited:** 2026-07-08 (baseline `20260708-ui198`).

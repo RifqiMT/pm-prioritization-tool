@@ -4,7 +4,7 @@
 
 **Purpose:** Map PRD requirements to concrete implementation evidence and verification steps.  
 **Standard:** Requirement IDs must remain synchronized with [PRD.md](PRD.md).  
-**Last audited:** 2026-05-28 · **Baseline:** `APP_ASSET_VERSION` = `20260528-ui197`
+**Last audited:** 2026-07-08 · **Baseline:** `APP_ASSET_VERSION` = `20260708-ui198`
 
 ---
 
@@ -143,6 +143,7 @@
 | FR-8.4 | Import JSON merge | `handleImportJsonFile`; `mergeImportedProfiles` | Update by id; no duplicates |
 | FR-8.5 | Import CSV merge | `handleImportCsvFile` | Rows merge safely |
 | FR-8.6 | Import/export modal parity | `export-modals-modern.css` | Shared cards + responsive footer |
+| FR-8.7 | Concurrent cloud merge | `workspace-merge.js` `mergeWorkspacePayloads`; `storage.js` `preparePayloadForRemoteSave`; `workspaceTombstones` in `app.js` | Two sessions: union entities; tombstoned deletes stay deleted; newer `modifiedAt` wins |
 
 ---
 

@@ -17,6 +17,8 @@ const AppStorage = (function () {
   let lastError = null;
   let lastSyncedAt = null;
   let lastAppliedRemoteAt = null;
+  let currentRevision = 0;
+  let lastConflictMergedAt = null;
   let remoteWorkspaceHadData = false;
   let lastLoadSource = null;
   let cloudConfig = null;
@@ -150,10 +152,78 @@ const AppStorage = (function () {
     }
   }
 
-  function markRemoteApplied(iso) {
+  function markRemoteApplied(iso, revision) {
     const at = iso || new Date().toISOString();
     lastAppliedRemoteAt = at;
-    writeLocalMeta({ lastRemoteAppliedAt: at, updatedAt: at, source: "remote" });
+    if (typeof revision === "number" && Number.isFinite(revision)) {
+      currentRevision = revision;
+    }
+    writeLocalMeta({
+      lastRemoteAppliedAt: at,
+      updatedAt: at,
+      source: "remote",
+      revision: currentRevision
+    });
+  }
+
+  function restoreRevisionFromMeta() {
+    const meta = readLocalMeta();
+    if (typeof meta.revision === "number" && Number.isFinite(meta.revision)) {
+      currentRevision = meta.revision;
+    }
+  }
+
+  function clearPendingLocalSave() {
+    if (saveTimer) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+    }
+    pendingPayload = null;
+  }
+
+  function getLiveSerializedPayload(fallbackPayload) {
+    if (typeof serializePayloadFn === "function") {
+      try {
+        return serializePayloadFn();
+      } catch (err) {
+        console.warn("Could not serialize live state for cloud save", err);
+      }
+    }
+    return fallbackPayload;
+  }
+
+  async function preparePayloadForRemoteSave(localPayload) {
+    const base = localPayload || getLiveSerializedPayload(null);
+    if (!base) return null;
+    if (mode !== "mongodb") return base;
+
+    try {
+      const remote = await fetchRemoteState();
+      if (typeof remote.revision === "number") {
+        currentRevision = remote.revision;
+      }
+      if (remote && remote.payload && !isEmptyPayload(remote.payload)) {
+        return mergeWorkspacePayloads(base, remote.payload);
+      }
+    } catch (err) {
+      console.warn("Pre-save cloud fetch failed; saving local snapshot", err);
+    }
+    return base;
+  }
+
+  function payloadsDiffer(a, b) {
+    if (typeof WorkspaceMerge !== "undefined" && WorkspaceMerge.payloadsDiffer) {
+      return WorkspaceMerge.payloadsDiffer(a, b);
+    }
+    return JSON.stringify(a || {}) !== JSON.stringify(b || {});
+  }
+  function mergeWorkspacePayloads(localPayload, remotePayload) {
+    if (typeof WorkspaceMerge !== "undefined" && WorkspaceMerge.mergeWorkspacePayloads) {
+      return WorkspaceMerge.mergeWorkspacePayloads(localPayload, remotePayload);
+    }
+    if (!remotePayload || typeof remotePayload !== "object") return localPayload;
+    if (!localPayload || typeof localPayload !== "object") return remotePayload;
+    return remotePayload;
   }
 
   function markLocalModified(iso) {
@@ -262,59 +332,21 @@ const AppStorage = (function () {
     }
 
     if (!remoteEmpty && !localEmpty) {
-      if (localRoadmaps > remoteRoadmaps) {
-        return {
-          payload: localPayload,
-          source: "local",
-          pushToCloud: true,
-          remoteUpdatedAt: remoteDocAt
-        };
-      }
-      if (remoteRoadmaps > localRoadmaps && remoteCount >= localCount) {
-        return {
-          payload: remotePayload,
-          source: "remote",
-          pushToCloud: false,
-          remoteUpdatedAt: remoteDocAt || null
-        };
-      }
-      if (remoteCount > localCount) {
-        return {
-          payload: remotePayload,
-          source: "remote",
-          pushToCloud: false,
-          remoteUpdatedAt: remoteDocAt || null
-        };
-      }
-      if (localCount > remoteCount && lastLocalMs > remoteDocMs) {
-        return {
-          payload: localPayload,
-          source: "local",
-          pushToCloud: true,
-          remoteUpdatedAt: remoteDocAt
-        };
-      }
-      if (!lastRemoteMs || remoteDocMs >= lastRemoteMs) {
-        return {
-          payload: remotePayload,
-          source: "remote",
-          pushToCloud: false,
-          remoteUpdatedAt: remoteDocAt || null
-        };
-      }
-      if (lastLocalMs > remoteDocMs && lastLocalMs > lastRemoteMs) {
-        return {
-          payload: localPayload,
-          source: "local",
-          pushToCloud: true,
-          remoteUpdatedAt: remoteDocAt
-        };
-      }
+      const mergedPayload = mergeWorkspacePayloads(localPayload, remotePayload);
+      const mergedProfiles = countProfiles(mergedPayload);
+      const mergedRoadmaps = countRoadmaps(mergedPayload);
+      const differsFromRemote =
+        mergedProfiles !== remoteCount || mergedRoadmaps !== remoteRoadmaps;
+      const differsFromLocal =
+        mergedProfiles !== localCount || mergedRoadmaps !== localRoadmaps;
+
       return {
-        payload: remotePayload,
-        source: "remote",
-        pushToCloud: false,
-        remoteUpdatedAt: remoteDocAt || null
+        payload: mergedPayload,
+        source: differsFromLocal && differsFromRemote ? "merged" : differsFromRemote ? "merged" : "local",
+        pushToCloud: differsFromRemote || differsFromLocal,
+        remoteUpdatedAt: remoteDocAt,
+        remoteRevision:
+          remoteBody && typeof remoteBody.revision === "number" ? remoteBody.revision : null
       };
     }
 
@@ -323,7 +355,9 @@ const AppStorage = (function () {
         payload: remotePayload,
         source: "remote",
         pushToCloud: false,
-        remoteUpdatedAt: remoteDocAt || null
+        remoteUpdatedAt: remoteDocAt || null,
+        remoteRevision:
+          remoteBody && typeof remoteBody.revision === "number" ? remoteBody.revision : null
       };
     }
 
@@ -339,20 +373,23 @@ const AppStorage = (function () {
     return { payload: null, source: "none", pushToCloud: false, remoteUpdatedAt: null };
   }
 
-  function commitLoadedPayload(payload, source, remoteUpdatedAt) {
+  function commitLoadedPayload(payload, source, remoteUpdatedAt, remoteRevision) {
     if (payload && typeof stripLegacyWorkspaceFields === "function") {
       stripLegacyWorkspaceFields(payload);
+    }
+    if (source === "remote" || source === "merged") {
+      clearPendingLocalSave();
     }
     applyPayload(payload);
     writeLocalCache(payload);
     lastLoadSource = source;
-    if (source === "remote") {
+    if (source === "remote" || source === "merged") {
       const appliedAt =
         remoteUpdatedAt ||
         (payload && payload._storageMeta && payload._storageMeta.updatedAt) ||
         new Date().toISOString();
       lastSyncedAt = appliedAt;
-      markRemoteApplied(appliedAt);
+      markRemoteApplied(appliedAt, remoteRevision);
     } else if (payload && source === "local") {
       markLocalModified(
         getPayloadUpdatedAtMs(payload, null)
@@ -470,9 +507,16 @@ const AppStorage = (function () {
     return body;
   }
 
-  async function putRemoteState(payload) {
+  async function putRemoteState(payload, expectedRevision) {
     const stamped = stampPayload(payload);
-    const bodyJson = JSON.stringify({ payload: stamped });
+    const requestBody = {
+      payload: stamped,
+      expectedRevision:
+        typeof expectedRevision === "number" && Number.isFinite(expectedRevision)
+          ? expectedRevision
+          : currentRevision
+    };
+    const bodyJson = JSON.stringify(requestBody);
     const headers = buildAuthHeaders();
     let res = await fetch("/api/state", {
       method: "PUT",
@@ -494,22 +538,74 @@ const AppStorage = (function () {
       err.code = "UNAUTHORIZED";
       throw err;
     }
+    if (res.status === 409) {
+      const err = new Error(body.error || "Workspace conflict");
+      err.code = "WORKSPACE_CONFLICT";
+      err.status = 409;
+      err.conflictPayload = body.payload || null;
+      err.revision = typeof body.revision === "number" ? body.revision : currentRevision;
+      err.updatedAt = body.updatedAt || null;
+      throw err;
+    }
     if (!res.ok) {
       throw new Error(body.error || "Failed to save cloud workspace");
     }
     return body;
   }
 
-  async function saveRemoteNow(payload) {
+  async function saveRemoteNow(payload, options) {
+    const maxRetries = options && options.maxRetries != null ? options.maxRetries : 4;
+    const skipPrefetch = options && options.skipPrefetch === true;
+    let attempt = 0;
+    let toSave = payload;
+
     setSyncStatus("syncing");
     try {
-      const stamped = stampPayload(payload);
-      writeLocalCache(stamped);
-      const result = await putRemoteState(stamped);
-      lastSyncedAt = (result && result.updatedAt) || new Date().toISOString();
-      markRemoteApplied(lastSyncedAt);
-      setSyncStatus("synced");
-      return true;
+      if (!skipPrefetch) {
+        toSave = await preparePayloadForRemoteSave(toSave);
+      }
+      if (!toSave) {
+        throw new Error("Nothing to save.");
+      }
+
+      while (attempt < maxRetries) {
+        try {
+          const stamped = stampPayload(toSave);
+          writeLocalCache(stamped);
+          const result = await putRemoteState(stamped, currentRevision);
+          lastSyncedAt = (result && result.updatedAt) || new Date().toISOString();
+          if (typeof result.revision === "number") {
+            currentRevision = result.revision;
+          }
+          markRemoteApplied(lastSyncedAt, currentRevision);
+          const liveBeforeSave = getLiveSerializedPayload(null);
+          if (liveBeforeSave && payloadsDiffer(liveBeforeSave, stamped)) {
+            applyPayload(stamped);
+            notifyCloudDataRefreshed({ source: "save-merge", merged: true });
+          }
+          setSyncStatus("synced");
+          if (attempt > 0) {
+            notifyCloudDataRefreshed({ source: "conflict-merge", merged: true });
+          }
+          return true;
+        } catch (err) {
+          if (err && err.code === "WORKSPACE_CONFLICT" && err.conflictPayload) {
+            const merged = mergeWorkspacePayloads(toSave, err.conflictPayload);
+            toSave = merged;
+            if (typeof err.revision === "number") {
+              currentRevision = err.revision;
+            }
+            lastConflictMergedAt = new Date().toISOString();
+            attempt += 1;
+            if (attempt >= maxRetries) {
+              throw new Error("Could not save after merging concurrent edits. Try Save to cloud again.");
+            }
+            continue;
+          }
+          throw err;
+        }
+      }
+      return false;
     } catch (err) {
       console.error("Cloud save failed", err);
       if (err && err.code === "UNAUTHORIZED") {
@@ -532,14 +628,17 @@ const AppStorage = (function () {
     if (mode !== "mongodb") return Promise.resolve(true);
 
     const flushNow = options && options.flush === true;
+    const runSave = () => {
+      const toSave = getLiveSerializedPayload(pendingPayload);
+      pendingPayload = null;
+      if (!toSave) return Promise.resolve(false);
+      return saveRemoteNow(toSave);
+    };
+
     if (flushNow) {
-      if (saveTimer) {
-        clearTimeout(saveTimer);
-        saveTimer = null;
-      }
-      inFlightSave = saveRemoteNow(stamped).finally(() => {
+      clearPendingLocalSave();
+      inFlightSave = runSave().finally(() => {
         inFlightSave = null;
-        pendingPayload = null;
       });
       return inFlightSave;
     }
@@ -547,10 +646,7 @@ const AppStorage = (function () {
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
       saveTimer = null;
-      const toSave = pendingPayload;
-      pendingPayload = null;
-      if (!toSave) return;
-      inFlightSave = saveRemoteNow(toSave).finally(() => {
+      inFlightSave = runSave().finally(() => {
         inFlightSave = null;
       });
     }, SAVE_DEBOUNCE_MS);
@@ -562,7 +658,7 @@ const AppStorage = (function () {
       clearTimeout(saveTimer);
       saveTimer = null;
     }
-    const payload = pendingPayload;
+    const payload = getLiveSerializedPayload(pendingPayload);
     pendingPayload = null;
     if (mode !== "mongodb" || !payload) return;
 
@@ -582,7 +678,10 @@ const AppStorage = (function () {
         await fetch("/api/state", {
           method: "PUT",
           headers: buildAuthHeaders(),
-          body: JSON.stringify({ payload: stampPayload(payload) }),
+          body: JSON.stringify({
+            payload: stampPayload(payload),
+            expectedRevision: currentRevision
+          }),
           keepalive: true
         });
         lastSyncedAt = new Date().toISOString();
@@ -600,11 +699,8 @@ const AppStorage = (function () {
     }
     setSyncStatus("syncing");
     try {
-      await putRemoteState(localPayload);
-      lastSyncedAt = new Date().toISOString();
-      markRemoteApplied(lastSyncedAt);
-      setSyncStatus("synced");
-      return true;
+      const result = await saveRemoteNow(localPayload);
+      return result;
     } catch (err) {
       console.error("Migration to cloud failed", err);
       setSyncStatus("error", err.message || String(err));
@@ -632,10 +728,14 @@ const AppStorage = (function () {
     const resolved = resolvePayloadForLoad(remote, localPayload);
 
     if (resolved.payload) {
+      if (typeof remote.revision === "number") {
+        currentRevision = remote.revision;
+      }
       commitLoadedPayload(
         resolved.payload,
         resolved.source,
-        resolved.remoteUpdatedAt
+        resolved.remoteUpdatedAt,
+        resolved.remoteRevision != null ? resolved.remoteRevision : remote.revision
       );
       if (resolved.pushToCloud) {
         const migrated = await migrateLocalToRemote(resolved.payload);
@@ -648,29 +748,40 @@ const AppStorage = (function () {
     return { migrated: false, source: "none" };
   }
 
-  /** If cloud has more profiles than this tab, apply cloud (fixes stale local cache). */
+  /** Merge cloud changes into this device instead of overwriting local-only data. */
   async function reconcileWithRemoteAfterLoad() {
     if (mode !== "mongodb") return { reconciled: false };
     try {
       const remote = await fetchRemoteState();
-      const remoteCount = countProfiles(remote.payload);
-      const localCount =
-        typeof getProfileCountFn === "function" ? getProfileCountFn() : countProfiles(readLocalPayload());
-      const remoteRoadmaps = countRoadmaps(remote.payload);
-      const localPayload = readLocalPayload();
-      const localRoadmaps = countRoadmaps(localPayload);
-      if (
-        (remoteCount > localCount || remoteRoadmaps > localRoadmaps) &&
-        !isEmptyPayload(remote.payload)
-      ) {
-        commitLoadedPayload(remote.payload, "remote", remote.updatedAt || null);
-        notifyCloudDataRefreshed({
-          profileCount: remoteCount,
-          source: "reconcile"
-        });
-        return { reconciled: true, remoteCount, localCount };
+      if (typeof remote.revision === "number") {
+        currentRevision = remote.revision;
       }
-      return { reconciled: false, remoteCount, localCount };
+      const localPayload = readLocalPayload();
+      if (isEmptyPayload(remote.payload)) {
+        return { reconciled: false };
+      }
+
+      const merged = mergeWorkspacePayloads(localPayload, remote.payload);
+      const needsApply = payloadsDiffer(localPayload, merged) || payloadsDiffer(merged, remote.payload);
+      if (!needsApply) {
+        return { reconciled: false };
+      }
+
+      commitLoadedPayload(merged, "merged", remote.updatedAt || null, remote.revision);
+      const shouldPush = payloadsDiffer(merged, remote.payload);
+      const pushed = shouldPush ? await saveRemoteNow(merged, { skipPrefetch: true }) : false;
+      notifyCloudDataRefreshed({
+        profileCount: countProfiles(merged),
+        source: "reconcile",
+        merged: true
+      });
+      return {
+        reconciled: true,
+        remoteCount: countProfiles(remote.payload),
+        localCount: countProfiles(localPayload),
+        merged: true,
+        pushed
+      };
     } catch (err) {
       console.warn("Cloud reconcile failed", err);
       return { reconciled: false, error: err.message || String(err) };
@@ -740,19 +851,46 @@ const AppStorage = (function () {
         return { updated: false, reason: "local_pending" };
       }
 
-      if (!force && remoteAt && lastAt && remoteAt <= lastAt) {
+      const remoteRevision = typeof remote.revision === "number" ? remote.revision : 0;
+      if (
+        !force &&
+        remoteAt &&
+        lastAt &&
+        remoteAt <= lastAt &&
+        remoteRevision <= currentRevision
+      ) {
         return { updated: false, reason: "already_current" };
       }
 
-      commitLoadedPayload(remote.payload, "remote", remote.updatedAt || null);
+      const localPayload = readLocalPayload();
+      const merged = mergeWorkspacePayloads(localPayload, remote.payload);
+      if (!payloadsDiffer(localPayload, merged)) {
+        if (typeof remote.revision === "number") {
+          currentRevision = remote.revision;
+          markRemoteApplied(remote.updatedAt || new Date().toISOString(), remote.revision);
+        }
+        return { updated: false, reason: "already_current" };
+      }
+
+      if (typeof remote.revision === "number") {
+        currentRevision = remote.revision;
+      }
+      commitLoadedPayload(merged, "merged", remote.updatedAt || null, remote.revision);
+      const shouldPush = payloadsDiffer(merged, remote.payload);
+      const pushed = shouldPush
+        ? await saveRemoteNow(merged, { skipPrefetch: true })
+        : false;
       notifyCloudDataRefreshed({
-        profileCount: remote.payload.profiles.length,
-        source: "pull"
+        profileCount: countProfiles(merged),
+        source: "pull",
+        merged: true,
+        pushed
       });
       return {
         updated: true,
-        profileCount: remote.payload.profiles.length,
-        updatedAt: remote.updatedAt
+        profileCount: countProfiles(merged),
+        updatedAt: remote.updatedAt,
+        merged: true
       };
     } catch (err) {
       console.warn("Cloud pull failed", err);
@@ -804,6 +942,7 @@ const AppStorage = (function () {
     onCloudDataRefreshedFn = options && options.onCloudDataRefreshed;
 
     consumeApiKeyFromUrl();
+    restoreRevisionFromMeta();
 
     if (isLocalFileOrigin()) {
       mode = "local";
@@ -910,14 +1049,6 @@ const AppStorage = (function () {
     mode = "mongodb";
     await loadFromCloud();
     setupCloudLifecycle();
-
-    const serialized =
-      typeof serializePayloadFn === "function" ? serializePayloadFn() : null;
-    if (serialized) {
-      await saveRemoteNow(serialized);
-      writeLocalCache(stampPayload(serialized));
-    }
-
     setSyncStatus("synced");
     return { ok: true };
   }
@@ -930,12 +1061,14 @@ const AppStorage = (function () {
       throw new Error("Cloud storage is not active.");
     }
     await flushPendingSave();
-    const serialized =
-      typeof serializePayloadFn === "function" ? serializePayloadFn() : pendingPayload;
+    const serialized = getLiveSerializedPayload(
+      typeof serializePayloadFn === "function" ? serializePayloadFn() : pendingPayload
+    );
     if (!serialized) {
       throw new Error("Nothing to sync.");
     }
-    const ok = await saveRemoteNow(serialized);
+    const merged = await preparePayloadForRemoteSave(serialized);
+    const ok = await saveRemoteNow(merged, { skipPrefetch: true });
     if (!ok) {
       throw new Error(lastError || "Cloud sync failed.");
     }
@@ -968,7 +1101,9 @@ const AppStorage = (function () {
       lastAppliedRemoteAt,
       lastLoadSource,
       remoteWorkspaceHadData,
-      cloudConfig
+      cloudConfig,
+      currentRevision,
+      lastConflictMergedAt
     };
   }
 

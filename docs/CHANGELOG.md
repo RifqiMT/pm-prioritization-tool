@@ -27,12 +27,23 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Docs — Full product documentation standard audit — 2026-07-08 — Product Team — Impact: documentation
+
+- Re-audited codebase vs 18-doc suite; baseline `APP_ASSET_VERSION` = `20260708-ui198`.
+- **WorkspaceMerge** for concurrent MongoDB editing: union merge, `modifiedAt` wins, `workspaceTombstones`; module `workspace-merge.js` (loads before `storage.js`).
+- **21** modules before `app.js`; **41** CSS; **13** `npm test` suites (`test:workspace-merge`); `app.js` ~25k lines.
+- Updated PRD FR-8.7, FEATURE_LOGIC F-32, VARIABLES, GUARDRAILS, TRACEABILITY, TECH, README, hub.
+
+### Feature — Concurrent workspace merge (MongoDB) — 2026-07-08 — Product Team — Impact: user-visible
+
+- `WorkspaceMerge.mergeWorkspacePayloads` unions profiles/roadmaps by id; newer `modifiedAt` wins; duplicate profile names collapse.
+- `workspaceTombstones` records profile/roadmap deletions; tombstones propagate on cloud sync so concurrent sessions do not resurrect deleted entities.
+- Pre-save cloud fetch merges local + remote before PUT; `recordWorkspaceTombstone` on delete in `app.js`.
+- `npm run test:workspace-merge`; `test-storage-sync-logic.js` uses merge helpers.
+
 ### Docs — Full product documentation standard audit — 2026-05-28 (pass 2) — Product Team — Impact: documentation
 
-- Re-audited codebase vs 18-doc suite; baseline `APP_ASSET_VERSION` = `20260528-ui197`.
-- **ShareLink** deep links: URL hash `#pm/?roadmap=&view=&profile=` syncs with portfolio state; module `share-link.js`, `share-link.css`.
-- **41 CSS layers**; **21** modules before `app.js`; **12** `npm test` suites (`test:share`).
-- Updated PRD FR-9.8, FEATURE_LOGIC F-27, VARIABLES §8.18, USER_STORIES US-F3, TRACEABILITY, GUARDRAILS, TECH, README.
+- Prior pass: ShareLink, 41 CSS, 12 tests; baseline `20260528-ui197`.
 
 ### Feature — Shareable portfolio deep links — 2026-06-30 — Product Team — Impact: user-visible
 

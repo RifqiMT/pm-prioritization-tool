@@ -1,8 +1,8 @@
 # Design Guidelines
 
 **Product:** Product Management Prioritization Tool  
-**Last updated:** 2026-05-28  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260528-ui197`  
+**Last updated:** 2026-07-08  
+**Implementation baseline:** `APP_ASSET_VERSION` = `20260708-ui198`  
 **Layout breakpoint:** `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** (`html.is-compact-layout` + `html.is-phone-layout`)
 
 Visual and interaction standards for the local-first prioritization workspace.
