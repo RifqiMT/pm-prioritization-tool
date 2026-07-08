@@ -236,11 +236,17 @@ const AppStorage = (function () {
   }
 
   function countProfiles(payload) {
+    if (typeof WorkspaceMerge !== "undefined" && WorkspaceMerge.countProfiles) {
+      return WorkspaceMerge.countProfiles(payload);
+    }
     if (!payload || !Array.isArray(payload.profiles)) return 0;
     return payload.profiles.length;
   }
 
   function countRoadmaps(payload) {
+    if (typeof WorkspaceMerge !== "undefined" && WorkspaceMerge.countRoadmaps) {
+      return WorkspaceMerge.countRoadmaps(payload);
+    }
     if (!payload || !Array.isArray(payload.profiles)) return 0;
     return payload.profiles.reduce((total, profile) => {
       const len = profile && Array.isArray(profile.roadmaps) ? profile.roadmaps.length : 0;
@@ -582,9 +588,8 @@ const AppStorage = (function () {
             currentRevision = result.revision;
           }
           markRemoteApplied(lastSyncedAt, currentRevision);
-          const liveBeforeSave = getLiveSerializedPayload(null);
-          if (liveBeforeSave && payloadsDiffer(liveBeforeSave, stamped)) {
-            applyPayload(stamped);
+          applyPayload(stamped);
+          if (payloadsDiffer(getLiveSerializedPayload(null), stamped)) {
             notifyCloudDataRefreshed({ source: "save-merge", merged: true });
           }
           setSyncStatus("synced");

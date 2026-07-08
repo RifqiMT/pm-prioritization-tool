@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-07-08 |
+| **Last updated** | 2026-07-09 |
 | **Measurement** | Local-first — no default telemetry; manual QA + optional instrumentation |
 
 ---
@@ -82,7 +82,7 @@ Among workspaces that had ≥3 roadmaps 30 days ago, count those with ≥1 sessi
 | ENG-04 | Render responsiveness | Table rerender after filter/sort | p95 latency (ms) | ≤ 300 |
 | ENG-05 | Cloud sync success | Debounced PUT without user-visible failure | `successful_cloud_saves / cloud_save_attempts` | ≥ 99% |
 | ENG-06 | Metadata round-trip | Labels/links unchanged after save + reload (cloud) | `metadata_match_after_reload / metadata_save_attempts` | ≥ 99% |
-| ENG-07 | Concurrent merge integrity | Tombstoned deletes stay deleted after multi-session cloud saves | `tombstone_resurrection_incidents / concurrent_save_sessions` | 0 |
+| ENG-07 | Concurrent merge integrity | Tombstoned deletes stay deleted; fingerprint duplicates collapse after multi-session cloud saves | `tombstone_resurrection_incidents + duplicate_row_incidents / concurrent_save_sessions` | 0 |
 | PM-09 | Rich metadata usage | Roadmaps with labels, links, or tasks | `roadmaps_with_metadata / total_roadmaps` | ≥ 40% |
 
 ---

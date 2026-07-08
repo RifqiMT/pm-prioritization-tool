@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-07-08 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260708-ui198` |
+| **Last updated** | 2026-07-09 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260709-ui199` |
 
 The app is a **static UI** plus **Vercel serverless API** routes under `/api`. Portfolio data is stored in **MongoDB Atlas** when `MONGODB_URI` is configured; the browser keeps a **local cache** for faster reload and offline fallback.
 
@@ -68,7 +68,8 @@ https://YOUR_DOMAIN/?pm_api_key=YOUR_PM_API_SECRET
 1. On load, the app calls `GET /api/health`.
 2. If `storage: "mongodb"`, it loads `GET /api/state` with `Authorization: Bearer <key>`.
 3. If the cloud workspace is empty but `localStorage` has data, it **migrates** local data to MongoDB once.
-4. On each change, state is written to `localStorage` (cache) and debounced to `PUT /api/state`.
+4. On each change, state is written to `localStorage` (cache), deduped via `WorkspaceMerge.dedupeWorkspacePayload`, merged with remote if needed, and debounced to `PUT /api/state` with `expectedRevision`.
+5. If another session saved first, the server returns **HTTP 409** with the current payload and `revision`; the client merges and retries automatically.
 
 Profile passwords remain **hashed in the payload** (PBKDF2); unlock state stays in **sessionStorage** only.
 

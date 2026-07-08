@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-07-08 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260708-ui198` |
+| **Last updated** | 2026-07-09 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260709-ui199` |
 
 Cross-feature behavior summaries live in [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md). This file defines **hard limits** and policies that must not be violated.
 
@@ -101,7 +101,9 @@ Cross-feature behavior summaries live in [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEAT
 - Cloud sync is **merge-based**, not locked transactions — simultaneous editors should expect last merged save to win on the same entity when timestamps are close.
 - `workspaceTombstones` must be included in every serialized workspace payload so deletes propagate; do not strip tombstones on export unless intentionally archiving.
 - Entities recreated with `modifiedAt` newer than a tombstone timestamp may reappear (intentional resurrection).
+- **Content-fingerprint dedupe** (`getRoadmapIdentityKey`) collapses roadmaps that look identical in the UI (title + period + countries + MoSCoW + type + t-shirt). Survivor id is the lowest anchor id; do not rely on duplicate rows persisting after cloud sync.
 - `WorkspaceMerge` deduplicates profiles with the same normalized name — avoid duplicate profile names in shared workspaces.
+- **Revision conflicts:** client must send `expectedRevision`; stale revision triggers 409 — client auto-merges and retries; do not bypass revision checks in custom integrations.
 - MongoDB document size limit (~16 MB) still applies; very large portfolios require export/archive.
 
 ## 6. Production (Vercel) Guardrails

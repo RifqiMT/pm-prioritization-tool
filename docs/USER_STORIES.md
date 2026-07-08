@@ -4,7 +4,7 @@
 |-------|-------|
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
-| **Last updated** | 2026-07-08 |
+| **Last updated** | 2026-07-09 |
 | **Compact breakpoint** | ≤ **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) |
 
 **Purpose:** Epics and user-story contracts with **Given / When / Then** acceptance criteria, including edge cases and error handling.
@@ -154,6 +154,41 @@ Each story includes:
 
 ---
 
+### US-B4 — Reuse labels, RACI names, and links from existing roadmaps
+
+- **Persona:** Product Manager  
+- **Goal:** Enter metadata consistently without retyping values used elsewhere in the portfolio.
+
+**Acceptance criteria**
+
+1. **Label suggestions**  
+   - **Given** the user opens the roadmap edit modal  
+   - **When** they focus a label input (`list="roadmapLabelSuggestions"`)  
+   - **Then** up to **40** distinct labels from the portfolio appear as browser datalist options.
+
+2. **RACI name suggestions**  
+   - **Given** the user edits RACI assignments  
+   - **When** they type a name (`list="roadmapRaciNameSuggestions"`)  
+   - **Then** previously used RACI names from the portfolio are suggested.
+
+3. **Link suggestions**  
+   - **Given** the user adds roadmap links  
+   - **When** they type label or URL fields  
+   - **Then** `#roadmapLinkLabelSuggestions` and `#roadmapLinkUrlSuggestions` offer prior values.
+
+4. **Privileged workspace scope**  
+   - **Given** privileged workspace mode is active  
+   - **When** suggestions refresh  
+   - **Then** values are collected from all profiles, not only the active one.
+
+**Error / edge handling**
+
+- **Given** no prior values exist for a field  
+- **When** the datalist renders  
+- **Then** the user can still type any free-text value (suggestions are optional).
+
+---
+
 ## Epic C — Financial frameworks
 
 ### US-C1 — Select framework and see planning value
@@ -291,7 +326,17 @@ Each story includes:
 3. **Pre-save remote fetch**  
    - **Given** local edits are pending cloud sync  
    - **When** `preparePayloadForRemoteSave` runs  
-   - **Then** remote state is fetched and merged before `PUT /api/state`.
+   - **Then** local payload is deduped, remote state is fetched and merged before `PUT /api/state`.
+
+4. **Content-fingerprint dedupe**  
+   - **Given** two roadmaps with the same title, period, countries, MoSCoW, type, and t-shirt size but different ids  
+   - **When** merge or pre-save dedupe runs  
+   - **Then** one roadmap survives (lowest id anchor; newest field data); duplicates are tombstoned.
+
+5. **Revision conflict recovery**  
+   - **Given** session A and B save simultaneously with stale `expectedRevision`  
+   - **When** the server returns HTTP 409 with conflict payload  
+   - **Then** the client merges conflict payload and retries without user data loss.
 
 **Error / edge handling**
 

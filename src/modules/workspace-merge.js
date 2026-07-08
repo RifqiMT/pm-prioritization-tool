@@ -117,6 +117,16 @@ const WorkspaceMerge = (function () {
     return roadmap.roadmapPeriod ? String(roadmap.roadmapPeriod).trim().toUpperCase() : "";
   }
 
+  function normalizeMoscowForIdentity(category) {
+    const raw = normalizeScalar(category);
+    if (!raw) return "";
+    if (raw === "must" || raw.startsWith("must")) return "must have";
+    if (raw === "should" || raw.startsWith("should")) return "should have";
+    if (raw === "could" || raw.startsWith("could")) return "could have";
+    if (raw === "wont" || raw === "won't" || raw.includes("won")) return "won't have";
+    return raw;
+  }
+
   /** Stable fingerprint for logical duplicate detection (same row in the UI). */
   function getRoadmapIdentityKey(roadmap) {
     if (!roadmap || typeof roadmap !== "object") return "";
@@ -126,10 +136,16 @@ const WorkspaceMerge = (function () {
       title,
       getRoadmapPeriodKey(roadmap),
       normalizeCountriesList(roadmap.countries),
-      normalizeScalar(roadmap.moscowCategory),
+      normalizeMoscowForIdentity(roadmap.moscowCategory),
       normalizeScalar(roadmap.roadmapType),
       normalizeScalar(roadmap.tshirtSize)
     ].join("|");
+  }
+
+  function tombstoneEntityId(tombstonesOut, kind, entity) {
+    if (!entity || !entity.id) return;
+    const deletedAt = entity.modifiedAt || entity.updatedAt || entity.createdAt || new Date().toISOString();
+    recordTombstoneOnMap(tombstonesOut, kind, entity.id, deletedAt);
   }
 
   function getTombstones(payload) {
@@ -243,7 +259,7 @@ const WorkspaceMerge = (function () {
       group.forEach((roadmap) => {
         if (roadmap.id === anchorId) return;
         removedIds.add(roadmap.id);
-        recordTombstoneOnMap(tombstonesOut, "roadmaps", roadmap.id);
+        tombstoneEntityId(tombstonesOut, "roadmaps", roadmap);
       });
       kept.push(anchor);
     });
@@ -295,7 +311,7 @@ const WorkspaceMerge = (function () {
         const other = byId.get(otherId);
         if (!other) continue;
         canonical = mergeSingleProfile(canonical, other, tombstonesOut, anchorId);
-        recordTombstoneOnMap(tombstonesOut, "profiles", otherId);
+        tombstoneEntityId(tombstonesOut, "profiles", other);
         byId.delete(otherId);
       }
       canonical.id = anchorId;
@@ -305,10 +321,45 @@ const WorkspaceMerge = (function () {
     return Array.from(byId.values());
   }
 
+  /** Same roadmap id copied into multiple profiles — keep on anchored profile id. */
+  function dedupeSharedRoadmapIdsAcrossProfiles(profiles, tombstonesOut) {
+    const list = (Array.isArray(profiles) ? profiles : []).map((profile) =>
+      Object.assign({}, profile, {
+        roadmaps: Array.isArray(profile.roadmaps) ? profile.roadmaps.slice() : []
+      })
+    );
+    const idToLocations = new Map();
+
+    list.forEach((profile) => {
+      profile.roadmaps.forEach((roadmap) => {
+        const id = roadmap && roadmap.id ? String(roadmap.id).trim() : "";
+        if (!id) return;
+        if (!idToLocations.has(id)) idToLocations.set(id, []);
+        idToLocations.get(id).push({ profile, roadmap });
+      });
+    });
+
+    idToLocations.forEach((locations) => {
+      if (locations.length <= 1) return;
+      const anchorProfileId = pickAnchorId(...locations.map((entry) => entry.profile.id));
+      const merged = mergeEntitiesWithIdAnchor(locations.map((entry) => entry.roadmap));
+      const mergedId = merged.id;
+      list.forEach((profile) => {
+        profile.roadmaps = profile.roadmaps.filter((roadmap) => roadmap.id !== mergedId);
+      });
+      const anchorProfile = list.find((profile) => profile.id === anchorProfileId);
+      if (anchorProfile) anchorProfile.roadmaps.push(merged);
+    });
+
+    return list;
+  }
+
   function dedupeWorkspacePayload(payload) {
     if (!payload || typeof payload !== "object") return payload;
     const tombstones = getTombstones(payload);
-    const profiles = dedupeProfilesByName(payload.profiles, tombstones);
+    let profiles = dedupeProfilesByName(Array.isArray(payload.profiles) ? payload.profiles : [], tombstones);
+    profiles = dedupeSharedRoadmapIdsAcrossProfiles(profiles, tombstones);
+    profiles = profiles.map((profile) => dedupeProfileRoadmaps(profile, tombstones));
     const next = Object.assign({}, payload, {
       profiles,
       workspaceTombstones: tombstones
@@ -479,9 +530,6 @@ const WorkspaceMerge = (function () {
   return {
     mergeWorkspacePayloads,
     dedupeWorkspacePayload,
-    getRoadmapIdentityKey,
-    pickAnchorId,
-    mergeEntitiesWithIdAnchor,
     applyTombstones,
     recordTombstone,
     countProfiles,

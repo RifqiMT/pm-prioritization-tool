@@ -4,7 +4,7 @@ Guidelines for teams using the Product Management Prioritization Tool in plannin
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-07-08 |
+| **Last updated** | 2026-07-09 |
 | **Audience** | Product managers, delivery leads, portfolio stakeholders |
 
 ---

@@ -147,6 +147,59 @@ const dedupeOnly = WorkspaceMerge.dedupeWorkspacePayload(duplicateRoadmapRemote)
 assert.strictEqual(countRoadmaps(dedupeOnly), 1);
 assert.strictEqual(dedupeOnly.profiles[0].roadmaps[0].id, "r-mid");
 
+const moscowAliasDedupe = WorkspaceMerge.dedupeWorkspacePayload({
+  profiles: [
+    {
+      id: "p1",
+      name: "Test",
+      roadmaps: [
+        {
+          id: "r-a",
+          title: "Unified conversation identity",
+          roadmapPeriod: "2025-Q1",
+          countries: ["EU"],
+          moscowCategory: "Must have",
+          tshirtSize: "M",
+          modifiedAt: "2026-05-31T17:43:00.000Z"
+        },
+        {
+          id: "r-b",
+          title: "Unified conversation identity",
+          roadmapPeriod: "2025-Q1",
+          countries: ["EU"],
+          moscowCategory: "Must",
+          tshirtSize: "M",
+          modifiedAt: "2026-07-08T20:24:00.000Z"
+        }
+      ]
+    }
+  ]
+});
+assert.strictEqual(countRoadmaps(moscowAliasDedupe), 1);
+assert.strictEqual(moscowAliasDedupe.profiles[0].roadmaps[0].id, "r-a");
+assert.strictEqual(
+  moscowAliasDedupe.profiles[0].roadmaps[0].modifiedAt,
+  "2026-07-08T20:24:00.000Z"
+);
+
+const sharedRoadmapIdDedupe = WorkspaceMerge.dedupeWorkspacePayload({
+  profiles: [
+    {
+      id: "p1",
+      name: "Team A",
+      roadmaps: [{ id: "r1", title: "Shared", modifiedAt: "2026-06-01T00:00:00.000Z" }]
+    },
+    {
+      id: "p2",
+      name: "Team B",
+      roadmaps: [{ id: "r1", title: "Shared copy", modifiedAt: "2026-06-02T00:00:00.000Z" }]
+    }
+  ]
+});
+assert.strictEqual(countRoadmaps(sharedRoadmapIdDedupe), 1);
+assert.strictEqual(sharedRoadmapIdDedupe.profiles[0].roadmaps[0].title, "Shared copy");
+assert.strictEqual(countProfiles(sharedRoadmapIdDedupe), 2);
+
 let tombstoned = recordTombstone(
   {
     profiles: [{ id: "p1", roadmaps: [{ id: "r1", modifiedAt: "2026-06-01T00:00:00.000Z" }] }]

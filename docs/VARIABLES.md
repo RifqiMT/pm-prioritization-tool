@@ -2,8 +2,8 @@
 
 **Purpose:** Authoritative dictionary of application variables — technical name, friendly name, definition, formula, UI location, and examples.  
 **Audience:** Product, engineering, QA, analytics.  
-**Last audited:** 2026-07-08  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260708-ui198`
+**Last audited:** 2026-07-09  
+**Implementation baseline:** `APP_ASSET_VERSION` = `20260709-ui199`
 
 > Privileged cross-profile workspace variables (workspace-wide mode, owner filter, owner metadata) are specified in [GUARDRAILS.md](GUARDRAILS.md) §7 only. This dictionary uses neutral names below.
 
@@ -29,7 +29,9 @@ Persisted to `localStorage` under `rice_prioritizer_v1` unless noted.
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
 | `profiles` | Profile Collection | All portfolio containers and their roadmaps. | Array of profile objects. | Global state | `[{ id: "profile_abc", name: "Growth", roadmaps: [...] }]` |
-| `workspaceTombstones` | Deletion Tombstones | ISO timestamps of deleted profile/roadmap ids for concurrent cloud sync. | `{ profiles: { id: deletedAt }, roadmaps: { id: deletedAt } }`; merged on pull/save; applied via `WorkspaceMerge.applyTombstones`. | Serialized with every workspace payload; `recordWorkspaceTombstone` on delete | `{ "profiles": {}, "roadmaps": { "roadmap_old": "2026-07-08T10:00:00.000Z" } }` |
+| `workspaceTombstones` | Deletion Tombstones | ISO timestamps of deleted profile/roadmap ids for concurrent cloud sync. | `{ profiles: { id: deletedAt }, roadmaps: { id: deletedAt } }`; merged on pull/save; applied via `WorkspaceMerge.applyTombstones`; losers of content-fingerprint dedupe are tombstoned. | Serialized with every workspace payload; `recordWorkspaceTombstone` on delete | `{ "profiles": {}, "roadmaps": { "roadmap_old": "2026-07-09T10:00:00.000Z" } }` |
+| `currentRevision` | Cloud Document Revision | Session-only optimistic-lock counter for MongoDB workspace document. | Integer incremented server-side on each successful PUT; client tracks in `AppStorage` and sends as `expectedRevision`. | `src/modules/storage.js` (not in exported JSON) | `42` |
+| `ROADMAP_SUGGESTION_MAX` | Suggestion List Cap | Maximum distinct values per roadmap edit datalist. | Constant `40` in `app.js`. | `syncRoadmapFieldSuggestions()` | `40` |
 | `activeProfileId` | Active Profile | ID of portfolio currently selected for workspace views. | String; must match a profile `id`. | Profiles panel + portfolio header | `"profile_abc"` |
 | `sortField` | Table Sort Column | Active sort key for table view. | Enum used by `sortRoadmaps`. | Table view | `"riceScore"` |
 | `sortDirection` | Sort Direction | Ascending or descending table sort. | `"asc"` \| `"desc"`. | Table view | `"desc"` |
@@ -134,6 +136,25 @@ financialImpactEUR = financialImpactValue × exchangeRatesToEUR[currency]
 ```
 
 If rate missing, EUR display may be omitted or stale per [GUARDRAILS.md](GUARDRAILS.md).
+
+### 4.4 Roadmap content fingerprint (dedupe identity)
+
+Used by `WorkspaceMerge.getRoadmapIdentityKey()` to detect logical duplicate roadmaps during cloud merge:
+
+```
+identityKey = join("|", [
+  normalizedTitle,
+  roadmapPeriodKey,           // roadmapPeriods[] sorted or legacy roadmapPeriod
+  sortedCountriesUppercase,
+  normalizedMoscowCategory,   // aliases: "must" → "must have", etc.
+  normalizedRoadmapType,
+  normalizedTshirtSize
+])
+```
+
+Roadmaps sharing the same `identityKey` collapse to one survivor: lowest id anchor (`pickAnchorId`); field data from the copy with the newest `modifiedAt`. Losers are tombstoned.
+
+**Implementation:** `src/modules/workspace-merge.js`.
 
 **Profile currency totals (original-currency breakdown):**
 - For each currency total card (non-EUR), the app computes:
@@ -506,16 +527,31 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  SAVE[saveState / cloud PUT] --> FETCH[GET remote payload]
-  FETCH --> MERGE[WorkspaceMerge.mergeWorkspacePayloads]
+  SAVE[saveState / cloud PUT] --> DEDUPE[dedupeWorkspacePayload]
+  DEDUPE --> FETCH[GET remote + revision]
+  FETCH --> MERGE[mergeWorkspacePayloads]
   LOCAL[local profiles + roadmaps] --> MERGE
   REMOTE[remote profiles + roadmaps] --> MERGE
-  MERGE --> UNION[Union by id; modifiedAt wins]
+  MERGE --> FP[getRoadmapIdentityKey fingerprint dedupe]
+  MERGE --> ANCHOR[pickAnchorId survivor id]
   MERGE --> TOMB[Merge workspaceTombstones]
   TOMB --> APPLY[applyTombstones filters deleted ids]
-  APPLY --> PUT[PUT merged payload to MongoDB]
+  APPLY --> PUT[PUT with expectedRevision]
+  PUT -->|409 conflict| CM[merge conflictPayload + retry]
+  PUT -->|200| OK[revision++]
   DEL[delete profile/roadmap] --> REC[recordWorkspaceTombstone]
   REC --> SAVE
+```
+
+### 8.20 Roadmap field suggestions
+
+```mermaid
+flowchart LR
+  ROADMAPS[getRoadmapsForFieldSuggestions] --> COLLECT[Collect labels / RACI names / link labels / URLs]
+  COLLECT --> DEDUPE[uniqueTrimmedStrings case-insensitive]
+  DEDUPE --> CAP[slice 0..ROADMAP_SUGGESTION_MAX]
+  CAP --> DL[syncDatalistOptions → HTML datalist elements]
+  DL --> INPUT[Roadmap edit modal inputs list= datalist id]
 ```
 
 ---
@@ -524,7 +560,7 @@ flowchart TD
 
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
-| `APP_ASSET_VERSION` | Asset Cache Version | Documentation baseline for cache-bust releases. Individual CSS/JS links in `index.html` may use per-asset `?v=` suffixes that include this baseline plus feature tags. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260708-ui198"` |
+| `APP_ASSET_VERSION` | Asset Cache Version | Documentation baseline for cache-bust releases. Individual CSS/JS links in `index.html` may use per-asset `?v=` suffixes that include this baseline plus feature tags. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260709-ui199"` |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | Compact Breakpoint (px) | Max viewport width for phone/tablet UI. | Constant in `constants.js`. | `src/constants.js` | `1400` |
 | `is-compact-layout` | Compact Layout Class | Viewport ≤1400px; enables compact CSS. | Set on `<html>` by `initCompactLayoutClass()`. | Global layout | class present |
 | `is-phone-layout` | Phone Layout Class | Same threshold as compact (unified phone UI). | Set together with compact class. | Global layout | class present |
@@ -537,8 +573,9 @@ flowchart TD
 
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
-| `_storageMeta.updatedAt` | Workspace Updated At | ISO timestamp for merge conflict resolution. | Newer local vs remote wins on load. | `storage.js` | `"2026-05-26T12:00:00.000Z"` |
+| `_storageMeta.updatedAt` | Workspace Updated At | ISO timestamp for merge conflict resolution. | Newer local vs remote wins on load. | `storage.js` | `"2026-07-09T12:00:00.000Z"` |
 | `_storageMeta.source` | Last Save Source | Whether last write was local or cloud. | Set on save paths. | Cloud modal / debug | `"cloud"` |
+| `revision` (MongoDB doc) | Cloud Revision Counter | Optimistic-lock integer on workspace document. | Server increments on each successful PUT; client sends `expectedRevision`; mismatch → 409 conflict. | `api/state.js`, `storage.js` session `currentRevision` | `42` |
 
 ---
 

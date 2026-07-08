@@ -6,8 +6,8 @@
 | **Version** | 2.0.0 |
 | **Audience** | Product, engineering, design, QA, and stakeholders |
 | **Maintainer** | Product Team |
-| **Last updated** | 2026-07-08 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260708-ui198` |
+| **Last updated** | 2026-07-09 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260709-ui199` |
 
 This document is the **collaborative cross-feature reference** for how the app behaves end-to-end. It explains **logic** (what the system does), **rules** (what inputs and workflows are allowed), and **constraints** (what the product must not do or cannot guarantee). Use it in planning reviews, QA test design, and cross-team alignment.
 
@@ -394,11 +394,23 @@ flowchart TB
 | Aspect | Detail |
 |--------|--------|
 | **Purpose** | Shared workspace document for teams on Vercel + MongoDB |
-| **Logic** | `GET /api/state` on load; debounced `PUT` on change; `preparePayloadForRemoteSave` fetches remote and `WorkspaceMerge.mergeWorkspacePayloads` before save |
-| **Rules** | Union profiles/roadmaps by id; newer `modifiedAt` wins per entity; duplicate profile names collapse; `workspaceTombstones` propagates deletes |
-| **Constraints** | Vercel deployment protection must allow `/api`; not true real-time CRDT — last merged save wins on conflicts; resurrect only if entity `modifiedAt` is newer than tombstone |
+| **Logic** | `GET /api/state` on load (includes `revision`); debounced `PUT` with `expectedRevision`; `preparePayloadForRemoteSave` dedupes locally, fetches remote, and `WorkspaceMerge.mergeWorkspacePayloads` before save |
+| **Rules** | Union profiles/roadmaps by id; newer `modifiedAt` wins per entity; duplicate profile names collapse with id anchor; duplicate roadmaps collapse via `getRoadmapIdentityKey` fingerprint; `workspaceTombstones` propagates deletes |
+| **Conflict handling** | HTTP 409 when `expectedRevision` stale; client merges `conflictPayload` via `mergeWorkspacePayloads` and retries; `notifyCloudDataRefreshed({ source: "conflict-merge" })` |
+| **Constraints** | Vercel deployment protection must allow `/api`; not true real-time CRDT — last merged save wins on same entity; resurrect only if `modifiedAt` newer than tombstone |
 | **Code** | `src/modules/storage.js`, `src/modules/workspace-merge.js`, `api/state.js` |
-| **See also** | [DEPLOYMENT.md](DEPLOYMENT.md), `npm run test:workspace-merge` |
+| **See also** | [DEPLOYMENT.md](DEPLOYMENT.md), `npm run test:workspace-merge`, `npm run test:storage` |
+
+### F-34 Roadmap field suggestions
+
+| Aspect | Detail |
+|--------|--------|
+| **Purpose** | Speed up consistent data entry for labels, RACI names, and links |
+| **Logic** | `syncRoadmapFieldSuggestions()` collects distinct values from `getRoadmapsForFieldSuggestions()` → populates `<datalist>` elements |
+| **Rules** | Max **40** values per datalist (`ROADMAP_SUGGESTION_MAX`); case-insensitive dedupe; privileged workspace mode sources all profiles |
+| **Datalists** | `#roadmapLabelSuggestions`, `#roadmapRaciNameSuggestions`, `#roadmapLinkLabelSuggestions`, `#roadmapLinkUrlSuggestions` |
+| **Constraints** | Suggestions are read-only hints — user can still type any value; not persisted as separate state |
+| **Code** | `src/app.js` (`syncRoadmapFieldSuggestions`, `syncDatalistOptions`), `index.html` datalist markup |
 
 ### F-33 Exchange rates
 
@@ -521,6 +533,7 @@ flowchart LR
 |------------|-----------------|
 | F-00–F-04 | `app.js`, `constants.js`, `storage.js`, `workspace-merge.js`, `share-link.js` |
 | F-32 | `storage.js`, `workspace-merge.js`, `api/state.js` |
+| F-34 | `app.js`, `index.html` datalists |
 | F-10–F-12 | `app.js`, `utils.js`, `roadmap-metadata.js` |
 | F-13 | `rice.js` |
 | F-15 | `app.js` (financial helpers) |
@@ -553,6 +566,7 @@ flowchart LR
 | Date | Change |
 |------|--------|
 | 2026-05-28 | Initial collaborative cross-feature logic and constraints reference |
+| 2026-07-09 | Id-anchored dedupe, revision conflicts, roadmap field suggestions; baseline `20260709-ui199` |
 | 2026-07-08 | WorkspaceMerge + tombstones; 13 tests; ~25k app.js; baseline `20260708-ui198` |
 | 2026-05-28 | ShareLink deep links; 41 CSS; 12 tests; baseline `20260528-ui197` |
 | 2026-05-28 | Seven views (Gantt); roadmapDeadline; ganttZoom; baseline `20260528-ui197` |

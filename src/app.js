@@ -12466,7 +12466,16 @@ function applyStatePayload(parsed) {
       typeof WorkspaceMerge !== "undefined" && WorkspaceMerge.countRoadmaps
         ? WorkspaceMerge.countRoadmaps(source)
         : roadmapsBefore;
-    const dedupedDuplicates = roadmapsAfter < roadmapsBefore;
+    const profilesBefore =
+      typeof WorkspaceMerge !== "undefined" && WorkspaceMerge.countProfiles
+        ? WorkspaceMerge.countProfiles(parsed)
+        : 0;
+    const profilesAfter =
+      typeof WorkspaceMerge !== "undefined" && WorkspaceMerge.countProfiles
+        ? WorkspaceMerge.countProfiles(source)
+        : profilesBefore;
+    const dedupedDuplicates =
+      roadmapsAfter < roadmapsBefore || profilesAfter < profilesBefore;
 
     const rawProfiles = Array.isArray(source) ? source : source.profiles;
     if (!Array.isArray(rawProfiles)) return;
@@ -12586,7 +12595,51 @@ function normalizeLoadedRoadmap(roadmap) {
   return Object.assign({}, roadmap, normalized);
 }
 
+/** Dedupe profiles/roadmaps in memory (id-anchored, newest data wins). Returns true if anything changed. */
+function dedupeWorkspaceStateInPlace() {
+  if (typeof WorkspaceMerge === "undefined" || !WorkspaceMerge.dedupeWorkspacePayload) return false;
+
+  const beforePayload = serializeStatePayload();
+  const roadmapsBefore = WorkspaceMerge.countRoadmaps(beforePayload);
+  const profilesBefore = WorkspaceMerge.countProfiles(beforePayload);
+
+  const deduped = WorkspaceMerge.dedupeWorkspacePayload(beforePayload);
+  const roadmapsAfter = WorkspaceMerge.countRoadmaps(deduped);
+  const profilesAfter = WorkspaceMerge.countProfiles(deduped);
+
+  if (
+    roadmapsBefore === roadmapsAfter &&
+    profilesBefore === profilesAfter &&
+    JSON.stringify(beforePayload) === JSON.stringify(deduped)
+  ) {
+    return false;
+  }
+
+  if (deduped.workspaceTombstones) {
+    state.workspaceTombstones = {
+      profiles: Object.assign({}, deduped.workspaceTombstones.profiles || {}),
+      roadmaps: Object.assign({}, deduped.workspaceTombstones.roadmaps || {})
+    };
+  }
+
+  const rawProfiles = Array.isArray(deduped.profiles) ? deduped.profiles : [];
+  state.profiles = rawProfiles.map(normalizeLoadedProfile).filter(Boolean);
+
+  if (!state.profiles.some((p) => p.id === state.activeProfileId)) {
+    state.activeProfileId = resolveFallbackActiveProfileId();
+  }
+
+  return true;
+}
+
 function saveState(options) {
+  try {
+    if (dedupeWorkspaceStateInPlace()) {
+      renderRoadmaps();
+    }
+  } catch (err) {
+    console.warn("Workspace dedupe before save failed", err);
+  }
   const payload = serializeStatePayload();
   const flush = options && options.flush === true;
   try {
@@ -22777,9 +22830,20 @@ function updateProfileDeleteConfirmState() {
     });
 }
 
+function dismissActiveToasts() {
+  const container = elements.toastContainer || document.getElementById("toastContainer");
+  if (!container) return;
+  container.querySelectorAll(".toast").forEach((toast) => {
+    if (toast._toastDismissTimer) clearTimeout(toast._toastDismissTimer);
+    if (toast._toastRemoveTimer) clearTimeout(toast._toastRemoveTimer);
+    toast.remove();
+  });
+}
+
 function showToast(message) {
   const container = elements.toastContainer || document.getElementById("toastContainer");
   if (!container || !message) return;
+  dismissActiveToasts();
   const toast = document.createElement("div");
   toast.className = "toast";
   toast.setAttribute("role", "alert");
@@ -22790,16 +22854,17 @@ function showToast(message) {
   container.appendChild(toast);
   const duration = 4200;
   const exitDuration = 250;
-  const timer = setTimeout(() => {
+  toast._toastDismissTimer = setTimeout(() => {
     toast.classList.add("toast-exit");
-    setTimeout(() => {
+    toast._toastRemoveTimer = setTimeout(() => {
       if (toast.parentNode) toast.parentNode.removeChild(toast);
     }, exitDuration);
   }, duration);
   toast.addEventListener("click", () => {
-    clearTimeout(timer);
+    if (toast._toastDismissTimer) clearTimeout(toast._toastDismissTimer);
+    if (toast._toastRemoveTimer) clearTimeout(toast._toastRemoveTimer);
     toast.classList.add("toast-exit");
-    setTimeout(() => {
+    toast._toastRemoveTimer = setTimeout(() => {
       if (toast.parentNode) toast.parentNode.removeChild(toast);
     }, exitDuration);
   });

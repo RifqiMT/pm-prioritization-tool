@@ -4,7 +4,7 @@
 
 **Purpose:** Map PRD requirements to concrete implementation evidence and verification steps.  
 **Standard:** Requirement IDs must remain synchronized with [PRD.md](PRD.md).  
-**Last audited:** 2026-07-08 · **Baseline:** `APP_ASSET_VERSION` = `20260708-ui198`
+**Last audited:** 2026-07-09 · **Baseline:** `APP_ASSET_VERSION` = `20260709-ui199`
 
 ---
 
@@ -51,6 +51,7 @@
 | FR-2.11 | KANO scores | Roadmap modal KANO section; `renderKanoPortfolioMatrix` | Scores 1–5 place roadmaps on matrix |
 | FR-2.14 | Multi-quarter periods | `roadmap-periods.js`; `roadmapPeriods[]` in modal | Periods validate; latest drives status |
 | FR-2.15 | Roadmap deadline | `normalizeRoadmapDeadline` in `utils.js`; modal date input | `YYYY-MM-DD`; Gantt marker; CSV round-trip |
+| FR-2.16 | Roadmap field suggestions | `syncRoadmapFieldSuggestions` in `app.js`; datalists in `index.html` | Labels, RACI names, link labels/URLs; max 40 each |
 
 ---
 
@@ -143,7 +144,8 @@
 | FR-8.4 | Import JSON merge | `handleImportJsonFile`; `mergeImportedProfiles` | Update by id; no duplicates |
 | FR-8.5 | Import CSV merge | `handleImportCsvFile` | Rows merge safely |
 | FR-8.6 | Import/export modal parity | `export-modals-modern.css` | Shared cards + responsive footer |
-| FR-8.7 | Concurrent cloud merge | `workspace-merge.js` `mergeWorkspacePayloads`; `storage.js` `preparePayloadForRemoteSave`; `workspaceTombstones` in `app.js` | Two sessions: union entities; tombstoned deletes stay deleted; newer `modifiedAt` wins |
+| FR-8.7 | Concurrent cloud merge | `workspace-merge.js` `mergeWorkspacePayloads`, `dedupeWorkspacePayload`; `storage.js` `preparePayloadForRemoteSave`; `workspaceTombstones` in `app.js` | Union entities; fingerprint dedupe; tombstoned deletes stay deleted |
+| FR-8.8 | Revision conflict handling | `api/state.js` revision check; `storage.js` `putRemoteState` + 409 merge-retry | Simultaneous saves converge without duplicate rows |
 
 ---
 

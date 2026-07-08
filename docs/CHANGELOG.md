@@ -27,6 +27,22 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Docs — Full product documentation standard audit — 2026-07-09 — Product Team — Impact: documentation
+
+- Re-audited codebase vs 18-doc suite; baseline `APP_ASSET_VERSION` = `20260709-ui199`.
+- **Id-anchored dedupe:** `WorkspaceMerge.dedupeWorkspacePayload`, `getRoadmapIdentityKey` fingerprint, `pickAnchorId`; pre-save dedupe in `storage.js`.
+- **Revision conflicts:** MongoDB `revision` + `expectedRevision` on PUT; 409 `WORKSPACE_CONFLICT` merge-retry in `storage.js`.
+- **Roadmap field suggestions:** `syncRoadmapFieldSuggestions()` datalists (labels, RACI names, link labels/URLs; max 40).
+- **13** test suites; **21** modules; **41** CSS; `app.js` ~25.2k lines.
+- Updated PRD FR-2.16, FR-8.8, FEATURE_LOGIC F-32/F-34, VARIABLES, USER_STORIES, TRACEABILITY, GUARDRAILS, ARCHITECTURE.
+
+### Fix — Id-anchored dedupe and revision merge — 2026-07-09 — Product Team — Impact: user-visible
+
+- Duplicate roadmaps with the same content fingerprint collapse to one survivor (lowest id anchor; newest `modifiedAt` fields).
+- Duplicate profile names merge with id anchor; shared roadmap ids deduped across profiles.
+- Cloud PUT sends `expectedRevision`; on conflict, merges conflict payload and retries.
+- Roadmap edit modal datalists for labels, RACI names, link labels, and URLs.
+
 ### Docs — Full product documentation standard audit — 2026-07-08 — Product Team — Impact: documentation
 
 - Re-audited codebase vs 18-doc suite; baseline `APP_ASSET_VERSION` = `20260708-ui198`.

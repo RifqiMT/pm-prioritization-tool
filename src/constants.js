@@ -9,7 +9,7 @@
 const STORAGE_KEY = "rice_prioritizer_v1";
 
 /** Bump when shipping client changes so browsers fetch fresh JS (Vercel caches /src with long TTL). */
-const APP_ASSET_VERSION = "20260708-ui198";
+const APP_ASSET_VERSION = "20260709-ui199";
 
 /**
  * Viewports at or below this width use the unified phone/tablet UI

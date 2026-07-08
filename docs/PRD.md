@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Status** | Implemented (local-first static app) |
-| **Last updated** | 2026-07-08 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260708-ui198` |
+| **Last updated** | 2026-07-09 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260709-ui199` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -81,6 +81,7 @@ See [USER_PERSONAS.md](USER_PERSONAS.md).
 | FR-2.11 | KANO scores | Optional `kanoFunctionality` and `kanoSatisfaction` (integers 1–5); drive portfolio KANO matrix placement |
 | FR-2.12 | LLM roadmap analysis (optional) | Summary section: Tavily link/search enrichment + Groq three-paragraph briefing; professional/simplified tone toggle; session-only output (not persisted to roadmap or cloud) |
 | FR-2.13 | 5 Why Framework (optional) | View-only roadmap modal section: iterative WHY 1→5 questions via Tavily research + Groq; DMAIC-aligned lenses (Define → Control); plain-English questions only (no answers); session-only output; independent from FR-2.12 summary |
+| FR-2.16 | Roadmap field suggestions | Edit modal `<datalist>` suggestions for labels, RACI names, link labels, and link URLs sourced from portfolio roadmaps (active profile, or all profiles in privileged workspace mode); max **40** distinct values per field; refreshed on load and after profile/workspace changes |
 
 ### FR-3 RICE
 
@@ -221,7 +222,8 @@ Manual refresh; rates cached in state; EUR conversion for table/map financial di
 | FR-8.4 | Import JSON | Merge profiles/roadmaps by id |
 | FR-8.5 | Import CSV | Merge roadmap rows |
 | FR-8.6 | UI parity | Import/export modals share design system |
-| FR-8.7 | Concurrent cloud merge | `WorkspaceMerge.mergeWorkspacePayloads`; `workspaceTombstones`; pre-save merge in `storage.js` | Two editors: union profiles/roadmaps; deletes propagate; newer entity wins |
+| FR-8.7 | Concurrent cloud merge | `WorkspaceMerge.mergeWorkspacePayloads`; `dedupeWorkspacePayload`; `workspaceTombstones`; pre-save merge in `storage.js` | Two editors: union profiles/roadmaps; content-fingerprint dedupe; deletes propagate; newer entity wins |
+| FR-8.8 | Revision conflict handling | MongoDB document `revision`; client sends `expectedRevision` on PUT; 409 returns conflict payload | Simultaneous saves: auto-merge conflict payload and retry; no user-visible data loss |
 
 ### FR-9 UX / accessibility
 

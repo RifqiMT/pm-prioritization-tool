@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Document owner** | Product Team |
-| **Last audited** | 2026-07-08 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260708-ui198` |
+| **Last audited** | 2026-07-09 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260709-ui199` |
 
 ---
 
@@ -60,6 +60,7 @@ The application is a **static single-page app** (HTML, layered CSS, vanilla Java
 - **Bulk delete** in table (toolbar on desktop; floating **selection bar** on compact).
 - **Bulk duplicate** and **bulk move** to another profile when privileged workspace mode is active (see [GUARDRAILS.md](GUARDRAILS.md) §7) — `roadmapBulkTransferModal`.
 - Stable **roadmap ID** and metadata in modal footer (collapsible on compact).
+- **Field suggestions** — datalists for labels, RACI names, link labels, and URLs (max 40 values; see §3.10).
 
 ### 3.3 Financial frameworks
 
@@ -121,12 +122,19 @@ When `html.is-compact-layout` and table view:
 ### 3.9 Cloud storage (optional)
 
 - `AppStorage` (`src/modules/storage.js`): load/save workspace to MongoDB via `/api/state`.
-- `WorkspaceMerge` (`src/modules/workspace-merge.js`): merges local + remote payloads before cloud save; unions profiles/roadmaps by id; applies `workspaceTombstones` so deletes propagate across concurrent editors.
+- `WorkspaceMerge` (`src/modules/workspace-merge.js`): merges local + remote payloads before cloud save; unions profiles/roadmaps by id; **content-fingerprint dedupe** via `getRoadmapIdentityKey`; applies `workspaceTombstones` so deletes propagate across concurrent editors.
+- **Revision optimistic concurrency:** MongoDB stores `revision`; client sends `expectedRevision` on PUT; HTTP 409 triggers merge of conflict payload and automatic retry.
 - Header status, Cloud modal (connect, pull, push, diagnostics); debounced sync (250ms) with **immediate flush** after roadmap save.
 - Background pull skipped while local edits are pending or newer than last applied remote snapshot (prevents overwriting labels/links).
 - Server normalizes labels, links, tasks, RACI, KANO axes, and note on every MongoDB write (`api/_lib/roadmap-metadata.js`).
 - Legacy JSON keys (`profile.projects`, `projectsView`, `projectType`, `projectStatus`, `projectPeriod`) migrate to roadmap equivalents on load; saves write only canonical keys.
-- Merge on load by document `updatedAt` and profile-count heuristics; `recordWorkspaceTombstone` on delete; local cache under `rice_prioritizer_v1`.
+- Merge on load by document `updatedAt` and profile-count heuristics; `recordWorkspaceTombstone` on delete; pre-save `dedupeWorkspacePayload`; local cache under `rice_prioritizer_v1`.
+
+### 3.10 Roadmap field suggestions
+
+- Edit modal inputs use HTML `<datalist>` elements for labels, RACI names, link labels, and link URLs.
+- `syncRoadmapFieldSuggestions()` collects up to **40** distinct values per field from portfolio roadmaps (active profile, or all profiles in privileged workspace mode).
+- Refreshed on init, after super-admin toggle, and when portfolio data changes.
 
 ### 3.11 Shareable deep links
 
@@ -251,7 +259,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md).
 | Layer | Technology |
 |-------|------------|
 | UI | `index.html`, **41** layered CSS files (see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) §3.1) |
-| Logic | `src/app.js` (~25k lines), `src/rice.js`, `src/constants.js`, `src/utils.js` |
+| Logic | `src/app.js` (~25.2k lines), `src/rice.js`, `src/constants.js`, `src/utils.js` |
 | Modules | `workspace-merge`, `storage`, `profile-security`, `exchange-rates`, `fullscreen`, `overlay-manager`, `description-format`, `rich-text-editor`, `board-drag`, `board-card-interaction`, `byok-api-keys`, `roadmap-llm-summary`, `roadmap-5why-framework`, `roadmap-periods`, `gantt-view`, `export-payload`, `share-link`; dev seed: `dev-seed-workspace.js` (localhost only) |
 | API | `api/health.js`, `api/config.js`, `api/state.js`, `api/byok/validate-*.js`, `api/_lib/*` (auth, mongo, roadmap-metadata, export-payload, byok-validate) |
 | Database | MongoDB Atlas (optional) |

@@ -8,7 +8,7 @@
 |---|---|
 | **Production** | [pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app) |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260708-ui198` (per-asset `?v=` tags in `index.html`) |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260709-ui199` (per-asset `?v=` tags in `index.html`) |
 | **Docs hub** | [docs/README.md](docs/README.md) |
 
 > Do not use `pm-prioritization-tool.vercel.app` — that hostname serves a legacy React app. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
@@ -42,7 +42,8 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 - **Planning flexibility** — filter by country, quarter, framework, status, labels, links; map by count, RICE, or EUR  
 - **Meeting-ready on any device** — compact layout uses vertical stacks, FAB, touch-friendly controls, and quadrant nav pills  
 - **Shareable deep links** — URL hash reflects active profile, view, and opened roadmap for teammates on the same workspace  
-- **Concurrent cloud editing** — MongoDB saves merge local + remote workspace; tombstones prevent deleted profiles/roadmaps from reappearing  
+- **Concurrent cloud editing** — MongoDB saves merge local + remote workspace; revision conflicts auto-merge; id-anchored dedupe collapses duplicate rows; tombstones prevent deleted items from reappearing  
+- **Faster roadmap entry** — edit modal datalists suggest labels, RACI names, and link labels/URLs from your portfolio (up to 40 values each)  
 
 ---
 
@@ -68,7 +69,8 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 - **Bulk duplicate / move** across profiles when privileged workspace mode is active (see [docs/GUARDRAILS.md](docs/GUARDRAILS.md) §7)  
 - Stable **roadmap ID** in modal footer metadata  
 - **LLM analysis** (optional) — Tavily enriches context from roadmap links; Groq (`llama-3.1-8b-instant`) produces professional or simplified three-paragraph summaries; session-only (not stored in MongoDB)  
-- **5 Why Framework** (optional) — view-only section generates iterative WHY 1→5 plain-English questions (DMAIC-aligned lenses) via Tavily + Groq; session-only; independent from LLM summary
+- **5 Why Framework** (optional) — view-only section generates iterative WHY 1→5 plain-English questions (DMAIC-aligned lenses) via Tavily + Groq; session-only; independent from LLM summary  
+- **Field suggestions** — edit modal datalists for labels, RACI names, link labels, and URLs (up to 40 distinct values from portfolio roadmaps)
 
 ### BYOK API keys (optional)
 
@@ -108,7 +110,7 @@ Active filter count appears in the portfolio filters badge. Reset restores defau
 ### Exchange rates and cloud
 
 - Refresh FX to EUR for table, map, and profile currency breakdowns  
-- Optional **MongoDB** sync: header status, Cloud modal, pull/save (`src/modules/storage.js`); concurrent edits merged via `WorkspaceMerge` with deletion tombstones  
+- Optional **MongoDB** sync: header status, Cloud modal, pull/save (`src/modules/storage.js`); concurrent edits merged via `WorkspaceMerge` (content-fingerprint dedupe + tombstones); revision conflicts auto-merge on HTTP 409  
 
 ### Site chrome
 
@@ -262,4 +264,4 @@ UNLICENSED (private). See `package.json`.
 - GitHub: [RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool)  
 - Article: [Effort–impact confusion to clear-cut priorities](https://rifqi-tjahyono.com/%f0%9f%93%8a-effort-impact-confusion-to-clear-cut-priorities-replace-tab-hopping-with-visual-roadmap-sanity-%f0%9f%a7%ad%e2%9c%a8/)
 
-**Documentation last comprehensively audited:** 2026-07-08 (baseline `20260708-ui198`).
+**Documentation last comprehensively audited:** 2026-07-09 (baseline `20260709-ui199`).

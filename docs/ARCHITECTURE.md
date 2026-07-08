@@ -4,8 +4,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last audited** | 2026-07-08 |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260708-ui198` |
+| **Last audited** | 2026-07-09 |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260709-ui199` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -48,7 +48,7 @@ The UI is a **static SPA** (`index.html` + `src/`). On Vercel, **serverless rout
 | `src/modules/exchange-rates.js` | Fetch/cache FX to EUR |
 | `src/modules/fullscreen.js` | Fullscreen API; compact media query uses `COMPACT_LAYOUT_MAX_WIDTH_PX` |
 | `src/modules/overlay-manager.js` | Single-popup coordination (modals, sheets, menus) |
-| `src/modules/workspace-merge.js` | Concurrent cloud merge: union profiles/roadmaps, tombstones (`WorkspaceMerge`) |
+| `src/modules/workspace-merge.js` | Concurrent cloud merge: union profiles/roadmaps, content-fingerprint dedupe, tombstones (`WorkspaceMerge`) |
 | `src/modules/storage.js` | MongoDB vs local persistence, debounced sync, pre-save merge, flush on roadmap save, pull guard |
 | `src/modules/description-format.js` | Sanitize/render description HTML |
 | `src/modules/rich-text-editor.js` | RichTextEditor mount for description fields |
@@ -296,8 +296,14 @@ sequenceDiagram
   API->>DB: fetch workspace doc
   Mod->>Merge: mergeWorkspacePayloads(local, remote)
   Merge-->>Mod: merged payload
-  Mod->>API: debounced PUT
-  API->>DB: upsert workspace doc
+  Mod->>API: PUT expectedRevision=N
+  alt revision match
+    API->>DB: upsert revision N+1
+  else 409 conflict
+    API-->>Mod: conflict payload + revision
+    Mod->>Merge: mergeWorkspacePayloads(local, conflict)
+    Mod->>API: retry PUT
+  end
   Note over App,DB: On load: GET + merge; applyTombstones filters deleted ids
 ```
 
@@ -353,7 +359,7 @@ flowchart TD
 
 ## 16. Known architectural constraints
 
-- Monolithic `app.js` (~25k lines) — acceptable for static app; split only with clear module boundaries if growth continues.
+- Monolithic `app.js` (~25.2k lines) — acceptable for static app; split only with clear module boundaries if growth continues.
 - Global namespace — naming collisions require discipline.
 - Full re-render on state change — optimize only if measured pain at scale.
 
