@@ -77,7 +77,75 @@ const duplicateNameRemote = {
 };
 const duplicateMerged = mergeWorkspacePayloads(duplicateNameLocal, duplicateNameRemote);
 assert.strictEqual(countProfiles(duplicateMerged), 1);
+assert.strictEqual(duplicateMerged.profiles[0].id, "p1");
 assert.strictEqual(countRoadmaps(duplicateMerged), 2);
+assert.ok(duplicateMerged.workspaceTombstones.profiles["p9"]);
+
+const duplicateRoadmapLocal = {
+  profiles: [
+    {
+      id: "p1",
+      name: "Team",
+      roadmaps: [
+        {
+          id: "r-old",
+          title: "AI audit logs",
+          roadmapPeriod: "2025-Q2",
+          countries: ["EU"],
+          moscowCategory: "Must have",
+          tshirtSize: "S",
+          modifiedAt: "2026-05-31T21:07:00.000Z"
+        }
+      ]
+    }
+  ]
+};
+
+const duplicateRoadmapRemote = {
+  profiles: [
+    {
+      id: "p1",
+      name: "Team",
+      roadmaps: [
+        {
+          id: "r-new",
+          title: "AI audit logs",
+          roadmapPeriod: "2025-Q2",
+          countries: ["EU"],
+          moscowCategory: "Must have",
+          tshirtSize: "S",
+          modifiedAt: "2026-07-08T18:37:00.000Z"
+        },
+        {
+          id: "r-mid",
+          title: "AI audit logs",
+          roadmapPeriod: "2025-Q2",
+          countries: ["EU"],
+          moscowCategory: "Must have",
+          tshirtSize: "S",
+          modifiedAt: "2026-07-08T18:36:00.000Z"
+        }
+      ]
+    }
+  ]
+};
+
+const duplicateRoadmapMerged = mergeWorkspacePayloads(duplicateRoadmapLocal, duplicateRoadmapRemote);
+assert.strictEqual(countRoadmaps(duplicateRoadmapMerged), 1);
+assert.strictEqual(
+  duplicateRoadmapMerged.profiles[0].roadmaps[0].id,
+  "r-mid"
+);
+assert.strictEqual(
+  duplicateRoadmapMerged.profiles[0].roadmaps[0].modifiedAt,
+  "2026-07-08T18:37:00.000Z"
+);
+assert.ok(duplicateRoadmapMerged.workspaceTombstones.roadmaps["r-old"]);
+assert.ok(duplicateRoadmapMerged.workspaceTombstones.roadmaps["r-new"]);
+
+const dedupeOnly = WorkspaceMerge.dedupeWorkspacePayload(duplicateRoadmapRemote);
+assert.strictEqual(countRoadmaps(dedupeOnly), 1);
+assert.strictEqual(dedupeOnly.profiles[0].roadmaps[0].id, "r-mid");
 
 let tombstoned = recordTombstone(
   {

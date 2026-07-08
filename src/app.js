@@ -7260,6 +7260,13 @@ function setSuperAdminMode(enabled) {
   saveState();
   syncSuperAdminChrome();
   renderRoadmaps();
+  if (elements.roadmapModal?.classList.contains("active")) {
+    try {
+      syncRoadmapFieldSuggestions();
+    } catch (err) {
+      console.warn("Failed to refresh roadmap suggestions after super admin toggle", err);
+    }
+  }
   if (state.superAdminMode) {
     showToast("Super admin mode on — all workspace roadmaps are visible. Changes stay in each roadmap’s owner profile.");
   } else {
@@ -8940,6 +8947,7 @@ function addRoadmapLabelRow(value) {
   input.className = "roadmap-label-input";
   input.placeholder = "e.g. Q3 growth bet, Platform";
   input.setAttribute("aria-label", "Label text");
+  input.setAttribute("list", "roadmapLabelSuggestions");
   input.value = value || "";
   const removeBtn = document.createElement("button");
   removeBtn.type = "button";
@@ -8959,6 +8967,77 @@ function getRoadmapLabelsFromControls() {
     .map((input) => (input.value || "").trim())
     .filter((value) => value);
   return normalizeRoadmapLabels(values);
+}
+
+const ROADMAP_SUGGESTION_MAX = 40;
+
+/** Roadmaps to source field suggestions from (active profile, or all when super admin). */
+function getRoadmapsForFieldSuggestions() {
+  return getPortfolioRoadmapsBaseList();
+}
+
+function uniqueTrimmedStrings(values) {
+  const seen = new Set();
+  const out = [];
+  (values || []).forEach((value) => {
+    const v = String(value || "").trim();
+    if (!v) return;
+    const key = v.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(v);
+  });
+  return out;
+}
+
+function syncDatalistOptions(datalistId, values) {
+  const el = document.getElementById(datalistId);
+  if (!el) return;
+  el.innerHTML = "";
+  const list = uniqueTrimmedStrings(values).slice(0, ROADMAP_SUGGESTION_MAX);
+  list.forEach((value) => {
+    const opt = document.createElement("option");
+    opt.value = value;
+    el.appendChild(opt);
+  });
+}
+
+function syncRoadmapFieldSuggestions() {
+  const roadmaps = getRoadmapsForFieldSuggestions();
+
+  const labelValues = [];
+  const raciNames = [];
+  const linkLabels = [];
+  const linkUrls = [];
+
+  roadmaps.forEach((roadmap) => {
+    if (Array.isArray(roadmap.labels)) {
+      roadmap.labels.forEach((label) => labelValues.push(label));
+    }
+
+    const raci = roadmap.raci && typeof roadmap.raci === "object" ? roadmap.raci : null;
+    if (raci) {
+      Object.keys(raci).forEach((role) => {
+        const entries = Array.isArray(raci[role]) ? raci[role] : [];
+        entries.forEach((entry) => {
+          if (entry && typeof entry === "object") raciNames.push(entry.name);
+        });
+      });
+    }
+
+    if (Array.isArray(roadmap.links)) {
+      roadmap.links.forEach((link) => {
+        if (!link || typeof link !== "object") return;
+        linkLabels.push(link.label);
+        linkUrls.push(link.url);
+      });
+    }
+  });
+
+  syncDatalistOptions("roadmapLabelSuggestions", labelValues);
+  syncDatalistOptions("roadmapRaciNameSuggestions", raciNames);
+  syncDatalistOptions("roadmapLinkLabelSuggestions", linkLabels);
+  syncDatalistOptions("roadmapLinkUrlSuggestions", linkUrls);
 }
 
 function ensureRoadmapLinkRowHeader() {
@@ -9044,6 +9123,7 @@ function addRoadmapLinkRow(link) {
   labelInput.className = "roadmap-link-label-input";
   labelInput.placeholder = "e.g. Product spec";
   labelInput.setAttribute("aria-label", "Link display text");
+  labelInput.setAttribute("list", "roadmapLinkLabelSuggestions");
   labelInput.value = (link && link.label) || "";
 
   const urlInput = document.createElement("input");
@@ -9051,6 +9131,7 @@ function addRoadmapLinkRow(link) {
   urlInput.className = "roadmap-link-url-input";
   urlInput.placeholder = "https://example.com/doc";
   urlInput.setAttribute("aria-label", "Link URL");
+  urlInput.setAttribute("list", "roadmapLinkUrlSuggestions");
   urlInput.value = (link && link.url) || "";
 
   const removeBtn = document.createElement("button");
@@ -9732,6 +9813,7 @@ function addRoadmapRaciRow(role, entry) {
   nameInput.className = "roadmap-raci-name-input";
   nameInput.placeholder = "e.g. Jane Doe, Platform team";
   nameInput.setAttribute("aria-label", "RACI entry name");
+  nameInput.setAttribute("list", "roadmapRaciNameSuggestions");
   nameInput.value = (entry && entry.name) || "";
 
   const domainSelect = buildRoadmapRaciDomainSelect(entry && entry.domain);
@@ -12366,10 +12448,26 @@ function applyStatePayload(parsed) {
   }
 
   try {
-    const source =
-      typeof WorkspaceMerge !== "undefined" && WorkspaceMerge.applyTombstones
-        ? WorkspaceMerge.applyTombstones(parsed)
-        : parsed;
+    let source = parsed;
+    if (typeof WorkspaceMerge !== "undefined") {
+      if (WorkspaceMerge.applyTombstones) {
+        source = WorkspaceMerge.applyTombstones(source);
+      }
+      if (WorkspaceMerge.dedupeWorkspacePayload) {
+        source = WorkspaceMerge.dedupeWorkspacePayload(source);
+      }
+    }
+
+    const roadmapsBefore =
+      typeof WorkspaceMerge !== "undefined" && WorkspaceMerge.countRoadmaps
+        ? WorkspaceMerge.countRoadmaps(parsed)
+        : 0;
+    const roadmapsAfter =
+      typeof WorkspaceMerge !== "undefined" && WorkspaceMerge.countRoadmaps
+        ? WorkspaceMerge.countRoadmaps(source)
+        : roadmapsBefore;
+    const dedupedDuplicates = roadmapsAfter < roadmapsBefore;
+
     const rawProfiles = Array.isArray(source) ? source : source.profiles;
     if (!Array.isArray(rawProfiles)) return;
 
@@ -12399,6 +12497,10 @@ function applyStatePayload(parsed) {
     const activeAfterLoad = state.profiles.find((p) => p.id === state.activeProfileId);
     if (!isSuperAdminProfile(activeAfterLoad)) {
       state.superAdminMode = false;
+    }
+
+    if (dedupedDuplicates) {
+      saveState({ flush: true });
     }
   } catch (err) {
     console.error("Failed to apply stored state", err);
@@ -24488,6 +24590,12 @@ function openRoadmapModal(mode, roadmapId, options = {}) {
   editingRoadmapId = isEdit ? roadmapId : null;
   viewingRoadmapId = isView && roadmapId ? roadmapId : null;
   bulkEditingRoadmapIds = isBulk ? bulkIds.slice() : null;
+
+  try {
+    syncRoadmapFieldSuggestions();
+  } catch (err) {
+    console.warn("Failed to sync roadmap suggestions", err);
+  }
 
   let roadmap = null;
   let ownerProfile = activeProfile;

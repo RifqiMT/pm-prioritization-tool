@@ -1626,6 +1626,7 @@
                   <div class="roadmap-dynamic-field-panel">
                     <div id="roadmapLabelsContainer" class="roadmap-labels-list" role="group" aria-labelledby="roadmapLabelsLabel" aria-live="polite"></div>
                   </div>
+                  <datalist id="roadmapLabelSuggestions"></datalist>
                   <button type="button" id="addRoadmapLabelBtn" class="btn-secondary roadmap-dynamic-add-btn">
                     + Add label
                   </button>
@@ -1640,6 +1641,8 @@
                   <div class="roadmap-dynamic-field-panel">
                     <div id="roadmapLinksContainer" class="roadmap-links-list" role="group" aria-labelledby="roadmapLinksLabel" aria-live="polite"></div>
                   </div>
+                  <datalist id="roadmapLinkLabelSuggestions"></datalist>
+                  <datalist id="roadmapLinkUrlSuggestions"></datalist>
                   <button type="button" id="addRoadmapLinkBtn" class="btn-secondary roadmap-dynamic-add-btn">
                     + Add link
                   </button>
@@ -2007,6 +2010,7 @@
                 <span class="form-section-title">RACI</span>
                 <span class="form-section-hint">Roles and accountability matrix</span>
               </div>
+              <datalist id="roadmapRaciNameSuggestions"></datalist>
               <div class="roadmap-raci-grid">
                 <div class="roadmap-raci-group" data-raci-role="responsible">
                   <div class="roadmap-field-tooltip-wrap roadmap-meta-dynamic-field">
@@ -2314,11 +2318,11 @@
             <div id="roadmapModalSectionFiveWhy" class="form-section roadmap-fivewhy-section" data-optional-section data-view-only-section hidden>
               <div class="form-section-header">
                 <span class="form-section-title">5 Why Framework</span>
-                <span class="form-section-hint">Plain English why questions (needs API keys)</span>
+                <span class="form-section-hint">Step-by-step why questions (needs API keys)</span>
               </div>
               <div class="roadmap-fivewhy-panel">
                 <p class="roadmap-fivewhy-intro">
-                  First, add your Groq and Tavily API keys from the header (API keys). Then tap Ask WHY 1 and work through WHY 5, one step at a time. Each step creates a short, plain question about why this roadmap exists and what matters most, using only the details you already saved here. The tool does not suggest answers or make things up. WHY 2 looks at priority using MoSCoW, RICE, and KANO when you have filled those sections in. Each later WHY builds on the previous one until you reach the deepest question.
+                  Add your Groq and Tavily API keys in the header, then click Ask WHY 1. Each click gives you one short question about why this roadmap matters, using only the details you saved here. The tool asks questions—it does not answer them. Keep going through WHY 5, one step at a time.
                 </p>
                 <div class="roadmap-fivewhy-actions">
                   <button type="button" id="roadmapFiveWhyGenerateBtn" class="btn-secondary roadmap-fivewhy-generate-btn">
@@ -2336,11 +2340,11 @@
             <div id="roadmapModalSectionSummary" class="form-section roadmap-summary-section" data-optional-section data-view-only-section hidden>
               <div class="form-section-header">
                 <span class="form-section-title">Roadmap Summary</span>
-                <span class="form-section-hint">AI written briefing (needs API keys)</span>
+                <span class="form-section-hint">Written summary (needs API keys)</span>
               </div>
               <div class="roadmap-summary-panel">
                 <p class="roadmap-summary-intro">
-                  First, add your Groq and Tavily API keys from the header (API keys). Tavily reads your linked pages and gathers background context. Groq then writes a three paragraph executive summary (about eight sentences per paragraph). When that is done, tap Simplified for a shorter storytelling version (about five sentences per paragraph) once the services are ready again. The summary only uses facts from saved roadmap fields. Any empty fields are skipped.
+                  Add your Groq and Tavily API keys in the header, then click Generate LLM analysis. It reads your links and saved roadmap details and writes a three-paragraph summary. When it is ready, switch to Simplified for a shorter version. Empty fields are skipped.
                 </p>
                 <div class="roadmap-summary-actions">
                   <button type="button" id="roadmapSummaryGenerateBtn" class="btn-secondary roadmap-summary-generate-btn">
@@ -3221,8 +3225,8 @@
   <script src="src/modules/exchange-rates.js?v=20260528-ui194"></script>
   <script src="src/modules/fullscreen.js?v=20260607-mobile-views-v1"></script>
   <script src="src/modules/overlay-manager.js?v=20260607-filters-sheet-fix-v1"></script>
-  <script src="src/modules/workspace-merge.js?v=20260708-sync-merge-v1"></script>
-  <script src="src/modules/storage.js?v=20260708-sync-merge-v1"></script>
+  <script src="src/modules/workspace-merge.js?v=20260708-id-anchor-v1"></script>
+  <script src="src/modules/storage.js?v=20260708-dedupe-v1"></script>
   <script src="src/dev-seed-workspace.js?v=20260528-ui194"></script>
   <script src="src/modules/description-format.js?v=20260528-ui194"></script>
   <script src="src/modules/rich-text-editor.js?v=20260608-bulk-edit-fix-v1"></script>
@@ -3235,7 +3239,7 @@
   <script src="src/modules/gantt-view.js?v=20260630-gantt-row-v10"></script>
   <script src="src/modules/export-payload.js?v=20260608-export-full-v1"></script>
   <script src="src/modules/share-link.js?v=20260630-share-link-v3"></script>
-  <script src="src/app.js?v=20260708-sync-merge-v1"></script>
+  <script src="src/app.js?v=20260708-dedupe-v1"></script>
 </body>
 </html>
 

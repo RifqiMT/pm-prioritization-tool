@@ -195,7 +195,11 @@ const AppStorage = (function () {
   async function preparePayloadForRemoteSave(localPayload) {
     const base = localPayload || getLiveSerializedPayload(null);
     if (!base) return null;
-    if (mode !== "mongodb") return base;
+    let prepared = base;
+    if (typeof WorkspaceMerge !== "undefined" && WorkspaceMerge.dedupeWorkspacePayload) {
+      prepared = WorkspaceMerge.dedupeWorkspacePayload(prepared);
+    }
+    if (mode !== "mongodb") return prepared;
 
     try {
       const remote = await fetchRemoteState();
@@ -203,12 +207,12 @@ const AppStorage = (function () {
         currentRevision = remote.revision;
       }
       if (remote && remote.payload && !isEmptyPayload(remote.payload)) {
-        return mergeWorkspacePayloads(base, remote.payload);
+        return mergeWorkspacePayloads(prepared, remote.payload);
       }
     } catch (err) {
       console.warn("Pre-save cloud fetch failed; saving local snapshot", err);
     }
-    return base;
+    return prepared;
   }
 
   function payloadsDiffer(a, b) {
