@@ -230,6 +230,24 @@ const AppStorage = (function () {
     return remotePayload;
   }
 
+  function dedupePayloadIfPossible(payload) {
+    if (!payload || typeof payload !== "object") return payload;
+    if (typeof WorkspaceMerge !== "undefined" && WorkspaceMerge.dedupeWorkspacePayload) {
+      return WorkspaceMerge.dedupeWorkspacePayload(payload);
+    }
+    return payload;
+  }
+
+  function workspacePayloadChangedByDedupe(before, after) {
+    if (!before && !after) return false;
+    if (!before || !after) return true;
+    return (
+      countProfiles(before) !== countProfiles(after) ||
+      countRoadmaps(before) !== countRoadmaps(after) ||
+      JSON.stringify(before) !== JSON.stringify(after)
+    );
+  }
+
   function markLocalModified(iso) {
     const at = iso || new Date().toISOString();
     writeLocalMeta({ lastLocalModifiedAt: at, updatedAt: at, source: "local" });
@@ -342,13 +360,19 @@ const AppStorage = (function () {
     }
 
     if (!remoteEmpty && !localEmpty) {
-      const mergedPayload = mergeWorkspacePayloads(localPayload, remotePayload);
+      const mergedPayload = dedupePayloadIfPossible(
+        mergeWorkspacePayloads(localPayload, remotePayload)
+      );
       const mergedProfiles = countProfiles(mergedPayload);
       const mergedRoadmaps = countRoadmaps(mergedPayload);
       const differsFromRemote =
-        mergedProfiles !== remoteCount || mergedRoadmaps !== remoteRoadmaps;
+        mergedProfiles !== remoteCount ||
+        mergedRoadmaps !== remoteRoadmaps ||
+        workspacePayloadChangedByDedupe(remotePayload, mergedPayload);
       const differsFromLocal =
-        mergedProfiles !== localCount || mergedRoadmaps !== localRoadmaps;
+        mergedProfiles !== localCount ||
+        mergedRoadmaps !== localRoadmaps ||
+        workspacePayloadChangedByDedupe(localPayload, mergedPayload);
 
       return {
         payload: mergedPayload,
@@ -361,10 +385,11 @@ const AppStorage = (function () {
     }
 
     if (!remoteEmpty) {
+      const dedupedRemote = dedupePayloadIfPossible(remotePayload);
       return {
-        payload: remotePayload,
+        payload: dedupedRemote,
         source: "remote",
-        pushToCloud: false,
+        pushToCloud: workspacePayloadChangedByDedupe(remotePayload, dedupedRemote),
         remoteUpdatedAt: remoteDocAt || null,
         remoteRevision:
           remoteBody && typeof remoteBody.revision === "number" ? remoteBody.revision : null
@@ -372,8 +397,9 @@ const AppStorage = (function () {
     }
 
     if (!localEmpty) {
+      const dedupedLocal = dedupePayloadIfPossible(localPayload);
       return {
-        payload: localPayload,
+        payload: dedupedLocal,
         source: "local",
         pushToCloud: true,
         remoteUpdatedAt: null
@@ -387,11 +413,13 @@ const AppStorage = (function () {
     if (payload && typeof stripLegacyWorkspaceFields === "function") {
       stripLegacyWorkspaceFields(payload);
     }
+    const prepared = dedupePayloadIfPossible(payload);
     if (source === "remote" || source === "merged") {
       clearPendingLocalSave();
     }
-    applyPayload(payload);
-    writeLocalCache(payload);
+    applyPayload(prepared);
+    const cachePayload = getLiveSerializedPayload(prepared) || prepared;
+    writeLocalCache(cachePayload);
     lastLoadSource = source;
     if (source === "remote" || source === "merged") {
       const appliedAt =

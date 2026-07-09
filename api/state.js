@@ -2,6 +2,10 @@ const { getDb, isMongoConfigured } = require("./_lib/mongo");
 const { verifyRequest } = require("./_lib/auth");
 const { sendJson, readJsonBody } = require("./_lib/http");
 const { normalizeWorkspacePayload } = require("./_lib/roadmap-metadata");
+const {
+  dedupeWorkspacePayload,
+  workspacePayloadChangedByDedupe
+} = require("./_lib/workspace-dedupe");
 
 const COLLECTION = "workspaces";
 
@@ -42,7 +46,7 @@ async function handleWrite(req, res, workspaceId) {
     return sendJson(res, 400, { ok: false, error: validation.error });
   }
 
-  const payload = normalizeWorkspacePayload(rawPayload);
+  const payload = dedupeWorkspacePayload(normalizeWorkspacePayload(rawPayload));
   const expectedRevision =
     body && body.expectedRevision != null && body.expectedRevision !== ""
       ? Number(body.expectedRevision)
@@ -124,12 +128,43 @@ module.exports = async function handler(req, res) {
 
     if (method === "GET") {
       const doc = await collection.findOne({ workspaceId });
+      let payload = doc && doc.payload ? doc.payload : null;
+      let updatedAt = doc && doc.updatedAt ? doc.updatedAt : null;
+      let revision = getDocumentRevision(doc);
+
+      if (payload) {
+        const deduped = dedupeWorkspacePayload(payload);
+        if (workspacePayloadChangedByDedupe(payload, deduped)) {
+          const nextRevision = revision + 1;
+          const nextUpdatedAt = new Date().toISOString();
+          const updateResult = await collection.updateOne(
+            { workspaceId, revision },
+            {
+              $set: {
+                payload: deduped,
+                updatedAt: nextUpdatedAt,
+                revision: nextRevision
+              }
+            }
+          );
+          if (updateResult.matchedCount) {
+            payload = deduped;
+            updatedAt = nextUpdatedAt;
+            revision = nextRevision;
+          } else {
+            payload = deduped;
+          }
+        } else {
+          payload = deduped;
+        }
+      }
+
       return sendJson(res, 200, {
         ok: true,
         workspaceId,
-        payload: doc && doc.payload ? doc.payload : null,
-        updatedAt: doc && doc.updatedAt ? doc.updatedAt : null,
-        revision: getDocumentRevision(doc)
+        payload,
+        updatedAt,
+        revision
       });
     }
 

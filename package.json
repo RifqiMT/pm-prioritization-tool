@@ -26,7 +26,9 @@
     "test:gantt": "node scripts/test-gantt-view.js",
     "test:share": "node scripts/test-share-link.js",
     "test:workspace-merge": "node scripts/test-workspace-merge.js",
-    "test": "npm run test:storage && npm run test:metadata && npm run test:persistence && npm run test:export && npm run test:byok && npm run test:byok-validate && npm run test:kano && npm run test:llm && npm run test:5why && npm run test:periods && npm run test:gantt && npm run test:share && npm run test:workspace-merge"
+    "test:api-dedupe": "node scripts/test-api-workspace-dedupe.js",
+    "test:import-tombstones": "node scripts/test-import-tombstones.js",
+    "test": "npm run test:storage && npm run test:metadata && npm run test:persistence && npm run test:export && npm run test:byok && npm run test:byok-validate && npm run test:kano && npm run test:llm && npm run test:5why && npm run test:periods && npm run test:gantt && npm run test:share && npm run test:workspace-merge && npm run test:api-dedupe && npm run test:import-tombstones"
   },
   "keywords": [
     "product-management",

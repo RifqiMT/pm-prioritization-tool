@@ -5325,11 +5325,13 @@ function attachEventListeners() {
     activateBlockingModal(elements.exportFormatModal, "exportFormatModal");
   });
 
-  elements.importDataBtn.addEventListener("click", () => {
-    if (!elements.importFormatModal) return;
-    updateImportFormatModalNotice();
-    activateBlockingModal(elements.importFormatModal, "importFormatModal");
-  });
+  if (elements.importDataBtn) {
+    elements.importDataBtn.addEventListener("click", () => {
+      if (!elements.importFormatModal) return;
+      updateImportFormatModalNotice();
+      activateBlockingModal(elements.importFormatModal, "importFormatModal");
+    });
+  }
 
   initExportUnlockModal();
   initDataTransferModalDismiss();
@@ -7562,8 +7564,99 @@ function openImportFilePicker() {
   if (!elements.importFileInput) return;
   elements.importFileInput.removeAttribute("data-import-kind");
   elements.importFileInput.value = "";
-  elements.importFileInput.click();
-  closeImportFormatModal();
+  // Defer so the click stays tied to the user gesture (Safari / mobile file dialogs).
+  window.setTimeout(() => {
+    if (elements.importFileInput) elements.importFileInput.click();
+  }, 0);
+}
+
+function collectImportEntityIds(importedProfiles) {
+  const profileIds = new Set();
+  const roadmapIds = new Set();
+  (Array.isArray(importedProfiles) ? importedProfiles : []).forEach((raw) => {
+    if (!raw || typeof raw !== "object") return;
+    if (raw.id) profileIds.add(String(raw.id).trim());
+    (Array.isArray(raw.roadmaps) ? raw.roadmaps : []).forEach((roadmap) => {
+      if (roadmap && roadmap.id) roadmapIds.add(String(roadmap.id).trim());
+    });
+  });
+  return { profileIds, roadmapIds };
+}
+
+/** Explicit import should resurrect entities even if they were tombstoned locally. */
+function clearWorkspaceTombstonesForImport(importedProfiles) {
+  ensureWorkspaceTombstones();
+  const { profileIds, roadmapIds } = collectImportEntityIds(importedProfiles);
+  profileIds.forEach((id) => {
+    delete state.workspaceTombstones.profiles[id];
+  });
+  roadmapIds.forEach((id) => {
+    delete state.workspaceTombstones.roadmaps[id];
+  });
+}
+
+function mergeImportedWorkspaceTombstones(workspaceEnvelope, importedProfiles) {
+  if (!workspaceEnvelope || typeof workspaceEnvelope !== "object") return;
+  const importedTs = workspaceEnvelope.workspaceTombstones;
+  if (!importedTs || typeof importedTs !== "object") return;
+
+  ensureWorkspaceTombstones();
+  const { profileIds, roadmapIds } = collectImportEntityIds(importedProfiles);
+
+  ["profiles", "roadmaps"].forEach((kind) => {
+    const bucket = importedTs[kind];
+    if (!bucket || typeof bucket !== "object") return;
+    const skipIds = kind === "profiles" ? profileIds : roadmapIds;
+    Object.keys(bucket).forEach((id) => {
+      if (skipIds.has(id)) return;
+      state.workspaceTombstones[kind][id] = bucket[id];
+    });
+  });
+}
+
+function prepareWorkspaceForImport(importedProfiles, workspaceEnvelope) {
+  clearWorkspaceTombstonesForImport(importedProfiles);
+  mergeImportedWorkspaceTombstones(workspaceEnvelope, importedProfiles);
+}
+
+function buildImportResultMessage(stats, formatLabel) {
+  const { addedProfiles, mergedProfiles, addedRoadmaps, updatedRoadmaps } = stats;
+  const parts = [];
+  if (addedProfiles) parts.push(`${addedProfiles} profile${addedProfiles !== 1 ? "s" : ""} added`);
+  if (mergedProfiles) parts.push(`${mergedProfiles} profile${mergedProfiles !== 1 ? "s" : ""} merged`);
+  if (addedRoadmaps) parts.push(`${addedRoadmaps} roadmap${addedRoadmaps !== 1 ? "s" : ""} added`);
+  if (updatedRoadmaps) parts.push(`${updatedRoadmaps} roadmap${updatedRoadmaps !== 1 ? "s" : ""} updated`);
+  const detail = parts.length ? parts.join(", ") + "." : "No new data.";
+  return `Imported from ${formatLabel}. ${detail}`;
+}
+
+function finalizeDataImport(importedProfiles, options) {
+  const opts = options && typeof options === "object" ? options : {};
+  const formatLabel = opts.formatLabel || "file";
+  const workspaceEnvelope = opts.workspaceEnvelope || null;
+
+  if (!Array.isArray(importedProfiles) || !importedProfiles.length) {
+    window.alert("No valid data found to import.");
+    return false;
+  }
+
+  prepareWorkspaceForImport(importedProfiles, workspaceEnvelope);
+  const stats = mergeImportedProfiles(importedProfiles);
+
+  if (workspaceEnvelope && typeof applyPersistedWorkspaceUiState === "function") {
+    applyPersistedWorkspaceUiState(workspaceEnvelope);
+  }
+  if (!state.activeProfileId && state.profiles.length) {
+    state.activeProfileId = resolveFallbackActiveProfileId();
+  }
+
+  saveState({ flush: true });
+  renderProfiles();
+  renderRoadmaps();
+  syncDemoReadOnlyChrome();
+
+  setTimeout(() => showToast(buildImportResultMessage(stats, formatLabel)), 0);
+  return true;
 }
 
 function normalizeExportFormat(format) {
@@ -7927,13 +8020,14 @@ function closeImportFormatModal({ immediate = false } = {}) {
 }
 
 function mergeImportedProfiles(importedProfiles) {
-  if (!Array.isArray(importedProfiles) || !importedProfiles.length) return { addedProfiles: 0, mergedProfiles: 0, addedRoadmaps: 0, mergedRoadmaps: 0, skippedRoadmaps: 0 };
+  if (!Array.isArray(importedProfiles) || !importedProfiles.length) {
+    return { addedProfiles: 0, mergedProfiles: 0, addedRoadmaps: 0, updatedRoadmaps: 0 };
+  }
 
   let addedProfiles = 0;
   let mergedProfiles = 0;
   let addedRoadmaps = 0;
-  let mergedRoadmaps = 0;
-  let skippedRoadmaps = 0;
+  let updatedRoadmaps = 0;
 
   importedProfiles.forEach((rawProfile) => {
     const profile = normalizeImportedProfile(rawProfile);
@@ -7948,27 +8042,35 @@ function mergeImportedProfiles(importedProfiles) {
     }
 
     mergedProfiles += 1;
+    if (profile.team) existing.team = profile.team;
+    if (profile.boardOrder) existing.boardOrder = profile.boardOrder;
+    if (profile.moscowOrder) existing.moscowOrder = profile.moscowOrder;
     if (!Array.isArray(existing.roadmaps)) existing.roadmaps = [];
     const existingById = new Map(existing.roadmaps.map((p) => [p.id, p]));
     profile.roadmaps.forEach((proj) => {
       const normProj = normalizeImportedRoadmap(proj);
       if (!normProj) return;
       if (existingById.has(normProj.id)) {
-        skippedRoadmaps += 1;
+        const idx = existing.roadmaps.findIndex((p) => p.id === normProj.id);
+        if (idx >= 0) existing.roadmaps[idx] = normProj;
+        else existing.roadmaps.push(normProj);
+        existingById.set(normProj.id, normProj);
+        updatedRoadmaps += 1;
         return;
       }
       existing.roadmaps.push(normProj);
       existingById.set(normProj.id, normProj);
       addedRoadmaps += 1;
-      mergedRoadmaps += 1;
     });
   });
 
-  return { addedProfiles, mergedProfiles, addedRoadmaps, mergedRoadmaps, skippedRoadmaps };
+  return { addedProfiles, mergedProfiles, addedRoadmaps, updatedRoadmaps };
 }
 
 // Unified handler: auto-detects JSON vs CSV from file extension and MIME type.
 function handleUnifiedImportChange(event) {
+  closeImportFormatModal({ immediate: true });
+
   const input = event.target;
   const file = input.files && input.files[0];
   if (!file) return;
@@ -8015,25 +8117,8 @@ function handleImportJsonFile(file) {
         window.alert("Import file contains no profiles.");
         return;
       }
-      const { addedProfiles, mergedProfiles, addedRoadmaps, mergedRoadmaps } = mergeImportedProfiles(importedProfiles);
-      if (!Array.isArray(parsed) && typeof applyPersistedWorkspaceUiState === "function") {
-        applyPersistedWorkspaceUiState(parsed);
-      }
-      if (!state.activeProfileId && state.profiles.length) {
-        state.activeProfileId = resolveFallbackActiveProfileId();
-      }
-      saveState();
-      renderProfiles();
-      renderRoadmaps();
-      const addedOnly = addedRoadmaps - mergedRoadmaps;
-      const parts = [];
-      if (addedProfiles) parts.push(`${addedProfiles} profile${addedProfiles !== 1 ? "s" : ""} added`);
-      if (mergedProfiles) parts.push(`${mergedProfiles} profile${mergedProfiles !== 1 ? "s" : ""} merged`);
-      if (addedOnly) parts.push(`${addedOnly} roadmap${addedOnly !== 1 ? "s" : ""} added`);
-      if (mergedRoadmaps) parts.push(`${mergedRoadmaps} roadmap${mergedRoadmaps !== 1 ? "s" : ""} merged`);
-      const detail = parts.length ? parts.join(", ") + "." : "No new data.";
-      const msg = `Imported from JSON. ${detail}`;
-      setTimeout(() => showToast(msg), 0);
+      const workspaceEnvelope = Array.isArray(parsed) ? null : parsed;
+      finalizeDataImport(importedProfiles, { formatLabel: "JSON", workspaceEnvelope });
     } catch (err) {
       console.error("Import failed", err);
       window.alert("Import failed. Please check that you selected a valid JSON export file.");
@@ -8070,25 +8155,10 @@ function handleImportCsvFile(file) {
         window.alert("No valid data found in CSV file.");
         return;
       }
-      const { addedProfiles, mergedProfiles, addedRoadmaps, mergedRoadmaps } = mergeImportedProfiles(importedProfiles);
-      if (imported.workspaceState && typeof applyPersistedWorkspaceUiState === "function") {
-        applyPersistedWorkspaceUiState(imported.workspaceState);
-      }
-      if (!state.activeProfileId && state.profiles.length) {
-        state.activeProfileId = resolveFallbackActiveProfileId();
-      }
-      saveState();
-      renderProfiles();
-      renderRoadmaps();
-      const addedOnly = addedRoadmaps - mergedRoadmaps;
-      const parts = [];
-      if (addedProfiles) parts.push(`${addedProfiles} profile${addedProfiles !== 1 ? "s" : ""} added`);
-      if (mergedProfiles) parts.push(`${mergedProfiles} profile${mergedProfiles !== 1 ? "s" : ""} merged`);
-      if (addedOnly) parts.push(`${addedOnly} roadmap${addedOnly !== 1 ? "s" : ""} added`);
-      if (mergedRoadmaps) parts.push(`${mergedRoadmaps} roadmap${mergedRoadmaps !== 1 ? "s" : ""} merged`);
-      const detail = parts.length ? parts.join(", ") + "." : "No new data.";
-      const msg = `Imported from CSV. ${detail}`;
-      setTimeout(() => showToast(msg), 0);
+      finalizeDataImport(importedProfiles, {
+        formatLabel: "CSV",
+        workspaceEnvelope: imported.workspaceState || null
+      });
     } catch (err) {
       console.error("CSV import failed", err);
       window.alert("CSV import failed. Please check that you selected a valid CSV export file.");
