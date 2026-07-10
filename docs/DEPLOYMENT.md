@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-07-09 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260709-ui199` |
+| **Last updated** | 2026-07-10 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui201` |
 
 The app is a **static UI** plus **Vercel serverless API** routes under `/api`. Portfolio data is stored in **MongoDB Atlas** when `MONGODB_URI` is configured; the browser keeps a **local cache** for faster reload and offline fallback.
 
@@ -66,10 +66,11 @@ https://YOUR_DOMAIN/?pm_api_key=YOUR_PM_API_SECRET
 ## Data flow
 
 1. On load, the app calls `GET /api/health`.
-2. If `storage: "mongodb"`, it loads `GET /api/state` with `Authorization: Bearer <key>`.
+2. If `storage: "mongodb"`, it loads `GET /api/state` with `Authorization: Bearer <key>` (response deduped server-side).
 3. If the cloud workspace is empty but `localStorage` has data, it **migrates** local data to MongoDB once.
-4. On each change, state is written to `localStorage` (cache), deduped via `WorkspaceMerge.dedupeWorkspacePayload`, merged with remote if needed, and debounced to `PUT /api/state` with `expectedRevision`.
+4. On each change, state is written to `localStorage` (cache), deduped via `WorkspaceMerge.dedupeWorkspacePayload`, merged with remote if needed, and debounced to `PUT /api/state` with `expectedRevision` (payload deduped again on server).
 5. If another session saved first, the server returns **HTTP 409** with the current payload and `revision`; the client merges and retries automatically.
+6. **GET self-heal:** if MongoDB already contains duplicate fingerprint rows, the next `GET` dedupes and may persist the cleaned document (revision bump).
 
 Profile passwords remain **hashed in the payload** (PBKDF2); unlock state stays in **sessionStorage** only.
 
@@ -180,8 +181,8 @@ With `PM_API_SECRET`: connect via **Cloud** menu or `https://YOUR-DOMAIN/?pm_api
 GitHub Actions workflow `.github/workflows/ci.yml` runs on every push/PR to `main`:
 
 1. `npm ci`
-2. `npm run build` — validates static root + `api/state.js`
-3. `npm test` — twelve script suites (storage, metadata, persistence, export, byok, byok-validate, kano, llm, 5why, periods, gantt, share)
+2. `npm run build` — validates static root + `api/state.js`; runs `sync:assets` to align per-asset cache tags with `APP_ASSET_VERSION`
+3. `npm test` — **seventeen** script suites (through `test:incomplete-filter` and `test:import-file-kind`)
 
 Post-deploy smoke: `npm run verify:production` (or `verify:deploy` with your URL).
 

@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Maintainer** | Product Team |
-| **Last audited** | 2026-07-09 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260709-ui199` |
+| **Last audited** | 2026-07-10 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui201` |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
 
 This folder is the **single source of product truth** for engineering, design, product management, and stakeholders (**17 documents** + root [README.md](../README.md) = **18-file suite**). Documents are maintained against the **current** implementation in `index.html`, `css/`, `src/`, and `api/`.
@@ -67,12 +67,12 @@ This folder is the **single source of product truth** for engineering, design, p
 
 ---
 
-## Source code map (audited 2026-07-09)
+## Source code map (audited 2026-07-10)
 
 ```
 pm-prioritization-tool/
 ├── index.html                      # Shell, modals, filters, seven views, BYOK, footer
-├── css/                            # 41 layered stylesheets (see TECH_GUIDELINES.md §3.1)
+├── css/                            # 43 layered stylesheets (see TECH_GUIDELINES.md §3.1)
 │   ├── main.css … export-modals-modern.css
 │   ├── byok-api-keys.css
 │   ├── view-toolbars-modern.css … app-footer.css
@@ -110,6 +110,7 @@ pm-prioritization-tool/
 │       ├── roadmap-llm-summary.js  # Tavily research + Groq summary
 │       ├── roadmap-5why-framework.js # Iterative WHY 1→5 questions
 │       ├── roadmap-periods.js      # Multi-quarter roadmapPeriods
+│       ├── incomplete-optional-fields.js # Optional-field completeness filter
 │       ├── gantt-view.js           # Gantt timeline view
 │       ├── export-payload.js       # JSON/CSV export builders
 │       └── share-link.js           # URL hash deep links
@@ -126,6 +127,7 @@ pm-prioritization-tool/
 │       ├── http.js                 # JSON helpers
 │       ├── roadmap-metadata.js     # Server-side labels/links normalize
 │       ├── export-payload.js       # Server-side export helpers (shared with client)
+│       ├── workspace-dedupe.js     # Server-side WorkspaceMerge dedupe wrapper
 │       └── byok-validate.js        # Shared BYOK validation helpers
 ├── scripts/
 │   ├── verify-deployment.js        # Production smoke test
@@ -142,6 +144,11 @@ pm-prioritization-tool/
 │   ├── test-gantt-view.js          # npm run test:gantt
 │   ├── test-share-link.js          # npm run test:share
 │   ├── test-workspace-merge.js     # npm run test:workspace-merge
+│   ├── test-api-workspace-dedupe.js # npm run test:api-dedupe
+│   ├── test-import-tombstones.js   # npm run test:import-tombstones
+│   ├── test-import-file-kind.js    # npm run test:import-file-kind
+│   ├── test-incomplete-optional-fields-filter.js # npm run test:incomplete-filter
+│   ├── sync-asset-versions.js      # npm run sync:assets (build step)
 │   └── disable-vercel-deployment-protection.sh
 ├── .github/workflows/              # ci.yml, vercel-production.yml, fix-vercel-protection.yml
 ├── docs/                           # This documentation suite

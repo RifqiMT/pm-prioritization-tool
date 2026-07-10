@@ -4,8 +4,8 @@ Engineering standards for the Product Management Prioritization Tool codebase.
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-07-09 |
-| **APP_ASSET_VERSION** | `20260709-ui199` |
+| **Last updated** | 2026-07-10 |
+| **APP_ASSET_VERSION** | `20260710-ui201` |
 | **COMPACT_LAYOUT_MAX_WIDTH_PX** | `1400` |
 
 ---
@@ -20,7 +20,7 @@ Engineering standards for the Product Management Prioritization Tool codebase.
 | Persistence | `localStorage` (workspace), `sessionStorage` (unlock session) |
 | Cloud | Vercel serverless `api/state.js` + MongoDB (optional) |
 | Hosting | Static (Vercel); `vercel.json` CSP and caching |
-| Build | None — files served as-is |
+| Build | `npm run sync:assets` prefixes `index.html` `?v=` tags from `APP_ASSET_VERSION`; runs before `npm run build` |
 
 ---
 
@@ -46,10 +46,11 @@ Defined in `index.html` (order matters — globals, not ES modules):
 16. `src/modules/roadmap-llm-summary.js` — `RoadmapLlmSummary` global
 17. `src/modules/roadmap-5why-framework.js` — `RoadmapFiveWhyFramework` global
 18. `src/modules/roadmap-periods.js` — `RoadmapPeriods` global (multi-quarter periods)
-19. `src/modules/gantt-view.js` — `GanttView` global (Gantt timeline)
-20. `src/modules/export-payload.js` — `ExportPayload` global (JSON/CSV export builders)
-21. `src/modules/share-link.js` — `ShareLink` global (URL hash deep links)
-22. `src/app.js` — defines `init()` and runs on `DOMContentLoaded`
+19. `src/modules/incomplete-optional-fields.js` — `IncompleteOptionalFields` global (optional-field completeness filter)
+20. `src/modules/gantt-view.js` — `GanttView` global (Gantt timeline)
+21. `src/modules/export-payload.js` — `ExportPayload` global (JSON/CSV export builders)
+22. `src/modules/share-link.js` — `ShareLink` global (URL hash deep links)
+23. `src/app.js` — defines `init()` and runs on `DOMContentLoaded`
 
 All shared symbols are **global functions and constants**. Do not introduce ES module imports without a planned migration.
 
@@ -64,7 +65,8 @@ Later files win for equal specificity. Each stylesheet in `index.html` uses a **
 | # | File | Purpose |
 |---|------|---------|
 | 1 | `main.css` | Base tokens, global buttons, legacy modals |
-| 2 | `workspace-modern.css` | Workspace shell |
+| 2 | `date-inputs-modern.css` | Date input styling (deadline, Gantt-adjacent fields) |
+| 3 | `workspace-modern.css` | Workspace shell |
 | 3 | `header-modern.css` | App header |
 | 4 | `profiles-modern.css` | Profiles + compact bottom sheet |
 | 5 | `portfolio-modern.css` | Portfolio command bar, filters trigger |
@@ -104,6 +106,7 @@ Later files win for equal specificity. Each stylesheet in `index.html` uses a **
 | 39 | `share-link.css` | Deep-link focus ring on portfolio cards (`.portfolio-roadmap--deep-link-focus`) |
 | 40 | `confirm-modals-modern.css` | Delete/confirm dialogs |
 | 41 | `filter-combobox-fix.css` | Profile picker and filter combobox alignment fixes |
+| 42 | `filter-incomplete-modern.css` | Incomplete optional fields filter popup and match toggle |
 
 ### 3.2 Compact layout
 
@@ -131,7 +134,7 @@ Later files win for equal specificity. Each stylesheet in `index.html` uses a **
 | Constant | Role |
 |----------|------|
 | `STORAGE_KEY` | `localStorage` key (`rice_prioritizer_v1`) |
-| `APP_ASSET_VERSION` | Cache buster (`20260709-ui199`) |
+| `APP_ASSET_VERSION` | Cache buster (`20260710-ui201`) |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | `1400` — single compact breakpoint |
 | `moscowList` | Stored MoSCoW values |
 | `moscowDisplayNames` | UI labels (Must Have, …) |
@@ -199,6 +202,7 @@ Persisted via `saveState()` → `AppStorage` → `localStorage` + optional cloud
 | Label + autocomplete | `filterLabel`, `filterLabelListbox` | same |
 | Labels any/with/without | `filterLabels` | `filterLabels.value` in `applyFilters` |
 | Links any/with/without | `filterLinks` | `filterLinks.value` in `applyFilters` |
+| Incomplete optional fields | `#filterIncompleteFieldsList`, `#filterIncompleteModeGroup` | `IncompleteOptionalFields.roadmapMatchesIncompleteOptionalFieldsFilter` |
 
 Active filter pill text includes human labels for labels/links constraints.
 
@@ -285,8 +289,11 @@ Export: `getExportableProfiles()` → `sanitizeProfilesForExport()` → download
 | `test:export` | Full JSON/CSV export payload round-trip |
 | `test:periods` | Multi-quarter `roadmapPeriods` normalization |
 | `test:gantt` | Gantt ISO weeks, quarter ranges, month zoom, deadline state |
-| `test:share` | ShareLink URL hash parse/build and legacy query migration |
-| `test:workspace-merge` | WorkspaceMerge union merge, conflict resolution, tombstones |
+| `test:incomplete-filter` | Incomplete optional fields any/all match logic |
+| `test:import-file-kind` | Unified import JSON vs CSV detection |
+| `test:workspace-merge` | WorkspaceMerge union merge, conflict resolution, tombstones, fingerprint dedupe |
+| `test:api-dedupe` | Server-side `api/_lib/workspace-dedupe.js` (MoSCoW alias + tombstone prune) |
+| `test:import-tombstones` | Import clears tombstones; `pruneObsoleteTombstones` on live entities |
 
 Also: `npm run verify:production` — smoke test deployed URL (`scripts/verify-deployment.js`).
 

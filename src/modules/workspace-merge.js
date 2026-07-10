@@ -92,17 +92,80 @@ const WorkspaceMerge = (function () {
       .toLowerCase();
   }
 
+  const EU_MEMBER_COUNTRIES_FALLBACK = [
+    "austria",
+    "belgium",
+    "bulgaria",
+    "croatia",
+    "cyprus",
+    "czechia",
+    "denmark",
+    "estonia",
+    "finland",
+    "france",
+    "germany",
+    "greece",
+    "hungary",
+    "ireland",
+    "italy",
+    "latvia",
+    "lithuania",
+    "luxembourg",
+    "malta",
+    "netherlands",
+    "poland",
+    "portugal",
+    "romania",
+    "slovakia",
+    "slovenia",
+    "spain",
+    "sweden"
+  ];
+
+  function getEuMemberCountryTokens() {
+    if (typeof EU_MEMBER_COUNTRIES !== "undefined" && Array.isArray(EU_MEMBER_COUNTRIES)) {
+      return EU_MEMBER_COUNTRIES.map((country) => normalizeScalar(country)).filter(Boolean);
+    }
+    return EU_MEMBER_COUNTRIES_FALLBACK.slice();
+  }
+
+  function getEuRegionToken() {
+    if (typeof COUNTRY_OPTION_EU !== "undefined") {
+      return normalizeScalar(COUNTRY_OPTION_EU);
+    }
+    return "eu";
+  }
+
   function normalizeProfileName(name) {
     return normalizeScalar(name);
   }
 
   function normalizeCountriesList(countries) {
-    if (!Array.isArray(countries)) return "";
-    return countries
-      .map((country) => normalizeScalar(country))
-      .filter(Boolean)
-      .sort()
-      .join(",");
+    let names = [];
+    if (Array.isArray(countries)) {
+      names = countries.map((country) => normalizeScalar(country)).filter(Boolean);
+    } else if (countries != null && countries !== "") {
+      names = String(countries)
+        .split(/[,|]/)
+        .map((country) => normalizeScalar(country))
+        .filter(Boolean);
+    }
+    if (!names.length) return "";
+
+    const euToken = getEuRegionToken();
+    const euMembers = getEuMemberCountryTokens();
+    const euMemberSet = new Set(euMembers);
+    const unique = Array.from(new Set(names));
+    const hasEuToken = unique.includes(euToken);
+    const hasAllEuMembers =
+      euMembers.length > 0 && euMembers.every((member) => unique.includes(member));
+
+    if (hasEuToken || hasAllEuMembers) {
+      const nonEu = unique.filter((name) => name !== euToken && !euMemberSet.has(name)).sort();
+      return nonEu.length ? `${euToken},${nonEu.join(",")}` : euToken;
+    }
+
+    return unique.sort().join(",");
   }
 
   function getRoadmapPeriodKey(roadmap) {
@@ -130,7 +193,7 @@ const WorkspaceMerge = (function () {
   /** Stable fingerprint for logical duplicate detection (same row in the UI). */
   function getRoadmapIdentityKey(roadmap) {
     if (!roadmap || typeof roadmap !== "object") return "";
-    const title = normalizeScalar(roadmap.title);
+    const title = normalizeScalar(roadmap.title).replace(/\s+/g, " ");
     if (!title) return "";
     return [
       title,
@@ -354,6 +417,34 @@ const WorkspaceMerge = (function () {
     return list;
   }
 
+  function pruneObsoleteTombstones(payload) {
+    if (!payload || typeof payload !== "object") return payload;
+    const tombstones = getTombstones(payload);
+    let changed = false;
+
+    (Array.isArray(payload.profiles) ? payload.profiles : []).forEach((profile) => {
+      if (!profile || typeof profile !== "object") return;
+      if (profile.id && tombstones.profiles[profile.id]) {
+        if (!isTombstoned(tombstones, "profiles", profile.id, profile)) {
+          delete tombstones.profiles[profile.id];
+          changed = true;
+        }
+      }
+      (Array.isArray(profile.roadmaps) ? profile.roadmaps : []).forEach((roadmap) => {
+        if (!roadmap || !roadmap.id || !tombstones.roadmaps[roadmap.id]) return;
+        if (!isTombstoned(tombstones, "roadmaps", roadmap.id, roadmap)) {
+          delete tombstones.roadmaps[roadmap.id];
+          changed = true;
+        }
+      });
+    });
+
+    if (!changed) return payload;
+    const next = Object.assign({}, payload);
+    next.workspaceTombstones = tombstones;
+    return next;
+  }
+
   function dedupeWorkspacePayload(payload) {
     if (!payload || typeof payload !== "object") return payload;
     const tombstones = getTombstones(payload);
@@ -364,7 +455,7 @@ const WorkspaceMerge = (function () {
       profiles,
       workspaceTombstones: tombstones
     });
-    return applyTombstones(next);
+    return applyTombstones(pruneObsoleteTombstones(next));
   }
 
   function mergeOrderMaps(preferred, fallback) {
@@ -493,7 +584,7 @@ const WorkspaceMerge = (function () {
       };
     }
 
-    return dedupeWorkspacePayload(applyTombstones(merged));
+    return dedupeWorkspacePayload(applyTombstones(pruneObsoleteTombstones(merged)));
   }
 
   function countProfiles(payload) {

@@ -6,8 +6,8 @@
 | **Version** | 2.0.0 |
 | **Audience** | Product, engineering, design, QA, and stakeholders |
 | **Maintainer** | Product Team |
-| **Last updated** | 2026-07-09 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260709-ui199` |
+| **Last updated** | 2026-07-10 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui201` |
 
 This document is the **collaborative cross-feature reference** for how the app behaves end-to-end. It explains **logic** (what the system does), **rules** (what inputs and workflows are allowed), and **constraints** (what the product must not do or cannot guarantee). Use it in planning reviews, QA test design, and cross-team alignment.
 
@@ -115,6 +115,18 @@ flowchart LR
 | T-shirt | Exact or `__none__` |
 | MoSCoW | Exact stored category |
 | Owner profile | Exact `ownerProfileId` (privileged mode only) |
+| Incomplete optional fields | Missing selected fields (`IncompleteOptionalFields`); mode `any` or `all` |
+
+### F-36 Incomplete optional fields filter
+
+| Aspect | Detail |
+|--------|--------|
+| **Purpose** | Find roadmaps with missing metadata for data-quality sweeps |
+| **Logic** | `roadmapMatchesIncompleteOptionalFieldsFilter(roadmap, fieldIds, mode)`; 14 field ids in four UI groups |
+| **Rules** | Zero numeric RICE/financial/KANO values count as missing; rich-text RICE descriptions count as present when non-empty |
+| **Constraints** | Session-only criteria (`incompleteFields`, `incompleteFieldsMode`); cleared on “Clear filters” |
+| **Code** | `src/modules/incomplete-optional-fields.js`, `css/filter-incomplete-modern.css`, filter popup in `index.html` |
+| **See also** | [PRD.md](PRD.md) FR-6.8, `npm run test:incomplete-filter` |
 
 ### F-04 Shareable deep links (ShareLink)
 
@@ -383,23 +395,33 @@ flowchart TB
 
 | Aspect | Detail |
 |--------|--------|
-| **Logic** | Merge by stable ids: profile by `profile.id`, roadmap by `roadmap.id` |
-| **Rules** | Legacy `projects` keys migrate to `roadmaps` on load; malformed JSON fails with user message |
-| **Constraints** | Repeated import of same file converges without duplicate ids |
-| **Code** | Import handlers, `normalizeLoadedProfile()` |
-| **See also** | [VARIABLES.md](VARIABLES.md) §8.15 |
+| **Purpose** | Merge backup files into live workspace without wiping unrelated data |
+| **Logic** | Merge by stable ids; `prepareWorkspaceForImport` clears tombstones for imported entity ids and merges envelope tombstones |
+| **Rules** | `stampImportedProfilesForRestore` sets fresh `modifiedAt` on imported entities; explicit import **resurrects** tombstoned ids |
+| **Constraints** | Repeated import of same file converges without duplicate ids; tombstones from file apply only to non-imported ids |
+| **Code** | Import handlers, `clearWorkspaceTombstonesForImport`, `normalizeLoadedProfile()` |
+| **See also** | [VARIABLES.md](VARIABLES.md) §8.19, `npm run test:import-tombstones` |
 
 ### F-32 Cloud sync (MongoDB)
 
 | Aspect | Detail |
 |--------|--------|
 | **Purpose** | Shared workspace document for teams on Vercel + MongoDB |
-| **Logic** | `GET /api/state` on load (includes `revision`); debounced `PUT` with `expectedRevision`; `preparePayloadForRemoteSave` dedupes locally, fetches remote, and `WorkspaceMerge.mergeWorkspacePayloads` before save |
-| **Rules** | Union profiles/roadmaps by id; newer `modifiedAt` wins per entity; duplicate profile names collapse with id anchor; duplicate roadmaps collapse via `getRoadmapIdentityKey` fingerprint; `workspaceTombstones` propagates deletes |
+| **Logic** | `GET /api/state` (includes `revision`, self-healing dedupe on read); debounced `PUT` with `expectedRevision`; client + server `dedupeWorkspacePayload` |
+| **Rules** | Union profiles/roadmaps by id; fingerprint dedupe; `pruneObsoleteTombstones` drops stale tombstones when live entity is newer |
 | **Conflict handling** | HTTP 409 when `expectedRevision` stale; client merges `conflictPayload` via `mergeWorkspacePayloads` and retries; `notifyCloudDataRefreshed({ source: "conflict-merge" })` |
 | **Constraints** | Vercel deployment protection must allow `/api`; not true real-time CRDT — last merged save wins on same entity; resurrect only if `modifiedAt` newer than tombstone |
-| **Code** | `src/modules/storage.js`, `src/modules/workspace-merge.js`, `api/state.js` |
-| **See also** | [DEPLOYMENT.md](DEPLOYMENT.md), `npm run test:workspace-merge`, `npm run test:storage` |
+| **Code** | `src/modules/storage.js`, `src/modules/workspace-merge.js`, `api/state.js`, `api/_lib/workspace-dedupe.js` |
+| **See also** | [DEPLOYMENT.md](DEPLOYMENT.md), `npm run test:workspace-merge`, `npm run test:api-dedupe` |
+
+### F-35 Toast and status messaging
+
+| Aspect | Detail |
+|--------|--------|
+| **Purpose** | Clear, non-overlapping feedback during sync, import, and errors |
+| **Logic** | `showToast` calls `dismissActiveToasts()` before rendering; `updateStorageStatusUI` uses `lastStorageStatusToastKey` to skip duplicate cloud status toasts |
+| **Constraints** | One visible toast at a time; click dismisses early |
+| **Code** | `src/app.js` (`showToast`, `showStorageStatusToast`, `showCloudWorkspaceToast`) |
 
 ### F-34 Roadmap field suggestions
 
@@ -532,8 +554,10 @@ flowchart LR
 | Feature ID | Primary modules |
 |------------|-----------------|
 | F-00–F-04 | `app.js`, `constants.js`, `storage.js`, `workspace-merge.js`, `share-link.js` |
-| F-32 | `storage.js`, `workspace-merge.js`, `api/state.js` |
+| F-32 | `storage.js`, `workspace-merge.js`, `api/state.js`, `api/_lib/workspace-dedupe.js` |
 | F-34 | `app.js`, `index.html` datalists |
+| F-36 | `incomplete-optional-fields.js`, `app.js`, `filter-incomplete-modern.css` |
+| F-35 | `app.js` toast helpers |
 | F-10–F-12 | `app.js`, `utils.js`, `roadmap-metadata.js` |
 | F-13 | `rice.js` |
 | F-15 | `app.js` (financial helpers) |
@@ -566,6 +590,8 @@ flowchart LR
 | Date | Change |
 |------|--------|
 | 2026-05-28 | Initial collaborative cross-feature logic and constraints reference |
+| 2026-07-10 | Incomplete optional fields filter; sync:assets; HRK→EUR; 43 CSS; 22 modules; 17 tests; baseline `20260710-ui201` |
+| 2026-07-09 (pass 2) | Server-side dedupe, import tombstones, single-toast, mobile import; 15 tests; baseline `20260709-ui200` |
 | 2026-07-09 | Id-anchored dedupe, revision conflicts, roadmap field suggestions; baseline `20260709-ui199` |
 | 2026-07-08 | WorkspaceMerge + tombstones; 13 tests; ~25k app.js; baseline `20260708-ui198` |
 | 2026-05-28 | ShareLink deep links; 41 CSS; 12 tests; baseline `20260528-ui197` |

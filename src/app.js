@@ -291,7 +291,9 @@ function normalizeCountryNames(names) {
 function normalizeCurrency(val) {
   if (val == null || val === "") return null;
   const s = String(val).trim();
-  return s === "" ? null : s;
+  if (s === "") return null;
+  if (s.toUpperCase() === "HRK") return "EUR";
+  return s;
 }
 
 const FINANCIAL_FRAMEWORK_DEFAULT = "custom";
@@ -4077,6 +4079,7 @@ async function init() {
   initProfilesSelect();
   initProfilePicker();
   initFilterAutocompletes();
+  initIncompleteOptionalFieldsFilter();
   initSuperAdminToggle();
   initProfileModals();
   initPortfolioWorkspace();
@@ -4135,6 +4138,20 @@ async function init() {
       })()
     );
     updateStorageStatusUI({ mode: "local", syncStatus: "idle" });
+  }
+
+  if (state.profiles.length === 0) {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.profiles) && parsed.profiles.length > 0) {
+          applyStatePayload(parsed);
+        }
+      }
+    } catch (err) {
+      console.warn("Could not recover workspace from local cache", err);
+    }
   }
 
   resetProfileUnlockSession();
@@ -4301,6 +4318,10 @@ function cacheElements() {
   elements.filterTechLeadAutocompleteEmpty = $("filterTechLeadAutocompleteEmpty");
   elements.filterLinks = $("filterLinks");
   elements.filterLabels = $("filterLabels");
+  elements.filterIncompleteFieldsToggle = $("filterIncompleteFieldsToggle");
+  elements.filterIncompleteFieldsSearch = $("filterIncompleteFieldsSearch");
+  elements.filterIncompleteFieldsList = $("filterIncompleteFieldsList");
+  elements.filterIncompleteFieldsSummary = $("filterIncompleteFieldsSummary");
   elements.superAdminToggleWrap = $("superAdminToggleWrap");
   elements.superAdminModeToggle = $("superAdminModeToggle");
   elements.superAdminToggleDesktopSlot = $("superAdminToggleDesktopSlot");
@@ -4659,6 +4680,8 @@ function cacheElements() {
   elements.importFormatModalHint = $("importFormatModalHint");
   elements.importFormatModalCancelBtn = $("importFormatModalCancelBtn");
   elements.importChooseFileBtn = $("importChooseFileBtn");
+  elements.importAsJsonBtn = $("importAsJsonBtn");
+  elements.importAsCsvBtn = $("importAsCsvBtn");
   elements.cloudStorageModal = $("cloudStorageModal");
   elements.byokApiKeysModal = $("byokApiKeysModal");
 }
@@ -4856,6 +4879,7 @@ function isRaciMatrixDesktopLayout() {
 
 function handleRaciMatrixTooltipShow(e) {
   if (!isRaciMatrixDesktopLayout()) return;
+  if (isAppPopupLayerOpen()) return;
   const wrap = e.target.closest(".raci-matrix-with-tooltip");
   if (!wrap) return;
   if (activeTooltipWrap === wrap) return;
@@ -5032,6 +5056,7 @@ function initAppHeaderMenu() {
     if (willOpen) prepareAppOverlay("appHeaderMenu");
     const isOpen = header.classList.toggle("app-header--menu-open");
     toggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    syncAppPopupLayerState();
     syncCompactChromeMetrics();
   });
 
@@ -5111,6 +5136,7 @@ function attachEventListeners() {
   }
   initRoadmapBulkPeriodControls();
   initRoadmapBulkDeadlineControls();
+  initDateInputShells();
   initRoadmapBulkPreviewControls();
   if (elements.portfolioSelectionDuplicateBtn) {
     elements.portfolioSelectionDuplicateBtn.addEventListener("click", () => handleBulkRoadmapTransfer("duplicate"));
@@ -5357,7 +5383,17 @@ function attachEventListeners() {
 
   if (elements.importChooseFileBtn) {
     elements.importChooseFileBtn.addEventListener("click", () => {
-      openImportFilePicker();
+      openImportFilePicker("auto");
+    });
+  }
+  if (elements.importAsJsonBtn) {
+    elements.importAsJsonBtn.addEventListener("click", () => {
+      openImportFilePicker("json");
+    });
+  }
+  if (elements.importAsCsvBtn) {
+    elements.importAsCsvBtn.addEventListener("click", () => {
+      openImportFilePicker("csv");
     });
   }
 
@@ -5519,6 +5555,7 @@ function attachEventListeners() {
         prepareAppOverlay("filterCountries");
       }
       container.classList.toggle("open");
+      syncAppPopupLayerState();
       if (willOpen && elements.filterCountriesSearch) {
         elements.filterCountriesSearch.focus();
         elements.filterCountriesSearch.select();
@@ -5537,9 +5574,37 @@ function attachEventListeners() {
         prepareAppOverlay("filterRoadmapPeriod");
       }
       container.classList.toggle("open");
+      syncAppPopupLayerState();
       if (willOpen && elements.filterRoadmapPeriodSearch) {
         elements.filterRoadmapPeriodSearch.focus();
         elements.filterRoadmapPeriodSearch.select();
+      }
+    });
+  }
+
+  if (elements.filterIncompleteFieldsToggle) {
+    elements.filterIncompleteFieldsToggle.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const container = elements.filterIncompleteFieldsToggle.closest(".filter-countries");
+      if (!container) return;
+      const willOpen = !container.classList.contains("open");
+      if (willOpen) {
+        closeAllFilterAutocompleteDropdowns();
+        prepareAppOverlay("filterIncompleteFields");
+      }
+      container.classList.toggle("open");
+      elements.filterIncompleteFieldsToggle.setAttribute(
+        "aria-expanded",
+        willOpen ? "true" : "false"
+      );
+      syncAppPopupLayerState();
+      if (willOpen) {
+        if (elements.filterIncompleteFieldsSearch) {
+          elements.filterIncompleteFieldsSearch.value = "";
+          filterFilterIncompleteFieldsBySearchTerm();
+          elements.filterIncompleteFieldsSearch.focus();
+        }
+        scrollFirstSelectedIncompleteFieldIntoView();
       }
     });
   }
@@ -5555,6 +5620,7 @@ function attachEventListeners() {
         syncScrumBoardStatusColumnsCheckboxes();
       }
       container.classList.toggle("open");
+      syncAppPopupLayerState();
       elements.scrumBoardStatusColumnsToggle.setAttribute(
         "aria-expanded",
         willOpen ? "true" : "false"
@@ -5601,6 +5667,13 @@ function attachEventListeners() {
         periodContainer.classList.remove("open");
       }
     }
+    if (elements.filterIncompleteFieldsToggle) {
+      const incompleteContainer = elements.filterIncompleteFieldsToggle.closest(".filter-countries");
+      if (incompleteContainer?.classList.contains("open") && !incompleteContainer.contains(target)) {
+        incompleteContainer.classList.remove("open");
+        elements.filterIncompleteFieldsToggle.setAttribute("aria-expanded", "false");
+      }
+    }
     if (elements.scrumBoardStatusColumnsToggle) {
       const statusContainer = elements.scrumBoardStatusColumnsToggle.closest(".filter-countries");
       if (statusContainer && !statusContainer.contains(target)) {
@@ -5625,6 +5698,13 @@ function attachEventListeners() {
       const periodContainer = elements.filterRoadmapPeriodToggle.closest(".filter-countries");
       if (periodContainer) {
         periodContainer.classList.remove("open");
+      }
+    }
+    if (elements.filterIncompleteFieldsToggle) {
+      const incompleteContainer = elements.filterIncompleteFieldsToggle.closest(".filter-countries");
+      if (incompleteContainer) {
+        incompleteContainer.classList.remove("open");
+        elements.filterIncompleteFieldsToggle.setAttribute("aria-expanded", "false");
       }
     }
     closeScrumBoardStatusColumnsPopup();
@@ -5677,6 +5757,22 @@ function attachEventListeners() {
       if (target && target.type === "checkbox") {
         applyPortfolioFiltersNow();
         updateFilterRoadmapPeriodsSummary();
+      }
+    });
+  }
+
+  if (elements.filterIncompleteFieldsSearch) {
+    elements.filterIncompleteFieldsSearch.addEventListener("input", filterFilterIncompleteFieldsBySearchTerm);
+    elements.filterIncompleteFieldsSearch.addEventListener("compositionend", filterFilterIncompleteFieldsBySearchTerm);
+  }
+
+  if (elements.filterIncompleteFieldsList) {
+    elements.filterIncompleteFieldsList.addEventListener("change", (event) => {
+      const target = event.target;
+      if (target && target.type === "checkbox") {
+        filterFilterIncompleteFieldsBySearchTerm();
+        applyPortfolioFiltersNow();
+        updateFilterIncompleteFieldsSummary();
       }
     });
   }
@@ -5946,6 +6042,11 @@ function attachEventListeners() {
   }
 
   document.body.addEventListener("mouseenter", (e) => {
+    if (isAppPopupLayerOpen()) return;
+    if (isInteractiveTooltipSuppressTarget(e.target)) {
+      hideCellTypeTooltips();
+      return;
+    }
     if (isCompactTooltipTapTarget(e.target)) return;
     const wrap = findTooltipHoverTrigger(e.target);
     if (!wrap) return;
@@ -5975,6 +6076,11 @@ function attachEventListeners() {
   );
 
   document.body.addEventListener("focusin", (e) => {
+    if (isAppPopupLayerOpen()) return;
+    if (isInteractiveTooltipSuppressTarget(e.target)) {
+      hideCellTypeTooltips();
+      return;
+    }
     const raciWrap = e.target.closest(".raci-matrix-with-tooltip");
     if (raciWrap && isRaciMatrixDesktopLayout()) {
       if (activeTooltipWrap !== raciWrap) positionProfileTooltip(raciWrap);
@@ -6051,13 +6157,23 @@ function attachEventListeners() {
 
   if (elements.roadmapModal) {
     elements.roadmapModal.addEventListener("mouseover", (e) => {
+      if (isAppPopupLayerOpen()) return;
+      if (isInteractiveTooltipSuppressTarget(e.target)) {
+        hideCellTypeTooltips();
+        return;
+      }
       const wrap = e.target.closest(".roadmap-field-tooltip-wrap");
       if (!wrap) return;
       if (activeTooltipWrap === wrap) return;
       positionProfileTooltip(wrap, getTooltipPointerAnchor(wrap, e));
     }, true);
     elements.roadmapModal.addEventListener("mousemove", (e) => {
+      if (isAppPopupLayerOpen()) return;
       if (!activeTooltipWrap || !isRoadmapFieldTooltipWrap(activeTooltipWrap)) return;
+      if (isInteractiveTooltipSuppressTarget(e.target)) {
+        hideCellTypeTooltips();
+        return;
+      }
       const wrap = e.target.closest(".roadmap-field-tooltip-wrap");
       const floatingTooltip = getFloatingTooltipForWrap(activeTooltipWrap);
       const stillHovering =
@@ -6071,6 +6187,11 @@ function attachEventListeners() {
       hideCellTypeTooltips();
     });
     elements.roadmapModal.addEventListener("focusin", (e) => {
+      if (isAppPopupLayerOpen()) return;
+      if (isInteractiveTooltipSuppressTarget(e.target)) {
+        hideCellTypeTooltips();
+        return;
+      }
       const wrap = e.target.closest(".roadmap-field-tooltip-wrap");
       if (!wrap) return;
       if (activeTooltipWrap === wrap) return;
@@ -6223,6 +6344,12 @@ function updateFiltersActivePill() {
   }
   if (criteria.linksFilter) {
     activeFilters.push(criteria.linksFilter === "with" ? "With links" : "Without links");
+  }
+  if (criteria.incompleteFields && criteria.incompleteFields.length) {
+    const fieldLabels = criteria.incompleteFields
+      .map((id) => IncompleteOptionalFields.INCOMPLETE_OPTIONAL_FIELD_LABELS[id] || id)
+      .join(", ");
+    activeFilters.push(`Missing: ${fieldLabels}`);
   }
   if (criteria.ownerProfileFilter && elements.filterOwnerProfile) {
     const opt = elements.filterOwnerProfile.selectedOptions[0];
@@ -6545,6 +6672,7 @@ function setFilterAutocompleteOpen(kind, open, { silent = false } = {}) {
     bindFilterAutocompleteDropdownInteraction(kind);
     mountFilterAutocompleteDropdown(kind);
   }
+  syncAppPopupLayerState();
 }
 
 function closeAllFilterAutocompleteDropdowns() {
@@ -7556,18 +7684,53 @@ function updateImportFormatModalNotice() {
   }
   if (elements.importFormatModalHint) {
     elements.importFormatModalHint.textContent =
-      "Choose a file below — JSON and CSV are detected automatically.";
+      "Choose JSON or CSV below to pick a file from this device.";
   }
 }
 
-function openImportFilePicker() {
-  if (!elements.importFileInput) return;
-  elements.importFileInput.removeAttribute("data-import-kind");
-  elements.importFileInput.value = "";
-  // Defer so the click stays tied to the user gesture (Safari / mobile file dialogs).
-  window.setTimeout(() => {
-    if (elements.importFileInput) elements.importFileInput.click();
-  }, 0);
+const IMPORT_FILE_ACCEPT = {
+  auto: ".json,application/json,.csv,text/csv,application/vnd.ms-excel",
+  json: ".json,application/json",
+  csv: ".csv,text/csv,application/csv,application/vnd.ms-excel"
+};
+
+function configureImportFileInput(kind) {
+  const input = elements.importFileInput;
+  if (!input) return;
+  const normalizedKind = kind === "json" || kind === "csv" ? kind : "auto";
+  input.setAttribute("data-import-kind", normalizedKind);
+  input.setAttribute("accept", IMPORT_FILE_ACCEPT[normalizedKind] || IMPORT_FILE_ACCEPT.auto);
+  input.value = "";
+}
+
+function tryOpenImportFilePicker(input) {
+  if (!input) return false;
+  try {
+    if (typeof input.showPicker === "function") {
+      input.showPicker();
+      return true;
+    }
+  } catch (err) {
+    /* showPicker may throw outside a direct user gesture */
+  }
+  try {
+    input.click();
+    return true;
+  } catch (err) {
+    console.error("Import file picker could not open", err);
+    return false;
+  }
+}
+
+function openImportFilePicker(kind) {
+  if (!elements.importFileInput) {
+    window.alert("Import is unavailable — file input missing. Please refresh the page.");
+    return;
+  }
+  configureImportFileInput(kind);
+  if (!tryOpenImportFilePicker(elements.importFileInput)) {
+    window.alert("Could not open the file picker. Try again or use a different browser.");
+  }
 }
 
 function collectImportEntityIds(importedProfiles) {
@@ -7619,13 +7782,84 @@ function prepareWorkspaceForImport(importedProfiles, workspaceEnvelope) {
   mergeImportedWorkspaceTombstones(workspaceEnvelope, importedProfiles);
 }
 
-function buildImportResultMessage(stats, formatLabel) {
+function stampImportedProfilesForRestore(importedProfiles) {
+  const now = new Date().toISOString();
+  (Array.isArray(importedProfiles) ? importedProfiles : []).forEach((raw) => {
+    if (!raw || typeof raw !== "object") return;
+    raw.modifiedAt = now;
+    (Array.isArray(raw.roadmaps) ? raw.roadmaps : []).forEach((roadmap) => {
+      if (roadmap && typeof roadmap === "object") {
+        roadmap.modifiedAt = now;
+      }
+    });
+  });
+}
+
+function resolveImportFocusProfileId(importedProfiles) {
+  const touchedIds = new Set();
+  (Array.isArray(importedProfiles) ? importedProfiles : []).forEach((raw) => {
+    const profile = normalizeImportedProfile(raw);
+    if (!profile) return;
+    const existing = state.profiles.find((p) => p.id === profile.id || p.name === profile.name);
+    touchedIds.add(existing ? existing.id : profile.id);
+  });
+
+  if (!touchedIds.size) return state.activeProfileId;
+
+  const active = getActiveProfile();
+  if (active && touchedIds.has(active.id)) {
+    const roadmaps = Array.isArray(active.roadmaps) ? active.roadmaps : [];
+    if (roadmaps.length > 0) return active.id;
+  }
+
+  let bestId = null;
+  let bestCount = -1;
+  touchedIds.forEach((id) => {
+    const profile = state.profiles.find((p) => p.id === id);
+    const count = profile && Array.isArray(profile.roadmaps) ? profile.roadmaps.length : 0;
+    if (count > bestCount) {
+      bestCount = count;
+      bestId = id;
+    }
+  });
+  return bestId || state.activeProfileId;
+}
+
+function focusProfileAfterImport(profileId) {
+  if (!profileId) return null;
+  const profile = state.profiles.find((p) => p.id === profileId);
+  if (!profile) return null;
+  const switched = state.activeProfileId !== profileId;
+  state.activeProfileId = profileId;
+  if (!isSuperAdminProfile(profile)) {
+    state.superAdminMode = false;
+  }
+  if (!isProfilePasswordProtected(profile)) {
+    markProfileUnlocked(profileId);
+  }
+  return switched ? profile : null;
+}
+
+function renderWorkspaceAfterImport() {
+  renderProfiles();
+  syncProfilesSelectTrigger();
+  syncSuperAdminChrome();
+  updateProfileLockedBanner();
+  renderRoadmaps();
+  syncDemoReadOnlyChrome();
+  updateFiltersActivePill();
+}
+
+function buildImportResultMessage(stats, formatLabel, focusProfile) {
   const { addedProfiles, mergedProfiles, addedRoadmaps, updatedRoadmaps } = stats;
   const parts = [];
   if (addedProfiles) parts.push(`${addedProfiles} profile${addedProfiles !== 1 ? "s" : ""} added`);
   if (mergedProfiles) parts.push(`${mergedProfiles} profile${mergedProfiles !== 1 ? "s" : ""} merged`);
   if (addedRoadmaps) parts.push(`${addedRoadmaps} roadmap${addedRoadmaps !== 1 ? "s" : ""} added`);
   if (updatedRoadmaps) parts.push(`${updatedRoadmaps} roadmap${updatedRoadmaps !== 1 ? "s" : ""} updated`);
+  if (focusProfile && focusProfile.name) {
+    parts.push(`showing ${focusProfile.name}`);
+  }
   const detail = parts.length ? parts.join(", ") + "." : "No new data.";
   return `Imported from ${formatLabel}. ${detail}`;
 }
@@ -7640,6 +7874,7 @@ function finalizeDataImport(importedProfiles, options) {
     return false;
   }
 
+  stampImportedProfilesForRestore(importedProfiles);
   prepareWorkspaceForImport(importedProfiles, workspaceEnvelope);
   const stats = mergeImportedProfiles(importedProfiles);
 
@@ -7650,12 +7885,27 @@ function finalizeDataImport(importedProfiles, options) {
     state.activeProfileId = resolveFallbackActiveProfileId();
   }
 
-  saveState({ flush: true });
-  renderProfiles();
-  renderRoadmaps();
-  syncDemoReadOnlyChrome();
+  const focusProfileId = resolveImportFocusProfileId(importedProfiles);
+  const focusProfile = focusProfileAfterImport(focusProfileId);
+  clearFilters();
 
-  setTimeout(() => showToast(buildImportResultMessage(stats, formatLabel)), 0);
+  const persistPromise = saveState({ flush: true });
+  renderWorkspaceAfterImport();
+
+  const finishImportUi = () => {
+    renderWorkspaceAfterImport();
+    setTimeout(() => showToast(buildImportResultMessage(stats, formatLabel, focusProfile)), 0);
+  };
+
+  if (persistPromise && typeof persistPromise.then === "function") {
+    persistPromise.then(finishImportUi).catch((err) => {
+      console.warn("Import saved locally; cloud sync may still be pending", err);
+      finishImportUi();
+    });
+  } else {
+    finishImportUi();
+  }
+
   return true;
 }
 
@@ -8069,15 +8319,34 @@ function mergeImportedProfiles(importedProfiles) {
 
 // Unified handler: auto-detects JSON vs CSV from file extension and MIME type.
 function handleUnifiedImportChange(event) {
-  closeImportFormatModal({ immediate: true });
-
   const input = event.target;
   const file = input.files && input.files[0];
-  if (!file) return;
+  const forcedKind = (input.getAttribute("data-import-kind") || "auto").trim().toLowerCase();
+
+  closeImportFormatModal({ immediate: true });
+
+  if (!file) {
+    input.removeAttribute("data-import-kind");
+    return;
+  }
+
+  const fileIsCsv = isImportFileCsv(file);
+  if (forcedKind === "json" && fileIsCsv) {
+    window.alert("Please choose a JSON file (.json), not a CSV spreadsheet.");
+    input.value = "";
+    input.removeAttribute("data-import-kind");
+    return;
+  }
+  if (forcedKind === "csv" && !fileIsCsv) {
+    window.alert("Please choose a CSV file (.csv), not a JSON backup.");
+    input.value = "";
+    input.removeAttribute("data-import-kind");
+    return;
+  }
 
   input.removeAttribute("data-import-kind");
 
-  if (isImportFileCsv(file)) {
+  if (forcedKind === "csv" || (forcedKind !== "json" && fileIsCsv)) {
     handleImportCsvFile(file);
   } else {
     handleImportJsonFile(file);
@@ -8511,6 +8780,8 @@ function readPortfolioFilterCriteria() {
     roadmapTypeFilter: getFilterInputValue(elements.filterRoadmapType),
     labelsFilter: getFilterInputValue(elements.filterLabels),
     linksFilter: getFilterInputValue(elements.filterLinks),
+    incompleteFieldsMode: "any",
+    incompleteFields: getSelectedIncompleteOptionalFields(),
     ownerProfileFilter:
       elements.filterOwnerProfile && isSuperAdminModeActive()
         ? getFilterInputValue(elements.filterOwnerProfile)
@@ -8602,6 +8873,74 @@ function filterFilterRoadmapPeriodsBySearchTerm() {
     const period = (opt.dataset.period || "").toLowerCase();
     opt.style.display = !term || period.includes(term) ? "" : "none";
   });
+}
+
+function filterFilterIncompleteFieldsBySearchTerm() {
+  if (!elements.filterIncompleteFieldsList) return;
+  const term = getFilterSearchInputValue(elements.filterIncompleteFieldsSearch);
+  const options = elements.filterIncompleteFieldsList.querySelectorAll(".filter-country-option");
+  options.forEach((opt) => {
+    const checkbox = opt.querySelector('input[type="checkbox"]');
+    const isChecked = !!(checkbox && checkbox.checked);
+    const label = (opt.dataset.incompleteLabel || opt.textContent || "").toLowerCase();
+    const matchesSearch = !term || label.includes(term);
+    opt.style.display = matchesSearch || isChecked ? "" : "none";
+  });
+  elements.filterIncompleteFieldsList
+    .querySelectorAll(".filter-incomplete-fields-group-label")
+    .forEach((groupLabel) => {
+      let next = groupLabel.nextElementSibling;
+      let hasVisible = false;
+      while (next && !next.classList.contains("filter-incomplete-fields-group-label")) {
+        if (next.classList.contains("filter-country-option") && next.style.display !== "none") {
+          hasVisible = true;
+          break;
+        }
+        next = next.nextElementSibling;
+      }
+      groupLabel.style.display = hasVisible || !term ? "" : "none";
+    });
+}
+
+function scrollFirstSelectedIncompleteFieldIntoView() {
+  if (!elements.filterIncompleteFieldsList) return;
+  const firstChecked = elements.filterIncompleteFieldsList.querySelector(
+    '.filter-country-option input[type="checkbox"]:checked'
+  );
+  const row = firstChecked && firstChecked.closest(".filter-country-option");
+  if (row && typeof row.scrollIntoView === "function") {
+    row.scrollIntoView({ block: "nearest" });
+  }
+}
+
+function updateFilterIncompleteFieldsSummary() {
+  if (!elements.filterIncompleteFieldsSummary) return;
+  const container = elements.filterIncompleteFieldsSummary;
+  const selected = getSelectedIncompleteOptionalFields();
+  container.innerHTML = "";
+
+  if (!selected.length) {
+    const span = document.createElement("span");
+    span.textContent = "Any";
+    container.appendChild(span);
+    return;
+  }
+
+  const maxChips = 3;
+  const visible = selected.slice(0, maxChips);
+  visible.forEach((fieldId) => {
+    const chip = document.createElement("span");
+    chip.className = "filter-countries-chip";
+    chip.textContent = IncompleteOptionalFields.INCOMPLETE_OPTIONAL_FIELD_LABELS[fieldId] || fieldId;
+    container.appendChild(chip);
+  });
+
+  if (selected.length > maxChips) {
+    const moreChip = document.createElement("span");
+    moreChip.className = "filter-countries-chip filter-countries-chip-count";
+    moreChip.textContent = `+${selected.length - maxChips} more`;
+    container.appendChild(moreChip);
+  }
 }
 
 function updateFilterCountriesSummary() {
@@ -8742,14 +9081,55 @@ function getCountriesFromControls() {
   return normalizeCountryNames(getCountriesFromControlsRaw());
 }
 
-/** True when the roadmap has at least one saved hyperlink. */
-function roadmapHasLinks(roadmap) {
-  return normalizeRoadmapLinks(roadmap && roadmap.links).length > 0;
+function getSelectedIncompleteOptionalFields() {
+  if (!elements.filterIncompleteFieldsList) return [];
+  const selected = new Set(
+    Array.from(
+      elements.filterIncompleteFieldsList.querySelectorAll('input[type="checkbox"]:checked')
+    )
+      .map((input) => input.value)
+      .filter(Boolean)
+  );
+  return IncompleteOptionalFields.INCOMPLETE_OPTIONAL_FIELD_OPTIONS.filter((option) =>
+    selected.has(option.id)
+  ).map((option) => option.id);
 }
 
-/** True when the roadmap has at least one saved label. */
-function roadmapHasLabels(roadmap) {
-  return normalizeRoadmapLabels(roadmap && roadmap.labels).length > 0;
+function createFilterIncompleteGroupLabel(text) {
+  const label = document.createElement("div");
+  label.className = "filter-incomplete-fields-group-label";
+  label.textContent = text;
+  return label;
+}
+
+function initIncompleteOptionalFieldsFilter() {
+  const listEl = elements.filterIncompleteFieldsList;
+  if (!listEl || listEl.dataset.ready === "1") return;
+  listEl.dataset.ready = "1";
+  listEl.innerHTML = "";
+
+  const selected = new Set(getSelectedIncompleteOptionalFields());
+
+  IncompleteOptionalFields.INCOMPLETE_OPTIONAL_FIELD_GROUPS.forEach((group) => {
+    listEl.appendChild(createFilterIncompleteGroupLabel(group.label));
+    group.fields.forEach((fieldId, index) => {
+      const option = IncompleteOptionalFields.INCOMPLETE_OPTIONAL_FIELD_OPTIONS.find(
+        (item) => item.id === fieldId
+      );
+      if (!option) return;
+      const rowBundle = createFilterCheckboxRow({
+        value: option.id,
+        text: option.label,
+        checked: selected.has(option.id),
+        checkboxId: `filterIncompleteField-${group.id}-${index}`,
+        rowDataset: { incompleteField: option.id, incompleteLabel: option.label }
+      });
+      listEl.appendChild(rowBundle.row);
+    });
+  });
+
+  filterFilterIncompleteFieldsBySearchTerm();
+  updateFilterIncompleteFieldsSummary();
 }
 
 /** Substring match against any roadmap label (case-insensitive). */
@@ -12578,7 +12958,8 @@ function applyStatePayload(parsed) {
       state.superAdminMode = false;
     }
 
-    if (dedupedDuplicates) {
+    const postNormalizeDeduped = dedupeWorkspaceStateInPlace();
+    if (dedupedDuplicates || postNormalizeDeduped) {
       saveState({ flush: true });
     }
   } catch (err) {
@@ -12714,12 +13095,13 @@ function saveState(options) {
   const flush = options && options.flush === true;
   try {
     if (typeof AppStorage !== "undefined") {
-      AppStorage.persistState(payload, { flush });
-    } else {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      return AppStorage.persistState(payload, { flush });
     }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    return Promise.resolve(true);
   } catch (err) {
     console.error("Failed to persist state", err);
+    return Promise.resolve(false);
   }
 }
 
@@ -13566,6 +13948,32 @@ const TOOLTIP_HOVER_TRIGGER_SELECTOR =
   ".profile-icon-wrap, .scrum-board-card-type-wrap, .roadmap-field-tooltip-wrap, " +
   TABLE_VIEW_TOOLTIP_TRIGGER_SELECTOR;
 
+const INTERACTIVE_TOOLTIP_SUPPRESS_SELECTOR =
+  "select, input, textarea, button, option, [contenteditable='true'], " +
+  ".date-input-shell, .rich-text-editor-host, .rich-text-editor, " +
+  ".filter-autocomplete__field--open, .profile-picker__field--open, " +
+  ".map-metric-picker__field--open, .profiles-select__field--open";
+
+function isInteractiveTooltipSuppressTarget(target) {
+  if (!target || !(target instanceof Element)) return false;
+  return !!target.closest(INTERACTIVE_TOOLTIP_SUPPRESS_SELECTOR);
+}
+
+function isNativeSelectFocused() {
+  const active = document.activeElement;
+  return !!(active && active.tagName === "SELECT" && !active.disabled);
+}
+
+function isDateInputFocused() {
+  const active = document.activeElement;
+  return !!(
+    active &&
+    !active.disabled &&
+    (active.matches?.('input[type="date"], .date-input-shell__picker') ||
+      active.closest?.(".date-input-shell"))
+  );
+}
+
 function findTableViewTooltipTrigger(target) {
   if (!target || !(target instanceof Element)) return null;
   return target.closest(TABLE_VIEW_TOOLTIP_TRIGGER_SELECTOR);
@@ -13573,6 +13981,7 @@ function findTableViewTooltipTrigger(target) {
 
 function findTooltipHoverTrigger(target) {
   if (!target || !(target instanceof Element)) return null;
+  if (isInteractiveTooltipSuppressTarget(target)) return null;
   return target.closest(TOOLTIP_HOVER_TRIGGER_SELECTOR);
 }
 
@@ -13700,6 +14109,10 @@ function finalizeTooltipViewportPosition(tooltip, anchorRect, options = {}) {
 function positionProfileTooltip(wrap, anchorPoint) {
   const tooltip = wrap.querySelector(".cell-type-tooltip");
   if (!tooltip) return;
+  if (isAppPopupLayerOpen()) {
+    hideCellTypeTooltips();
+    return;
+  }
   if (!shouldAllowTooltipForWrap(wrap)) {
     hideCellTypeTooltips();
     return;
@@ -13801,6 +14214,10 @@ function toggleCompactTableTooltip(wrap, anchorPoint) {
 
 function handleCompactCardTooltipClick(e) {
   if (!isCompactLayoutViewport()) return;
+  if (isAppPopupLayerOpen()) {
+    hideCellTypeTooltips();
+    return;
+  }
 
   if (e.target.closest(".cell-type-tooltip.cell-type-tooltip-visible")) {
     return;
@@ -14231,9 +14648,133 @@ function getActiveBlockingModalElement() {
   return id ? document.getElementById(id) : null;
 }
 
-/** Block tooltips triggered outside the open modal (e.g. profile action chips over create/edit). */
+let nativeSelectMenuOpen = false;
+
+function isDatePickerLayerOpen() {
+  if (document.querySelector(".modal-backdrop--date-picker-open")) return true;
+  return isDateInputFocused();
+}
+
+function isFilterPopupOpen() {
+  return !!document.querySelector(".filter-countries.open");
+}
+
+function isAppHeaderMenuOpen() {
+  return !!document.querySelector(".app-header--modern.app-header--menu-open");
+}
+
+/** True when any dropdown, native picker, or nested popup layer is active. */
+function isAppPopupLayerOpen() {
+  return (
+    isDatePickerLayerOpen() ||
+    nativeSelectMenuOpen ||
+    isNativeSelectFocused() ||
+    isAnyFilterAutocompleteOpen() ||
+    profilePickerOpen ||
+    profilesSelectOpen ||
+    mapMetricPickerOpen ||
+    isFilterPopupOpen() ||
+    isAppHeaderMenuOpen()
+  );
+}
+
+function syncAppPopupLayerState() {
+  const suppress = isAppPopupLayerOpen();
+  document.documentElement.classList.toggle("app-popup-open", suppress);
+  if (suppress) {
+    hideCellTypeTooltips();
+    document.body.classList.add("cell-type-tooltip-hidden");
+  }
+}
+
+function closeAllDatePickers() {
+  document.querySelectorAll(".date-input-shell input[type='date']").forEach((input) => {
+    if (document.activeElement === input) input.blur();
+  });
+  document.querySelectorAll(".modal-backdrop--date-picker-open").forEach((el) => {
+    el.classList.remove("modal-backdrop--date-picker-open");
+  });
+}
+
+function blurOpenNativeSelects() {
+  const active = document.activeElement;
+  if (active && active.tagName === "SELECT") {
+    active.blur();
+  }
+  nativeSelectMenuOpen = false;
+}
+
+function bindAppPopupLayerHandlers() {
+  if (bindAppPopupLayerHandlers.bound) return;
+  bindAppPopupLayerHandlers.bound = true;
+
+  const openNativeSelectLayer = (select) => {
+    if (!select || select.disabled) return;
+    nativeSelectMenuOpen = true;
+    hideCellTypeTooltips();
+    prepareAppOverlay("nativeSelect");
+    syncAppPopupLayerState();
+  };
+
+  document.addEventListener(
+    "pointerdown",
+    (event) => {
+      const select = event.target.closest?.("select");
+      if (!select) return;
+      openNativeSelectLayer(select);
+    },
+    true
+  );
+
+  document.addEventListener(
+    "mousedown",
+    (event) => {
+      const select = event.target.closest?.("select");
+      if (!select) return;
+      openNativeSelectLayer(select);
+    },
+    true
+  );
+
+  document.addEventListener(
+    "focusin",
+    (event) => {
+      const select = event.target?.matches?.("select") ? event.target : null;
+      if (!select) return;
+      openNativeSelectLayer(select);
+    },
+    true
+  );
+
+  document.addEventListener(
+    "change",
+    (event) => {
+      if (!event.target?.matches?.("select")) return;
+      nativeSelectMenuOpen = false;
+      syncAppPopupLayerState();
+    },
+    true
+  );
+
+  document.addEventListener("blur", (event) => {
+    if (!event.target?.matches?.("select")) return;
+    window.setTimeout(() => {
+      if (document.activeElement?.tagName !== "SELECT") {
+        nativeSelectMenuOpen = false;
+        syncAppPopupLayerState();
+      }
+    }, 0);
+  }, true);
+}
+
+/** Block tooltips while popups are open or outside the active modal. */
 function shouldAllowTooltipForWrap(wrap) {
   if (!wrap) return false;
+  if (isAppPopupLayerOpen()) return false;
+  const active = document.activeElement;
+  if (active && wrap.contains(active) && isInteractiveTooltipSuppressTarget(active)) {
+    return false;
+  }
   const activeModal = getActiveBlockingModalElement();
   if (!activeModal) return true;
   return activeModal.contains(wrap);
@@ -14373,11 +14914,15 @@ const FILTERS_SHEET_NESTED_OVERLAY_IDS = new Set([
 
 function prepareAppOverlay(id) {
   hideCellTypeTooltips();
-  if (typeof OverlayManager === "undefined") return;
+  if (typeof OverlayManager === "undefined") {
+    syncAppPopupLayerState();
+    return;
+  }
 
   const activeModalId = getActiveBlockingModalOverlayId();
   if (activeModalId && id !== activeModalId && !BLOCKING_MODAL_OVERLAY_IDS.has(id)) {
     OverlayManager.closeAllExcept(activeModalId);
+    syncAppPopupLayerState();
     return;
   }
 
@@ -14387,10 +14932,12 @@ function prepareAppOverlay(id) {
       keepOpen.push(id);
     }
     OverlayManager.closeAllExcept(keepOpen);
+    syncAppPopupLayerState();
     return;
   }
 
   OverlayManager.prepareOpen(id);
+  syncAppPopupLayerState();
 }
 
 function closeAppHeaderMenu() {
@@ -14399,22 +14946,27 @@ function closeAppHeaderMenu() {
   if (!header) return;
   header.classList.remove("app-header--menu-open");
   if (toggleBtn) toggleBtn.setAttribute("aria-expanded", "false");
+  syncAppPopupLayerState();
 }
 
 function closeFilterCountriesPopup() {
   const container = elements.filterCountriesToggle?.closest(".filter-countries");
   if (container) container.classList.remove("open");
+  syncAppPopupLayerState();
 }
 
 function closeFilterRoadmapPeriodPopup() {
   const container = elements.filterRoadmapPeriodToggle?.closest(".filter-countries");
   if (container) container.classList.remove("open");
+  syncAppPopupLayerState();
 }
 
 function registerAppOverlays() {
   if (typeof OverlayManager === "undefined") return;
 
   const closeNow = (fn) => () => fn({ immediate: true });
+
+  bindAppPopupLayerHandlers();
 
   OverlayManager.register("profilesSheet", closeNow(closeProfilesSheet));
   OverlayManager.register("filtersSheet", closeNow(closeFiltersSheet));
@@ -14440,6 +14992,8 @@ function registerAppOverlays() {
   OverlayManager.register("cloudStorage", closeNow(closeCloudStorageModal));
   OverlayManager.register("byokApiKeysModal", closeNow(closeByokApiKeysModal));
   OverlayManager.register("filterAutocomplete", closeAllFilterAutocompleteDropdowns);
+  OverlayManager.register("datePicker", closeAllDatePickers);
+  OverlayManager.register("nativeSelect", blurOpenNativeSelects);
 }
 
 /** Expand “New profile” on wide layouts; keep collapsed on phones by default. */
@@ -14921,6 +15475,7 @@ function setProfilesSelectOpen(open) {
     trigger?.focus({ preventScroll: true });
   }
   syncProfilesSelectListScroll();
+  syncAppPopupLayerState();
 }
 
 function closeProfilesSelect(options = {}) {
@@ -15408,6 +15963,7 @@ function setProfilePickerOpen(open) {
     profilePickerHighlightIndex = -1;
     syncProfilePickerInputDisplay();
   }
+  syncAppPopupLayerState();
 }
 
 function openProfilePickerDropdown() {
@@ -18454,6 +19010,7 @@ function setMapMetricPickerOpen(open) {
     if (search) search.value = "";
     syncMapMetricPickerDisplay();
   }
+  syncAppPopupLayerState();
 }
 
 function openMapMetricPickerDropdown() {
@@ -20044,6 +20601,7 @@ function closeScrumBoardStatusColumnsPopup() {
   if (elements.scrumBoardStatusColumnsToggle) {
     elements.scrumBoardStatusColumnsToggle.setAttribute("aria-expanded", "false");
   }
+  syncAppPopupLayerState();
 }
 
 function renderScrumBoard() {
@@ -21198,6 +21756,8 @@ function applyFilters(roadmaps) {
     roadmapTypeFilter,
     labelsFilter,
     linksFilter,
+    incompleteFieldsMode,
+    incompleteFields,
     ownerProfileFilter
   } = criteria;
 
@@ -21270,17 +21830,27 @@ function applyFilters(roadmaps) {
       return false;
     }
 
-    if (labelsFilter === "with" && !roadmapHasLabels(p)) {
+    if (labelsFilter === "with" && !IncompleteOptionalFields.roadmapHasLabels(p)) {
       return false;
     }
-    if (labelsFilter === "without" && roadmapHasLabels(p)) {
+    if (labelsFilter === "without" && IncompleteOptionalFields.roadmapHasLabels(p)) {
       return false;
     }
 
-    if (linksFilter === "with" && !roadmapHasLinks(p)) {
+    if (linksFilter === "with" && !IncompleteOptionalFields.roadmapHasLinks(p)) {
       return false;
     }
-    if (linksFilter === "without" && roadmapHasLinks(p)) {
+    if (linksFilter === "without" && IncompleteOptionalFields.roadmapHasLinks(p)) {
+      return false;
+    }
+
+    if (
+      !IncompleteOptionalFields.roadmapMatchesIncompleteOptionalFieldsFilter(
+        p,
+        incompleteFields,
+        incompleteFieldsMode
+      )
+    ) {
       return false;
     }
 
@@ -21406,6 +21976,25 @@ function clearFilters() {
   FILTER_AUTOCOMPLETE_KINDS.forEach((kind) => syncFilterAutocompleteValueState(kind));
   if (elements.filterLabels) elements.filterLabels.value = "";
   if (elements.filterLinks) elements.filterLinks.value = "";
+  if (elements.filterIncompleteFieldsSearch) {
+    elements.filterIncompleteFieldsSearch.value = "";
+  }
+  if (elements.filterIncompleteFieldsList) {
+    elements.filterIncompleteFieldsList
+      .querySelectorAll('input[type="checkbox"]')
+      .forEach((cb) => {
+        cb.checked = false;
+      });
+    filterFilterIncompleteFieldsBySearchTerm();
+  }
+  if (elements.filterIncompleteFieldsToggle) {
+    const incompleteContainer = elements.filterIncompleteFieldsToggle.closest(".filter-countries");
+    if (incompleteContainer) {
+      incompleteContainer.classList.remove("open");
+    }
+    elements.filterIncompleteFieldsToggle.setAttribute("aria-expanded", "false");
+  }
+  updateFilterIncompleteFieldsSummary();
   if (elements.filterOwnerProfile) elements.filterOwnerProfile.value = "";
   if (elements.filterRoadmapPeriodSearch) {
     elements.filterRoadmapPeriodSearch.value = "";
@@ -21429,6 +22018,7 @@ function clearFilters() {
   updateFiltersActivePill();
   updateFilterRoadmapPeriodsSummary();
   updateFilterCountriesSummary();
+  updateFilterIncompleteFieldsSummary();
 }
 
 function isTableCompactLayout() {
@@ -21701,6 +22291,7 @@ function syncRoadmapDeadlineBulkEditorVisibility() {
   editorWrap.hidden = true;
   if (mode === BULK_EDIT_CLEAR && elements.roadmapDeadline) {
     elements.roadmapDeadline.value = "";
+    syncDateInputShellForInput(elements.roadmapDeadline);
   }
 }
 
@@ -21734,6 +22325,7 @@ function syncRoadmapDeadlineControlsForModal(roadmap, { isView = false } = {}) {
     if (isRoadmapDeadlineEditorVisible() && elements.roadmapDeadline) {
       elements.roadmapDeadline.value = roadmapDeadlineToDateInputValue(roadmap?.roadmapDeadline);
       elements.roadmapDeadline.disabled = !!isView;
+      syncDateInputShellForInput(elements.roadmapDeadline);
     }
   } else {
     if (elements.roadmapDeadlineBulkModeWrap) elements.roadmapDeadlineBulkModeWrap.hidden = true;
@@ -21741,6 +22333,7 @@ function syncRoadmapDeadlineControlsForModal(roadmap, { isView = false } = {}) {
     if (elements.roadmapDeadline) {
       elements.roadmapDeadline.value = roadmapDeadlineToDateInputValue(roadmap?.roadmapDeadline);
       elements.roadmapDeadline.disabled = !!isView;
+      syncDateInputShellForInput(elements.roadmapDeadline);
     }
   }
 }
@@ -21811,11 +22404,14 @@ function syncRoadmapBulkPreviewContextHint(roadmap) {
   const title = (roadmap.title || "Untitled roadmap").trim();
   const editedCount = bulkEditModifiedRoadmapIds.size;
   const editedSuffix =
-    editedCount > 0 ? ` · ${editedCount} roadmap${editedCount === 1 ? "" : "s"} with unsaved edits` : "";
+    editedCount > 0 ? ` ${editedCount} roadmap${editedCount === 1 ? "" : "s"} with unsaved edits.` : "";
+  if (count === 1) {
+    elements.roadmapModalSubtitle.textContent =
+      `Editing “${title}”. Changes apply only to this roadmap${editedSuffix}`;
+    return;
+  }
   elements.roadmapModalSubtitle.textContent =
-    count === 1
-      ? `Editing “${title}”. Changes apply only to this roadmap${editedSuffix}.`
-      : `Editing “${title}” (${bulkPreviewRoadmapIndex + 1} of ${count}). Each roadmap keeps its own edits — switch using the arrows${editedSuffix}.`;
+    `Editing “${title}”. Each roadmap keeps its own edits — use the navigator below to switch.${editedSuffix}`;
 }
 
 function syncBulkEditModifiedIndicators() {
@@ -22214,7 +22810,21 @@ function syncRoadmapBulkPreviewNavigator(options = {}) {
   }
 
   if (elements.roadmapBulkPreviewCounter) {
-    elements.roadmapBulkPreviewCounter.textContent = `${bulkPreviewRoadmapIndex + 1} / ${count}`;
+    const position = `${bulkPreviewRoadmapIndex + 1} / ${count}`;
+    const modifiedCount = bulkEditModifiedRoadmapIds.size;
+    const activeDirty =
+      activeRoadmap && bulkEditModifiedRoadmapIds.has(activeRoadmap.id);
+    let counterText = position;
+    if (modifiedCount > 0) {
+      counterText += ` · ${modifiedCount} unsaved`;
+    } else if (activeDirty) {
+      counterText += " · edited";
+    }
+    elements.roadmapBulkPreviewCounter.textContent = counterText;
+    elements.roadmapBulkPreviewCounter.classList.toggle(
+      "roadmap-bulk-nav__counter--dirty",
+      !!(activeDirty || modifiedCount > 0)
+    );
   }
   if (elements.roadmapBulkPreviewPrev) {
     elements.roadmapBulkPreviewPrev.disabled = bulkPreviewRoadmapIndex <= 0;
@@ -22565,7 +23175,112 @@ function handleRoadmapBulkDeadlineModeChange() {
   const roadmapShape = draft?.raw ? { ...located.roadmap, ...draft.raw } : located.roadmap;
   if (elements.roadmapDeadline) {
     elements.roadmapDeadline.value = roadmapDeadlineToDateInputValue(roadmapShape.roadmapDeadline);
+    syncDateInputShellForInput(elements.roadmapDeadline);
   }
+}
+
+function tryOpenDatePicker(input) {
+  if (!input || input.disabled) return false;
+  try {
+    if (typeof input.showPicker === "function") {
+      input.showPicker();
+      return true;
+    }
+  } catch (err) {
+    /* showPicker may throw outside a direct user gesture */
+  }
+  return false;
+}
+
+function syncDateInputShellDisplay(shell) {
+  if (!shell) return;
+  const input = shell.querySelector('input[type="date"]');
+  const display = shell.querySelector(".date-input-shell__display");
+  if (!input || !display) return;
+  const value = (input.value || "").trim();
+  display.textContent = value;
+  shell.classList.toggle("date-input-shell--empty", !value);
+}
+
+function syncDateInputShellForInput(input) {
+  if (!input) return;
+  syncDateInputShellDisplay(input.closest(".date-input-shell"));
+}
+
+function bindDateInputShell(shell) {
+  if (!shell || shell.dataset.dateShellBound === "1") return;
+  const input = shell.querySelector('input[type="date"]');
+  if (!input) return;
+  shell.dataset.dateShellBound = "1";
+
+  const surface = shell.querySelector(".date-input-shell__surface");
+
+  const hosts = () => {
+    const list = [];
+    const modal = shell.closest(".modal-backdrop");
+    const sheet = shell.closest(".portfolio-filters-sheet");
+    if (modal) list.push(modal);
+    if (sheet) list.push(sheet);
+    return list;
+  };
+
+  const setPickerOpen = (open) => {
+    hosts().forEach((host) => {
+      host.classList.toggle("modal-backdrop--date-picker-open", open);
+    });
+    if (open) {
+      prepareAppOverlay("datePicker");
+    } else {
+      syncAppPopupLayerState();
+    }
+  };
+
+  const openPickerFromGesture = () => {
+    if (input.disabled) return;
+    hideCellTypeTooltips();
+    setPickerOpen(true);
+    input.focus({ preventScroll: true });
+    tryOpenDatePicker(input);
+  };
+
+  if (surface) {
+    surface.addEventListener("click", (event) => {
+      if (input.disabled) return;
+      const rect = surface.getBoundingClientRect();
+      const inPickerZone = event.clientX >= rect.right - 48;
+      if (inPickerZone) {
+        openPickerFromGesture();
+        return;
+      }
+      input.focus({ preventScroll: true });
+    });
+  }
+
+  input.addEventListener("input", () => syncDateInputShellDisplay(shell));
+  input.addEventListener("change", () => syncDateInputShellDisplay(shell));
+
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowDown" || (event.key === " " && event.target === input)) {
+      if (tryOpenDatePicker(input)) {
+        event.preventDefault();
+      }
+    }
+  });
+
+  input.addEventListener("focus", () => setPickerOpen(true));
+  input.addEventListener("blur", () => {
+    window.setTimeout(() => {
+      setPickerOpen(false);
+      syncAppPopupLayerState();
+    }, 160);
+  });
+
+  syncDateInputShellDisplay(shell);
+}
+
+function initDateInputShells(root) {
+  const scope = root && typeof root.querySelectorAll === "function" ? root : document;
+  scope.querySelectorAll(".date-input-shell").forEach(bindDateInputShell);
 }
 
 function initRoadmapBulkDeadlineControls() {
@@ -24796,7 +25511,10 @@ function openRoadmapModal(mode, roadmapId, options = {}) {
     elements.roadmapType.value = "";
     elements.roadmapStatus.value = "";
     elements.roadmapTshirtSize.value = "";
-    if (elements.roadmapDeadline) elements.roadmapDeadline.value = "";
+    if (elements.roadmapDeadline) {
+      elements.roadmapDeadline.value = "";
+      syncDateInputShellForInput(elements.roadmapDeadline);
+    }
     renderRoadmapPeriodControls([], { readonly: false });
     elements.roadmapMoscow.value = "";
     setRoadmapKanoSelection(null, null, { readonly: false });
@@ -24828,6 +25546,7 @@ function openRoadmapModal(mode, roadmapId, options = {}) {
   syncRoadmapModalFooterMetaDetails({ resetCollapsed: true });
   resetRoadmapSummaryUi();
   activateBlockingModal(elements.roadmapModal, "roadmapModal");
+  initDateInputShells(elements.roadmapModal);
   elements.roadmapModal.classList.toggle("roadmap-modal--view", isView);
   elements.roadmapModal.classList.toggle("roadmap-modal--bulk", isBulk);
   syncRoadmapSummarySectionVisibility(isView && !isBulk);

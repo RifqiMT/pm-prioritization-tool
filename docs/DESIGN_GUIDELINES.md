@@ -1,8 +1,8 @@
 # Design Guidelines
 
 **Product:** Product Management Prioritization Tool  
-**Last updated:** 2026-07-09  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260709-ui199`  
+**Last updated:** 2026-07-10  
+**Implementation baseline:** `APP_ASSET_VERSION` = `20260710-ui201`  
 **Layout breakpoint:** `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** (`html.is-compact-layout` + `html.is-phone-layout`)
 
 Visual and interaction standards for the local-first prioritization workspace.
@@ -98,6 +98,8 @@ Typography for sanitized HTML in roadmap descriptions, tooltips, and LLM summary
 | `compact-view-gutter.css` | Reduced horizontal padding on table/board in compact mode |
 | `confirm-modals-modern.css` | Destructive-action confirms aligned with export/import modal chrome |
 | `filter-combobox-fix.css` | Profile picker and filter combobox alignment |
+| `filter-incomplete-modern.css` | Incomplete optional fields filter popup, match toggle (any/all), grouped checklists |
+| `date-inputs-modern.css` | Native date inputs (roadmap deadline, planning fields) |
 
 Breakpoints align with `COMPACT_LAYOUT_MAX_WIDTH` (1400px) in `constants.js`.
 

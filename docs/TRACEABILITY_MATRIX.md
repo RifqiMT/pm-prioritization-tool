@@ -4,7 +4,7 @@
 
 **Purpose:** Map PRD requirements to concrete implementation evidence and verification steps.  
 **Standard:** Requirement IDs must remain synchronized with [PRD.md](PRD.md).  
-**Last audited:** 2026-07-09 · **Baseline:** `APP_ASSET_VERSION` = `20260709-ui199`
+**Last audited:** 2026-07-10 · **Baseline:** `APP_ASSET_VERSION` = `20260710-ui201`
 
 ---
 
@@ -123,6 +123,7 @@
 | FR-6.5 | Links presence filter | `filterLinks` with/without | With/without/any behaviors |
 | FR-6.6 | Active filter summary pill | Filter summary renderer | Pill lists labels/links filters |
 | FR-6.7 | Compact filters sheet | `#portfolioFiltersSheet`; `filters-sheet-modern.css`; mobile command deck | At ≤1400px: sheet opens/closes; filters persist |
+| FR-6.8 | Incomplete optional fields | `incomplete-optional-fields.js`; `#filterIncompleteFieldsList`; `filter-incomplete-modern.css` | Any/all match on 14 optional fields; session-only |
 
 ---
 
@@ -141,11 +142,15 @@
 | FR-8.1 | Export JSON | `export-payload.js` `buildJsonExportDocument`; `sanitizeProfilesForExport` | Download; protected profiles omitted without unlock |
 | FR-8.2 | Export CSV | `export-payload.js` `CSV_COLUMN_IDS`; `*ExtraData` round-trip columns | One row per roadmap; full metadata columns |
 | FR-8.3 | Export password gate | Export unlock modal | Wrong password omits profile |
-| FR-8.4 | Import JSON merge | `handleImportJsonFile`; `mergeImportedProfiles` | Update by id; no duplicates |
-| FR-8.5 | Import CSV merge | `handleImportCsvFile` | Rows merge safely |
+| FR-8.4 | Import JSON merge | `handleImportJsonFile`; `prepareWorkspaceForImport`; `clearWorkspaceTombstonesForImport` | Update by id; resurrect tombstoned imports |
+| FR-8.5 | Import CSV merge | `handleImportCsvFile`; same tombstone rules | Rows merge safely; resurrection on explicit import |
 | FR-8.6 | Import/export modal parity | `export-modals-modern.css` | Shared cards + responsive footer |
 | FR-8.7 | Concurrent cloud merge | `workspace-merge.js` `mergeWorkspacePayloads`, `dedupeWorkspacePayload`; `storage.js` `preparePayloadForRemoteSave`; `workspaceTombstones` in `app.js` | Union entities; fingerprint dedupe; tombstoned deletes stay deleted |
 | FR-8.8 | Revision conflict handling | `api/state.js` revision check; `storage.js` `putRemoteState` + 409 merge-retry | Simultaneous saves converge without duplicate rows |
+| FR-8.9 | Server-side dedupe | `api/_lib/workspace-dedupe.js`; `api/state.js` GET self-heal + PUT normalize | MongoDB never serves duplicate fingerprint rows |
+| FR-8.10 | Import file kind detection | `isImportFileCsv`, `resolveImportKind` in `handleUnifiedImportChange` | Auto JSON/CSV; mismatch errors when forced kind wrong |
+| FR-9.9 | Single-toast UX | `showToast`, `dismissActiveToasts`, `lastStorageStatusToastKey` | One toast visible; no duplicate cloud status spam |
+| FR-9.10 | Mobile import UX | `openImportFilePicker` deferred click; `updateImportFormatModalNotice` | Safari/mobile file picker works; live counts in modal |
 
 ---
 

@@ -4,7 +4,7 @@ Target users for the Product Management Prioritization Tool.
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-07-09 |
+| **Last updated** | 2026-07-10 |
 | **Layout baseline** | Compact UI at viewport ≤ **1400px** |
 
 ## How to use personas
@@ -21,9 +21,9 @@ Target users for the Product Management Prioritization Tool.
 | Dimension | Detail |
 |-----------|--------|
 | **Role** | Roadmap owner across teams or products |
-| **Goals** | Explainable prioritization; consistent RICE; MoSCoW alignment; portable backups; fast filtering by period, country, labels, and links |
-| **Pain points** | Scores scattered in spreadsheets; inconsistent rubrics; low trust in “gut feel” confidence; hard to find roadmaps missing labels or documentation links |
-| **Key workflows** | Create profiles → add roadmaps → share deep links with teammates on the same cloud workspace → edit concurrently (merge + tombstones) → configure BYOK keys → generate **LLM analysis** for stakeholder briefings → run **5 Why** question chains in view mode for root-cause workshops → use title/label autocomplete in filters → group compact table cards by MoSCoW or status → export JSON before planning milestones |
+| **Goals** | Explainable prioritization; consistent RICE; MoSCoW alignment; portable backups; fast filtering by period, country, labels, links, and **missing optional metadata** |
+| **Pain points** | Scores scattered in spreadsheets; inconsistent rubrics; low trust in “gut feel” confidence; hard to find roadmaps missing labels, documentation links, or other optional fields before review |
+| **Key workflows** | Create profiles → add roadmaps → share deep links with teammates on the same cloud workspace → edit concurrently (merge + tombstones) → configure BYOK keys → generate **LLM analysis** for stakeholder briefings → run **5 Why** question chains in view mode for root-cause workshops → use title/label autocomplete in filters → sweep portfolios with **incomplete optional fields** filter (any/all match) before planning → group compact table cards by MoSCoW or status → export JSON before planning milestones |
 | **Device usage** | **Desktop** (>1400px) for deep table editing and multi-column sorts; **iPad / phone** (≤1400px) for between-meeting reviews via compact card table and MoSCoW nav pills |
 | **Success** | Stakeholders accept rankings because inputs, formulas, and filters are visible and reproducible |
 
@@ -102,6 +102,7 @@ Target users for the Product Management Prioritization Tool.
 | RICE tooltips | PM Primary, Stakeholder |
 | MoSCoW view + display names (Must Have, etc.) | PM Primary, Stakeholder |
 | Title/label autocomplete + labels/links filters | PM Primary |
+| Incomplete optional fields filter (data-quality sweeps) | PM Primary, Stakeholder |
 | Board + unified card UI | Delivery Lead, Mobile PM |
 | Table semantic columns + compact cards + group-by | PM Primary, Delivery Lead, Geo/Finance PM |
 | Map + FX normalization | Geo/Finance PM |

@@ -9,7 +9,7 @@
 const STORAGE_KEY = "rice_prioritizer_v1";
 
 /** Bump when shipping client changes so browsers fetch fresh JS (Vercel caches /src with long TTL). */
-const APP_ASSET_VERSION = "20260709-ui199";
+const APP_ASSET_VERSION = "20260710-ui201";
 
 /**
  * Viewports at or below this width use the unified phone/tablet UI
@@ -352,7 +352,7 @@ const roadmapTypeIcons = {
 
 const currencyList = [
   "USD", "EUR", "GBP", "JPY", "CNY", "AUD", "CAD", "CHF", "HKD", "SGD",
-  "NZD", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "BGN", "RON", "HRK",
+  "NZD", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "BGN", "RON",
   "RUB", "TRY", "BRL", "MXN", "ARS", "CLP", "COP", "PEN", "ZAR", "INR",
   "IDR", "MYR", "THB", "PHP", "VND", "KRW", "TWD", "ISK",
   "SAR", "AED", "QAR", "KWD", "BHD", "ILS", "EGP", "NGN", "KES", "GHS",
@@ -473,7 +473,6 @@ const CURRENCY_SYMBOLS = {
   HUF: "Ft",
   BGN: "лв",
   RON: "lei",
-  HRK: "kn",
   RUB: "₽",
   TRY: "₺",
   BRL: "R$",

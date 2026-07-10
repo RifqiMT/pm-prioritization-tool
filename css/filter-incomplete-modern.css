@@ -1,0 +1,50 @@
+/**
+ * Missing fields filter — integrated into the advanced filters grid.
+ */
+
+.workspace-panel--v2 .filter-group--incomplete,
+.portfolio-filters-sheet .filter-group--incomplete {
+  min-width: 0;
+}
+
+.filter-incomplete-fields-dropdown {
+  width: 100%;
+}
+
+.filter-incomplete-fields-dropdown .filter-countries-list {
+  max-height: min(280px, 42vh);
+}
+
+.filter-incomplete-fields-group-label {
+  padding: 0.45rem 0.45rem 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a8a29e;
+  user-select: none;
+}
+
+.filter-incomplete-fields-group-label:not(:first-child) {
+  margin-top: 0.2rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid rgba(231, 201, 120, 0.28);
+}
+
+.filter-incomplete-fields-dropdown .filter-country-option label {
+  display: inline;
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  color: inherit;
+}
+
+.filter-incomplete-fields-dropdown .filter-country-option input[type="checkbox"] {
+  width: 16px !important;
+  height: 16px !important;
+  min-height: 0 !important;
+  flex: 0 0 auto;
+  margin: 0;
+}

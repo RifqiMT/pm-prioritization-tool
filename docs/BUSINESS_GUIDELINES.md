@@ -4,7 +4,7 @@ Guidelines for teams using the Product Management Prioritization Tool in plannin
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-07-09 |
+| **Last updated** | 2026-07-10 |
 | **Audience** | Product managers, delivery leads, portfolio stakeholders |
 
 ---
@@ -112,6 +112,7 @@ Frameworks produce a **planning estimate** in roadmap currency, with optional **
 | **Label search + autocomplete** | Theme slicing (e.g. `growth`, `compliance`) |
 | **Labels filter (any / with / without)** | Audits for undocumented themes or mandatory tagging policies |
 | **Links filter (any / with / without)** | Ensure PRDs, designs, or tickets are attached before review |
+| **Incomplete optional fields filter** | Session-only sweep for roadmaps missing selected optional metadata (14 field types; **any** or **all** match) before quarterly review or export |
 | **Roadmap labels** | Multi-word tags on each initiative (e.g. `Platform`, `Q2 bet`) |
 | **Roadmap links** | Named URLs to specs, Figma, Jira, or docs |
 | **Roadmap tasks** | Sub-items with workflow status for delivery tracking inside an initiative |

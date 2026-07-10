@@ -2,7 +2,8 @@
  * Import + tombstone interaction: cleared tombstones must allow re-imported entities to persist.
  */
 const assert = require("assert");
-const { applyTombstones, dedupeWorkspacePayload } = require("../src/modules/workspace-merge.js");
+const WorkspaceMerge = require("../src/modules/workspace-merge.js");
+const { applyTombstones, dedupeWorkspacePayload } = WorkspaceMerge;
 
 const tombstonedPayload = {
   profiles: [
@@ -58,5 +59,28 @@ const newerReimport = {
 
 const newerKept = applyTombstones(newerReimport);
 assert.strictEqual(newerKept.profiles[0].roadmaps.length, 1, "newer modifiedAt should beat tombstone without clearing");
+
+const revived = dedupeWorkspacePayload({
+  profiles: [
+    {
+      id: "p1",
+      name: "Team A",
+      modifiedAt: "2026-07-09T12:00:00.000Z",
+      roadmaps: [
+        {
+          id: "r1",
+          title: "Re-imported",
+          modifiedAt: "2026-07-09T12:00:00.000Z"
+        }
+      ]
+    }
+  ],
+  workspaceTombstones: {
+    profiles: {},
+    roadmaps: { r1: "2026-06-01T00:00:00.000Z" }
+  }
+});
+assert.strictEqual(revived.profiles[0].roadmaps.length, 1, "prune should drop stale tombstones for live entities");
+assert.strictEqual(revived.workspaceTombstones.roadmaps.r1, undefined);
 
 console.log("Import tombstone tests passed");

@@ -94,7 +94,6 @@ function normalizeRoadmapLinks(raw) {
   return out;
 }
 
-const RACI_ROLES = ["responsible", "accountable", "consulted", "informed"];
 const RACI_DOMAIN_OPTIONS = ["Business", "Tech"];
 
 function normalizeRaciDomain(domain) {
@@ -217,7 +216,7 @@ function normalizeWorkspacePayload(payload) {
   return next;
 }
 
-module.exports = {
+const RoadmapMetadata = {
   normalizeWorkspacePayload,
   normalizeRoadmapLabels,
   normalizeRoadmapLinks,
@@ -226,3 +225,11 @@ module.exports = {
   normalizeKanoAxisLevel,
   normalizeRoadmapNote
 };
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = RoadmapMetadata;
+}
+
+if (typeof window !== "undefined") {
+  window.RoadmapMetadata = RoadmapMetadata;
+}

@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-07-09 |
+| **Last updated** | 2026-07-10 |
 | **Measurement** | Local-first — no default telemetry; manual QA + optional instrumentation |
 
 ---
@@ -65,7 +65,7 @@ Among workspaces that had ≥3 roadmaps 30 days ago, count those with ≥1 sessi
 | UX-06 | Modal guidance coverage | Fields with standardized tooltip | `fields_with_tooltip / total_modal_fields` | 100% |
 | UX-07 | Compact layout usability | Critical horizontal overflow on board/MoSCoW at compact widths | `overflow_defects / compact_qa_sessions` | 0 critical |
 | UX-08 | Compact task completion | Move status / jump MoSCoW quadrant without desktop controls | `successful_compact_tasks / compact_task_attempts` | ≥ 95% |
-| UX-09 | Filter discoverability | Sessions using labels/links filter or autocomplete | `filter_feature_sessions / portfolio_sessions` | ≥ 30% |
+| UX-09 | Filter discoverability | Sessions using labels/links/incomplete-field filter or autocomplete | `filter_feature_sessions / portfolio_sessions` | ≥ 30% |
 | UX-10 | Compact table grouping | Compact sessions using non-`none` group-by | `group_by_sessions / compact_table_sessions` | ≥ 20% |
 
 **UX-07 widths:** 375px, 768px, **1400px** (breakpoint), plus 1280px split-screen sample.
@@ -83,6 +83,7 @@ Among workspaces that had ≥3 roadmaps 30 days ago, count those with ≥1 sessi
 | ENG-05 | Cloud sync success | Debounced PUT without user-visible failure | `successful_cloud_saves / cloud_save_attempts` | ≥ 99% |
 | ENG-06 | Metadata round-trip | Labels/links unchanged after save + reload (cloud) | `metadata_match_after_reload / metadata_save_attempts` | ≥ 99% |
 | ENG-07 | Concurrent merge integrity | Tombstoned deletes stay deleted; fingerprint duplicates collapse after multi-session cloud saves | `tombstone_resurrection_incidents + duplicate_row_incidents / concurrent_save_sessions` | 0 |
+| ENG-08 | Server dedupe self-heal | GET `/api/state` cleans duplicate rows already stored in MongoDB | `self_heal_dedupe_events / cloud_get_requests` | Track; target 0 duplicates after GET |
 | PM-09 | Rich metadata usage | Roadmaps with labels, links, or tasks | `roadmaps_with_metadata / total_roadmaps` | ≥ 40% |
 
 ---
@@ -114,6 +115,7 @@ Among workspaces that had ≥3 roadmaps 30 days ago, count those with ≥1 sessi
 | KR3.3 | ENG-04 render p95 | ≤ 300ms |
 | KR3.4 | UX-06 modal tooltips | 100% |
 | KR3.5 | ENG-07 concurrent merge integrity | 0 tombstone resurrection incidents |
+| KR3.6 | ENG-08 server dedupe self-heal | 0 duplicate rows after GET in production spot checks |
 
 ### Objective 4 — Excellent experience on tablets and phones (≤1400px)
 
@@ -160,7 +162,7 @@ Among workspaces that had ≥3 roadmaps 30 days ago, count those with ≥1 sessi
 
 | Cadence | Metrics |
 |---------|---------|
-| Weekly | ENG-01, ENG-02, ENG-05, ENG-07 |
+| Weekly | ENG-01, ENG-02, ENG-05, ENG-07, ENG-08 |
 | Bi-weekly | UX-01–UX-10 |
 | Monthly | PM-01–PM-12, OKR health |
 | Quarterly | Target recalibration, persona validation |
@@ -190,7 +192,7 @@ The app does not stream telemetry by default. Collect metrics via:
 
 ### UX collection notes
 
-- **UX-09:** Count session if user applies `filterLabels`, `filterLinks`, or selects an autocomplete suggestion.  
+- **UX-09:** Count session if user applies `filterLabels`, `filterLinks`, incomplete optional fields filter, or selects an autocomplete suggestion.  
 - **UX-10:** Count when `tableGroupBy !== "none"` on compact table.  
 - **UX-07:** Critical defect = required horizontal scroll for primary board/MoSCoW content or primary actions.  
 

@@ -2,8 +2,8 @@
 
 **Purpose:** Authoritative dictionary of application variables — technical name, friendly name, definition, formula, UI location, and examples.  
 **Audience:** Product, engineering, QA, analytics.  
-**Last audited:** 2026-07-09  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260709-ui199`
+**Last audited:** 2026-07-10  
+**Implementation baseline:** `APP_ASSET_VERSION` = `20260710-ui201`
 
 > Privileged cross-profile workspace variables (workspace-wide mode, owner filter, owner metadata) are specified in [GUARDRAILS.md](GUARDRAILS.md) §7 only. This dictionary uses neutral names below.
 
@@ -29,7 +29,7 @@ Persisted to `localStorage` under `rice_prioritizer_v1` unless noted.
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
 | `profiles` | Profile Collection | All portfolio containers and their roadmaps. | Array of profile objects. | Global state | `[{ id: "profile_abc", name: "Growth", roadmaps: [...] }]` |
-| `workspaceTombstones` | Deletion Tombstones | ISO timestamps of deleted profile/roadmap ids for concurrent cloud sync. | `{ profiles: { id: deletedAt }, roadmaps: { id: deletedAt } }`; merged on pull/save; applied via `WorkspaceMerge.applyTombstones`; losers of content-fingerprint dedupe are tombstoned. | Serialized with every workspace payload; `recordWorkspaceTombstone` on delete | `{ "profiles": {}, "roadmaps": { "roadmap_old": "2026-07-09T10:00:00.000Z" } }` |
+| `workspaceTombstones` | Deletion Tombstones | ISO timestamps of deleted profile/roadmap ids for concurrent cloud sync. | `{ profiles: { id: deletedAt }, roadmaps: { id: deletedAt } }`; merged on pull/save; `pruneObsoleteTombstones` removes entries when live entity `modifiedAt` is newer than tombstone; import clears tombstones for imported ids. | Serialized with every workspace payload; `recordWorkspaceTombstone` on delete; `clearWorkspaceTombstonesForImport` on import | `{ "profiles": {}, "roadmaps": { "roadmap_old": "2026-07-09T10:00:00.000Z" } }` |
 | `currentRevision` | Cloud Document Revision | Session-only optimistic-lock counter for MongoDB workspace document. | Integer incremented server-side on each successful PUT; client tracks in `AppStorage` and sends as `expectedRevision`. | `src/modules/storage.js` (not in exported JSON) | `42` |
 | `ROADMAP_SUGGESTION_MAX` | Suggestion List Cap | Maximum distinct values per roadmap edit datalist. | Constant `40` in `app.js`. | `syncRoadmapFieldSuggestions()` | `40` |
 | `activeProfileId` | Active Profile | ID of portfolio currently selected for workspace views. | String; must match a profile `id`. | Profiles panel + portfolio header | `"profile_abc"` |
@@ -53,6 +53,8 @@ Persisted to `localStorage` under `rice_prioritizer_v1` unless noted.
 
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
+| `incompleteFields` | Incomplete Field Selection | Selected optional field ids for data-quality filter. | Array of ids from `INCOMPLETE_OPTIONAL_FIELD_OPTIONS`. | `getSelectedIncompleteOptionalFields()` | `["labels", "rice"]` |
+| `incompleteFieldsMode` | Incomplete Match Mode | Roadmap must miss **any** or **all** selected fields. | `"any"` (default) or `"all"`. | `getIncompleteOptionalFieldsMode()` | `"any"` |
 | `unlockedProfileIds` | Unlocked Profiles (session) | Set of profile IDs unlocked with password this tab. | Cleared on refresh; stored in `sessionStorage`. | Lock banner, export gate | `Set(["profile_abc"])` |
 | `editingRoadmapId` | Editing Roadmap | Roadmap id open in modal for edit. | `null` when creating. | Roadmap modal | `"roadmap_xyz"` |
 | `activeTooltipWrap` | Active Tooltip Host | DOM wrapper owning the visible tooltip. | Enforces one tooltip policy. | Table/cards/modal | `HTMLElement` |
@@ -539,6 +541,8 @@ flowchart TD
   APPLY --> PUT[PUT with expectedRevision]
   PUT -->|409 conflict| CM[merge conflictPayload + retry]
   PUT -->|200| OK[revision++]
+  GET[GET /api/state] --> SDEDUPE[server dedupeWorkspacePayload]
+  SDEDUPE -->|changed| SPersist[self-heal write + revision++]
   DEL[delete profile/roadmap] --> REC[recordWorkspaceTombstone]
   REC --> SAVE
 ```
@@ -554,13 +558,24 @@ flowchart LR
   DL --> INPUT[Roadmap edit modal inputs list= datalist id]
 ```
 
+### 8.21 Incomplete optional fields filter
+
+```mermaid
+flowchart LR
+  UI[#filterIncompleteFieldsList checkboxes] --> MODE[data-incomplete-mode any/all]
+  MODE --> CRIT[incompleteFields + incompleteFieldsMode]
+  CRIT --> MOD[IncompleteOptionalFields module]
+  MOD --> APPLY[applyFilters in app.js]
+  APPLY --> VIEWS[Table Board MoSCoW Map RACI KANO Gantt]
+```
+
 ---
 
 ## 9. Layout, DOM, and build constants
 
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
-| `APP_ASSET_VERSION` | Asset Cache Version | Documentation baseline for cache-bust releases. Individual CSS/JS links in `index.html` may use per-asset `?v=` suffixes that include this baseline plus feature tags. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260709-ui199"` |
+| `APP_ASSET_VERSION` | Asset Cache Version | Documentation baseline for cache-bust releases. Individual CSS/JS links in `index.html` may use per-asset `?v=` suffixes that include this baseline plus feature tags. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260710-ui201"` |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | Compact Breakpoint (px) | Max viewport width for phone/tablet UI. | Constant in `constants.js`. | `src/constants.js` | `1400` |
 | `is-compact-layout` | Compact Layout Class | Viewport ≤1400px; enables compact CSS. | Set on `<html>` by `initCompactLayoutClass()`. | Global layout | class present |
 | `is-phone-layout` | Phone Layout Class | Same threshold as compact (unified phone UI). | Set together with compact class. | Global layout | class present |

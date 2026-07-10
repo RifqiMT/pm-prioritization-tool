@@ -27,6 +27,37 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Docs — Full product documentation standard audit — 2026-07-10 — Product Team — Impact: documentation
+
+- Re-audited codebase vs 18-doc suite; baseline `APP_ASSET_VERSION` = `20260710-ui201`.
+- **Incomplete optional fields filter** module (`incomplete-optional-fields.js`); 14 field types; any/all match mode.
+- **43 CSS** layers (`date-inputs-modern`, `filter-incomplete-modern`); **22** modules before `app.js`; **17** tests.
+- **`npm run sync:assets`** + `scripts/sync-asset-versions.js`; HRK → EUR migration documented.
+- Updated PRD FR-6.8, FR-8.10, FEATURE_LOGIC F-36, VARIABLES, USER_STORIES, TRACEABILITY, TECH, DESIGN.
+
+### Refactor — Asset cache bust, incomplete-filter module, HRK migration — 2026-07-10 — Product Team — Impact: developer
+
+- **`APP_ASSET_VERSION`** bumped to `20260710-ui201`; `scripts/sync-asset-versions.js` prefixes every `index.html` `?v=` tag with the baseline (`npm run sync:assets`; runs on `npm run build`).
+- **Incomplete optional fields** extracted to `src/modules/incomplete-optional-fields.js`; tests import the module directly (no duplicated logic).
+- **`api/_lib/roadmap-metadata.js`** exposes `window.RoadmapMetadata` for browser use.
+- **HRK removed** from `currencyList` / `CURRENCY_SYMBOLS`; `normalizeCurrency()` migrates legacy `HRK` payloads to `EUR`.
+- **17** `npm test` suites (`test:import-file-kind`, `test:incomplete-filter`); all passing.
+
+### Docs — Full product documentation standard audit — 2026-07-09 (pass 2) — Product Team — Impact: documentation
+
+- Re-audited codebase vs 18-doc suite; baseline `APP_ASSET_VERSION` = `20260709-ui200`.
+- **Server-side dedupe:** `api/_lib/workspace-dedupe.js` on PUT/POST and self-healing GET in `api/state.js`.
+- **Import tombstone fix:** `clearWorkspaceTombstonesForImport`, `pruneObsoleteTombstones`; explicit import resurrects entities.
+- **Single-toast UX:** `showToast` dismisses prior toasts; `lastStorageStatusToastKey` dedupes cloud status messages.
+- **Mobile import UX:** deferred file-picker click (Safari); dynamic import modal counts.
+- **15** `npm test` suites (`test:api-dedupe`, `test:import-tombstones`); `app.js` ~25.4k lines.
+
+### Feature — Server-side workspace dedupe + import tombstones — 2026-07-09 — Product Team — Impact: user-visible
+
+- `dedupeWorkspacePayload` runs on every API write and on GET when duplicates exist in MongoDB (self-heal + revision bump).
+- Import clears tombstones for imported entity ids; `stampImportedProfilesForRestore` sets fresh `modifiedAt`.
+- `pruneObsoleteTombstones` removes stale tombstone entries when live entities beat deletion timestamp.
+
 ### Docs — Full product documentation standard audit — 2026-07-09 — Product Team — Impact: documentation
 
 - Re-audited codebase vs 18-doc suite; baseline `APP_ASSET_VERSION` = `20260709-ui199`.

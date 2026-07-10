@@ -4,7 +4,7 @@
 |-------|-------|
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
-| **Last updated** | 2026-07-09 |
+| **Last updated** | 2026-07-10 |
 | **Compact breakpoint** | ≤ **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) |
 
 **Purpose:** Epics and user-story contracts with **Given / When / Then** acceptance criteria, including edge cases and error handling.
@@ -338,11 +338,44 @@ Each story includes:
    - **When** the server returns HTTP 409 with conflict payload  
    - **Then** the client merges conflict payload and retries without user data loss.
 
+6. **Server-side self-heal**  
+   - **Given** MongoDB contains duplicate fingerprint roadmaps from a legacy save  
+   - **When** any client calls `GET /api/state`  
+   - **Then** `api/_lib/workspace-dedupe.js` collapses duplicates and may persist the cleaned payload.
+
 **Error / edge handling**
 
 - **Given** two sessions edit the **same** roadmap simultaneously  
 - **When** both save within seconds  
 - **Then** the version with the later `modifiedAt` wins (no row-level locking).
+
+### US-E3 — Import resurrecting tombstoned entities
+
+- **Persona:** Product Manager  
+- **Goal:** Restore deleted roadmaps from a backup file even when local tombstones would hide them.
+
+**Acceptance criteria**
+
+1. **Clear tombstones on import**  
+   - **Given** roadmap `r1` was deleted locally (tombstoned)  
+   - **When** the user imports a JSON/CSV file containing `r1`  
+   - **Then** `clearWorkspaceTombstonesForImport` removes the tombstone for `r1` before merge.
+
+2. **Fresh timestamps**  
+   - **Given** a successful import of profiles/roadmaps  
+   - **When** merge completes  
+   - **Then** `stampImportedProfilesForRestore` sets `modifiedAt` to now on imported entities.
+
+3. **Prune stale tombstones**  
+   - **Given** a live roadmap beats its tombstone timestamp  
+   - **When** `dedupeWorkspacePayload` runs  
+   - **Then** `pruneObsoleteTombstones` removes the obsolete tombstone entry.
+
+**Error / edge handling**
+
+- **Given** import file tombstones reference ids not in the import  
+- **When** merge runs  
+- **Then** those tombstones merge into workspace state (deletes from backup still apply).
 
 ---
 
@@ -589,6 +622,36 @@ Each story includes:
 - **Given** links filter active  
 - **When** filters apply to all views  
 - **Then** board, MoSCoW, and map respect the same filtered set as table.
+
+---
+
+### US-H5 — Incomplete optional fields filter
+
+- **Persona:** Product Manager  
+- **Goal:** Find roadmaps missing key metadata before planning reviews.
+
+**Acceptance criteria**
+
+1. **Field selection**  
+   - **Given** the filters drawer  
+   - **When** the user checks fields under “Incomplete on” (e.g. Labels, RICE scores, RACI)  
+   - **Then** only roadmaps missing those fields remain visible (mode **Any** by default).
+
+2. **Match all mode**  
+   - **Given** Labels and Links selected with mode **All**  
+   - **When** filters apply  
+   - **Then** only roadmaps missing **both** labels and links are shown.
+
+3. **Zero counts as missing**  
+   - **Given** a roadmap with `reachValue: 0`  
+   - **When** RICE is selected in incomplete filter  
+   - **Then** the roadmap matches as missing RICE input.
+
+**Error / edge handling**
+
+- **Given** no incomplete fields selected  
+- **When** filters run  
+- **Then** incomplete filter imposes no constraint.
 
 ---
 

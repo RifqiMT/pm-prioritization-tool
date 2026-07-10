@@ -8,7 +8,7 @@
 |---|---|
 | **Production** | [pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app) |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260709-ui199` (per-asset `?v=` tags in `index.html`) |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260710-ui201` (per-asset `?v=` tags synced via `npm run sync:assets`) |
 | **Docs hub** | [docs/README.md](docs/README.md) |
 
 > Do not use `pm-prioritization-tool.vercel.app` — that hostname serves a legacy React app. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
@@ -29,7 +29,7 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 | **Financial frameworks** | Custom, CLV, NPS, Risk, Headcount, Operational |
 | **Views** | Table, Scrum board, MoSCoW, world map (Leaflet), RACI matrix, KANO portfolio matrix, **Gantt timeline** |
 | **Filters** | Search, quick filters, advanced filters (including labels and links) |
-| **Portability** | JSON full backup + CSV export; merge import |
+| **Portability** | JSON full backup + CSV export; merge import with tombstone resurrection |
 | **Responsive UI** | Desktop (>1400px); unified phone/tablet UI (≤1400px) |
 | **Cloud (optional)** | MongoDB workspace via `/api/state` |
 | **BYOK AI (optional)** | Encrypted local Groq + Tavily API keys; **LLM analysis** + **5 Why Framework** (session-only; not synced to cloud) |
@@ -42,7 +42,7 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 - **Planning flexibility** — filter by country, quarter, framework, status, labels, links; map by count, RICE, or EUR  
 - **Meeting-ready on any device** — compact layout uses vertical stacks, FAB, touch-friendly controls, and quadrant nav pills  
 - **Shareable deep links** — URL hash reflects active profile, view, and opened roadmap for teammates on the same workspace  
-- **Concurrent cloud editing** — MongoDB saves merge local + remote workspace; revision conflicts auto-merge; id-anchored dedupe collapses duplicate rows; tombstones prevent deleted items from reappearing  
+- **Concurrent cloud editing** — client + **server-side** dedupe; revision conflicts auto-merge; id-anchored fingerprint dedupe; tombstones with import resurrection  
 - **Faster roadmap entry** — edit modal datalists suggest labels, RACI names, and link labels/URLs from your portfolio (up to 40 values each)  
 
 ---
@@ -85,7 +85,7 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 |------|----------|
 | **Search** | Title (with autocomplete), label (with autocomplete) |
 | **Quick** | Roadmap type, countries (multi + EU shortcut), roadmap period |
-| **Advanced** | Impact, effort, currency, framework, status, t-shirt, MoSCoW, links (any / with / without), labels (any / with / without) |
+| **Advanced** | Impact, effort, currency, framework, status, t-shirt, MoSCoW, links (any / with / without), labels (any / with / without), **incomplete optional fields** (any / all match) |
 
 Active filter count appears in the portfolio filters badge. Reset restores defaults.
 
@@ -110,7 +110,7 @@ Active filter count appears in the portfolio filters badge. Reset restores defau
 ### Exchange rates and cloud
 
 - Refresh FX to EUR for table, map, and profile currency breakdowns  
-- Optional **MongoDB** sync: header status, Cloud modal, pull/save (`src/modules/storage.js`); concurrent edits merged via `WorkspaceMerge` (content-fingerprint dedupe + tombstones); revision conflicts auto-merge on HTTP 409  
+- Optional **MongoDB** sync: header status, Cloud modal, pull/save (`src/modules/storage.js`); client + **server-side** dedupe; concurrent merge with tombstones and import resurrection  
 
 ### Site chrome
 
@@ -145,9 +145,10 @@ pm-prioritization-tool/
 │   └── modules/            # workspace-merge, storage, profile-security, exchange-rates, fullscreen,
 │                           # overlay-manager, description-format, rich-text-editor, board-drag,
 │                           # board-card-interaction, byok-api-keys, roadmap-llm-summary,
-│                           # roadmap-5why-framework, roadmap-periods, gantt-view, export-payload, share-link
+│                           # roadmap-5why-framework, roadmap-periods, incomplete-optional-fields,
+│                           # gantt-view, export-payload, share-link
 ├── api/                    # health, config, state, byok/validate-* + _lib (Vercel)
-├── scripts/                # verify-deployment; 13 test suites (storage … workspace-merge)
+├── scripts/                # verify-deployment; sync-asset-versions; 17 test suites
 ├── docs/                   # Product documentation suite
 ├── vercel.json
 └── package.json
@@ -206,7 +207,8 @@ npm run verify:production
 ## Testing
 
 ```bash
-npm test                    # 13 automated suites (storage … share, workspace-merge)
+npm run sync:assets         # Prefix index.html ?v= tags with APP_ASSET_VERSION (runs on build)
+npm test                    # 17 automated suites (storage … incomplete-filter)
 npm run verify:production   # Smoke test production deploy
 ```
 
@@ -264,4 +266,4 @@ UNLICENSED (private). See `package.json`.
 - GitHub: [RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool)  
 - Article: [Effort–impact confusion to clear-cut priorities](https://rifqi-tjahyono.com/%f0%9f%93%8a-effort-impact-confusion-to-clear-cut-priorities-replace-tab-hopping-with-visual-roadmap-sanity-%f0%9f%a7%ad%e2%9c%a8/)
 
-**Documentation last comprehensively audited:** 2026-07-09 (baseline `20260709-ui199`).
+**Documentation last comprehensively audited:** 2026-07-10 (baseline `20260710-ui201`).

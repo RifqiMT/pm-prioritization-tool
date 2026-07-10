@@ -86,11 +86,16 @@ narrow screens (≤1400px).
     will-change: transform, opacity !important;
   }
 
-  html.is-compact-layout body > .portfolio-filters-sheet.portfolio-filters-sheet--open,
+html.is-compact-layout body > .portfolio-filters-sheet.portfolio-filters-sheet--open,
   html.is-compact-layout .portfolio-filters-sheet.portfolio-filters-sheet--open {
     display: flex !important;
     transform: translateY(0) !important;
     opacity: 1 !important;
+  }
+
+  html.is-compact-layout .portfolio-filters-sheet.portfolio-filters-sheet--open.modal-backdrop--date-picker-open,
+  html.is-compact-layout body > .portfolio-filters-sheet.portfolio-filters-sheet--open.modal-backdrop--date-picker-open {
+    transform: none !important;
   }
 
   html.is-compact-layout .portfolio-filters-sheet-handle {

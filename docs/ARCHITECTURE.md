@@ -4,8 +4,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last audited** | 2026-07-09 |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260709-ui199` |
+| **Last audited** | 2026-07-10 |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260710-ui201` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -58,12 +58,14 @@ The UI is a **static SPA** (`index.html` + `src/`). On Vercel, **serverless rout
 | `src/modules/roadmap-llm-summary.js` | Tavily research + Groq roadmap briefing (`RoadmapLlmSummary`) |
 | `src/modules/roadmap-5why-framework.js` | Iterative WHY 1→5 questions (`RoadmapFiveWhyFramework`) |
 | `src/modules/roadmap-periods.js` | Multi-quarter `roadmapPeriods` normalize/validate (`RoadmapPeriods`) |
+| `src/modules/incomplete-optional-fields.js` | Optional-field completeness checks for data-quality filter (`IncompleteOptionalFields`) |
 | `src/modules/gantt-view.js` | Gantt ISO-week timeline, period bars, deadline markers (`GanttView`) |
 | `src/modules/export-payload.js` | JSON/CSV export builders (`ExportPayload`) |
 | `src/modules/share-link.js` | URL hash deep links for profile/view/roadmap (`ShareLink`) |
 | `api/health.js` | Storage backend probe |
 | `api/config.js` | Client config probe (same as health) |
-| `api/state.js` | GET/PUT workspace document |
+| `api/_lib/workspace-dedupe.js` | Server-side wrapper around `WorkspaceMerge.dedupeWorkspacePayload` for `api/state.js` |
+| `api/state.js` | GET/PUT workspace; revision optimistic lock; GET self-healing dedupe |
 | `api/byok/validate-groq.js` | POST validate Groq BYOK key |
 | `api/byok/validate-tavily.js` | POST validate Tavily BYOK key |
 | `api/_lib/roadmap-metadata.js` | Server-side normalize: labels, links, tasks, RACI, KANO, note; legacy migration |
@@ -288,12 +290,14 @@ sequenceDiagram
   participant Merge as workspace-merge.js
   participant Mod as storage.js
   participant API as /api/state
+  participant Dedupe as workspace-dedupe.js
   participant DB as MongoDB
 
   App->>Mod: saveState(payload + tombstones)
   Mod->>Mod: write localStorage immediately
   Mod->>API: GET remote (pre-save)
   API->>DB: fetch workspace doc
+  API->>Dedupe: dedupeWorkspacePayload
   Mod->>Merge: mergeWorkspacePayloads(local, remote)
   Merge-->>Mod: merged payload
   Mod->>API: PUT expectedRevision=N
@@ -359,7 +363,7 @@ flowchart TD
 
 ## 16. Known architectural constraints
 
-- Monolithic `app.js` (~25.2k lines) — acceptable for static app; split only with clear module boundaries if growth continues.
+- Monolithic `app.js` (~26k lines) — acceptable for static app; split only with clear module boundaries if growth continues.
 - Global namespace — naming collisions require discipline.
 - Full re-render on state change — optimize only if measured pain at scale.
 

@@ -224,4 +224,64 @@ const resurrect = mergeWorkspacePayloads(
 assert.strictEqual(countRoadmaps(resurrect), 1);
 assert.strictEqual(resurrect.profiles[0].roadmaps[0].title, "Recreated");
 
+const euAliasDedupe = WorkspaceMerge.dedupeWorkspacePayload({
+  profiles: [
+    {
+      id: "p1",
+      name: "Team",
+      roadmaps: [
+        {
+          id: "r-eu-token",
+          title: "AI audit logs",
+          roadmapPeriod: "2025-Q2",
+          countries: ["EU"],
+          moscowCategory: "Must have",
+          tshirtSize: "S",
+          modifiedAt: "2026-05-31T21:07:00.000Z"
+        },
+        {
+          id: "r-eu-expanded",
+          title: "AI audit logs",
+          roadmapPeriod: "2025-Q2",
+          countries: [
+            "Austria",
+            "Belgium",
+            "Bulgaria",
+            "Croatia",
+            "Cyprus",
+            "Czechia",
+            "Denmark",
+            "Estonia",
+            "Finland",
+            "France",
+            "Germany",
+            "Greece",
+            "Hungary",
+            "Ireland",
+            "Italy",
+            "Latvia",
+            "Lithuania",
+            "Luxembourg",
+            "Malta",
+            "Netherlands",
+            "Poland",
+            "Portugal",
+            "Romania",
+            "Slovakia",
+            "Slovenia",
+            "Spain",
+            "Sweden"
+          ],
+          moscowCategory: "Must have",
+          tshirtSize: "S",
+          modifiedAt: "2026-07-08T18:37:00.000Z"
+        }
+      ]
+    }
+  ]
+});
+assert.strictEqual(countRoadmaps(euAliasDedupe), 1);
+assert.strictEqual(euAliasDedupe.profiles[0].roadmaps[0].id, "r-eu-expanded");
+assert.ok(euAliasDedupe.workspaceTombstones.roadmaps["r-eu-token"]);
+
 console.log("OK: workspace merge tests passed");

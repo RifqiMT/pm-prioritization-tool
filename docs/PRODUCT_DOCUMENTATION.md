@@ -5,14 +5,14 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Document owner** | Product Team |
-| **Last audited** | 2026-07-09 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260709-ui199` |
+| **Last audited** | 2026-07-10 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui201` |
 
 ---
 
 ## 1. Product overview
 
-The **Product Management Prioritization Tool** is a browser-based workspace for product teams to capture initiatives, score priority with **RICE**, classify delivery intent with **MoSCoW**, estimate value through **financial frameworks**, and communicate plans through **Table**, **Board**, **MoSCoW**, **Map**, **RACI**, and **KANO** views.
+The **Product Management Prioritization Tool** is a browser-based workspace for product teams to capture initiatives, score priority with **RICE**, classify delivery intent with **MoSCoW**, estimate value through **financial frameworks**, and communicate plans through **seven portfolio views**: **Table**, **Board**, **MoSCoW**, **Map**, **RACI**, **KANO**, and **Gantt**.
 
 The application is a **static single-page app** (HTML, layered CSS, vanilla JavaScript) deployable to **Vercel**. When configured, workspace data syncs to **MongoDB Atlas** via serverless `/api` routes; the browser keeps a **local cache** and supports **JSON/CSV export** for backup and portability.
 
@@ -83,7 +83,7 @@ Organized in the portfolio filters drawer:
 |------|--------|
 | **Search** | Title (autocomplete), Label (autocomplete) |
 | **Quick** | Roadmap type, Countries (multi-select + EU), Roadmap period |
-| **Advanced** | Impact, Effort, Currency, Framework, Status, T-shirt, MoSCoW, Links (any / with / without), Labels (any / with / without) |
+| **Advanced** | Impact, Effort, Currency, Framework, Status, T-shirt, MoSCoW, Links (any / with / without), Labels (any / with / without), **Incomplete optional fields** (14-field checklist; any/all match) |
 
 `applyFilters()` in `src/app.js` intersects all active criteria. Active count shown in filters badge; **Reset** clears filters.
 
@@ -111,7 +111,9 @@ When `html.is-compact-layout` and table view:
 ### 3.7 Data transfer
 
 - **Export** JSON or CSV; password verification for protected profiles.
-- **Import** merge JSON/CSV into existing workspace.
+- **Import** merge JSON/CSV by id; `prepareWorkspaceForImport` clears tombstones for imported entities; `stampImportedProfilesForRestore` refreshes `modifiedAt`.
+- Import modal shows live profile/roadmap counts; mobile file picker uses deferred `click()` (Safari gesture rules).
+- Single-toast policy: one visible toast; cloud status deduped via `lastStorageStatusToastKey`.
 - Shared modal design (`export-modals-modern.css`).
 
 ### 3.8 Exchange rates
@@ -124,6 +126,7 @@ When `html.is-compact-layout` and table view:
 - `AppStorage` (`src/modules/storage.js`): load/save workspace to MongoDB via `/api/state`.
 - `WorkspaceMerge` (`src/modules/workspace-merge.js`): merges local + remote payloads before cloud save; unions profiles/roadmaps by id; **content-fingerprint dedupe** via `getRoadmapIdentityKey`; applies `workspaceTombstones` so deletes propagate across concurrent editors.
 - **Revision optimistic concurrency:** MongoDB stores `revision`; client sends `expectedRevision` on PUT; HTTP 409 triggers merge of conflict payload and automatic retry.
+- **Server-side dedupe:** `api/_lib/workspace-dedupe.js` normalizes every write; `GET /api/state` self-heals duplicate rows already in MongoDB.
 - Header status, Cloud modal (connect, pull, push, diagnostics); debounced sync (250ms) with **immediate flush** after roadmap save.
 - Background pull skipped while local edits are pending or newer than last applied remote snapshot (prevents overwriting labels/links).
 - Server normalizes labels, links, tasks, RACI, KANO axes, and note on every MongoDB write (`api/_lib/roadmap-metadata.js`).
@@ -258,10 +261,10 @@ See [ARCHITECTURE.md](ARCHITECTURE.md).
 
 | Layer | Technology |
 |-------|------------|
-| UI | `index.html`, **41** layered CSS files (see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) §3.1) |
-| Logic | `src/app.js` (~25.2k lines), `src/rice.js`, `src/constants.js`, `src/utils.js` |
-| Modules | `workspace-merge`, `storage`, `profile-security`, `exchange-rates`, `fullscreen`, `overlay-manager`, `description-format`, `rich-text-editor`, `board-drag`, `board-card-interaction`, `byok-api-keys`, `roadmap-llm-summary`, `roadmap-5why-framework`, `roadmap-periods`, `gantt-view`, `export-payload`, `share-link`; dev seed: `dev-seed-workspace.js` (localhost only) |
-| API | `api/health.js`, `api/config.js`, `api/state.js`, `api/byok/validate-*.js`, `api/_lib/*` (auth, mongo, roadmap-metadata, export-payload, byok-validate) |
+| UI | `index.html`, **43** layered CSS files (see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) §3.1) |
+| Logic | `src/app.js` (~26k lines), `src/rice.js`, `src/constants.js`, `src/utils.js` |
+| Modules | `workspace-merge`, `storage`, `profile-security`, `exchange-rates`, `fullscreen`, `overlay-manager`, `description-format`, `rich-text-editor`, `board-drag`, `board-card-interaction`, `byok-api-keys`, `roadmap-llm-summary`, `roadmap-5why-framework`, `roadmap-periods`, **`incomplete-optional-fields`**, `gantt-view`, `export-payload`, `share-link`; dev seed: `dev-seed-workspace.js` |
+| API | `api/health.js`, `api/config.js`, `api/state.js`, `api/byok/validate-*.js`, `api/_lib/*` (auth, mongo, roadmap-metadata, export-payload, **workspace-dedupe**, byok-validate) |
 | Database | MongoDB Atlas (optional) |
 | Map | Leaflet 1.9.4 (CDN) |
 

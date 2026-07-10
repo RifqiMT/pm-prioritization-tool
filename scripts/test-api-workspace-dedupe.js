@@ -50,4 +50,27 @@ assert.ok(workspacePayloadChangedByDedupe(duplicatePayload, deduped));
 const unchanged = dedupeWorkspacePayload(deduped);
 assert.ok(!workspacePayloadChangedByDedupe(deduped, unchanged));
 
+const tombstonedImport = dedupeWorkspacePayload({
+  profiles: [
+    {
+      id: "p1",
+      name: "Prod team",
+      modifiedAt: "2026-07-09T12:00:00.000Z",
+      roadmaps: [
+        {
+          id: "r1",
+          title: "Re-imported on Vercel",
+          modifiedAt: "2026-07-09T12:00:00.000Z"
+        }
+      ]
+    }
+  ],
+  workspaceTombstones: {
+    profiles: {},
+    roadmaps: { r1: "2026-06-01T00:00:00.000Z" }
+  }
+});
+assert.strictEqual(WorkspaceMerge.countRoadmaps(tombstonedImport), 1);
+assert.strictEqual(tombstonedImport.workspaceTombstones.roadmaps.r1, undefined);
+
 console.log("OK: api workspace dedupe tests passed");

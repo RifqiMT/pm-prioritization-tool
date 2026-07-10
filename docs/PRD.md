@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Status** | Implemented (local-first static app) |
-| **Last updated** | 2026-07-09 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260709-ui199` |
+| **Last updated** | 2026-07-10 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui201` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -202,7 +202,16 @@ Works together with label search (both must pass).
 
 #### FR-6.6 Active filter summary
 
-Pill summarizes active filters including “With labels”, “Without labels”, “With links”, “Without links”.
+Pill summarizes active filters including “With labels”, “Without labels”, “With links”, “Without links”, and incomplete-field selections.
+
+#### FR-6.8 Incomplete optional fields filter
+
+| ID | Requirement | Acceptance |
+|----|-------------|------------|
+| FR-6.8.1 | Field checklist | 14 optional fields grouped (Content, Prioritization, Planning, Stakeholders & finance) via `IncompleteOptionalFields.INCOMPLETE_OPTIONAL_FIELD_OPTIONS` |
+| FR-6.8.2 | Match mode | **Any** (missing at least one selected field) or **All** (missing every selected field) via `data-incomplete-mode` toggle |
+| FR-6.8.3 | Completeness rules | Zero numeric values count as missing; uses shared `roadmapOptionalFieldIsComplete` helpers |
+| FR-6.8.4 | Scope | Session filter criteria (`incompleteFields`, `incompleteFieldsMode`); not persisted to workspace JSON |
 
 ### FR-7 Exchange rates
 
@@ -219,11 +228,13 @@ Manual refresh; rates cached in state; EUR conversion for table/map financial di
 | FR-8.1 | Export JSON | Download file with exportable profiles only |
 | FR-8.2 | Export CSV | One row per roadmap |
 | FR-8.3 | Export password gate | Locked profiles omitted unless verified per profile |
-| FR-8.4 | Import JSON | Merge profiles/roadmaps by id |
-| FR-8.5 | Import CSV | Merge roadmap rows |
+| FR-8.4 | Import JSON | Merge profiles/roadmaps by id; clear tombstones for imported entity ids so deleted items can be resurrected |
+| FR-8.5 | Import CSV | Merge roadmap rows; same tombstone resurrection rules as JSON |
 | FR-8.6 | UI parity | Import/export modals share design system |
 | FR-8.7 | Concurrent cloud merge | `WorkspaceMerge.mergeWorkspacePayloads`; `dedupeWorkspacePayload`; `workspaceTombstones`; pre-save merge in `storage.js` | Two editors: union profiles/roadmaps; content-fingerprint dedupe; deletes propagate; newer entity wins |
 | FR-8.8 | Revision conflict handling | MongoDB document `revision`; client sends `expectedRevision` on PUT; 409 returns conflict payload | Simultaneous saves: auto-merge conflict payload and retry; no user-visible data loss |
+| FR-8.9 | Server-side workspace dedupe | `api/_lib/workspace-dedupe.js` on PUT/POST; self-healing GET when MongoDB payload has duplicates | Production MongoDB never serves duplicate fingerprint rows; GET may persist cleaned payload |
+| FR-8.10 | Import file kind detection | `isImportFileCsv`, `resolveImportKind` in unified import handler | Auto-detect JSON vs CSV; reject forced kind mismatches with user message |
 
 ### FR-9 UX / accessibility
 
@@ -237,6 +248,8 @@ Manual refresh; rates cached in state; EUR conversion for table/map financial di
 | FR-9.6 | Site footer | Year, maintainer, LinkedIn, website, **GitHub repository**, **article** link; readable on all breakpoints |
 | FR-9.7 | Board/MoSCoW cards | Consistent radius, border, shadow; action row on one line; structured tooltips on meta fields |
 | FR-9.8 | Shareable deep links | URL hash `#pm/?roadmap=&view=&profile=` syncs with portfolio state via `ShareLink`; opens roadmap view modal when unlocked; legacy `?query` params supported on load |
+| FR-9.9 | Single-toast notifications | `showToast` dismisses any active toast before showing the next; storage status toasts deduped via `lastStorageStatusToastKey` | No stacked toast pile during cloud sync or import |
+| FR-9.10 | Mobile-friendly import | Import modal shows live workspace counts; file picker opened via deferred `click()` for Safari/mobile gesture rules | User can import JSON/CSV from phone/tablet reliably |
 
 ### FR-10 Privileged workspace mode (cross-profile)
 

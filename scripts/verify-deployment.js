@@ -1,13 +1,36 @@
 #!/usr/bin/env node
 /**
  * Usage: node scripts/verify-deployment.js https://your-domain.vercel.app
+ *
+ * Checks cloud API health and that production serves the expected import-fix bundle.
  */
 const DEFAULT_PRODUCTION = "https://pm-prioritization-tool-six.vercel.app";
+const EXPECTED_APP_BUNDLE = "app.js?v=20260709-import-fix-v2";
+const EXPECTED_MERGE_BUNDLE = "workspace-merge.js?v=20260709-import-fix-v2";
+
 const base = (process.argv[2] || DEFAULT_PRODUCTION).replace(/\/$/, "");
 if (!base) {
   console.error("Usage: node scripts/verify-deployment.js [origin]");
   console.error("Default production:", DEFAULT_PRODUCTION);
   process.exit(1);
+}
+
+function assertBundleVersion(rootText) {
+  const missing = [];
+  if (!rootText.includes(EXPECTED_APP_BUNDLE)) {
+    missing.push(EXPECTED_APP_BUNDLE);
+  }
+  if (!rootText.includes(EXPECTED_MERGE_BUNDLE)) {
+    missing.push(EXPECTED_MERGE_BUNDLE);
+  }
+  if (!missing.length) {
+    console.log("OK: Production HTML references latest import-fix bundles.");
+    return;
+  }
+  console.error("FAIL: Production is missing latest client bundles:");
+  missing.forEach((bundle) => console.error("  -", bundle));
+  console.error("Redeploy from main after pushing import-fix-v2 changes, then hard-refresh.");
+  process.exit(8);
 }
 
 async function main() {
@@ -28,6 +51,8 @@ async function main() {
   ) {
     console.warn("WARN: Homepage may not be the expected static app.");
   }
+
+  assertBundleVersion(rootText);
 
   const url = base + "/api/config";
   console.log("Checking", url);

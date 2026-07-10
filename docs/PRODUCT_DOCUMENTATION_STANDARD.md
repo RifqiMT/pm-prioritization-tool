@@ -2,12 +2,12 @@
 
 **Purpose:** Define how product, design, and engineering maintain documentation for the Product Management Prioritization Tool.  
 **Audience:** Contributors, reviewers, release owners.  
-**Last updated:** 2026-07-09  
-**Last audited:** 2026-07-09
+**Last updated:** 2026-07-10  
+**Last audited:** 2026-07-10
 
 | Baseline | Value |
 |----------|-------|
-| **APP_ASSET_VERSION** | `20260709-ui199` |
+| **APP_ASSET_VERSION** | `20260710-ui201` |
 | **Compact breakpoint** | **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) |
 
 ---
@@ -113,11 +113,11 @@ When performing a comprehensive audit:
 8. Set **Last audited** / **Last updated** dates to audit date (YYYY-MM-DD).
 9. Verify **Roadmap** terminology (not Project) in user-facing docs; document legacy `projects` migration in VARIABLES §8.16 only.
 10. Confirm all **seven views** (Table, Board, MoSCoW, Map, RACI, KANO, Gantt) are documented in PRD FR-5, personas, and user stories.
-11. Confirm **41 CSS layers** in README, DESIGN_GUIDELINES, TECH_GUIDELINES, and ARCHITECTURE match `index.html` lines 15–55.
-12. Document **BYOK**, **LLM analysis**, **5 Why Framework**, **WorkspaceMerge** (FR-8.7/FR-8.8), and **roadmap field suggestions** (FR-2.16) in PRD, GUARDRAILS §6.7, VARIABLES §8.19–8.20, and traceability matrix.
+11. Confirm **43 CSS layers** in README, DESIGN_GUIDELINES, TECH_GUIDELINES, and ARCHITECTURE match `index.html` link tags.
+12. Document **BYOK**, **LLM analysis**, **5 Why Framework**, **WorkspaceMerge** (FR-8.7–FR-8.9), **roadmap field suggestions** (FR-2.16), and **incomplete optional fields** (FR-6.8) in PRD, GUARDRAILS, VARIABLES, and traceability matrix.
 13. Verify CSS load order in TECH_GUIDELINES §3.1 and ARCHITECTURE §10 against `index.html` lines 15–47 exactly.
-14. Ensure `TECH_GUIDELINES.md` script load order matches `index.html` exactly (**21** modules before `app.js`, including `workspace-merge.js` before `storage.js` and `share-link.js`).
-15. Confirm **`npm test`** runs **13** suites (storage, metadata, persistence, export, byok, byok-validate, kano, llm, 5why, periods, gantt, share, workspace-merge).
+14. Ensure `TECH_GUIDELINES.md` script load order matches `index.html` exactly (**22** modules before `app.js`, including `incomplete-optional-fields.js` before `gantt-view.js`).
+15. Confirm **`npm test`** runs **17** suites (through `test:incomplete-filter`).
 16. Update [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md) when any feature’s logic, validation rules, or cross-feature constraints change.
 
 ### 3.7 Feature logic documentation format

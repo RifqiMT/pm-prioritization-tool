@@ -43,7 +43,7 @@ delete).
   background: linear-gradient(180deg, #fffdf8 0%, #ffffff 28%) !important;
   box-shadow: var(--pm-shadow) !important;
   color: var(--pm-text) !important;
-  transform: translateY(0) !important;
+  transform: none !important;
   overflow: hidden;
 }
 
@@ -497,7 +497,7 @@ delete).
   background: var(--pv-bg) !important;
   box-shadow: 0 20px 48px rgba(120, 53, 15, 0.22) !important;
   color: var(--pm-text) !important;
-  transform: translateY(0) !important;
+  transform: none !important;
   overflow: hidden;
 }#profileEditModal .modal-panel,
 .modal-panel--profile-view.profile-edit-modal,

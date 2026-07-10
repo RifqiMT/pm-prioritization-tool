@@ -591,6 +591,26 @@ const AppStorage = (function () {
     return body;
   }
 
+  function getInMemoryProfileCount() {
+    if (typeof getProfileCountFn === "function") {
+      try {
+        return getProfileCountFn();
+      } catch {
+        return 0;
+      }
+    }
+    return 0;
+  }
+
+  function ensureInMemoryStateFromLocalCache() {
+    if (getInMemoryProfileCount() > 0) return false;
+    const local = readLocalPayload();
+    if (isEmptyPayload(local)) return false;
+    console.warn("Restoring workspace from local cache after cloud sync issue.");
+    commitLoadedPayload(local, "local", null, null);
+    return true;
+  }
+
   async function saveRemoteNow(payload, options) {
     const maxRetries = options && options.maxRetries != null ? options.maxRetries : 4;
     const skipPrefetch = options && options.skipPrefetch === true;
@@ -628,6 +648,17 @@ const AppStorage = (function () {
         } catch (err) {
           if (err && err.code === "WORKSPACE_CONFLICT" && err.conflictPayload) {
             const merged = mergeWorkspacePayloads(toSave, err.conflictPayload);
+            if (!payloadsDiffer(merged, err.conflictPayload)) {
+              const accepted = stampPayload(merged);
+              writeLocalCache(accepted);
+              if (typeof err.revision === "number") {
+                currentRevision = err.revision;
+              }
+              markRemoteApplied(err.updatedAt || new Date().toISOString(), currentRevision);
+              applyPayload(accepted);
+              setSyncStatus("synced");
+              return true;
+            }
             toSave = merged;
             if (typeof err.revision === "number") {
               currentRevision = err.revision;
@@ -645,10 +676,19 @@ const AppStorage = (function () {
       return false;
     } catch (err) {
       console.error("Cloud save failed", err);
+      ensureInMemoryStateFromLocalCache();
       if (err && err.code === "UNAUTHORIZED") {
         mode = "mongodb-pending-auth";
       }
-      setSyncStatus("error", err.message || String(err));
+      const hasLocalData = getInMemoryProfileCount() > 0;
+      if (hasLocalData) {
+        setSyncStatus(
+          "synced",
+          err.message || "Loaded on this device; use Cloud → Save to cloud to retry."
+        );
+      } else {
+        setSyncStatus("error", err.message || String(err));
+      }
       return false;
     }
   }
@@ -776,6 +816,7 @@ const AppStorage = (function () {
       );
       if (resolved.pushToCloud) {
         const migrated = await migrateLocalToRemote(resolved.payload);
+        ensureInMemoryStateFromLocalCache();
         return { migrated, source: resolved.source };
       }
       return { migrated: false, source: resolved.source };
@@ -1014,10 +1055,8 @@ const AppStorage = (function () {
       const result = await loadFromCloud();
       migrated = result.migrated;
       loadSource = result.source || "none";
-      const reconcile = await reconcileWithRemoteAfterLoad();
-      if (reconcile && reconcile.reconciled) {
-        loadSource = "remote";
-      }
+      // loadFromCloud already merges local+remote; an immediate second reconcile
+      // caused revision conflicts and empty UI on startup.
       setupCloudLifecycle();
     } catch (err) {
       console.error("Cloud load failed; using local cache", err);
@@ -1031,6 +1070,8 @@ const AppStorage = (function () {
       applyPayload(readLocalPayload());
       loadSource = "local";
     }
+
+    ensureInMemoryStateFromLocalCache();
 
     notifyStatus();
     return {
