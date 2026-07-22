@@ -1616,8 +1616,6 @@ const GanttView = (function () {
   }
 
   return {
-    parseWeekKey,
-    formatWeekKey,
     getISOWeekKey,
     periodToDateRange,
     buildTimelineWeeks,
@@ -1626,17 +1624,11 @@ const GanttView = (function () {
     getPeriodMonthSpan,
     monthOverlapsRange,
     resolveRoadmapDeadlineState,
-    getCalendarMonthKey,
     weekOverlapsRange,
-    compareWeekKeys,
-    getZoomLevel,
-    isCompactGanttLayout,
     syncGanttToolbarForLayout,
-    jumpGanttToToday,
     bindGanttTodayButton,
     resolveTodayTimelineIndex,
     resolveBarSegmentGeometry,
-    scrollToToday,
     hideTooltip,
     render
   };

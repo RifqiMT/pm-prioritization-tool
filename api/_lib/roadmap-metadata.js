@@ -216,7 +216,7 @@ function normalizeWorkspacePayload(payload) {
   return next;
 }
 
-const RoadmapMetadata = {
+module.exports = {
   normalizeWorkspacePayload,
   normalizeRoadmapLabels,
   normalizeRoadmapLinks,
@@ -225,11 +225,3 @@ const RoadmapMetadata = {
   normalizeKanoAxisLevel,
   normalizeRoadmapNote
 };
-
-if (typeof module !== "undefined" && module.exports) {
-  module.exports = RoadmapMetadata;
-}
-
-if (typeof window !== "undefined") {
-  window.RoadmapMetadata = RoadmapMetadata;
-}

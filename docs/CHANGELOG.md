@@ -27,6 +27,13 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Cleanup — Dead refs and over-exported APIs — 2026-07-22 — Product Team — Impact: developer
+
+- Removed unused `elements.financial*Breakdown` parent container refs from `app.js` (child cells remain wired).
+- Trimmed `IncompleteOptionalFields` public API to options/labels + filter helpers used by app/tests.
+- Trimmed unused `GanttView` public exports (`parseWeekKey`, `formatWeekKey`, `getCalendarMonthKey`, `compareWeekKeys`, `getZoomLevel`, `isCompactGanttLayout`, `jumpGanttToToday`, `scrollToToday`); internals unchanged.
+- Dropped unused `window.RoadmapMetadata` browser global (`api/_lib/roadmap-metadata.js` remains Node/API-only); incomplete-filter uses app globals or `require`.
+
 ### Docs — Full product documentation standard audit — 2026-07-10 — Product Team — Impact: documentation
 
 - Re-audited codebase vs 18-doc suite; baseline `APP_ASSET_VERSION` = `20260710-ui201`.
@@ -39,7 +46,7 @@ When updating this file after a change:
 
 - **`APP_ASSET_VERSION`** bumped to `20260710-ui201`; `scripts/sync-asset-versions.js` prefixes every `index.html` `?v=` tag with the baseline (`npm run sync:assets`; runs on `npm run build`).
 - **Incomplete optional fields** extracted to `src/modules/incomplete-optional-fields.js`; tests import the module directly (no duplicated logic).
-- **`api/_lib/roadmap-metadata.js`** exposes `window.RoadmapMetadata` for browser use.
+- **`api/_lib/roadmap-metadata.js`** remains the Node/API normalizer; browser incomplete-filter reads app.js globals.
 - **HRK removed** from `currencyList` / `CURRENCY_SYMBOLS`; `normalizeCurrency()` migrates legacy `HRK` payloads to `EUR`.
 - **17** `npm test` suites (`test:import-file-kind`, `test:incomplete-filter`); all passing.
 

@@ -65,9 +65,6 @@ const IncompleteOptionalFields = (function () {
   }
 
   function getMetadata() {
-    if (typeof RoadmapMetadata !== "undefined") {
-      return RoadmapMetadata;
-    }
     const fromApp = getBrowserMetadataFromAppGlobals();
     if (fromApp) return fromApp;
     if (typeof module !== "undefined" && module.exports) {
@@ -286,23 +283,8 @@ const IncompleteOptionalFields = (function () {
     INCOMPLETE_OPTIONAL_FIELD_OPTIONS,
     INCOMPLETE_OPTIONAL_FIELD_GROUPS,
     INCOMPLETE_OPTIONAL_FIELD_LABELS,
-    optionalVariableValueIsPresent,
-    optionalVariableValueIsExplicitZero,
-    roadmapHasNote,
     roadmapHasLabels,
     roadmapHasLinks,
-    roadmapHasRiceInput,
-    roadmapHasMoscowCategory,
-    roadmapHasKanoPosition,
-    roadmapHasRoadmapType,
-    roadmapHasTshirtSize,
-    roadmapHasDeadline,
-    roadmapHasAnyPeriod,
-    roadmapHasTasks,
-    roadmapHasCountries,
-    roadmapHasRaciAssignments,
-    roadmapHasFinancialImpact,
-    roadmapOptionalFieldIsComplete,
     roadmapIsMissingOptionalField,
     roadmapMatchesIncompleteOptionalFieldsFilter
   };

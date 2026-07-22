@@ -4421,7 +4421,6 @@ function cacheElements() {
   elements.financialClvDiscountRatePct = $("financialClvDiscountRatePct");
   elements.financialClvAcquisitionCost = $("financialClvAcquisitionCost");
   elements.financialClvBaselineRetentionRatePct = $("financialClvBaselineRetentionRatePct");
-  elements.financialClvBreakdown = $("financialClvBreakdown");
   elements.financialClvBreakdownClvNew = $("financialClvBreakdownClvNew");
   elements.financialClvBreakdownNetClvNew = $("financialClvBreakdownNetClvNew");
   elements.financialClvBreakdownNetClvBaseline = $("financialClvBreakdownNetClvBaseline");
@@ -4437,7 +4436,6 @@ function cacheElements() {
   elements.financialNpsReferralPerConverted = $("financialNpsReferralPerConverted");
   elements.financialNpsProgramCost = $("financialNpsProgramCost");
   elements.financialNpsReportedImpactBasis = $("financialNpsReportedImpactBasis");
-  elements.financialNpsBreakdown = $("financialNpsBreakdown");
   elements.financialNpsBreakdownWarningRow = $("financialNpsBreakdownWarningRow");
   elements.financialNpsBreakdownWarning = $("financialNpsBreakdownWarning");
   elements.financialNpsBreakdownFormulaRow = $("financialNpsBreakdownFormulaRow");
@@ -4458,7 +4456,6 @@ function cacheElements() {
   elements.financialRiskExposureUnits = $("financialRiskExposureUnits");
   elements.financialRiskPeriodsPerYear = $("financialRiskPeriodsPerYear");
   elements.financialRiskMitigationCost = $("financialRiskMitigationCost");
-  elements.financialRiskBreakdown = $("financialRiskBreakdown");
   elements.financialRiskBreakdownExpectedBefore = $("financialRiskBreakdownExpectedBefore");
   elements.financialRiskBreakdownExpectedAfter = $("financialRiskBreakdownExpectedAfter");
   elements.financialRiskBreakdownExpectedAvoided = $("financialRiskBreakdownExpectedAvoided");
@@ -4470,7 +4467,6 @@ function cacheElements() {
   elements.financialHeadcountHoursPerDay = $("financialHeadcountHoursPerDay");
   elements.financialHeadcountUtilizationGainPct = $("financialHeadcountUtilizationGainPct");
   elements.financialHeadcountAnnualCostPerFte = $("financialHeadcountAnnualCostPerFte");
-  elements.financialHeadcountBreakdown = $("financialHeadcountBreakdown");
   elements.financialHeadcountBreakdownUtilizationGain = $("financialHeadcountBreakdownUtilizationGain");
   elements.financialHeadcountBreakdownHoursSavedPerFte = $("financialHeadcountBreakdownHoursSavedPerFte");
   elements.financialHeadcountBreakdownTotalHoursSaved = $("financialHeadcountBreakdownTotalHoursSaved");
@@ -4483,7 +4479,6 @@ function cacheElements() {
   elements.financialOperationalCycleTimeAfterMinutes = $("financialOperationalCycleTimeAfterMinutes");
   elements.financialOperationalLaborCostPerHour = $("financialOperationalLaborCostPerHour");
   elements.financialOperationalAnnualTransactions = $("financialOperationalAnnualTransactions");
-  elements.financialOperationalBreakdown = $("financialOperationalBreakdown");
   elements.financialOperationalBreakdownCostPerUnitSavings = $("financialOperationalBreakdownCostPerUnitSavings");
   elements.financialOperationalBreakdownLaborSavings = $("financialOperationalBreakdownLaborSavings");
   elements.financialOperationalBreakdownTotalSavings = $("financialOperationalBreakdownTotalSavings");
