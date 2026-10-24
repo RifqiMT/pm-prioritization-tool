@@ -4,8 +4,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last audited** | 2026-07-10 |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260710-ui201` |
+| **Last audited** | 2026-10-24 |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260710-ui205` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -58,7 +58,8 @@ The UI is a **static SPA** (`index.html` + `src/`). On Vercel, **serverless rout
 | `src/modules/roadmap-llm-summary.js` | Tavily research + Groq roadmap briefing (`RoadmapLlmSummary`) |
 | `src/modules/roadmap-5why-framework.js` | Iterative WHY 1→5 questions (`RoadmapFiveWhyFramework`) |
 | `src/modules/roadmap-periods.js` | Multi-quarter `roadmapPeriods` normalize/validate (`RoadmapPeriods`) |
-| `src/modules/incomplete-optional-fields.js` | Optional-field completeness checks for data-quality filter (`IncompleteOptionalFields`) |
+| `src/modules/incomplete-optional-fields.js` | Optional-field completeness checks for data-quality filter (`IncompleteOptionalFields`; 15 field types incl. Cost of Delay) |
+| `src/modules/cost-of-delay.js` | Plain-English Cost of Delay calculator (`CostOfDelay`); independent of Financial impact |
 | `src/modules/gantt-view.js` | Gantt ISO-week timeline, period bars, deadline markers (`GanttView`) |
 | `src/modules/export-payload.js` | JSON/CSV export builders (`ExportPayload`) |
 | `src/modules/share-link.js` | URL hash deep links for profile/view/roadmap (`ShareLink`) |

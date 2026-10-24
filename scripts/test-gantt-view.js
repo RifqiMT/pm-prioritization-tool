@@ -114,10 +114,9 @@ assert.ok(overdueState, "deadline state should resolve");
 assert.strictEqual(overdueState.isOverdue, true);
 assert.strictEqual(overdueState.exceeds, true);
 
-const futureDeadline = new Date();
-futureDeadline.setMonth(futureDeadline.getMonth() + 3);
-const futureKey = `${futureDeadline.getFullYear()}-${String(futureDeadline.getMonth() + 1).padStart(2, "0")}-${String(futureDeadline.getDate()).padStart(2, "0")}`;
-const exceedsState = GanttView.resolveRoadmapDeadlineState(futureKey, [
+// Fixed calendar dates (avoid relative "today + N months" flaking as the year progresses).
+// Deadline mid-Q4; Q4 period end (31 Dec) is after the deadline → timelineExceeds.
+const exceedsState = GanttView.resolveRoadmapDeadlineState("2026-11-15", [
   { period: "2026-Q4", status: "In Progress", slug: "in-progress", startIdx: 0, endIdx: 0, span: 1 }
 ]);
 assert.ok(exceedsState);

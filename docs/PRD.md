@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Status** | Implemented (local-first static app) |
-| **Last updated** | 2026-07-10 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui201` |
+| **Last updated** | 2026-10-24 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui205` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -105,6 +105,16 @@ See [USER_PERSONAS.md](USER_PERSONAS.md).
 | FR-4.6 | operational | Unit cost + cycle-time labor savings |
 | FR-4.7 | — | Switching framework sanitizes inputs |
 | FR-4.8 | — | Table **Framework** column + filter |
+
+### FR-4b Cost of Delay (optional)
+
+| ID | Requirement | Acceptance |
+|----|-------------|------------|
+| FR-4b.1 | Optional section | Roadmap modal **Cost of Delay** section (`data-optional-section`); collapses when empty |
+| FR-4b.2 | Plain-English calculator | Three ongoing parts (user/business value, time pressure, risk/opportunity) × delay length + optional one-time hit |
+| FR-4b.3 | Currency | Own `costOfDelayCurrency` field; options from shared `currencyList` (not linked to Financial impact value); required when CoD value is non-zero |
+| FR-4b.4 | Independence | No copy/link from Financial impact; CoD inputs and result are separate fields |
+| FR-4b.5 | Persistence | `costOfDelayValue`, `costOfDelayCurrency`, `costOfDelayInputs` on roadmap; CSV round-trip; legacy input keys migrate; `useFinancialImpact` stripped on load |
 
 ### FR-5 Views
 
@@ -208,8 +218,8 @@ Pill summarizes active filters including “With labels”, “Without labels”
 
 | ID | Requirement | Acceptance |
 |----|-------------|------------|
-| FR-6.8.1 | Field checklist | 14 optional fields grouped (Content, Prioritization, Planning, Stakeholders & finance) via `IncompleteOptionalFields.INCOMPLETE_OPTIONAL_FIELD_OPTIONS` |
-| FR-6.8.2 | Match mode | **Any** (missing at least one selected field) or **All** (missing every selected field) via `data-incomplete-mode` toggle |
+| FR-6.8.1 | Field checklist | 15 optional fields grouped (Content, Prioritization, Planning, Stakeholders & finance) via `IncompleteOptionalFields.INCOMPLETE_OPTIONAL_FIELD_OPTIONS` (includes Cost of Delay) |
+| FR-6.8.2 | Match mode | **Any** (missing at least one selected field). UI hardcodes `incompleteFieldsMode: "any"`; module retains `"all"` for tests only |
 | FR-6.8.3 | Completeness rules | Zero numeric values count as missing; uses shared `roadmapOptionalFieldIsComplete` helpers |
 | FR-6.8.4 | Scope | Session filter criteria (`incompleteFields`, `incompleteFieldsMode`); not persisted to workspace JSON |
 

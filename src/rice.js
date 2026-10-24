@@ -97,6 +97,19 @@ function validateRoadmapInput(raw) {
     return "Select a currency when financial impact is provided.";
   }
 
+  if (raw.costOfDelayValue != null && raw.costOfDelayValue !== "" && !Number.isFinite(raw.costOfDelayValue)) {
+    return "Cost of Delay must be a valid number.";
+  }
+
+  if (
+    raw.costOfDelayValue != null &&
+    raw.costOfDelayValue !== 0 &&
+    Number.isFinite(raw.costOfDelayValue) &&
+    !raw.costOfDelayCurrency
+  ) {
+    return "Select a currency when Cost of Delay is provided.";
+  }
+
   if (raw.roadmapPeriods && Array.isArray(raw.roadmapPeriods) && raw.roadmapPeriods.length) {
     if (typeof RoadmapPeriods !== "undefined") {
       const periodError = RoadmapPeriods.validatePeriods(raw.roadmapPeriods);

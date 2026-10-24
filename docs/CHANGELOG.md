@@ -27,6 +27,49 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Cleanup — Dead code and outdated variable docs — 2026-10-24 — Product Team — Impact: developer
+
+- Removed unused LLM wrappers `resolveGroqApiKey` / `assertSummaryParagraphVariant` from `roadmap-llm-summary.js`.
+- Removed dead profiles sheet leftovers: `#profilesSheetTabs`, `#profilesNoResults`, related CSS, and always-`"browse"` `profilesSheetTab` state.
+- Synced docs: `mapMetric` enum matches `MAP_METRIC_OPTIONS`; incomplete-filter mode documented as hardcoded `"any"` (module still supports `"all"` for tests).
+
+### Docs — Full product documentation standard audit — 2026-10-24 — Product Team — Impact: documentation
+
+- Re-audited codebase vs 18-doc suite; baseline `APP_ASSET_VERSION` = `20260710-ui205`.
+- Documented **Cost of Delay** end-to-end (PRD FR-4b, F-15b, VARIABLES §8.22, personas, metrics PM-16, design §2.5, guardrails independence from Financial impact).
+- **19** modules in `src/modules/`; **43** CSS layers; **18** `npm test` suites (`test:cost-of-delay`); incomplete optional filter **15** field types.
+- Synced README, PRODUCT_DOCUMENTATION, ARCHITECTURE, TECH, DEPLOYMENT, STANDARD, hub source map, and audit dates to `2026-10-24`.
+
+### Fix — Gantt deadline test date flake — 2026-10-24 — Product Team — Impact: developer
+
+- `test-gantt-view.js` now uses fixed `2026-11-15` + `2026-Q4` for `timelineExceeds` assertions instead of relative “today + 3 months” (failed after Oct 2026).
+
+### Feature — Cost of Delay (optional roadmap section) — 2026-10-24 — Product Team — Impact: user-visible
+
+- Added optional **Cost of Delay** section on the roadmap modal (plain-English estimate of what waiting costs).
+- Workshop model: **value to users and the business** + **time pressure** + **risk / opportunity**, × delay length, + optional one-time hit.
+- Currency select uses the same `currencyList` options as Financial impact; amounts and selected currency stay independent.
+- Persisted as `costOfDelayValue`, `costOfDelayCurrency`, `costOfDelayInputs`; CSV import/export columns; incomplete-optional filter field (**15** field types).
+- Module: `src/modules/cost-of-delay.js`; tests: `npm run test:cost-of-delay`. Baseline `APP_ASSET_VERSION` = `20260710-ui203`.
+
+### Polish — Cost of Delay workshop copy and three-part model — 2026-10-24 — Product Team — Impact: user-visible
+
+- Reworked CoD UI into two clear steps with coaching copy (no jargon).
+- Breakdown shows each part, cost of waiting per period, ongoing cost, one-time hit, and total.
+- Legacy `valuePerPeriod` / `extraCostOfWaiting` inputs still load correctly.
+
+### Fix — Decouple Cost of Delay from Financial impact — 2026-10-24 — Product Team — Impact: user-visible
+
+- Removed “Use financial impact result” checkbox and all FI→CoD value/currency auto-fill.
+- CoD compute no longer accepts Financial impact; legacy `useFinancialImpact` stripped on load.
+- Docs clarify: shared `currencyList` options only — amounts and currencies stay independent.
+
+### Polish — Cost of Delay coaching copy and result narrative — 2026-10-24 — Product Team — Impact: user-visible
+
+- Rewrote CoD section in workshop plain English: purpose, method, Step 1/2 coaching questions under each field.
+- Result panel shows narrative estimate (“If we wait…”) plus “How to use this number” guidance; amounts include currency code when set.
+- Baseline `APP_ASSET_VERSION` = `20260710-ui205`.
+
 ### Cleanup — Dead refs and over-exported APIs — 2026-07-22 — Product Team — Impact: developer
 
 - Removed unused `elements.financial*Breakdown` parent container refs from `app.js` (child cells remain wired).

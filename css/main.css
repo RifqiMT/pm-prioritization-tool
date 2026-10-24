@@ -4880,6 +4880,41 @@ actions always visible. */
   background: #fff7ed;
   border: 1px solid rgba(202, 138, 4, 0.26);
   color: #7c2d12;
+}#roadmapModal .cost-of-delay-intro {
+  margin: 0 0 0.35rem;
+}#roadmapModal .cost-of-delay-method-hint {
+  margin: 0.35rem 0 0;
+}#roadmapModal .cost-of-delay-field-hint {
+  display: block;
+  margin-top: 0.28rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--text-muted, #6b7280);
+}#roadmapModal .cost-of-delay-explanation {
+  margin: 0.75rem 0 0;
+  grid-column: 1 / -1;
+}#roadmapModal .cost-of-delay-how-to-use {
+  margin: 0.4rem 0 0;
+  grid-column: 1 / -1;
+  font-style: italic;
+}#roadmapModal .cost-of-delay-step-label {
+  margin: 1.05rem 0 0.2rem;
+  font-weight: 650;
+  color: var(--text-primary, #1f2937);
+}#roadmapModal .cost-of-delay-step-subhint {
+  margin: 0 0 0.55rem;
+}#roadmapModal .cost-of-delay-result-title {
+  margin: 0 0 0.55rem;
+  font-size: 0.86rem;
+  font-weight: 650;
+  color: var(--text-primary, #1f2937);
+}#roadmapModal .cost-of-delay-result-total {
+  margin-top: 0.2rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid rgba(15, 23, 42, 0.1);
+}#roadmapModal .cost-of-delay-result-total span,
+#roadmapModal .cost-of-delay-result-total strong {
+  font-weight: 700;
 }#roadmapModal #financialImpactValue.is-computed {
   background: #fff6e5;
   border-color: rgba(180, 83, 9, 0.48);
@@ -9000,13 +9035,11 @@ select:focus-visible {
 .map-metric-picker__option--active {
   filter: none !important;
   box-shadow: none !important;
-}.profiles-sheet-tab,
-.profiles-panel-sheet-close,
+}.profiles-panel-sheet-close,
 .profiles-panel-sheet .profiles-select__trigger,
 .profiles-panel-sheet .profiles-select__option,
 .profiles-panel-sheet .profiles-select__actions .profile-action-chip,
 .profiles-panel-sheet .profiles-select__actions .profile-icon-btn,
-.profiles-panel-sheet .profiles-sheet-tab,
 .portfolio-filters-sheet .portfolio-filters-sheet-close,
 .portfolio-filters-sheet .filters-reset-btn,
 .portfolio-filters-sheet .filters-toggle-btn {
@@ -9018,8 +9051,6 @@ select:focus-visible {
   text-transform: none !important;
   letter-spacing: normal !important;
   transform: none !important;
-}.profiles-sheet-tab--active {
-  background: #fff !important;
 }.profiles-panel--v2 .profiles-create-submit,
 .profile-add-btn.profiles-create-submit {
   background: linear-gradient(135deg, var(--id-red-700), var(--id-red-600)) !important;

@@ -2,12 +2,12 @@
 
 **Purpose:** Define how product, design, and engineering maintain documentation for the Product Management Prioritization Tool.  
 **Audience:** Contributors, reviewers, release owners.  
-**Last updated:** 2026-07-10  
-**Last audited:** 2026-07-10
+**Last updated:** 2026-10-24  
+**Last audited:** 2026-10-24
 
 | Baseline | Value |
 |----------|-------|
-| **APP_ASSET_VERSION** | `20260710-ui201` |
+| **APP_ASSET_VERSION** | `20260710-ui205` |
 | **Compact breakpoint** | **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) |
 
 ---
@@ -114,10 +114,10 @@ When performing a comprehensive audit:
 9. Verify **Roadmap** terminology (not Project) in user-facing docs; document legacy `projects` migration in VARIABLES §8.16 only.
 10. Confirm all **seven views** (Table, Board, MoSCoW, Map, RACI, KANO, Gantt) are documented in PRD FR-5, personas, and user stories.
 11. Confirm **43 CSS layers** in README, DESIGN_GUIDELINES, TECH_GUIDELINES, and ARCHITECTURE match `index.html` link tags.
-12. Document **BYOK**, **LLM analysis**, **5 Why Framework**, **WorkspaceMerge** (FR-8.7–FR-8.9), **roadmap field suggestions** (FR-2.16), and **incomplete optional fields** (FR-6.8) in PRD, GUARDRAILS, VARIABLES, and traceability matrix.
-13. Verify CSS load order in TECH_GUIDELINES §3.1 and ARCHITECTURE §10 against `index.html` lines 15–47 exactly.
-14. Ensure `TECH_GUIDELINES.md` script load order matches `index.html` exactly (**22** modules before `app.js`, including `incomplete-optional-fields.js` before `gantt-view.js`).
-15. Confirm **`npm test`** runs **17** suites (through `test:incomplete-filter`).
+12. Document **BYOK**, **LLM analysis**, **5 Why Framework**, **WorkspaceMerge** (FR-8.7–FR-8.9), **roadmap field suggestions** (FR-2.16), **incomplete optional fields** (FR-6.8), and **Cost of Delay** (FR-4b) in PRD, GUARDRAILS, VARIABLES, and traceability matrix.
+13. Verify CSS load order in TECH_GUIDELINES §3.1 and ARCHITECTURE against `index.html` local CSS link tags exactly (**43** layers).
+14. Ensure `TECH_GUIDELINES.md` script load order matches `index.html` exactly (**19** files in `src/modules/`, including `cost-of-delay.js` before `gantt-view.js`).
+15. Confirm **`npm test`** runs **18** suites (through `test:cost-of-delay`).
 16. Update [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md) when any feature’s logic, validation rules, or cross-feature constraints change.
 
 ### 3.7 Feature logic documentation format

@@ -4,8 +4,8 @@ Engineering standards for the Product Management Prioritization Tool codebase.
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-07-10 |
-| **APP_ASSET_VERSION** | `20260710-ui201` |
+| **Last updated** | 2026-10-24 |
+| **APP_ASSET_VERSION** | `20260710-ui205` |
 | **COMPACT_LAYOUT_MAX_WIDTH_PX** | `1400` |
 
 ---
@@ -46,11 +46,12 @@ Defined in `index.html` (order matters — globals, not ES modules):
 16. `src/modules/roadmap-llm-summary.js` — `RoadmapLlmSummary` global
 17. `src/modules/roadmap-5why-framework.js` — `RoadmapFiveWhyFramework` global
 18. `src/modules/roadmap-periods.js` — `RoadmapPeriods` global (multi-quarter periods)
-19. `src/modules/incomplete-optional-fields.js` — `IncompleteOptionalFields` global (optional-field completeness filter)
-20. `src/modules/gantt-view.js` — `GanttView` global (Gantt timeline)
-21. `src/modules/export-payload.js` — `ExportPayload` global (JSON/CSV export builders)
-22. `src/modules/share-link.js` — `ShareLink` global (URL hash deep links)
-23. `src/app.js` — defines `init()` and runs on `DOMContentLoaded`
+19. `src/modules/incomplete-optional-fields.js` — `IncompleteOptionalFields` global (optional-field completeness filter; 15 types)
+20. `src/modules/cost-of-delay.js` — `CostOfDelay` global (plain-English Cost of Delay calculator)
+21. `src/modules/gantt-view.js` — `GanttView` global (Gantt timeline)
+22. `src/modules/export-payload.js` — `ExportPayload` global (JSON/CSV export builders)
+23. `src/modules/share-link.js` — `ShareLink` global (URL hash deep links)
+24. `src/app.js` — defines `init()` and runs on `DOMContentLoaded`
 
 All shared symbols are **global functions and constants**. Do not introduce ES module imports without a planned migration.
 
@@ -134,7 +135,7 @@ Later files win for equal specificity. Each stylesheet in `index.html` uses a **
 | Constant | Role |
 |----------|------|
 | `STORAGE_KEY` | `localStorage` key (`rice_prioritizer_v1`) |
-| `APP_ASSET_VERSION` | Cache buster (`20260710-ui201`) |
+| `APP_ASSET_VERSION` | Cache buster (`20260710-ui205`) |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | `1400` — single compact breakpoint |
 | `moscowList` | Stored MoSCoW values |
 | `moscowDisplayNames` | UI labels (Must Have, …) |
@@ -202,7 +203,7 @@ Persisted via `saveState()` → `AppStorage` → `localStorage` + optional cloud
 | Label + autocomplete | `filterLabel`, `filterLabelListbox` | same |
 | Labels any/with/without | `filterLabels` | `filterLabels.value` in `applyFilters` |
 | Links any/with/without | `filterLinks` | `filterLinks.value` in `applyFilters` |
-| Incomplete optional fields | `#filterIncompleteFieldsList`, `#filterIncompleteModeGroup` | `IncompleteOptionalFields.roadmapMatchesIncompleteOptionalFieldsFilter` |
+| Incomplete optional fields | `#filterIncompleteFieldsList` (mode fixed to `"any"`; no mode toggle UI) | `IncompleteOptionalFields.roadmapMatchesIncompleteOptionalFieldsFilter` |
 
 Active filter pill text includes human labels for labels/links constraints.
 
@@ -289,7 +290,8 @@ Export: `getExportableProfiles()` → `sanitizeProfilesForExport()` → download
 | `test:export` | Full JSON/CSV export payload round-trip |
 | `test:periods` | Multi-quarter `roadmapPeriods` normalization |
 | `test:gantt` | Gantt ISO weeks, quarter ranges, month zoom, deadline state |
-| `test:incomplete-filter` | Incomplete optional fields any/all match logic |
+| `test:incomplete-filter` | Incomplete optional fields match logic (`any` / `all` helpers) |
+| `test:cost-of-delay` | Cost of Delay sanitize/compute/validation |
 | `test:import-file-kind` | Unified import JSON vs CSV detection |
 | `test:workspace-merge` | WorkspaceMerge union merge, conflict resolution, tombstones, fingerprint dedupe |
 | `test:api-dedupe` | Server-side `api/_lib/workspace-dedupe.js` (MoSCoW alias + tombstone prune) |
@@ -300,9 +302,9 @@ Also: `npm run verify:production` — smoke test deployed URL (`scripts/verify-d
 ### 15.2 Manual smoke path (before release)
 
 1. Create profile (with and without password)
-2. CRUD roadmap with each financial framework; save **Note** rich-text field
+2. CRUD roadmap with each financial framework; save **Note** rich-text field; estimate **Cost of Delay** (independent currency/amounts)
 3. All **seven views** + fullscreen at **375px, 768px, 1400px, 1600px**
-4. Title/label autocomplete; labels/links filters
+4. Title/label autocomplete; labels/links filters; incomplete optional fields (incl. Cost of Delay)
 5. Table group-by on compact card list
 6. MoSCoW display names and compact nav pills
 7. Footer links (LinkedIn, website, GitHub, article)

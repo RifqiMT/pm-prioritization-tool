@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Maintainer** | Product Team |
-| **Last audited** | 2026-07-10 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui201` |
+| **Last audited** | 2026-10-24 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui205` |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
 
 This folder is the **single source of product truth** for engineering, design, product management, and stakeholders (**17 documents** + root [README.md](../README.md) = **18-file suite**). Documents are maintained against the **current** implementation in `index.html`, `css/`, `src/`, and `api/`.
@@ -67,7 +67,7 @@ This folder is the **single source of product truth** for engineering, design, p
 
 ---
 
-## Source code map (audited 2026-07-10)
+## Source code map (audited 2026-10-24)
 
 ```
 pm-prioritization-tool/
@@ -110,7 +110,8 @@ pm-prioritization-tool/
 │       ├── roadmap-llm-summary.js  # Tavily research + Groq summary
 │       ├── roadmap-5why-framework.js # Iterative WHY 1→5 questions
 │       ├── roadmap-periods.js      # Multi-quarter roadmapPeriods
-│       ├── incomplete-optional-fields.js # Optional-field completeness filter
+│       ├── incomplete-optional-fields.js # Optional-field completeness filter (15 types)
+│       ├── cost-of-delay.js        # CostOfDelay plain-English calculator
 │       ├── gantt-view.js           # Gantt timeline view
 │       ├── export-payload.js       # JSON/CSV export builders
 │       └── share-link.js           # URL hash deep links
@@ -148,6 +149,7 @@ pm-prioritization-tool/
 │   ├── test-import-tombstones.js   # npm run test:import-tombstones
 │   ├── test-import-file-kind.js    # npm run test:import-file-kind
 │   ├── test-incomplete-optional-fields-filter.js # npm run test:incomplete-filter
+│   ├── test-cost-of-delay.js       # npm run test:cost-of-delay
 │   ├── sync-asset-versions.js      # npm run sync:assets (build step)
 │   └── disable-vercel-deployment-protection.sh
 ├── .github/workflows/              # ci.yml, vercel-production.yml, fix-vercel-protection.yml

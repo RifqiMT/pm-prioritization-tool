@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-07-10 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui201` |
+| **Last updated** | 2026-10-24 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui205` |
 
 The app is a **static UI** plus **Vercel serverless API** routes under `/api`. Portfolio data is stored in **MongoDB Atlas** when `MONGODB_URI` is configured; the browser keeps a **local cache** for faster reload and offline fallback.
 
@@ -182,7 +182,7 @@ GitHub Actions workflow `.github/workflows/ci.yml` runs on every push/PR to `mai
 
 1. `npm ci`
 2. `npm run build` — validates static root + `api/state.js`; runs `sync:assets` to align per-asset cache tags with `APP_ASSET_VERSION`
-3. `npm test` — **seventeen** script suites (through `test:incomplete-filter` and `test:import-file-kind`)
+3. `npm test` — **eighteen** script suites (through `test:incomplete-filter`, `test:import-file-kind`, and `test:cost-of-delay`)
 
 Post-deploy smoke: `npm run verify:production` (or `verify:deploy` with your URL).
 

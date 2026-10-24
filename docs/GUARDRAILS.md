@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-07-10 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui201` |
+| **Last updated** | 2026-10-24 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui205` |
 
 Cross-feature behavior summaries live in [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md). This file defines **hard limits** and policies that must not be violated.
 
@@ -13,6 +13,8 @@ Cross-feature behavior summaries live in [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEAT
 - Support **local-only** mode (file:// or static serve without API) and **cloud** mode (MongoDB on Vercel) without breaking either path.
 - Preserve user data ownership via export/import capability.
 - Present financial outputs as planning estimates, not accounting truth.
+- Present **Cost of Delay** as a sequencing / planning signal only — never as audited accounting or a substitute for RICE.
+- Keep **Cost of Delay** independent of **Financial impact**: shared `currencyList` options only; never auto-copy amounts or currencies between the two sections.
 
 ## 2. Technical Guardrails
 
@@ -26,7 +28,7 @@ Cross-feature behavior summaries live in [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEAT
 
 - Dense table columns must remain readable without broken header wrapping.
 - Icon-only semantics must always include accessible tooltip/aria context.
-- Derived calculations (RICE/financial) must provide explanatory text.
+- Derived calculations (RICE / financial / Cost of Delay) must provide explanatory text (CoD: narrative estimate + “How to use this number”).
 - Every create/edit modal variable field must provide standardized tooltip guidance.
 - Framework terminology must stay standardized as `Framework` in filter/table labels.
 - **No header × dismiss in modals:** dialogs close via labeled footer actions (Cancel, Done, Save, etc.), Esc, and backdrop where appropriate — never a top-right × icon (see [DESIGN_GUIDELINES.md](DESIGN_GUIDELINES.md) §5.12).

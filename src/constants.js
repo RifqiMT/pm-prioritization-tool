@@ -9,7 +9,7 @@
 const STORAGE_KEY = "rice_prioritizer_v1";
 
 /** Bump when shipping client changes so browsers fetch fresh JS (Vercel caches /src with long TTL). */
-const APP_ASSET_VERSION = "20260710-ui201";
+const APP_ASSET_VERSION = "20260710-ui205";
 
 /**
  * Viewports at or below this width use the unified phone/tablet UI
@@ -430,6 +430,9 @@ const EXPORT_CSV_KNOWN_ROADMAP_KEYS = [
   "financialImpactCurrency",
   "financialImpactFramework",
   "financialImpactInputs",
+  "costOfDelayValue",
+  "costOfDelayCurrency",
+  "costOfDelayInputs",
   "roadmapType",
   "roadmapStatus",
   "projectType",

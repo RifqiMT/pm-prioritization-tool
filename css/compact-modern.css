@@ -404,19 +404,6 @@ touch-first.
     font-size: 0.92rem;
   }
 
-  html.is-compact-layout .profiles-sheet-tabs {
-    margin: 0 0.85rem 0.55rem;
-    padding: 0.22rem;
-    border-radius: 12px;
-  }
-
-  html.is-compact-layout .profiles-sheet-tab {
-    min-height: 42px;
-    font-size: 0.82rem;
-    text-transform: none !important;
-    letter-spacing: normal !important;
-  }
-
   html.is-compact-layout .profiles-panel-sheet-body {
     padding-left: 0.85rem;
     padding-right: 0.85rem;

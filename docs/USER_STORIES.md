@@ -4,7 +4,7 @@
 |-------|-------|
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
-| **Last updated** | 2026-07-10 |
+| **Last updated** | 2026-10-24 |
 | **Compact breakpoint** | ≤ **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) |
 
 **Purpose:** Epics and user-story contracts with **Given / When / Then** acceptance criteria, including edge cases and error handling.
@@ -189,7 +189,7 @@ Each story includes:
 
 ---
 
-## Epic C — Financial frameworks
+## Epic C — Financial frameworks & Cost of Delay
 
 ### US-C1 — Select framework and see planning value
 
@@ -207,6 +207,38 @@ Each story includes:
    - **Given** the user changes framework in the modal  
    - **When** the change applies  
    - **Then** prior framework inputs do not leak into the new framework.
+
+---
+
+### US-C2 — Estimate Cost of Delay in plain English
+
+- **Persona:** Product Manager  
+- **Goal:** Estimate what waiting costs using the same currencies as Financial impact.
+
+**Acceptance criteria**
+
+1. **Optional calculator**  
+   - **Given** the roadmap modal Cost of Delay section  
+   - **When** the user enters value to users/business, optional time pressure and risk/opportunity, a period, and delay length  
+   - **Then** Estimated Cost of Delay updates live as (sum of ongoing parts × delay) + optional one-time hit  
+   - **And** the breakdown explains each part in plain English.
+
+2. **Shared currency list only**  
+   - **Given** the Cost of Delay currency select  
+   - **When** options load  
+   - **Then** they use the same `currencyList` options as Financial impact  
+   - **And** the selected CoD currency and amounts stay independent of Financial impact fields.
+
+3. **No link to Financial impact**  
+   - **Given** a roadmap with Financial impact filled in  
+   - **When** the user opens Cost of Delay  
+   - **Then** CoD fields are not auto-filled from Financial impact  
+   - **And** changing either section does not change the other.
+
+4. **Persistence**  
+   - **Given** a saved Cost of Delay  
+   - **When** the roadmap reopens or is exported/imported via CSV  
+   - **Then** `costOfDelayValue`, `costOfDelayCurrency`, and `costOfDelayInputs` round-trip correctly.
 
 ---
 

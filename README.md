@@ -8,7 +8,7 @@
 |---|---|
 | **Production** | [pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app) |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260710-ui201` (per-asset `?v=` tags synced via `npm run sync:assets`) |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20260710-ui205` (per-asset `?v=` tags synced via `npm run sync:assets`) |
 | **Docs hub** | [docs/README.md](docs/README.md) |
 
 > Do not use `pm-prioritization-tool.vercel.app` — that hostname serves a legacy React app. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
@@ -17,7 +17,7 @@
 
 ## Product overview
 
-The Product Management Prioritization Tool helps product teams **capture initiatives**, **score priority**, **estimate value**, and **communicate roadmaps** in the browser. Each **profile** is an isolated portfolio (team, product, or owner). Roadmaps are scored with **RICE**, classified with **MoSCoW**, and optionally valued with **six financial frameworks**. Data can remain **local** (browser cache + export) or sync to **MongoDB** on Vercel when configured.
+The Product Management Prioritization Tool helps product teams **capture initiatives**, **score priority**, **estimate value**, **estimate Cost of Delay**, and **communicate roadmaps** in the browser. Each **profile** is an isolated portfolio (team, product, or owner). Roadmaps are scored with **RICE**, classified with **MoSCoW**, optionally valued with **six financial frameworks**, and optionally sequenced with a plain-English **Cost of Delay** estimate (independent of Financial impact). Data can remain **local** (browser cache + export) or sync to **MongoDB** on Vercel when configured.
 
 ### Core capabilities
 
@@ -27,8 +27,9 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 | **RICE** | `(Reach × Impact × Confidence) ÷ Effort` with explainable tooltips |
 | **MoSCoW** | Must Have / Should Have / Could Have / Won't Have quadrants |
 | **Financial frameworks** | Custom, CLV, NPS, Risk, Headcount, Operational |
+| **Cost of Delay** | Optional plain-English waiting-cost estimate (independent of Financial impact) |
 | **Views** | Table, Scrum board, MoSCoW, world map (Leaflet), RACI matrix, KANO portfolio matrix, **Gantt timeline** |
-| **Filters** | Search, quick filters, advanced filters (including labels and links) |
+| **Filters** | Search, quick filters, advanced filters (labels, links, incomplete optional fields) |
 | **Portability** | JSON full backup + CSV export; merge import with tombstone resurrection |
 | **Responsive UI** | Desktop (>1400px); unified phone/tablet UI (≤1400px) |
 | **Cloud (optional)** | MongoDB workspace via `/api/state` |
@@ -65,6 +66,7 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 - RICE validation and live score calculation  
 - Metadata: type, status, MoSCoW, multi-quarter **periods** (`roadmapPeriods[]`), optional **deadline** (`YYYY-MM-DD`), countries, t-shirt size, **labels**, **links**, **tasks**, **RACI** assignments, **KANO** scores (functionality × satisfaction)  
 - Six financial frameworks with computed impact  
+- **Cost of Delay** (optional) — workshop-style estimate: value to users & business + time pressure + risk/opportunity, × delay length, + optional one-time hit; own currency from shared `currencyList`; **independent** of Financial impact (no auto-fill)  
 - Bulk delete in table (toolbar on desktop; **floating selection bar** on compact)  
 - **Bulk duplicate / move** across profiles when privileged workspace mode is active (see [docs/GUARDRAILS.md](docs/GUARDRAILS.md) §7)  
 - Stable **roadmap ID** in modal footer metadata  
@@ -85,7 +87,7 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 |------|----------|
 | **Search** | Title (with autocomplete), label (with autocomplete) |
 | **Quick** | Roadmap type, countries (multi + EU shortcut), roadmap period |
-| **Advanced** | Impact, effort, currency, framework, status, t-shirt, MoSCoW, links (any / with / without), labels (any / with / without), **incomplete optional fields** (any / all match) |
+| **Advanced** | Impact, effort, currency, framework, status, t-shirt, MoSCoW, links (any / with / without), labels (any / with / without), **incomplete optional fields** (15 types incl. Cost of Delay; any / all match) |
 
 Active filter count appears in the portfolio filters badge. Reset restores defaults.
 
@@ -266,4 +268,4 @@ UNLICENSED (private). See `package.json`.
 - GitHub: [RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool)  
 - Article: [Effort–impact confusion to clear-cut priorities](https://rifqi-tjahyono.com/%f0%9f%93%8a-effort-impact-confusion-to-clear-cut-priorities-replace-tab-hopping-with-visual-roadmap-sanity-%f0%9f%a7%ad%e2%9c%a8/)
 
-**Documentation last comprehensively audited:** 2026-07-10 (baseline `20260710-ui201`).
+**Documentation last comprehensively audited:** 2026-10-24 (baseline `20260710-ui205`; Cost of Delay independent of Financial impact).

@@ -169,7 +169,6 @@ let mapMetricPickerOpen = false;
 let mapMetricPickerHighlightIndex = -1;
 let mapMetricPickerPointerSelecting = false;
 
-let profilesSheetTab = "browse";
 let profilesSheetCloseTimer = null;
 
 function markProfileUnlocked(profileId) {
@@ -700,6 +699,12 @@ function buildExportCsvCellValues(profile, roadmap, workspaceStateJson) {
         serializedRoadmap.financialImpactFramework,
         serializedRoadmap.financialImpactInputs || {}
       )
+    ),
+    costOfDelayValue:
+      serializedRoadmap.costOfDelayValue != null ? String(serializedRoadmap.costOfDelayValue) : "",
+    costOfDelayCurrency: serializedRoadmap.costOfDelayCurrency || "",
+    costOfDelayInputs: JSON.stringify(
+      sanitizeCostOfDelayInputs(serializedRoadmap.costOfDelayInputs || {})
     ),
     roadmapType: serializedRoadmap.roadmapType || "",
     roadmapStatus: getEffectiveRoadmapStatus(serializedRoadmap) || "",
@@ -1403,6 +1408,140 @@ function computeFrameworkFinancialImpact(framework, inputs, customAmount) {
   return null;
 }
 
+function sanitizeCostOfDelayInputs(inputs) {
+  if (typeof CostOfDelay !== "undefined" && typeof CostOfDelay.sanitizeInputs === "function") {
+    return CostOfDelay.sanitizeInputs(inputs);
+  }
+  return {
+    userBusinessValue: null,
+    timePressureValue: null,
+    riskOpportunityValue: null,
+    oneTimeWaitingCost: null,
+    delayPeriods: null,
+    durationUnit: "month",
+    valuePerPeriod: null,
+    extraCostOfWaiting: null
+  };
+}
+
+function getCostOfDelayInputsFromForm() {
+  return sanitizeCostOfDelayInputs({
+    userBusinessValue: elements.costOfDelayUserBusinessValue?.value,
+    timePressureValue: elements.costOfDelayTimePressureValue?.value,
+    riskOpportunityValue: elements.costOfDelayRiskOpportunityValue?.value,
+    oneTimeWaitingCost: elements.costOfDelayOneTimeWaitingCost?.value,
+    delayPeriods: elements.costOfDelayDelayPeriods?.value,
+    durationUnit: elements.costOfDelayDurationUnit?.value
+  });
+}
+
+function setCostOfDelayInputsToForm(inputs) {
+  const sanitized = sanitizeCostOfDelayInputs(inputs);
+  if (elements.costOfDelayUserBusinessValue) {
+    elements.costOfDelayUserBusinessValue.value =
+      sanitized.userBusinessValue != null ? String(sanitized.userBusinessValue) : "";
+    elements.costOfDelayUserBusinessValue.readOnly = false;
+    elements.costOfDelayUserBusinessValue.classList.remove("is-computed");
+    elements.costOfDelayUserBusinessValue.placeholder = "e.g. 8000";
+  }
+  if (elements.costOfDelayTimePressureValue) {
+    elements.costOfDelayTimePressureValue.value =
+      sanitized.timePressureValue != null ? String(sanitized.timePressureValue) : "";
+  }
+  if (elements.costOfDelayRiskOpportunityValue) {
+    elements.costOfDelayRiskOpportunityValue.value =
+      sanitized.riskOpportunityValue != null ? String(sanitized.riskOpportunityValue) : "";
+  }
+  if (elements.costOfDelayOneTimeWaitingCost) {
+    elements.costOfDelayOneTimeWaitingCost.value =
+      sanitized.oneTimeWaitingCost != null ? String(sanitized.oneTimeWaitingCost) : "";
+  }
+  if (elements.costOfDelayDelayPeriods) {
+    elements.costOfDelayDelayPeriods.value =
+      sanitized.delayPeriods != null ? String(sanitized.delayPeriods) : "";
+  }
+  if (elements.costOfDelayDurationUnit) {
+    elements.costOfDelayDurationUnit.value = sanitized.durationUnit || "month";
+  }
+}
+
+function computeCostOfDelayFromForm() {
+  if (typeof CostOfDelay === "undefined" || typeof CostOfDelay.compute !== "function") {
+    return { costOfDelayValue: null, breakdown: {}, explanation: "" };
+  }
+  return CostOfDelay.compute(getCostOfDelayInputsFromForm());
+}
+
+function formatCostOfDelayDisplayAmount(value, currency) {
+  const format =
+    typeof CostOfDelay !== "undefined" && typeof CostOfDelay.formatPlainNumber === "function"
+      ? CostOfDelay.formatPlainNumber
+      : (n) => (Number.isFinite(n) ? String(n) : "—");
+  if (value == null) return "—";
+  const amount = format(value);
+  const code = currency && String(currency).trim() ? String(currency).trim().toUpperCase() : "";
+  return code ? `${amount} ${code}` : amount;
+}
+
+function updateCostOfDelayBreakdown(result) {
+  const breakdown = result && result.breakdown ? result.breakdown : {};
+  const currency = normalizeCurrency(elements.costOfDelayCurrency?.value);
+  const setBreakdown = (el, value) => {
+    if (!el) return;
+    el.textContent = formatCostOfDelayDisplayAmount(value, currency);
+  };
+  setBreakdown(elements.costOfDelayBreakdownUserBusiness, breakdown.userBusinessValue);
+  setBreakdown(elements.costOfDelayBreakdownTimePressure, breakdown.timePressureValue);
+  setBreakdown(elements.costOfDelayBreakdownRiskOpportunity, breakdown.riskOpportunityValue);
+  setBreakdown(elements.costOfDelayBreakdownRate, breakdown.waitingPerPeriod);
+  setBreakdown(elements.costOfDelayBreakdownDelayedValue, breakdown.delayedValue);
+  setBreakdown(
+    elements.costOfDelayBreakdownExtra,
+    breakdown.oneTimeWaitingCost != null ? breakdown.oneTimeWaitingCost : breakdown.extraCostOfWaiting
+  );
+  if (elements.costOfDelayBreakdownTotal) {
+    elements.costOfDelayBreakdownTotal.textContent =
+      result && result.costOfDelayValue != null
+        ? formatCostOfDelayDisplayAmount(result.costOfDelayValue, currency)
+        : "—";
+  }
+  if (elements.costOfDelayExplanation) {
+    elements.costOfDelayExplanation.textContent =
+      (result && result.explanation) ||
+      "Start with Step 1, then add a likely delay in Step 2. A thoughtful estimate is enough for planning conversations.";
+  }
+  if (elements.costOfDelayHowToUse) {
+    const howToUse =
+      result && result.howToUse
+        ? result.howToUse
+        : typeof CostOfDelay !== "undefined" && typeof CostOfDelay.buildHowToUse === "function"
+          ? CostOfDelay.buildHowToUse(result)
+          : "How to use this: compare Cost of Delay across roadmaps when deciding what to start next.";
+    elements.costOfDelayHowToUse.textContent = howToUse;
+  }
+}
+
+function normalizeCostOfDelayOnRoadmap(roadmap) {
+  const rawInputs =
+    roadmap && roadmap.costOfDelayInputs && typeof roadmap.costOfDelayInputs === "object"
+      ? { ...roadmap.costOfDelayInputs }
+      : {};
+  // Drop legacy coupling flag if present in older saved data.
+  delete rawInputs.useFinancialImpact;
+  const inputs = sanitizeCostOfDelayInputs(rawInputs);
+  let computed = null;
+  if (typeof CostOfDelay !== "undefined" && typeof CostOfDelay.compute === "function") {
+    computed = CostOfDelay.compute(inputs).costOfDelayValue;
+  }
+  const stored = toNumberOrNull(roadmap && roadmap.costOfDelayValue);
+  const value = Number.isFinite(computed) ? computed : Number.isFinite(stored) ? stored : null;
+  return {
+    costOfDelayValue: Number.isFinite(value) ? value : null,
+    costOfDelayCurrency: normalizeCurrency(roadmap && roadmap.costOfDelayCurrency),
+    costOfDelayInputs: inputs
+  };
+}
+
 // --- Initialization ---
 let roadmapModalSectionNavObserver = null;
 let roadmapModalSectionNavSyncFrame = null;
@@ -1419,6 +1558,7 @@ const ROADMAP_MODAL_SECTION_NAV_IDS = [
   "roadmapModalSectionMeta",
   "roadmapModalSectionRaci",
   "roadmapModalSectionFinancial",
+  "roadmapModalSectionCostOfDelay",
   "roadmapModalSectionFiveWhy",
   "roadmapModalSectionSummary"
 ];
@@ -1774,6 +1914,9 @@ function buildRoadmapSummaryContextFromViewForm() {
     financialImpactValue:
       elements.financialImpactValue?.value !== "" ? Number(elements.financialImpactValue.value) : null,
     financialImpactCurrency: normalizeCurrency(elements.roadmapCurrency?.value),
+    costOfDelayCurrency: normalizeCurrency(elements.costOfDelayCurrency?.value),
+    costOfDelayInputs: getCostOfDelayInputsFromForm(),
+    costOfDelayValue: null,
     kanoFunctionality: kano.kanoFunctionality,
     kanoSatisfaction: kano.kanoSatisfaction,
     countries: getCountriesFromControls(),
@@ -1782,6 +1925,11 @@ function buildRoadmapSummaryContextFromViewForm() {
     tasks: getRoadmapTasksFromControls(),
     raci: getRoadmapRaciFromControls()
   };
+
+  if (typeof CostOfDelay !== "undefined" && typeof CostOfDelay.compute === "function") {
+    const cod = CostOfDelay.compute(raw.costOfDelayInputs);
+    raw.costOfDelayValue = Number.isFinite(cod.costOfDelayValue) ? cod.costOfDelayValue : null;
+  }
 
   const hasRiceInput =
     raw.reachValue != null ||
@@ -2845,6 +2993,21 @@ function roadmapOptionalSectionHasData(sectionId) {
       for (const input of frameworkInputs) {
         if ((input.value || "").trim()) return true;
       }
+    }
+    return false;
+  }
+  if (sectionId === "roadmapModalSectionCostOfDelay") {
+    const currency = elements.costOfDelayCurrency?.value;
+    if (currency && String(currency).trim()) return true;
+    const inputs = [
+      elements.costOfDelayUserBusinessValue,
+      elements.costOfDelayTimePressureValue,
+      elements.costOfDelayRiskOpportunityValue,
+      elements.costOfDelayOneTimeWaitingCost,
+      elements.costOfDelayDelayPeriods
+    ];
+    for (const el of inputs) {
+      if (el && String(el.value || "").trim()) return true;
     }
     return false;
   }
@@ -4482,6 +4645,22 @@ function cacheElements() {
   elements.financialOperationalBreakdownCostPerUnitSavings = $("financialOperationalBreakdownCostPerUnitSavings");
   elements.financialOperationalBreakdownLaborSavings = $("financialOperationalBreakdownLaborSavings");
   elements.financialOperationalBreakdownTotalSavings = $("financialOperationalBreakdownTotalSavings");
+  elements.costOfDelayUserBusinessValue = $("costOfDelayUserBusinessValue");
+  elements.costOfDelayTimePressureValue = $("costOfDelayTimePressureValue");
+  elements.costOfDelayRiskOpportunityValue = $("costOfDelayRiskOpportunityValue");
+  elements.costOfDelayOneTimeWaitingCost = $("costOfDelayOneTimeWaitingCost");
+  elements.costOfDelayDurationUnit = $("costOfDelayDurationUnit");
+  elements.costOfDelayDelayPeriods = $("costOfDelayDelayPeriods");
+  elements.costOfDelayCurrency = $("costOfDelayCurrency");
+  elements.costOfDelayBreakdownUserBusiness = $("costOfDelayBreakdownUserBusiness");
+  elements.costOfDelayBreakdownTimePressure = $("costOfDelayBreakdownTimePressure");
+  elements.costOfDelayBreakdownRiskOpportunity = $("costOfDelayBreakdownRiskOpportunity");
+  elements.costOfDelayBreakdownRate = $("costOfDelayBreakdownRate");
+  elements.costOfDelayBreakdownDelayedValue = $("costOfDelayBreakdownDelayedValue");
+  elements.costOfDelayBreakdownExtra = $("costOfDelayBreakdownExtra");
+  elements.costOfDelayBreakdownTotal = $("costOfDelayBreakdownTotal");
+  elements.costOfDelayExplanation = $("costOfDelayExplanation");
+  elements.costOfDelayHowToUse = $("costOfDelayHowToUse");
   elements.roadmapCurrency = $("roadmapCurrency");
   elements.roadmapType = $("roadmapType");
   elements.roadmapStatus = $("roadmapStatus");
@@ -4682,7 +4861,7 @@ function cacheElements() {
 }
 
 function initCurrencyOptions() {
-  const currencySelects = [elements.filterCurrency, elements.roadmapCurrency];
+  const currencySelects = [elements.filterCurrency, elements.roadmapCurrency, elements.costOfDelayCurrency];
   currencyList.sort().forEach((code) => {
     currencySelects.forEach((select) => {
       if (!select) return;
@@ -6271,6 +6450,13 @@ function attachEventListeners() {
     elements.effortValue,
     elements.financialImpactValue,
     elements.roadmapCurrency,
+    elements.costOfDelayUserBusinessValue,
+    elements.costOfDelayTimePressureValue,
+    elements.costOfDelayRiskOpportunityValue,
+    elements.costOfDelayOneTimeWaitingCost,
+    elements.costOfDelayDurationUnit,
+    elements.costOfDelayDelayPeriods,
+    elements.costOfDelayCurrency,
     elements.financialCustomNotes,
     elements.financialClvCustomers,
     elements.financialClvMargin,
@@ -7463,7 +7649,11 @@ function cloneRoadmapForDuplicate(sourceRoadmap) {
     financialImpactInputs:
       normalized.financialImpactInputs && typeof normalized.financialImpactInputs === "object"
         ? JSON.parse(JSON.stringify(normalized.financialImpactInputs))
-        : {}
+        : {},
+    costOfDelayInputs:
+      normalized.costOfDelayInputs && typeof normalized.costOfDelayInputs === "object"
+        ? JSON.parse(JSON.stringify(normalized.costOfDelayInputs))
+        : sanitizeCostOfDelayInputs({})
   };
   clone.riceScore = calculateRiceScore(clone);
   return clone;
@@ -8542,6 +8732,13 @@ function buildProfilesFromCsvRows(header, rows) {
         if (!raw) return {};
         try { return JSON.parse(raw); } catch (_) { return {}; }
       })(),
+      costOfDelayValue: toNumberOrNull(cells[colIndex.costOfDelayValue]),
+      costOfDelayCurrency: normalizeCurrency(cells[colIndex.costOfDelayCurrency]),
+      costOfDelayInputs: (() => {
+        const raw = (cells[colIndex.costOfDelayInputs] ?? "").toString().trim();
+        if (!raw) return {};
+        try { return JSON.parse(raw); } catch (_) { return {}; }
+      })(),
       roadmapType: (cells[colIndex.roadmapType] ?? "").toString().trim() || null,
       roadmapStatus: (cells[colIndex.roadmapStatus] ?? "").toString().trim() || null,
       tshirtSize: (cells[colIndex.tshirtSize] ?? "").toString().trim() || null,
@@ -8649,6 +8846,7 @@ function normalizeImportedRoadmap(roadmap) {
     financialImpactCurrency: normalizeCurrency(roadmap.financialImpactCurrency),
     financialImpactFramework,
     financialImpactInputs,
+    ...normalizeCostOfDelayOnRoadmap(roadmap),
     roadmapType: coalesceLegacyRoadmapStringField(roadmap, "roadmapType", "projectType"),
     roadmapStatus: deriveRoadmapStatusFromPeriods(
       roadmapPeriods,
@@ -13020,6 +13218,7 @@ function normalizeLoadedRoadmap(roadmap) {
     financialImpactCurrency: normalizeCurrency(roadmap.financialImpactCurrency),
     financialImpactFramework,
     financialImpactInputs,
+    ...normalizeCostOfDelayOnRoadmap(roadmap),
     roadmapType: coalesceLegacyRoadmapStringField(roadmap, "roadmapType", "projectType"),
     roadmapStatus: deriveRoadmapStatusFromPeriods(
       roadmapPeriods,
@@ -15307,7 +15506,7 @@ function isProfilesSheetOpen() {
 }
 
 function isProfilesSheetBrowseMode() {
-  return isCompactProfilesLayout() && isProfilesSheetOpen() && profilesSheetTab === "browse";
+  return isCompactProfilesLayout() && isProfilesSheetOpen();
 }
 
 function syncProfilesSelectBrowseMode() {
@@ -15333,12 +15532,12 @@ function syncProfilesSelectBrowseMode() {
 }
 
 function scheduleProfilesBrowseOpenInSheet() {
-  if (!isCompactProfilesLayout() || !isProfilesSheetOpen() || profilesSheetTab !== "browse") {
+  if (!isCompactProfilesLayout() || !isProfilesSheetOpen()) {
     return;
   }
   if (!state.profiles.length) return;
   window.requestAnimationFrame(() => {
-    if (!isProfilesSheetOpen() || profilesSheetTab !== "browse") return;
+    if (!isProfilesSheetOpen()) return;
     syncProfilesSelectBrowseMode();
     setProfilesSelectOpen(true);
   });
@@ -16261,12 +16460,7 @@ function initProfilePicker() {
 /* ─── Bottom-sheet helpers ──────────────────────────────── */
 function syncProfilesSheetTabsUi() {
   const browsePanel = elements.profilesSheetPanelBrowse;
-  const sheetBody = document.querySelector(".profiles-panel-sheet-body");
-
   if (browsePanel) browsePanel.hidden = false;
-  if (sheetBody) {
-    sheetBody.classList.remove("profiles-sheet-body--tab-browse", "profiles-sheet-body--tab-create");
-  }
   syncProfilesSelectBrowseMode();
   if (isCompactProfilesLayout() && isProfilesSheetOpen()) {
     scheduleProfilesBrowseOpenInSheet();
@@ -16310,7 +16504,6 @@ function openProfilesSheet() {
 
   prepareAppOverlay("profilesSheet");
 
-  profilesSheetTab = "browse";
   syncProfilesSheetTabsUi();
 
   mountProfilesSheetToScrimRoot();
@@ -22460,6 +22653,7 @@ function roadmapEntityToEditableRaw(roadmap) {
       normalizeFinancialFramework(roadmap.financialImpactFramework),
       roadmap.financialImpactInputs || {}
     ),
+    ...normalizeCostOfDelayOnRoadmap(roadmap),
     roadmapType: coalesceLegacyRoadmapStringField(roadmap, "roadmapType", "projectType") || null,
     roadmapStatus: resolveRoadmapStatusForSave(
       roadmapPeriods,
@@ -22591,6 +22785,19 @@ function populateRoadmapFormFromRoadmap(roadmap, { isView = false } = {}) {
     if (opt) elements.roadmapCurrency.value = opt.value;
   } else {
     elements.roadmapCurrency.value = "";
+  }
+  setCostOfDelayInputsToForm(roadmap.costOfDelayInputs || {});
+  ensureCurrencyOption(elements.costOfDelayCurrency, roadmap.costOfDelayCurrency);
+  const codCurrencyVal = roadmap.costOfDelayCurrency ? String(roadmap.costOfDelayCurrency).trim() : "";
+  if (elements.costOfDelayCurrency) {
+    if (codCurrencyVal) {
+      const codOpt = Array.from(elements.costOfDelayCurrency.options).find(
+        (o) => (o.value || "").toUpperCase() === codCurrencyVal.toUpperCase()
+      );
+      if (codOpt) elements.costOfDelayCurrency.value = codOpt.value;
+    } else {
+      elements.costOfDelayCurrency.value = "";
+    }
   }
   elements.roadmapType.value =
     coalesceLegacyRoadmapStringField(roadmap, "roadmapType", "projectType") || "";
@@ -23032,6 +23239,9 @@ function applyRoadmapRawToExistingRoadmap(roadmap, raw) {
   roadmap.financialImpactCurrency = raw.financialImpactCurrency;
   roadmap.financialImpactFramework = raw.financialImpactFramework;
   roadmap.financialImpactInputs = raw.financialImpactInputs;
+  roadmap.costOfDelayValue = raw.costOfDelayValue;
+  roadmap.costOfDelayCurrency = raw.costOfDelayCurrency;
+  roadmap.costOfDelayInputs = raw.costOfDelayInputs;
   roadmap.roadmapType = raw.roadmapType || null;
   const periodFields = buildRoadmapPeriodFieldsForSave(raw.roadmapPeriods, {
     fallbackLegacyPeriod: raw.roadmapPeriod || null
@@ -25503,6 +25713,9 @@ function openRoadmapModal(mode, roadmapId, options = {}) {
     setFinancialInputsToForm({});
     toggleFinancialFrameworkFields(FINANCIAL_FRAMEWORK_DEFAULT);
     elements.roadmapCurrency.value = "";
+    setCostOfDelayInputsToForm({});
+    if (elements.costOfDelayCurrency) elements.costOfDelayCurrency.value = "";
+    updateCostOfDelayBreakdown({ costOfDelayValue: null, breakdown: {}, explanation: "" });
     elements.roadmapType.value = "";
     elements.roadmapStatus.value = "";
     elements.roadmapTshirtSize.value = "";
@@ -25728,6 +25941,9 @@ function collectRoadmapRawFromForm({ validate = true } = {}) {
       normalizeFinancialFramework(elements.financialFramework && elements.financialFramework.value),
       mergeFinancialImpactInputsForCompute()
     ),
+    costOfDelayInputs: getCostOfDelayInputsFromForm(),
+    costOfDelayCurrency: normalizeCurrency(elements.costOfDelayCurrency?.value),
+    costOfDelayValue: null,
     roadmapType: (elements.roadmapType.value || "").trim() || null,
     roadmapStatus: resolveRoadmapStatusForSave(roadmapPeriods, (elements.roadmapStatus.value || "").trim() || null),
     tshirtSize: (elements.roadmapTshirtSize.value || "").trim() || null,
@@ -25773,6 +25989,15 @@ function collectRoadmapRawFromForm({ validate = true } = {}) {
   if (!Number.isFinite(raw.financialImpactValue)) {
     raw.financialImpactValue = null;
   }
+
+  const costOfDelayResult =
+    typeof CostOfDelay !== "undefined" && typeof CostOfDelay.compute === "function"
+      ? CostOfDelay.compute(raw.costOfDelayInputs)
+      : { costOfDelayValue: null };
+  raw.costOfDelayValue = Number.isFinite(costOfDelayResult.costOfDelayValue)
+    ? costOfDelayResult.costOfDelayValue
+    : null;
+  raw.costOfDelayInputs = sanitizeCostOfDelayInputs(raw.costOfDelayInputs);
 
   if (validate) {
     const validationError = validateRoadmapInput(raw);
@@ -25874,6 +26099,9 @@ function handleRoadmapFormSubmit(e) {
       financialImpactCurrency: raw.financialImpactCurrency,
       financialImpactFramework: raw.financialImpactFramework,
       financialImpactInputs: raw.financialImpactInputs,
+      costOfDelayValue: raw.costOfDelayValue,
+      costOfDelayCurrency: raw.costOfDelayCurrency,
+      costOfDelayInputs: raw.costOfDelayInputs,
       roadmapType: raw.roadmapType || null,
       roadmapStatus: resolveRoadmapStatusForSave(periodFields.roadmapPeriods, raw.roadmapStatus || null),
       tshirtSize: raw.tshirtSize || null,
@@ -25931,6 +26159,8 @@ function updateModalRicePreview() {
       ? Number(computedAmount).toLocaleString("en-US", { useGrouping: false, maximumFractionDigits: 6 })
       : "";
   }
+  const costOfDelayResult = computeCostOfDelayFromForm();
+  updateCostOfDelayBreakdown(costOfDelayResult);
   const currency = (elements.roadmapCurrency && elements.roadmapCurrency.value || "").toString().trim().toUpperCase() || "";
   const hasAmount = Number.isFinite(computedAmount);
   const hasCurrency = currency.length === 3;

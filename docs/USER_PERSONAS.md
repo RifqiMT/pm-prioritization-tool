@@ -4,7 +4,7 @@ Target users for the Product Management Prioritization Tool.
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-07-10 |
+| **Last updated** | 2026-10-24 |
 | **Layout baseline** | Compact UI at viewport ≤ **1400px** |
 
 ## How to use personas
@@ -21,9 +21,9 @@ Target users for the Product Management Prioritization Tool.
 | Dimension | Detail |
 |-----------|--------|
 | **Role** | Roadmap owner across teams or products |
-| **Goals** | Explainable prioritization; consistent RICE; MoSCoW alignment; portable backups; fast filtering by period, country, labels, links, and **missing optional metadata** |
-| **Pain points** | Scores scattered in spreadsheets; inconsistent rubrics; low trust in “gut feel” confidence; hard to find roadmaps missing labels, documentation links, or other optional fields before review |
-| **Key workflows** | Create profiles → add roadmaps → share deep links with teammates on the same cloud workspace → edit concurrently (merge + tombstones) → configure BYOK keys → generate **LLM analysis** for stakeholder briefings → run **5 Why** question chains in view mode for root-cause workshops → use title/label autocomplete in filters → sweep portfolios with **incomplete optional fields** filter (any/all match) before planning → group compact table cards by MoSCoW or status → export JSON before planning milestones |
+| **Goals** | Explainable prioritization; consistent RICE; MoSCoW alignment; portable backups; fast filtering by period, country, labels, links, and **missing optional metadata**; sequence work using **Cost of Delay** |
+| **Pain points** | Scores scattered in spreadsheets; inconsistent rubrics; low trust in “gut feel” confidence; hard to find roadmaps missing labels, documentation links, or other optional fields before review; no shared language for “what waiting costs” |
+| **Key workflows** | Create profiles → add roadmaps → share deep links with teammates on the same cloud workspace → edit concurrently (merge + tombstones) → configure BYOK keys → generate **LLM analysis** for stakeholder briefings → run **5 Why** question chains in view mode for root-cause workshops → estimate **Cost of Delay** in the roadmap modal (separate from Financial impact) → use title/label autocomplete in filters → sweep portfolios with **incomplete optional fields** filter (any-match) before planning → group compact table cards by MoSCoW or status → export JSON before planning milestones |
 | **Device usage** | **Desktop** (>1400px) for deep table editing and multi-column sorts; **iPad / phone** (≤1400px) for between-meeting reviews via compact card table and MoSCoW nav pills |
 | **Success** | Stakeholders accept rankings because inputs, formulas, and filters are visible and reproducible |
 
@@ -103,6 +103,7 @@ Target users for the Product Management Prioritization Tool.
 | MoSCoW view + display names (Must Have, etc.) | PM Primary, Stakeholder |
 | Title/label autocomplete + labels/links filters | PM Primary |
 | Incomplete optional fields filter (data-quality sweeps) | PM Primary, Stakeholder |
+| Cost of Delay (sequencing workshops) | PM Primary, Delivery Lead, Stakeholder |
 | Board + unified card UI | Delivery Lead, Mobile PM |
 | Table semantic columns + compact cards + group-by | PM Primary, Delivery Lead, Geo/Finance PM |
 | Map + FX normalization | Geo/Finance PM |

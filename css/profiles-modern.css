@@ -827,39 +827,6 @@ hide native browser chrome */
   display: none;
 }.profiles-panel--v2 .profile-password-toggle.is-visible .icon-eye-off {
   display: block;
-}/* ── Sheet tabs (mobile/tablet) ─────────────────────────── */
-.profiles-sheet-tabs {
-  display: none;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.35rem;
-  padding: 0.35rem;
-  border-radius: 12px;
-  background: rgba(254, 243, 199, 0.35);
-  border: 1px solid var(--pr-border);
-}.profiles-sheet-tab {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  min-height: 42px;
-  padding: 0.45rem 0.65rem;
-  border: none;
-  border-radius: 9px;
-  background: transparent !important;
-  color: var(--pr-text-soft) !important;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: none !important;
-  filter: none !important;
-  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
-}.profiles-sheet-tab svg {
-  flex: 0 0 auto;
-  opacity: 0.85;
-}.profiles-sheet-tab--active {
-  background: #fff !important;
-  color: var(--pr-accent) !important;
-  box-shadow: 0 1px 4px rgba(63, 15, 25, 0.08) !important;
 }.profiles-sheet-panels {
   display: contents;
 }.profiles-sheet-panel {
@@ -977,14 +944,6 @@ hide native browser chrome */
   border-color: rgba(220, 38, 38, 0.25) !important;
 }.profiles-panel--v2 .profile-action-chip:hover {
   transform: none !important;
-}/* Empty & no-results */
-.profiles-panel--v2 .profiles-no-results {
-  padding: 0.85rem;
-  text-align: center;
-  font-size: 0.82rem;
-  color: var(--pr-text-soft);
-  border-radius: 10px;
-  background: rgba(254, 243, 199, 0.25);
 }/* ── Responsive ─────────────────────────────────────────── */
 @media (min-width: 520px) {
   .profiles-panel--v2 .profiles-create-grid {
@@ -1465,8 +1424,7 @@ render panel normally ─── */
 
   .profiles-panel-sheet-handle,
   .profiles-panel-sheet-header,
-  .profiles-sheet-backdrop,
-  .profiles-sheet-tabs {
+  .profiles-sheet-backdrop {
     display: none !important;
   }
 
@@ -1570,39 +1528,6 @@ section.profiles-panel--v2 .profiles-list {
     border-color: rgba(185, 28, 28, 0.28) !important;
     transform: none !important;
     box-shadow: none !important;
-  }
-
-  .profiles-panel-sheet .profiles-sheet-tabs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.28rem;
-    margin: 0 0.85rem 0.55rem;
-    padding: 0.22rem;
-    border-radius: 12px;
-    background: rgba(254, 243, 199, 0.42);
-    border: 1px solid rgba(212, 175, 55, 0.38);
-  }
-
-  .profiles-panel-sheet .profiles-sheet-tab {
-    min-height: 42px;
-    padding: 0.45rem 0.55rem;
-    border-radius: 10px;
-    font-family: inherit !important;
-    font-size: 0.82rem !important;
-    font-weight: 600 !important;
-    letter-spacing: normal !important;
-    text-transform: none !important;
-    background: transparent !important;
-    color: rgba(122, 75, 18, 0.85) !important;
-    box-shadow: none !important;
-    filter: none !important;
-    transform: none !important;
-  }
-
-  .profiles-panel-sheet .profiles-sheet-tab--active {
-    background: #fff !important;
-    color: #b91c1c !important;
-    box-shadow: 0 1px 4px rgba(63, 15, 25, 0.08) !important;
   }
 
   .profiles-panel-sheet .profiles-select__shell {
@@ -1892,9 +1817,5 @@ no redundant chrome ─ */
 
   .profiles-select--sheet-browse .profiles-select__actions .profile-action-label--visible {
     font-size: 0.64rem !important;
-  }
-
-  .profiles-sheet-body--tab-browse .profiles-list-section {
-    gap: 0.35rem;
   }
 }

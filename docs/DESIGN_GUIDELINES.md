@@ -1,8 +1,8 @@
 # Design Guidelines
 
 **Product:** Product Management Prioritization Tool  
-**Last updated:** 2026-07-10  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260710-ui201`  
+**Last updated:** 2026-10-24  
+**Implementation baseline:** `APP_ASSET_VERSION` = `20260710-ui205`  
 **Layout breakpoint:** `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** (`html.is-compact-layout` + `html.is-phone-layout`)
 
 Visual and interaction standards for the local-first prioritization workspace.
@@ -62,6 +62,19 @@ Visual and interaction standards for the local-first prioritization workspace.
 
 Typography and spacing follow roadmap modal optional-section patterns (`--roadmap-optional-*` tokens in `main.css`).
 
+### 2.5 Cost of Delay section (roadmap modal, `main.css`)
+
+| Class / pattern | Role |
+|-----------------|------|
+| `.cost-of-delay-intro` | Purpose + method hints above inputs |
+| `.cost-of-delay-step-label` / `-subhint` | Step 1 / Step 2 coaching headers |
+| `.cost-of-delay-field-hint` | Per-field plain-English coaching questions |
+| `.cost-of-delay-result` | Live breakdown panel (`aria-live="polite"`) |
+| `.cost-of-delay-result-total` | Emphasized Estimated Cost of Delay row |
+| `.cost-of-delay-explanation` / `-how-to-use` | Narrative estimate + sequencing guidance |
+
+Layout reuses financial section grid (`financial-form-section`, `financial-clv-breakdown`) so CoD visually aligns with Financial impact without sharing data.
+
 ### 2.5 BYOK modal (`byok-api-keys.css`)
 
 | Token | Value | Usage |
@@ -98,7 +111,7 @@ Typography for sanitized HTML in roadmap descriptions, tooltips, and LLM summary
 | `compact-view-gutter.css` | Reduced horizontal padding on table/board in compact mode |
 | `confirm-modals-modern.css` | Destructive-action confirms aligned with export/import modal chrome |
 | `filter-combobox-fix.css` | Profile picker and filter combobox alignment |
-| `filter-incomplete-modern.css` | Incomplete optional fields filter popup, match toggle (any/all), grouped checklists |
+| `filter-incomplete-modern.css` | Incomplete optional fields filter popup and grouped checklists (match mode fixed to any) |
 | `date-inputs-modern.css` | Native date inputs (roadmap deadline, planning fields) |
 
 Breakpoints align with `COMPACT_LAYOUT_MAX_WIDTH` (1400px) in `constants.js`.
@@ -220,7 +233,7 @@ Category badges use `categoryCode` (A/O/M/I/R) on compact cards; desktop matrix 
 | `byok-api-keys.css` | BYOK API keys modal (Groq/Tavily) |
 | `rich-description-content.css` | Rendered rich-text / summary paragraph typography |
 
-**Load order:** see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) — **33** stylesheets total.
+**Load order:** see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) — **43** local layered stylesheets in `index.html` (plus Google Fonts and Leaflet CSS from CDN).
 
 ### 4.1 Compact layout tokens (`compact-modern.css`)
 

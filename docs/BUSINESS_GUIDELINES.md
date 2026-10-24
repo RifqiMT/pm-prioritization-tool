@@ -4,7 +4,7 @@ Guidelines for teams using the Product Management Prioritization Tool in plannin
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-07-10 |
+| **Last updated** | 2026-10-24 |
 | **Audience** | Product managers, delivery leads, portfolio stakeholders |
 
 ---
@@ -104,6 +104,27 @@ Frameworks produce a **planning estimate** in roadmap currency, with optional **
 
 ---
 
+## 4b. Cost of Delay (plain English)
+
+**Cost of Delay** answers: *If we start or finish this later, what do we lose?*
+
+Experts usually break the ongoing cost into three parts for each week, month, or quarter you wait:
+
+| Input | Plain-English question to ask |
+|-------|-------------------------------|
+| Value people and the business miss | If this shipped today, what would we gain each week/month/quarter? |
+| Extra cost because timing matters | Is there a deadline, season, launch window, or competitor move? |
+| Risk that grows or opportunity that closes | What else gets worse, stays blocked, or becomes unavailable if we wait? |
+| Likely delay | How long might we postpone this? |
+| One-time cost of waiting | Is there a single hit (penalty, lost deal, rework) that does not repeat? |
+| Currency | Own currency for this estimate (shared option list only) |
+
+**Rule of thumb:** Cost of Delay ≈ (those three ongoing costs added up × likely delay) + any one-time cost.
+
+**Keep it separate from Financial impact.** Financial impact estimates *how much value the initiative creates*. Cost of Delay estimates *what waiting costs* so you can sequence work. Enter each on its own. A thoughtful estimate is enough — treat the result as a planning signal, not an accounting figure.
+
+---
+
 ## 5. Labels, links, tasks, and search hygiene
 
 | Control | Business use |
@@ -112,7 +133,7 @@ Frameworks produce a **planning estimate** in roadmap currency, with optional **
 | **Label search + autocomplete** | Theme slicing (e.g. `growth`, `compliance`) |
 | **Labels filter (any / with / without)** | Audits for undocumented themes or mandatory tagging policies |
 | **Links filter (any / with / without)** | Ensure PRDs, designs, or tickets are attached before review |
-| **Incomplete optional fields filter** | Session-only sweep for roadmaps missing selected optional metadata (14 field types; **any** or **all** match) before quarterly review or export |
+| **Incomplete optional fields filter** | Session-only sweep for roadmaps missing selected optional metadata (15 field types; **any** or **all** match) before quarterly review or export |
 | **Roadmap labels** | Multi-word tags on each initiative (e.g. `Platform`, `Q2 bet`) |
 | **Roadmap links** | Named URLs to specs, Figma, Jira, or docs |
 | **Roadmap tasks** | Sub-items with workflow status for delivery tracking inside an initiative |

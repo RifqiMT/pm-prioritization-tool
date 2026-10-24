@@ -37,7 +37,10 @@ const rich = {
   tasks: [{ name: "Ship" }],
   countries: ["US"],
   raci: { responsible: [{ name: "Alice", domain: "Business" }] },
-  financialImpactValue: 5000
+  financialImpactValue: 5000,
+  costOfDelayValue: 12000,
+  costOfDelayCurrency: "EUR",
+  costOfDelayInputs: { valuePerPeriod: 4000, delayPeriods: 3, durationUnit: "month" }
 };
 
 assert.strictEqual(roadmapIsMissingOptionalField(sparse, "labels"), true);
@@ -74,6 +77,12 @@ const zeroKano = { id: "zero-kano", title: "Zero KANO", kanoSatisfaction: 0, kan
 assert.strictEqual(roadmapIsMissingOptionalField(zeroRice, "rice"), true);
 assert.strictEqual(roadmapIsMissingOptionalField(zeroFinancial, "financial"), true);
 assert.strictEqual(roadmapIsMissingOptionalField(zeroKano, "kano"), true);
+assert.strictEqual(roadmapIsMissingOptionalField(sparse, "costOfDelay"), true);
+assert.strictEqual(roadmapIsMissingOptionalField(rich, "costOfDelay"), false);
+assert.strictEqual(
+  roadmapIsMissingOptionalField({ id: "zero-cod", costOfDelayValue: 0 }, "costOfDelay"),
+  true
+);
 assert.strictEqual(
   roadmapIsMissingOptionalField({ ...zeroRice, reachValue: 120, impactValue: 0 }, "rice"),
   true

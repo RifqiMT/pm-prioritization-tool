@@ -17,7 +17,8 @@ const IncompleteOptionalFields = (function () {
     { id: "tasks", label: "Tasks" },
     { id: "countries", label: "Countries" },
     { id: "raci", label: "RACI" },
-    { id: "financial", label: "Financial impact" }
+    { id: "financial", label: "Financial impact" },
+    { id: "costOfDelay", label: "Cost of Delay" }
   ];
 
   const INCOMPLETE_OPTIONAL_FIELD_GROUPS = [
@@ -39,7 +40,7 @@ const IncompleteOptionalFields = (function () {
     {
       id: "stakeholders",
       label: "Stakeholders & finance",
-      fields: ["raci", "financial"]
+      fields: ["raci", "financial", "costOfDelay"]
     }
   ];
 
@@ -231,6 +232,34 @@ const IncompleteOptionalFields = (function () {
     return false;
   }
 
+  function roadmapHasCostOfDelay(roadmap) {
+    const p = roadmap || {};
+    const rawValue = p.costOfDelayValue;
+    if (optionalVariableValueIsExplicitZero(rawValue)) {
+      return false;
+    }
+    if (optionalVariableValueIsPresent(rawValue)) {
+      return true;
+    }
+    const inputs = p.costOfDelayInputs;
+    if (inputs && typeof inputs === "object") {
+      const keys = [
+        "userBusinessValue",
+        "timePressureValue",
+        "riskOpportunityValue",
+        "oneTimeWaitingCost",
+        "valuePerPeriod",
+        "delayPeriods",
+        "extraCostOfWaiting"
+      ];
+      if (keys.some((key) => optionalVariableValueIsExplicitZero(inputs[key]))) {
+        return false;
+      }
+      return keys.some((key) => optionalVariableValueIsPresent(inputs[key]));
+    }
+    return false;
+  }
+
   function roadmapOptionalFieldIsComplete(roadmap, fieldId) {
     switch (fieldId) {
       case "note":
@@ -261,6 +290,8 @@ const IncompleteOptionalFields = (function () {
         return roadmapHasRaciAssignments(roadmap);
       case "financial":
         return roadmapHasFinancialImpact(roadmap);
+      case "costOfDelay":
+        return roadmapHasCostOfDelay(roadmap);
       default:
         return true;
     }

@@ -90,10 +90,6 @@
     };
   }
 
-  async function resolveGroqApiKey() {
-    return resolveSummaryApiKeys();
-  }
-
   function normalizeRedirectLinkUrl(url) {
     const trimmed = String(url || "").trim();
     if (!trimmed) return null;
@@ -2176,10 +2172,6 @@
     return finalizeSummaryVariantForTone(variant, sourceVariant || variant, tone);
   }
 
-  function assertSummaryParagraphVariant(variant, label) {
-    return repairSummaryParagraphStructure(variant, label);
-  }
-
   function assertThreeParagraphVariant(variant, label) {
     return repairSummaryParagraphStructure(variant, label);
   }
@@ -2391,7 +2383,6 @@
 
   global.RoadmapLlmSummary = {
     resolveSummaryApiKeys,
-    resolveGroqApiKey,
     formatMissingSummaryKeyMessage,
     generateSummary,
     generateProfessionalSummary,
@@ -2402,7 +2393,6 @@
     parseThreeParagraphs,
     parseSummaryParagraphs: parseThreeParagraphs,
     parseSummaryResponse,
-    assertSummaryParagraphVariant,
     buildProfessionalPrompt,
     buildStorytellingPrompt,
     buildSimplifyPrompt: buildStorytellingPrompt,

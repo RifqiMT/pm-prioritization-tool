@@ -2,8 +2,8 @@
 
 **Purpose:** Authoritative dictionary of application variables — technical name, friendly name, definition, formula, UI location, and examples.  
 **Audience:** Product, engineering, QA, analytics.  
-**Last audited:** 2026-07-10  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260710-ui201`
+**Last audited:** 2026-10-24  
+**Implementation baseline:** `APP_ASSET_VERSION` = `20260710-ui205`
 
 > Privileged cross-profile workspace variables (workspace-wide mode, owner filter, owner metadata) are specified in [GUARDRAILS.md](GUARDRAILS.md) §7 only. This dictionary uses neutral names below.
 
@@ -44,7 +44,7 @@ Persisted to `localStorage` under `rice_prioritizer_v1` unless noted.
 | `scrumBoardVisibleStatuses` | Board Status Columns | Which roadmap statuses appear as Scrum columns. | Subset of `roadmapStatusList`; at least one required. | Board toolbar multi-select | `["Not Started","In Progress","Done"]` |
 | `superAdminMode` | Workspace-wide mode flag | When true (and eligibility rules in GUARDRAILS §7), all workspace roadmaps are visible across profiles. | Boolean; persisted in workspace payload | See GUARDRAILS §7; `isSuperAdminModeActive()` | `false` |
 | `moscowSortByRice` | MoSCoW RICE Sort | When true, cards in each MoSCoW quadrant sorted by RICE. | Boolean; persisted. | MoSCoW toolbar toggle | `true` |
-| `mapMetric` | Map Aggregation Metric | What the choropleth represents. | `roadmaps` \| `rice` \| `riceAvg` \| `financial` \| `financialAvg` | Map metric picker | `"financial"` |
+| `mapMetric` | Map Aggregation Metric | What the choropleth represents. | `roadmaps` \| `rice` \| `riceAvg` \| `financial` \| `financialAvg` \| `businessLeads` \| `techLeads` \| `kanoMajority` \| `moscowMajority` \| `roadmapTypeMajority` \| `financialFrameworkMajority` (`MAP_METRIC_OPTIONS` in `app.js`) | Map metric picker | `"financial"` |
 | `exchangeRatesToEUR` | FX Rates to EUR | Map of currency code → EUR multiplier. | `amountEUR = amount × rate`. | FX refresh; table/map EUR | `{ "USD": 0.92, "IDR": 0.000058 }` |
 | `exchangeRatesDate` | FX Rates Date | ISO timestamp of last rate fetch. | Set on refresh. | Header FX footnote | `"2026-05-26T10:00:00.000Z"` |
 | `exchangeRatesLastSource` | FX Source | Whether rates were manual or auto. | `manual` \| `auto`. | Internal | `"auto"` |
@@ -54,7 +54,7 @@ Persisted to `localStorage` under `rice_prioritizer_v1` unless noted.
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
 | `incompleteFields` | Incomplete Field Selection | Selected optional field ids for data-quality filter. | Array of ids from `INCOMPLETE_OPTIONAL_FIELD_OPTIONS`. | `getSelectedIncompleteOptionalFields()` | `["labels", "rice"]` |
-| `incompleteFieldsMode` | Incomplete Match Mode | Roadmap must miss **any** or **all** selected fields. | `"any"` (default) or `"all"`. | `getIncompleteOptionalFieldsMode()` | `"any"` |
+| `incompleteFieldsMode` | Incomplete Match Mode | How selected incomplete fields combine when filtering. | Hardcoded `"any"` in `readPortfolioFilterCriteria()` (missing at least one selected field). Module still accepts `"all"` for tests; no mode UI. | `readPortfolioFilterCriteria()` → `IncompleteOptionalFields.roadmapMatchesIncompleteOptionalFieldsFilter` | `"any"` |
 | `unlockedProfileIds` | Unlocked Profiles (session) | Set of profile IDs unlocked with password this tab. | Cleared on refresh; stored in `sessionStorage`. | Lock banner, export gate | `Set(["profile_abc"])` |
 | `editingRoadmapId` | Editing Roadmap | Roadmap id open in modal for edit. | `null` when creating. | Roadmap modal | `"roadmap_xyz"` |
 | `activeTooltipWrap` | Active Tooltip Host | DOM wrapper owning the visible tooltip. | Enforces one tooltip policy. | Table/cards/modal | `HTMLElement` |
@@ -194,6 +194,9 @@ Full input field whitelists: `sanitizeFinancialImpactInputs` in `src/app.js`.
 | `financialImpactInputs` | Framework Inputs | Key-value inputs per framework. | Sanitized on save/switch. | Roadmap modal sections | `{ opAnnualVolume: 10000 }` |
 | `financialImpactValue` | Financial Impact | Computed or manual amount. | From framework or custom. | Table, map | `166500` |
 | `financialImpactCurrency` | Currency | ISO-like currency code. | Required if value non-zero. | Roadmap modal | `"EUR"` |
+| `costOfDelayValue` | Cost of Delay | Estimated value lost by delaying. | `(userBusiness + timePressure + riskOpportunity) × delay + oneTime`. | Roadmap modal Cost of Delay | `30000` |
+| `costOfDelayCurrency` | Cost of Delay Currency | Own currency field; options from shared `currencyList`. | Required if CoD value non-zero; not linked to `financialImpactCurrency`. | Roadmap modal | `"EUR"` |
+| `costOfDelayInputs` | Cost of Delay Inputs | Calculator inputs object (independent of financial impact). | `userBusinessValue`, `timePressureValue`, `riskOpportunityValue`, `oneTimeWaitingCost`, `delayPeriods`, `durationUnit` (+ legacy aliases). | Roadmap modal; CSV JSON | `{ "userBusinessValue": 8000, "timePressureValue": 2000, "delayPeriods": 3, "durationUnit": "month" }` |
 | `roadmapStatus` | Roadmap Status | Workflow state. | One of `roadmapStatusList`. | Table, board column | `"In Progress"` |
 | `roadmapType` | Roadmap Type | Initiative category. | Team-defined list. | Table Type column | `"Improvement"` |
 | `moscowCategory` | MoSCoW Category | Delivery priority class. | One of `moscowList`. | MoSCoW view | `"Must have"` |
@@ -562,12 +565,41 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-  UI[#filterIncompleteFieldsList checkboxes] --> MODE[data-incomplete-mode any/all]
-  MODE --> CRIT[incompleteFields + incompleteFieldsMode]
+  UI[#filterIncompleteFieldsList checkboxes] --> CRIT[incompleteFields + incompleteFieldsMode=any]
   CRIT --> MOD[IncompleteOptionalFields module]
   MOD --> APPLY[applyFilters in app.js]
   APPLY --> VIEWS[Table Board MoSCoW Map RACI KANO Gantt]
 ```
+
+### 8.22 Cost of Delay pipeline
+
+```mermaid
+flowchart TD
+  UBV[userBusinessValue] --> RATE[waitingPerPeriod sum]
+  TP[timePressureValue] --> RATE
+  RO[riskOpportunityValue] --> RATE
+  RATE --> DELAYED[waitingPerPeriod × delayPeriods]
+  DELAY[delayPeriods + durationUnit] --> DELAYED
+  DELAYED --> TOTAL[costOfDelayValue]
+  OT[oneTimeWaitingCost] --> TOTAL
+  CUR[costOfDelayCurrency from currencyList] --> SAVE[normalizeCostOfDelayOnRoadmap]
+  TOTAL --> SAVE
+  SAVE --> ENTITY[roadmap.costOfDelayValue / Currency / Inputs]
+  ENTITY --> CSV[CSV export/import columns]
+  ENTITY --> INC[IncompleteOptionalFields costOfDelay]
+  FI[Financial impact fields] -.->|no data link| SAVE
+```
+
+**Nested `costOfDelayInputs` keys**
+
+| Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
+|----------------|---------------|------------|-----------------|--------------|---------|
+| `userBusinessValue` | Value people and the business miss | Ongoing gain missed each period if not shipped. | Non-negative number or null; legacy `valuePerPeriod` migrates here. | `#costOfDelayUserBusinessValue` | `8000` |
+| `timePressureValue` | Extra cost because timing matters | Optional ongoing cost from deadlines, seasons, or competitors. | Non-negative or null. | `#costOfDelayTimePressureValue` | `2000` |
+| `riskOpportunityValue` | Risk / opportunity per period | Optional ongoing cost of growing risk or closed opportunity. | Non-negative or null. | `#costOfDelayRiskOpportunityValue` | `1500` |
+| `oneTimeWaitingCost` | One-time cost of waiting | Single hit that does not repeat each period. | Non-negative or null; legacy `extraCostOfWaiting` migrates here. | `#costOfDelayOneTimeWaitingCost` | `2500` |
+| `delayPeriods` | Likely delay | How many duration units you might postpone. | Non-negative number; multiplied by waiting rate. | `#costOfDelayDelayPeriods` | `3` |
+| `durationUnit` | Period unit | Unit for ongoing amounts and delay length. | `week` \| `month` \| `quarter` (default `month`). | `#costOfDelayDurationUnit` | `"month"` |
 
 ---
 
@@ -575,7 +607,7 @@ flowchart LR
 
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
-| `APP_ASSET_VERSION` | Asset Cache Version | Documentation baseline for cache-bust releases. Individual CSS/JS links in `index.html` may use per-asset `?v=` suffixes that include this baseline plus feature tags. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260710-ui201"` |
+| `APP_ASSET_VERSION` | Asset Cache Version | Documentation baseline for cache-bust releases. Individual CSS/JS links in `index.html` may use per-asset `?v=` suffixes that include this baseline plus feature tags. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260710-ui205"` |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | Compact Breakpoint (px) | Max viewport width for phone/tablet UI. | Constant in `constants.js`. | `src/constants.js` | `1400` |
 | `is-compact-layout` | Compact Layout Class | Viewport ≤1400px; enables compact CSS. | Set on `<html>` by `initCompactLayoutClass()`. | Global layout | class present |
 | `is-phone-layout` | Phone Layout Class | Same threshold as compact (unified phone UI). | Set together with compact class. | Global layout | class present |

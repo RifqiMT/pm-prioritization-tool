@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Document owner** | Product Team |
-| **Last audited** | 2026-07-10 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui201` |
+| **Last audited** | 2026-10-24 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui205` |
 
 ---
 
@@ -75,6 +75,23 @@ The application is a **static single-page app** (HTML, layered CSS, vanilla Java
 
 Computed in `computeFrameworkFinancialImpact()` (`src/app.js`). Table shows a **Framework** icon column; filters support framework.
 
+### 3.3b Cost of Delay (optional)
+
+Plain-English estimate of **what waiting costs**, independent of Financial impact:
+
+| Input | Role |
+|-------|------|
+| Value people and the business miss | Ongoing cost per period |
+| Extra cost because timing matters | Optional ongoing (deadline / season / competitor) |
+| Risk that grows or opportunity that closes | Optional ongoing |
+| Duration unit | `week` / `month` / `quarter` for all ongoing amounts |
+| Likely delay | Number of those periods postponed |
+| One-time cost of waiting | Optional single hit (penalty, lost deal, rework) |
+| Currency | Own `costOfDelayCurrency` from shared `currencyList` |
+
+**Formula:** `(userBusinessValue + timePressureValue + riskOpportunityValue) × delayPeriods + oneTimeWaitingCost`  
+Module: `src/modules/cost-of-delay.js` (`CostOfDelay`). Persisted as `costOfDelayValue`, `costOfDelayCurrency`, `costOfDelayInputs`. Included in incomplete-optional filter and CSV round-trip. See [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md) §4b and [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md) F-15b.
+
 ### 3.4 Filters
 
 Organized in the portfolio filters drawer:
@@ -83,7 +100,7 @@ Organized in the portfolio filters drawer:
 |------|--------|
 | **Search** | Title (autocomplete), Label (autocomplete) |
 | **Quick** | Roadmap type, Countries (multi-select + EU), Roadmap period |
-| **Advanced** | Impact, Effort, Currency, Framework, Status, T-shirt, MoSCoW, Links (any / with / without), Labels (any / with / without), **Incomplete optional fields** (14-field checklist; any/all match) |
+| **Advanced** | Impact, Effort, Currency, Framework, Status, T-shirt, MoSCoW, Links (any / with / without), Labels (any / with / without), **Incomplete optional fields** (15-field checklist incl. Cost of Delay; match mode fixed to any) |
 
 `applyFilters()` in `src/app.js` intersects all active criteria. Active count shown in filters badge; **Reset** clears filters.
 
@@ -263,7 +280,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md).
 |-------|------------|
 | UI | `index.html`, **43** layered CSS files (see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) §3.1) |
 | Logic | `src/app.js` (~26k lines), `src/rice.js`, `src/constants.js`, `src/utils.js` |
-| Modules | `workspace-merge`, `storage`, `profile-security`, `exchange-rates`, `fullscreen`, `overlay-manager`, `description-format`, `rich-text-editor`, `board-drag`, `board-card-interaction`, `byok-api-keys`, `roadmap-llm-summary`, `roadmap-5why-framework`, `roadmap-periods`, **`incomplete-optional-fields`**, `gantt-view`, `export-payload`, `share-link`; dev seed: `dev-seed-workspace.js` |
+| Modules | **19** in `src/modules/`: `workspace-merge`, `storage`, `profile-security`, `exchange-rates`, `fullscreen`, `overlay-manager`, `description-format`, `rich-text-editor`, `board-drag`, `board-card-interaction`, `byok-api-keys`, `roadmap-llm-summary`, `roadmap-5why-framework`, `roadmap-periods`, `incomplete-optional-fields`, **`cost-of-delay`**, `gantt-view`, `export-payload`, `share-link`; plus core `constants` / `utils` / `rice` and dev seed `dev-seed-workspace.js` |
 | API | `api/health.js`, `api/config.js`, `api/state.js`, `api/byok/validate-*.js`, `api/_lib/*` (auth, mongo, roadmap-metadata, export-payload, **workspace-dedupe**, byok-validate) |
 | Database | MongoDB Atlas (optional) |
 | Map | Leaflet 1.9.4 (CDN) |

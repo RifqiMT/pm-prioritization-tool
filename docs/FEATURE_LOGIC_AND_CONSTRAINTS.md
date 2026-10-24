@@ -6,8 +6,8 @@
 | **Version** | 2.0.0 |
 | **Audience** | Product, engineering, design, QA, and stakeholders |
 | **Maintainer** | Product Team |
-| **Last updated** | 2026-07-10 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui201` |
+| **Last updated** | 2026-10-24 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui205` |
 
 This document is the **collaborative cross-feature reference** for how the app behaves end-to-end. It explains **logic** (what the system does), **rules** (what inputs and workflows are allowed), and **constraints** (what the product must not do or cannot guarantee). Use it in planning reviews, QA test design, and cross-team alignment.
 
@@ -122,9 +122,9 @@ flowchart LR
 | Aspect | Detail |
 |--------|--------|
 | **Purpose** | Find roadmaps with missing metadata for data-quality sweeps |
-| **Logic** | `roadmapMatchesIncompleteOptionalFieldsFilter(roadmap, fieldIds, mode)`; 14 field ids in four UI groups |
+| **Logic** | `roadmapMatchesIncompleteOptionalFieldsFilter(roadmap, fieldIds, mode)`; 15 field ids in four UI groups (includes `costOfDelay`) |
 | **Rules** | Zero numeric RICE/financial/KANO values count as missing; rich-text RICE descriptions count as present when non-empty |
-| **Constraints** | Session-only criteria (`incompleteFields`, `incompleteFieldsMode`); cleared on “Clear filters” |
+| **Constraints** | Session-only criteria (`incompleteFields`; `incompleteFieldsMode` hardcoded `"any"`); cleared on “Clear filters” |
 | **Code** | `src/modules/incomplete-optional-fields.js`, `css/filter-incomplete-modern.css`, filter popup in `index.html` |
 | **See also** | [PRD.md](PRD.md) FR-6.8, `npm run test:incomplete-filter` |
 
@@ -234,6 +234,17 @@ flowchart LR
 | **Constraints** | Outputs are estimates, not accounting; NPS has segment retention ordering rules |
 | **Code** | `sanitizeFinancialImpactInputs()`, `getFinancialFrameworkValidationMessage()`, financial section in modal |
 | **See also** | [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md) §4–5, [VARIABLES.md](VARIABLES.md) |
+
+### F-15b Cost of Delay
+
+| Aspect | Detail |
+|--------|--------|
+| **Purpose** | Plain-English estimate of what waiting costs (workshop-style Cost of Delay) |
+| **Logic** | `CostOfDelay.compute`: `(userBusinessValue + timePressureValue + riskOpportunityValue) × delayPeriods + oneTimeWaitingCost` |
+| **Rules** | Independent of Financial impact (separate amounts/currency/result); options from shared `currencyList` only; currency required when CoD non-zero; duration unit `week` / `month` / `quarter`; legacy `valuePerPeriod` / `extraCostOfWaiting` migrate on sanitize; `useFinancialImpact` dropped on load |
+| **Constraints** | Planning estimate only — not accounting; does not replace RICE; does not read or write financial impact fields |
+| **Code** | `src/modules/cost-of-delay.js`, `#roadmapModalSectionCostOfDelay`, `normalizeCostOfDelayOnRoadmap()` |
+| **See also** | [BUSINESS_GUIDELINES.md](BUSINESS_GUIDELINES.md), [VARIABLES.md](VARIABLES.md), `npm run test:cost-of-delay` |
 
 ### F-16 Labels, links, and tasks
 
@@ -590,7 +601,8 @@ flowchart LR
 | Date | Change |
 |------|--------|
 | 2026-05-28 | Initial collaborative cross-feature logic and constraints reference |
-| 2026-07-10 | Incomplete optional fields filter; sync:assets; HRK→EUR; 43 CSS; 22 modules; 17 tests; baseline `20260710-ui201` |
+| 2026-10-24 | Full docs audit to `20260710-ui205`; Cost of Delay workshop model (3-part + delay + one-time); decoupled from Financial impact; 19 modules; 18 tests |
+| 2026-07-10 | Incomplete optional fields filter; sync:assets; HRK→EUR; 43 CSS; 18 modules; 17 tests; baseline `20260710-ui201` |
 | 2026-07-09 (pass 2) | Server-side dedupe, import tombstones, single-toast, mobile import; 15 tests; baseline `20260709-ui200` |
 | 2026-07-09 | Id-anchored dedupe, revision conflicts, roadmap field suggestions; baseline `20260709-ui199` |
 | 2026-07-08 | WorkspaceMerge + tombstones; 13 tests; ~25k app.js; baseline `20260708-ui198` |

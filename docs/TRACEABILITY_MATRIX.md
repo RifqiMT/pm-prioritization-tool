@@ -4,7 +4,7 @@
 
 **Purpose:** Map PRD requirements to concrete implementation evidence and verification steps.  
 **Standard:** Requirement IDs must remain synchronized with [PRD.md](PRD.md).  
-**Last audited:** 2026-07-10 · **Baseline:** `APP_ASSET_VERSION` = `20260710-ui201`
+**Last audited:** 2026-10-24 · **Baseline:** `APP_ASSET_VERSION` = `20260710-ui205`
 
 ---
 
@@ -80,6 +80,17 @@
 | FR-4.7 | Framework switch clears irrelevant inputs | `sanitizeFinancialImpactInputs` | Switching resets stale keys |
 | FR-4.8 | Table framework column + filter | Framework icon column; `filterFinancialFramework` | Filter matches stored framework |
 
+## FR-4b Cost of Delay
+
+| Requirement ID | Requirement Summary | Code Evidence | Verification |
+|---|---|---|---|
+| FR-4b.1 | CoD optional section | `#roadmapModalSectionCostOfDelay` (`data-optional-section`) | Collapses when empty; section nav button |
+| FR-4b.2 | CoD calculator | `CostOfDelay.compute` in `cost-of-delay.js` | 3 ongoing parts × delay + one-time; narrative + how-to-use |
+| FR-4b.3 | CoD currency | `costOfDelayCurrency` + shared `currencyList` | Required when value non-zero; not linked to FI currency |
+| FR-4b.4 | CoD independence | No FI→CoD coupling; `useFinancialImpact` stripped | Separate inputs/result from Financial impact |
+| FR-4b.5 | CoD persistence | `costOfDelayValue` / `Currency` / `Inputs`; CSV; incomplete filter | Legacy input keys migrate on sanitize |
+| US-C2 | Estimate Cost of Delay | Roadmap modal CoD section; `npm run test:cost-of-delay` | US-C2 acceptance |
+
 ---
 
 ## FR-5 Views
@@ -123,7 +134,7 @@
 | FR-6.5 | Links presence filter | `filterLinks` with/without | With/without/any behaviors |
 | FR-6.6 | Active filter summary pill | Filter summary renderer | Pill lists labels/links filters |
 | FR-6.7 | Compact filters sheet | `#portfolioFiltersSheet`; `filters-sheet-modern.css`; mobile command deck | At ≤1400px: sheet opens/closes; filters persist |
-| FR-6.8 | Incomplete optional fields | `incomplete-optional-fields.js`; `#filterIncompleteFieldsList`; `filter-incomplete-modern.css` | Any/all match on 14 optional fields; session-only |
+| FR-6.8 | Incomplete optional fields | `incomplete-optional-fields.js`; `#filterIncompleteFieldsList`; `filter-incomplete-modern.css` | Any/all match on 15 optional fields (incl. Cost of Delay); session-only |
 
 ---
 
