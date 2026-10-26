@@ -18,7 +18,7 @@ controls stay compact.
     --pcard-border: rgba(226, 232, 240, 0.98);
     --pcard-shadow:
       0 1px 2px rgba(15, 23, 42, 0.04),
-      0 6px 18px rgba(127, 29, 29, 0.07);
+      0 6px 18px rgba(15, 23, 42, 0.07);
     --pcard-surface: linear-gradient(165deg, #ffffff 0%, #fefdfb 55%, #fffaf5 100%);
     --pcard-footer-bg: rgba(248, 250, 252, 0.88);
     --pcard-divider: rgba(226, 232, 240, 0.92);
@@ -59,8 +59,8 @@ controls stay compact.
   html.is-compact-layout .moscow-board-card.moscow-board-card--dragging,
   html.is-compact-layout .scrum-board-card.scrum-board-card--dragging {
     opacity: 0.97 !important;
-    box-shadow: 0 12px 28px rgba(127, 29, 29, 0.16) !important;
-    border-color: rgba(185, 28, 28, 0.35) !important;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16) !important;
+    border-color: rgba(15, 118, 110, 0.35) !important;
     z-index: 20;
   }
 
@@ -86,19 +86,19 @@ controls stay compact.
   }
 
   html.is-compact-layout .moscow-board-column[data-moscow="Must have"] .moscow-board-card {
-    border-left: 4px solid rgba(185, 28, 28, 0.9) !important;
+    border-left: 4px solid #e11d48 !important;
   }
 
   html.is-compact-layout .moscow-board-column[data-moscow="Should have"] .moscow-board-card {
-    border-left: 4px solid rgba(234, 88, 12, 0.9) !important;
+    border-left: 4px solid #d97706 !important;
   }
 
   html.is-compact-layout .moscow-board-column[data-moscow="Could have"] .moscow-board-card {
-    border-left: 4px solid rgba(59, 130, 246, 0.9) !important;
+    border-left: 4px solid #0284c7 !important;
   }
 
   html.is-compact-layout .moscow-board-column[data-moscow="Won't have"] .moscow-board-card {
-    border-left: 4px solid rgba(100, 116, 139, 0.9) !important;
+    border-left: 4px solid #64748b !important;
   }
 
   html.is-compact-layout .scrum-board-column-cards,
@@ -264,7 +264,7 @@ controls stay compact.
   html.is-compact-layout .moscow-board-card-financial {
     font-weight: 700 !important;
     border: 1px solid rgba(180, 83, 9, 0.28) !important;
-    background: #fff7ed !important;
+    background: #f8fafc !important;
     color: #9a3412 !important;
   }
 
@@ -330,8 +330,8 @@ controls stay compact.
 
   html.is-compact-layout .portfolio-card-move-select:focus {
     outline: none !important;
-    border-color: rgba(185, 28, 28, 0.38) !important;
-    box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.1) !important;
+    border-color: rgba(15, 118, 110, 0.38) !important;
+    box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.1) !important;
   }
 
   /* Icon-only action strip — compact square controls, centered */
@@ -428,8 +428,8 @@ controls stay compact.
 
   html.is-compact-layout .moscow-board-card-btn--delete,
   html.is-compact-layout .scrum-board-card-btn--delete {
-    background: #fef2f2 !important;
-    color: #b91c1c !important;
+    background: #f0fdfa !important;
+    color: #dc2626 !important;
     border: 1px solid rgba(239, 68, 68, 0.22) !important;
   }
 
@@ -558,7 +558,7 @@ html.is-desktop-layout {
   --pcard-border: rgba(226, 232, 240, 0.98);
   --pcard-shadow:
     0 1px 2px rgba(15, 23, 42, 0.04),
-    0 6px 18px rgba(127, 29, 29, 0.07);
+    0 6px 18px rgba(15, 23, 42, 0.07);
   --pcard-surface: linear-gradient(165deg, #ffffff 0%, #fefdfb 55%, #fffaf5 100%);
 }html.is-desktop-layout .moscow-board-card,
 html.is-desktop-layout .scrum-board-card,
@@ -576,8 +576,8 @@ html.is-desktop-layout .moscow-board-card.moscow-board-card--dragging,
 html.is-desktop-layout .scrum-board-card.scrum-board-card--dragging,
 html.is-desktop-layout .roadmaps-view--board .scrum-board-card.scrum-board-card--dragging {
   opacity: 0.97 !important;
-  box-shadow: 0 12px 28px rgba(127, 29, 29, 0.16) !important;
-  border-color: rgba(185, 28, 28, 0.35) !important;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16) !important;
+  border-color: rgba(15, 118, 110, 0.35) !important;
   transform: none !important;
 }html.is-desktop-layout .scrum-board-card-type-wrap.cell-type-pill,
 html.is-desktop-layout .moscow-board-card .scrum-board-card-type-wrap.cell-type-pill {
@@ -616,7 +616,7 @@ html.is-desktop-layout .moscow-board-card .portfolio-card-footer {
   gap: 0.45rem;
   padding: 0.6rem 0.95rem 0.75rem;
   border-top: 1px solid rgba(226, 232, 240, 0.92);
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.72) 0%, rgba(255, 253, 248, 0.95) 100%);
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.72) 0%, rgba(248, 250, 252, 0.95) 100%);
   flex-shrink: 0;
 }html.is-desktop-layout .scrum-board-card .board-card-section--actions.scrum-board-card-actions,
 html.is-desktop-layout .moscow-board-card .board-card-section--actions.moscow-board-card-actions {

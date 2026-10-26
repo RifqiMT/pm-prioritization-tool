@@ -6,9 +6,9 @@
 
 | | |
 |---|---|
-| **Production** | [pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app) |
+| **Production** | [pm-prioritization-tool-one.vercel.app](https://pm-prioritization-tool-one.vercel.app) |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260710-ui205` (per-asset `?v=` tags synced via `npm run sync:assets`) |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20261025-ui234` (per-asset `?v=` tags synced via `npm run sync:assets`) |
 | **Docs hub** | [docs/README.md](docs/README.md) |
 
 > Do not use `pm-prioritization-tool.vercel.app` — that hostname serves a legacy React app. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
@@ -29,6 +29,7 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 | **Financial frameworks** | Custom, CLV, NPS, Risk, Headcount, Operational |
 | **Cost of Delay** | Optional plain-English waiting-cost estimate (independent of Financial impact) |
 | **Views** | Table, Scrum board, MoSCoW, world map (Leaflet), RACI matrix, KANO portfolio matrix, **Gantt timeline** |
+| **Portfolio timeline** | Profile overview Chart/Table by quarter or year (type, MoSCoW, KANO, finance, RICE, …) |
 | **Filters** | Search, quick filters, advanced filters (labels, links, incomplete optional fields) |
 | **Portability** | JSON full backup + CSV export; merge import with tombstone resurrection |
 | **Responsive UI** | Desktop (>1400px); unified phone/tablet UI (≤1400px) |
@@ -58,6 +59,8 @@ The Product Management Prioritization Tool helps product teams **capture initiat
 - Inline unlock banner and modal unlock flows  
 - Session unlock in `sessionStorage` (cleared on tab close / refresh)  
 - **Demo profile** (`Test`) is read-only when active  
+- **Portfolio timeline** in Profile overview — Chart or Table; Quarterly / Annually; metric switcher (type, t-shirt, MoSCoW, KANO, framework, currency, financial EUR sum, RICE average); legend category filters; table period-over-period growth %  
+- Calm **slate / teal** visual system (`design-tokens.css`, `ui-refresh.css`, `ui-polish.css`, `moscow-theme.css`)
 
 ### Roadmaps
 
@@ -268,4 +271,4 @@ UNLICENSED (private). See `package.json`.
 - GitHub: [RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool)  
 - Article: [Effort–impact confusion to clear-cut priorities](https://rifqi-tjahyono.com/%f0%9f%93%8a-effort-impact-confusion-to-clear-cut-priorities-replace-tab-hopping-with-visual-roadmap-sanity-%f0%9f%a7%ad%e2%9c%a8/)
 
-**Documentation last comprehensively audited:** 2026-10-24 (baseline `20260710-ui205`; Cost of Delay independent of Financial impact).
+**Documentation last comprehensively audited:** 2026-10-26 (baseline `20261025-ui234`; Portfolio timeline Chart/Table + calm slate/teal design system).

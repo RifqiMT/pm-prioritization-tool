@@ -9,12 +9,12 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
   /* ── Cockpit filter chip (mobile command rail) ─────────── */
   html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-drawer {
     flex: 0 0 auto;
-    border: 1px solid rgba(202, 138, 4, 0.24) !important;
+    border: 1px solid rgba(100, 116, 139, 0.24) !important;
     border-radius: 999px !important;
     background: rgba(255, 255, 255, 0.96) !important;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.98),
-      0 1px 4px rgba(63, 15, 25, 0.05) !important;
+      0 1px 4px rgba(15, 23, 42, 0.05) !important;
     transition:
       border-color 0.18s ease,
       background 0.18s ease,
@@ -23,19 +23,19 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
   }
 
   html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-drawer.portfolio-filters-drawer--active {
-    border-color: rgba(185, 28, 28, 0.42) !important;
+    border-color: rgba(15, 118, 110, 0.42) !important;
     background: linear-gradient(180deg, rgba(255, 247, 237, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%) !important;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.98),
-      0 0 0 3px rgba(185, 28, 28, 0.08),
-      0 2px 8px rgba(185, 28, 28, 0.1) !important;
+      0 0 0 3px rgba(15, 118, 110, 0.08),
+      0 2px 8px rgba(15, 118, 110, 0.1) !important;
   }
 
   html.is-compact-layout.filters-sheet-open .mobile-workspace-chrome .portfolio-filters-drawer {
-    border-color: rgba(185, 28, 28, 0.48) !important;
+    border-color: rgba(15, 118, 110, 0.48) !important;
     background: #fff !important;
     box-shadow:
-      0 0 0 3px rgba(185, 28, 28, 0.12),
+      0 0 0 3px rgba(15, 118, 110, 0.12),
       inset 0 1px 0 rgba(255, 255, 255, 0.98) !important;
   }
 
@@ -86,8 +86,8 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
     width: 28px;
     height: 28px;
     border-radius: 999px;
-    color: #7a4b12;
-    background: rgba(254, 243, 199, 0.42);
+    color: #475569;
+    background: rgba(204, 251, 241, 0.42);
     border: none;
     box-shadow: none;
     transition: color 0.15s ease, background 0.15s ease;
@@ -100,14 +100,14 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
   }
 
   html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-drawer--active .portfolio-filters-summary-icon {
-    color: #b91c1c;
-    background: rgba(254, 226, 226, 0.55);
+    color: #0f766e;
+    background: rgba(204, 251, 241, 0.55);
   }
 
   html.is-compact-layout.filters-sheet-open .mobile-workspace-chrome .portfolio-filters-summary-icon {
     color: #fff;
-    background: linear-gradient(145deg, #dc2626, #b91c1c);
-    box-shadow: 0 2px 6px rgba(185, 28, 28, 0.28);
+    background: linear-gradient(145deg, #0f766e, #0f766e);
+    box-shadow: 0 2px 6px rgba(15, 118, 110, 0.28);
   }
 
   html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-label {
@@ -117,12 +117,12 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
     font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: -0.01em;
-    color: #3f0f19;
+    color: #0f172a;
     white-space: nowrap;
   }
 
   html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-drawer--active .portfolio-filters-summary-label {
-    color: #991b1b;
+    color: #115e59;
   }
 
   html.is-compact-layout .mobile-workspace-chrome .portfolio-filters-summary-indicator {
@@ -154,9 +154,9 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
     line-height: 1;
     letter-spacing: 0;
     color: #fff !important;
-    background: linear-gradient(180deg, #dc2626, #b91c1c) !important;
+    background: linear-gradient(180deg, #0f766e, #0f766e) !important;
     border: 2px solid #fff !important;
-    box-shadow: 0 2px 8px rgba(185, 28, 28, 0.38);
+    box-shadow: 0 2px 8px rgba(15, 118, 110, 0.38);
     animation: filters-badge-pop 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
   }
 
@@ -173,12 +173,12 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
 
   /* ── Non-cockpit compact drawer (fallback / expanded contexts) ─ */
   html.is-compact-layout .portfolio-filters-drawer {
-    border-bottom: 1px solid rgba(202, 138, 4, 0.28) !important;
-    background: linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(255, 249, 240, 0.94)) !important;
+    border-bottom: 1px solid rgba(100, 116, 139, 0.28) !important;
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(255, 249, 240, 0.94)) !important;
   }
 
   html.is-compact-layout .portfolio-filters-drawer.portfolio-filters-drawer--active {
-    border-color: rgba(185, 28, 28, 0.28) !important;
+    border-color: rgba(15, 118, 110, 0.28) !important;
   }
 
   html.is-compact-layout .portfolio-filters-summary {
@@ -204,7 +204,7 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
   }
 
   html.is-compact-layout .portfolio-filters-drawer[open] .portfolio-filters-summary {
-    border-bottom: 1px solid rgba(202, 138, 4, 0.22) !important;
+    border-bottom: 1px solid rgba(100, 116, 139, 0.22) !important;
     box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.65);
   }
 
@@ -223,17 +223,17 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
     width: 36px;
     height: 36px;
     border-radius: 10px;
-    color: #7a4b12;
-    background: linear-gradient(145deg, rgba(254, 243, 199, 0.55), rgba(254, 226, 226, 0.35));
-    border: 1px solid rgba(202, 138, 4, 0.28);
+    color: #475569;
+    background: linear-gradient(145deg, rgba(204, 251, 241, 0.55), rgba(204, 251, 241, 0.35));
+    border: 1px solid rgba(100, 116, 139, 0.28);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
     transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
   }
 
   html.is-compact-layout .portfolio-filters-drawer--active .portfolio-filters-summary-icon {
-    color: #b91c1c;
-    background: linear-gradient(145deg, rgba(254, 226, 226, 0.65), rgba(255, 237, 213, 0.55));
-    border-color: rgba(185, 28, 28, 0.28);
+    color: #0f766e;
+    background: linear-gradient(145deg, rgba(204, 251, 241, 0.65), rgba(255, 237, 213, 0.55));
+    border-color: rgba(15, 118, 110, 0.28);
   }
 
   html.is-compact-layout .portfolio-filters-summary-icon svg {
@@ -254,7 +254,7 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
     font-size: 0.88rem !important;
     font-weight: 700 !important;
     letter-spacing: -0.02em !important;
-    color: #3f0f19 !important;
+    color: #0f172a !important;
     line-height: 1.2 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
@@ -263,14 +263,14 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
   }
 
   html.is-compact-layout .portfolio-filters-drawer--active .portfolio-filters-summary-title {
-    color: #991b1b !important;
+    color: #115e59 !important;
   }
 
   html.is-compact-layout .portfolio-filters-summary-subline {
     font-size: 0.68rem;
     font-weight: 500;
     line-height: 1.25;
-    color: #78716c;
+    color: #64748b;
     letter-spacing: 0.01em;
     white-space: nowrap;
     overflow: hidden;
@@ -294,9 +294,9 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
     text-transform: none !important;
     line-height: 1.2 !important;
     color: #fff !important;
-    background: linear-gradient(180deg, #dc2626, #b91c1c) !important;
-    border: 1px solid rgba(185, 28, 28, 0.35) !important;
-    box-shadow: 0 2px 6px rgba(185, 28, 28, 0.22);
+    background: linear-gradient(180deg, #0f766e, #0f766e) !important;
+    border: 1px solid rgba(15, 118, 110, 0.35) !important;
+    box-shadow: 0 2px 6px rgba(15, 118, 110, 0.22);
   }
 
   html.is-compact-layout .portfolio-filters-summary-chevron {
@@ -307,16 +307,16 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
     height: 32px;
     margin-left: 0.15rem;
     border-radius: 9px;
-    color: #a16207;
+    color: #64748b;
     background: rgba(255, 255, 255, 0.75);
-    border: 1px solid rgba(202, 138, 4, 0.28);
+    border: 1px solid rgba(100, 116, 139, 0.28);
     transition: transform 0.22s ease, background 0.2s ease, color 0.2s ease;
   }
 
   html.is-compact-layout .portfolio-filters-drawer[open] .portfolio-filters-summary-chevron,
   html.is-compact-layout.filters-sheet-open .portfolio-filters-summary-chevron {
     transform: rotate(180deg);
-    background: rgba(254, 243, 199, 0.85);
+    background: rgba(204, 251, 241, 0.85);
     color: #92400e;
   }
 
@@ -336,8 +336,8 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
     z-index: 3;
     margin: 0 0 0.5rem !important;
     padding: 0 0 0.45rem !important;
-    border-bottom: 1px solid rgba(202, 138, 4, 0.18) !important;
-    background: linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(255, 249, 240, 0.92)) !important;
+    border-bottom: 1px solid rgba(100, 116, 139, 0.18) !important;
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(255, 249, 240, 0.92)) !important;
   }
 
   html.is-compact-layout .portfolio-filters-drawer[open] .portfolio-filters-toolbar .filters-meta {
@@ -373,7 +373,7 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
     white-space: nowrap !important;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.92),
-      0 1px 2px rgba(63, 15, 25, 0.06);
+      0 1px 2px rgba(15, 23, 42, 0.06);
     transition:
       background 0.18s ease,
       border-color 0.18s ease,
@@ -396,9 +396,9 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
   }
 
   html.is-compact-layout .portfolio-filter-btn--reset {
-    color: #57534e !important;
+    color: #475569 !important;
     background: #fff !important;
-    border: 1px solid rgba(202, 138, 4, 0.38) !important;
+    border: 1px solid rgba(100, 116, 139, 0.38) !important;
   }
 
   html.is-compact-layout .portfolio-filter-btn--reset:active {
@@ -407,13 +407,13 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
 
   html.is-compact-layout .portfolio-filter-btn--advanced {
     color: #7c2d12 !important;
-    background: linear-gradient(180deg, #fffbeb, #fef3c7) !important;
-    border: 1px solid rgba(202, 138, 4, 0.45) !important;
+    background: linear-gradient(180deg, #f8fafc, #e2e8f0) !important;
+    border: 1px solid rgba(100, 116, 139, 0.45) !important;
   }
 
   html.is-compact-layout .portfolio-filter-btn--advanced[aria-expanded="true"] {
     color: #fff !important;
-    background: linear-gradient(180deg, #b45309, #92400e) !important;
+    background: linear-gradient(180deg, #475569, #92400e) !important;
     border-color: rgba(146, 64, 14, 0.65) !important;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.2),
@@ -445,7 +445,7 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
     display: block !important;
     margin-top: 0.45rem !important;
     padding-top: 0.55rem !important;
-    border-top: 1px solid rgba(202, 138, 4, 0.22) !important;
+    border-top: 1px solid rgba(100, 116, 139, 0.22) !important;
     animation: filters-compact-body-in 0.2s ease-out;
   }
 
@@ -505,7 +505,7 @@ narrow screens (≤1400px) — filter trigger + expanded drawer.
     max-width: none !important;
     min-width: 0 !important;
     min-height: 0 !important;
-    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-family: "Manrope", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     font-size: 0.88rem !important;
     font-weight: 500 !important;
     padding: 0 !important;

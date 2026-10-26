@@ -3,7 +3,7 @@
 board,
 filters,
 and portfolio chrome.
- * Loaded after main.css; aligns with Indonesian red/gold light theme.
+ * Loaded after main.css; aligns with calm slate / teal workspace theme.
  */
 
 /* ── Design tokens (workspace) ───────────────────────────── */
@@ -11,20 +11,20 @@ and portfolio chrome.
   --ws-radius-sm: 8px;
   --ws-radius-md: 12px;
   --ws-radius-lg: 16px;
-  --ws-shadow-soft: 0 1px 2px rgba(63, 15, 25, 0.06), 0 8px 24px rgba(185, 28, 28, 0.08);
-  --ws-shadow-lift: 0 4px 14px rgba(185, 28, 28, 0.12), 0 12px 32px rgba(161, 98, 7, 0.1);
-  --ws-header-grad: linear-gradient(135deg, #991b1b 0%, #b91c1c 42%, #a16207 100%);
+  --ws-shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 118, 110, 0.08);
+  --ws-shadow-lift: 0 4px 14px rgba(15, 118, 110, 0.12), 0 12px 32px rgba(71, 85, 105, 0.1);
+  --ws-header-grad: linear-gradient(135deg, #115e59 0%, #0f766e 42%, #64748b 100%);
   --ws-surface: #ffffff;
-  --ws-surface-muted: #fffdf8;
-  --ws-border: rgba(231, 201, 120, 0.65);
-  --ws-border-strong: rgba(185, 28, 28, 0.28);
-  --ws-text: #3f0f19;
-  --ws-text-soft: #7a4b12;
-  --ws-accent: #b91c1c;
-  --ws-gold: #a16207;
-  --ws-row-hover: rgba(254, 243, 199, 0.45);
-  --ws-row-alt: rgba(255, 253, 248, 0.85);
-  --ws-focus: 0 0 0 3px rgba(220, 38, 38, 0.22);
+  --ws-surface-muted: #f8fafc;
+  --ws-border: rgba(148, 163, 184, 0.65);
+  --ws-border-strong: rgba(15, 118, 110, 0.28);
+  --ws-text: #0f172a;
+  --ws-text-soft: #475569;
+  --ws-accent: #0f766e;
+  --ws-gold: #64748b;
+  --ws-row-hover: rgba(204, 251, 241, 0.45);
+  --ws-row-alt: rgba(248, 250, 252, 0.85);
+  --ws-focus: 0 0 0 3px rgba(15, 118, 110, 0.22);
 }/* ── Workspace panel shell ─────────────────────────────── */
 .workspace-panel.card-plain {
   display: flex;
@@ -50,7 +50,7 @@ and portfolio chrome.
   padding: 0.85rem 1rem 0.75rem;
   margin: 0 !important;
   border-bottom: 1px solid var(--ws-border);
-  background: linear-gradient(180deg, #fffdf8 0%, #ffffff 72%);
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 72%);
   gap: 1rem 1.25rem;
   align-items: flex-start;
 }.workspace-eyebrow {
@@ -80,10 +80,10 @@ and portfolio chrome.
   display: inline-flex;
   padding: 0.22rem;
   border-radius: 999px;
-  background: rgba(254, 243, 199, 0.55);
+  background: rgba(204, 251, 241, 0.55);
   border: 1px solid var(--ws-border);
   gap: 0.15rem;
-  box-shadow: inset 0 1px 2px rgba(63, 15, 25, 0.04);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
 }.view-toggle-group--modern .view-toggle-btn {
   border: none !important;
   background: transparent !important;
@@ -101,13 +101,13 @@ and portfolio chrome.
 .view-toggle-group--modern .view-toggle-btn[aria-selected="true"] {
   background: var(--ws-surface) !important;
   color: var(--ws-accent) !important;
-  box-shadow: 0 1px 4px rgba(185, 28, 28, 0.15) !important;
+  box-shadow: 0 1px 4px rgba(15, 118, 110, 0.15) !important;
 }.workspace-panel #addRoadmapBtn {
   border-radius: 10px !important;
   font-weight: 600 !important;
   padding: 0.5rem 1rem !important;
   min-height: 40px;
-  box-shadow: 0 2px 8px rgba(185, 28, 28, 0.2);
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.2);
 }.workspace-panel #bulkDeleteBtn {
   border-radius: 10px !important;
   min-height: 40px;
@@ -205,12 +205,12 @@ and portfolio chrome.
   width: 10px;
   height: 10px;
 }.table-wrapper--modern::-webkit-scrollbar-thumb {
-  background: rgba(161, 98, 7, 0.35);
+  background: rgba(71, 85, 105, 0.35);
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }.table-wrapper--modern::-webkit-scrollbar-track {
-  background: rgba(254, 243, 199, 0.35);
+  background: rgba(204, 251, 241, 0.35);
   border-radius: 999px;
 }.table-wrapper--modern table {
   border-collapse: separate !important;
@@ -220,40 +220,40 @@ and portfolio chrome.
   top: 0;
   z-index: 4;
 }.table-wrapper--modern thead th {
-  background: var(--ws-header-grad) !important;
-  color: #fff !important;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%) !important;
+  color: #475569 !important;
   font-size: 0.7rem !important;
   font-weight: 700 !important;
   letter-spacing: 0.05em !important;
   text-transform: uppercase !important;
   padding: 0.65rem 0.55rem !important;
-  border-bottom: 2px solid rgba(161, 98, 7, 0.5) !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.45) !important;
   vertical-align: middle !important;
-  box-shadow: 0 2px 6px rgba(127, 29, 29, 0.2);
+  box-shadow: none;
 }.table-wrapper--modern thead th:first-child {
   border-top-left-radius: 0;
 }.table-wrapper--modern thead th:last-child {
   border-top-right-radius: 0;
 }.table-wrapper--modern .sort-button {
-  color: rgba(255, 255, 255, 0.95) !important;
+  color: #475569 !important;
   font-size: inherit !important;
   font-weight: inherit !important;
   letter-spacing: inherit !important;
   text-transform: inherit !important;
 }.table-wrapper--modern .sort-button:hover,
 .table-wrapper--modern thead th[data-sort-active="true"] .sort-button {
-  color: #fef3c7 !important;
+  color: #0f766e !important;
 }.table-wrapper--modern .sort-indicator {
-  color: rgba(254, 243, 199, 0.85) !important;
+  color: #94a3b8 !important;
   opacity: 0.75 !important;
 }.table-wrapper--modern thead th[data-sort-active="true"] .sort-indicator {
   opacity: 1 !important;
-  color: #fff !important;
+  color: #0f766e !important;
 }.table-wrapper--modern tbody td {
   padding: 0.55rem 0.5rem !important;
   font-size: 0.8rem !important;
   color: var(--ws-text) !important;
-  border-bottom: 1px solid rgba(231, 201, 120, 0.35) !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.35) !important;
   vertical-align: middle !important;
   line-height: 1.35 !important;
   background: var(--ws-surface) !important;
@@ -271,7 +271,7 @@ and portfolio chrome.
   text-align: center !important;
   font-size: 0.92rem !important;
   color: var(--ws-text-soft) !important;
-  background: linear-gradient(180deg, #fffdf8, #ffffff) !important;
+  background: linear-gradient(180deg, #f8fafc, #ffffff) !important;
   border: none !important;
 }.table-wrapper--modern .empty-state::before {
   content: "📋";
@@ -317,7 +317,7 @@ and portfolio chrome.
   font-size: 0.68rem;
   font-weight: 600;
   border: 1px solid var(--ws-border);
-  background: #fffdf8;
+  background: #f8fafc;
   color: var(--ws-text-soft);
 }/* ── Board (Scrum / Kanban) ──────────────────────────────── */
 .roadmaps-view--board {
@@ -338,7 +338,7 @@ and portfolio chrome.
   gap: 0.35rem 0.5rem;
   padding: 0.35rem 0.5rem;
   border-radius: var(--ws-radius-sm);
-  background: rgba(254, 243, 199, 0.4);
+  background: rgba(204, 251, 241, 0.4);
   border: 1px solid var(--ws-border);
   max-width: 100%;
 }.scrum-board-legend--modern .scrum-board-legend-item {
@@ -386,7 +386,7 @@ and portfolio chrome.
   flex-direction: column;
   border-radius: var(--ws-radius-md) !important;
   border: 1px solid var(--ws-border) !important;
-  background: linear-gradient(180deg, #fffdf8 0%, #ffffff 100%) !important;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%) !important;
   box-shadow: var(--ws-shadow-soft) !important;
   scroll-snap-align: start;
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
@@ -411,7 +411,7 @@ and portfolio chrome.
   font-weight: 700 !important;
   padding: 0.12rem 0.5rem !important;
   border-radius: 999px !important;
-  background: rgba(254, 243, 199, 0.8) !important;
+  background: rgba(204, 251, 241, 0.8) !important;
   color: var(--ws-gold) !important;
   border: 1px solid var(--ws-border) !important;
 }.roadmaps-view--board .scrum-board-column-cards {
@@ -427,12 +427,12 @@ and portfolio chrome.
   border: 1px solid var(--ws-border) !important;
   background: var(--ws-surface) !important;
   padding: 0.7rem 0.75rem !important;
-  box-shadow: 0 1px 3px rgba(63, 15, 25, 0.06) !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06) !important;
   cursor: grab;
   transition: none !important;
 }.roadmaps-view--board .scrum-board-card:hover {
   transform: none !important;
-  box-shadow: 0 1px 3px rgba(63, 15, 25, 0.06) !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06) !important;
   border-color: var(--ws-border) !important;
 }html.is-compact-layout .roadmaps-view--board .scrum-board-card {
   cursor: default !important;
@@ -441,8 +441,8 @@ and portfolio chrome.
 }.roadmaps-view--board .scrum-board-card.scrum-board-card--dragging {
   opacity: 0.94;
   transform: none !important;
-  box-shadow: 0 8px 20px rgba(127, 29, 29, 0.14) !important;
-  border-color: rgba(185, 28, 28, 0.4) !important;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.14) !important;
+  border-color: rgba(15, 118, 110, 0.4) !important;
   cursor: grabbing;
   z-index: 20;
 }.roadmaps-view--board .scrum-board-card-title {
@@ -460,11 +460,11 @@ and portfolio chrome.
   text-align: center;
   border: 1px dashed var(--ws-border);
   border-radius: var(--ws-radius-sm);
-  background: rgba(255, 253, 248, 0.6);
+  background: rgba(248, 250, 252, 0.6);
 }/* Drag-over column highlight */
 .roadmaps-view--board .scrum-board-column.scrum-board-column--drag-over {
   border-color: var(--ws-accent) !important;
-  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.25), var(--ws-shadow-lift) !important;
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.25), var(--ws-shadow-lift) !important;
 }/* ── Mobile/tablet fullscreen host (teleport to body) ─────── */
 .view-fullscreen-host {
   position: fixed;
@@ -487,8 +487,8 @@ and portfolio chrome.
   align-items: center;
   gap: 0.5rem;
   padding: 0.55rem 0.65rem 0.45rem;
-  border-bottom: 1px solid rgba(231, 201, 120, 0.55);
-  background: linear-gradient(180deg, #fffdf8 0%, #ffffff 100%);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.55);
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
 }.view-fullscreen-tabs {
   flex: 1 1 auto;
   display: grid;
@@ -501,7 +501,7 @@ and portfolio chrome.
   border-radius: 10px;
   border: 1px solid transparent;
   background: transparent;
-  color: var(--ws-text-soft, #7a4b12);
+  color: var(--ws-text-soft, #475569);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -510,9 +510,9 @@ and portfolio chrome.
 }.view-fullscreen-tab--active,
 .view-fullscreen-tab[aria-selected="true"] {
   background: #fff;
-  border-color: rgba(185, 28, 28, 0.28);
-  color: var(--ws-accent, #b91c1c);
-  box-shadow: 0 1px 4px rgba(185, 28, 28, 0.1);
+  border-color: rgba(15, 118, 110, 0.28);
+  color: var(--ws-accent, #0f766e);
+  box-shadow: 0 1px 4px rgba(15, 118, 110, 0.1);
 }.view-fullscreen-exit-btn {
   flex: 0 0 auto;
   display: inline-flex;
@@ -522,9 +522,9 @@ and portfolio chrome.
   min-height: 40px;
   padding: 0.35rem 0.65rem;
   border-radius: 10px;
-  border: 1px solid rgba(185, 28, 28, 0.35);
-  background: rgba(254, 243, 199, 0.55);
-  color: var(--ws-accent, #b91c1c);
+  border: 1px solid rgba(15, 118, 110, 0.35);
+  background: rgba(204, 251, 241, 0.55);
+  color: var(--ws-accent, #0f766e);
   font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
@@ -679,12 +679,12 @@ html.has-view-fullscreen .profile-unlock-panel {
   top: 0;
   z-index: 2;
   background: var(--ws-surface, #fff);
-  border-bottom: 1px solid rgba(231, 201, 120, 0.45);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.45);
   margin-bottom: 0.5rem !important;
 }.roadmaps-view.view-pseudo-fullscreen .view-fullscreen-btn.is-fullscreen {
-  border-color: rgba(185, 28, 28, 0.35) !important;
-  background: rgba(254, 243, 199, 0.55) !important;
-  color: var(--ws-accent, #b91c1c) !important;
+  border-color: rgba(15, 118, 110, 0.35) !important;
+  background: rgba(204, 251, 241, 0.55) !important;
+  color: var(--ws-accent, #0f766e) !important;
 }/* After fullscreen exit: ensure view shells reflow in the portfolio stage */
 html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage {
   overflow: auto;

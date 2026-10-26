@@ -4,7 +4,7 @@
 
 **Purpose:** Map PRD requirements to concrete implementation evidence and verification steps.  
 **Standard:** Requirement IDs must remain synchronized with [PRD.md](PRD.md).  
-**Last audited:** 2026-10-24 · **Baseline:** `APP_ASSET_VERSION` = `20260710-ui205`
+**Last audited:** 2026-10-26 · **Baseline:** `APP_ASSET_VERSION` = `20261025-ui234`
 
 ---
 
@@ -31,6 +31,8 @@
 | FR-1.4 | Activate profile | Profile selection; `activeProfileId` + render refresh | Workspace views show active profile roadmaps only (unless FR-10) |
 | FR-1.5 | Search profiles | Profiles panel search; `profilesFilterQuery` | Search narrows by name/team |
 | FR-1.6 | Optional password on create | `src/modules/profile-security.js` hashing | Locked until unlock; no plaintext in storage |
+| FR-1.8 | Portfolio timeline (Profile overview) | `profile-overview-timeline.js`; `#profileViewTimelineMetric`; Chart\|Table + Quarterly\|Annually; `renderProfileViewTimelineChart` | Metrics; grain; view mode; legend filters; table growth %; unique KPIs |
+| US-A2b | Explore portfolio timeline | Profile overview timeline card; `npm run test:profile-timeline` | US-A2b acceptance (chart, table, annual, filters) |
 
 ---
 

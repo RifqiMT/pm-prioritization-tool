@@ -9,10 +9,10 @@ or scale changes — outline + shadow only.
 html.is-desktop-layout,
 html.is-compact-layout {
   --bci-ease: 0.16s ease;
-  --bci-shadow-rest: 0 1px 3px rgba(63, 15, 25, 0.06);
-  --bci-shadow-hover: 0 6px 18px rgba(127, 29, 29, 0.11);
-  --bci-shadow-pressed: 0 3px 10px rgba(127, 29, 29, 0.14);
-  --bci-outline-hover: rgba(220, 38, 38, 0.32);
+  --bci-shadow-rest: 0 1px 3px rgba(15, 23, 42, 0.06);
+  --bci-shadow-hover: 0 6px 18px rgba(15, 23, 42, 0.11);
+  --bci-shadow-pressed: 0 3px 10px rgba(15, 23, 42, 0.14);
+  --bci-outline-hover: rgba(15, 118, 110, 0.32);
   --bci-outline-pressed: rgba(220, 38, 28, 0.5);
   --bci-surface-pressed: rgba(254, 242, 242, 0.42);
 }/* Base interactive shell (structured board cards) */
@@ -111,14 +111,14 @@ html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured:act
   transform: none !important;
   z-index: 3;
 }html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured.roadmaps-table-card--selected {
-  border-color: rgba(185, 28, 28, 0.42) !important;
+  border-color: rgba(15, 118, 110, 0.42) !important;
   box-shadow:
-    0 0 0 2px rgba(254, 202, 202, 0.55),
+    0 0 0 2px rgba(153, 246, 228, 0.55),
     var(--bci-shadow-rest) !important;
 }html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured.roadmaps-table-card--selected.portfolio-board-card--pressed,
 html.is-compact-layout .roadmaps-table-card.portfolio-board-card--structured.roadmaps-table-card--selected:active {
   box-shadow:
-    0 0 0 2px rgba(254, 202, 202, 0.55),
+    0 0 0 2px rgba(153, 246, 228, 0.55),
     var(--bci-shadow-pressed) !important;
 }.roadmaps-table-card.portfolio-board-card--structured .roadmaps-table-card__select,
 .roadmaps-table-card.portfolio-board-card--structured .roadmaps-table-card__actions,

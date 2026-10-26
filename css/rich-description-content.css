@@ -6,7 +6,7 @@ and read-only previews.
 
 .rich-description-content {
   --rdc-text: #431407;
-  --rdc-muted: #57534e;
+  --rdc-muted: #475569;
   --rdc-h2-size: 1.08rem;
   --rdc-h3-size: 0.98rem;
   --rdc-h2-color: #7c2d12;
@@ -72,9 +72,9 @@ and read-only previews.
 }.rich-description-content blockquote {
   margin: 0.35rem 0;
   padding: 0.35rem 0.55rem;
-  border: 1px solid rgba(202, 138, 4, 0.2);
+  border: 1px solid rgba(100, 116, 139, 0.2);
   border-radius: 8px;
-  background: rgba(254, 243, 199, 0.28);
+  background: rgba(204, 251, 241, 0.28);
   color: var(--rdc-muted);
   font-style: italic;
 }

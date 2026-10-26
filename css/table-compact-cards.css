@@ -21,9 +21,9 @@
     min-height: 0;
     margin-top: 0.35rem;
     border-radius: 14px;
-    border: 1px solid rgba(202, 138, 4, 0.2);
-    background: linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(255, 250, 242, 1));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 8px 22px rgba(120, 53, 15, 0.06);
+    border: 1px solid rgba(100, 116, 139, 0.2);
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(255, 250, 242, 1));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 8px 22px rgba(15, 23, 42, 0.06);
     overflow: hidden;
   }
 
@@ -80,9 +80,9 @@
     z-index: 2;
     padding: 0.42rem 0.55rem;
     border-radius: 10px;
-    border: 1px solid rgba(202, 138, 4, 0.2);
+    border: 1px solid rgba(100, 116, 139, 0.2);
     background: linear-gradient(180deg, rgba(255, 251, 242, 0.98), rgba(255, 247, 234, 0.96));
-    box-shadow: 0 2px 8px rgba(120, 53, 15, 0.06);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
     cursor: pointer;
     user-select: none;
     transition:
@@ -92,8 +92,8 @@
   }
 
   html.is-compact-layout .roadmaps-table-card-group__header:hover {
-    border-color: rgba(202, 138, 4, 0.38);
-    box-shadow: 0 4px 12px rgba(120, 53, 15, 0.1);
+    border-color: rgba(100, 116, 139, 0.38);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
   }
 
   html.is-compact-layout .roadmaps-table-card-group__header:focus-visible {
@@ -117,7 +117,7 @@
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.72);
     border: 1px solid rgba(168, 162, 158, 0.28);
-    color: #78716c;
+    color: #64748b;
     font-size: 0.72rem;
     line-height: 1;
     font-weight: 800;
@@ -157,8 +157,8 @@
     font-size: 0.72rem;
     font-weight: 800;
     text-align: center;
-    color: #7f1d1d;
-    background: rgba(254, 226, 226, 0.65);
+    color: #0f172a;
+    background: rgba(204, 251, 241, 0.65);
     border: 1px solid rgba(248, 113, 113, 0.35);
   }
 
@@ -188,20 +188,20 @@
 
   html.is-compact-layout .roadmaps-table-card-group--kano-must-be .roadmaps-table-card-group__header {
     border-color: rgba(217, 119, 6, 0.28);
-    background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+    background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
   }
 
   html.is-compact-layout .roadmaps-table-card-group--kano-must-be .roadmaps-table-card-group__title {
-    color: #b45309;
+    color: #475569;
   }
 
   html.is-compact-layout .roadmaps-table-card-group--kano-reverse .roadmaps-table-card-group__header {
-    border-color: rgba(225, 29, 72, 0.24);
+    border-color: rgba(15, 118, 110, 0.24);
     background: linear-gradient(180deg, #fff1f2 0%, #ffffff 100%);
   }
 
   html.is-compact-layout .roadmaps-table-card-group--kano-reverse .roadmaps-table-card-group__title {
-    color: #be123c;
+    color: #0f766e;
   }
 
   html.is-compact-layout .roadmaps-table-card-group--kano-indifferent .roadmaps-table-card-group__header {
@@ -210,7 +210,7 @@
   }
 
   html.is-compact-layout .roadmaps-table-card-group--kano-indifferent .roadmaps-table-card-group__title {
-    color: #57534e;
+    color: #475569;
   }
 
   html.is-compact-layout .roadmaps-table-card-group--kano-unpositioned .roadmaps-table-card-group__header {
@@ -236,16 +236,16 @@
     background: linear-gradient(165deg, #ffffff 0%, #fefdfb 58%, #fffaf5 100%);
     box-shadow:
       0 1px 2px rgba(15, 23, 42, 0.04),
-      0 8px 22px rgba(127, 29, 29, 0.08);
+      0 8px 22px rgba(15, 23, 42, 0.08);
     overflow: hidden;
     /* Hover / press: board-card-interaction.css */
   }
 
   html.is-compact-layout .roadmaps-table-card--selected {
-    border-color: rgba(185, 28, 28, 0.42);
+    border-color: rgba(15, 118, 110, 0.42);
     box-shadow:
-      0 0 0 2px rgba(254, 202, 202, 0.55),
-      0 10px 26px rgba(127, 29, 29, 0.12);
+      0 0 0 2px rgba(153, 246, 228, 0.55),
+      0 10px 26px rgba(15, 23, 42, 0.12);
   }
 
   html.is-compact-layout .roadmaps-table-card[data-status="Not Started"] {
@@ -367,7 +367,7 @@
   html.is-compact-layout .roadmaps-table-card__chip--more {
     flex: 0 0 auto;
     font-weight: 800;
-    color: #78716c;
+    color: #64748b;
     background: rgba(241, 245, 249, 0.95);
     border-color: rgba(203, 213, 225, 0.85);
   }
@@ -583,27 +583,27 @@
   }
 
   html.is-compact-layout .roadmaps-table-card__chip.moscow-pill--must {
-    color: #7f1d1d;
-    background: #fef2f2;
-    border-color: rgba(239, 68, 68, 0.35);
+    color: #9f1239;
+    background: #fff1f2;
+    border-color: rgba(225, 29, 72, 0.3);
   }
 
   html.is-compact-layout .roadmaps-table-card__chip.moscow-pill--should {
-    color: #9a3412;
-    background: #fff7ed;
-    border-color: rgba(249, 115, 22, 0.35);
+    color: #92400e;
+    background: #fffbeb;
+    border-color: rgba(217, 119, 6, 0.32);
   }
 
   html.is-compact-layout .roadmaps-table-card__chip.moscow-pill--could {
-    color: #1e40af;
-    background: #eff6ff;
-    border-color: rgba(59, 130, 246, 0.35);
+    color: #075985;
+    background: #f0f9ff;
+    border-color: rgba(2, 132, 199, 0.3);
   }
 
   html.is-compact-layout .roadmaps-table-card__chip.moscow-pill--wont {
-    color: #475569;
+    color: #334155;
     background: #f8fafc;
-    border-color: rgba(148, 163, 184, 0.45);
+    border-color: rgba(100, 116, 139, 0.35);
   }
 
   html.is-compact-layout .roadmaps-table-card__body {
@@ -665,7 +665,7 @@
     margin: 0;
     font-size: 0.78rem;
     line-height: 1.42;
-    color: #57534e;
+    color: #475569;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -758,7 +758,7 @@
     align-items: center;
     gap: 0.35rem;
     font-size: 0.72rem;
-    color: #78716c;
+    color: #64748b;
   }
 
   html.is-compact-layout .roadmaps-table-card__countries-row {
@@ -776,7 +776,7 @@
     flex: 0 0 auto;
     padding: 0.18rem 0.42rem;
     border-radius: 6px;
-    background: rgba(254, 243, 199, 0.55);
+    background: rgba(204, 251, 241, 0.55);
     border: 1px solid rgba(251, 191, 36, 0.28);
     font-size: 0.68rem;
     font-weight: 700;
@@ -787,7 +787,7 @@
 
   html.is-compact-layout .roadmaps-table-card__countries-row .countries-badge__chip--others {
     font-weight: 650;
-    color: #78716c;
+    color: #64748b;
     background: #fafaf9;
     border-color: #e7e5e4;
   }

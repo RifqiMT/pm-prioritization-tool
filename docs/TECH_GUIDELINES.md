@@ -4,8 +4,8 @@ Engineering standards for the Product Management Prioritization Tool codebase.
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-10-24 |
-| **APP_ASSET_VERSION** | `20260710-ui205` |
+| **Last updated** | 2026-10-26 |
+| **APP_ASSET_VERSION** | `20261025-ui234` |
 | **COMPACT_LAYOUT_MAX_WIDTH_PX** | `1400` |
 
 ---
@@ -48,10 +48,11 @@ Defined in `index.html` (order matters — globals, not ES modules):
 18. `src/modules/roadmap-periods.js` — `RoadmapPeriods` global (multi-quarter periods)
 19. `src/modules/incomplete-optional-fields.js` — `IncompleteOptionalFields` global (optional-field completeness filter; 15 types)
 20. `src/modules/cost-of-delay.js` — `CostOfDelay` global (plain-English Cost of Delay calculator)
-21. `src/modules/gantt-view.js` — `GanttView` global (Gantt timeline)
-22. `src/modules/export-payload.js` — `ExportPayload` global (JSON/CSV export builders)
-23. `src/modules/share-link.js` — `ShareLink` global (URL hash deep links)
-24. `src/app.js` — defines `init()` and runs on `DOMContentLoaded`
+21. `src/modules/profile-overview-timeline.js` — `ProfileOverviewTimeline` global (Portfolio timeline Chart/Table)
+22. `src/modules/gantt-view.js` — `GanttView` global (Gantt timeline)
+23. `src/modules/export-payload.js` — `ExportPayload` global (JSON/CSV export builders)
+24. `src/modules/share-link.js` — `ShareLink` global (URL hash deep links)
+25. `src/app.js` — defines `init()` and runs on `DOMContentLoaded`
 
 All shared symbols are **global functions and constants**. Do not introduce ES module imports without a planned migration.
 
@@ -65,7 +66,8 @@ Later files win for equal specificity. Each stylesheet in `index.html` uses a **
 
 | # | File | Purpose |
 |---|------|---------|
-| 1 | `main.css` | Base tokens, global buttons, legacy modals |
+| 0 | `design-tokens.css` | Calm slate/teal foundation tokens (`--dt-*`) + legacy aliases |
+| 1 | `main.css` | Base layout, global buttons, legacy modals |
 | 2 | `date-inputs-modern.css` | Date input styling (deadline, Gantt-adjacent fields) |
 | 3 | `workspace-modern.css` | Workspace shell |
 | 3 | `header-modern.css` | App header |
@@ -108,6 +110,11 @@ Later files win for equal specificity. Each stylesheet in `index.html` uses a **
 | 40 | `confirm-modals-modern.css` | Delete/confirm dialogs |
 | 41 | `filter-combobox-fix.css` | Profile picker and filter combobox alignment fixes |
 | 42 | `filter-incomplete-modern.css` | Incomplete optional fields filter popup and match toggle |
+| 43 | `ui-refresh.css` | Shell, density, controls polish on top of design tokens |
+| 44 | `ui-polish.css` | Quieter chrome, denser data, desktop panel refinements |
+| 45 | `moscow-theme.css` | Semantic MoSCoW rose/amber/sky/slate color system |
+
+**Total:** **47** local layered stylesheets in `index.html` (plus Google Fonts and Leaflet CSS from CDN). Numbers above are load-order anchors; keep the list synchronized with `index.html` link tags.
 
 ### 3.2 Compact layout
 
@@ -135,7 +142,7 @@ Later files win for equal specificity. Each stylesheet in `index.html` uses a **
 | Constant | Role |
 |----------|------|
 | `STORAGE_KEY` | `localStorage` key (`rice_prioritizer_v1`) |
-| `APP_ASSET_VERSION` | Cache buster (`20260710-ui205`) |
+| `APP_ASSET_VERSION` | Cache buster (`20261025-ui234`); sync via `npm run sync:assets` |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | `1400` — single compact breakpoint |
 | `moscowList` | Stored MoSCoW values |
 | `moscowDisplayNames` | UI labels (Must Have, …) |
@@ -292,6 +299,7 @@ Export: `getExportableProfiles()` → `sanitizeProfilesForExport()` → download
 | `test:gantt` | Gantt ISO weeks, quarter ranges, month zoom, deadline state |
 | `test:incomplete-filter` | Incomplete optional fields match logic (`any` / `all` helpers) |
 | `test:cost-of-delay` | Cost of Delay sanitize/compute/validation |
+| `test:profile-timeline` | Portfolio timeline aggregation (quarter/year), Chart/Table helpers, filters |
 | `test:import-file-kind` | Unified import JSON vs CSV detection |
 | `test:workspace-merge` | WorkspaceMerge union merge, conflict resolution, tombstones, fingerprint dedupe |
 | `test:api-dedupe` | Server-side `api/_lib/workspace-dedupe.js` (MoSCoW alias + tombstone prune) |

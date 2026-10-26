@@ -5,8 +5,8 @@ readable columns).
  */
 
 :root {
-  --table-revamp-header-bg: linear-gradient(135deg, #1e293b 0%, #334155 52%, #475569 100%);
-  --table-revamp-header-border: rgba(255, 255, 255, 0.1);
+  --table-revamp-header-bg: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  --table-revamp-header-border: rgba(148, 163, 184, 0.45);
   --table-revamp-actions-col: 108px;
   --table-revamp-action-btn: 28px;
   --table-revamp-swipe-hint-h: 0px;
@@ -51,7 +51,7 @@ readable columns).
   z-index: auto !important;
 }.table-wrapper--modern.roadmaps-table-shell thead th {
   background: var(--table-revamp-header-bg) !important;
-  color: rgba(255, 255, 255, 0.94) !important;
+  color: #475569 !important;
   font-size: 0.67rem !important;
   font-weight: 650 !important;
   letter-spacing: 0.06em !important;
@@ -94,7 +94,7 @@ readable columns).
   box-shadow: none !important;
 }.table-wrapper--modern.roadmaps-table-shell tbody tr:focus-within td {
   background: #f1f5f9 !important;
-  box-shadow: inset 3px 0 0 #6366f1 !important;
+  box-shadow: inset 3px 0 0 #0f766e !important;
 }.table-wrapper--modern.roadmaps-table-shell tbody tr:nth-child(even) td {
   background: #ffffff !important;
 }/* Column widths — semantic classes (stable when Profile column is hidden) */
@@ -109,7 +109,7 @@ readable columns).
   text-align: center !important;
 }/* Sort controls — centered labels + indicators */
 .table-wrapper--modern.roadmaps-table-shell .sort-button {
-  color: rgba(255, 255, 255, 0.92) !important;
+  color: #475569 !important;
   width: 100% !important;
   min-width: 0 !important;
   justify-content: center !important;
@@ -126,10 +126,10 @@ readable columns).
   line-height: 1.2 !important;
 }.table-wrapper--modern.roadmaps-table-shell .sort-button:hover,
 .table-wrapper--modern.roadmaps-table-shell thead th[data-sort-active="true"] .sort-button {
-  color: #f8fafc !important;
+  color: #0f766e !important;
 }.table-wrapper--modern.roadmaps-table-shell .sort-indicator {
   opacity: 0.45 !important;
-  color: rgba(255, 255, 255, 0.85) !important;
+  color: #94a3b8 !important;
   flex-shrink: 0 !important;
 }.table-wrapper--modern.roadmaps-table-shell thead th[data-sort-active="true"] .sort-indicator {
   opacity: 1 !important;
@@ -179,21 +179,21 @@ readable columns).
   border: 1px solid transparent;
   white-space: nowrap;
 }.table-wrapper--modern.roadmaps-table-shell .moscow-pill--must {
-  color: #991b1b;
-  background: #fef2f2;
-  border-color: rgba(239, 68, 68, 0.28);
+  color: #9f1239;
+  background: #fff1f2;
+  border-color: rgba(225, 29, 72, 0.3);
 }.table-wrapper--modern.roadmaps-table-shell .moscow-pill--should {
-  color: #b45309;
+  color: #92400e;
   background: #fffbeb;
-  border-color: rgba(245, 158, 11, 0.32);
+  border-color: rgba(217, 119, 6, 0.32);
 }.table-wrapper--modern.roadmaps-table-shell .moscow-pill--could {
-  color: #1d4ed8;
-  background: #eff6ff;
-  border-color: rgba(59, 130, 246, 0.28);
+  color: #075985;
+  background: #f0f9ff;
+  border-color: rgba(2, 132, 199, 0.3);
 }.table-wrapper--modern.roadmaps-table-shell .moscow-pill--wont {
-  color: #475569;
-  background: #f1f5f9;
-  border-color: rgba(100, 116, 139, 0.28);
+  color: #334155;
+  background: #f8fafc;
+  border-color: rgba(100, 116, 139, 0.35);
 }.table-wrapper--modern.roadmaps-table-shell .moscow-pill--unset {
   color: #94a3b8;
   background: #f8fafc;

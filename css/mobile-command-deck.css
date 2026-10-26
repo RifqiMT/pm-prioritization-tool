@@ -12,12 +12,12 @@ narrow screens (≤1400px).
     --cockpit-sticky-top: 0px;
     --cockpit-bg: rgba(255, 253, 250, 0.94);
     --cockpit-bg-soft: rgba(255, 249, 242, 0.9);
-    --cockpit-border: rgba(202, 138, 4, 0.16);
-    --cockpit-border-strong: rgba(202, 138, 4, 0.28);
-    --cockpit-shadow: 0 10px 32px rgba(63, 15, 25, 0.08);
+    --cockpit-border: rgba(100, 116, 139, 0.16);
+    --cockpit-border-strong: rgba(100, 116, 139, 0.28);
+    --cockpit-shadow: 0 10px 32px rgba(15, 23, 42, 0.08);
     --cockpit-blur: saturate(185%) blur(18px);
-    --cockpit-accent: #b91c1c;
-    --cockpit-accent-soft: rgba(185, 28, 28, 0.11);
+    --cockpit-accent: #0f766e;
+    --cockpit-accent-soft: rgba(15, 118, 110, 0.11);
     --cockpit-pill: 10px;
     --cockpit-touch: 36px;
     --compact-cockpit-height: 5.5rem;
@@ -52,7 +52,7 @@ narrow screens (≤1400px).
     background: rgba(255, 253, 250, 0.98) !important;
     backdrop-filter: var(--cockpit-blur);
     -webkit-backdrop-filter: var(--cockpit-blur);
-    box-shadow: 0 16px 40px rgba(63, 15, 25, 0.14) !important;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14) !important;
   }
 
   html.is-compact-layout .app-header--cockpit-embedded.app-header--menu-open .app-header-toolbar {
@@ -68,7 +68,7 @@ narrow screens (≤1400px).
     padding-left: env(safe-area-inset-left) !important;
     padding-right: env(safe-area-inset-right) !important;
     gap: 0 !important;
-    background: #faf6ef;
+    background: #f8fafc;
   }
 
   html.is-compact-layout .app-layout {
@@ -82,7 +82,7 @@ narrow screens (≤1400px).
     border: 1px solid var(--cockpit-border) !important;
     box-shadow: var(--cockpit-shadow) !important;
     overflow: clip;
-    background: #fffdf8 !important;
+    background: #f8fafc !important;
   }
 
   /* ── Unified sticky command rail (profile + view tabs + filters) ─ */
@@ -100,7 +100,7 @@ narrow screens (≤1400px).
     background: linear-gradient(180deg, var(--cockpit-bg) 0%, var(--cockpit-bg-soft) 100%);
     backdrop-filter: var(--cockpit-blur);
     -webkit-backdrop-filter: var(--cockpit-blur);
-    box-shadow: 0 6px 18px rgba(63, 15, 25, 0.05);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
   }
 
   html.is-compact-layout .compact-cockpit-brand-slot {
@@ -212,15 +212,15 @@ narrow screens (≤1400px).
     flex: 0 0 auto;
     border: 1px solid transparent !important;
     background: transparent !important;
-    color: #78716c !important;
+    color: #64748b !important;
     transition: background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
   }
 
   html.is-compact-layout .workspace-panel--v2 .portfolio-view-tabs .view-toggle-btn.view-toggle-btn--active {
-    background: linear-gradient(145deg, #b91c1c 0%, #991b1b 100%) !important;
+    background: linear-gradient(145deg, #0f766e 0%, #115e59 100%) !important;
     color: #fff !important;
     border-color: rgba(153, 27, 27, 0.4) !important;
-    box-shadow: 0 2px 8px rgba(185, 28, 28, 0.28);
+    box-shadow: 0 2px 8px rgba(15, 118, 110, 0.28);
   }
 
   html.is-compact-layout .workspace-panel--v2 .portfolio-view-tabs .view-tab-text {
@@ -304,7 +304,7 @@ narrow screens (≤1400px).
     background: rgba(255, 255, 255, 0.72) !important;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    box-shadow: 0 2px 8px rgba(63, 15, 25, 0.04) !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
   }
 
   html.is-compact-layout .view-toolbar__identity {

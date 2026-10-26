@@ -13,7 +13,7 @@
     "sync:assets": "node scripts/sync-asset-versions.js",
     "start": "npm run dev",
     "verify:deploy": "node scripts/verify-deployment.js",
-    "verify:production": "node scripts/verify-deployment.js https://pm-prioritization-tool-six.vercel.app",
+    "verify:production": "node scripts/verify-deployment.js https://pm-prioritization-tool-one.vercel.app",
     "test:storage": "node scripts/test-storage-sync-logic.js",
     "test:metadata": "node scripts/test-roadmap-metadata.js",
     "test:persistence": "node scripts/test-persistence-keys.js",
@@ -32,7 +32,8 @@
     "test:import-file-kind": "node scripts/test-import-file-kind.js",
     "test:incomplete-filter": "node scripts/test-incomplete-optional-fields-filter.js",
     "test:cost-of-delay": "node scripts/test-cost-of-delay.js",
-    "test": "npm run test:storage && npm run test:metadata && npm run test:persistence && npm run test:export && npm run test:byok && npm run test:byok-validate && npm run test:kano && npm run test:llm && npm run test:5why && npm run test:periods && npm run test:gantt && npm run test:share && npm run test:workspace-merge && npm run test:api-dedupe && npm run test:import-tombstones && npm run test:import-file-kind && npm run test:incomplete-filter && npm run test:cost-of-delay"
+    "test:profile-timeline": "node scripts/test-profile-overview-timeline.js",
+    "test": "npm run test:storage && npm run test:metadata && npm run test:persistence && npm run test:export && npm run test:byok && npm run test:byok-validate && npm run test:kano && npm run test:llm && npm run test:5why && npm run test:periods && npm run test:gantt && npm run test:share && npm run test:workspace-merge && npm run test:api-dedupe && npm run test:import-tombstones && npm run test:import-file-kind && npm run test:incomplete-filter && npm run test:cost-of-delay && npm run test:profile-timeline"
   },
   "keywords": [
     "product-management",

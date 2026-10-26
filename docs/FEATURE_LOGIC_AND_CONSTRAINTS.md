@@ -6,8 +6,8 @@
 | **Version** | 2.0.0 |
 | **Audience** | Product, engineering, design, QA, and stakeholders |
 | **Maintainer** | Product Team |
-| **Last updated** | 2026-10-24 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui205` |
+| **Last updated** | 2026-10-26 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20261025-ui234` |
 
 This document is the **collaborative cross-feature reference** for how the app behaves end-to-end. It explains **logic** (what the system does), **rules** (what inputs and workflows are allowed), and **constraints** (what the product must not do or cannot guarantee). Use it in planning reviews, QA test design, and cross-team alignment.
 
@@ -153,6 +153,17 @@ flowchart LR
 | **Constraints** | No server-side profile ACL; password protects content visibility, not cloud document access |
 | **Code** | `src/app.js` profile handlers, `css/profiles-modern.css` |
 | **See also** | [PRD.md](PRD.md) FR-1, [USER_PERSONAS.md](USER_PERSONAS.md) |
+
+### F-10b Portfolio timeline (Profile overview)
+
+| Aspect | Detail |
+|--------|--------|
+| **Purpose** | See portfolio composition or value across planning periods inside Profile overview |
+| **Logic** | `ProfileOverviewTimeline.buildSeries` groups filtered roadmaps by `roadmapPeriods` (`YYYY-Qn`) or calendar year; metric switcher selects category stacks (count) or numeric bars (financial EUR sum / RICE average); **Chart** renders pure SVG; **Table** shows period rows × series columns with period-over-period growth %; legend chips multi-filter series (module-held `seriesFilter`); multi-period roadmaps contribute to each listed quarter; annual mode counts each roadmap once per year |
+| **Rules** | Session-only: `profileViewTimelineMetric`, `profileViewTimelineGranularity` (`quarter`\|`year`), `profileViewTimelineViewMode` (`chart`\|`table`); view mode resets to Chart when overview opens; filters persist across Chart ↔ Table; respects Profile overview owner + period filters |
+| **Constraints** | Roadmaps without periods omitted; unique-roadmap KPIs (no double-count across periods); EUR uses live rates when available; no chart library |
+| **Code** | `src/modules/profile-overview-timeline.js`, `#profileViewTimelineChart`, `renderProfileViewTimelineChart()` |
+| **See also** | [PRD.md](PRD.md) FR-1.8, [VARIABLES.md](VARIABLES.md) §8.23, `npm run test:profile-timeline` |
 
 ### F-11 Profile password lock
 
@@ -601,7 +612,8 @@ flowchart LR
 | Date | Change |
 |------|--------|
 | 2026-05-28 | Initial collaborative cross-feature logic and constraints reference |
-| 2026-10-24 | Full docs audit to `20260710-ui205`; Cost of Delay workshop model (3-part + delay + one-time); decoupled from Financial impact; 19 modules; 18 tests |
+| 2026-10-26 | Full docs audit to `20261025-ui234`; Portfolio timeline Chart/Table + annual + filters + growth %; calm slate/teal tokens; 47 CSS; 20 modules; 19 tests |
+| 2026-10-24 | Full docs audit to `20260710-ui205`; Cost of Delay workshop model; decoupled from Financial impact; 19 modules; 18 tests |
 | 2026-07-10 | Incomplete optional fields filter; sync:assets; HRK→EUR; 43 CSS; 18 modules; 17 tests; baseline `20260710-ui201` |
 | 2026-07-09 (pass 2) | Server-side dedupe, import tombstones, single-toast, mobile import; 15 tests; baseline `20260709-ui200` |
 | 2026-07-09 | Id-anchored dedupe, revision conflicts, roadmap field suggestions; baseline `20260709-ui199` |

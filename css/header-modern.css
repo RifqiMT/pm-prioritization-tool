@@ -13,12 +13,12 @@ desktop.
   border-bottom: none !important;
   padding-bottom: 1rem !important;
 }.app-header--modern {
-  --hdr-bg: linear-gradient(135deg, #ffffff 0%, #fffdf8 55%, #fef3c7 100%);
-  --hdr-border: rgba(231, 201, 120, 0.75);
-  --hdr-text: #3f0f19;
-  --hdr-text-soft: #7a4b12;
-  --hdr-accent: #b91c1c;
-  --hdr-gold: #a16207;
+  --hdr-bg: linear-gradient(135deg, #ffffff 0%, #f8fafc 55%, #e2e8f0 100%);
+  --hdr-border: rgba(148, 163, 184, 0.75);
+  --hdr-text: #0f172a;
+  --hdr-text-soft: #475569;
+  --hdr-accent: #0f766e;
+  --hdr-gold: #64748b;
   --hdr-radius: 4px;
   --hdr-shadow: none;
 
@@ -61,9 +61,9 @@ desktop.
   display: grid;
   place-items: center;
   border-radius: 12px;
-  background: linear-gradient(145deg, #b91c1c 0%, #991b1b 48%, #a16207 100%);
+  background: linear-gradient(145deg, #0f766e 0%, #115e59 48%, #64748b 100%);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(185, 28, 28, 0.35);
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.35);
 }.app-header-mark svg {
   display: block;
 }.app-header-brand-text {
@@ -111,13 +111,13 @@ desktop.
   box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.25);
   animation: hdr-pulse 1.2s ease-in-out infinite;
 }.storage-status-dot--warn {
-  background: #dc2626;
-  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+  background: #0f766e;
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.2);
   animation: none;
 }.storage-status--cloud {
   color: #1d4ed8;
 }.storage-status--warn {
-  color: #b45309;
+  color: #475569;
 }.cloud-storage-hint {
   margin: 0 0 1rem;
   font-size: 0.875rem;
@@ -160,7 +160,7 @@ desktop.
   gap: 1rem;
   margin: 0;
   padding: 0.85rem 1rem;
-  background: linear-gradient(90deg, #fef3c7 0%, #fff7ed 100%);
+  background: linear-gradient(90deg, #e2e8f0 0%, #f8fafc 100%);
   border-bottom: 1px solid #f59e0b;
   color: #78350f;
   font-size: 0.875rem;
@@ -180,7 +180,7 @@ desktop.
   border-radius: 3px;
   background: rgba(0, 0, 0, 0.06);
 }.deployment-issue-banner__hint a {
-  color: #b45309;
+  color: #475569;
   font-weight: 600;
 }.deployment-issue-banner__dismiss {
   flex-shrink: 0;
@@ -195,8 +195,8 @@ desktop.
   cursor: pointer;
 }.deployment-issue-banner--redirect {
   background: linear-gradient(90deg, #fee2e2 0%, #fff1f2 100%);
-  border-bottom-color: #dc2626;
-  color: #7f1d1d;
+  border-bottom-color: #0f766e;
+  color: #0f172a;
 }.deployment-issue-banner__actions {
   margin: 0.5rem 0 0;
 }.deployment-issue-banner__cta {
@@ -216,7 +216,7 @@ desktop.
 }.app-header--modern .app-header-title,
 .app-header--modern .app-title {
   margin: 0 !important;
-  font-family: "Inter", system-ui, sans-serif !important;
+  font-family: "Manrope", system-ui, sans-serif !important;
   font-size: clamp(1.05rem, 3.2vw, 1.35rem) !important;
   font-weight: 700 !important;
   letter-spacing: -0.025em !important;
@@ -243,14 +243,14 @@ desktop.
   font-weight: 600;
   letter-spacing: 0.02em;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(63, 15, 25, 0.08);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }.app-header-menu-toggle:hover {
-  border-color: rgba(185, 28, 28, 0.45);
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+  border-color: rgba(15, 118, 110, 0.45);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
 }.app-header-menu-toggle:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.22);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.22);
 }.app-header-menu-icon {
   display: flex;
   flex-direction: column;
@@ -280,7 +280,7 @@ desktop.
   z-index: 1;
   padding: 0.7rem;
   border-radius: 12px;
-  border: 1px solid rgba(231, 201, 120, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.55);
   background: #ffffff;
   animation: hdr-menu-in 0.22s ease;
 }.app-header--menu-open .app-header-toolbar {
@@ -312,8 +312,8 @@ desktop.
 .app-header--modern .app-header-action-btn {
   background: #ffffff !important;
   color: var(--hdr-text) !important;
-  border: 1px solid rgba(231, 201, 120, 0.65) !important;
-  box-shadow: 0 1px 2px rgba(63, 15, 25, 0.06) !important;
+  border: 1px solid rgba(148, 163, 184, 0.65) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
   text-transform: none !important;
   letter-spacing: 0.01em !important;
   font-size: 0.84rem !important;
@@ -321,10 +321,10 @@ desktop.
   filter: none !important;
 }.app-header--modern .app-header-menu-toggle:hover,
 .app-header--modern .app-header-action-btn:hover {
-  background: #fffdf8 !important;
+  background: #f8fafc !important;
   color: var(--hdr-accent) !important;
-  border-color: rgba(185, 28, 28, 0.45) !important;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12) !important;
+  border-color: rgba(15, 118, 110, 0.45) !important;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12) !important;
 }.app-header--modern .app-header-action-btn:active {
   transform: scale(0.98);
 }.app-header-action-btn {
@@ -341,7 +341,7 @@ desktop.
   transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
 }.app-header-action-btn:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.22) !important;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.22) !important;
 }.app-header-action-icon {
   flex: 0 0 auto;
   width: 32px;
@@ -349,9 +349,9 @@ desktop.
   display: grid;
   place-items: center;
   border-radius: 8px;
-  background: linear-gradient(180deg, #fef2f2 0%, #fff7ed 100%) !important;
+  background: linear-gradient(180deg, #f0fdfa 0%, #ecfeff 100%) !important;
   color: var(--hdr-accent) !important;
-  border: 1px solid rgba(231, 201, 120, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.5);
 }.app-header-action-icon svg {
   display: block;
 }.app-header-action-title {
@@ -369,7 +369,7 @@ desktop.
   line-height: 1.35 !important;
   color: var(--hdr-text-soft) !important;
   text-align: left;
-  border-top: 1px dashed rgba(231, 201, 120, 0.55);
+  border-top: 1px dashed rgba(148, 163, 184, 0.55);
 }.app-header-rates-footnote:empty {
   display: none;
   padding: 0;
@@ -453,7 +453,7 @@ horizontal ───── */
     padding: 0.4rem;
     border-radius: 14px;
     background: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(231, 201, 120, 0.55);
+    border: 1px solid rgba(148, 163, 184, 0.55);
     animation: none;
     max-width: none;
   }

@@ -34,9 +34,9 @@
 
 .confirm-modal {
   --cm-danger: #dc2626;
-  --cm-danger-bg: #fef2f2;
+  --cm-danger-bg: #f0fdfa;
   --cm-warning: #d97706;
-  --cm-warning-bg: #fffbeb;
+  --cm-warning-bg: #f8fafc;
 
   display: flex !important;
   flex-direction: column !important;
@@ -47,13 +47,13 @@
   margin: 0 auto !important;
   padding: 0 !important;
   border-radius: 16px !important;
-  border: 1px solid rgba(231, 201, 120, 0.35) !important;
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
   background: #ffffff !important;
   box-shadow:
-    0 24px 48px rgba(63, 15, 25, 0.16),
+    0 24px 48px rgba(15, 23, 42, 0.16),
     0 0 0 1px rgba(255, 255, 255, 0.65) inset !important;
-  color: #292524 !important;
-  font-family: var(--app-font-family, "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif) !important;
+  color: #0f172a !important;
+  font-family: var(--app-font-family, "Manrope", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif) !important;
   transform: translateY(0) !important;
   overflow: hidden;
   isolation: isolate;
@@ -109,7 +109,7 @@
   font-size: 0.88rem;
   font-weight: 600;
   line-height: 1.4;
-  color: #44403c !important;
+  color: #334155 !important;
   word-break: break-word;
 }
 
@@ -118,7 +118,7 @@
   margin-top: 0.15rem;
   font-size: 0.78rem;
   font-weight: 500;
-  color: #78716c !important;
+  color: #64748b !important;
 }
 
 .confirm-modal__message {
@@ -127,7 +127,7 @@
   font-size: 0.84rem;
   font-weight: 400;
   line-height: 1.55;
-  color: #57534e !important;
+  color: #475569 !important;
 }
 
 .confirm-modal__extras {
@@ -143,7 +143,7 @@
   margin-bottom: 0.35rem;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #78716c !important;
+  color: #64748b !important;
   text-transform: none !important;
   letter-spacing: normal !important;
 }
@@ -155,7 +155,7 @@
   border-radius: 10px;
   border: 1px solid rgba(214, 211, 209, 0.95);
   background: #fafaf9 !important;
-  color: #292524 !important;
+  color: #0f172a !important;
   font-family: inherit !important;
   font-size: 0.88rem;
   box-sizing: border-box;
@@ -171,7 +171,7 @@
   margin: 0.4rem 0 0;
   font-size: 0.74rem;
   line-height: 1.4;
-  color: #78716c !important;
+  color: #64748b !important;
 }
 
 .confirm-modal__error {
@@ -222,14 +222,14 @@
 .confirm-modal button.confirm-modal__btn--ghost {
   background: #fafaf9 !important;
   border: 1px solid #e7e5e4 !important;
-  color: #44403c !important;
+  color: #334155 !important;
   box-shadow: none !important;
 }
 
 .confirm-modal button.confirm-modal__btn--ghost:hover {
   background: #f5f5f4 !important;
   border-color: #d6d3d1 !important;
-  color: #292524 !important;
+  color: #0f172a !important;
   transform: none !important;
 }
 
@@ -241,7 +241,7 @@
 }
 
 .confirm-modal button.confirm-modal__btn--danger:hover:not(:disabled) {
-  background: #b91c1c !important;
+  background: #dc2626 !important;
   transform: none !important;
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.22) !important;
 }
@@ -260,7 +260,7 @@
 }
 
 .confirm-modal button.confirm-modal__btn--warning:hover {
-  background: #b45309 !important;
+  background: #475569 !important;
   transform: none !important;
   box-shadow: 0 4px 12px rgba(217, 119, 6, 0.22) !important;
 }

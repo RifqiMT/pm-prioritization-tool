@@ -1,0 +1,256 @@
+/**
+ * Design tokens — Calm slate workspace (2026 UI refresh).
+ * Loaded early so component stylesheets can alias into these values.
+ * Accent: deep teal. Neutrals: cool slate. No cream/maroon/gold chrome.
+ */
+
+:root {
+  /* ── Core palette ─────────────────────────────────────── */
+  --dt-page: #eef2f6;
+  --dt-page-mid: #f4f7fa;
+  --dt-surface: #ffffff;
+  --dt-surface-muted: #f8fafc;
+  --dt-surface-soft: #f1f5f9;
+  --dt-surface-tint: #f0fdfa;
+
+  --dt-text: #0f172a;
+  --dt-text-soft: #475569;
+  --dt-text-muted: #64748b;
+  --dt-text-faint: #94a3b8;
+
+  --dt-accent: #0f766e;
+  --dt-accent-hover: #0d9488;
+  --dt-accent-strong: #115e59;
+  --dt-accent-soft: rgba(15, 118, 110, 0.12);
+  --dt-accent-softer: rgba(15, 118, 110, 0.07);
+  --dt-accent-glow: rgba(13, 148, 136, 0.28);
+
+  --dt-secondary: #334155;
+  --dt-secondary-soft: #64748b;
+
+  --dt-border: rgba(15, 23, 42, 0.09);
+  --dt-border-strong: rgba(15, 118, 110, 0.28);
+  --dt-border-gold-legacy: rgba(148, 163, 184, 0.55);
+
+  --dt-success: #059669;
+  --dt-danger: #dc2626;
+  --dt-danger-soft: rgba(220, 38, 38, 0.12);
+  --dt-warning: #d97706;
+  --dt-info: #0284c7;
+
+  --dt-radius-sm: 8px;
+  --dt-radius-md: 12px;
+  --dt-radius-lg: 16px;
+  --dt-radius-xl: 20px;
+
+  --dt-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --dt-shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
+  --dt-shadow-lift: 0 4px 16px rgba(15, 23, 42, 0.08), 0 12px 32px rgba(15, 118, 110, 0.08);
+  --dt-focus: 0 0 0 3px var(--dt-accent-glow);
+
+  --dt-font: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --dt-font-display: "Source Serif 4", "Manrope", Georgia, serif;
+
+  --dt-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dt-duration-fast: 0.15s;
+  --dt-duration: 0.22s;
+  --dt-duration-slow: 0.32s;
+
+  /* ── Legacy shell aliases (main.css :root) ────────────── */
+  --bg: var(--dt-page);
+  --bg-elevated: var(--dt-surface);
+  --surface: var(--dt-surface);
+  --surface-hover: var(--dt-surface-soft);
+  --border: #e2e8f0;
+  --border-focus: rgba(13, 148, 136, 0.55);
+  --text: var(--dt-text);
+  --text-secondary: var(--dt-text-soft);
+  --muted: var(--dt-text-muted);
+  --accent: var(--dt-accent);
+  --accent-soft: var(--dt-accent-soft);
+  --accent-hover: var(--dt-accent-hover);
+  --gold: var(--dt-secondary);
+  --gold-soft: rgba(51, 65, 85, 0.12);
+  --white-soft: var(--dt-surface-muted);
+  --success: var(--dt-success);
+  --danger: var(--dt-danger);
+  --radius-lg: var(--dt-radius-lg);
+  --radius-md: var(--dt-radius-md);
+  --radius-sm: var(--dt-radius-sm);
+  --shadow-soft: var(--dt-shadow-soft);
+  --shadow-card: var(--dt-shadow-soft);
+  --shadow-card-hover: var(--dt-shadow-lift);
+  --transition-fast: var(--dt-duration-fast) var(--dt-ease);
+  --transition-normal: var(--dt-duration) var(--dt-ease);
+  --transition-slow: var(--dt-duration-slow) var(--dt-ease);
+  --app-font-family: var(--dt-font);
+
+  /* ── Workspace / portfolio aliases ────────────────────── */
+  --ws-radius-sm: var(--dt-radius-sm);
+  --ws-radius-md: var(--dt-radius-md);
+  --ws-radius-lg: var(--dt-radius-lg);
+  --ws-shadow-soft: var(--dt-shadow-soft);
+  --ws-shadow-lift: var(--dt-shadow-lift);
+  --ws-header-grad: linear-gradient(135deg, #115e59 0%, #0f766e 48%, #0d9488 100%);
+  --ws-surface: var(--dt-surface);
+  --ws-surface-muted: var(--dt-surface-muted);
+  --ws-border: var(--dt-border-gold-legacy);
+  --ws-border-strong: var(--dt-border-strong);
+  --ws-text: var(--dt-text);
+  --ws-text-soft: var(--dt-text-soft);
+  --ws-accent: var(--dt-accent);
+  --ws-gold: var(--dt-secondary-soft);
+  --ws-row-hover: var(--dt-accent-softer);
+  --ws-row-alt: var(--dt-surface-muted);
+  --ws-focus: var(--dt-focus);
+
+  --pf-bg: var(--dt-surface);
+  --pf-bg-soft: var(--dt-surface-muted);
+  --pf-border: var(--dt-border-gold-legacy);
+  --pf-text: var(--dt-text);
+  --pf-text-soft: var(--dt-text-soft);
+  --pf-accent: var(--dt-accent);
+  --pf-gold: var(--dt-secondary-soft);
+  --pf-radius: var(--dt-radius-md);
+  --pf-shadow: var(--dt-shadow-xs);
+
+  /* ── Header / footer / transfer / BYOK / toolbars ───────── */
+  --hdr-bg: linear-gradient(135deg, #ffffff 0%, #f8fafc 55%, #f0fdfa 100%);
+  --hdr-border: rgba(148, 163, 184, 0.45);
+  --hdr-text: var(--dt-text);
+  --hdr-text-soft: var(--dt-text-soft);
+  --hdr-accent: var(--dt-accent);
+  --hdr-gold: var(--dt-secondary-soft);
+  --hdr-radius: var(--dt-radius-md);
+  --hdr-shadow: var(--dt-shadow-soft);
+
+  --footer-bg: linear-gradient(180deg, rgba(248, 250, 252, 0.98) 0%, rgba(241, 245, 249, 0.96) 100%);
+  --footer-border: rgba(148, 163, 184, 0.4);
+  --footer-text: var(--dt-text-soft);
+  --footer-text-soft: var(--dt-text-muted);
+  --footer-accent: var(--dt-accent);
+  --footer-gold: var(--dt-secondary-soft);
+  --footer-surface: rgba(255, 255, 255, 0.85);
+  --footer-radius: var(--dt-radius-md);
+
+  --dt-modal-accent: var(--dt-accent);
+  --dt-modal-gold: var(--dt-secondary-soft);
+  --dt-bg-soft: var(--dt-surface-muted);
+  --dt-radius: var(--dt-radius-lg);
+
+  --byok-text: var(--dt-text);
+  --byok-text-soft: var(--dt-text-soft);
+  --byok-accent: var(--dt-accent);
+  --byok-green: var(--dt-success);
+  --byok-blue: var(--dt-info);
+  --byok-border: rgba(148, 163, 184, 0.45);
+
+  --vt-gold: var(--dt-secondary-soft);
+  --vt-text: var(--dt-text);
+  --vt-accent: var(--dt-accent);
+
+  --compact-text: var(--dt-text);
+  --compact-text-soft: var(--dt-text-soft);
+  --compact-accent: var(--dt-accent);
+  --compact-gold: var(--dt-secondary-soft);
+  --compact-border: rgba(148, 163, 184, 0.5);
+  --compact-surface: var(--dt-surface);
+  --compact-surface-soft: var(--dt-surface-muted);
+  --compact-shadow: var(--dt-shadow-soft);
+  --compact-radius: var(--dt-radius-md);
+  --compact-radius-sm: var(--dt-radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dt-duration-fast: 0.05s;
+    --dt-duration: 0.08s;
+    --dt-duration-slow: 0.1s;
+  }
+}
+
+/* Page atmosphere */
+body {
+  background:
+    radial-gradient(ellipse 110% 70% at 12% -10%, rgba(13, 148, 136, 0.11), transparent 52%),
+    radial-gradient(ellipse 80% 50% at 92% 8%, rgba(2, 132, 199, 0.07), transparent 48%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(15, 23, 42, 0.04), transparent 55%),
+    linear-gradient(180deg, var(--dt-page-mid) 0%, var(--dt-page) 45%, #e8eef4 100%) !important;
+  color: var(--dt-text) !important;
+  font-family: var(--dt-font) !important;
+}
+
+/* Display serif — brand title only (workspace stays Manrope for density) */
+.app-header-title {
+  font-family: var(--dt-font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Shared motion utilities */
+@keyframes dt-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dt-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dt-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .workspace-panel--v2,
+  .profiles-panel--v2 {
+    animation: dt-fade-up var(--dt-duration-slow) var(--dt-ease) both;
+  }
+
+  .view-pane.is-active,
+  .board-column,
+  .roadmap-table tbody tr {
+    transition: background-color var(--dt-duration-fast) var(--dt-ease),
+      box-shadow var(--dt-duration-fast) var(--dt-ease),
+      border-color var(--dt-duration-fast) var(--dt-ease),
+      transform var(--dt-duration-fast) var(--dt-ease);
+  }
+
+  .app-header-action-btn,
+  .btn-primary,
+  .btn-secondary,
+  .portfolio-action-btn,
+  .view-toggle-btn {
+    transition: background-color var(--dt-duration) var(--dt-ease),
+      color var(--dt-duration) var(--dt-ease),
+      border-color var(--dt-duration) var(--dt-ease),
+      box-shadow var(--dt-duration) var(--dt-ease),
+      transform var(--dt-duration-fast) var(--dt-ease);
+  }
+
+  .app-header-action-btn:hover,
+  .portfolio-action-btn:hover,
+  .view-toggle-btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .modal-panel,
+  .data-transfer-modal,
+  .confirm-modal-panel {
+    animation: dt-scale-in var(--dt-duration-slow) var(--dt-ease) both;
+  }
+}

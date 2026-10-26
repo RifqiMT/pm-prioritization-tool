@@ -17,7 +17,7 @@ html.pseudo-view-fullscreen .app-shell {
   z-index: 980;
   display: flex;
   flex-direction: column;
-  background: #fffdf8;
+  background: #f8fafc;
   box-sizing: border-box;
 }.view-fullscreen-host[hidden] {
   display: none !important;
@@ -29,9 +29,9 @@ html.pseudo-view-fullscreen .app-shell {
   align-items: center;
   gap: 1rem 1.25rem;
   padding: 0.65rem 1.25rem;
-  border-bottom: 1px solid rgba(231, 201, 120, 0.55);
-  background: linear-gradient(180deg, #ffffff 0%, #fffdf8 100%);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85), 0 4px 18px rgba(127, 29, 29, 0.06);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.55);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85), 0 4px 18px rgba(15, 23, 42, 0.06);
 }.view-fullscreen-brand {
   display: flex;
   align-items: center;
@@ -44,9 +44,9 @@ html.pseudo-view-fullscreen .app-shell {
   display: grid;
   place-items: center;
   border-radius: 11px;
-  background: linear-gradient(145deg, #b91c1c 0%, #991b1b 48%, #a16207 100%);
+  background: linear-gradient(145deg, #0f766e 0%, #115e59 48%, #64748b 100%);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(185, 28, 28, 0.28);
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.28);
 }.view-fullscreen-mark svg {
   display: block;
 }.view-fullscreen-context {
@@ -59,11 +59,11 @@ html.pseudo-view-fullscreen .app-shell {
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #a16207;
+  color: #64748b;
 }.view-fullscreen-profile {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #3f0f19;
+  color: #0f172a;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -73,8 +73,8 @@ html.pseudo-view-fullscreen .app-shell {
   gap: 0.28rem;
   padding: 0.22rem;
   border-radius: 12px;
-  background: rgba(254, 243, 199, 0.38);
-  border: 1px solid rgba(231, 201, 120, 0.5);
+  background: rgba(204, 251, 241, 0.38);
+  border: 1px solid rgba(148, 163, 184, 0.5);
 }.view-fullscreen-tab {
   display: inline-flex;
   align-items: center;
@@ -85,7 +85,7 @@ html.pseudo-view-fullscreen .app-shell {
   border-radius: 9px;
   border: 1px solid transparent;
   background: transparent;
-  color: #7a4b12;
+  color: #475569;
   font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
@@ -101,12 +101,12 @@ html.pseudo-view-fullscreen .app-shell {
 }.view-fullscreen-tab--active,
 .view-fullscreen-tab[aria-selected="true"] {
   background: #fff;
-  border-color: rgba(185, 28, 28, 0.28);
-  color: #b91c1c;
-  box-shadow: 0 1px 4px rgba(185, 28, 28, 0.12);
+  border-color: rgba(15, 118, 110, 0.28);
+  color: #0f766e;
+  box-shadow: 0 1px 4px rgba(15, 118, 110, 0.12);
 }.view-fullscreen-tab:hover:not(.view-fullscreen-tab--active):not([aria-selected="true"]) {
   background: rgba(255, 255, 255, 0.65);
-  border-color: rgba(231, 201, 120, 0.45);
+  border-color: rgba(148, 163, 184, 0.45);
 }.view-fullscreen-actions {
   display: flex;
   align-items: center;
@@ -119,9 +119,9 @@ html.pseudo-view-fullscreen .app-shell {
   min-height: 40px;
   padding: 0.45rem 0.9rem;
   border-radius: 10px;
-  border: 1px solid rgba(185, 28, 28, 0.35);
-  background: linear-gradient(180deg, #fff5f5 0%, #fef2f2 100%);
-  color: #b91c1c;
+  border: 1px solid rgba(15, 118, 110, 0.35);
+  background: linear-gradient(180deg, #fff5f5 0%, #f0fdfa 100%);
+  color: #0f766e;
   font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
@@ -129,8 +129,8 @@ html.pseudo-view-fullscreen .app-shell {
   transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }.view-fullscreen-exit-btn:hover {
   background: #fee2e2;
-  border-color: rgba(185, 28, 28, 0.5);
-  box-shadow: 0 2px 8px rgba(185, 28, 28, 0.12);
+  border-color: rgba(15, 118, 110, 0.5);
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.12);
 }.view-fullscreen-exit-btn svg {
   flex-shrink: 0;
 }/* ── Stage & view ────────────────────────────────────────── */
@@ -171,7 +171,7 @@ html.pseudo-view-fullscreen .app-shell {
   z-index: 2;
   margin-bottom: 0.55rem !important;
   border-radius: 12px !important;
-  background: rgba(255, 253, 248, 0.92) !important;
+  background: rgba(248, 250, 252, 0.92) !important;
 }.view-in-fullscreen-host .view-toolbar__row--primary {
   grid-template-columns: 1fr !important;
 }.view-in-fullscreen-host .scrum-board,

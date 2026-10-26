@@ -4,7 +4,7 @@
 |-------|-------|
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
-| **Last updated** | 2026-10-24 |
+| **Last updated** | 2026-10-26 |
 | **Compact breakpoint** | ≤ **1400px** (`COMPACT_LAYOUT_MAX_WIDTH_PX`) |
 
 **Purpose:** Epics and user-story contracts with **Given / When / Then** acceptance criteria, including edge cases and error handling.
@@ -72,6 +72,51 @@ Each story includes:
    - **When** it is active  
    - **Then** the locked banner shows  
    - **And** roadmap data does not render in any view.
+
+---
+
+### US-A2b — Explore portfolio timeline in Profile overview
+
+- **Persona:** Product Manager  
+- **Goal:** See how type, MoSCoW, KANO, finance, or RICE looks across planning quarters or years — as a chart or table.
+
+**Acceptance criteria**
+
+1. **Metric switch**  
+   - **Given** Profile overview is open with roadmaps that have periods  
+   - **When** the user selects a metric (type, t-shirt, MoSCoW, KANO, framework, currency, financial impact, RICE)  
+   - **Then** the Portfolio timeline updates without closing the modal.
+
+2. **Quarterly stacking**  
+   - **Given** a roadmap listed in 2026-Q1 and 2026-Q2  
+   - **When** a count metric is selected in Quarterly mode  
+   - **Then** that roadmap contributes to both quarters.
+
+3. **Annual roll-up**  
+   - **Given** a roadmap spanning 2026-Q1 and 2026-Q2  
+   - **When** Annually is selected  
+   - **Then** that roadmap counts once for 2026 (no double-count).
+
+4. **Chart / Table toggle**  
+   - **Given** the timeline card  
+   - **When** the user switches Chart ↔ Table  
+   - **Then** the same metric, granularity, and category filters apply  
+   - **And** Table shows period rows, series columns, Total, and period-over-period growth (`+12%` / `−8%` / `New` / `—`).
+
+5. **Legend category filters**  
+   - **Given** a category metric with legend chips  
+   - **When** the user clicks chips (multi-select) or Clear filters  
+   - **Then** chart stacks / table columns and KPIs recompute to the filtered series.
+
+6. **Empty periods**  
+   - **Given** no roadmaps have periods  
+   - **When** the timeline renders  
+   - **Then** an empty-state message explains that periods are required.
+
+7. **Session defaults**  
+   - **Given** Profile overview opens  
+   - **When** the timeline mounts  
+   - **Then** view mode starts as Chart (filters may persist from the prior Chart↔Table switch in the same open).
 
 **Error / edge handling**
 

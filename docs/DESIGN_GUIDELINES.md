@@ -1,8 +1,8 @@
 # Design Guidelines
 
 **Product:** Product Management Prioritization Tool  
-**Last updated:** 2026-10-24  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260710-ui205`  
+**Last updated:** 2026-10-26  
+**Implementation baseline:** `APP_ASSET_VERSION` = `20261025-ui234`  
 **Layout breakpoint:** `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** (`html.is-compact-layout` + `html.is-phone-layout`)
 
 Visual and interaction standards for the local-first prioritization workspace.
@@ -13,40 +13,56 @@ Visual and interaction standards for the local-first prioritization workspace.
 
 1. **Explainability first** — scores and values must be understandable in context (tooltips, labels, callouts).  
 2. **Dense but readable** — table-first workflows; compact type without broken headers.  
-3. **Consistent interaction** — icon pills, toggles, and modals behave the same across views.  
+3. **Consistent interaction** — toggles, buttons, and modals behave the same across views.  
 4. **Responsive by default** — phone, tablet, and desktop layouts are first-class.  
-5. **Warm professional tone** — cream surfaces, maroon text, red accent for primary actions.
+5. **Calm professional tone** — cool slate surfaces, deep teal accent, restrained motion.
 
 ---
 
 ## 2. Theme tokens
 
-### 2.1 App shell (`main.css` :root — dark chrome)
+### 2.0 Foundation (`design-tokens.css` + `ui-refresh.css`)
+
+Calm **slate / teal** system. Legacy aliases (`--ws-*`, `--pf-*`, `--hdr-*`, `--byok-*`, `--vt-*`, `--compact-*`) remap into these values.
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `--accent` | `#e11d48` / `#b91c1c` | Legacy accents |
-| `--gold` | `#d4af37` | Borders, highlights |
-| `--text` | `#f8f8f8` | Shell text on dark bg |
+| `--dt-page` / `--dt-page-mid` | `#eef2f6` / `#f4f7fa` | Page atmosphere |
+| `--dt-surface` / `--dt-surface-muted` | `#ffffff` / `#f8fafc` | Panels, cards |
+| `--dt-text` / `--dt-text-soft` | `#0f172a` / `#475569` | Primary / secondary copy |
+| `--dt-accent` / `--dt-accent-hover` | `#0f766e` / `#0d9488` | Primary actions, focus |
+| `--dt-danger` | `#dc2626` | Destructive actions only |
+| `--dt-font` | Manrope | UI type |
+| `--dt-font-display` | Source Serif 4 | Brand title only |
+| Radii / shadow | 8–16px / soft single-layer | Panels, modals, cards |
+
+### 2.1 App shell (`main.css` :root)
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--accent` | `#0f766e` | Primary accent |
+| `--gold` | `#334155` | Legacy alias → steel secondary |
+| `--text` | `#0f172a` | Body text on light shell |
 
 ### 2.2 Modern workspace (`workspace-modern.css`, portfolio, profiles)
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `--ws-surface` / `--pf-bg` | `#fffdf8`, `#ffffff` | Cards, panels |
-| `--ws-gold` / `--pf-gold` | `#a16207` | Eyebrows, labels |
-| `--ws-text` / `--pf-text` | `#3f0f19` | Headings |
-| `--ws-text-soft` | `#7a4b12` | Secondary copy |
-| `--ws-border` | `rgba(231, 201, 120, 0.65)` | Panel borders |
+| `--ws-surface` / `--pf-bg` | `#ffffff`, `#f8fafc` | Cards, panels |
+| `--ws-gold` / `--pf-gold` | `#64748b` | Eyebrows, labels |
+| `--ws-text` / `--pf-text` | `#0f172a` | Headings |
+| `--ws-text-soft` | `#475569` | Secondary copy |
+| `--ws-border` | `rgba(148, 163, 184, 0.55)` | Panel borders |
+| `--ws-accent` | `#0f766e` | Primary actions |
 
 ### 2.3 Data transfer modals (`export-modals-modern.css`)
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `--dt-accent` | `#b91c1c` | Primary buttons, export mark |
-| `--dt-gold` | `#a16207` | CSV icon accent |
-| `--dt-bg-soft` | `#fffdf8` | Callouts, cards |
-| `--dt-radius` | `18px` | Modal corners (desktop) |
+| `--dt-accent` (modal) | `#0f766e` | Primary buttons, export mark |
+| `--dt-gold` | `#64748b` | Secondary icon accent |
+| `--dt-bg-soft` | `#f8fafc` | Callouts, cards |
+| `--dt-radius` | `16–18px` | Modal corners (desktop) |
 
 ### 2.4 Five Why section (roadmap modal, `main.css`)
 
@@ -75,18 +91,31 @@ Typography and spacing follow roadmap modal optional-section patterns (`--roadma
 
 Layout reuses financial section grid (`financial-form-section`, `financial-clv-breakdown`) so CoD visually aligns with Financial impact without sharing data.
 
+### 2.5b Portfolio timeline (Profile overview, `profile-modals-modern.css`)
+
+| Class / pattern | Role |
+|-----------------|------|
+| `.profile-timeline-*` toolbar | Quarterly/Annually + Chart/Table segmented controls; metric select |
+| `.profile-timeline-legend-*` | Soft legend chips with swatch + unique count; on/off filter contrast |
+| `.profile-timeline-clear-filter` | Ghost Clear filters chip (× + label) |
+| `.profile-timeline-empty` | Empty-state when no period data |
+| Chart SVG | Teal numeric bars / multi-color category stacks; peak emphasis; hover tooltip |
+| Table | Sticky Period + Total; wrapping series headers; period-over-period growth (`+` green / `−` rose / `New` / `—`); no heat fills |
+
+Do not let global `button` teal or `table { min-width }` bleed into the timeline card — scoped overrides live in `profile-modals-modern.css`.
+
 ### 2.5 BYOK modal (`byok-api-keys.css`)
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `--byok-text` | `#3f0f19` | Headings |
-| `--byok-text-soft` | `#7a4b12` | Secondary copy |
-| `--byok-accent` | `#b91c1c` | Primary actions |
+| `--byok-text` | `#0f172a` | Headings |
+| `--byok-text-soft` | `#475569` | Secondary copy |
+| `--byok-accent` | `#0f766e` | Primary actions |
 | `--byok-green` | `#047857` | Valid/saved status |
-| `--byok-blue` | `#1d4ed8` | Provider accents |
-| `--byok-border` | `rgba(202, 138, 4, 0.35)` | Panel border |
+| `--byok-blue` | `#0284c7` | Provider accents |
+| `--byok-border` | `rgba(148, 163, 184, 0.45)` | Panel border |
 
-Panel uses cream gradient (`#fffdf8` → `#fffaf0`), 20px radius, max **1120×92vh** — aligned with profile view and roadmap modals.
+Panel uses soft slate surfaces (`#ffffff` / `#f8fafc`), ~16–20px radius, max **1120×92vh** — aligned with profile view and roadmap modals.
 
 ### 2.6 Rich description content (`rich-description-content.css`)
 
@@ -204,7 +233,7 @@ Category badges use `categoryCode` (A/O/M/I/R) on compact cards; desktop matrix 
 | `header-modern.css` | App header, actions menu |
 | `profiles-modern.css` | Profile list v2 |
 | `portfolio-modern.css` | Command bar, filters, FAB, locked banner |
-| `profile-modals-modern.css` | Edit/unlock/delete profile modals |
+| `profile-modals-modern.css` | Profile Overview + edit/unlock/delete modals; Overview shell scroll clears sticky Close footer; MoSCoW chips use rose/amber/sky/slate; metrics KPI strip; Portfolio timeline calm scrollable table (sticky Period/Total, wrapping headers, value bars) beats global teal `button` / table min-width bleed |
 | `export-modals-modern.css` | Export, import, export-unlock |
 | `view-toolbars-modern.css` | Table/board/MoSCoW/map toolbars |
 | `compact-modern.css` | Compact chrome: icon tabs, short title, FAB, hidden toolbar labels |
@@ -233,7 +262,7 @@ Category badges use `categoryCode` (A/O/M/I/R) on compact cards; desktop matrix 
 | `byok-api-keys.css` | BYOK API keys modal (Groq/Tavily) |
 | `rich-description-content.css` | Rendered rich-text / summary paragraph typography |
 
-**Load order:** see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) — **43** local layered stylesheets in `index.html` (plus Google Fonts and Leaflet CSS from CDN).
+**Load order:** see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) — **47** local layered stylesheets in `index.html` (plus Google Fonts and Leaflet CSS from CDN).
 
 ### 4.1 Compact layout tokens (`compact-modern.css`)
 
@@ -320,7 +349,8 @@ Category badges use `categoryCode` (A/O/M/I/R) on compact cards; desktop matrix 
 
 - **Display names:** **Must Have**, **Should Have**, **Could Have**, **Won't Have**.  
 - **Header row:** category badge + quadrant description on one line.  
-- **Compact nav:** 2×2 pill bar uses `getMoscowDisplayName()` for full names.
+- **Compact nav:** 2×2 pill bar uses `getMoscowDisplayName()` for full names.  
+- **Color system** (`css/moscow-theme.css`): semantic and high-contrast — **Must** rose `#e11d48`, **Should** amber `#d97706`, **Could** sky `#0284c7`, **Won't** slate `#64748b`. Soft tinted headers/cards + matching table pills. Do not reuse app teal for MoSCoW categories. Profile Overview “By MOSCOW distribution” chips reuse the same tokens via `profile-view-chip--moscow-*`.
 
 ### 5.10 Profile command bar (compact)
 
@@ -349,8 +379,9 @@ Category badges use `categoryCode` (A/O/M/I/R) on compact cards; desktop matrix 
 
 ## 6. Typography
 
-- **Font:** Inter (Google Fonts), system-ui fallback.  
-- **Eyebrows:** 0.68rem, uppercase, gold, letter-spaced.  
+- **UI font:** Manrope (Google Fonts), system-ui fallback.  
+- **Brand title:** Source Serif 4 (`.app-header-title` only).  
+- **Eyebrows:** 0.68rem, uppercase, slate secondary (`#64748b`), letter-spaced.  
 - **Modal titles:** ~1.05rem, sentence case, bold (not all-caps).  
 - **Avoid** legacy all-caps button labels in modern surfaces.
 

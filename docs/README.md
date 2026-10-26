@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Maintainer** | Product Team |
-| **Last audited** | 2026-10-24 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui205` |
+| **Last audited** | 2026-10-26 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20261025-ui234` |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
 
 This folder is the **single source of product truth** for engineering, design, product management, and stakeholders (**17 documents** + root [README.md](../README.md) = **18-file suite**). Documents are maintained against the **current** implementation in `index.html`, `css/`, `src/`, and `api/`.
@@ -67,28 +67,16 @@ This folder is the **single source of product truth** for engineering, design, p
 
 ---
 
-## Source code map (audited 2026-10-24)
+## Source code map (audited 2026-10-26)
 
 ```
 pm-prioritization-tool/
 ├── index.html                      # Shell, modals, filters, seven views, BYOK, footer
-├── css/                            # 43 layered stylesheets (see TECH_GUIDELINES.md §3.1)
-│   ├── main.css … export-modals-modern.css
-│   ├── byok-api-keys.css
-│   ├── view-toolbars-modern.css … app-footer.css
-│   ├── filters-compact-bar.css
-│   ├── filters-sheet-modern.css    # Bottom-sheet filters (compact)
-│   ├── mobile-command-deck.css     # Compact portfolio command deck
-│   ├── compact-view-gutter.css
-│   ├── profile-picker-compact.css  # Profile combobox (compact)
-│   ├── view-tabs-compact-menu.css  # View tab overflow menu
-│   ├── rich-description-content.css
-│   ├── rich-text-editor.css
-│   ├── portfolio-kano-modern.css
-│   ├── gantt-view.css              # Gantt timeline grid and bars
-│   ├── share-link.css              # Deep-link focus ring on portfolio cards
-│   ├── confirm-modals-modern.css   # Delete/confirm dialogs
-│   └── filter-combobox-fix.css     # Profile/filter combobox alignment
+├── css/                            # 47 layered stylesheets (see TECH_GUIDELINES.md §3.1)
+│   ├── design-tokens.css           # Calm slate/teal foundation
+│   ├── main.css … filter-combobox-fix.css
+│   ├── ui-refresh.css / ui-polish.css
+│   └── moscow-theme.css            # MoSCoW rose/amber/sky/slate
 ├── src/
 │   ├── app.js                      # State, render, CRUD, filters, import/export
 │   ├── constants.js                # Enums, tooltips, APP_ASSET_VERSION
@@ -112,6 +100,7 @@ pm-prioritization-tool/
 │       ├── roadmap-periods.js      # Multi-quarter roadmapPeriods
 │       ├── incomplete-optional-fields.js # Optional-field completeness filter (15 types)
 │       ├── cost-of-delay.js        # CostOfDelay plain-English calculator
+│       ├── profile-overview-timeline.js # Portfolio timeline Chart/Table
 │       ├── gantt-view.js           # Gantt timeline view
 │       ├── export-payload.js       # JSON/CSV export builders
 │       └── share-link.js           # URL hash deep links
@@ -150,6 +139,7 @@ pm-prioritization-tool/
 │   ├── test-import-file-kind.js    # npm run test:import-file-kind
 │   ├── test-incomplete-optional-fields-filter.js # npm run test:incomplete-filter
 │   ├── test-cost-of-delay.js       # npm run test:cost-of-delay
+│   ├── test-profile-overview-timeline.js # npm run test:profile-timeline
 │   ├── sync-asset-versions.js      # npm run sync:assets (build step)
 │   └── disable-vercel-deployment-protection.sh
 ├── .github/workflows/              # ci.yml, vercel-production.yml, fix-vercel-protection.yml

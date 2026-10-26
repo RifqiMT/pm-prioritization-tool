@@ -2,8 +2,8 @@
 
 **Purpose:** Authoritative dictionary of application variables — technical name, friendly name, definition, formula, UI location, and examples.  
 **Audience:** Product, engineering, QA, analytics.  
-**Last audited:** 2026-10-24  
-**Implementation baseline:** `APP_ASSET_VERSION` = `20260710-ui205`
+**Last audited:** 2026-10-26  
+**Implementation baseline:** `APP_ASSET_VERSION` = `20261025-ui234`
 
 > Privileged cross-profile workspace variables (workspace-wide mode, owner filter, owner metadata) are specified in [GUARDRAILS.md](GUARDRAILS.md) §7 only. This dictionary uses neutral names below.
 
@@ -36,6 +36,7 @@ Persisted to `localStorage` under `rice_prioritizer_v1` unless noted.
 | `sortField` | Table Sort Column | Active sort key for table view. | Enum used by `sortRoadmaps`. | Table view | `"riceScore"` |
 | `sortDirection` | Sort Direction | Ascending or descending table sort. | `"asc"` \| `"desc"`. | Table view | `"desc"` |
 | `roadmapsView` | Active Planning View | Which workspace tab is visible. | `table` \| `board` \| `moscow` \| `map` \| `raci` \| `kano` \| `gantt`. | View tabs (seven planning views) | `"board"` |
+| `ganttZoom` | Gantt Zoom Level | Timeline density in Gantt view. | `compact` (monthly) \| `standard` \| `comfortable` (weekly); persisted. | Gantt toolbar | `"standard"` |
 | `raciMatrixDomain` | RACI Perspective | Filters RACI matrix entries by stakeholder domain. | `Business` \| `Tech`; persisted in workspace. | RACI view toolbar | `"Business"` |
 | `kanoPortfolioPanel` | KANO Portfolio Panel | Which KANO sub-panel is active. | `positioned` \| `unpositioned`; persisted. | KANO view toolbar | `"positioned"` |
 | `tableSortByRice` | Table RICE Sort | When true, table rows sorted by RICE score. | Boolean; persisted. | Table toolbar | `true` |
@@ -68,6 +69,10 @@ Persisted to `localStorage` under `rice_prioritizer_v1` unless noted.
 | `roadmapFiveWhyGenerated` | Generated Five Why Chain | Last 5 Why output object (ordered WHY entries + research metadata). | Session-only; cleared on modal close or reset. | `#roadmapFiveWhyOutput` | `{ whys: [{ level, question, lensLabel }], research, complete }` |
 | `FIVE_WHY_MAX_LEVELS` | Five Why Depth | Maximum iterative WHY levels. | Constant `5` in `roadmap-5why-framework.js`. | Generate button label | `5` |
 | `WHY_LEVEL_LENS` | Five Why Level Lens | Per-level analytical framing (DMAIC phase + plain label). | Indexed by level 1–5; drives prompt and UI labels. | Five Why output list items | Define → Measure → Analyze → Improve → Control |
+| `profileViewTimelineMetric` | Portfolio Timeline Metric | Selected metric for Profile overview Portfolio timeline. | One of `ProfileOverviewTimeline.METRICS` ids; session-only; defaults to `roadmapType` on overview open. | `#profileViewTimelineMetric` | `"moscow"` |
+| `profileViewTimelineGranularity` | Portfolio Timeline Granularity | Quarter vs year bucket mode. | `quarter` \| `year`; session-only; defaults to `quarter` on open. | Quarterly / Annually segmented control | `"year"` |
+| `profileViewTimelineViewMode` | Portfolio Timeline View Mode | Chart vs data table presentation. | `chart` \| `table`; session-only; **resets to `chart`** when Profile overview opens. | Chart / Table segmented control | `"table"` |
+| `seriesFilter` (timeline module state) | Timeline Category Filter | Active legend series keys isolating the stack/table. | Held on chart container `_ptRenderState`; multi-select via legend chips; cleared by Clear filters; persists across Chart ↔ Table while overview stays open. | Legend chips / Clear filters | `["Must have","Should have"]` |
 
 ### URL deep-link parameters (`ShareLink` — not persisted to cloud)
 
@@ -245,6 +250,11 @@ Full input field whitelists: `sanitizeFinancialImpactInputs` in `src/app.js`.
 | Technical Name | Friendly Name | Definition | Example |
 |----------------|---------------|------------|---------|
 | `STORAGE_KEY` | Storage Key | localStorage key for app state. | `"rice_prioritizer_v1"` |
+| `APP_ASSET_VERSION` | Asset Cache Version | Prefix for `?v=` on CSS/JS in `index.html` (synced by `scripts/sync-asset-versions.js`). | `"20261025-ui234"` |
+| `PRODUCTION_APP_ORIGIN` | Production Origin | Canonical deployed app URL (MongoDB + `/api`). | `"https://pm-prioritization-tool-one.vercel.app"` |
+| `LEGACY_WRONG_HOSTNAMES` | Legacy Hostnames | Hosts that serve a different app; banner redirects to `PRODUCTION_APP_ORIGIN`. | `pm-prioritization-tool.vercel.app`, `…-six.vercel.app` |
+| `DEMO_PROFILE_NAME` | Demo Profile Name | Read-only demo workspace label when active. | `"Test"` |
+| `DEFAULT_ACTIVE_PROFILE_NAME` | Default Active Profile | Profile selected on load when present (same as demo). | `"Test"` |
 | `roadmapStatusList` | Status Enum | Allowed status values. | 5 statuses |
 | `moscowList` | MoSCoW Enum | Stored MoSCoW values (lowercase “have”). | `Must have`, … |
 | `moscowDisplayNames` | MoSCoW Display Labels | UI quadrant headers. | `Must Have`, … |
@@ -252,26 +262,29 @@ Full input field whitelists: `sanitizeFinancialImpactInputs` in `src/app.js`.
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | Compact Breakpoint | Max width for phone/tablet UI. | `1400` |
 | `tshirtSizeList` | T-Shirt Enum | Allowed sizes. | XS–XL |
 | `currencyList` | Currency List | Selectable currencies. | EUR, USD, IDR, … |
+| `CURRENCY_SYMBOLS` | Currency Symbol Map | Display symbol for each supported currency code. | `{ EUR: "€", GBP: "£", IDR: "Rp", ... }` |
+| `CURRENCY_SYMBOL_SUFFIX` | Suffix Symbol Currencies | Codes that show the symbol after the amount. | `["SEK", "NOK", "DKK", "ISK"]` |
 | `LEGACY_WORKSPACE_FIELDS` | Legacy Workspace Keys | Deprecated workspace JSON keys stripped on load/import/persist. | `["boardHiddenStatuses"]` |
-| `WORKSPACE_PERSISTED_STATE_KEYS` | Persisted UI State Keys | Registry of top-level workspace fields saved to `localStorage` and MongoDB. | Listed in `src/constants.js`; used by `serializeStatePayload()` | Storage layer | Includes `roadmapsView`, `ganttZoom`, `raciMatrixDomain`, `kanoPortfolioPanel` |
-| `ganttZoom` | Gantt Zoom Level | Timeline density in Gantt view. | One of `compact` (monthly), `standard`, `comfortable` (weekly). | Gantt toolbar; `WORKSPACE_PERSISTED_STATE_KEYS` | `"standard"` |
-| `raciMatrixDomain` | RACI Perspective | Active domain filter in RACI view. | `Business` or `Tech`. | RACI matrix toolbar | `"Business"` |
-| `kanoPortfolioPanel` | KANO Panel | Active KANO portfolio tab. | `positioned` or `unpositioned`. | KANO view toolbar | `"positioned"` |
-| `kanoFunctionalityLevels` | KANO Functionality Scale | Five functionality depth labels (Absent → Full). | Levels 1–5 | Roadmap modal KANO section | Level 4 = Enhanced |
-| `kanoSatisfactionLevels` | KANO Satisfaction Scale | Five satisfaction response labels. | Levels 1–5 | Roadmap modal KANO section | Level 5 = Delighted |
-| `kanoCategoryLegend` | KANO Category Legend | Attractive / One-dimensional / Must-be / Indifferent / Reverse definitions. | Derived from axis pair | KANO modal + portfolio view | Attractive (A) |
-| `KANO_ZONE_MATRIX` | KANO Zone Matrix | 5×5 lookup from satisfaction (row) × functionality (col) to zone id. | `getKanoZoneIdFromPosition(f, s)` | `src/constants.js`, KANO portfolio | Zone `"attractive"` at F5/S5 |
-| `getKanoZoneIdFromPosition` | KANO Zone Resolver | Maps axis pair to zone id string. | Matrix lookup | KANO view, tests | `"must-be"` |
-| `getKanoCategoryFromPosition` | KANO Category Resolver | Full legend entry + position description for a matrix cell. | Uses zone matrix + legend | KANO portfolio tooltips | `{ id, label, hint, description }` |
-| `DESCRIPTION_ALLOWED_TAGS` | Rich-Text Allowed Tags | HTML tags permitted after sanitize (`description-format.js`). | Whitelist: P, DIV, BR, STRONG, headings, lists, etc. | Rich-text save pipeline | `P`, `UL`, `LI`, … |
-| `DESCRIPTION_ALLOWED_BULLET_STYLES` | Rich-Text Bullet Styles | Custom list marker styles in sanitized HTML. | disc, circle, square, dash, check, arrow, diamond, star | `description-format.js` | `"check"` |
-| `EXPORT_JSON_VERSION` | Export JSON Version | Schema version in JSON export payloads. | Constant `1` | Export modal, `export-payload.js` | `1` |
-| `EXPORT_CSV_KNOWN_PROFILE_KEYS` | CSV Profile Column Registry | Allowed profile keys for CSV import/export round-trip. | Whitelist in `constants.js` | CSV export/import | `name`, `team`, `roadmaps`, … |
-| `EXPORT_CSV_KNOWN_ROADMAP_KEYS` | CSV Roadmap Column Registry | Allowed roadmap keys for CSV import/export round-trip. | Whitelist in `constants.js` | CSV export/import | `title`, `reachValue`, `roadmapPeriods`, … |
+| `WORKSPACE_PERSISTED_STATE_KEYS` | Persisted UI State Keys | Registry of top-level workspace fields saved to `localStorage` and MongoDB (includes `roadmapsView`, `ganttZoom`, `raciMatrixDomain`, `kanoPortfolioPanel`, …). | See §1 session/persisted state |
+| `kanoFunctionalityLevels` | KANO Functionality Scale | Five functionality depth labels (Absent → Full). | Levels 1–5 |
+| `kanoSatisfactionLevels` | KANO Satisfaction Scale | Five satisfaction response labels. | Levels 1–5 |
+| `kanoCategoryLegend` | KANO Category Legend | Attractive / One-dimensional / Must-be / Indifferent / Reverse definitions. | Attractive (A) |
+| `KANO_ZONE_MATRIX` | KANO Zone Matrix | 5×5 lookup from satisfaction (row) × functionality (col) to zone id. | Zone `"attractive"` at F5/S5 |
+| `getKanoZoneIdFromPosition` | KANO Zone Resolver | Maps axis pair to zone id string. | `"must-be"` |
+| `getKanoCategoryFromPosition` | KANO Category Resolver | Full legend entry + position description for a matrix cell. | `{ id, label, hint, description }` |
+| `EXPORT_JSON_VERSION` | Export JSON Version | Schema version in JSON export payloads. | `1` |
+| `EXPORT_CSV_KNOWN_PROFILE_KEYS` | CSV Profile Column Registry | Allowed profile keys for CSV import/export round-trip. | `name`, `team`, `roadmaps`, … |
+| `EXPORT_CSV_KNOWN_ROADMAP_KEYS` | CSV Roadmap Column Registry | Allowed roadmap keys for CSV import/export round-trip. | `title`, `reachValue`, `roadmapPeriods`, … |
 | `countryList` | Country List | Normalized country names for geo. | `"Germany"` |
 | `COUNTRY_OPTION_EU` | EU Region Option | Pseudo-value `EU` in target-country selects; expands to all EU members on selection. | `"EU"` |
 | `EU_MEMBER_COUNTRIES` | EU Member States | 27 canonical `countryList` names filled when `EU` is chosen. | `["Germany", "France", …]` |
-| `CURRENCY_SYMBOLS` | Currency Symbol Map | Display symbol for each supported currency code. | `{ EUR: "€", GBP: "£", IDR: "Rp", ... }` |
+
+### 7.1 Rich-text constants (`src/modules/description-format.js`)
+
+| Technical Name | Friendly Name | Definition | Example |
+|----------------|---------------|------------|---------|
+| `DESCRIPTION_ALLOWED_TAGS` | Rich-Text Allowed Tags | HTML tags permitted after sanitize. | `P`, `UL`, `LI`, … |
+| `DESCRIPTION_ALLOWED_BULLET_STYLES` | Rich-Text Bullet Styles | Custom list marker styles in sanitized HTML. | `"check"` |
 
 ---
 
@@ -601,20 +614,48 @@ flowchart TD
 | `delayPeriods` | Likely delay | How many duration units you might postpone. | Non-negative number; multiplied by waiting rate. | `#costOfDelayDelayPeriods` | `3` |
 | `durationUnit` | Period unit | Unit for ongoing amounts and delay length. | `week` \| `month` \| `quarter` (default `month`). | `#costOfDelayDurationUnit` | `"month"` |
 
+### 8.23 Portfolio timeline (Profile overview)
+
+```mermaid
+flowchart TD
+  RM[Filtered roadmaps with periods] --> BUILD[ProfileOverviewTimeline.buildSeries]
+  MET[profileViewTimelineMetric] --> BUILD
+  GRAIN[profileViewTimelineGranularity quarter/year] --> BUILD
+  BUILD --> BASE[Base model series + KPIs]
+  BASE --> FILTER[applySeriesFilter legend chips]
+  FILTER --> MODE{viewMode}
+  MODE -->|chart| SVG[renderSvg stacked/numeric bars]
+  MODE -->|table| TBL[renderTable Period Total series + growth %]
+  SVG --> DOM[#profileViewTimelineChart]
+  TBL --> DOM
+  OPEN[Open Profile overview] -->|reset| CHART[viewMode = chart]
+```
+
+| Metric id | Friendly label | Kind | Aggregation |
+|-----------|----------------|------|-------------|
+| `roadmapType` | Roadmap type | category | count per bucket |
+| `tshirtSize` | T-shirt size | category | count |
+| `moscow` | MoSCoW distribution | category | count |
+| `kano` | KANO model | category | count (unpositioned key `__kano_unpositioned__`) |
+| `financialFramework` | Financial framework | category | count |
+| `currency` | Currency | category | count |
+| `financialImpact` | Financial impact (EUR) | numeric | sum |
+| `riceScore` | RICE score | numeric | average |
+
 ---
 
 ## 9. Layout, DOM, and build constants
 
 | Technical Name | Friendly Name | Definition | Formula / Logic | App Location | Example |
 |----------------|---------------|------------|-----------------|--------------|---------|
-| `APP_ASSET_VERSION` | Asset Cache Version | Documentation baseline for cache-bust releases. Individual CSS/JS links in `index.html` may use per-asset `?v=` suffixes that include this baseline plus feature tags. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20260710-ui205"` |
+| `APP_ASSET_VERSION` | Asset Cache Version | Documentation baseline for cache-bust releases. Individual CSS/JS links in `index.html` may use per-asset `?v=` suffixes that include this baseline plus feature tags. | Bump on UI releases. | `src/constants.js`, `index.html` | `"20261025-ui234"` |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | Compact Breakpoint (px) | Max viewport width for phone/tablet UI. | Constant in `constants.js`. | `src/constants.js` | `1400` |
 | `is-compact-layout` | Compact Layout Class | Viewport ≤1400px; enables compact CSS. | Set on `<html>` by `initCompactLayoutClass()`. | Global layout | class present |
 | `is-phone-layout` | Phone Layout Class | Same threshold as compact (unified phone UI). | Set together with compact class. | Global layout | class present |
 | `is-desktop-layout` | Desktop Layout Class | Viewport >1400px. | Mutually exclusive with compact. | Global layout | class present |
 | `portfolioSelectionBar` | Portfolio Selection Bar | Floating bar for bulk delete when rows selected on compact table. | Shown when `selectedRoadmapIds` non-empty. | Table view (compact) | DOM element |
 | `view-in-fullscreen-host` | Fullscreen Host Class | Body class when a view is fullscreen. | `fullscreen.js` + `fullscreen-compact.css`. | Fullscreen | class on `body` |
-| `PRODUCTION_APP_ORIGIN` | Production URL | Canonical deployed origin for links/docs. | Constant string. | `src/constants.js` | `https://pm-prioritization-tool-six.vercel.app` |
+| `PRODUCTION_APP_ORIGIN` | Production URL | Canonical deployed origin for links/docs. | Constant string. | `src/constants.js` | `https://pm-prioritization-tool-one.vercel.app` |
 
 ### Cloud storage metadata (`_storageMeta` on workspace)
 

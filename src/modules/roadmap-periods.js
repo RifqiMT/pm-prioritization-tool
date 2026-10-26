@@ -126,11 +126,6 @@ const RoadmapPeriods = (function () {
     return fallback ? normalizeStatus(fallback, statusOptions) : null;
   }
 
-  function formatDisplay(periods) {
-    const list = Array.isArray(periods) ? periods : [];
-    return list.map((entry) => entry.period).join(", ");
-  }
-
   function validatePeriods(periods) {
     const list = Array.isArray(periods) ? periods : [];
     for (const entry of list) {

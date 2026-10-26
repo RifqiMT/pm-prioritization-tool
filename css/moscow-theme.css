@@ -1,0 +1,359 @@
+/**
+ * MoSCoW color system — semantic, high-contrast, slate-workspace aligned.
+ * Must = rose (critical) · Should = amber (important) · Could = sky (optional) · Won't = slate (deferred)
+ * Loaded last so it wins over legacy pink/teal/purple and remapped gold leftovers.
+ */
+
+:root {
+  --moscow-must: #e11d48;
+  --moscow-must-strong: #be123c;
+  --moscow-must-soft: #fff1f2;
+  --moscow-must-mid: #fecdd3;
+  --moscow-must-ink: #9f1239;
+
+  --moscow-should: #d97706;
+  --moscow-should-strong: #b45309;
+  --moscow-should-soft: #fffbeb;
+  --moscow-should-mid: #fde68a;
+  --moscow-should-ink: #92400e;
+
+  --moscow-could: #0284c7;
+  --moscow-could-strong: #0369a1;
+  --moscow-could-soft: #f0f9ff;
+  --moscow-could-mid: #bae6fd;
+  --moscow-could-ink: #075985;
+
+  --moscow-wont: #64748b;
+  --moscow-wont-strong: #475569;
+  --moscow-wont-soft: #f8fafc;
+  --moscow-wont-mid: #e2e8f0;
+  --moscow-wont-ink: #334155;
+}
+
+/* ── Grid shell ─────────────────────────────────────────── */
+.moscow-grid {
+  background: #f1f5f9 !important;
+  border-color: rgba(148, 163, 184, 0.4) !important;
+  gap: 0.65rem !important;
+  padding: 0.65rem !important;
+  border-radius: 14px !important;
+}
+
+.moscow-board-column.moscow-grid-cell {
+  background: #ffffff !important;
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
+  border-radius: 14px !important;
+  margin: 0 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  overflow: hidden;
+}
+
+.moscow-board-column.moscow-grid-cell:hover {
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06) !important;
+}
+
+.moscow-board-column.moscow-grid-cell.moscow-board-column--drag-over {
+  border-color: rgba(15, 118, 110, 0.45) !important;
+  box-shadow: inset 0 0 0 2px rgba(15, 118, 110, 0.16), 0 8px 24px rgba(15, 23, 42, 0.1) !important;
+  transform: none !important;
+}
+
+.moscow-quadrant-header {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.28) !important;
+  padding: 0.75rem 0.85rem 0.65rem !important;
+  min-height: auto !important;
+}
+
+.moscow-quadrant-description {
+  color: #64748b !important;
+  font-size: 0.72rem !important;
+  line-height: 1.4 !important;
+}
+
+.moscow-board-column.moscow-grid-cell .moscow-board-column-count {
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
+  border-radius: 999px !important;
+  font-size: 0.68rem !important;
+  font-weight: 700 !important;
+  padding: 0.2rem 0.55rem !important;
+}
+
+.moscow-quadrant-header__top {
+  padding-right: 0 !important;
+}
+
+/* ── Quadrant labels (solid chips, not neon gradients) ──── */
+.moscow-quadrant-label {
+  border-radius: 8px !important;
+  padding: 0.32rem 0.7rem !important;
+  font-size: 0.72rem !important;
+  font-weight: 750 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  box-shadow: none !important;
+  border: 1px solid transparent !important;
+}
+
+.moscow-board-column.moscow-grid-cell:hover .moscow-quadrant-label {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.moscow-board-column[data-moscow="Must have"] .moscow-quadrant-label {
+  background: var(--moscow-must) !important;
+  border-color: var(--moscow-must-strong) !important;
+  color: #ffffff !important;
+}
+
+.moscow-board-column[data-moscow="Should have"] .moscow-quadrant-label {
+  background: var(--moscow-should) !important;
+  border-color: var(--moscow-should-strong) !important;
+  color: #ffffff !important;
+}
+
+.moscow-board-column[data-moscow="Could have"] .moscow-quadrant-label {
+  background: var(--moscow-could) !important;
+  border-color: var(--moscow-could-strong) !important;
+  color: #ffffff !important;
+}
+
+.moscow-board-column[data-moscow="Won't have"] .moscow-quadrant-label {
+  background: var(--moscow-wont) !important;
+  border-color: var(--moscow-wont-strong) !important;
+  color: #ffffff !important;
+}
+
+/* Soft tinted column headers */
+.moscow-board-column[data-moscow="Must have"] .moscow-quadrant-header {
+  background: linear-gradient(180deg, var(--moscow-must-soft) 0%, #ffffff 100%) !important;
+}
+
+.moscow-board-column[data-moscow="Should have"] .moscow-quadrant-header {
+  background: linear-gradient(180deg, var(--moscow-should-soft) 0%, #ffffff 100%) !important;
+}
+
+.moscow-board-column[data-moscow="Could have"] .moscow-quadrant-header {
+  background: linear-gradient(180deg, var(--moscow-could-soft) 0%, #ffffff 100%) !important;
+}
+
+.moscow-board-column[data-moscow="Won't have"] .moscow-quadrant-header {
+  background: linear-gradient(180deg, var(--moscow-wont-soft) 0%, #ffffff 100%) !important;
+}
+
+/* Top accent bar on each quadrant */
+.moscow-board-column[data-moscow="Must have"] {
+  border-top: 3px solid var(--moscow-must) !important;
+}
+
+.moscow-board-column[data-moscow="Should have"] {
+  border-top: 3px solid var(--moscow-should) !important;
+}
+
+.moscow-board-column[data-moscow="Could have"] {
+  border-top: 3px solid var(--moscow-could) !important;
+}
+
+.moscow-board-column[data-moscow="Won't have"] {
+  border-top: 3px solid var(--moscow-wont) !important;
+}
+
+/* ── Cards ──────────────────────────────────────────────── */
+.moscow-board-card,
+html.is-desktop-layout .moscow-board-card,
+html.is-desktop-layout .roadmaps-view--moscow .moscow-board-card {
+  background: #ffffff !important;
+  border-top: 1px solid rgba(148, 163, 184, 0.32) !important;
+  border-right: 1px solid rgba(148, 163, 184, 0.32) !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.32) !important;
+  border-left: 4px solid rgba(148, 163, 184, 0.45) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+
+.moscow-board-card-title {
+  color: #0f172a !important;
+}
+
+.moscow-board-column[data-moscow="Must have"] .moscow-board-card,
+html.is-desktop-layout .moscow-board-column[data-moscow="Must have"] .moscow-board-card {
+  border-left: 4px solid var(--moscow-must) !important;
+  background: linear-gradient(90deg, var(--moscow-must-soft) 0%, #ffffff 28%) !important;
+}
+
+.moscow-board-column[data-moscow="Should have"] .moscow-board-card,
+html.is-desktop-layout .moscow-board-column[data-moscow="Should have"] .moscow-board-card {
+  border-left: 4px solid var(--moscow-should) !important;
+  background: linear-gradient(90deg, var(--moscow-should-soft) 0%, #ffffff 28%) !important;
+}
+
+.moscow-board-column[data-moscow="Could have"] .moscow-board-card,
+html.is-desktop-layout .moscow-board-column[data-moscow="Could have"] .moscow-board-card {
+  border-left: 4px solid var(--moscow-could) !important;
+  background: linear-gradient(90deg, var(--moscow-could-soft) 0%, #ffffff 28%) !important;
+}
+
+.moscow-board-column[data-moscow="Won't have"] .moscow-board-card,
+html.is-desktop-layout .moscow-board-column[data-moscow="Won't have"] .moscow-board-card {
+  border-left: 4px solid var(--moscow-wont) !important;
+  background: linear-gradient(90deg, var(--moscow-wont-soft) 0%, #ffffff 28%) !important;
+}
+
+.moscow-board-column[data-moscow="Must have"] .moscow-board-card:hover,
+html.is-desktop-layout .moscow-board-column[data-moscow="Must have"] .moscow-board-card:hover {
+  border-top-color: rgba(225, 29, 72, 0.28) !important;
+  border-right-color: rgba(225, 29, 72, 0.28) !important;
+  border-bottom-color: rgba(225, 29, 72, 0.28) !important;
+  border-left: 4px solid var(--moscow-must-strong) !important;
+  box-shadow: 0 6px 16px rgba(225, 29, 72, 0.1) !important;
+}
+
+.moscow-board-column[data-moscow="Should have"] .moscow-board-card:hover,
+html.is-desktop-layout .moscow-board-column[data-moscow="Should have"] .moscow-board-card:hover {
+  border-top-color: rgba(217, 119, 6, 0.28) !important;
+  border-right-color: rgba(217, 119, 6, 0.28) !important;
+  border-bottom-color: rgba(217, 119, 6, 0.28) !important;
+  border-left: 4px solid var(--moscow-should-strong) !important;
+  box-shadow: 0 6px 16px rgba(217, 119, 6, 0.1) !important;
+}
+
+.moscow-board-column[data-moscow="Could have"] .moscow-board-card:hover,
+html.is-desktop-layout .moscow-board-column[data-moscow="Could have"] .moscow-board-card:hover {
+  border-top-color: rgba(2, 132, 199, 0.28) !important;
+  border-right-color: rgba(2, 132, 199, 0.28) !important;
+  border-bottom-color: rgba(2, 132, 199, 0.28) !important;
+  border-left: 4px solid var(--moscow-could-strong) !important;
+  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.1) !important;
+}
+
+.moscow-board-column[data-moscow="Won't have"] .moscow-board-card:hover,
+html.is-desktop-layout .moscow-board-column[data-moscow="Won't have"] .moscow-board-card:hover {
+  border-top-color: rgba(100, 116, 139, 0.4) !important;
+  border-right-color: rgba(100, 116, 139, 0.4) !important;
+  border-bottom-color: rgba(100, 116, 139, 0.4) !important;
+  border-left: 4px solid var(--moscow-wont-strong) !important;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Metric chips on cards */
+.moscow-board-card-rice {
+  background: #f0fdfa !important;
+  color: #0f766e !important;
+  border: 1px solid rgba(15, 118, 110, 0.2) !important;
+}
+
+.moscow-board-card-size {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
+}
+
+.moscow-board-card-financial {
+  background: #fff7ed !important;
+  color: #c2410c !important;
+  border: 1px solid rgba(234, 88, 12, 0.22) !important;
+}
+
+/* ── Compact layout accents ─────────────────────────────── */
+@media (max-width: 1400px) {
+  html.is-compact-layout .moscow-board-column[data-moscow="Must have"] {
+    border-top: 3px solid var(--moscow-must) !important;
+  }
+
+  html.is-compact-layout .moscow-board-column[data-moscow="Should have"] {
+    border-top: 3px solid var(--moscow-should) !important;
+  }
+
+  html.is-compact-layout .moscow-board-column[data-moscow="Could have"] {
+    border-top: 3px solid var(--moscow-could) !important;
+  }
+
+  html.is-compact-layout .moscow-board-column[data-moscow="Won't have"] {
+    border-top: 3px solid var(--moscow-wont) !important;
+  }
+
+  html.is-compact-layout .moscow-quadrant-header {
+    background: transparent !important;
+  }
+
+  html.is-compact-layout .moscow-board-column[data-moscow="Must have"] .moscow-quadrant-header {
+    background: var(--moscow-must-soft) !important;
+  }
+
+  html.is-compact-layout .moscow-board-column[data-moscow="Should have"] .moscow-quadrant-header {
+    background: var(--moscow-should-soft) !important;
+  }
+
+  html.is-compact-layout .moscow-board-column[data-moscow="Could have"] .moscow-quadrant-header {
+    background: var(--moscow-could-soft) !important;
+  }
+
+  html.is-compact-layout .moscow-board-column[data-moscow="Won't have"] .moscow-quadrant-header {
+    background: var(--moscow-wont-soft) !important;
+  }
+}
+
+/* ── Table / card pills ─────────────────────────────────── */
+.moscow-pill,
+.table-wrapper--modern.roadmaps-table-shell .moscow-pill,
+.roadmaps-table-card__chip.moscow-pill {
+  border-radius: 7px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em !important;
+}
+
+.moscow-pill--must,
+.table-wrapper--modern.roadmaps-table-shell .moscow-pill--must,
+html.is-compact-layout .roadmaps-table-card__chip.moscow-pill--must {
+  color: var(--moscow-must-ink) !important;
+  background: var(--moscow-must-soft) !important;
+  border-color: rgba(225, 29, 72, 0.3) !important;
+}
+
+.moscow-pill--should,
+.table-wrapper--modern.roadmaps-table-shell .moscow-pill--should,
+html.is-compact-layout .roadmaps-table-card__chip.moscow-pill--should {
+  color: var(--moscow-should-ink) !important;
+  background: var(--moscow-should-soft) !important;
+  border-color: rgba(217, 119, 6, 0.32) !important;
+}
+
+.moscow-pill--could,
+.table-wrapper--modern.roadmaps-table-shell .moscow-pill--could,
+html.is-compact-layout .roadmaps-table-card__chip.moscow-pill--could {
+  color: var(--moscow-could-ink) !important;
+  background: var(--moscow-could-soft) !important;
+  border-color: rgba(2, 132, 199, 0.3) !important;
+}
+
+.moscow-pill--wont,
+.table-wrapper--modern.roadmaps-table-shell .moscow-pill--wont,
+html.is-compact-layout .roadmaps-table-card__chip.moscow-pill--wont {
+  color: var(--moscow-wont-ink) !important;
+  background: var(--moscow-wont-soft) !important;
+  border-color: rgba(100, 116, 139, 0.35) !important;
+}
+
+.moscow-pill--unset,
+.table-wrapper--modern.roadmaps-table-shell .moscow-pill--unset {
+  color: #94a3b8 !important;
+  background: #f8fafc !important;
+  border-color: rgba(148, 163, 184, 0.3) !important;
+}
+
+/* Desktop 2×2 — keep equal cells with new gap */
+html.is-desktop-layout .roadmaps-view--moscow .moscow-grid {
+  gap: 0.75rem !important;
+  padding: 0.75rem !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+html.is-desktop-layout .moscow-board-column.moscow-grid-cell {
+  min-height: 0 !important;
+}

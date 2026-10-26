@@ -5,9 +5,9 @@ FAB).
  */
 
 :root {
-  --flow-divider: rgba(231, 201, 120, 0.45);
+  --flow-divider: rgba(148, 163, 184, 0.45);
   --flow-surface: #ffffff;
-  --flow-surface-soft: #fffdf8;
+  --flow-surface-soft: #f8fafc;
 }/* ═══════════════════════════════════════════════════════════
    PHONES & TABLETS (≤1400px) — fully flat workspace flow
    ═══════════════════════════════════════════════════════════ */
@@ -90,7 +90,7 @@ FAB).
   }
 
   html.is-compact-layout .view-toolbar__row--secondary {
-    border-top: 1px solid rgba(231, 201, 120, 0.32) !important;
+    border-top: 1px solid rgba(148, 163, 184, 0.32) !important;
     border-bottom: none !important;
     margin-top: 0 !important;
     padding-top: 0.3rem !important;
@@ -137,7 +137,7 @@ FAB).
   html.is-compact-layout .roadmaps-view--moscow .moscow-board-card {
     border-radius: var(--flow-radius-control) !important;
     box-shadow: none !important;
-    border: 1px solid rgba(231, 201, 120, 0.38) !important;
+    border: 1px solid rgba(148, 163, 184, 0.38) !important;
   }
 
   /* MoSCoW — flat stack */

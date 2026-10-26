@@ -15,7 +15,7 @@
   min-height: var(--roadmap-field-min-height, 44px);
   border: 1px solid #e8d2a4;
   border-radius: 12px;
-  background: #fffdf8;
+  background: #f8fafc;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
   overflow: hidden;
   transition:
@@ -24,8 +24,8 @@
 }
 
 .date-input-shell:focus-within .date-input-shell__surface {
-  border-color: #dc2626;
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.14);
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
 }
 
 .date-input-shell__display {
@@ -46,7 +46,7 @@
 
 .date-input-shell--empty .date-input-shell__display::before {
   content: "yyyy-mm-dd";
-  color: #a16207;
+  color: #64748b;
   opacity: 0.72;
 }
 
@@ -120,14 +120,14 @@
   height: 2rem;
   margin: 0;
   border-radius: 8px;
-  color: #78716c;
+  color: #64748b;
   cursor: pointer;
 }
 
 .date-input-shell:hover .date-input-shell__trigger,
 .date-input-shell:focus-within .date-input-shell__trigger {
   color: #7c2d12;
-  background: rgba(254, 243, 199, 0.55) !important;
+  background: rgba(204, 251, 241, 0.55) !important;
 }
 
 .date-input-shell:has(input[type="date"]:disabled) .date-input-shell__surface {
@@ -141,7 +141,7 @@
 
 #roadmapModal .date-input-shell__surface {
   border-color: #e8d2a4;
-  background: #fffdf8;
+  background: #f8fafc;
 }
 
 #roadmapModal .date-input-shell__display {
@@ -149,12 +149,12 @@
 }
 
 #roadmapModal .date-input-shell__trigger {
-  color: #a16207;
+  color: #64748b;
 }
 
 #roadmapModal .date-input-shell:focus-within .date-input-shell__trigger {
-  color: #7f1d1d;
-  background: rgba(254, 226, 226, 0.35) !important;
+  color: #0f172a;
+  background: rgba(204, 251, 241, 0.35) !important;
 }
 
 #roadmapModal .date-input-shell input[type="date"] {

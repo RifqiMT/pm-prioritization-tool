@@ -618,54 +618,6 @@
   const PROFESSIONAL_BRIDGE_OPENERS =
     /^(with|given|against|building|this|that|these|those|as|once|from|in turn|together|accordingly|on that basis|on this basis|from this|turning to|moving to|next|finally|to carry|to deliver|to execute|with that|with this|against this|against that|from there|in this framing|under this|within this|looking|under|through|by|on|because|while|after|before|here|such|so|meanwhile|therefore|consequently|specifically|notably|equally|similarly|still|yet|also)/i;
 
-  function buildSentenceFlowGuide() {
-    return (
-      "Sentence flow:\n" +
-      "- Each sentence must follow logically from the previous one; avoid isolated fact drops.\n" +
-      "- Use connective phrasing between sentences (e.g. In turn, Together, This positioning, Against that backdrop, From there).\n" +
-      "- Vary sentence openings inside each paragraph; do not start 3+ consecutive sentences the same way.\n" +
-      "- Prefer implication → evidence → next implication rather than list-like enumeration.\n\n"
-    );
-  }
-
-  function buildCohesionExampleGuide() {
-    return (
-      "Bridge patterns (adapt wording; do not copy verbatim):\n" +
-      "- paragraph1 close → paragraph2 open: context/purpose → prioritization lens.\n" +
-      "- paragraph2 close → paragraph3 open: prioritization stakes → delivery and ownership.\n" +
-      "- sentence chain: fact → implication → next fact.\n\n"
-    );
-  }
-
-  function buildParagraphTransitionGuide(context) {
-    const present = listPresentContextKeys(context);
-    const hasPrioritization =
-      intersectFields(present, SUMMARY_FIELD_GROUPS.prioritization).length > 0;
-    const hasDelivery = intersectFields(present, SUMMARY_FIELD_GROUPS.delivery).length > 0;
-    const lines = [
-      "Paragraph bridges:",
-      "- paragraph1: establish context, then move toward why prioritization matters; the final sentence must tee up paragraph2.",
-      "- paragraph2: open with an explicit bridge from paragraph1; never start with an unrelated fact dump."
-    ];
-    if (hasPrioritization) {
-      lines.push(
-        "- paragraph2: weave prioritization signals into a single narrative thread; the final sentence must tee up delivery."
-      );
-    }
-    lines.push(
-      "- paragraph3: open with an explicit bridge from paragraph2; never restart the story from scratch."
-    );
-    if (hasDelivery) {
-      lines.push(
-        "- paragraph3: land delivery, ownership, and references, then close with forward-looking clarity."
-      );
-    } else {
-      lines.push("- paragraph3: close with execution outlook grounded in prior paragraphs only.");
-    }
-    lines.push("- Do not repeat the same bridge phrase across paragraphs.");
-    return `${lines.join("\n")}\n\n`;
-  }
-
   function sentenceOpensWithBridge(sentence) {
     const trimmed = String(sentence || "").trim();
     if (!trimmed) return false;
@@ -756,59 +708,6 @@
       parts.push(buildCohesionRetryHint(cohesionIssues));
     }
     return parts.filter(Boolean).join(" ");
-  }
-
-  function buildPrioritizationNarrativeGuide(context) {
-    const present = intersectFields(listPresentContextKeys(context), SUMMARY_FIELD_GROUPS.prioritization);
-    if (!present.length) return "";
-    const lines = [
-      "Prioritization synthesis (paragraph2 only):",
-      "- Weave prioritization signals into one narrative thread; do not read fields as a bullet list."
-    ];
-    const riceFields = present.filter((key) =>
-      /^(riceScore|reach|impact|confidence|effort)/i.test(key)
-    );
-    if (riceFields.length) {
-      lines.push(
-        "- Connect RICE inputs as cause → score → decision implication; mention each RICE element once."
-      );
-    }
-    if (present.includes("moscowCategory")) {
-      lines.push("- MoSCoW category should frame urgency and trade-off posture in context.");
-    }
-    if (present.some((key) => key.startsWith("kano"))) {
-      lines.push("- Kano scores should explain customer expectation fit, not repeat raw numbers mechanically.");
-    }
-    if (present.includes("tshirtSize")) {
-      lines.push("- T-shirt size should anchor delivery scope expectations alongside other prioritization signals.");
-    }
-    return `${lines.join("\n")}\n\n`;
-  }
-
-  function buildDeliveryNarrativeGuide(context) {
-    const present = intersectFields(listPresentContextKeys(context), SUMMARY_FIELD_GROUPS.delivery);
-    if (!present.length) return "";
-    const lines = [
-      "Delivery synthesis (paragraph3 only):",
-      "- Connect tasks, ownership, geography, labels, links, and financial impact into an execution storyline."
-    ];
-    if (present.includes("tasks")) {
-      lines.push("- Tasks should read as sequenced delivery momentum, not a task dump.");
-    }
-    if (present.includes("raci")) {
-      lines.push("- RACI should clarify who drives, approves, advises, and stays informed across Business/Tech.");
-    }
-    if (present.includes("links")) {
-      lines.push("- Link labels should appear naturally inside the delivery narrative.");
-    }
-    if (
-      present.includes("financialImpactValue") ||
-      present.includes("financialImpactCurrency") ||
-      present.includes("financialImpactFramework")
-    ) {
-      lines.push("- Financial impact should close the business case without repeating prioritization metrics.");
-    }
-    return `${lines.join("\n")}\n\n`;
   }
 
   function compactStringListForPrompt(value) {
@@ -2170,10 +2069,6 @@
 
   function enforceParagraphSentenceCounts(variant, tone, sourceVariant) {
     return finalizeSummaryVariantForTone(variant, sourceVariant || variant, tone);
-  }
-
-  function assertThreeParagraphVariant(variant, label) {
-    return repairSummaryParagraphStructure(variant, label);
   }
 
   function postProcessProfessionalVariant(variant, context, links) {

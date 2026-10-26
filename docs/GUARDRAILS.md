@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-10-24 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui205` |
+| **Last updated** | 2026-10-26 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20261025-ui234` |
 
 Cross-feature behavior summaries live in [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEATURE_LOGIC_AND_CONSTRAINTS.md). This file defines **hard limits** and policies that must not be violated.
 
@@ -15,6 +15,7 @@ Cross-feature behavior summaries live in [FEATURE_LOGIC_AND_CONSTRAINTS.md](FEAT
 - Present financial outputs as planning estimates, not accounting truth.
 - Present **Cost of Delay** as a sequencing / planning signal only — never as audited accounting or a substitute for RICE.
 - Keep **Cost of Delay** independent of **Financial impact**: shared `currencyList` options only; never auto-copy amounts or currencies between the two sections.
+- **Portfolio timeline** controls (metric, grain, view mode, legend filters) are session UI only — never persist to workspace JSON or MongoDB; unique-roadmap KPIs must not double-count multi-period items.
 
 ## 2. Technical Guardrails
 

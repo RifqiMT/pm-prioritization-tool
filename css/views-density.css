@@ -13,7 +13,9 @@ and Map.
 }.workspace-panel .filters-shell,
 .workspace-panel--v2 .portfolio-filters-body,
 .portfolio-filters-body {
-  padding: 0.45rem 0.6rem 0.5rem !important;
+  /* Extra bottom padding so Countries/Period toggles are not clipped */
+  padding: 0.45rem 0.6rem 0.95rem !important;
+  overflow: visible !important;
 }.portfolio-filters-toolbar {
   margin-bottom: 0.4rem !important;
   padding-top: 0.2rem !important;
@@ -224,7 +226,8 @@ html:not(.has-view-fullscreen):not(.pseudo-view-fullscreen) .portfolio-stage .ro
     margin-bottom: 0.2rem !important;
   }
 
-  html.is-compact-layout .workspace-panel--v2 {
+  /* Bottom-nav clearance for in-flow workspace only — never portaled sheets */
+  html.is-compact-layout .workspace-panel--v2:not(.portfolio-filters-sheet):not(.profiles-panel-sheet) {
     padding-bottom: calc(4.25rem + env(safe-area-inset-bottom)) !important;
   }
 }

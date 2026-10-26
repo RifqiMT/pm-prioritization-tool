@@ -4,7 +4,7 @@ Guidelines for teams using the Product Management Prioritization Tool in plannin
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-10-24 |
+| **Last updated** | 2026-10-26 |
 | **Audience** | Product managers, delivery leads, portfolio stakeholders |
 
 ---
@@ -149,6 +149,7 @@ Experts usually break the ongoing cost into three parts for each week, month, or
 - Unlock is **per browser tab session**; users re-enter password after closing the tab or refreshing (by design).
 - **Export** includes password-protected profiles only when the correct password was entered (inline unlock, session unlock, or export verification dialog).
 - Workspace-wide cross-profile operations: see **[GUARDRAILS.md §7](GUARDRAILS.md)**.
+- Use **Portfolio timeline** in Profile overview for exec-facing composition and value trends (Chart for narrative; Table for growth % and export-friendly scan). Prefer **Annually** when multi-quarter roadmaps would inflate quarterly stacks; treat KPIs as unique-roadmap counts, not period-bucket sums.
 
 ---
 

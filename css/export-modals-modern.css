@@ -24,7 +24,7 @@ centered dialog on wider screens.
 .modal-backdrop--data-transfer.active {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  background: rgba(63, 15, 25, 0.48) !important;
+  background: rgba(15, 23, 42, 0.48) !important;
   cursor: default;
 }/* ── Panel shell ─────────────────────────────────────────── */
 #exportUnlockModal .modal-panel,
@@ -35,15 +35,15 @@ centered dialog on wider screens.
 .modal-panel--data-transfer,
 .data-transfer-modal {
   --dt-bg: #ffffff;
-  --dt-bg-soft: #fffdf8;
-  --dt-border: rgba(231, 201, 120, 0.65);
-  --dt-text: #3f0f19;
-  --dt-text-soft: #7a4b12;
-  --dt-accent: #b91c1c;
-  --dt-gold: #a16207;
+  --dt-bg-soft: #f8fafc;
+  --dt-border: rgba(148, 163, 184, 0.65);
+  --dt-text: #0f172a;
+  --dt-text-soft: #475569;
+  --dt-accent: #0f766e;
+  --dt-gold: #64748b;
   --dt-green: #047857;
   --dt-radius: 20px;
-  --dt-shadow: 0 -8px 40px rgba(63, 15, 25, 0.14), 0 24px 48px rgba(127, 29, 29, 0.16);
+  --dt-shadow: 0 -8px 40px rgba(15, 23, 42, 0.14), 0 24px 48px rgba(15, 23, 42, 0.16);
 
   display: flex !important;
   flex-direction: column !important;
@@ -54,7 +54,7 @@ centered dialog on wider screens.
   padding: 0 !important;
   border-radius: var(--dt-radius) var(--dt-radius) 0 0 !important;
   border: 1px solid var(--dt-border) !important;
-  background: linear-gradient(180deg, #fffdf8 0%, #ffffff 22%) !important;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 22%) !important;
   box-shadow: var(--dt-shadow) !important;
   color: var(--dt-text) !important;
   transform: none !important;
@@ -71,7 +71,7 @@ centered dialog on wider screens.
   .data-transfer-modal {
     border-radius: var(--dt-radius) !important;
     max-height: min(88vh, 680px) !important;
-    box-shadow: 0 24px 56px rgba(127, 29, 29, 0.2) !important;
+    box-shadow: 0 24px 56px rgba(15, 23, 42, 0.2) !important;
   }
 }
 
@@ -103,7 +103,7 @@ centered dialog on wider screens.
   width: 40px;
   height: 4px;
   border-radius: 99px;
-  background: rgba(63, 15, 25, 0.16);
+  background: rgba(15, 23, 42, 0.16);
 }
 
 @media (min-width: 540px) {
@@ -121,7 +121,7 @@ centered dialog on wider screens.
   gap: 0.65rem !important;
   padding: 0.35rem 1rem 0.85rem !important;
   border-bottom: 1px solid var(--dt-border) !important;
-  background: linear-gradient(180deg, #fffdf8, #fff) !important;
+  background: linear-gradient(180deg, #f8fafc, #fff) !important;
   flex-shrink: 0;
 }
 
@@ -152,13 +152,13 @@ centered dialog on wider screens.
   text-transform: none !important;
   letter-spacing: normal !important;
 }.profile-modal-mark--export {
-  background: linear-gradient(145deg, #b91c1c, #991b1b 55%, #a16207);
+  background: linear-gradient(145deg, #0f766e, #115e59 55%, #64748b);
 }.profile-modal-mark--data-transfer,
 .profile-modal-mark--export-format,
 .profile-modal-mark--import-format {
-  background: linear-gradient(145deg, #b91c1c, #991b1b 55%, #a16207);
+  background: linear-gradient(145deg, #0f766e, #115e59 55%, #64748b);
 }.profile-modal-mark--data-transfer-import {
-  background: linear-gradient(145deg, #991b1b, #b91c1c 45%, #a16207);
+  background: linear-gradient(145deg, #115e59, #0f766e 45%, #64748b);
 }/* ── Body intro (shared export + import) ─────────────────── */
 .data-transfer-body-intro {
   display: flex;
@@ -176,8 +176,8 @@ centered dialog on wider screens.
   font-size: 0.78rem;
   line-height: 1.45;
   color: var(--dt-text-soft);
-  background: linear-gradient(180deg, #fffbeb, #fffdf8);
-  border: 1px solid rgba(202, 138, 4, 0.28);
+  background: linear-gradient(180deg, #f8fafc, #f8fafc);
+  border: 1px solid rgba(100, 116, 139, 0.28);
   border-radius: 12px;
 }#exportUnlockModal .profile-modal-close,
 #exportFormatModal .profile-modal-close,
@@ -194,7 +194,7 @@ centered dialog on wider screens.
   border-radius: 11px !important;
   background: #fff !important;
   color: var(--dt-text-soft) !important;
-  box-shadow: 0 1px 3px rgba(63, 15, 25, 0.06) !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06) !important;
   cursor: pointer;
   padding: 0 !important;
   transition:
@@ -208,7 +208,7 @@ centered dialog on wider screens.
 .data-transfer-modal__close:hover {
   background: var(--dt-bg-soft) !important;
   color: var(--dt-accent) !important;
-  border-color: rgba(185, 28, 28, 0.32) !important;
+  border-color: rgba(15, 118, 110, 0.32) !important;
   transform: none !important;
   filter: none !important;
 }#exportUnlockModal .profile-modal-close:active,
@@ -237,7 +237,7 @@ centered dialog on wider screens.
   gap: 0.35rem;
   padding: 0.75rem 1rem max(0.85rem, env(safe-area-inset-bottom));
   border-top: 1px solid var(--dt-border);
-  background: linear-gradient(180deg, #fff, #fffdf8);
+  background: linear-gradient(180deg, #fff, #f8fafc);
 }.data-transfer-modal__footer.export-modal-footer {
   flex-direction: column-reverse;
   gap: 0.45rem;
@@ -280,7 +280,7 @@ centered dialog on wider screens.
 }.data-transfer-modal__cancel:hover {
   background: var(--dt-bg-soft) !important;
   color: var(--dt-text) !important;
-  border-color: rgba(185, 28, 28, 0.28) !important;
+  border-color: rgba(15, 118, 110, 0.28) !important;
   transform: none !important;
   filter: none !important;
 }.data-transfer-modal__dismiss-hint {
@@ -322,8 +322,8 @@ centered dialog on wider screens.
   font-weight: 700;
   letter-spacing: 0.02em;
   color: #fff;
-  background: linear-gradient(145deg, #b91c1c, #991b1b);
-  box-shadow: 0 2px 6px rgba(185, 28, 28, 0.2);
+  background: linear-gradient(145deg, #0f766e, #115e59);
+  box-shadow: 0 2px 6px rgba(15, 118, 110, 0.2);
 }.export-unlock-card__meta {
   min-width: 0;
   flex: 1;
@@ -360,8 +360,8 @@ centered dialog on wider screens.
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }.export-unlock-card .profile-password-input-wrap input:focus {
   outline: none;
-  border-color: rgba(185, 28, 28, 0.45);
-  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1);
+  border-color: rgba(15, 118, 110, 0.45);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
 }#exportUnlockModal .profile-password-toggle {
   position: absolute;
   right: 0.35rem;
@@ -373,9 +373,9 @@ centered dialog on wider screens.
   padding: 0.5rem 0.65rem;
   font-size: 0.8rem;
   line-height: 1.4;
-  color: #991b1b;
-  background: #fef2f2;
-  border: 1px solid rgba(220, 38, 38, 0.25);
+  color: #115e59;
+  background: #f0fdfa;
+  border: 1px solid rgba(15, 118, 110, 0.25);
   border-radius: 10px;
 }#exportUnlockError.export-unlock-error[hidden] {
   display: none !important;
@@ -416,13 +416,13 @@ centered dialog on wider screens.
   color: var(--dt-text) !important;
   filter: none !important;
 }.export-modal-btn--primary {
-  background: linear-gradient(135deg, #b91c1c, #991b1b) !important;
+  background: linear-gradient(135deg, #0f766e, #115e59) !important;
   color: #fff !important;
   border: none !important;
-  box-shadow: 0 4px 12px rgba(185, 28, 28, 0.25) !important;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.25) !important;
 }.export-modal-btn--primary:hover {
   filter: brightness(1.03);
-  box-shadow: 0 6px 16px rgba(185, 28, 28, 0.3) !important;
+  box-shadow: 0 6px 16px rgba(15, 118, 110, 0.3) !important;
 }.export-modal-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -453,10 +453,10 @@ centered dialog on wider screens.
 .data-transfer-format-option--primary {
   grid-column: 1 / -1;
 }.data-transfer-format-option__icon--both {
-  background: linear-gradient(145deg, rgba(185, 28, 28, 0.12), rgba(5, 150, 105, 0.14));
+  background: linear-gradient(145deg, rgba(15, 118, 110, 0.12), rgba(5, 150, 105, 0.14));
   color: var(--dt-accent);
 }.data-transfer-format-option__icon--import {
-  background: linear-gradient(145deg, rgba(185, 28, 28, 0.12), rgba(161, 98, 7, 0.14));
+  background: linear-gradient(145deg, rgba(15, 118, 110, 0.12), rgba(71, 85, 105, 0.14));
   color: var(--dt-accent);
 }.data-transfer-format-option--both .data-transfer-format-option__badge,
 .data-transfer-format-option--primary .data-transfer-format-option__badge {
@@ -466,13 +466,13 @@ centered dialog on wider screens.
 }.data-transfer-format-option--static {
   pointer-events: none;
   cursor: default;
-  background: linear-gradient(180deg, #fffdf8, #fff) !important;
+  background: linear-gradient(180deg, #f8fafc, #fff) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
   opacity: 0.92;
 }.data-transfer-format-option--static:hover {
   transform: none !important;
   border-color: var(--dt-border) !important;
-  background: linear-gradient(180deg, #fffdf8, #fff) !important;
+  background: linear-gradient(180deg, #f8fafc, #fff) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
 }.data-transfer-format-option--static .data-transfer-format-option__action {
   display: none;
@@ -492,7 +492,7 @@ centered dialog on wider screens.
   text-align: left;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    0 1px 3px rgba(63, 15, 25, 0.05) !important;
+    0 1px 3px rgba(15, 23, 42, 0.05) !important;
   transform: none !important;
   cursor: pointer;
   transition:
@@ -520,15 +520,15 @@ centered dialog on wider screens.
   border: 1px solid rgba(5, 150, 105, 0.22);
 }.data-transfer-format-option--csv .data-transfer-format-option__badge {
   color: #92400e;
-  background: #fffbeb;
-  border-color: rgba(202, 138, 4, 0.28);
+  background: #f8fafc;
+  border-color: rgba(100, 116, 139, 0.28);
 }.data-transfer-format-option:hover {
-  border-color: rgba(185, 28, 28, 0.35) !important;
+  border-color: rgba(15, 118, 110, 0.35) !important;
   background: var(--dt-bg-soft) !important;
   transform: translateY(-1px) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    0 6px 16px rgba(63, 15, 25, 0.08) !important;
+    0 6px 16px rgba(15, 23, 42, 0.08) !important;
   filter: none !important;
 }.data-transfer-format-option:active {
   transform: scale(0.98) !important;
@@ -536,20 +536,20 @@ centered dialog on wider screens.
   outline: none;
   box-shadow:
     0 0 0 2px #fff,
-    0 0 0 4px rgba(185, 28, 28, 0.35) !important;
+    0 0 0 4px rgba(15, 118, 110, 0.35) !important;
 }.data-transfer-format-option__icon {
   width: 38px;
   height: 38px;
   display: grid;
   place-items: center;
   border-radius: 11px;
-  background: rgba(185, 28, 28, 0.1);
+  background: rgba(15, 118, 110, 0.1);
   color: var(--dt-accent);
 }.data-transfer-format-option--json .data-transfer-format-option__icon,
 .data-transfer-format-option__icon--json {
-  background: linear-gradient(145deg, rgba(185, 28, 28, 0.12), rgba(161, 98, 7, 0.14));
+  background: linear-gradient(145deg, rgba(15, 118, 110, 0.12), rgba(71, 85, 105, 0.14));
 }.data-transfer-format-option__icon--csv {
-  background: rgba(161, 98, 7, 0.12);
+  background: rgba(71, 85, 105, 0.12);
   color: var(--dt-gold);
 }.data-transfer-format-option__label {
   grid-column: 1;
@@ -582,14 +582,14 @@ centered dialog on wider screens.
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--dt-accent);
-  background: rgba(185, 28, 28, 0.08);
+  background: rgba(15, 118, 110, 0.08);
   transition: transform 0.15s ease, background 0.15s ease;
 }.data-transfer-format-option:hover .data-transfer-format-option__chevron {
   transform: translateX(2px);
-  background: rgba(185, 28, 28, 0.14);
+  background: rgba(15, 118, 110, 0.14);
 }.data-transfer-format-option--csv:hover .data-transfer-format-option__chevron {
   color: var(--dt-gold);
-  background: rgba(161, 98, 7, 0.14);
+  background: rgba(71, 85, 105, 0.14);
 }/* Override global button bleed */
 #exportUnlockModal button,
 #exportFormatModal button,

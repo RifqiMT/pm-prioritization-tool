@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Document owner** | Product Team |
-| **Last audited** | 2026-10-24 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui205` |
+| **Last audited** | 2026-10-26 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20261025-ui234` |
 
 ---
 
@@ -18,7 +18,7 @@ The application is a **static single-page app** (HTML, layered CSS, vanilla Java
 
 | | |
 |---|---|
-| **Production URL** | [pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app) |
+| **Production URL** | [pm-prioritization-tool-one.vercel.app](https://pm-prioritization-tool-one.vercel.app) |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
 
 ---
@@ -47,6 +47,12 @@ The application is a **static single-page app** (HTML, layered CSS, vanilla Java
 - **Session unlock** (`sessionStorage`); cleared on tab close or refresh.
 - Locked profiles show unlock banner; portfolio views empty until unlock.
 - **Demo profile** (`Test`) is read-only when active.
+- **Portfolio timeline** card in Profile overview (`ProfileOverviewTimeline`):
+  - Metrics: roadmap type, t-shirt, MoSCoW, KANO, financial framework, currency, financial impact (EUR sum), RICE average.
+  - Granularity: **Quarterly** (`YYYY-Qn`) or **Annually** (one count per year).
+  - Presentation: **Chart** (SVG) or **Table** (Period → Total → series; period-over-period growth %).
+  - Legend chips multi-filter category series; Clear filters resets; unique-roadmap KPIs.
+  - Session-only controls; view mode resets to Chart when overview opens.
 
 ### 3.2 Roadmaps
 
@@ -278,9 +284,9 @@ See [ARCHITECTURE.md](ARCHITECTURE.md).
 
 | Layer | Technology |
 |-------|------------|
-| UI | `index.html`, **43** layered CSS files (see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) §3.1) |
-| Logic | `src/app.js` (~26k lines), `src/rice.js`, `src/constants.js`, `src/utils.js` |
-| Modules | **19** in `src/modules/`: `workspace-merge`, `storage`, `profile-security`, `exchange-rates`, `fullscreen`, `overlay-manager`, `description-format`, `rich-text-editor`, `board-drag`, `board-card-interaction`, `byok-api-keys`, `roadmap-llm-summary`, `roadmap-5why-framework`, `roadmap-periods`, `incomplete-optional-fields`, **`cost-of-delay`**, `gantt-view`, `export-payload`, `share-link`; plus core `constants` / `utils` / `rice` and dev seed `dev-seed-workspace.js` |
+| UI | `index.html`, **47** layered CSS files (`design-tokens` → `moscow-theme`; see [TECH_GUIDELINES.md](TECH_GUIDELINES.md) §3.1) |
+| Logic | `src/app.js` (~26.6k lines), `src/rice.js`, `src/constants.js`, `src/utils.js` |
+| Modules | **20** in `src/modules/`: … `incomplete-optional-fields`, `cost-of-delay`, **`profile-overview-timeline`**, `gantt-view`, `export-payload`, `share-link`; plus core `constants` / `utils` / `rice` and dev seed `dev-seed-workspace.js` |
 | API | `api/health.js`, `api/config.js`, `api/state.js`, `api/byok/validate-*.js`, `api/_lib/*` (auth, mongo, roadmap-metadata, export-payload, **workspace-dedupe**, byok-validate) |
 | Database | MongoDB Atlas (optional) |
 | Map | Leaflet 1.9.4 (CDN) |
@@ -324,7 +330,7 @@ See [TECH_GUIDELINES.md](TECH_GUIDELINES.md).
 
 See [DESIGN_GUIDELINES.md](DESIGN_GUIDELINES.md).
 
-- **Warm professional** palette: cream surfaces (`#fffdf8`), maroon text (`#3f0f19`), red accent (`#b91c1c`).
+- **Calm professional** palette: slate surfaces (`#f8fafc` / `#ffffff`), slate text (`#0f172a`), teal accent (`#0f766e`); tokens in `css/design-tokens.css` + polish in `css/ui-refresh.css`.
 - **Icon-first** navigation on compact widths.
 - **Touch targets** ≥ 44px on primary compact controls.
 - Status, MoSCoW, and framework colors consistent across table, board, and pills.

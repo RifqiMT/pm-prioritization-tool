@@ -123,15 +123,6 @@
     return getViewRoots().some((el) => isElementFullscreen(el));
   }
 
-  function preferHostFullscreen() {
-    /* Unified body-level host — reliable on desktop and compact viewports. */
-    return true;
-  }
-
-  function getWorkspaceContainer() {
-    return getPortfolioStageContainer();
-  }
-
   function saveViewAnchor(viewEl) {
     if (!viewEl || viewRestoreInfo.has(viewEl)) return;
     viewRestoreInfo.set(viewEl, {
@@ -695,22 +686,6 @@
 
     if (runExitCallback !== false) {
       finishFullscreenExit();
-    }
-  }
-
-  function enterNativeFullscreen(viewEl) {
-    const req = viewEl.requestFullscreen || viewEl.webkitRequestFullscreen;
-    if (!req) {
-      enterPseudoFullscreen(viewEl);
-      return;
-    }
-    try {
-      const result = req.call(viewEl);
-      if (result && typeof result.catch === "function") {
-        result.catch(() => enterPseudoFullscreen(viewEl));
-      }
-    } catch (_) {
-      enterPseudoFullscreen(viewEl);
     }
   }
 

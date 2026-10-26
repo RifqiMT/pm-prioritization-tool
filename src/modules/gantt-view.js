@@ -436,19 +436,11 @@ const GanttView = (function () {
     return ZOOM_PRESETS[zoom] || ZOOM_PRESETS.standard;
   }
 
-  function getTimelineUnit(zoom) {
-    return getZoomPreset(zoom).unit;
-  }
-
   function getColWidth(chartOrZoom) {
     if (typeof chartOrZoom === "string") {
       return getZoomPreset(chartOrZoom).colWidth;
     }
     return getZoomPreset(getZoomLevel(chartOrZoom)).colWidth;
-  }
-
-  function getWeekWidth(container) {
-    return getColWidth(container);
   }
 
   function getLabelWidth() {

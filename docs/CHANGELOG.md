@@ -27,6 +27,138 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Cleanup — Dead helpers and VARIABLES §7 sync — 2026-10-26 — Product Team — Impact: developer
+
+- Removed unused helpers: fullscreen aliases (`preferHostFullscreen`, `getWorkspaceContainer`, `enterNativeFullscreen`), gantt aliases (`getTimelineUnit`, `getWeekWidth`), `RoadmapPeriods.formatDisplay`, storage leftovers (`reconcileWithRemoteAfterLoad`, `flushPersistState`, `canUseCloudWithoutClientSecret`, `isRemoteWorkspacePopulated`, `getMode`, unused `remoteDocMs`), and unused LLM prompt guides / `assertThreeParagraphVariant`.
+- Removed orphan CSS `#profileDeleteCancelTopBtn`.
+- Synced `docs/VARIABLES.md` §7 with `constants.js` (added origin/demo/suffix symbols; moved rich-text tags to §7.1; clarified persisted-state keys vs constants).
+
+### Docs — Full product documentation standard audit — 2026-10-26 — Product Team — Impact: documentation
+
+- Re-audited codebase vs 18-doc suite; baseline `APP_ASSET_VERSION` = `20261025-ui234`.
+- Documented **Portfolio timeline** end-to-end (FR-1.8, F-10b, US-A2b, VARIABLES §8.23, PM-17, design §2.5b): Chart/Table, Quarterly/Annually, legend filters, growth %.
+- **Calm slate/teal** design system (`design-tokens`, `ui-refresh`, `ui-polish`, `moscow-theme`): **47** CSS layers; **20** modules; **19** tests (`test:profile-timeline`).
+- Production origin documented as `https://pm-prioritization-tool-one.vercel.app`.
+- Synced README, PRODUCT_DOCUMENTATION, ARCHITECTURE, TECH, DEPLOYMENT, STANDARD, hub, personas, metrics, and audit dates to `2026-10-26`.
+
+### UI — Timeline table period growth % (`ui234`) — 2026-10-25 — Product Team — Impact: user-visible
+
+- Replaced under-cell value bars with period-over-period growth (`+12%` / `−8%` / `New` / `—`); green up / rose down.
+- Baseline `APP_ASSET_VERSION` = `20261025-ui234`.
+
+### UI — Timeline table calm + KPI polish (`ui233`) — 2026-10-25 — Product Team — Impact: user-visible
+
+- Removed per-cell heat fills (zeros no longer break column bands); thin value bars only; wrapping series headers; equal series min-widths with horizontal scroll; sticky Period + Total.
+- KPI tiles restyled with Peak accent.
+- Baseline `APP_ASSET_VERSION` = `20261025-ui233`.
+
+### Fix — Timeline table header column alignment (`ui232`) — 2026-10-25 — Product Team — Impact: user-visible
+
+- Neutralized global `thead tr::before` phantom gap that shifted header labels off their columns; added `<colgroup>` so Period/Total/series widths stay symmetrical.
+- Baseline `APP_ASSET_VERSION` = `20261025-ui232`.
+
+### UI — Portfolio timeline table v2 (`ui231`) — 2026-10-25 — Product Team — Impact: user-visible
+
+- Full-width fixed layout (no empty right band); heat tint + under-value bars by series intensity; stronger header/Total hierarchy.
+- Baseline `APP_ASSET_VERSION` = `20261025-ui231`.
+
+### UI — Portfolio timeline table polish (`ui230`) — 2026-10-25 — Product Team — Impact: user-visible
+
+- Table columns: **Period → Total → categories** (Total no longer orphaned at the far right).
+- Denser layout — overrides global `table { min-width: 1340px }` bleed; teal header accent, zebra/hover, muted zeros, peak-row highlight; toolbar clusters granularity + Chart/Table.
+- Baseline `APP_ASSET_VERSION` = `20261025-ui230`.
+
+### Feature — Portfolio timeline Chart / Table toggle (`ui229`) — 2026-10-25 — Product Team — Impact: user-visible
+
+- Added **Chart | Table** view switcher beside Quarterly / Annually.
+- Table shows the same metric, granularity, and category filters as the chart (period rows + series columns + total).
+- View mode resets to Chart when opening Profile overview; filters persist across Chart ↔ Table.
+- Baseline `APP_ASSET_VERSION` = `20261025-ui229`.
+
+### UI — Timeline meta toolbar v2 (`ui228`) — 2026-10-25 — Product Team — Impact: user-visible
+
+- Two-row rail: summary + **Clear filters** on the head; full-width left-aligned legend below (no detached Clear / uneven wrap).
+- Summary is plain eyebrow text (not a pill that looks clickable); stronger on/off chip contrast.
+- Baseline `APP_ASSET_VERSION` = `20261025-ui228`.
+
+### UI — Timeline legend meta toolbar (`ui227`) — 2026-10-25 — Product Team — Impact: user-visible
+
+- Meta row is a soft rail: uppercase summary pill + legend cluster; **Clear filters** sits beside chips (not inside the summary sentence).
+- Clearer chip on/off/hover; responsive stack ≤820px.
+- Baseline `APP_ASSET_VERSION` = `20261025-ui227`.
+
+### UI — Timeline Clear filters chip (`ui226`) — 2026-10-25 — Product Team — Impact: user-visible
+
+- Replaced underlined teal CTA bleed with a compact ghost chip (× icon + label); hover/focus states; no underline.
+- Baseline `APP_ASSET_VERSION` = `20261025-ui226`.
+
+### Feature — Portfolio timeline category filters (`ui225`) — 2026-10-25 — Product Team — Impact: user-visible
+
+- Legend chips are real filters: click to isolate a category, click again to clear, click another to multi-select; chart stacks + KPIs recompute; **Clear filters** resets.
+- Baseline `APP_ASSET_VERSION` = `20261025-ui225`.
+
+### UI — Portfolio timeline controls polish (`ui224`) — 2026-10-25 — Product Team — Impact: user-visible
+
+- Fixed global teal `button` bleed: inactive Quarterly/Annually and legend chips no longer look like primary CTAs.
+- Granularity uses slate track + white active pill; metric select radius-12 with teal focus; legend soft chips with count badges and clearer focus/dim.
+
+### Fix — Portfolio timeline unique counts (`ui223`) — 2026-10-25 — Product Team — Impact: user-visible
+
+- KPI no longer sums period buckets (e.g. 38+21 years) which double-counted multi-period roadmaps; shows **Unique roadmaps** / portfolio total/avg instead.
+- Legend counts are unique roadmaps per category; annual bars capped so 1–2 years do not become oversized slabs.
+- Baseline `APP_ASSET_VERSION` = `20261025-ui223`.
+
+### UI — Portfolio timeline visual redesign (`ui222`) — 2026-10-25 — Product Team — Impact: user-visible
+
+- Denser full-slot bars, column hover tracks, unified KPI rail (no sparse cards), legend above plot with click-to-focus filtering.
+- Cleaner toolbar: pill granularity + metric select; refined plot, tooltip, and typography hierarchy.
+- Baseline `APP_ASSET_VERSION` = `20261025-ui222`.
+
+### Feature — Portfolio timeline quarterly/annual switcher (`ui221`) — 2026-10-25 — Product Team — Impact: user-visible
+
+- Renamed card to **Portfolio timeline** with **Quarterly | Annually** segmented control beside the metric select.
+- Annual mode rolls `YYYY-Qn` into calendar years; each roadmap counts once per year (no Q1+Q2 double-count).
+- SVG `viewBox` width follows container via `ResizeObserver` (fixes letterboxed empty space); chips are a full-width 3-column strip; clearer x-axis year labels.
+- Baseline `APP_ASSET_VERSION` = `20261025-ui221`.
+
+### UI — Quarterly timeline chart polish (`ui220`) — 2026-10-25 — Product Team — Impact: user-visible
+
+- Full-width responsive SVG (fills the Profile overview card; no left-weighted dead space).
+- Teal gradient bars, rounded tops, peak emphasis, empty-quarter ghosts, staggered enter motion (respects `prefers-reduced-motion`).
+- Insight chips (peak / portfolio total or avg / active quarters), year+quarter axis labels, compact value formatting (`2.6M`, `370k`).
+- Hover focus with floating tooltip and dim-siblings interaction; stacked category legend as pills with counts.
+
+### Feature — Profile overview quarterly timeline chart — 2026-10-25 — Product Team — Impact: user-visible
+
+- Added **Quarterly timeline** card in Profile overview with a metric switcher:
+  roadmap type, T-shirt size, MoSCoW, KANO, financial framework, currency, financial impact (EUR sum), RICE (average).
+- X-axis uses roadmap periods (`YYYY-Qn`); multi-period roadmaps count in each listed quarter.
+- Pure SVG stacked/single bars (no chart library); respects owner + period filters.
+- Module: `src/modules/profile-overview-timeline.js`; tests: `npm run test:profile-timeline`.
+
+### UI — Calm slate / teal redesign — 2026-10-24 — Product Team — Impact: user-visible
+
+- **Profile metrics KPI strip (`ui218`):** RICE + Financial Impact — Total as teal hero band first; Mean/Median/Min/Max in an even 2×2 (no orphan Max); nested blocks, hover polish, responsive stack; cream Total gradient removed.
+- **Profile Overview refresh (`ui217`):** modal shell/scroll clears sticky Close footer (RACI no longer chopped); hero + status polish; dashboard cards/chips modernized; MoSCoW chips use rose/amber/sky/slate; subtle open/hover motion with reduced-motion respect.
+- **Filters popup clip (`ui216`):** Countries / Period / Incomplete multi-select menus portal to `documentElement` with `position: fixed` so workspace `overflow: hidden` and the MoSCoW RICE-sort toolbar no longer chop the open panel; SVG chevrons replace the tiny ▾ speck.
+- **Filters Countries/Period chop (`ui215`):** multi-select triggers (`.filter-countries-toggle`) no longer clip circular chevrons — fixed height aligned to native selects, `flex-shrink: 0` icons, `overflow: visible`, removed hover `translateY` that nudged controls into clip edges; denser body padding restored under Quick Filters.
+- **Filters sheet clip (`ui214`):** portaled filters sheet no longer inherits workspace `padding-bottom` (~4.25–4.75rem for the bottom nav). That leftover padding chopped Quick Filters / controls at the sheet edge and left a dead empty band. Sheets are excluded from compact/views-density workspace padding; filter sheet padding forced to 0 with safe-area on the scroll body only.
+- **MoSCoW colors (`ui213`):** semantic rose / amber / sky / slate system in `css/moscow-theme.css`; replaces pink-teal-purple clash and remapped leftovers.
+
+- Replaced cream/maroon/gold chrome with a light slate workspace and deep teal (`#0f766e`) primary accent.
+- Added `css/design-tokens.css` (shared tokens + aliases) and `css/ui-refresh.css` (shell, tables, board, modals, motion polish).
+- Typography: **Manrope** for UI; **Source Serif 4** for the brand title only (dropped Inter).
+- Light table headers, softer panels/shadows, consistent buttons, and restrained hover/modal motion (`prefers-reduced-motion` respected).
+- **Polish pass (`ui211`):** `css/ui-polish.css` — filters as a real search field, solid New profile CTA, icon-only profile/board actions, denser table, narrower profiles column, softer desktop panels.
+- **Bugfix (`ui212`):** native `<select>` chevron no longer tiles across the control — caused by `background` shorthand resetting `background-repeat` to `repeat`; switched to `background-color` + explicit `no-repeat` / size / position.
+- Asset baseline: `APP_ASSET_VERSION` = `20261025-ui218`; Design Guidelines updated.
+
+### Infra — New Vercel production project — 2026-10-24 — Product Team — Impact: user-visible
+
+- Production moved to account `rifqimtjahyono-3455s-projects` → **https://pm-prioritization-tool-one.vercel.app** (`prj_d5iS2U3ePp9AwaQPUJXx7SDAWOWl`).
+- Updated `PRODUCTION_APP_ORIGIN`, verify scripts, and docs; previous `pm-prioritization-tool-six.vercel.app` treated as legacy wrong host.
+- **Action required:** set `MONGODB_URI` on the new Vercel project (Production + Preview) and redeploy for cloud sync.
+
 ### Cleanup — Dead code and outdated variable docs — 2026-10-24 — Product Team — Impact: developer
 
 - Removed unused LLM wrappers `resolveGroqApiKey` / `assertSummaryParagraphVariant` from `roadmap-llm-summary.js`.

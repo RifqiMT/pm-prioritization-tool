@@ -4,8 +4,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last audited** | 2026-10-24 |
-| **Asset baseline** | `APP_ASSET_VERSION` = `20260710-ui205` |
+| **Last audited** | 2026-10-26 |
+| **Asset baseline** | `APP_ASSET_VERSION` = `20261025-ui234` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -60,6 +60,7 @@ The UI is a **static SPA** (`index.html` + `src/`). On Vercel, **serverless rout
 | `src/modules/roadmap-periods.js` | Multi-quarter `roadmapPeriods` normalize/validate (`RoadmapPeriods`) |
 | `src/modules/incomplete-optional-fields.js` | Optional-field completeness checks for data-quality filter (`IncompleteOptionalFields`; 15 field types incl. Cost of Delay) |
 | `src/modules/cost-of-delay.js` | Plain-English Cost of Delay calculator (`CostOfDelay`); independent of Financial impact |
+| `src/modules/profile-overview-timeline.js` | Portfolio timeline Chart/Table by quarter or year (`ProfileOverviewTimeline`) |
 | `src/modules/gantt-view.js` | Gantt ISO-week timeline, period bars, deadline markers (`GanttView`) |
 | `src/modules/export-payload.js` | JSON/CSV export builders (`ExportPayload`) |
 | `src/modules/share-link.js` | URL hash deep links for profile/view/roadmap (`ShareLink`) |
@@ -364,7 +365,7 @@ flowchart TD
 
 ## 16. Known architectural constraints
 
-- Monolithic `app.js` (~26k lines) — acceptable for static app; split only with clear module boundaries if growth continues.
+- Monolithic `app.js` (~26.6k lines) — acceptable for static app; split only with clear module boundaries if growth continues.
 - Global namespace — naming collisions require discipline.
 - Full re-render on state change — optimize only if measured pain at scale.
 

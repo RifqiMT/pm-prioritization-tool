@@ -339,7 +339,6 @@ const AppStorage = (function () {
       remoteBody && remoteBody.payload ? remoteBody.payload : null;
     const remoteDocAt = remoteBody && remoteBody.updatedAt ? remoteBody.updatedAt : null;
     const remoteAt = getPayloadUpdatedAtMs(remotePayload, remoteDocAt);
-    const remoteDocMs = remoteDocAt ? Date.parse(remoteDocAt) || remoteAt : remoteAt;
     const localMeta = readLocalMeta();
     const lastLocalMs = localMeta.lastLocalModifiedAt
       ? Date.parse(localMeta.lastLocalModifiedAt) || 0
@@ -791,10 +790,6 @@ const AppStorage = (function () {
     }
   }
 
-  function canUseCloudWithoutClientSecret(config) {
-    return config && config.storage === "mongodb" && config.authRequired === false;
-  }
-
   function needsClientSecret(config) {
     return config && config.storage === "mongodb" && config.authRequired === true;
   }
@@ -824,46 +819,6 @@ const AppStorage = (function () {
 
     setSyncStatus("synced");
     return { migrated: false, source: "none" };
-  }
-
-  /** Merge cloud changes into this device instead of overwriting local-only data. */
-  async function reconcileWithRemoteAfterLoad() {
-    if (mode !== "mongodb") return { reconciled: false };
-    try {
-      const remote = await fetchRemoteState();
-      if (typeof remote.revision === "number") {
-        currentRevision = remote.revision;
-      }
-      const localPayload = readLocalPayload();
-      if (isEmptyPayload(remote.payload)) {
-        return { reconciled: false };
-      }
-
-      const merged = mergeWorkspacePayloads(localPayload, remote.payload);
-      const needsApply = payloadsDiffer(localPayload, merged) || payloadsDiffer(merged, remote.payload);
-      if (!needsApply) {
-        return { reconciled: false };
-      }
-
-      commitLoadedPayload(merged, "merged", remote.updatedAt || null, remote.revision);
-      const shouldPush = payloadsDiffer(merged, remote.payload);
-      const pushed = shouldPush ? await saveRemoteNow(merged, { skipPrefetch: true }) : false;
-      notifyCloudDataRefreshed({
-        profileCount: countProfiles(merged),
-        source: "reconcile",
-        merged: true
-      });
-      return {
-        reconciled: true,
-        remoteCount: countProfiles(remote.payload),
-        localCount: countProfiles(localPayload),
-        merged: true,
-        pushed
-      };
-    } catch (err) {
-      console.warn("Cloud reconcile failed", err);
-      return { reconciled: false, error: err.message || String(err) };
-    }
   }
 
   async function getCloudDiagnostics() {
@@ -1089,19 +1044,11 @@ const AppStorage = (function () {
     return scheduleRemoteSave(payload, options);
   }
 
-  async function flushPersistState() {
-    await flushPendingSave();
-  }
-
   function shouldSeedDefaultProfile() {
     if (mode === "mongodb" && remoteWorkspaceHadData) {
       return false;
     }
     return true;
-  }
-
-  function isRemoteWorkspacePopulated() {
-    return remoteWorkspaceHadData;
   }
 
   async function connectWithApiSecret(secret) {
@@ -1164,10 +1111,6 @@ const AppStorage = (function () {
       throw new Error(result.error || "Could not load workspace from cloud.");
     }
     return result;
-  }
-
-  function getMode() {
-    return mode;
   }
 
   function getStatus() {

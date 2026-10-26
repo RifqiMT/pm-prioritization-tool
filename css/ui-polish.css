@@ -1,0 +1,461 @@
+/**
+ * UI polish pass 2 — quieter chrome, clearer controls, denser data.
+ * Loaded after ui-refresh.css.
+ */
+
+/* ═══════════════════════════════════════════════════════════
+   Desktop shell — soft panels without nested “boxes”
+   ═══════════════════════════════════════════════════════════ */
+@media (min-width: 1401px) {
+  html.is-desktop-layout .app-shell {
+    padding: 0.7rem 1rem 0.55rem !important;
+    gap: 0.65rem;
+    background:
+      radial-gradient(ellipse 80% 50% at 0% 0%, rgba(13, 148, 136, 0.06), transparent 50%),
+      #f1f5f9 !important;
+  }
+
+  html.is-desktop-layout .app-layout {
+    gap: 0.75rem !important;
+    grid-template-columns: minmax(240px, 280px) minmax(0, 1fr) !important;
+  }
+
+  html.is-desktop-layout .app-header--modern {
+    border-radius: 12px !important;
+    border: 1px solid rgba(148, 163, 184, 0.35) !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03) !important;
+    padding: 0.5rem 0.75rem 0.55rem !important;
+    margin-bottom: 0.15rem !important;
+    background: rgba(255, 255, 255, 0.92) !important;
+  }
+
+  html.is-desktop-layout .workspace-panel--v2.card-plain,
+  html.is-desktop-layout .workspace-panel.card-plain.workspace-panel--v2,
+  html.is-desktop-layout .profiles-panel--modern.profiles-panel--v2 {
+    border-radius: 14px !important;
+    border: 1px solid rgba(148, 163, 184, 0.32) !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03), 0 10px 28px rgba(15, 23, 42, 0.04) !important;
+  }
+
+  html.is-desktop-layout .scrum-board-card {
+    border-radius: 12px !important;
+    border: 1px solid rgba(148, 163, 184, 0.35) !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03) !important;
+  }
+
+  /* MoSCoW cards: radius/shadow only — left accent colors live in moscow-theme.css */
+  html.is-desktop-layout .moscow-board-card {
+    border-radius: 12px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03) !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Header actions — compact quiet chips
+   ═══════════════════════════════════════════════════════════ */
+@media (min-width: 900px) {
+  .app-header--modern .app-header-toolbar-actions {
+    gap: 0.35rem !important;
+  }
+
+  .app-header--modern .app-header-action-btn {
+    min-height: 38px !important;
+    padding: 0.35rem 0.55rem !important;
+    border-radius: 10px !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(148, 163, 184, 0.4) !important;
+    box-shadow: none !important;
+  }
+
+  .app-header--modern .app-header-action-icon {
+    width: 26px !important;
+    height: 26px !important;
+    border-radius: 7px !important;
+  }
+
+  .app-header--modern .app-header-action-title {
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Filters — look like a real search / control field
+   ═══════════════════════════════════════════════════════════ */
+html.is-desktop-layout .portfolio-filters-drawer {
+  background: transparent !important;
+  border-bottom: none !important;
+  padding: 0.55rem 1rem 0.35rem !important;
+}
+
+html.is-desktop-layout .portfolio-filters-summary {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.55rem !important;
+  margin: 0 !important;
+  padding: 0.55rem 0.75rem !important;
+  min-height: 44px;
+  border: 1px solid rgba(148, 163, 184, 0.45) !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease !important;
+}
+
+html.is-desktop-layout .portfolio-filters-summary:hover {
+  border-color: rgba(15, 118, 110, 0.4) !important;
+  background: #f8fafc !important;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1) !important;
+}
+
+html.is-desktop-layout .portfolio-filters-summary:focus-visible {
+  outline: none !important;
+  border-color: rgba(15, 118, 110, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.22) !important;
+}
+
+html.is-desktop-layout .portfolio-filters-drawer[open] .portfolio-filters-summary {
+  border-color: rgba(15, 118, 110, 0.45) !important;
+  border-bottom-left-radius: 10px !important;
+  border-bottom-right-radius: 10px !important;
+}
+
+/* Restore lead chrome that desktop previously hid */
+html.is-desktop-layout .portfolio-filters-summary-lead {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.55rem !important;
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+}
+
+html.is-desktop-layout .portfolio-filters-summary-copy {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.05rem !important;
+  min-width: 0 !important;
+}
+
+html.is-desktop-layout .portfolio-filters-summary-icon {
+  display: grid !important;
+  place-items: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  flex: 0 0 auto !important;
+  border-radius: 9px !important;
+  background: #f0fdfa !important;
+  color: #0f766e !important;
+  border: 1px solid rgba(15, 118, 110, 0.16) !important;
+}
+
+html.is-desktop-layout .portfolio-filters-summary-icon svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+html.is-desktop-layout .portfolio-filters-summary-title {
+  font-size: 0.84rem !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  line-height: 1.2 !important;
+}
+
+html.is-desktop-layout .portfolio-filters-summary-subline {
+  display: block !important;
+  font-size: 0.68rem !important;
+  color: #64748b !important;
+  line-height: 1.2 !important;
+}
+
+html.is-desktop-layout .portfolio-filters-summary-label {
+  display: none !important;
+}
+
+html.is-desktop-layout .portfolio-filters-summary-chevron {
+  display: grid !important;
+  place-items: center !important;
+  margin-left: auto !important;
+  color: #94a3b8 !important;
+  transition: transform 0.18s ease !important;
+}
+
+html.is-desktop-layout .portfolio-filters-drawer[open] .portfolio-filters-summary-chevron {
+  transform: rotate(180deg);
+  color: #0f766e !important;
+}
+
+html.is-desktop-layout .portfolio-filters-summary-hint {
+  display: none !important;
+}
+
+html.is-desktop-layout .portfolio-filters-summary::after {
+  display: none !important;
+}
+
+html.is-desktop-layout .portfolio-filters-summary-indicator {
+  display: inline-flex !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Profiles — solid CTA + quieter icon actions
+   ═══════════════════════════════════════════════════════════ */
+.profiles-create-trigger {
+  background: linear-gradient(180deg, #0d9488 0%, #0f766e 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #115e59 !important;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.22) !important;
+  border-radius: 11px !important;
+  min-height: 42px !important;
+}
+
+.profiles-create-trigger svg {
+  color: #ffffff !important;
+}
+
+.profiles-create-trigger:hover {
+  background: linear-gradient(180deg, #14b8a6 0%, #0d9488 100%) !important;
+  border-color: #0f766e !important;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.28) !important;
+  color: #ffffff !important;
+}
+
+.profiles-create-trigger:focus-visible {
+  outline: none !important;
+  border-color: #0f766e !important;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.28) !important;
+}
+
+/* Icon-only profile action chips (labels remain for a11y via aria/sr-only pattern) */
+html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-label--visible,
+html.is-desktop-layout .profiles-panel--v2 .profile-action-label--visible {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions {
+  gap: 0.3rem !important;
+  padding: 0.35rem !important;
+  margin: 0.4rem 0.5rem 0.5rem !important;
+  background: #f8fafc !important;
+  border: 1px solid rgba(148, 163, 184, 0.28) !important;
+  box-shadow: none !important;
+}
+
+html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip,
+html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-icon-btn {
+  width: 100% !important;
+  min-height: 36px !important;
+  height: 36px !important;
+  border-radius: 9px !important;
+  border: 1px solid transparent !important;
+  background: #ffffff !important;
+  color: #64748b !important;
+}
+
+html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip--view:hover {
+  color: #0f766e !important;
+  background: #f0fdfa !important;
+  border-color: rgba(15, 118, 110, 0.25) !important;
+}
+
+html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip--edit:hover {
+  color: #334155 !important;
+  background: #f1f5f9 !important;
+  border-color: rgba(148, 163, 184, 0.45) !important;
+}
+
+html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip--danger:hover,
+html.is-desktop-layout .profiles-panel--v2 .profile-action-chip--danger:hover {
+  color: #dc2626 !important;
+  background: #fef2f2 !important;
+  border-color: rgba(220, 38, 38, 0.28) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Board cards — quieter actions (icon-first, reveal on hover)
+   ═══════════════════════════════════════════════════════════ */
+html.is-desktop-layout .scrum-board-card-actions .portfolio-card-action-text,
+html.is-desktop-layout .moscow-board-card-actions .portfolio-card-action-text {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+html.is-desktop-layout .scrum-board-card-actions .portfolio-card-action-btn,
+html.is-desktop-layout .moscow-board-card-actions .portfolio-card-action-btn,
+html.is-desktop-layout .scrum-board-card-btn,
+html.is-desktop-layout .moscow-board-card-btn {
+  min-width: 32px !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  justify-content: center !important;
+}
+
+html.is-desktop-layout .scrum-board-card-actions,
+html.is-desktop-layout .moscow-board-card-actions {
+  opacity: 0.72;
+  transition: opacity 0.16s ease;
+}
+
+html.is-desktop-layout .scrum-board-card:hover .scrum-board-card-actions,
+html.is-desktop-layout .scrum-board-card:focus-within .scrum-board-card-actions,
+html.is-desktop-layout .moscow-board-card:hover .moscow-board-card-actions,
+html.is-desktop-layout .moscow-board-card:focus-within .moscow-board-card-actions {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.is-desktop-layout .scrum-board-card-actions,
+  html.is-desktop-layout .moscow-board-card-actions {
+    opacity: 1;
+  }
+}
+
+html.is-desktop-layout .scrum-board-card,
+html.is-desktop-layout .moscow-board-card {
+  padding: 0.7rem 0.75rem !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease !important;
+}
+
+html.is-desktop-layout .scrum-board-card:hover {
+  border-color: rgba(15, 118, 110, 0.35) !important;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07) !important;
+  transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Table — denser, calmer
+   ═══════════════════════════════════════════════════════════ */
+html.is-desktop-layout .table-wrapper--modern.roadmaps-table-shell thead th {
+  padding: 0.5rem 0.4rem !important;
+  font-size: 0.64rem !important;
+}
+
+html.is-desktop-layout .table-wrapper--modern.roadmaps-table-shell tbody td {
+  padding: 0.48rem 0.4rem !important;
+}
+
+html.is-desktop-layout .table-wrapper--modern.roadmaps-table-shell tbody tr:hover td {
+  background: #f0fdfa !important;
+}
+
+html.is-desktop-layout .workspace-panel--v2 .table-wrapper--modern.roadmaps-table-shell {
+  margin: 0 0.65rem 0.65rem !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(148, 163, 184, 0.28) !important;
+  box-shadow: none !important;
+  overflow: auto !important;
+}
+
+/* Soften “Roadmaps table” toolbar weight */
+html.is-desktop-layout .roadmaps-table-toolbar.view-toolbar {
+  padding: 0.55rem 1rem !important;
+}
+
+html.is-desktop-layout .view-toolbar__title {
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em !important;
+}
+
+html.is-desktop-layout .view-toolbar__subtitle {
+  font-size: 0.75rem !important;
+  color: #64748b !important;
+}
+
+/* Portfolio command bar — less padding, clearer hierarchy */
+html.is-desktop-layout .portfolio-command-bar {
+  padding: 0.75rem 1rem !important;
+  background: #ffffff !important;
+}
+
+html.is-desktop-layout .portfolio-identity__avatar {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 11px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Columns — softer status pods
+   ═══════════════════════════════════════════════════════════ */
+html.is-desktop-layout .roadmaps-view--board .scrum-board-column {
+  border-radius: 12px !important;
+  background: #f8fafc !important;
+  border: 1px solid rgba(148, 163, 184, 0.28) !important;
+  padding: 0.45rem !important;
+}
+
+html.is-desktop-layout .roadmaps-view--board .scrum-board-column-header {
+  border-radius: 8px !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0.35rem 0.4rem 0.55rem !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Native <select> — single chevron (never tiled)
+   Cause: `background` shorthand resets background-repeat to
+   `repeat`, so the chevron SVG tiles across the control.
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5.5 7.75L10 12.25L14.5 7.75' stroke='%2364748b' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --select-chevron-muted: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5.5 7.75L10 12.25L14.5 7.75' stroke='%2394a3b8' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+select,
+select.view-toolbar__select,
+select.profile-view-header-filter,
+select.roadmap-kano-axis-select,
+select.roadmaps-table-group-select,
+select.portfolio-card-move-select,
+select.portfolio-kano-compact-card__select,
+#roadmapModal select,
+.filters-row select,
+.filter-group select,
+.country-row select {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background-color: #ffffff !important;
+  background-image: var(--select-chevron) !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.7rem center !important;
+  background-size: 1rem 1rem !important;
+  background-attachment: scroll !important;
+  background-origin: padding-box !important;
+  background-clip: border-box !important;
+  padding-right: 2.25rem !important;
+}
+
+select:hover:not(:disabled),
+select:focus:not(:disabled),
+select:focus-visible:not(:disabled) {
+  background-image: var(--select-chevron) !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.7rem center !important;
+  background-size: 1rem 1rem !important;
+}
+
+select:disabled {
+  background-color: #f1f5f9 !important;
+  background-image: var(--select-chevron-muted) !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.7rem center !important;
+  background-size: 1rem 1rem !important;
+}

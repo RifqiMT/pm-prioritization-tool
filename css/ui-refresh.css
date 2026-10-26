@@ -1,0 +1,378 @@
+/**
+ * UI refresh polish — loaded last.
+ * Elevates shell, density, controls, and responsive feel on top of remapped tokens.
+ */
+
+/* ── App shell ──────────────────────────────────────────── */
+.app-shell {
+  padding: 0.65rem clamp(0.5rem, 1.2vw, 1rem) !important;
+  gap: 0;
+}
+
+@media (min-width: 1401px) {
+  .app-shell {
+    padding: 0.85rem 1.1rem 0.75rem !important;
+  }
+
+  .workspace-panel.card-plain,
+  .workspace-panel--v2,
+  .profiles-panel--v2 {
+    border-radius: 16px !important;
+    box-shadow: var(--dt-shadow-soft, 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06)) !important;
+    overflow: hidden;
+  }
+
+  /* Filters live inside workspace — allow controls to paint fully */
+  html.is-desktop-layout .workspace-panel--v2 .portfolio-filters-drawer,
+  html.is-desktop-layout .workspace-panel--v2 .portfolio-filters-sheet {
+    overflow: visible !important;
+  }
+
+  .profiles-panel--v2 {
+    border: 1px solid rgba(148, 163, 184, 0.45) !important;
+  }
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+.app-header--modern {
+  --hdr-bg: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #f0fdfa 100%) !important;
+  --hdr-border: rgba(148, 163, 184, 0.42) !important;
+  --hdr-radius: 14px !important;
+  --hdr-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 28px rgba(15, 23, 42, 0.05) !important;
+  border-radius: 14px !important;
+  box-shadow: var(--hdr-shadow) !important;
+  margin-bottom: 0.85rem !important;
+  backdrop-filter: blur(8px);
+}
+
+.app-header-mark {
+  background: linear-gradient(145deg, #0d9488 0%, #0f766e 55%, #115e59 100%) !important;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.28) !important;
+  border-radius: 12px !important;
+}
+
+.app-header-action-icon {
+  background: linear-gradient(180deg, #f0fdfa 0%, #ecfeff 100%) !important;
+  border-color: rgba(15, 118, 110, 0.18) !important;
+  color: #0f766e !important;
+}
+
+.storage-status-dot--warn {
+  background: #d97706 !important;
+  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.25) !important;
+}
+
+/* ── Portfolio command bar ──────────────────────────────── */
+.workspace-panel--v2 {
+  --pf-radius: 16px !important;
+  --pf-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.05) !important;
+  --pf-border: rgba(148, 163, 184, 0.45) !important;
+}
+
+.portfolio-command-bar {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  border-bottom-color: rgba(148, 163, 184, 0.35) !important;
+  padding: 1rem 1.15rem !important;
+}
+
+.portfolio-identity__avatar {
+  background: linear-gradient(145deg, #0d9488 0%, #0f766e 55%, #155e75 100%) !important;
+  box-shadow: 0 2px 10px rgba(15, 118, 110, 0.22) !important;
+}
+
+/* ── Segmented controls (avoid pill clusters) ───────────── */
+.view-toggle-group--modern,
+.portfolio-view-toggle,
+.density-toggle-group {
+  border-radius: 10px !important;
+  background: #f1f5f9 !important;
+  border: 1px solid rgba(148, 163, 184, 0.4) !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.03) !important;
+  padding: 0.2rem !important;
+}
+
+.view-toggle-group--modern .view-toggle-btn,
+.portfolio-view-toggle .view-toggle-btn,
+.density-toggle-group button {
+  border-radius: 8px !important;
+}
+
+.view-toggle-group--modern .view-toggle-btn--active,
+.view-toggle-group--modern .view-toggle-btn[aria-pressed="true"],
+.portfolio-view-toggle .view-toggle-btn--active {
+  background: #ffffff !important;
+  color: #0f766e !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* ── Primary / secondary buttons ────────────────────────── */
+.btn-primary,
+button.btn-primary,
+.roadmap-modal .btn-primary,
+.data-transfer-modal .btn-primary {
+  background: linear-gradient(180deg, #0d9488 0%, #0f766e 100%) !important;
+  border: 1px solid #115e59 !important;
+  color: #ffffff !important;
+  border-radius: 10px !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 118, 110, 0.22) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+}
+
+.btn-primary:hover,
+button.btn-primary:hover {
+  background: linear-gradient(180deg, #14b8a6 0%, #0d9488 100%) !important;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.28) !important;
+}
+
+.btn-secondary,
+button.btn-secondary {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid rgba(148, 163, 184, 0.55) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  text-transform: none !important;
+  letter-spacing: 0.01em !important;
+}
+
+.btn-secondary:hover,
+button.btn-secondary:hover {
+  background: #f8fafc !important;
+  border-color: rgba(15, 118, 110, 0.4) !important;
+  color: #0f766e !important;
+}
+
+.btn-primary,
+button.btn-primary {
+  text-transform: none !important;
+  letter-spacing: 0.01em !important;
+}
+
+.btn-danger,
+button.btn-danger {
+  background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%) !important;
+  border: 1px solid #b91c1c !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25) !important;
+}
+
+.btn-ghost,
+button.btn-ghost {
+  background: transparent !important;
+  color: #475569 !important;
+  border: 1px solid rgba(148, 163, 184, 0.45) !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  text-transform: none !important;
+}
+
+.btn-ghost:hover,
+button.btn-ghost:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Soften global uppercase button chrome on light UI */
+button {
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
+
+/* ── Tables ─────────────────────────────────────────────── */
+.roadmap-table thead th,
+.table-wrapper thead th {
+  background: #f8fafc !important;
+  color: #475569 !important;
+  font-weight: 650 !important;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.45) !important;
+}
+
+.roadmap-table tbody tr:hover,
+.table-wrapper tbody tr:hover {
+  background: rgba(240, 253, 250, 0.65) !important;
+}
+
+.roadmap-table tbody tr:nth-child(even) {
+  background: rgba(248, 250, 252, 0.7);
+}
+
+/* Score / rank chips */
+.rice-score-chip,
+.priority-badge,
+.rank-badge,
+.score-pill {
+  border-radius: 8px !important;
+  font-weight: 650 !important;
+}
+
+/* ── Board cards ────────────────────────────────────────── */
+.board-card,
+.moscow-card,
+.kanban-card {
+  border-radius: 12px !important;
+  border: 1px solid rgba(148, 163, 184, 0.4) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  background: #ffffff !important;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.18s ease !important;
+}
+
+.board-card:hover,
+.moscow-card:hover,
+.kanban-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08) !important;
+  border-color: rgba(15, 118, 110, 0.35) !important;
+}
+
+.board-column,
+.moscow-column {
+  border-radius: 14px !important;
+  background: #f8fafc !important;
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
+}
+
+/* ── Filters / toolbars ─────────────────────────────────── */
+.filters-compact-bar,
+.view-toolbar,
+.portfolio-filters-bar {
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(148, 163, 184, 0.4) !important;
+}
+
+input[type="text"],
+input[type="search"],
+input[type="number"],
+input[type="date"],
+input[type="email"],
+input[type="password"],
+textarea,
+.form-control {
+  border-radius: 10px !important;
+  border-color: rgba(148, 163, 184, 0.55) !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+/* Never use the `background` shorthand on select — it resets
+   background-image / background-repeat and tiles the chevron. */
+select {
+  border-radius: 10px !important;
+  border-color: rgba(148, 163, 184, 0.55) !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.form-control:focus {
+  outline: none !important;
+  border-color: rgba(15, 118, 110, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.22) !important;
+}
+
+/* ── Modals ─────────────────────────────────────────────── */
+.modal-backdrop,
+.overlay-backdrop,
+.data-transfer-backdrop,
+.confirm-modal-backdrop {
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(4px);
+}
+
+.modal-panel,
+.roadmap-modal,
+.data-transfer-modal,
+.confirm-modal-panel,
+.profile-modal,
+.byok-modal-panel {
+  border-radius: 16px !important;
+  border: 1px solid rgba(148, 163, 184, 0.4) !important;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18) !important;
+  background: #ffffff !important;
+}
+
+/* ── Footer ─────────────────────────────────────────────── */
+.app-site-footer {
+  --footer-bg: linear-gradient(180deg, rgba(248, 250, 252, 0.98) 0%, rgba(241, 245, 249, 0.96) 100%) !important;
+  --footer-border: rgba(148, 163, 184, 0.4) !important;
+  --footer-accent: #0f766e !important;
+  --footer-gold: #64748b !important;
+  border-radius: 12px 12px 0 0;
+  margin-top: 0.75rem;
+}
+
+.app-site-footer__accent {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(15, 118, 110, 0.35) 22%,
+    rgba(2, 132, 199, 0.3) 50%,
+    rgba(15, 118, 110, 0.35) 78%,
+    transparent 100%
+  ) !important;
+}
+
+/* ── Gantt ──────────────────────────────────────────────── */
+.gantt-view,
+.gantt-timeline {
+  border-radius: 12px;
+}
+
+.gantt-bar,
+.gantt-task-bar {
+  border-radius: 6px !important;
+}
+
+/* ── Compact / mobile ───────────────────────────────────── */
+@media (max-width: 1400px) {
+  html.is-compact-layout .app-header--modern {
+    border-radius: 0 !important;
+    box-shadow: 0 1px 0 rgba(148, 163, 184, 0.35) !important;
+    backdrop-filter: none;
+  }
+
+  html.is-compact-layout .workspace-panel--v2:not(.workspace-panel--profile-locked) {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .mobile-command-deck,
+  .filters-sheet,
+  .profiles-panel-sheet {
+    border-radius: 16px 16px 0 0 !important;
+    box-shadow: 0 -8px 32px rgba(15, 23, 42, 0.12) !important;
+  }
+}
+
+/* ── Focus visibility ───────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid #0d9488;
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #0d9488;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board-card:hover,
+  .moscow-card:hover,
+  .kanban-card:hover,
+  .app-header-action-btn:hover,
+  .portfolio-action-btn:hover {
+    transform: none !important;
+  }
+}

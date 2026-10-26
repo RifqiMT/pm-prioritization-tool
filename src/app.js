@@ -3819,7 +3819,7 @@ function showWrongHostBanner() {
   const origin =
     typeof PRODUCTION_APP_ORIGIN !== "undefined" && PRODUCTION_APP_ORIGIN
       ? PRODUCTION_APP_ORIGIN
-      : "https://pm-prioritization-tool-six.vercel.app";
+      : "https://pm-prioritization-tool-one.vercel.app";
   if (link) link.href = origin.replace(/\/$/, "") + "/";
   banner.hidden = false;
   const shell = document.querySelector(".app-shell");
@@ -3851,7 +3851,7 @@ function showDeploymentIssueBanner(boot) {
       const prod =
         typeof PRODUCTION_APP_ORIGIN !== "undefined"
           ? PRODUCTION_APP_ORIGIN
-          : "https://pm-prioritization-tool-six.vercel.app";
+          : "https://pm-prioritization-tool-one.vercel.app";
       textEl.textContent =
         "This site returned HTML for /api/config (often the legacy React app). " +
         "Use the production URL: " + prod;
@@ -4033,7 +4033,11 @@ async function refreshCloudStorageDiagnostics() {
     if (d.cloudUpdatedAt) {
       line += " · Cloud updated " + formatStorageSyncTime(d.cloudUpdatedAt);
     }
-    if (d.hostname && d.hostname.indexOf("pm-prioritization-tool-six") < 0) {
+    const prodHost =
+      typeof PRODUCTION_APP_ORIGIN !== "undefined" && PRODUCTION_APP_ORIGIN
+        ? PRODUCTION_APP_ORIGIN.replace(/^https?:\/\//, "").replace(/\/$/, "")
+        : "pm-prioritization-tool-one.vercel.app";
+    if (d.hostname && d.hostname !== prodHost) {
       line += " · Warning: not on production URL";
     }
     diagEl.textContent = line;
@@ -4775,6 +4779,14 @@ function cacheElements() {
   elements.profileViewStatusInsight = $("profileViewStatusInsight");
   elements.profileViewTotalRoadmaps = $("profileViewTotalRoadmaps");
   elements.profileViewTotalRoadmapsLabel = $("profileViewTotalRoadmapsLabel");
+  elements.profileViewTimelineMetric = $("profileViewTimelineMetric");
+  elements.profileViewTimelineChart = $("profileViewTimelineChart");
+  elements.profileViewTimelineGranularity = document.querySelectorAll(
+    ".profile-view-timeline-granularity-btn"
+  );
+  elements.profileViewTimelineViewMode = document.querySelectorAll(
+    ".profile-view-timeline-viewmode-btn"
+  );
   elements.profileViewByType = $("profileViewByType");
   elements.profileViewByTshirt = $("profileViewByTshirt");
   elements.profileViewByMoscow = $("profileViewByMoscow");
@@ -5584,6 +5596,64 @@ function attachEventListeners() {
       refreshProfileViewModal();
     });
   }
+  if (elements.profileViewTimelineMetric) {
+    elements.profileViewTimelineMetric.addEventListener("change", () => {
+      profileViewTimelineMetric = elements.profileViewTimelineMetric.value || "roadmapType";
+      if (profileViewActiveProfileId) {
+        const contextProfile = state.profiles.find((profile) => profile.id === profileViewActiveProfileId);
+        if (!contextProfile) return;
+        const baseRoadmaps = getProfileViewBaseRoadmaps(contextProfile, profileViewOwnerFilter);
+        const roadmaps = filterProfileViewRoadmaps(baseRoadmaps, profileViewPeriodFilter);
+        renderProfileViewTimelineChart(roadmaps, { resetSeriesFilter: true });
+      }
+    });
+  }
+  if (elements.profileViewTimelineGranularity && elements.profileViewTimelineGranularity.length) {
+    elements.profileViewTimelineGranularity.forEach((button) => {
+      button.addEventListener("click", () => {
+        const next =
+          typeof ProfileOverviewTimeline !== "undefined" &&
+          typeof ProfileOverviewTimeline.normalizeGranularity === "function"
+            ? ProfileOverviewTimeline.normalizeGranularity(button.getAttribute("data-granularity"))
+            : button.getAttribute("data-granularity") === "year"
+              ? "year"
+              : "quarter";
+        if (next === profileViewTimelineGranularity) return;
+        profileViewTimelineGranularity = next;
+        syncProfileViewTimelineGranularityControl();
+        if (profileViewActiveProfileId) {
+          const contextProfile = state.profiles.find((profile) => profile.id === profileViewActiveProfileId);
+          if (!contextProfile) return;
+          const baseRoadmaps = getProfileViewBaseRoadmaps(contextProfile, profileViewOwnerFilter);
+          const roadmaps = filterProfileViewRoadmaps(baseRoadmaps, profileViewPeriodFilter);
+          renderProfileViewTimelineChart(roadmaps, { resetSeriesFilter: true });
+        }
+      });
+    });
+  }
+  if (elements.profileViewTimelineViewMode && elements.profileViewTimelineViewMode.length) {
+    elements.profileViewTimelineViewMode.forEach((button) => {
+      button.addEventListener("click", () => {
+        const next =
+          typeof ProfileOverviewTimeline !== "undefined" &&
+          typeof ProfileOverviewTimeline.normalizeViewMode === "function"
+            ? ProfileOverviewTimeline.normalizeViewMode(button.getAttribute("data-view"))
+            : button.getAttribute("data-view") === "table"
+              ? "table"
+              : "chart";
+        if (next === profileViewTimelineViewMode) return;
+        profileViewTimelineViewMode = next;
+        syncProfileViewTimelineViewModeControl();
+        if (profileViewActiveProfileId) {
+          const contextProfile = state.profiles.find((profile) => profile.id === profileViewActiveProfileId);
+          if (!contextProfile) return;
+          const baseRoadmaps = getProfileViewBaseRoadmaps(contextProfile, profileViewOwnerFilter);
+          const roadmaps = filterProfileViewRoadmaps(baseRoadmaps, profileViewPeriodFilter);
+          renderProfileViewTimelineChart(roadmaps);
+        }
+      });
+    });
+  }
   if (elements.profileViewOwnerFilter) {
     elements.profileViewOwnerFilter.addEventListener("change", () => {
       profileViewOwnerFilter = elements.profileViewOwnerFilter.value || "";
@@ -5727,12 +5797,13 @@ function attachEventListeners() {
       if (willOpen) {
         closeAllFilterAutocompleteDropdowns();
         prepareAppOverlay("filterCountries");
-      }
-      container.classList.toggle("open");
-      syncAppPopupLayerState();
-      if (willOpen && elements.filterCountriesSearch) {
-        elements.filterCountriesSearch.focus();
-        elements.filterCountriesSearch.select();
+        openFilterCountriesPopup(container);
+        if (elements.filterCountriesSearch) {
+          elements.filterCountriesSearch.focus();
+          elements.filterCountriesSearch.select();
+        }
+      } else {
+        closeFilterCountriesPopupContainer(container);
       }
     });
   }
@@ -5746,12 +5817,13 @@ function attachEventListeners() {
       if (willOpen) {
         closeAllFilterAutocompleteDropdowns();
         prepareAppOverlay("filterRoadmapPeriod");
-      }
-      container.classList.toggle("open");
-      syncAppPopupLayerState();
-      if (willOpen && elements.filterRoadmapPeriodSearch) {
-        elements.filterRoadmapPeriodSearch.focus();
-        elements.filterRoadmapPeriodSearch.select();
+        openFilterCountriesPopup(container);
+        if (elements.filterRoadmapPeriodSearch) {
+          elements.filterRoadmapPeriodSearch.focus();
+          elements.filterRoadmapPeriodSearch.select();
+        }
+      } else {
+        closeFilterCountriesPopupContainer(container);
       }
     });
   }
@@ -5765,20 +5837,17 @@ function attachEventListeners() {
       if (willOpen) {
         closeAllFilterAutocompleteDropdowns();
         prepareAppOverlay("filterIncompleteFields");
-      }
-      container.classList.toggle("open");
-      elements.filterIncompleteFieldsToggle.setAttribute(
-        "aria-expanded",
-        willOpen ? "true" : "false"
-      );
-      syncAppPopupLayerState();
-      if (willOpen) {
+        openFilterCountriesPopup(container);
+        elements.filterIncompleteFieldsToggle.setAttribute("aria-expanded", "true");
         if (elements.filterIncompleteFieldsSearch) {
           elements.filterIncompleteFieldsSearch.value = "";
           filterFilterIncompleteFieldsBySearchTerm();
           elements.filterIncompleteFieldsSearch.focus();
         }
         scrollFirstSelectedIncompleteFieldIntoView();
+      } else {
+        closeFilterCountriesPopupContainer(container);
+        elements.filterIncompleteFieldsToggle.setAttribute("aria-expanded", "false");
       }
     });
   }
@@ -5831,20 +5900,29 @@ function attachEventListeners() {
 
     if (elements.filterCountriesToggle) {
       const countriesContainer = elements.filterCountriesToggle.closest(".filter-countries");
-      if (countriesContainer?.classList.contains("open") && !countriesContainer.contains(target)) {
-        countriesContainer.classList.remove("open");
+      if (
+        countriesContainer?.classList.contains("open") &&
+        !isEventInsideFilterCountries(countriesContainer, target)
+      ) {
+        closeFilterCountriesPopupContainer(countriesContainer);
       }
     }
     if (elements.filterRoadmapPeriodToggle) {
       const periodContainer = elements.filterRoadmapPeriodToggle.closest(".filter-countries");
-      if (periodContainer?.classList.contains("open") && !periodContainer.contains(target)) {
-        periodContainer.classList.remove("open");
+      if (
+        periodContainer?.classList.contains("open") &&
+        !isEventInsideFilterCountries(periodContainer, target)
+      ) {
+        closeFilterCountriesPopupContainer(periodContainer);
       }
     }
     if (elements.filterIncompleteFieldsToggle) {
       const incompleteContainer = elements.filterIncompleteFieldsToggle.closest(".filter-countries");
-      if (incompleteContainer?.classList.contains("open") && !incompleteContainer.contains(target)) {
-        incompleteContainer.classList.remove("open");
+      if (
+        incompleteContainer?.classList.contains("open") &&
+        !isEventInsideFilterCountries(incompleteContainer, target)
+      ) {
+        closeFilterCountriesPopupContainer(incompleteContainer);
         elements.filterIncompleteFieldsToggle.setAttribute("aria-expanded", "false");
       }
     }
@@ -5864,20 +5942,20 @@ function attachEventListeners() {
     }
     if (elements.filterCountriesToggle) {
       const countriesContainer = elements.filterCountriesToggle.closest(".filter-countries");
-      if (countriesContainer) {
-        countriesContainer.classList.remove("open");
+      if (countriesContainer?.classList.contains("open")) {
+        closeFilterCountriesPopupContainer(countriesContainer);
       }
     }
     if (elements.filterRoadmapPeriodToggle) {
       const periodContainer = elements.filterRoadmapPeriodToggle.closest(".filter-countries");
-      if (periodContainer) {
-        periodContainer.classList.remove("open");
+      if (periodContainer?.classList.contains("open")) {
+        closeFilterCountriesPopupContainer(periodContainer);
       }
     }
     if (elements.filterIncompleteFieldsToggle) {
       const incompleteContainer = elements.filterIncompleteFieldsToggle.closest(".filter-countries");
-      if (incompleteContainer) {
-        incompleteContainer.classList.remove("open");
+      if (incompleteContainer?.classList.contains("open")) {
+        closeFilterCountriesPopupContainer(incompleteContainer);
         elements.filterIncompleteFieldsToggle.setAttribute("aria-expanded", "false");
       }
     }
@@ -15143,16 +15221,184 @@ function closeAppHeaderMenu() {
   syncAppPopupLayerState();
 }
 
+/**
+ * Pin multi-select filter popups with position:fixed so overflow:hidden
+ * ancestors (workspace panel, filters body) and the view toolbar cannot clip them.
+ */
+let filterCountriesPopupRepositionBound = false;
+
+function getFilterCountriesPopupEls(container) {
+  if (!container) return { toggle: null, popup: null };
+  return {
+    toggle: container.querySelector(".filter-countries-toggle"),
+    popup: container.querySelector(".filter-countries-popup")
+  };
+}
+
+function ensureFilterCountriesPopupHomeId(container) {
+  if (!container) return "";
+  if (!container.id) {
+    container.id = `filter-popup-home-${Math.random().toString(36).slice(2, 9)}`;
+  }
+  return container.id;
+}
+
+function findFilterCountriesPopupFor(container) {
+  if (!container) return null;
+  const homeKey = container.id || container.dataset.filterPopupId || "";
+  const portaled = homeKey
+    ? document.querySelector(
+        `.filter-countries-popup--portaled[data-filter-popup-for="${CSS.escape(homeKey)}"]`
+      )
+    : null;
+  return portaled || container.querySelector(".filter-countries-popup");
+}
+
+function isEventInsideFilterCountries(container, target) {
+  if (!container || !target) return false;
+  if (container.contains(target)) return true;
+  const popup = findFilterCountriesPopupFor(container);
+  return !!(popup && popup.contains(target));
+}
+
+function clearFilterCountriesPopupPosition(container) {
+  const target = findFilterCountriesPopupFor(container);
+  if (!target) return;
+
+  const homeId = target.dataset.filterPopupHome || container?.id || "";
+  const home = (homeId && document.getElementById(homeId)) || container || null;
+
+  target.classList.remove("filter-countries-popup--portaled");
+  target.style.position = "";
+  target.style.top = "";
+  target.style.left = "";
+  target.style.bottom = "";
+  target.style.width = "";
+  target.style.right = "";
+  target.style.maxWidth = "";
+  target.style.maxHeight = "";
+  target.style.overflow = "";
+  target.style.zIndex = "";
+  target.style.display = "";
+  delete target.dataset.filterPopupFor;
+  const list = target.querySelector(".filter-countries-list");
+  if (list) list.style.maxHeight = "";
+
+  if (home && target.parentElement !== home) {
+    const toggle = home.querySelector(".filter-countries-toggle");
+    if (toggle?.nextSibling) {
+      home.insertBefore(target, toggle.nextSibling);
+    } else {
+      home.appendChild(target);
+    }
+  }
+}
+
+function positionFilterCountriesPopup(container) {
+  const { toggle } = getFilterCountriesPopupEls(container);
+  if (!toggle || !container.classList.contains("open")) return;
+
+  const homeKey = ensureFilterCountriesPopupHomeId(container);
+  let popup = findFilterCountriesPopupFor(container);
+  if (!popup) {
+    popup = container.querySelector(".filter-countries-popup");
+  }
+  if (!popup) return;
+
+  if (popup.parentElement !== document.documentElement) {
+    popup.dataset.filterPopupHome = homeKey;
+    popup.dataset.filterPopupFor = homeKey;
+    document.documentElement.appendChild(popup);
+  } else {
+    popup.dataset.filterPopupFor = homeKey;
+    popup.dataset.filterPopupHome = homeKey;
+  }
+
+  const rect = toggle.getBoundingClientRect();
+  const gap = 6;
+  const viewportPad = 8;
+  const preferredWidth = Math.max(rect.width, 260);
+  const maxWidth = Math.min(preferredWidth, window.innerWidth - viewportPad * 2);
+  let left = rect.left;
+  if (left + maxWidth > window.innerWidth - viewportPad) {
+    left = Math.max(viewportPad, window.innerWidth - viewportPad - maxWidth);
+  }
+  left = Math.max(viewportPad, left);
+
+  const spaceBelow = window.innerHeight - rect.bottom - gap - viewportPad;
+  const spaceAbove = rect.top - gap - viewportPad;
+  const preferBelow = spaceBelow >= 180 || spaceBelow >= spaceAbove;
+  const maxHeight = Math.max(160, Math.min(320, preferBelow ? spaceBelow : spaceAbove));
+
+  popup.classList.add("filter-countries-popup--portaled");
+  popup.style.position = "fixed";
+  popup.style.left = `${Math.round(left)}px`;
+  popup.style.width = `${Math.round(maxWidth)}px`;
+  popup.style.right = "auto";
+  popup.style.zIndex = "960";
+  popup.style.display = "block";
+  popup.style.maxHeight = `${Math.round(maxHeight)}px`;
+  popup.style.overflow = "auto";
+
+  if (preferBelow) {
+    popup.style.top = `${Math.round(rect.bottom + gap)}px`;
+    popup.style.bottom = "auto";
+  } else {
+    popup.style.top = "auto";
+    popup.style.bottom = `${Math.round(window.innerHeight - rect.top + gap)}px`;
+  }
+
+  const list = popup.querySelector(".filter-countries-list");
+  if (list) {
+    const chrome = 72;
+    list.style.maxHeight = `${Math.max(120, maxHeight - chrome)}px`;
+  }
+}
+
+function repositionOpenFilterCountriesPopups() {
+  document.querySelectorAll(".filter-countries.open").forEach((container) => {
+    positionFilterCountriesPopup(container);
+  });
+}
+
+function bindFilterCountriesPopupReposition() {
+  if (filterCountriesPopupRepositionBound) return;
+  filterCountriesPopupRepositionBound = true;
+  const onReposition = () => {
+    if (!document.querySelector(".filter-countries.open")) return;
+    repositionOpenFilterCountriesPopups();
+  };
+  window.addEventListener("resize", onReposition, { passive: true });
+  window.addEventListener("scroll", onReposition, { passive: true, capture: true });
+}
+
+function openFilterCountriesPopup(container) {
+  if (!container) return;
+  bindFilterCountriesPopupReposition();
+  container.classList.add("open");
+  document.documentElement.classList.add("filter-countries-popup-open");
+  positionFilterCountriesPopup(container);
+  syncAppPopupLayerState();
+}
+
+function closeFilterCountriesPopupContainer(container) {
+  if (!container) return;
+  container.classList.remove("open");
+  clearFilterCountriesPopupPosition(container);
+  if (!document.querySelector(".filter-countries.open")) {
+    document.documentElement.classList.remove("filter-countries-popup-open");
+  }
+  syncAppPopupLayerState();
+}
+
 function closeFilterCountriesPopup() {
   const container = elements.filterCountriesToggle?.closest(".filter-countries");
-  if (container) container.classList.remove("open");
-  syncAppPopupLayerState();
+  closeFilterCountriesPopupContainer(container);
 }
 
 function closeFilterRoadmapPeriodPopup() {
   const container = elements.filterRoadmapPeriodToggle?.closest(".filter-countries");
-  if (container) container.classList.remove("open");
-  syncAppPopupLayerState();
+  closeFilterCountriesPopupContainer(container);
 }
 
 function registerAppOverlays() {
@@ -23892,17 +24138,19 @@ function renderProfileViewStatsGrid(container, values, { formatValue, emptyMessa
   const stats = computeNumericStats(values);
   if (!stats) return;
 
+  // Total first (KPI hero), then 2×2 Mean/Median/Min/Max — avoids orphan Max row.
   const rows = [
-    ["Mean", stats.mean, false],
-    ["Median", stats.median, false],
-    ["Min", stats.min, false],
-    ["Max", stats.max, false],
-    ["Total", stats.total, true]
+    ["Total", "total", stats.total, true],
+    ["Mean", "mean", stats.mean, false],
+    ["Median", "median", stats.median, false],
+    ["Min", "min", stats.min, false],
+    ["Max", "max", stats.max, false]
   ];
 
-  rows.forEach(([label, value, isTotal]) => {
+  rows.forEach(([label, key, value, isTotal]) => {
     const card = document.createElement("div");
     card.className = "profile-view-rice-card" + (isTotal ? " profile-view-rice-card--total" : "");
+    card.dataset.stat = key;
 
     const labelEl = document.createElement("span");
     labelEl.className = "profile-view-rice-label";
@@ -23993,11 +24241,26 @@ function renderProfileViewFinancialStats(roadmaps) {
   }
 }
 
-function renderProfileViewBreakdownChips(container, counts, { sortOrder, labelFor, titleFor, emptyMessage } = {}) {
+function getProfileViewMoscowChipModifier(key) {
+  const map = {
+    "Must have": "must",
+    "Should have": "should",
+    "Could have": "could",
+    "Won't have": "wont",
+  };
+  return map[key] || null;
+}
+
+function renderProfileViewBreakdownChips(
+  container,
+  counts,
+  { sortOrder, labelFor, titleFor, emptyMessage, chipClassFor } = {}
+) {
   if (!container) return;
   container.innerHTML = "";
   const formatLabel = typeof labelFor === "function" ? labelFor : (key) => key;
   const formatTitle = typeof titleFor === "function" ? titleFor : null;
+  const extraClassFor = typeof chipClassFor === "function" ? chipClassFor : null;
   let entries;
   if (Array.isArray(sortOrder) && sortOrder.length) {
     const used = new Set();
@@ -24018,13 +24281,14 @@ function renderProfileViewBreakdownChips(container, counts, { sortOrder, labelFo
   if (!entries.length) {
     const empty = document.createElement("span");
     empty.className = "profile-view-empty";
-    empty.textContent = "No data yet";
+    empty.textContent = emptyMessage || "No data yet";
     container.appendChild(empty);
     return;
   }
   entries.forEach(([label, count]) => {
     const chip = document.createElement("span");
-    chip.className = "profile-view-chip";
+    const extra = extraClassFor ? String(extraClassFor(label) || "").trim() : "";
+    chip.className = extra ? `profile-view-chip ${extra}` : "profile-view-chip";
     const displayLabel = formatLabel(label);
     const tooltipText = formatTitle ? formatTitle(label) : displayLabel !== label ? label : "";
     if (tooltipText) chip.setAttribute("title", tooltipText);
@@ -24634,6 +24898,150 @@ function syncRoadmapModalFooterMetaDetails({ resetCollapsed = false } = {}) {
 let profileViewActiveProfileId = null;
 let profileViewPeriodFilter = "";
 let profileViewOwnerFilter = "";
+let profileViewTimelineMetric = "roadmapType";
+let profileViewTimelineGranularity = "quarter";
+let profileViewTimelineViewMode = "chart";
+
+function getProfileViewTimelineHelpers() {
+  return {
+    getPeriodEntries: getRoadmapPeriodEntries,
+    normalizeFramework: normalizeFinancialFramework,
+    calculateRiceScore,
+    getKanoKey(roadmap) {
+      if (!roadmapHasKanoPosition(roadmap)) {
+        return typeof ProfileOverviewTimeline !== "undefined"
+          ? ProfileOverviewTimeline.UNPOSITIONED_KANO_KEY
+          : "__kano_unpositioned__";
+      }
+      return (
+        getKanoCellZoneId(
+          normalizeKanoAxisLevel(roadmap.kanoFunctionality),
+          normalizeKanoAxisLevel(roadmap.kanoSatisfaction)
+        ) ||
+        (typeof ProfileOverviewTimeline !== "undefined"
+          ? ProfileOverviewTimeline.UNPOSITIONED_KANO_KEY
+          : "__kano_unpositioned__")
+      );
+    },
+    getFinancialImpactEur(roadmap) {
+      if (!roadmap || roadmap.financialImpactValue == null || roadmap.financialImpactValue === "") {
+        return null;
+      }
+      const amount = Number(roadmap.financialImpactValue);
+      if (!Number.isFinite(amount)) return null;
+      const currency = (roadmap.financialImpactCurrency || "EUR").toString().trim().toUpperCase() || "EUR";
+      if (
+        typeof ExchangeRates !== "undefined" &&
+        typeof ExchangeRates.convertToEUR === "function"
+      ) {
+        const eur = ExchangeRates.convertToEUR(amount, currency);
+        return Number.isFinite(eur) ? eur : null;
+      }
+      return currency === "EUR" ? amount : null;
+    },
+    labelFor(metricId, key) {
+      if (metricId === "moscow") return PROFILE_VIEW_MOSCOW_SHORT_LABELS[key] || key;
+      if (metricId === "kano") return getProfileViewKanoChipLabel(key);
+      if (metricId === "financialFramework") return getProfileViewFrameworkChipLabel(key);
+      return key;
+    },
+    sortOrderFor(metricId) {
+      if (metricId === "moscow" && typeof moscowList !== "undefined") return moscowList.slice();
+      if (metricId === "tshirtSize" && typeof tshirtSizeList !== "undefined") return tshirtSizeList.slice();
+      if (metricId === "financialFramework") return FINANCIAL_FRAMEWORKS.slice();
+      if (metricId === "kano") return getProfileViewKanoSortOrder();
+      return null;
+    }
+  };
+}
+
+function syncProfileViewTimelineMetricControl() {
+  if (!elements.profileViewTimelineMetric) return;
+  const allowed =
+    typeof ProfileOverviewTimeline !== "undefined" && Array.isArray(ProfileOverviewTimeline.METRICS)
+      ? ProfileOverviewTimeline.METRICS.map((metric) => metric.id)
+      : [];
+  if (allowed.length && !allowed.includes(profileViewTimelineMetric)) {
+    profileViewTimelineMetric = allowed[0];
+  }
+  if (
+    Array.from(elements.profileViewTimelineMetric.options).some(
+      (option) => option.value === profileViewTimelineMetric
+    )
+  ) {
+    elements.profileViewTimelineMetric.value = profileViewTimelineMetric;
+  }
+}
+
+function syncProfileViewTimelineGranularityControl() {
+  if (
+    typeof ProfileOverviewTimeline !== "undefined" &&
+    typeof ProfileOverviewTimeline.normalizeGranularity === "function"
+  ) {
+    profileViewTimelineGranularity = ProfileOverviewTimeline.normalizeGranularity(
+      profileViewTimelineGranularity
+    );
+  } else if (profileViewTimelineGranularity !== "year") {
+    profileViewTimelineGranularity = "quarter";
+  }
+  const buttons =
+    elements.profileViewTimelineGranularity && elements.profileViewTimelineGranularity.length
+      ? elements.profileViewTimelineGranularity
+      : document.querySelectorAll(".profile-view-timeline-granularity-btn");
+  buttons.forEach((button) => {
+    const value = button.getAttribute("data-granularity");
+    const active = value === profileViewTimelineGranularity;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+}
+
+function syncProfileViewTimelineViewModeControl() {
+  if (
+    typeof ProfileOverviewTimeline !== "undefined" &&
+    typeof ProfileOverviewTimeline.normalizeViewMode === "function"
+  ) {
+    profileViewTimelineViewMode = ProfileOverviewTimeline.normalizeViewMode(
+      profileViewTimelineViewMode
+    );
+  } else if (profileViewTimelineViewMode !== "table") {
+    profileViewTimelineViewMode = "chart";
+  }
+  const buttons =
+    elements.profileViewTimelineViewMode && elements.profileViewTimelineViewMode.length
+      ? elements.profileViewTimelineViewMode
+      : document.querySelectorAll(".profile-view-timeline-viewmode-btn");
+  buttons.forEach((button) => {
+    const value = button.getAttribute("data-view");
+    const active = value === profileViewTimelineViewMode;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+}
+
+function renderProfileViewTimelineChart(roadmaps, options) {
+  if (!elements.profileViewTimelineChart) return;
+  if (typeof ProfileOverviewTimeline === "undefined" || typeof ProfileOverviewTimeline.renderInto !== "function") {
+    elements.profileViewTimelineChart.innerHTML =
+      '<div class="profile-timeline-empty">Timeline chart unavailable.</div>';
+    return;
+  }
+  const opts = options && typeof options === "object" ? options : {};
+  syncProfileViewTimelineMetricControl();
+  syncProfileViewTimelineGranularityControl();
+  syncProfileViewTimelineViewModeControl();
+  ProfileOverviewTimeline.renderInto(
+    elements.profileViewTimelineChart,
+    roadmaps,
+    profileViewTimelineMetric,
+    getProfileViewTimelineHelpers(),
+    {
+      granularity: profileViewTimelineGranularity,
+      viewMode: profileViewTimelineViewMode,
+      resetSeriesFilter: Boolean(opts.resetSeriesFilter)
+    }
+  );
+}
 
 function isProfileViewOwnerFilterEnabled() {
   const active = getActiveProfile();
@@ -24929,11 +25337,16 @@ function renderProfileViewContent(contextProfile, roadmaps, options = {}) {
   });
 
   renderProfileViewStatusStats(elements.profileViewStatusStats, statusCounts, totalRoadmaps);
+  renderProfileViewTimelineChart(roadmaps);
   renderProfileViewBreakdownChips(elements.profileViewByType, typeCounts);
   renderProfileViewBreakdownChips(elements.profileViewByTshirt, tshirtCounts);
   renderProfileViewBreakdownChips(elements.profileViewByMoscow, moscowCounts, {
     sortOrder: typeof moscowList !== "undefined" ? moscowList.slice() : [],
     labelFor: (key) => PROFILE_VIEW_MOSCOW_SHORT_LABELS[key] || key,
+    chipClassFor: (key) => {
+      const mod = getProfileViewMoscowChipModifier(key);
+      return mod ? `profile-view-chip--moscow profile-view-chip--moscow-${mod}` : "";
+    },
   });
   renderProfileViewBreakdownChips(elements.profileViewByKano, buildProfileViewKanoCounts(roadmaps), {
     sortOrder: getProfileViewKanoSortOrder(),
@@ -25023,6 +25436,12 @@ function openProfileViewModal(profileId) {
   profileViewActiveProfileId = profileId;
   profileViewPeriodFilter = "";
   profileViewOwnerFilter = isProfileViewOwnerFilterEnabled() ? profileId : "";
+  profileViewTimelineMetric = "roadmapType";
+  profileViewTimelineGranularity = "quarter";
+  profileViewTimelineViewMode = "chart";
+  syncProfileViewTimelineMetricControl();
+  syncProfileViewTimelineGranularityControl();
+  syncProfileViewTimelineViewModeControl();
 
   syncProfileViewOwnerFilterChrome();
   initProfileViewOwnerFilterOptions(profileId);

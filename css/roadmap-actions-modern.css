@@ -10,11 +10,11 @@ profiles.
   --action-view: #4338ca;
   --action-view-bg: #eef2ff;
   --action-view-border: rgba(99, 102, 241, 0.28);
-  --action-edit: #b45309;
-  --action-edit-bg: #fffbeb;
+  --action-edit: #475569;
+  --action-edit-bg: #f8fafc;
   --action-edit-border: rgba(245, 158, 11, 0.35);
-  --action-delete: #b91c1c;
-  --action-delete-bg: #fef2f2;
+  --action-delete: #dc2626;
+  --action-delete-bg: #f0fdfa;
   --action-delete-border: rgba(239, 68, 68, 0.32);
   --action-surface: #ffffff;
   --action-group-bg: #f8fafc;
@@ -101,7 +101,7 @@ profiles.
   background: #e0e7ff !important;
   border-color: rgba(99, 102, 241, 0.45) !important;
 }.roadmap-action-btn--edit:hover:not(:disabled) {
-  background: #fef3c7 !important;
+  background: #e2e8f0 !important;
   border-color: rgba(245, 158, 11, 0.5) !important;
 }.roadmap-action-btn--delete:hover:not(:disabled) {
   background: #fee2e2 !important;
@@ -491,7 +491,7 @@ html.is-desktop-layout .moscow-board-card-btn--order {
 
   html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-action-chip--edit:hover:not(:disabled),
   html.is-desktop-layout .profiles-panel--v2 .profiles-select__actions .profile-icon-btn--edit:hover:not(:disabled) {
-    background: #fef3c7 !important;
+    background: #e2e8f0 !important;
     border-color: rgba(245, 158, 11, 0.48) !important;
     box-shadow: 0 4px 14px rgba(245, 158, 11, 0.14) !important;
     transform: translateY(-1px) !important;

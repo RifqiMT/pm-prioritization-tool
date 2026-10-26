@@ -2,8 +2,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-10-24 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui205` |
+| **Last updated** | 2026-10-26 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20261025-ui234` |
 
 The app is a **static UI** plus **Vercel serverless API** routes under `/api`. Portfolio data is stored in **MongoDB Atlas** when `MONGODB_URI` is configured; the browser keeps a **local cache** for faster reload and offline fallback.
 
@@ -51,7 +51,7 @@ openssl rand -hex 32
 
 After deploy, open the production URL:
 
-1. Visit `https://pm-prioritization-tool-six.vercel.app/api/config` — expect JSON: `"storage": "mongodb"`.
+1. Visit `https://pm-prioritization-tool-one.vercel.app/api/config` — expect JSON: `"storage": "mongodb"`.
 2. If you **only** set `MONGODB_URI` (no `PM_API_SECRET`), the header should show **Saved to cloud** automatically after redeploy.
 3. If you set `PM_API_SECRET`, click **Cloud** → paste the secret → **Connect & sync** (stored in `localStorage` for return visits).
 
@@ -145,7 +145,7 @@ Open `https://YOUR-DOMAIN/api/config`. Expected JSON:
 { "ok": true, "storage": "mongodb", "authRequired": false, "workspaceId": "default", "version": 1 }
 ```
 
-If you see **HTML** for a React app (“PM Prioritization Matrix”), the domain points at the **wrong** Vercel roadmap. Fix **Settings → Git** to use this repo, or create a new roadmap and move the domain. Production URL: **`pm-prioritization-tool-six.vercel.app`** — not `pm-prioritization-tool.vercel.app` (legacy React app).
+If you see **HTML** for a React app (“PM Prioritization Matrix”), the domain points at the **wrong** Vercel roadmap. Fix **Settings → Git** to use this repo, or create a new roadmap and move the domain. Production URL: **`pm-prioritization-tool-one.vercel.app`** — not `pm-prioritization-tool.vercel.app` (legacy React app) or `pm-prioritization-tool-six.vercel.app` (previous team account).
 
 ### 3. Environment variables and Atlas
 
@@ -182,7 +182,7 @@ GitHub Actions workflow `.github/workflows/ci.yml` runs on every push/PR to `mai
 
 1. `npm ci`
 2. `npm run build` — validates static root + `api/state.js`; runs `sync:assets` to align per-asset cache tags with `APP_ASSET_VERSION`
-3. `npm test` — **eighteen** script suites (through `test:incomplete-filter`, `test:import-file-kind`, and `test:cost-of-delay`)
+3. `npm test` — **nineteen** script suites (through `test:cost-of-delay` and `test:profile-timeline`)
 
 Post-deploy smoke: `npm run verify:production` (or `verify:deploy` with your URL).
 

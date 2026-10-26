@@ -10,9 +10,9 @@ and card-style rows.
   --table-row-pad-y: 0.78rem;
   --table-row-pad-x: 0.62rem;
   --table-row-radius: 11px;
-  --table-row-border: rgba(231, 201, 120, 0.38);
-  --table-row-shadow: 0 1px 2px rgba(63, 15, 25, 0.04);
-  --table-row-shadow-hover: 0 6px 18px rgba(63, 15, 25, 0.08);
+  --table-row-border: rgba(148, 163, 184, 0.38);
+  --table-row-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --table-row-shadow-hover: 0 6px 18px rgba(15, 23, 42, 0.08);
 }/* Scoped: card rows only outside the revamp shell */
 .table-wrapper:not(.roadmaps-table-shell) table,
 .table-wrapper--modern:not(.roadmaps-table-shell) table {
@@ -51,12 +51,12 @@ and card-style rows.
   border-bottom: 1px solid var(--table-row-border) !important;
 }.table-wrapper:not(.roadmaps-table-shell) tbody tr:hover td,
 .table-wrapper--modern:not(.roadmaps-table-shell) tbody tr:hover td {
-  border-color: rgba(212, 175, 55, 0.55) !important;
+  border-color: rgba(100, 116, 139, 0.55) !important;
   box-shadow: var(--table-row-shadow-hover);
 }.table-wrapper:not(.roadmaps-table-shell) tbody tr:focus-within td,
 .table-wrapper--modern:not(.roadmaps-table-shell) tbody tr:focus-within td {
-  border-color: rgba(185, 28, 28, 0.28) !important;
-  box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.08), var(--table-row-shadow-hover);
+  border-color: rgba(15, 118, 110, 0.28) !important;
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.08), var(--table-row-shadow-hover);
 }/* Roadmap column — clearer hierarchy */
 .table-wrapper .cell-title-block,
 .table-wrapper--modern .cell-title-block {
@@ -95,7 +95,7 @@ and card-style rows.
 }/* Empty state spans full width without row card chrome */
 .table-wrapper tbody tr:only-child td.empty-state,
 .table-wrapper--modern tbody tr:only-child td.empty-state {
-  border: 1px dashed rgba(231, 201, 120, 0.45) !important;
+  border: 1px dashed rgba(148, 163, 184, 0.45) !important;
   border-radius: var(--table-row-radius) !important;
   padding: 2rem 1.25rem !important;
   box-shadow: none !important;

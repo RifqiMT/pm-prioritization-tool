@@ -5,8 +5,8 @@
 | **Product** | Product Management Prioritization Tool |
 | **Version** | 2.0.0 |
 | **Status** | Implemented (local-first static app) |
-| **Last updated** | 2026-10-24 |
-| **Implementation baseline** | `APP_ASSET_VERSION` = `20260710-ui205` |
+| **Last updated** | 2026-10-26 |
+| **Implementation baseline** | `APP_ASSET_VERSION` = `20261025-ui234` |
 | **Compact breakpoint** | `COMPACT_LAYOUT_MAX_WIDTH_PX` = **1400** |
 
 ---
@@ -61,6 +61,7 @@ See [USER_PERSONAS.md](USER_PERSONAS.md).
 | FR-1.5 | Search profiles | Filters by name/team |
 | FR-1.6 | Optional password on create | Hash stored; profile locked until unlock |
 | FR-1.7 | Compact profile picker | At ≤1400px: picker + bottom-sheet profile list |
+| FR-1.8 | Portfolio timeline (Profile overview) | Metric chart/table by quarter or year: type, t-shirt, MoSCoW, KANO, framework, currency, financial impact (EUR sum), RICE average; Chart\|Table toggle; legend category filters; growth % in table |
 
 ### FR-2 Roadmaps
 
