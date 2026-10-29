@@ -359,7 +359,7 @@ flowchart TD
 
 - **Vercel** serves static files from repo root.
 - `vercel.json`: security headers (CSP), cache rules.
-- Canonical production origin: `PRODUCTION_APP_ORIGIN` in `constants.js`.
+- Canonical production origin: `PRODUCTION_APP_ORIGIN` = `https://pm-prioritization-tool-six.vercel.app` in `constants.js`. Legacy wrong host: `pm-prioritization-tool.vercel.app` only (`LEGACY_WRONG_HOSTNAMES`).
 
 ---
 

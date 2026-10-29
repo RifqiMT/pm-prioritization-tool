@@ -1314,23 +1314,16 @@ const ProfileOverviewTimeline = (function () {
     GRANULARITIES,
     VIEW_MODES,
     UNPOSITIONED_KANO_KEY,
-    getMetric,
     normalizeGranularity,
     normalizeViewMode,
-    comparePeriods,
-    compareBuckets,
     periodToBucket,
-    normalizePeriodKey,
     buildSeries,
     applySeriesFilter,
-    normalizeSeriesFilter,
     toggleSeriesFilter,
     renderSvg,
     renderTable,
     renderInto,
-    formatTick,
-    formatCompactNumber,
-    bindChartInteractions
+    formatCompactNumber
   };
 })();
 

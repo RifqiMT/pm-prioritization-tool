@@ -13,7 +13,7 @@
     "sync:assets": "node scripts/sync-asset-versions.js",
     "start": "npm run dev",
     "verify:deploy": "node scripts/verify-deployment.js",
-    "verify:production": "node scripts/verify-deployment.js https://pm-prioritization-tool-one.vercel.app",
+    "verify:production": "node scripts/verify-deployment.js https://pm-prioritization-tool-six.vercel.app",
     "test:storage": "node scripts/test-storage-sync-logic.js",
     "test:metadata": "node scripts/test-roadmap-metadata.js",
     "test:persistence": "node scripts/test-persistence-keys.js",

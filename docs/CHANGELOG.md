@@ -27,6 +27,26 @@ When updating this file after a change:
 
 ## [Unreleased]
 
+### Cleanup — Unused exports and Gantt dead locals — 2026-10-27 — Product Team — Impact: developer
+
+- Removed unused `ZOOM_LEVELS` and dead `RoadmapPeriods.normalizeStatus` branch in `gantt-view.js`.
+- Trimmed unused public API keys (internals kept): `CostOfDelay` duration helpers, `ByokApiKeys` modal/validate surface, `ProfileOverviewTimeline` internal helpers, `RoadmapLlmSummary` unused aliases/exports.
+- Synced `docs/VARIABLES.md` §7 with icon/tooltip maps and country alias/code tables from `constants.js`.
+
+### Docs — Full product documentation standard audit (pass 2) — 2026-10-26 — Product Team — Impact: documentation
+
+- Re-audited codebase vs 18-doc suite after production restore + dead-helper cleanup; baseline remains `APP_ASSET_VERSION` = `20261025-ui234`.
+- Confirmed counts: **47** CSS, **20** modules, **19** tests, `app.js` ~26.6k lines.
+- Fixed `LEGACY_WRONG_HOSTNAMES` example in VARIABLES §7 (only `pm-prioritization-tool.vercel.app`; **`-six` is production**).
+- Documented `PRODUCTION_APP_ORIGIN` / legacy-host rules in TECH_GUIDELINES; verified README, DEPLOYMENT, PRODUCT_DOCUMENTATION, verify scripts all point at `https://pm-prioritization-tool-six.vercel.app`.
+- Confirmed trimmed module public APIs are not referenced in ARCHITECTURE / TECH / FEATURE_LOGIC (cleanup already changelogged).
+
+### Infra — Restore production to pm-prioritization-tool-six — 2026-10-26 — Product Team — Impact: user-visible
+
+- Canonical production is again **https://pm-prioritization-tool-six.vercel.app** (MongoDB-backed project).
+- Removed `pm-prioritization-tool-six` from `LEGACY_WRONG_HOSTNAMES`; dropped dead `pm-prioritization-tool-one` origin (project deleted).
+- Updated verify scripts, canonical links, and docs.
+
 ### Cleanup — Dead helpers and VARIABLES §7 sync — 2026-10-26 — Product Team — Impact: developer
 
 - Removed unused helpers: fullscreen aliases (`preferHostFullscreen`, `getWorkspaceContainer`, `enterNativeFullscreen`), gantt aliases (`getTimelineUnit`, `getWeekWidth`), `RoadmapPeriods.formatDisplay`, storage leftovers (`reconcileWithRemoteAfterLoad`, `flushPersistState`, `canUseCloudWithoutClientSecret`, `isRemoteWorkspacePopulated`, `getMode`, unused `remoteDocMs`), and unused LLM prompt guides / `assertThreeParagraphVariant`.
@@ -38,7 +58,7 @@ When updating this file after a change:
 - Re-audited codebase vs 18-doc suite; baseline `APP_ASSET_VERSION` = `20261025-ui234`.
 - Documented **Portfolio timeline** end-to-end (FR-1.8, F-10b, US-A2b, VARIABLES §8.23, PM-17, design §2.5b): Chart/Table, Quarterly/Annually, legend filters, growth %.
 - **Calm slate/teal** design system (`design-tokens`, `ui-refresh`, `ui-polish`, `moscow-theme`): **47** CSS layers; **20** modules; **19** tests (`test:profile-timeline`).
-- Production origin documented as `https://pm-prioritization-tool-one.vercel.app`.
+- Production origin documented as `https://pm-prioritization-tool-six.vercel.app` (later restored/confirmed in Infra + pass 2).
 - Synced README, PRODUCT_DOCUMENTATION, ARCHITECTURE, TECH, DEPLOYMENT, STANDARD, hub, personas, metrics, and audit dates to `2026-10-26`.
 
 ### UI — Timeline table period growth % (`ui234`) — 2026-10-25 — Product Team — Impact: user-visible

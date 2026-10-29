@@ -612,6 +612,7 @@ flowchart LR
 | Date | Change |
 |------|--------|
 | 2026-05-28 | Initial collaborative cross-feature logic and constraints reference |
+| 2026-10-26 (pass 2) | Production restored to `-six`; LEGACY_WRONG_HOSTNAMES corrected; dead-helper cleanup verified; baseline `20261025-ui234` |
 | 2026-10-26 | Full docs audit to `20261025-ui234`; Portfolio timeline Chart/Table + annual + filters + growth %; calm slate/teal tokens; 47 CSS; 20 modules; 19 tests |
 | 2026-10-24 | Full docs audit to `20260710-ui205`; Cost of Delay workshop model; decoupled from Financial impact; 19 modules; 18 tests |
 | 2026-07-10 | Incomplete optional fields filter; sync:assets; HRK→EUR; 43 CSS; 18 modules; 17 tests; baseline `20260710-ui201` |

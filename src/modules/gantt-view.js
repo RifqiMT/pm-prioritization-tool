@@ -9,11 +9,6 @@ const GanttView = (function () {
     standard: { unit: "week", colWidth: 44 },
     comfortable: { unit: "week", colWidth: 58 }
   };
-  const ZOOM_LEVELS = {
-    compact: ZOOM_PRESETS.compact.colWidth,
-    standard: ZOOM_PRESETS.standard.colWidth,
-    comfortable: ZOOM_PRESETS.comfortable.colWidth
-  };
   let activeTooltip = null;
   let touchTooltipDismissBound = false;
   let tooltipHideTimer = 0;
@@ -32,12 +27,6 @@ const GanttView = (function () {
         ? roadmapStatusList
         : ["Not Started", "In Progress", "On Hold", "Done", "Cancelled"];
     if (options.includes(value)) return value;
-    if (
-      typeof RoadmapPeriods !== "undefined" &&
-      typeof RoadmapPeriods.normalizeStatus === "function"
-    ) {
-      return RoadmapPeriods.normalizeStatus(value, options);
-    }
     return options[0] || "Not Started";
   }
 

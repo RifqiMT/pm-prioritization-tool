@@ -6,7 +6,7 @@
 
 | | |
 |---|---|
-| **Production** | [pm-prioritization-tool-one.vercel.app](https://pm-prioritization-tool-one.vercel.app) |
+| **Production** | [pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app) |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
 | **Asset baseline** | `APP_ASSET_VERSION` = `20261025-ui234` (per-asset `?v=` tags synced via `npm run sync:assets`) |
 | **Docs hub** | [docs/README.md](docs/README.md) |
@@ -271,4 +271,4 @@ UNLICENSED (private). See `package.json`.
 - GitHub: [RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool)  
 - Article: [Effort–impact confusion to clear-cut priorities](https://rifqi-tjahyono.com/%f0%9f%93%8a-effort-impact-confusion-to-clear-cut-priorities-replace-tab-hopping-with-visual-roadmap-sanity-%f0%9f%a7%ad%e2%9c%a8/)
 
-**Documentation last comprehensively audited:** 2026-10-26 (baseline `20261025-ui234`; Portfolio timeline Chart/Table + calm slate/teal design system).
+**Documentation last comprehensively audited:** 2026-10-26 (baseline `20261025-ui234`; Portfolio timeline + calm slate/teal; production `pm-prioritization-tool-six.vercel.app`).

@@ -3819,7 +3819,7 @@ function showWrongHostBanner() {
   const origin =
     typeof PRODUCTION_APP_ORIGIN !== "undefined" && PRODUCTION_APP_ORIGIN
       ? PRODUCTION_APP_ORIGIN
-      : "https://pm-prioritization-tool-one.vercel.app";
+      : "https://pm-prioritization-tool-six.vercel.app";
   if (link) link.href = origin.replace(/\/$/, "") + "/";
   banner.hidden = false;
   const shell = document.querySelector(".app-shell");
@@ -3851,7 +3851,7 @@ function showDeploymentIssueBanner(boot) {
       const prod =
         typeof PRODUCTION_APP_ORIGIN !== "undefined"
           ? PRODUCTION_APP_ORIGIN
-          : "https://pm-prioritization-tool-one.vercel.app";
+          : "https://pm-prioritization-tool-six.vercel.app";
       textEl.textContent =
         "This site returned HTML for /api/config (often the legacy React app). " +
         "Use the production URL: " + prod;
@@ -4036,7 +4036,7 @@ async function refreshCloudStorageDiagnostics() {
     const prodHost =
       typeof PRODUCTION_APP_ORIGIN !== "undefined" && PRODUCTION_APP_ORIGIN
         ? PRODUCTION_APP_ORIGIN.replace(/^https?:\/\//, "").replace(/\/$/, "")
-        : "pm-prioritization-tool-one.vercel.app";
+        : "pm-prioritization-tool-six.vercel.app";
     if (d.hostname && d.hostname !== prodHost) {
       line += " · Warning: not on production URL";
     }

@@ -18,7 +18,7 @@ The application is a **static single-page app** (HTML, layered CSS, vanilla Java
 
 | | |
 |---|---|
-| **Production URL** | [pm-prioritization-tool-one.vercel.app](https://pm-prioritization-tool-one.vercel.app) |
+| **Production URL** | [pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app) |
 | **Repository** | [github.com/RifqiMT/pm-prioritization-tool](https://github.com/RifqiMT/pm-prioritization-tool) |
 
 ---

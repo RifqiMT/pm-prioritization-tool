@@ -7,6 +7,8 @@
 
 The app is a **static UI** plus **Vercel serverless API** routes under `/api`. Portfolio data is stored in **MongoDB Atlas** when `MONGODB_URI` is configured; the browser keeps a **local cache** for faster reload and offline fallback.
 
+**Canonical production:** [https://pm-prioritization-tool-six.vercel.app](https://pm-prioritization-tool-six.vercel.app). Do not use `pm-prioritization-tool.vercel.app` (legacy React app).
+
 ## Architecture on Vercel
 
 | Layer | Responsibility |
@@ -51,7 +53,7 @@ openssl rand -hex 32
 
 After deploy, open the production URL:
 
-1. Visit `https://pm-prioritization-tool-one.vercel.app/api/config` — expect JSON: `"storage": "mongodb"`.
+1. Visit `https://pm-prioritization-tool-six.vercel.app/api/config` — expect JSON: `"storage": "mongodb"`.
 2. If you **only** set `MONGODB_URI` (no `PM_API_SECRET`), the header should show **Saved to cloud** automatically after redeploy.
 3. If you set `PM_API_SECRET`, click **Cloud** → paste the secret → **Connect & sync** (stored in `localStorage` for return visits).
 
@@ -145,7 +147,7 @@ Open `https://YOUR-DOMAIN/api/config`. Expected JSON:
 { "ok": true, "storage": "mongodb", "authRequired": false, "workspaceId": "default", "version": 1 }
 ```
 
-If you see **HTML** for a React app (“PM Prioritization Matrix”), the domain points at the **wrong** Vercel roadmap. Fix **Settings → Git** to use this repo, or create a new roadmap and move the domain. Production URL: **`pm-prioritization-tool-one.vercel.app`** — not `pm-prioritization-tool.vercel.app` (legacy React app) or `pm-prioritization-tool-six.vercel.app` (previous team account).
+If you see **HTML** for a React app (“PM Prioritization Matrix”), the domain points at the **wrong** Vercel roadmap. Fix **Settings → Git** to use this repo, or create a new roadmap and move the domain. Production URL: **`pm-prioritization-tool-six.vercel.app`** — not `pm-prioritization-tool.vercel.app` (legacy React app).
 
 ### 3. Environment variables and Atlas
 

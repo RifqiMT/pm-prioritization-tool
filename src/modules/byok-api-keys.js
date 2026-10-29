@@ -1042,19 +1042,11 @@
   }
 
   global.ByokApiKeys = {
-    PROVIDERS,
     initModal,
-    openModal,
-    closeModal,
     getStoredKey,
     saveKey,
     clearKey,
     hasStoredKey,
-    countStoredKeys,
-    validateKeyRemote,
-    normalizeApiKey,
-    validateKeyDirect,
-    updateHeaderBadge,
     encryptSecret,
     decryptSecret
   };

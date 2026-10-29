@@ -251,16 +251,22 @@ Full input field whitelists: `sanitizeFinancialImpactInputs` in `src/app.js`.
 |----------------|---------------|------------|---------|
 | `STORAGE_KEY` | Storage Key | localStorage key for app state. | `"rice_prioritizer_v1"` |
 | `APP_ASSET_VERSION` | Asset Cache Version | Prefix for `?v=` on CSS/JS in `index.html` (synced by `scripts/sync-asset-versions.js`). | `"20261025-ui234"` |
-| `PRODUCTION_APP_ORIGIN` | Production Origin | Canonical deployed app URL (MongoDB + `/api`). | `"https://pm-prioritization-tool-one.vercel.app"` |
-| `LEGACY_WRONG_HOSTNAMES` | Legacy Hostnames | Hosts that serve a different app; banner redirects to `PRODUCTION_APP_ORIGIN`. | `pm-prioritization-tool.vercel.app`, `…-six.vercel.app` |
+| `PRODUCTION_APP_ORIGIN` | Production Origin | Canonical deployed app URL (MongoDB + `/api`). | `"https://pm-prioritization-tool-six.vercel.app"` |
+| `LEGACY_WRONG_HOSTNAMES` | Legacy Hostnames | Hosts that serve a different app; banner redirects to `PRODUCTION_APP_ORIGIN`. | `["pm-prioritization-tool.vercel.app"]` only — `-six` is production again |
 | `DEMO_PROFILE_NAME` | Demo Profile Name | Read-only demo workspace label when active. | `"Test"` |
 | `DEFAULT_ACTIVE_PROFILE_NAME` | Default Active Profile | Profile selected on load when present (same as demo). | `"Test"` |
 | `roadmapStatusList` | Status Enum | Allowed status values. | 5 statuses |
+| `roadmapStatusIcons` | Status Column Icons | SVG + tooltip copy keyed by `roadmapStatusList`. | Table status column |
 | `moscowList` | MoSCoW Enum | Stored MoSCoW values (lowercase “have”). | `Must have`, … |
 | `moscowDisplayNames` | MoSCoW Display Labels | UI quadrant headers. | `Must Have`, … |
+| `moscowTooltips` | MoSCoW Tooltips | Tooltip title/body/grid description per MoSCoW value. | Board + MoSCoW view |
+| `moscowGridOrder` | MoSCoW Grid Order | 2×2 quadrant order (top-left → bottom-right). | `["Must have", "Should have", "Could have", "Won't have"]` |
 | `TABLE_GROUP_BY_OPTIONS` | Table Group-by Options | Compact card list grouping. | status, MoSCoW, owner, … |
 | `COMPACT_LAYOUT_MAX_WIDTH_PX` | Compact Breakpoint | Max width for phone/tablet UI. | `1400` |
 | `tshirtSizeList` | T-Shirt Enum | Allowed sizes. | XS–XL |
+| `tshirtSizeTooltips` | T-Shirt Tooltips | Size tooltip copy (sprint guidance). | Table t-shirt column |
+| `roadmapPeriodTooltip` | Period Column Tooltip | Static tooltip for roadmap periods column. | Table periods column |
+| `roadmapTypeIcons` | Roadmap Type Icons | SVG + tooltip keyed by roadmap type. | Table type column |
 | `currencyList` | Currency List | Selectable currencies. | EUR, USD, IDR, … |
 | `CURRENCY_SYMBOLS` | Currency Symbol Map | Display symbol for each supported currency code. | `{ EUR: "€", GBP: "£", IDR: "Rp", ... }` |
 | `CURRENCY_SYMBOL_SUFFIX` | Suffix Symbol Currencies | Codes that show the symbol after the amount. | `["SEK", "NOK", "DKK", "ISK"]` |
@@ -276,6 +282,8 @@ Full input field whitelists: `sanitizeFinancialImpactInputs` in `src/app.js`.
 | `EXPORT_CSV_KNOWN_PROFILE_KEYS` | CSV Profile Column Registry | Allowed profile keys for CSV import/export round-trip. | `name`, `team`, `roadmaps`, … |
 | `EXPORT_CSV_KNOWN_ROADMAP_KEYS` | CSV Roadmap Column Registry | Allowed roadmap keys for CSV import/export round-trip. | `title`, `reachValue`, `roadmapPeriods`, … |
 | `countryList` | Country List | Normalized country names for geo. | `"Germany"` |
+| `countryCodeByName` | Country → ISO2 Map | Canonical country name to two-letter code. | `{ "Germany": "DE", … }` |
+| `countryNameAliases` | Country Name Aliases | Alternate names mapped to `countryList` canonical labels. | `"Czech Republic"` → `"Czechia"` |
 | `COUNTRY_OPTION_EU` | EU Region Option | Pseudo-value `EU` in target-country selects; expands to all EU members on selection. | `"EU"` |
 | `EU_MEMBER_COUNTRIES` | EU Member States | 27 canonical `countryList` names filled when `EU` is chosen. | `["Germany", "France", …]` |
 
@@ -655,7 +663,7 @@ flowchart TD
 | `is-desktop-layout` | Desktop Layout Class | Viewport >1400px. | Mutually exclusive with compact. | Global layout | class present |
 | `portfolioSelectionBar` | Portfolio Selection Bar | Floating bar for bulk delete when rows selected on compact table. | Shown when `selectedRoadmapIds` non-empty. | Table view (compact) | DOM element |
 | `view-in-fullscreen-host` | Fullscreen Host Class | Body class when a view is fullscreen. | `fullscreen.js` + `fullscreen-compact.css`. | Fullscreen | class on `body` |
-| `PRODUCTION_APP_ORIGIN` | Production URL | Canonical deployed origin for links/docs. | Constant string. | `src/constants.js` | `https://pm-prioritization-tool-one.vercel.app` |
+| `PRODUCTION_APP_ORIGIN` | Production URL | Canonical deployed origin for links/docs. | Constant string. | `src/constants.js` | `https://pm-prioritization-tool-six.vercel.app` |
 
 ### Cloud storage metadata (`_storageMeta` on workspace)
 

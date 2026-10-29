@@ -4,9 +4,9 @@
  *
  * Checks cloud API health and that production serves the expected import-fix bundle.
  */
-const DEFAULT_PRODUCTION = "https://pm-prioritization-tool-one.vercel.app";
-const EXPECTED_APP_BUNDLE = "app.js?v=20260710-ui205-app";
-const EXPECTED_MERGE_BUNDLE = "workspace-merge.js?v=20260710-ui205-modules-workspace-merge";
+const DEFAULT_PRODUCTION = "https://pm-prioritization-tool-six.vercel.app";
+const EXPECTED_APP_BUNDLE = "app.js?v=20261025-ui234-app";
+const EXPECTED_MERGE_BUNDLE = "workspace-merge.js?v=20261025-ui234-modules-workspace-merge";
 
 const base = (process.argv[2] || DEFAULT_PRODUCTION).replace(/\/$/, "");
 if (!base) {

@@ -255,16 +255,11 @@ const CostOfDelay = (function () {
   }
 
   return {
-    DURATION_UNITS,
-    DURATION_UNIT_LABELS,
-    DURATION_UNIT_PLURAL,
     sanitizeInputs,
     compute,
     hasMeaningfulInputs,
     validationMessage,
-    normalizeDurationUnit,
     formatPlainNumber,
-    unitWord,
     buildHowToUse
   };
 })();

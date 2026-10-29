@@ -148,7 +148,9 @@ Later files win for equal specificity. Each stylesheet in `index.html` uses a **
 | `moscowDisplayNames` | UI labels (Must Have, …) |
 | `TABLE_GROUP_BY_OPTIONS` | Compact table group-by ids + labels |
 | `WORKSPACE_TRUST_PROFILE_LABEL` | Internal trust profile token — do not log or document in VARIABLES |
-| `PRODUCTION_APP_ORIGIN` | Canonical deploy URL |
+| `PRODUCTION_APP_ORIGIN` | Canonical deploy URL: `https://pm-prioritization-tool-six.vercel.app` |
+| `LEGACY_WRONG_HOSTNAMES` | Wrong-host banner list — currently only `pm-prioritization-tool.vercel.app` (legacy React app). Do **not** include `-six`. |
+| `DEMO_PROFILE_NAME` / `DEFAULT_ACTIVE_PROFILE_NAME` | Read-only demo profile label (`Test`) |
 
 Privileged workspace mode flags and helpers: see [GUARDRAILS.md §7](GUARDRAILS.md); use `isWorkspaceWideModeActive()` / `html.is-workspace-wide-mode` in code — do not duplicate policy in product docs.
 
